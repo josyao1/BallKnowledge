@@ -1,0 +1,143 @@
+{
+  "team": "CHA",
+  "season": "2021-22",
+  "cached_at": "2026-01-22T11:21:21.739787",
+  "players": [
+    {
+      "id": 1628970,
+      "name": "Miles Bridges",
+      "position": "F",
+      "number": "0",
+      "ppg": 20.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630163,
+      "name": "LaMelo Ball",
+      "position": "G",
+      "number": "2",
+      "ppg": 20.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626179,
+      "name": "Terry Rozier",
+      "position": "G",
+      "number": "3",
+      "ppg": 19.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 202330,
+      "name": "Gordon Hayward",
+      "position": "F",
+      "number": "20",
+      "ppg": 15.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626162,
+      "name": "Kelly Oubre Jr.",
+      "position": "F-G",
+      "number": "12",
+      "ppg": 15.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626149,
+      "name": "Montrezl Harrell",
+      "position": "F-C",
+      "number": "8",
+      "ppg": 13.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629023,
+      "name": "P.J. Washington",
+      "position": "F",
+      "number": "25",
+      "ppg": 10.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 202738,
+      "name": "Isaiah Thomas",
+      "position": "G",
+      "number": "4",
+      "ppg": 8.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628998,
+      "name": "Cody Martin",
+      "position": "F",
+      "number": "11",
+      "ppg": 7.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 203486,
+      "name": "Mason Plumlee",
+      "position": "F-C",
+      "number": "24",
+      "ppg": 6.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629667,
+      "name": "Jalen McDaniels",
+      "position": "F-C",
+      "number": "6",
+      "ppg": 6.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630547,
+      "name": "James Bouknight",
+      "position": "G",
+      "number": "5",
+      "ppg": 4.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630208,
+      "name": "Nick Richards",
+      "position": "C",
+      "number": "14",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630550,
+      "name": "JT Thor",
+      "position": "F",
+      "number": "21",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630539,
+      "name": "Kai Jones",
+      "position": "C-F",
+      "number": "23",
+      "ppg": 1.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630575,
+      "name": "Scottie Lewis",
+      "position": "G",
+      "number": "16",
+      "ppg": 0.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629083,
+      "name": "Arnoldas Kulboka",
+      "position": "F",
+      "number": "98",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

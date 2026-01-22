@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import type { Player, Team, GameStatus, GameMode, GuessResult } from '../types';
 
+interface LeaguePlayer {
+  id: number;
+  name: string;
+}
+
 interface GameState {
   // Configuration
   selectedTeam: Team | null;
@@ -18,12 +23,14 @@ interface GameState {
   guessedPlayers: Player[];
   incorrectGuesses: string[];
 
+  // League-wide players for autocomplete (all players from the season)
+  leaguePlayers: LeaguePlayer[];
+
   // Scoring
   score: number;
-  bonusPoints: number;
 
   // Actions
-  setGameConfig: (team: Team, season: string, mode: GameMode, duration: number, roster: Player[]) => void;
+  setGameConfig: (team: Team, season: string, mode: GameMode, duration: number, roster: Player[], leaguePlayers?: LeaguePlayer[]) => void;
   startGame: () => void;
   makeGuess: (playerName: string) => GuessResult;
   pauseGame: () => void;
@@ -44,8 +51,6 @@ function normalizePlayerName(name: string): string {
     .trim();
 }
 
-const BONUS_THRESHOLD = 10; // PPG below which bonus is awarded
-
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
   selectedTeam: null,
@@ -58,10 +63,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentRoster: [],
   guessedPlayers: [],
   incorrectGuesses: [],
+  leaguePlayers: [],
   score: 0,
-  bonusPoints: 0,
 
-  setGameConfig: (team, season, mode, duration, roster) => {
+  setGameConfig: (team, season, mode, duration, roster, leaguePlayers = []) => {
     set({
       selectedTeam: team,
       selectedSeason: season,
@@ -69,11 +74,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       timerDuration: duration,
       timeRemaining: duration,
       currentRoster: roster,
+      leaguePlayers,
       status: 'idle',
       guessedPlayers: [],
       incorrectGuesses: [],
       score: 0,
-      bonusPoints: 0,
       startTime: null,
     });
   },
@@ -89,7 +94,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
 
     if (state.status !== 'playing') {
-      return { isCorrect: false, alreadyGuessed: false, bonusAwarded: false };
+      return { isCorrect: false, alreadyGuessed: false };
     }
 
     const normalizedGuess = normalizePlayerName(playerName);
@@ -99,7 +104,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       (p) => normalizePlayerName(p.name) === normalizedGuess
     );
     if (alreadyGuessedCorrectly) {
-      return { isCorrect: false, alreadyGuessed: true, bonusAwarded: false };
+      return { isCorrect: false, alreadyGuessed: true };
     }
 
     // Check if already guessed incorrectly
@@ -107,7 +112,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       (g) => normalizePlayerName(g) === normalizedGuess
     );
     if (alreadyGuessedIncorrectly) {
-      return { isCorrect: false, alreadyGuessed: true, bonusAwarded: false };
+      return { isCorrect: false, alreadyGuessed: true };
     }
 
     // Check against current roster
@@ -116,18 +121,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     );
 
     if (matchedPlayer) {
-      const bonusAwarded = matchedPlayer.ppg < BONUS_THRESHOLD;
-
       set({
         guessedPlayers: [...state.guessedPlayers, matchedPlayer],
         score: state.score + 1,
-        bonusPoints: state.bonusPoints + (bonusAwarded ? 1 : 0),
       });
 
       return {
         isCorrect: true,
         player: matchedPlayer,
-        bonusAwarded,
         alreadyGuessed: false,
       };
     }
@@ -137,7 +138,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       incorrectGuesses: [...state.incorrectGuesses, playerName],
     });
 
-    return { isCorrect: false, alreadyGuessed: false, bonusAwarded: false };
+    return { isCorrect: false, alreadyGuessed: false };
   },
 
   pauseGame: () => {
@@ -163,8 +164,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentRoster: [],
       guessedPlayers: [],
       incorrectGuesses: [],
+      leaguePlayers: [],
       score: 0,
-      bonusPoints: 0,
     });
   },
 

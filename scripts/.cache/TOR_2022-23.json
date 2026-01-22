@@ -1,0 +1,143 @@
+{
+  "team": "TOR",
+  "season": "2022-23",
+  "cached_at": "2026-01-22T11:22:19.982327",
+  "players": [
+    {
+      "id": 1627783,
+      "name": "Pascal Siakam",
+      "position": "F",
+      "number": "43",
+      "ppg": 24.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627832,
+      "name": "Fred VanVleet",
+      "position": "G",
+      "number": "23",
+      "ppg": 19.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629018,
+      "name": "Gary Trent Jr.",
+      "position": "G-F",
+      "number": "33",
+      "ppg": 17.4,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628384,
+      "name": "OG Anunoby",
+      "position": "F",
+      "number": "3",
+      "ppg": 16.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630567,
+      "name": "Scottie Barnes",
+      "position": "F",
+      "number": "4",
+      "ppg": 15.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627751,
+      "name": "Jakob Poeltl",
+      "position": "C",
+      "number": "19",
+      "ppg": 12.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628449,
+      "name": "Chris Boucher",
+      "position": "F-C",
+      "number": "25",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630173,
+      "name": "Precious Achiuwa",
+      "position": "F",
+      "number": "5",
+      "ppg": 9.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 203115,
+      "name": "Will Barton",
+      "position": "G",
+      "number": "1",
+      "ppg": 6.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 203490,
+      "name": "Otto Porter Jr.",
+      "position": "F",
+      "number": "32",
+      "ppg": 5.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630201,
+      "name": "Malachi Flynn",
+      "position": "G",
+      "number": "22",
+      "ppg": 4.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630625,
+      "name": "Dalano Banton",
+      "position": "F",
+      "number": "45",
+      "ppg": 4.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 201152,
+      "name": "Thaddeus Young",
+      "position": "F",
+      "number": "21",
+      "ppg": 4.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631132,
+      "name": "Christian Koloko",
+      "position": "C",
+      "number": "35",
+      "ppg": 3.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630288,
+      "name": "Jeff Dowtin Jr.",
+      "position": "G",
+      "number": "20",
+      "ppg": 2.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631199,
+      "name": "Ron Harper Jr.",
+      "position": "F",
+      "number": "8",
+      "ppg": 2.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630580,
+      "name": "Joe Wieskamp",
+      "position": "G-F",
+      "number": "11",
+      "ppg": 1.0,
+      "isLowScorer": true
+    }
+  ]
+}

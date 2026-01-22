@@ -1,0 +1,135 @@
+{
+  "team": "BOS",
+  "season": "1994-95",
+  "cached_at": "2026-01-22T11:13:39.474959",
+  "players": [
+    {
+      "id": 1806,
+      "name": "James Blackwell",
+      "position": "G",
+      "number": "8",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 244,
+      "name": "Dee Brown",
+      "position": "G",
+      "number": "",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 76542,
+      "name": "Tony Dawson",
+      "position": "F",
+      "number": "45",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 428,
+      "name": "Sherman Douglas",
+      "position": "G",
+      "number": "20",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 768,
+      "name": "Acie Earl",
+      "position": "C",
+      "number": "55",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 442,
+      "name": "Pervis Ellison",
+      "position": "C",
+      "number": "29",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 296,
+      "name": "Rick Fox",
+      "position": "F-G",
+      "number": "44",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 76961,
+      "name": "Tony Harris",
+      "position": "G",
+      "number": "43",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 77081,
+      "name": "Jay Humphries",
+      "position": "G",
+      "number": "5",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1365,
+      "name": "Xavier McDaniel",
+      "position": "F",
+      "number": "34",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 65,
+      "name": "Greg Minor",
+      "position": "G",
+      "number": "9",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 376,
+      "name": "Eric Montross",
+      "position": "C",
+      "number": "0",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 129,
+      "name": "Dino Radja",
+      "position": "F",
+      "number": "40",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 400,
+      "name": "Derek Strong",
+      "position": "F",
+      "number": "31",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 133,
+      "name": "David Wesley",
+      "position": "G",
+      "number": "4",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1122,
+      "name": "Dominique Wilkins",
+      "position": "F",
+      "number": "12",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

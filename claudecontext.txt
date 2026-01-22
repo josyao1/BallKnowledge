@@ -1,8 +1,8 @@
 ================================================================================
 BALL KNOWLEDGE - CLAUDE CODE CONTEXT FILE
 ================================================================================
-Last Updated: 2026-01-21
-Current Phase: Phase 7 (Polish) complete, Dynamic Roster Fetching implemented
+Last Updated: 2026-01-22
+Current Phase: Phase 7 (Polish) complete, Dynamic Roster Fetching + Autocomplete Rework implemented
 
 ================================================================================
 PROJECT OVERVIEW
@@ -102,36 +102,43 @@ Files modified:
 
 --------------------------------------------------------------------------------
 
-[!] AUTOCOMPLETE GIVES AWAY ANSWERS - NEEDS FIX
+[✓] AUTOCOMPLETE REWORK - COMPLETE
 
-Current Problem:
-1. Autocomplete is too generous - suggests names even with minimal typing
-2. CRITICAL: Autocomplete only suggests players from the CURRENT ROSTER being
-   guessed, which directly gives away the answers. If user types "Leb" and
-   only LeBron shows up, they know he's on the team.
+Problem Solved:
+- Autocomplete now uses ALL NBA players from the season, not just the team roster
+- This prevents the autocomplete from giving away answers
+- Stricter fuzzy matching (threshold 0.2) requires more precise typing
+- Minimum 3 characters required before showing suggestions
+- Current roster players are ALWAYS included in autocomplete (even if API fails)
 
-Required Solution:
-- Instead of autocompleting from just the team roster, pull ALL NBA players
-  from that SEASON/YEAR to create a much larger suggestion pool
-- This way autocomplete suggests players who may NOT be on the team
-- Forces users to actually know the roster, not just recognize names
-- Incorrect guesses become more likely = harder game = more skill required
+Implementation:
+- Added GET /players/{season} endpoint to API server (scripts/api_server.py)
+- Added fetchSeasonPlayers() function to src/services/api.ts
+- Added leaguePlayers field to gameStore (src/stores/gameStore.ts)
+- HomePage fetches league-wide players when starting game
+- PlayerInput merges: roster players (guaranteed) + league players OR static fallback
+- Fuse.js threshold lowered to 0.2, minMatchCharLength: 2
+- Autocomplete requires 3+ characters to show suggestions
+- API handles different column names (PLAYER_NAME vs PLAYER) for historical seasons
 
-Implementation Notes:
-- API server needs new endpoint: GET /players/{season} → all NBA players that year
-- Or modify roster fetch to also return league-wide player list
-- Frontend PlayerInput.tsx uses Fuse.js for fuzzy search - update data source
-- Consider making fuzzy matching stricter (higher threshold)
-
-Files to modify:
-- scripts/api_server.py - add endpoint to fetch all players for a season
-- src/services/api.ts - add function to fetch season players
-- src/components/game/PlayerInput.tsx - use league-wide player list
-- src/pages/GamePage.tsx - fetch and pass league players to input
 
 ================================================================================
 OPTIONAL FUTURE IMPROVEMENTS
 ================================================================================
+
+[ ] Multiplayer / Online Play (High Priority)
+    - Allow players to create lobbies and play together
+    - Real-time competition with WebSockets
+    - Implementation options:
+      a) Socket.io / WebSockets for real-time communication
+      b) Supabase Realtime for lobby management and live updates
+      c) Dedicated game server (Node.js/Python) for state management
+    - Features to consider:
+      - Lobby creation with join codes
+      - Real-time score updates
+      - Turn-based or simultaneous gameplay modes
+      - Leaderboards per game session
+      - Chat functionality
 
 [ ] Additional Polish
     - More responsive design improvements
@@ -292,7 +299,12 @@ Flow when starting a game:
    a. Random mode: ONLY picks from available static data (8 team-seasons)
    b. Falls back to static data in src/data/rosters.ts
    c. Frontend shows "Using local data"
-6. Game starts with roster data
+6. If roster fetch fails (random mode):
+   a. Shows "Roster unavailable, trying another (1/5)..."
+   b. Automatically picks new random team/season
+   c. Retries up to 5 times before showing error
+   d. Manual mode shows error immediately (no auto-retry)
+7. Game starts with roster data
 
 Available Static Rosters (when offline):
 - LAL: 2023-24, 2019-20
@@ -308,6 +320,7 @@ API Endpoints:
 - GET /roster/{team}/{season} → { team, season, players[], cached }
 - GET /teams               → { teams: [{abbreviation, id}, ...] }
 - GET /random?min_year=2015&max_year=2024 → { team, season, team_id }
+- GET /players/{season}    → { season, players: [{id, name}...], cached } (all NBA players that season)
 
 Caching Strategy:
 - File cache: scripts/.cache/{team}_{season}.json (24hr expiry)

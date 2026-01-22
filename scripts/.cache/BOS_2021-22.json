@@ -1,0 +1,143 @@
+{
+  "team": "BOS",
+  "season": "2021-22",
+  "cached_at": "2026-01-22T11:11:44.903502",
+  "players": [
+    {
+      "id": 1628369,
+      "name": "Jayson Tatum",
+      "position": "F-G",
+      "number": "0",
+      "ppg": 26.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627759,
+      "name": "Jaylen Brown",
+      "position": "G-F",
+      "number": "7",
+      "ppg": 23.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628401,
+      "name": "Derrick White",
+      "position": "G",
+      "number": "9",
+      "ppg": 13.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 203935,
+      "name": "Marcus Smart",
+      "position": "G",
+      "number": "36",
+      "ppg": 12.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 201143,
+      "name": "Al Horford",
+      "position": "C-F",
+      "number": "42",
+      "ppg": 10.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629057,
+      "name": "Robert Williams III",
+      "position": "C-F",
+      "number": "44",
+      "ppg": 10.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628464,
+      "name": "Daniel Theis",
+      "position": "F-C",
+      "number": "27",
+      "ppg": 8.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629684,
+      "name": "Grant Williams",
+      "position": "F",
+      "number": "12",
+      "ppg": 7.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630202,
+      "name": "Payton Pritchard",
+      "position": "G",
+      "number": "11",
+      "ppg": 6.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630174,
+      "name": "Aaron Nesmith",
+      "position": "G-F",
+      "number": "26",
+      "ppg": 3.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630346,
+      "name": "Matt Ryan",
+      "position": "F",
+      "number": "",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629752,
+      "name": "Juwan Morgan",
+      "position": "F",
+      "number": "16",
+      "ppg": 2.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630573,
+      "name": "Sam Hauser",
+      "position": "F",
+      "number": "30",
+      "ppg": 2.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 203917,
+      "name": "Nik Stauskas",
+      "position": "G",
+      "number": "13",
+      "ppg": 2.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628436,
+      "name": "Luke Kornet",
+      "position": "C-F",
+      "number": "40",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630271,
+      "name": "Brodric Thomas",
+      "position": "G",
+      "number": "97",
+      "ppg": 1.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630238,
+      "name": "Malik Fitts",
+      "position": "F",
+      "number": "8",
+      "ppg": 1.4,
+      "isLowScorer": true
+    }
+  ]
+}

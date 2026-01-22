@@ -9,7 +9,7 @@ import { SettingsModal } from '../components/home/SettingsModal';
 import { teams } from '../data/teams';
 import { rosters } from '../data/rosters';
 import { fetchTeamRoster } from '../services/roster';
-import { isApiAvailable, resetApiAvailability } from '../services/api';
+import { isApiAvailable, resetApiAvailability, fetchSeasonPlayers } from '../services/api';
 import type { Team, GameMode } from '../types';
 
 type LoadingStatus = 'idle' | 'checking' | 'fetching' | 'success' | 'error';
@@ -41,31 +41,30 @@ export function HomePage() {
     checkApi();
   }, []);
 
+  const MAX_RETRIES = 5;
+
   const handleStartGame = async () => {
     setLoadingStatus('checking');
     setStatusMessage('Selecting team...');
 
-    let team: Team;
-    let year: number;
+    const apiAvailable = await isApiAvailable();
+    let retryCount = 0;
 
-    if (gameMode === 'random') {
-      // Check API availability first for random mode
-      const apiAvailable = await isApiAvailable();
-
+    // Helper to pick a random team/season
+    const pickRandomTeamSeason = (): { team: Team; year: number } | null => {
       if (apiAvailable) {
-        // API available: pick from all teams and years within selected range
         const randomTeamIndex = Math.floor(Math.random() * teams.length);
-        team = teams[randomTeamIndex];
-        year = Math.floor(Math.random() * (randomMaxYear - randomMinYear + 1)) + randomMinYear;
+        const team = teams[randomTeamIndex];
+        const year = Math.floor(Math.random() * (randomMaxYear - randomMinYear + 1)) + randomMinYear;
+        return { team, year };
       } else {
-        // API offline: pick only from available static data within selected range
+        // API offline: pick only from available static data
         const availableTeamSeasons: { team: Team; season: string }[] = [];
 
         for (const [abbr, seasons] of Object.entries(rosters)) {
           const teamData = teams.find(t => t.abbreviation === abbr);
           if (teamData) {
             for (const season of Object.keys(seasons)) {
-              // Filter by selected year range
               const seasonYear = parseInt(season.split('-')[0]);
               if (seasonYear >= randomMinYear && seasonYear <= randomMaxYear) {
                 availableTeamSeasons.push({ team: teamData, season });
@@ -75,58 +74,101 @@ export function HomePage() {
         }
 
         if (availableTeamSeasons.length === 0) {
-          setLoadingStatus('error');
-          setStatusMessage(`No offline data available for ${randomMinYear}-${randomMaxYear}.`);
-          return;
+          return null;
         }
 
         const randomChoice = availableTeamSeasons[Math.floor(Math.random() * availableTeamSeasons.length)];
-        team = randomChoice.team;
-        // Parse year from season string (e.g., "2023-24" -> 2023)
-        year = parseInt(randomChoice.season.split('-')[0]);
+        return { team: randomChoice.team, year: parseInt(randomChoice.season.split('-')[0]) };
       }
-    } else {
+    };
+
+    // Try to load a roster (with retries for random mode)
+    const attemptLoadRoster = async (team: Team, year: number): Promise<boolean> => {
+      const season = `${year}-${String(year + 1).slice(-2)}`;
+
+      setStatusMessage(`Loading ${team.abbreviation} ${season} roster...`);
+      setLoadingStatus('fetching');
+
+      try {
+        const result = await fetchTeamRoster(team.abbreviation, season);
+
+        if (result.players.length === 0) {
+          return false; // No data found
+        }
+
+        // Fetch league-wide players for autocomplete
+        setStatusMessage('Loading player database...');
+        let leaguePlayers: { id: number; name: string }[] = [];
+
+        const leagueResult = await fetchSeasonPlayers(season);
+        if (leagueResult && leagueResult.players.length > 0) {
+          leaguePlayers = leagueResult.players;
+        }
+
+        setLoadingStatus('success');
+        setStatusMessage(
+          result.fromApi
+            ? result.cached
+              ? 'Loaded from cache!'
+              : 'Fetched from NBA API!'
+            : 'Using local data'
+        );
+
+        // Brief delay to show success message
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        setGameConfig(team, season, gameMode, timerDuration, result.players, leaguePlayers);
+        navigate('/game');
+        return true;
+      } catch (error) {
+        console.error('Error fetching roster:', error);
+        return false;
+      }
+    };
+
+    // Manual mode - no retries, just try once
+    if (gameMode === 'manual') {
       if (!selectedTeam || !selectedYear) {
         setLoadingStatus('idle');
         return;
       }
-      team = selectedTeam;
-      year = selectedYear;
+
+      const success = await attemptLoadRoster(selectedTeam, selectedYear);
+      if (!success) {
+        setLoadingStatus('error');
+        setStatusMessage(`No roster data found for ${selectedTeam.name} ${selectedYear}-${String(selectedYear + 1).slice(-2)}`);
+      }
+      return;
     }
 
-    const season = `${year}-${String(year + 1).slice(-2)}`;
+    // Random mode - retry with different teams if needed
+    while (retryCount < MAX_RETRIES) {
+      const pick = pickRandomTeamSeason();
 
-    setStatusMessage(`Loading ${team.abbreviation} ${season} roster...`);
-    setLoadingStatus('fetching');
-
-    try {
-      const result = await fetchTeamRoster(team.abbreviation, season);
-
-      if (result.players.length === 0) {
+      if (!pick) {
         setLoadingStatus('error');
-        setStatusMessage(`No roster data found for ${team.name} ${season}`);
+        setStatusMessage(`No offline data available for ${randomMinYear}-${randomMaxYear}.`);
         return;
       }
 
-      setLoadingStatus('success');
-      setStatusMessage(
-        result.fromApi
-          ? result.cached
-            ? 'Loaded from cache!'
-            : 'Fetched from NBA API!'
-          : 'Using local data'
-      );
+      const success = await attemptLoadRoster(pick.team, pick.year);
 
-      // Brief delay to show success message
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (success) {
+        return; // Successfully loaded, game started
+      }
 
-      setGameConfig(team, season, gameMode, timerDuration, result.players);
-      navigate('/game');
-    } catch (error) {
-      console.error('Error fetching roster:', error);
-      setLoadingStatus('error');
-      setStatusMessage('Failed to load roster. Please try again.');
+      // Failed - retry with a new random pick
+      retryCount++;
+      if (retryCount < MAX_RETRIES) {
+        setStatusMessage(`Roster unavailable, trying another (${retryCount}/${MAX_RETRIES})...`);
+        setLoadingStatus('checking');
+        await new Promise((resolve) => setTimeout(resolve, 800)); // Brief pause before retry
+      }
     }
+
+    // Exhausted all retries
+    setLoadingStatus('error');
+    setStatusMessage(`Couldn't find available roster after ${MAX_RETRIES} attempts. Try a different year range.`);
   };
 
   const handleRetry = () => {

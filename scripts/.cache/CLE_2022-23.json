@@ -1,0 +1,143 @@
+{
+  "team": "CLE",
+  "season": "2022-23",
+  "cached_at": "2026-01-22T10:48:09.407584",
+  "players": [
+    {
+      "id": 1628378,
+      "name": "Donovan Mitchell",
+      "position": "G",
+      "number": "45",
+      "ppg": 28.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629636,
+      "name": "Darius Garland",
+      "position": "G",
+      "number": "10",
+      "ppg": 21.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630596,
+      "name": "Evan Mobley",
+      "position": "C",
+      "number": "4",
+      "ppg": 16.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628386,
+      "name": "Jarrett Allen",
+      "position": "C",
+      "number": "31",
+      "ppg": 14.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627747,
+      "name": "Caris LeVert",
+      "position": "G",
+      "number": "3",
+      "ppg": 12.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626224,
+      "name": "Cedi Osman",
+      "position": "F",
+      "number": "16",
+      "ppg": 8.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630171,
+      "name": "Isaac Okoro",
+      "position": "F-G",
+      "number": "35",
+      "ppg": 6.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 201980,
+      "name": "Danny Green",
+      "position": "G",
+      "number": "14",
+      "ppg": 5.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630205,
+      "name": "Lamar Stevens",
+      "position": "F",
+      "number": "8",
+      "ppg": 5.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 201937,
+      "name": "Ricky Rubio",
+      "position": "G",
+      "number": "13",
+      "ppg": 5.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630241,
+      "name": "Sam Merrill",
+      "position": "G",
+      "number": "20",
+      "ppg": 5.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629731,
+      "name": "Dean Wade",
+      "position": "F-C",
+      "number": "32",
+      "ppg": 4.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 203526,
+      "name": "Raul Neto",
+      "position": "G",
+      "number": "19",
+      "ppg": 3.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 201577,
+      "name": "Robin Lopez",
+      "position": "C",
+      "number": "33",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630600,
+      "name": "Isaiah Mobley",
+      "position": "F",
+      "number": "15",
+      "ppg": 2.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629603,
+      "name": "Mamadi Diakite",
+      "position": "F",
+      "number": "21",
+      "ppg": 2.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629685,
+      "name": "Dylan Windler",
+      "position": "G-F",
+      "number": "9",
+      "ppg": 1.7,
+      "isLowScorer": true
+    }
+  ]
+}

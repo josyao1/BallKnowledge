@@ -1,0 +1,151 @@
+{
+  "team": "CLE",
+  "season": "2023-24",
+  "cached_at": "2026-01-22T11:11:35.545004",
+  "players": [
+    {
+      "id": 1628378,
+      "name": "Donovan Mitchell",
+      "position": "G",
+      "number": "45",
+      "ppg": 26.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629636,
+      "name": "Darius Garland",
+      "position": "G",
+      "number": "10",
+      "ppg": 18.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628386,
+      "name": "Jarrett Allen",
+      "position": "C",
+      "number": "31",
+      "ppg": 16.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630596,
+      "name": "Evan Mobley",
+      "position": "C",
+      "number": "4",
+      "ppg": 15.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627747,
+      "name": "Caris LeVert",
+      "position": "G",
+      "number": "3",
+      "ppg": 14.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629622,
+      "name": "Max Strus",
+      "position": "G-F",
+      "number": "1",
+      "ppg": 12.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627777,
+      "name": "Georges Niang",
+      "position": "F",
+      "number": "20",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630171,
+      "name": "Isaac Okoro",
+      "position": "F-G",
+      "number": "35",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630241,
+      "name": "Sam Merrill",
+      "position": "G",
+      "number": "5",
+      "ppg": 8.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 202694,
+      "name": "Marcus Morris Sr.",
+      "position": "F",
+      "number": "24",
+      "ppg": 6.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641854,
+      "name": "Craig Porter Jr.",
+      "position": "G",
+      "number": "9",
+      "ppg": 5.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629731,
+      "name": "Dean Wade",
+      "position": "F-C",
+      "number": "32",
+      "ppg": 5.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 202684,
+      "name": "Tristan Thompson",
+      "position": "C-F",
+      "number": "13",
+      "ppg": 3.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641734,
+      "name": "Emoni Bates",
+      "position": "F",
+      "number": "21",
+      "ppg": 2.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627745,
+      "name": "Damian Jones",
+      "position": "C",
+      "number": "30",
+      "ppg": 2.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630600,
+      "name": "Isaiah Mobley",
+      "position": "F",
+      "number": "15",
+      "ppg": 2.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629660,
+      "name": "Ty Jerome",
+      "position": "G-F",
+      "number": "2",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631250,
+      "name": "Pete Nance",
+      "position": "F",
+      "number": "8",
+      "ppg": 0.4,
+      "isLowScorer": true
+    }
+  ]
+}

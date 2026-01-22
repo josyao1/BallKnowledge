@@ -1,0 +1,127 @@
+{
+  "team": "CHI",
+  "season": "1993-94",
+  "cached_at": "2026-01-22T11:07:15.770560",
+  "players": [
+    {
+      "id": 769,
+      "name": "B.J. Armstrong",
+      "position": "G",
+      "number": "10",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 916,
+      "name": "Corie Blount",
+      "position": "F-C",
+      "number": "44",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 76362,
+      "name": "Bill Cartwright",
+      "position": "C",
+      "number": "24",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 76676,
+      "name": "Jojo English",
+      "position": "G",
+      "number": "3",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 270,
+      "name": "Horace Grant",
+      "position": "F-C",
+      "number": "54",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 77138,
+      "name": "Dave Johnson",
+      "position": "G",
+      "number": "8",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 70,
+      "name": "Steve Kerr",
+      "position": "G",
+      "number": "25",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 389,
+      "name": "Toni Kukoc",
+      "position": "G-F",
+      "number": "7",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 26,
+      "name": "Luc Longley",
+      "position": "C",
+      "number": "13",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 939,
+      "name": "Pete Myers",
+      "position": "G",
+      "number": "20",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 77820,
+      "name": "John Paxson",
+      "position": "G",
+      "number": "5",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 781,
+      "name": "Will Perdue",
+      "position": "C",
+      "number": "32",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 937,
+      "name": "Scottie Pippen",
+      "position": "F-G",
+      "number": "33",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 82,
+      "name": "Bill Wennington",
+      "position": "C",
+      "number": "34",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 281,
+      "name": "Scott Williams",
+      "position": "F-C",
+      "number": "42",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

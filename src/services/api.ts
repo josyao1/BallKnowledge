@@ -27,6 +27,17 @@ interface ApiHealthResponse {
   timestamp: string;
 }
 
+interface SeasonPlayer {
+  id: number;
+  name: string;
+}
+
+interface ApiSeasonPlayersResponse {
+  season: string;
+  players: SeasonPlayer[];
+  cached: boolean;
+}
+
 /**
  * Check if the API server is available
  */
@@ -102,6 +113,36 @@ export async function fetchRandomTeamSeason(
     return await response.json();
   } catch (error) {
     console.error('Failed to fetch random team/season:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all players for a season (for autocomplete)
+ */
+export async function fetchSeasonPlayers(
+  season: string
+): Promise<{ players: SeasonPlayer[]; cached: boolean } | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/players/${season}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data: ApiSeasonPlayersResponse = await response.json();
+    return {
+      players: data.players,
+      cached: data.cached,
+    };
+  } catch (error) {
+    console.error('Failed to fetch season players from API:', error);
     return null;
   }
 }

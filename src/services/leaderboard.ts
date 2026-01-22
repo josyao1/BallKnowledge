@@ -16,7 +16,6 @@ interface GameSessionInput {
   team_abbreviation: string;
   season: string;
   score: number;
-  bonus_points: number;
   percentage: number;
   guessed_players: string[];
   incorrect_guesses: string[];

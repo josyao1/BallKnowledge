@@ -1,0 +1,143 @@
+{
+  "team": "MEM",
+  "season": "2022-23",
+  "cached_at": "2026-01-22T11:24:30.563960",
+  "players": [
+    {
+      "id": 1629630,
+      "name": "Ja Morant",
+      "position": "G",
+      "number": "12",
+      "ppg": 26.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630217,
+      "name": "Desmond Bane",
+      "position": "G",
+      "number": "22",
+      "ppg": 21.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628991,
+      "name": "Jaren Jackson Jr.",
+      "position": "F-C",
+      "number": "13",
+      "ppg": 18.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628415,
+      "name": "Dillon Brooks",
+      "position": "G-F",
+      "number": "24",
+      "ppg": 14.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626145,
+      "name": "Tyus Jones",
+      "position": "G",
+      "number": "21",
+      "ppg": 10.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629634,
+      "name": "Brandon Clarke",
+      "position": "F",
+      "number": "15",
+      "ppg": 10.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628379,
+      "name": "Luke Kennard",
+      "position": "G",
+      "number": "10",
+      "ppg": 9.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630583,
+      "name": "Santi Aldama",
+      "position": "F-C",
+      "number": "7",
+      "ppg": 9.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 203500,
+      "name": "Steven Adams",
+      "position": "C",
+      "number": "4",
+      "ppg": 8.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630214,
+      "name": "Xavier Tillman",
+      "position": "F",
+      "number": "2",
+      "ppg": 7.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631223,
+      "name": "David Roddy",
+      "position": "F",
+      "number": "27",
+      "ppg": 6.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630533,
+      "name": "Ziaire Williams",
+      "position": "F",
+      "number": "8",
+      "ppg": 5.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629723,
+      "name": "John Konchar",
+      "position": "G",
+      "number": "46",
+      "ppg": 5.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631254,
+      "name": "Kenneth Lofton Jr.",
+      "position": "F",
+      "number": "6",
+      "ppg": 5.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631367,
+      "name": "Jacob Gilyard",
+      "position": "G",
+      "number": "",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631222,
+      "name": "Jake LaRavia",
+      "position": "F",
+      "number": "3",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631246,
+      "name": "Vince Williams Jr.",
+      "position": "G",
+      "number": "5",
+      "ppg": 2.0,
+      "isLowScorer": true
+    }
+  ]
+}

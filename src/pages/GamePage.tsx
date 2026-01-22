@@ -18,7 +18,6 @@ export function GamePage() {
     guessedPlayers,
     incorrectGuesses,
     score,
-    bonusPoints,
     startGame,
     endGame,
     tick,
@@ -71,12 +70,21 @@ export function GamePage() {
     return null;
   }
 
+  // Team color CSS variables
+  const teamColorStyles = {
+    '--team-primary': selectedTeam.colors.primary,
+    '--team-secondary': selectedTeam.colors.secondary,
+    '--team-primary-20': `${selectedTeam.colors.primary}33`,
+    '--team-secondary-20': `${selectedTeam.colors.secondary}33`,
+  } as React.CSSProperties;
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={teamColorStyles}>
       {/* Header - Scoreboard style */}
       <header
-        className="p-4 border-b-4 border-[#333]"
+        className="p-4 border-b-4"
         style={{
+          borderColor: selectedTeam.colors.primary,
           background: `linear-gradient(90deg, ${selectedTeam.colors.primary}20 0%, transparent 50%, ${selectedTeam.colors.secondary}20 100%)`,
         }}
       >
@@ -91,31 +99,33 @@ export function GamePage() {
           </div>
 
           {/* Score Panel */}
-          <div className="scoreboard-panel p-4">
-            <div className="grid grid-cols-4 gap-4">
+          <div
+            className="scoreboard-panel p-4"
+            style={{ borderColor: `${selectedTeam.colors.primary}50` }}
+          >
+            <div className="grid grid-cols-3 gap-4">
               <div className="stat-display">
-                <div className="stat-value">{score + bonusPoints}</div>
+                <div className="stat-value" style={{ color: selectedTeam.colors.secondary }}>{score}</div>
                 <div className="stat-label">Points</div>
               </div>
               <div className="stat-display">
-                <div className="stat-value">{guessedPlayers.length}</div>
+                <div className="stat-value" style={{ color: selectedTeam.colors.primary }}>{guessedPlayers.length}</div>
                 <div className="stat-label">Found</div>
               </div>
               <div className="stat-display">
                 <div className="stat-value">{currentRoster.length}</div>
                 <div className="stat-label">Roster</div>
               </div>
-              <div className="stat-display">
-                <div className="stat-value text-[var(--nba-gold)]">+{bonusPoints}</div>
-                <div className="stat-label">Bonus</div>
-              </div>
             </div>
 
             {/* Progress bar */}
-            <div className="mt-4 retro-progress">
+            <div className="mt-4 retro-progress" style={{ borderColor: `${selectedTeam.colors.primary}30` }}>
               <div
-                className="retro-progress-fill"
-                style={{ width: `${(guessedPlayers.length / currentRoster.length) * 100}%` }}
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${(guessedPlayers.length / currentRoster.length) * 100}%`,
+                  background: `linear-gradient(90deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`
+                }}
               />
             </div>
             <div className="mt-2 text-center sports-font text-xs text-[#666]">
@@ -137,8 +147,11 @@ export function GamePage() {
         </motion.div>
 
         {/* Guessed players */}
-        <div className="flex-1 overflow-y-auto vintage-card p-4">
-          <div className="sports-font text-xs text-[#666] mb-3 tracking-widest">
+        <div
+          className="flex-1 overflow-y-auto vintage-card p-4"
+          style={{ borderColor: `${selectedTeam.colors.primary}30` }}
+        >
+          <div className="sports-font text-xs mb-3 tracking-widest" style={{ color: selectedTeam.colors.secondary }}>
             Players Found ({guessedPlayers.length})
           </div>
           <GuessedPlayersList
@@ -156,7 +169,13 @@ export function GamePage() {
         >
           <button
             onClick={handleGiveUp}
-            className="px-8 py-2 bg-[var(--nba-red)]/20 hover:bg-[var(--nba-red)]/40 text-[var(--nba-red)] border-2 border-[var(--nba-red)]/30 rounded-lg transition-colors sports-font tracking-wider"
+            className="px-8 py-2 rounded-lg transition-colors sports-font tracking-wider"
+            style={{
+              backgroundColor: `${selectedTeam.colors.primary}20`,
+              color: selectedTeam.colors.primary,
+              borderWidth: '2px',
+              borderColor: `${selectedTeam.colors.primary}50`,
+            }}
           >
             Give Up
           </button>

@@ -1,0 +1,280 @@
+# NFL Roster Trivia - Implementation Plan
+# "Gridiron Knowledge" or "Roster Knowledge: NFL Edition"
+# Created: 2026-01-22
+
+================================================================================
+DATA SOURCES
+================================================================================
+
+## Primary: nfl-data-py (Python Package)
+GitHub: https://github.com/nflverse/nfl_data_py
+PyPI: https://pypi.org/project/nfl-data-py/
+
+- Community-maintained, free, well-documented
+- Data available from 1999 onwards (rosters from 2006+)
+- Similar to nba_api in usage pattern
+
+Installation:
+    pip install nfl-data-py
+
+Key Functions:
+    import nfl_data_py as nfl
+
+    # Get roster for specific years
+    rosters = nfl.import_rosters([2023, 2024])
+
+    # Get weekly rosters (who played each game)
+    weekly = nfl.import_weekly_rosters([2023])
+
+Roster Data Fields (from nflverse):
+    - player_name / name
+    - player_id
+    - position (QB, RB, WR, TE, OL, DL, LB, DB, K, P, etc.)
+    - team (abbreviation)
+    - jersey_number
+    - height, weight, age
+    - college
+    - draft_round, draft_pick
+    - years_exp
+    - status (Active, Injured Reserve, etc.)
+
+--------------------------------------------------------------------------------
+
+## Alternative: ESPN API (Undocumented but Free)
+Gist: https://gist.github.com/nntrn/ee26cb2a0716de0947a0a4e9a157bc1c
+
+Team Roster Endpoint:
+    https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{TEAM_ID}/roster
+
+Season-Specific:
+    https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/{YEAR}/teams/{TEAM_ID}/athletes?limit=200
+
+Pros: Real-time data, includes player photos
+Cons: Undocumented, could break, rate limits unknown
+
+--------------------------------------------------------------------------------
+
+## Other Options Considered
+
+1. SportsDataIO Discovery Lab (https://sportsdata.io)
+   - Free tier: Last season's data only
+   - Good for testing, limited for historical
+
+2. BALLDONTLIE API (https://www.balldontlie.io/)
+   - Multi-sport API including NFL
+   - Free tier available
+
+================================================================================
+NFL vs NBA DIFFERENCES
+================================================================================
+
+1. ROSTER SIZE
+   - NBA: ~15 players per team
+   - NFL: 53 active roster + practice squad (~60-70 total)
+   - Consider: Only active 53? Starters only (22)? Position groups?
+
+2. POSITIONS
+   - NBA: 5 positions (PG, SG, SF, PF, C)
+   - NFL: 20+ positions (QB, RB, FB, WR, TE, LT, LG, C, RG, RT, DE, DT, MLB, OLB, CB, SS, FS, K, P, LS)
+   - Consider: Group by offense/defense/special teams
+
+3. PLAYER RECOGNITION
+   - NBA: Most fans know ~10-15 players per team
+   - NFL: Casual fans mainly know skill positions (QB, RB, WR)
+   - Challenge: Offensive linemen are much harder to name
+
+4. SCORING APPROACH OPTIONS
+   - Option A: Guess any roster player (like NBA version)
+   - Option B: Separate by position group (offense/defense)
+   - Option C: Starters only (22 players)
+   - Option D: Skill positions only (QB, RB, WR, TE)
+
+5. STAT FOR DIFFICULTY (replacing PPG)
+   - Could use: Snaps played, Pro Bowl selections, fantasy points
+   - Or just remove difficulty bonus entirely (already done for NBA)
+
+================================================================================
+RECOMMENDED GAME MODES
+================================================================================
+
+1. FULL ROSTER MODE
+   - Guess all 53 active roster players
+   - Very challenging, for hardcore fans
+   - Timer: 3-5 minutes
+
+2. STARTERS MODE (Recommended Default)
+   - Guess 22 starters (11 offense + 11 defense)
+   - More accessible, similar difficulty to NBA
+   - Timer: 90 seconds (like NBA)
+
+3. OFFENSE ONLY
+   - Guess 11 offensive starters
+   - Most casual-friendly
+   - Timer: 60 seconds
+
+4. SKILL POSITIONS
+   - QB, RB, WR, TE only (~8-10 players)
+   - Easiest mode
+   - Timer: 45 seconds
+
+================================================================================
+IMPLEMENTATION PLAN
+================================================================================
+
+## Phase 1: Backend (scripts/nfl_api_server.py)
+
+1. Create NFL API server similar to api_server.py
+2. Use nfl-data-py for roster fetching
+3. Endpoints needed:
+   - GET /nfl/health
+   - GET /nfl/roster/{team}/{season}
+   - GET /nfl/teams
+   - GET /nfl/random
+   - GET /nfl/players/{season} (for autocomplete)
+
+4. NFL Team abbreviations (32 teams):
+   AFC East: BUF, MIA, NE, NYJ
+   AFC North: BAL, CIN, CLE, PIT
+   AFC South: HOU, IND, JAX, TEN
+   AFC West: DEN, KC, LV, LAC
+   NFC East: DAL, NYG, PHI, WAS
+   NFC North: CHI, DET, GB, MIN
+   NFC South: ATL, CAR, NO, TB
+   NFC West: ARI, LAR, SF, SEA
+
+## Phase 2: Frontend Data
+
+1. Create src/data/nfl-teams.ts with:
+   - All 32 teams
+   - Team colors (primary/secondary)
+   - Conference/Division info
+
+2. Create src/data/nfl-rosters.ts
+   - Sample static data for offline mode
+   - Include 5-8 iconic team-seasons
+
+## Phase 3: Sport Selection
+
+1. Add sport selection to HomePage
+   - "NBA" or "NFL" toggle/buttons
+   - Or separate landing page with sport choice
+
+2. Create parallel components:
+   - NFLTeamSelector (grouped by conference/division)
+   - NFLPlayerInput (same fuzzy search)
+   - NFLGamePage (different position display)
+
+3. Option: Unified codebase with sport parameter
+   - Most components can be reused
+   - Just swap data sources and team lists
+
+## Phase 4: UI Adjustments
+
+1. Position Display
+   - Show position group (Offense/Defense/ST)
+   - Color-code by position type
+
+2. Player Cards
+   - Show position more prominently
+   - Jersey number display
+
+3. Results Page
+   - Group by position or unit
+   - Show offense/defense/special teams separately
+
+================================================================================
+FILE STRUCTURE (NEW/MODIFIED)
+================================================================================
+
+scripts/
+├── nfl_api_server.py          # NEW - NFL roster API
+├── nfl_requirements.txt       # NEW - nfl-data-py dependency
+
+src/data/
+├── nfl-teams.ts               # NEW - 32 NFL teams with colors
+├── nfl-rosters.ts             # NEW - Static fallback data
+
+src/services/
+├── nfl-api.ts                 # NEW - NFL API client
+├── nfl-roster.ts              # NEW - NFL roster service
+
+src/pages/
+├── HomePage.tsx               # MODIFY - Add sport selection
+├── NFLGamePage.tsx            # NEW or reuse GamePage with sport prop
+
+src/stores/
+├── gameStore.ts               # MODIFY - Add sport field
+├── settingsStore.ts           # MODIFY - Add sport preference
+
+================================================================================
+SAMPLE NFL TEAMS DATA
+================================================================================
+
+const nflTeams = [
+  {
+    id: 1,
+    abbreviation: 'ARI',
+    name: 'Arizona Cardinals',
+    city: 'Arizona',
+    colors: { primary: '#97233F', secondary: '#FFB612' },
+    conference: 'NFC',
+    division: 'West'
+  },
+  {
+    id: 2,
+    abbreviation: 'ATL',
+    name: 'Atlanta Falcons',
+    city: 'Atlanta',
+    colors: { primary: '#A71930', secondary: '#000000' },
+    conference: 'NFC',
+    division: 'South'
+  },
+  // ... 30 more teams
+];
+
+================================================================================
+ICONIC TEAM-SEASONS FOR STATIC DATA
+================================================================================
+
+Suggested memorable rosters to include:
+
+1. 2007 New England Patriots (16-0 regular season)
+2. 2013 Seattle Seahawks (Super Bowl champions, Legion of Boom)
+3. 1985 Chicago Bears (historic defense)
+4. 2000 Baltimore Ravens (legendary defense)
+5. 2018 Kansas City Chiefs (Mahomes MVP season)
+6. 1998 Minnesota Vikings (Randy Moss rookie year)
+7. 2016 Atlanta Falcons (28-3 Super Bowl)
+8. 2023 San Francisco 49ers (recent, familiar)
+
+================================================================================
+ESTIMATED EFFORT
+================================================================================
+
+- Backend (nfl_api_server.py): 2-3 hours
+- NFL teams/data files: 1-2 hours
+- Sport selection UI: 1-2 hours
+- Testing & polish: 2-3 hours
+
+Total: ~8-10 hours of development
+
+================================================================================
+FUTURE EXPANSION
+================================================================================
+
+After NFL, same pattern could work for:
+- MLB (30 teams, 26-man rosters)
+- NHL (32 teams, ~23 players)
+- College Football (more complex - many teams)
+- Soccer/Premier League (20 teams, ~25 players)
+
+Could become "Roster Knowledge" multi-sport trivia platform.
+
+================================================================================
+RESOURCES
+================================================================================
+
+- nfl-data-py GitHub: https://github.com/nflverse/nfl_data_py
+- nflverse data: https://github.com/nflverse/nflverse-data
+- ESPN API endpoints: https://gist.github.com/nntrn/ee26cb2a0716de0947a0a4e9a157bc1c
+- NFL team colors: https://teamcolorcodes.com/nfl-team-color-codes/

@@ -86,6 +86,15 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: str
 
+class SeasonPlayer(BaseModel):
+    id: int
+    name: str
+
+class SeasonPlayersResponse(BaseModel):
+    season: str
+    players: list[SeasonPlayer]
+    cached: bool = False
+
 # ============================================================================
 # Caching
 # ============================================================================
@@ -129,6 +138,48 @@ def save_to_cache(team: str, season: str, players: list[dict]) -> None:
             }, f, indent=2)
     except Exception as e:
         print(f"Warning: Could not save cache: {e}")
+
+
+def get_season_players_cache_path(season: str) -> Path:
+    """Get the cache file path for season players."""
+    CACHE_DIR.mkdir(exist_ok=True)
+    return CACHE_DIR / f"season_players_{season}.json"
+
+
+def get_cached_season_players(season: str) -> Optional[list[dict]]:
+    """Get cached season players if they exist and are not expired."""
+    cache_path = get_season_players_cache_path(season)
+
+    if not cache_path.exists():
+        return None
+
+    try:
+        with open(cache_path, "r") as f:
+            data = json.load(f)
+
+        # Check if cache is expired
+        cached_time = datetime.fromisoformat(data.get("cached_at", "2000-01-01"))
+        if datetime.now() - cached_time > timedelta(hours=CACHE_EXPIRY_HOURS):
+            return None
+
+        return data.get("players", [])
+    except Exception:
+        return None
+
+
+def save_season_players_to_cache(season: str, players: list[dict]) -> None:
+    """Save season players to cache."""
+    cache_path = get_season_players_cache_path(season)
+
+    try:
+        with open(cache_path, "w") as f:
+            json.dump({
+                "season": season,
+                "cached_at": datetime.now().isoformat(),
+                "players": players
+            }, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save season players cache: {e}")
 
 # ============================================================================
 # NBA API Functions
@@ -181,6 +232,57 @@ def get_season_stats(season: str) -> dict[int, float]:
     if season not in _season_stats_cache:
         _season_stats_cache[season] = fetch_season_stats(season)
     return _season_stats_cache[season]
+
+
+# In-memory cache for season players
+_season_players_cache: dict[str, list[dict]] = {}
+
+
+def fetch_all_season_players(season: str) -> list[dict]:
+    """Fetch all players who played in a given season."""
+    try:
+        stats = LeagueDashPlayerStats(
+            season=season,
+            per_mode_detailed="PerGame",
+            season_type_all_star="Regular Season"
+        )
+        time.sleep(REQUEST_DELAY)
+        df = stats.get_data_frames()[0]
+
+        if df.empty:
+            print(f"No player data returned for season {season}")
+            return []
+
+        # Handle different column names (API might vary by season)
+        name_col = "PLAYER_NAME" if "PLAYER_NAME" in df.columns else "PLAYER"
+        id_col = "PLAYER_ID"
+
+        if name_col not in df.columns or id_col not in df.columns:
+            print(f"Missing columns for season {season}. Available: {list(df.columns)}")
+            return []
+
+        players = []
+        for _, row in df.iterrows():
+            players.append({
+                "id": int(row[id_col]),
+                "name": row[name_col]
+            })
+
+        print(f"Fetched {len(players)} players for season {season}")
+
+        # Sort alphabetically by name
+        players.sort(key=lambda p: p["name"])
+        return players
+    except Exception as e:
+        print(f"Error fetching all season players for {season}: {e}")
+        return []
+
+
+def get_all_season_players(season: str) -> list[dict]:
+    """Get all season players with in-memory caching."""
+    if season not in _season_players_cache:
+        _season_players_cache[season] = fetch_all_season_players(season)
+    return _season_players_cache[season]
 
 # ============================================================================
 # API Endpoints
@@ -299,6 +401,55 @@ async def get_random_team_season(
         "season": season,
         "team_id": NBA_TEAMS[team]
     }
+
+
+@app.get("/players/{season}", response_model=SeasonPlayersResponse)
+async def get_season_players(season: str):
+    """
+    Get all NBA players who played in a given season.
+
+    Args:
+        season: Season in format "YYYY-YY" (e.g., "2023-24")
+
+    Returns:
+        SeasonPlayersResponse with list of all players (id, name)
+    """
+    # Validate season format
+    if not (len(season) == 7 and season[4] == "-"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid season format. Expected 'YYYY-YY', got '{season}'"
+        )
+
+    # Check file cache first
+    cached_players = get_cached_season_players(season)
+    if cached_players:
+        print(f"Season players cache hit: {season}")
+        return SeasonPlayersResponse(
+            season=season,
+            players=[SeasonPlayer(**p) for p in cached_players],
+            cached=True
+        )
+
+    print(f"Fetching all players for season {season} from NBA API...")
+
+    # Fetch from API
+    players = get_all_season_players(season)
+
+    if not players:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No player data found for season {season}"
+        )
+
+    # Save to file cache
+    save_season_players_to_cache(season, players)
+
+    return SeasonPlayersResponse(
+        season=season,
+        players=[SeasonPlayer(**p) for p in players],
+        cached=False
+    )
 
 # ============================================================================
 # Main

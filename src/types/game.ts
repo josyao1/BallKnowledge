@@ -29,13 +29,11 @@ export interface GameState {
 
   // Scoring
   score: number;
-  bonusPoints: number;
 }
 
 export interface GuessResult {
   isCorrect: boolean;
   player?: Player;
-  bonusAwarded: boolean;
   alreadyGuessed: boolean;
 }
 
@@ -44,7 +42,6 @@ export interface GameSession {
   teamAbbreviation: string;
   season: string;
   score: number;
-  bonusPoints: number;
   totalPlayers: number;
   guessedCount: number;
   percentage: number;

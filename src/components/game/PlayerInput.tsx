@@ -7,16 +7,47 @@ import { getAllPlayersForAutocomplete } from '../../services/roster';
 export function PlayerInput() {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(-1); // -1 means no selection
+  const [hasNavigated, setHasNavigated] = useState(false); // Track if user used arrow keys
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<List>(null);
 
   const makeGuess = useGameStore((state) => state.makeGuess);
   const guessedPlayers = useGameStore((state) => state.guessedPlayers);
   const incorrectGuesses = useGameStore((state) => state.incorrectGuesses);
+  const leaguePlayers = useGameStore((state) => state.leaguePlayers);
+  const currentRoster = useGameStore((state) => state.currentRoster);
 
   // Get all players for autocomplete
-  const allPlayers = useMemo(() => getAllPlayersForAutocomplete(), []);
+  // Priority: league-wide players > static data, but ALWAYS include current roster
+  const allPlayers = useMemo(() => {
+    const playerMap = new Map<string, { id: number; name: string }>();
+
+    // Always add current roster players FIRST (ensures they're always in autocomplete)
+    if (currentRoster.length > 0) {
+      console.log('Adding roster players to autocomplete:', currentRoster.map(p => p.name));
+      currentRoster.forEach(p => {
+        playerMap.set(p.name.toLowerCase(), { id: p.id, name: p.name });
+      });
+    } else {
+      console.warn('currentRoster is empty!');
+    }
+
+    // Then add league players if available, otherwise add static data
+    const additionalPlayers = leaguePlayers.length > 0
+      ? leaguePlayers
+      : getAllPlayersForAutocomplete();
+
+    additionalPlayers.forEach(p => {
+      if (!playerMap.has(p.name.toLowerCase())) {
+        playerMap.set(p.name.toLowerCase(), p);
+      }
+    });
+
+    console.log(`Autocomplete pool: ${playerMap.size} players (${currentRoster.length} from roster, ${leaguePlayers.length} from API)`);
+
+    return Array.from(playerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [leaguePlayers, currentRoster]);
 
   // Set of already guessed names (normalized)
   const guessedNames = useMemo(() => {
@@ -27,19 +58,21 @@ export function PlayerInput() {
   }, [guessedPlayers, incorrectGuesses]);
 
   // Initialize Fuse.js for fuzzy search
+  // Threshold 0.4 allows for typos while still being reasonably strict
   const fuse = useMemo(
     () =>
       new Fuse(allPlayers, {
         keys: ['name'],
-        threshold: 0.3,
+        threshold: 0.4,
         ignoreLocation: true,
+        minMatchCharLength: 2,
       }),
     [allPlayers]
   );
 
-  // Filter results
+  // Filter results - require at least 3 characters to avoid giving away answers
   const filteredPlayers = useMemo(() => {
-    if (!query || query.length < 2) return [];
+    if (!query || query.length < 3) return [];
 
     return fuse
       .search(query)
@@ -48,9 +81,10 @@ export function PlayerInput() {
       .filter((player) => !guessedNames.has(player.name.toLowerCase()));
   }, [query, fuse, guessedNames]);
 
-  // Reset selected index when filtered players change
+  // Reset selection state when filtered players change
   useEffect(() => {
-    setSelectedIndex(0);
+    setSelectedIndex(-1);
+    setHasNavigated(false);
   }, [filteredPlayers]);
 
   // Handle selection
@@ -67,8 +101,10 @@ export function PlayerInput() {
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // If no autocomplete options, just submit the query
       if (!isOpen || filteredPlayers.length === 0) {
         if (e.key === 'Enter' && query.trim()) {
+          e.preventDefault();
           handleSelect(query.trim());
         }
         return;
@@ -77,35 +113,47 @@ export function PlayerInput() {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev < filteredPlayers.length - 1 ? prev + 1 : prev
-          );
-          listRef.current?.scrollToItem(selectedIndex + 1);
+          setHasNavigated(true);
+          setSelectedIndex((prev) => {
+            const next = prev < filteredPlayers.length - 1 ? prev + 1 : prev;
+            listRef.current?.scrollToItem(next);
+            return next;
+          });
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-          listRef.current?.scrollToItem(selectedIndex - 1);
+          setHasNavigated(true);
+          setSelectedIndex((prev) => {
+            const next = prev > 0 ? prev - 1 : 0;
+            listRef.current?.scrollToItem(next);
+            return next;
+          });
           break;
         case 'Enter':
           e.preventDefault();
-          if (filteredPlayers[selectedIndex]) {
+          // Only use autocomplete selection if user navigated with arrow keys
+          if (hasNavigated && selectedIndex >= 0 && filteredPlayers[selectedIndex]) {
             handleSelect(filteredPlayers[selectedIndex].name);
+          } else {
+            // Submit what the user typed
+            handleSelect(query.trim());
           }
           break;
         case 'Escape':
           setIsOpen(false);
+          setHasNavigated(false);
+          setSelectedIndex(-1);
           break;
       }
     },
-    [isOpen, filteredPlayers, selectedIndex, query, handleSelect]
+    [isOpen, filteredPlayers, selectedIndex, query, handleSelect, hasNavigated]
   );
 
   // Row renderer for virtualized list
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const player = filteredPlayers[index];
-      const isSelected = index === selectedIndex;
+      const isSelected = hasNavigated && index === selectedIndex;
 
       return (
         <div
@@ -114,13 +162,16 @@ export function PlayerInput() {
             isSelected ? 'bg-[var(--nba-orange)] text-white' : 'hover:bg-[#2a2a2a] text-[var(--vintage-cream)]'
           }`}
           onClick={() => handleSelect(player.name)}
-          onMouseEnter={() => setSelectedIndex(index)}
+          onMouseEnter={() => {
+            setSelectedIndex(index);
+            setHasNavigated(true);
+          }}
         >
           {player.name}
         </div>
       );
     },
-    [filteredPlayers, selectedIndex, handleSelect]
+    [filteredPlayers, selectedIndex, handleSelect, hasNavigated]
   );
 
   return (

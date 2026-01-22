@@ -1,0 +1,111 @@
+{
+  "team": "NYK",
+  "season": "1992-93",
+  "cached_at": "2026-01-22T11:15:13.888226",
+  "players": [
+    {
+      "id": 944,
+      "name": "Eric Anderson",
+      "position": "F",
+      "number": "42",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 21,
+      "name": "Greg Anthony",
+      "position": "G",
+      "number": "50",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 76176,
+      "name": "Rolando Blackman",
+      "position": "G",
+      "number": "20",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 76338,
+      "name": "Tony Campbell",
+      "position": "F",
+      "number": "9",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 93,
+      "name": "Hubert Davis",
+      "position": "G",
+      "number": "44",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 121,
+      "name": "Patrick Ewing",
+      "position": "C",
+      "number": "33",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 77260,
+      "name": "Bo Kimble",
+      "position": "G",
+      "number": "16",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 193,
+      "name": "Anthony Mason",
+      "position": "F",
+      "number": "14",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 891,
+      "name": "Charles Oakley",
+      "position": "F-C",
+      "number": "34",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 470,
+      "name": "Doc Rivers",
+      "position": "G",
+      "number": "25",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 293,
+      "name": "Charles Smith",
+      "position": "F",
+      "number": "54",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 317,
+      "name": "John Starks",
+      "position": "G",
+      "number": "3",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1006,
+      "name": "Herb Williams",
+      "position": "C",
+      "number": "32",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

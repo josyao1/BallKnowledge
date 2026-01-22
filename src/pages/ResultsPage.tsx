@@ -18,13 +18,11 @@ export function ResultsPage() {
     guessedPlayers,
     incorrectGuesses,
     score,
-    bonusPoints,
     timerDuration,
     timeRemaining,
     resetGame,
   } = useGameStore();
 
-  const totalScore = score + bonusPoints;
   const percentage = currentRoster.length > 0
     ? Math.round((guessedPlayers.length / currentRoster.length) * 100)
     : 0;
@@ -48,8 +46,7 @@ export function ResultsPage() {
       const result = await submitScore({
         team_abbreviation: selectedTeam.abbreviation,
         season: selectedSeason,
-        score: totalScore,
-        bonus_points: bonusPoints,
+        score,
         percentage,
         guessed_players: guessedPlayers.map(p => p.name),
         incorrect_guesses: incorrectGuesses,
@@ -63,7 +60,7 @@ export function ResultsPage() {
     }
 
     autoSubmitScore();
-  }, [selectedTeam, selectedSeason, totalScore, bonusPoints, percentage, guessedPlayers, incorrectGuesses, timeRemaining, scoreSubmitted]);
+  }, [selectedTeam, selectedSeason, score, percentage, guessedPlayers, incorrectGuesses, timeRemaining, scoreSubmitted]);
 
   if (!selectedTeam || !selectedSeason) {
     return null;
@@ -77,8 +74,14 @@ export function ResultsPage() {
     navigate('/');
   };
 
+  // Team color CSS variables
+  const teamColorStyles = {
+    '--team-primary': selectedTeam.colors.primary,
+    '--team-secondary': selectedTeam.colors.secondary,
+  } as React.CSSProperties;
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={teamColorStyles}>
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <motion.div
@@ -86,7 +89,10 @@ export function ResultsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="retro-title text-5xl md:text-6xl text-[var(--nba-orange)] mb-2">
+          <h1
+            className="retro-title text-5xl md:text-6xl mb-2"
+            style={{ color: selectedTeam.colors.primary }}
+          >
             Final Score
           </h1>
           <div
@@ -105,14 +111,15 @@ export function ResultsPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
           className="scoreboard-panel p-6 mb-8"
+          style={{ borderColor: `${selectedTeam.colors.primary}50` }}
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="stat-display">
-              <div className="stat-value text-[#22c55e]">{totalScore}</div>
-              <div className="stat-label">Total Points</div>
+              <div className="stat-value" style={{ color: selectedTeam.colors.secondary }}>{score}</div>
+              <div className="stat-label">Points</div>
             </div>
             <div className="stat-display">
-              <div className="stat-value">{percentage}%</div>
+              <div className="stat-value" style={{ color: selectedTeam.colors.primary }}>{percentage}%</div>
               <div className="stat-label">Completed</div>
             </div>
             <div className="stat-display">
@@ -121,14 +128,13 @@ export function ResultsPage() {
               </div>
               <div className="stat-label">Found</div>
             </div>
-            <div className="stat-display">
-              <div className="stat-value text-[var(--nba-gold)]">+{bonusPoints}</div>
-              <div className="stat-label">Bonus</div>
-            </div>
           </div>
 
           <div className="mt-6 flex justify-center">
-            <div className="scoreboard-number text-2xl px-4 py-2">
+            <div
+              className="scoreboard-number text-2xl px-4 py-2 rounded-lg"
+              style={{ backgroundColor: `${selectedTeam.colors.primary}20` }}
+            >
               Time: {Math.floor(timeTaken / 60)}:{String(timeTaken % 60).padStart(2, '0')}
             </div>
           </div>
@@ -164,8 +170,9 @@ export function ResultsPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
           className="vintage-card p-4 mb-8"
+          style={{ borderColor: `${selectedTeam.colors.primary}30` }}
         >
-          <h2 className="sports-font text-lg text-[var(--vintage-cream)] mb-4 tracking-wider">
+          <h2 className="sports-font text-lg mb-4 tracking-wider" style={{ color: selectedTeam.colors.secondary }}>
             Full Roster
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -177,11 +184,18 @@ export function ResultsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + index * 0.03 }}
-                  className={`player-card p-3 ${wasGuessed ? 'guessed' : ''}`}
+                  className="player-card p-3"
+                  style={{
+                    borderColor: wasGuessed ? selectedTeam.colors.primary : undefined,
+                    backgroundColor: wasGuessed ? `${selectedTeam.colors.primary}15` : undefined,
+                  }}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className={`font-medium ${wasGuessed ? 'text-[#22c55e]' : 'text-[#aaa]'}`}>
+                      <div
+                        className="font-medium"
+                        style={{ color: wasGuessed ? selectedTeam.colors.secondary : '#aaa' }}
+                      >
                         {player.name}
                       </div>
                       <div className="text-sm text-[#666]">
@@ -190,14 +204,14 @@ export function ResultsPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-sm text-[#888]">{player.ppg.toFixed(1)} PPG</div>
-                      {player.isLowScorer && (
-                        <span className="text-xs text-[var(--nba-gold)]">+1 bonus</span>
-                      )}
                     </div>
                   </div>
                   {wasGuessed && (
                     <div className="mt-1">
-                      <span className="text-xs text-[#22c55e] sports-font tracking-wider">
+                      <span
+                        className="text-xs sports-font tracking-wider"
+                        style={{ color: selectedTeam.colors.primary }}
+                      >
                         Found!
                       </span>
                     </div>
@@ -241,7 +255,12 @@ export function ResultsPage() {
         >
           <button
             onClick={handlePlayAgain}
-            className="retro-btn retro-btn-gold px-12 py-4 text-lg"
+            className="px-12 py-4 text-lg rounded-lg font-bold sports-font tracking-wider transition-all hover:scale-105"
+            style={{
+              background: `linear-gradient(135deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`,
+              color: '#fff',
+              boxShadow: `0 4px 15px ${selectedTeam.colors.primary}50`,
+            }}
           >
             Play Again
           </button>

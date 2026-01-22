@@ -23,14 +23,9 @@ export function GuessedPlayersList({ guessedPlayers, incorrectGuesses }: Guessed
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="px-3 py-1.5 bg-green-900/40 border border-green-700 rounded-lg flex items-center gap-2"
+                  className="px-3 py-1.5 bg-green-900/40 border border-green-700 rounded-lg"
                 >
                   <span className="text-green-400 font-medium">{player.name}</span>
-                  {player.isLowScorer && (
-                    <span className="text-xs text-yellow-500 bg-yellow-900/30 px-1.5 py-0.5 rounded">
-                      +1
-                    </span>
-                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
