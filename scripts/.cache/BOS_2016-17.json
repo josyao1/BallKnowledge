@@ -1,0 +1,127 @@
+{
+  "team": "BOS",
+  "season": "2016-17",
+  "cached_at": "2026-01-22T12:16:59.596514",
+  "players": [
+    {
+      "id": 202738,
+      "name": "Isaiah Thomas",
+      "position": "G",
+      "number": "4",
+      "ppg": 28.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 202340,
+      "name": "Avery Bradley",
+      "position": "G",
+      "number": "0",
+      "ppg": 16.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 201143,
+      "name": "Al Horford",
+      "position": "C",
+      "number": "42",
+      "ppg": 14.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 203109,
+      "name": "Jae Crowder",
+      "position": "F",
+      "number": "99",
+      "ppg": 13.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 203935,
+      "name": "Marcus Smart",
+      "position": "G",
+      "number": "36",
+      "ppg": 10.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 203482,
+      "name": "Kelly Olynyk",
+      "position": "C-F",
+      "number": "41",
+      "ppg": 9.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627759,
+      "name": "Jaylen Brown",
+      "position": "F",
+      "number": "7",
+      "ppg": 6.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 101161,
+      "name": "Amir Johnson",
+      "position": "F",
+      "number": "90",
+      "ppg": 6.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 101123,
+      "name": "Gerald Green",
+      "position": "F",
+      "number": "30",
+      "ppg": 5.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626179,
+      "name": "Terry Rozier",
+      "position": "G",
+      "number": "12",
+      "ppg": 5.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 201973,
+      "name": "Jonas Jerebko",
+      "position": "F",
+      "number": "8",
+      "ppg": 3.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 203092,
+      "name": "Tyler Zeller",
+      "position": "C",
+      "number": "44",
+      "ppg": 3.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 203923,
+      "name": "James Young",
+      "position": "G-F",
+      "number": "13",
+      "ppg": 2.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627743,
+      "name": "Demetrius Jackson",
+      "position": "G",
+      "number": "9",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626175,
+      "name": "Jordan Mickey",
+      "position": "F",
+      "number": "55",
+      "ppg": 1.5,
+      "isLowScorer": true
+    }
+  ]
+}

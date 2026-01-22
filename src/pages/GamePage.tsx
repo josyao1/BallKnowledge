@@ -15,11 +15,14 @@ export function GamePage() {
     status,
     timeRemaining,
     currentRoster,
+    pendingGuesses,
     guessedPlayers,
     incorrectGuesses,
     score,
+    hideResultsDuringGame,
     startGame,
     endGame,
+    processGuesses,
     tick,
   } = useGameStore();
 
@@ -58,9 +61,13 @@ export function GamePage() {
   // Navigate to results when game ends
   useEffect(() => {
     if (status === 'ended') {
+      // Process pending guesses before showing results (when in hidden mode)
+      if (hideResultsDuringGame) {
+        processGuesses();
+      }
       navigate('/results');
     }
-  }, [status, navigate]);
+  }, [status, navigate, hideResultsDuringGame, processGuesses]);
 
   const handleGiveUp = useCallback(() => {
     endGame();
@@ -105,12 +112,16 @@ export function GamePage() {
           >
             <div className="grid grid-cols-3 gap-4">
               <div className="stat-display">
-                <div className="stat-value" style={{ color: selectedTeam.colors.secondary }}>{score}</div>
+                <div className="stat-value" style={{ color: selectedTeam.colors.secondary }}>
+                  {hideResultsDuringGame ? '?' : score}
+                </div>
                 <div className="stat-label">Points</div>
               </div>
               <div className="stat-display">
-                <div className="stat-value" style={{ color: selectedTeam.colors.primary }}>{guessedPlayers.length}</div>
-                <div className="stat-label">Found</div>
+                <div className="stat-value" style={{ color: selectedTeam.colors.primary }}>
+                  {hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length}
+                </div>
+                <div className="stat-label">{hideResultsDuringGame ? 'Guesses' : 'Found'}</div>
               </div>
               <div className="stat-display">
                 <div className="stat-value">{currentRoster.length}</div>
@@ -118,18 +129,24 @@ export function GamePage() {
               </div>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar - hidden mode shows guesses, normal mode shows correct */}
             <div className="mt-4 retro-progress" style={{ borderColor: `${selectedTeam.colors.primary}30` }}>
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
-                  width: `${(guessedPlayers.length / currentRoster.length) * 100}%`,
-                  background: `linear-gradient(90deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`
+                  width: hideResultsDuringGame
+                    ? `${Math.min((pendingGuesses.length / currentRoster.length) * 100, 100)}%`
+                    : `${(guessedPlayers.length / currentRoster.length) * 100}%`,
+                  background: hideResultsDuringGame
+                    ? `linear-gradient(90deg, ${selectedTeam.colors.primary}80, ${selectedTeam.colors.secondary}80)`
+                    : `linear-gradient(90deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`
                 }}
               />
             </div>
             <div className="mt-2 text-center sports-font text-xs text-[#666]">
-              {Math.round((guessedPlayers.length / currentRoster.length) * 100)}% Complete
+              {hideResultsDuringGame
+                ? `${pendingGuesses.length} guesses`
+                : `${Math.round((guessedPlayers.length / currentRoster.length) * 100)}% Complete`}
             </div>
           </div>
         </div>
@@ -152,11 +169,15 @@ export function GamePage() {
           style={{ borderColor: `${selectedTeam.colors.primary}30` }}
         >
           <div className="sports-font text-xs mb-3 tracking-widest" style={{ color: selectedTeam.colors.secondary }}>
-            Players Found ({guessedPlayers.length})
+            {hideResultsDuringGame
+              ? `Your Guesses (${pendingGuesses.length})`
+              : `Players Found (${guessedPlayers.length})`}
           </div>
           <GuessedPlayersList
             guessedPlayers={guessedPlayers}
             incorrectGuesses={incorrectGuesses}
+            pendingGuesses={hideResultsDuringGame ? pendingGuesses : []}
+            hideResults={hideResultsDuringGame}
           />
         </div>
 

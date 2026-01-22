@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from nba_api.stats.static import teams as nba_teams
-from nba_api.stats.endpoints import CommonTeamRoster, LeagueDashPlayerStats
+from nba_api.stats.endpoints import CommonTeamRoster, LeagueDashPlayerStats, CommonAllPlayers
 
 # ============================================================================
 # Configuration
@@ -239,8 +239,16 @@ _season_players_cache: dict[str, list[dict]] = {}
 
 
 def fetch_all_season_players(season: str) -> list[dict]:
-    """Fetch all players who played in a given season."""
+    """Fetch all players who played in a given season.
+
+    Uses LeagueDashPlayerStats for recent seasons (1996+),
+    falls back to CommonAllPlayers for older seasons or if stats endpoint fails.
+    """
+    players = []
+
+    # Try LeagueDashPlayerStats first (better for recent seasons, has stats)
     try:
+        print(f"Trying LeagueDashPlayerStats for {season}...")
         stats = LeagueDashPlayerStats(
             season=season,
             per_mode_detailed="PerGame",
@@ -249,33 +257,78 @@ def fetch_all_season_players(season: str) -> list[dict]:
         time.sleep(REQUEST_DELAY)
         df = stats.get_data_frames()[0]
 
-        if df.empty:
-            print(f"No player data returned for season {season}")
-            return []
+        if not df.empty:
+            # Handle different column names (API might vary by season)
+            name_col = "PLAYER_NAME" if "PLAYER_NAME" in df.columns else "PLAYER"
+            id_col = "PLAYER_ID"
 
-        # Handle different column names (API might vary by season)
-        name_col = "PLAYER_NAME" if "PLAYER_NAME" in df.columns else "PLAYER"
-        id_col = "PLAYER_ID"
-
-        if name_col not in df.columns or id_col not in df.columns:
-            print(f"Missing columns for season {season}. Available: {list(df.columns)}")
-            return []
-
-        players = []
-        for _, row in df.iterrows():
-            players.append({
-                "id": int(row[id_col]),
-                "name": row[name_col]
-            })
-
-        print(f"Fetched {len(players)} players for season {season}")
-
-        # Sort alphabetically by name
-        players.sort(key=lambda p: p["name"])
-        return players
+            if name_col in df.columns and id_col in df.columns:
+                for _, row in df.iterrows():
+                    players.append({
+                        "id": int(row[id_col]),
+                        "name": row[name_col]
+                    })
+                print(f"LeagueDashPlayerStats returned {len(players)} players for {season}")
     except Exception as e:
-        print(f"Error fetching all season players for {season}: {e}")
+        print(f"LeagueDashPlayerStats failed for {season}: {e}")
+
+    # If no players found, try CommonAllPlayers (better for historical data)
+    if len(players) == 0:
+        try:
+            print(f"Trying CommonAllPlayers for {season}...")
+            # CommonAllPlayers returns all players filtered by season
+            all_players = CommonAllPlayers(
+                is_only_current_season=0,
+                season=season
+            )
+            time.sleep(REQUEST_DELAY)
+            df = all_players.get_data_frames()[0]
+
+            if not df.empty:
+                # Filter for players who actually played that season
+                # TO_YEAR column shows the last season they played
+                # FROM_YEAR shows when they started
+                # We want players where the season falls within their career
+                season_year = int(season[:4])
+
+                for _, row in df.iterrows():
+                    try:
+                        from_year = int(row.get("FROM_YEAR", 0))
+                        to_year = int(row.get("TO_YEAR", 9999))
+
+                        # Check if player was active during this season
+                        if from_year <= season_year <= to_year:
+                            player_name = row.get("DISPLAY_FIRST_LAST") or row.get("PLAYERCODE", "Unknown")
+                            player_id = int(row.get("PERSON_ID", 0))
+
+                            if player_name and player_id:
+                                players.append({
+                                    "id": player_id,
+                                    "name": player_name
+                                })
+                    except (ValueError, TypeError):
+                        continue
+
+                print(f"CommonAllPlayers returned {len(players)} players for {season}")
+        except Exception as e:
+            print(f"CommonAllPlayers failed for {season}: {e}")
+
+    if len(players) == 0:
+        print(f"No player data found for season {season} from any source")
         return []
+
+    # Remove duplicates by player ID
+    seen_ids = set()
+    unique_players = []
+    for p in players:
+        if p["id"] not in seen_ids:
+            seen_ids.add(p["id"])
+            unique_players.append(p)
+
+    # Sort alphabetically by name
+    unique_players.sort(key=lambda p: p["name"])
+    print(f"Final player count for {season}: {len(unique_players)}")
+    return unique_players
 
 
 def get_all_season_players(season: str) -> list[dict]:

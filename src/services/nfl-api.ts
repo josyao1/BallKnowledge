@@ -1,0 +1,169 @@
+/**
+ * NFL Roster API Service
+ *
+ * Fetches NFL roster data from the Python backend API.
+ */
+
+import type { NFLPlayer } from '../types/nfl';
+
+const NFL_API_BASE_URL = import.meta.env.VITE_NFL_API_URL || 'http://localhost:8001';
+
+interface NFLApiRosterResponse {
+  team: string;
+  season: number;
+  players: NFLPlayer[];
+  cached: boolean;
+}
+
+interface NFLApiRandomResponse {
+  team: string;
+  season: number;
+  team_name: string;
+}
+
+interface NFLApiHealthResponse {
+  status: string;
+  timestamp: string;
+  nfl_data_available: boolean;
+}
+
+interface NFLSeasonPlayer {
+  id: string;
+  name: string;
+}
+
+interface NFLApiSeasonPlayersResponse {
+  season: number;
+  players: NFLSeasonPlayer[];
+  cached: boolean;
+}
+
+/**
+ * Check if the NFL API server is available
+ */
+export async function checkNFLApiHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${NFL_API_BASE_URL}/nfl/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3000),
+    });
+    const data: NFLApiHealthResponse = await response.json();
+    return data.status === 'ok' && data.nfl_data_available;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch NFL roster from the API
+ */
+export async function fetchNFLRosterFromApi(
+  teamAbbreviation: string,
+  season: number
+): Promise<{ players: NFLPlayer[]; cached: boolean } | null> {
+  try {
+    const response = await fetch(
+      `${NFL_API_BASE_URL}/nfl/roster/${teamAbbreviation}/${season}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`NFL API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data: NFLApiRosterResponse = await response.json();
+    return {
+      players: data.players,
+      cached: data.cached,
+    };
+  } catch (error) {
+    console.error('Failed to fetch NFL roster from API:', error);
+    return null;
+  }
+}
+
+/**
+ * Get a random NFL team and season from the API
+ */
+export async function fetchNFLRandomTeamSeason(
+  minYear: number = 2000,
+  maxYear: number = 2024
+): Promise<NFLApiRandomResponse | null> {
+  try {
+    const response = await fetch(
+      `${NFL_API_BASE_URL}/nfl/random?min_year=${minYear}&max_year=${maxYear}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch random NFL team/season:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all NFL players for a season (for autocomplete)
+ */
+export async function fetchNFLSeasonPlayers(
+  season: number
+): Promise<{ players: NFLSeasonPlayer[]; cached: boolean } | null> {
+  try {
+    const response = await fetch(`${NFL_API_BASE_URL}/nfl/players/${season}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`NFL API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data: NFLApiSeasonPlayersResponse = await response.json();
+    return {
+      players: data.players,
+      cached: data.cached,
+    };
+  } catch (error) {
+    console.error('Failed to fetch NFL season players from API:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if NFL API is configured and available
+ */
+let _nflApiAvailable: boolean | null = null;
+
+export async function isNFLApiAvailable(): Promise<boolean> {
+  if (_nflApiAvailable !== null) {
+    return _nflApiAvailable;
+  }
+
+  _nflApiAvailable = await checkNFLApiHealth();
+  return _nflApiAvailable;
+}
+
+/**
+ * Reset NFL API availability check (useful for retry logic)
+ */
+export function resetNFLApiAvailability(): void {
+  _nflApiAvailable = null;
+}

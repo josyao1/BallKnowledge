@@ -1,19 +1,45 @@
 import { useState } from 'react';
 import { teams } from '../../data/teams';
-import type { Team } from '../../types';
+import { nflTeams } from '../../data/nfl-teams';
+import type { Sport } from '../../types';
 
-interface TeamSelectorProps {
-  selectedTeam: Team | null;
-  onSelect: (team: Team) => void;
+// Generic team type that works with both NBA and NFL
+interface GenericTeam {
+  id: number;
+  abbreviation: string;
+  name: string;
+  colors: { primary: string; secondary: string };
+  conference?: string;
 }
 
-export function TeamSelector({ selectedTeam, onSelect }: TeamSelectorProps) {
+interface TeamSelectorProps {
+  selectedTeam: GenericTeam | null;
+  onSelect: (team: GenericTeam) => void;
+  sport?: Sport;
+}
+
+export function TeamSelector({ selectedTeam, onSelect, sport = 'nba' }: TeamSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const conferences = {
-    Eastern: teams.filter((t) => t.conference === 'Eastern'),
-    Western: teams.filter((t) => t.conference === 'Western'),
+  // Get teams based on sport
+  const teamList = sport === 'nba' ? teams : nflTeams;
+
+  // Group teams by conference
+  const getConferences = () => {
+    if (sport === 'nba') {
+      return {
+        Eastern: teamList.filter((t) => t.conference === 'Eastern'),
+        Western: teamList.filter((t) => t.conference === 'Western'),
+      };
+    } else {
+      return {
+        AFC: teamList.filter((t) => t.conference === 'AFC'),
+        NFC: teamList.filter((t) => t.conference === 'NFC'),
+      };
+    }
   };
+
+  const conferences = getConferences();
 
   return (
     <div className="relative">
@@ -50,12 +76,12 @@ export function TeamSelector({ selectedTeam, onSelect }: TeamSelectorProps) {
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-50 max-h-80 overflow-y-auto">
-          {(['Eastern', 'Western'] as const).map((conference) => (
-            <div key={conference}>
+          {Object.entries(conferences).map(([conferenceName, conferenceTeams]) => (
+            <div key={conferenceName}>
               <div className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-900/50 sticky top-0">
-                {conference} Conference
+                {conferenceName} {sport === 'nba' ? 'Conference' : ''}
               </div>
-              {conferences[conference].map((team) => (
+              {conferenceTeams.map((team) => (
                 <button
                   key={team.id}
                   onClick={() => {

@@ -122,6 +122,21 @@ Implementation:
 - API handles different column names (PLAYER_NAME vs PLAYER) for historical seasons
 
 
+MANDATORY FUTURE IMPROVEMENT:
+1.
+New validation system. The user will not be able to know who is right and who is wrong until the end 
+of the timer. Then itll show the correct and wrong answers like normal. Along with that, the user should be 
+able to override incase they spelled a name wrong, no autofill helped. They should be able to 
+drag an incorrect name into the right name slot to count to benefit people who cant spell. 
+
+2. 
+We need to fix the autofill feature still. It's unacceptable for a player in a certain year to just not appear in the 
+autofill. Look over and fix the autofilling. Whenever a year is selected, all players who played that year should
+be available in the autofill. This issue is common for older years. not the 2010s and 2020s. In an older year
+like the 95-95 hornets, there's only autofill for loaded in players from the recent seasons as well as those specific
+old teams saved in the cache. not all the players from 95-96.
+
+
 ================================================================================
 OPTIONAL FUTURE IMPROVEMENTS
 ================================================================================

@@ -1,0 +1,318 @@
+import type { NFLTeam } from '../types/nfl';
+
+/**
+ * All 32 NFL teams with their colors and division info
+ */
+export const nflTeams: NFLTeam[] = [
+  // AFC East
+  {
+    id: 1,
+    abbreviation: 'BUF',
+    name: 'Buffalo Bills',
+    city: 'Buffalo',
+    colors: { primary: '#00338D', secondary: '#C60C30' },
+    conference: 'AFC',
+    division: 'East',
+  },
+  {
+    id: 2,
+    abbreviation: 'MIA',
+    name: 'Miami Dolphins',
+    city: 'Miami',
+    colors: { primary: '#008E97', secondary: '#FC4C02' },
+    conference: 'AFC',
+    division: 'East',
+  },
+  {
+    id: 3,
+    abbreviation: 'NE',
+    name: 'New England Patriots',
+    city: 'New England',
+    colors: { primary: '#002244', secondary: '#C60C30' },
+    conference: 'AFC',
+    division: 'East',
+  },
+  {
+    id: 4,
+    abbreviation: 'NYJ',
+    name: 'New York Jets',
+    city: 'New York',
+    colors: { primary: '#125740', secondary: '#FFFFFF' },
+    conference: 'AFC',
+    division: 'East',
+  },
+  // AFC North
+  {
+    id: 5,
+    abbreviation: 'BAL',
+    name: 'Baltimore Ravens',
+    city: 'Baltimore',
+    colors: { primary: '#241773', secondary: '#9E7C0C' },
+    conference: 'AFC',
+    division: 'North',
+  },
+  {
+    id: 6,
+    abbreviation: 'CIN',
+    name: 'Cincinnati Bengals',
+    city: 'Cincinnati',
+    colors: { primary: '#FB4F14', secondary: '#000000' },
+    conference: 'AFC',
+    division: 'North',
+  },
+  {
+    id: 7,
+    abbreviation: 'CLE',
+    name: 'Cleveland Browns',
+    city: 'Cleveland',
+    colors: { primary: '#311D00', secondary: '#FF3C00' },
+    conference: 'AFC',
+    division: 'North',
+  },
+  {
+    id: 8,
+    abbreviation: 'PIT',
+    name: 'Pittsburgh Steelers',
+    city: 'Pittsburgh',
+    colors: { primary: '#FFB612', secondary: '#101820' },
+    conference: 'AFC',
+    division: 'North',
+  },
+  // AFC South
+  {
+    id: 9,
+    abbreviation: 'HOU',
+    name: 'Houston Texans',
+    city: 'Houston',
+    colors: { primary: '#03202F', secondary: '#A71930' },
+    conference: 'AFC',
+    division: 'South',
+  },
+  {
+    id: 10,
+    abbreviation: 'IND',
+    name: 'Indianapolis Colts',
+    city: 'Indianapolis',
+    colors: { primary: '#002C5F', secondary: '#A2AAAD' },
+    conference: 'AFC',
+    division: 'South',
+  },
+  {
+    id: 11,
+    abbreviation: 'JAX',
+    name: 'Jacksonville Jaguars',
+    city: 'Jacksonville',
+    colors: { primary: '#006778', secondary: '#D7A22A' },
+    conference: 'AFC',
+    division: 'South',
+  },
+  {
+    id: 12,
+    abbreviation: 'TEN',
+    name: 'Tennessee Titans',
+    city: 'Tennessee',
+    colors: { primary: '#0C2340', secondary: '#4B92DB' },
+    conference: 'AFC',
+    division: 'South',
+  },
+  // AFC West
+  {
+    id: 13,
+    abbreviation: 'DEN',
+    name: 'Denver Broncos',
+    city: 'Denver',
+    colors: { primary: '#FB4F14', secondary: '#002244' },
+    conference: 'AFC',
+    division: 'West',
+  },
+  {
+    id: 14,
+    abbreviation: 'KC',
+    name: 'Kansas City Chiefs',
+    city: 'Kansas City',
+    colors: { primary: '#E31837', secondary: '#FFB81C' },
+    conference: 'AFC',
+    division: 'West',
+  },
+  {
+    id: 15,
+    abbreviation: 'LV',
+    name: 'Las Vegas Raiders',
+    city: 'Las Vegas',
+    colors: { primary: '#000000', secondary: '#A5ACAF' },
+    conference: 'AFC',
+    division: 'West',
+  },
+  {
+    id: 16,
+    abbreviation: 'LAC',
+    name: 'Los Angeles Chargers',
+    city: 'Los Angeles',
+    colors: { primary: '#0080C6', secondary: '#FFC20E' },
+    conference: 'AFC',
+    division: 'West',
+  },
+  // NFC East
+  {
+    id: 17,
+    abbreviation: 'DAL',
+    name: 'Dallas Cowboys',
+    city: 'Dallas',
+    colors: { primary: '#003594', secondary: '#869397' },
+    conference: 'NFC',
+    division: 'East',
+  },
+  {
+    id: 18,
+    abbreviation: 'NYG',
+    name: 'New York Giants',
+    city: 'New York',
+    colors: { primary: '#0B2265', secondary: '#A71930' },
+    conference: 'NFC',
+    division: 'East',
+  },
+  {
+    id: 19,
+    abbreviation: 'PHI',
+    name: 'Philadelphia Eagles',
+    city: 'Philadelphia',
+    colors: { primary: '#004C54', secondary: '#A5ACAF' },
+    conference: 'NFC',
+    division: 'East',
+  },
+  {
+    id: 20,
+    abbreviation: 'WAS',
+    name: 'Washington Commanders',
+    city: 'Washington',
+    colors: { primary: '#5A1414', secondary: '#FFB612' },
+    conference: 'NFC',
+    division: 'East',
+  },
+  // NFC North
+  {
+    id: 21,
+    abbreviation: 'CHI',
+    name: 'Chicago Bears',
+    city: 'Chicago',
+    colors: { primary: '#0B162A', secondary: '#C83803' },
+    conference: 'NFC',
+    division: 'North',
+  },
+  {
+    id: 22,
+    abbreviation: 'DET',
+    name: 'Detroit Lions',
+    city: 'Detroit',
+    colors: { primary: '#0076B6', secondary: '#B0B7BC' },
+    conference: 'NFC',
+    division: 'North',
+  },
+  {
+    id: 23,
+    abbreviation: 'GB',
+    name: 'Green Bay Packers',
+    city: 'Green Bay',
+    colors: { primary: '#203731', secondary: '#FFB612' },
+    conference: 'NFC',
+    division: 'North',
+  },
+  {
+    id: 24,
+    abbreviation: 'MIN',
+    name: 'Minnesota Vikings',
+    city: 'Minnesota',
+    colors: { primary: '#4F2683', secondary: '#FFC62F' },
+    conference: 'NFC',
+    division: 'North',
+  },
+  // NFC South
+  {
+    id: 25,
+    abbreviation: 'ATL',
+    name: 'Atlanta Falcons',
+    city: 'Atlanta',
+    colors: { primary: '#A71930', secondary: '#000000' },
+    conference: 'NFC',
+    division: 'South',
+  },
+  {
+    id: 26,
+    abbreviation: 'CAR',
+    name: 'Carolina Panthers',
+    city: 'Carolina',
+    colors: { primary: '#0085CA', secondary: '#101820' },
+    conference: 'NFC',
+    division: 'South',
+  },
+  {
+    id: 27,
+    abbreviation: 'NO',
+    name: 'New Orleans Saints',
+    city: 'New Orleans',
+    colors: { primary: '#D3BC8D', secondary: '#101820' },
+    conference: 'NFC',
+    division: 'South',
+  },
+  {
+    id: 28,
+    abbreviation: 'TB',
+    name: 'Tampa Bay Buccaneers',
+    city: 'Tampa Bay',
+    colors: { primary: '#D50A0A', secondary: '#34302B' },
+    conference: 'NFC',
+    division: 'South',
+  },
+  // NFC West
+  {
+    id: 29,
+    abbreviation: 'ARI',
+    name: 'Arizona Cardinals',
+    city: 'Arizona',
+    colors: { primary: '#97233F', secondary: '#000000' },
+    conference: 'NFC',
+    division: 'West',
+  },
+  {
+    id: 30,
+    abbreviation: 'LAR',
+    name: 'Los Angeles Rams',
+    city: 'Los Angeles',
+    colors: { primary: '#003594', secondary: '#FFA300' },
+    conference: 'NFC',
+    division: 'West',
+  },
+  {
+    id: 31,
+    abbreviation: 'SF',
+    name: 'San Francisco 49ers',
+    city: 'San Francisco',
+    colors: { primary: '#AA0000', secondary: '#B3995D' },
+    conference: 'NFC',
+    division: 'West',
+  },
+  {
+    id: 32,
+    abbreviation: 'SEA',
+    name: 'Seattle Seahawks',
+    city: 'Seattle',
+    colors: { primary: '#002244', secondary: '#69BE28' },
+    conference: 'NFC',
+    division: 'West',
+  },
+];
+
+// Get a team by abbreviation
+export function getNFLTeamByAbbreviation(abbreviation: string): NFLTeam | undefined {
+  return nflTeams.find(t => t.abbreviation === abbreviation);
+}
+
+// Get teams by conference
+export function getNFLTeamsByConference(conference: 'AFC' | 'NFC'): NFLTeam[] {
+  return nflTeams.filter(t => t.conference === conference);
+}
+
+// Get teams by division
+export function getNFLTeamsByDivision(conference: 'AFC' | 'NFC', division: string): NFLTeam[] {
+  return nflTeams.filter(t => t.conference === conference && t.division === division);
+}

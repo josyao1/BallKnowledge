@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
-import { Leaderboard } from '../components/leaderboard';
-import { submitScore } from '../services/leaderboard';
-import { isSupabaseEnabled } from '../lib/supabase';
 
 export function ResultsPage() {
   const navigate = useNavigate();
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [draggedGuess, setDraggedGuess] = useState<string | null>(null);
+  const [dragOverPlayerId, setDragOverPlayerId] = useState<number | string | null>(null);
 
   const {
     selectedTeam,
@@ -20,6 +17,8 @@ export function ResultsPage() {
     score,
     timerDuration,
     timeRemaining,
+    hideResultsDuringGame,
+    overrideGuess,
     resetGame,
   } = useGameStore();
 
@@ -34,33 +33,6 @@ export function ResultsPage() {
       navigate('/');
     }
   }, [selectedTeam, selectedSeason, navigate]);
-
-  // Auto-submit score when results page loads
-  useEffect(() => {
-    async function autoSubmitScore() {
-      if (!isSupabaseEnabled || scoreSubmitted || !selectedTeam || !selectedSeason) {
-        return;
-      }
-
-      setSubmitting(true);
-      const result = await submitScore({
-        team_abbreviation: selectedTeam.abbreviation,
-        season: selectedSeason,
-        score,
-        percentage,
-        guessed_players: guessedPlayers.map(p => p.name),
-        incorrect_guesses: incorrectGuesses,
-        time_remaining: timeRemaining,
-      });
-
-      if (result.success) {
-        setScoreSubmitted(true);
-      }
-      setSubmitting(false);
-    }
-
-    autoSubmitScore();
-  }, [selectedTeam, selectedSeason, score, percentage, guessedPlayers, incorrectGuesses, timeRemaining, scoreSubmitted]);
 
   if (!selectedTeam || !selectedSeason) {
     return null;
@@ -150,12 +122,22 @@ export function ResultsPage() {
           >
             <h2 className="sports-font text-lg text-[var(--nba-red)] mb-3 tracking-wider">
               Incorrect Guesses
+              {hideResultsDuringGame && (
+                <span className="text-xs text-gray-500 ml-2 font-normal">
+                  (drag onto a player to correct)
+                </span>
+              )}
             </h2>
             <div className="flex flex-wrap gap-2">
               {incorrectGuesses.map((guess, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-[var(--nba-red)]/20 text-[var(--nba-red)] border border-[var(--nba-red)]/30 rounded-full text-sm"
+                  draggable={hideResultsDuringGame}
+                  onDragStart={() => setDraggedGuess(guess)}
+                  onDragEnd={() => setDraggedGuess(null)}
+                  className={`px-3 py-1 bg-[var(--nba-red)]/20 text-[var(--nba-red)] border border-[var(--nba-red)]/30 rounded-full text-sm ${
+                    hideResultsDuringGame ? 'cursor-grab active:cursor-grabbing hover:bg-[var(--nba-red)]/30' : ''
+                  } ${draggedGuess === guess ? 'opacity-50' : ''}`}
                 >
                   {guess}
                 </span>
@@ -178,17 +160,45 @@ export function ResultsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {currentRoster.map((player, index) => {
               const wasGuessed = guessedIds.has(player.id);
+              const isDropTarget = hideResultsDuringGame && !wasGuessed && draggedGuess;
+              const isDragOver = dragOverPlayerId === player.id;
+
+              const handleDragOver = (e: React.DragEvent) => {
+                if (isDropTarget) {
+                  e.preventDefault();
+                  setDragOverPlayerId(player.id);
+                }
+              };
+
+              const handleDragLeave = () => {
+                setDragOverPlayerId(null);
+              };
+
+              const handleDrop = (e: React.DragEvent) => {
+                e.preventDefault();
+                if (draggedGuess && !wasGuessed) {
+                  overrideGuess(draggedGuess, player.id as number);
+                  setDraggedGuess(null);
+                  setDragOverPlayerId(null);
+                }
+              };
+
               return (
                 <motion.div
                   key={player.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + index * 0.03 }}
-                  className="player-card p-3"
+                  className={`player-card p-3 transition-all ${
+                    isDropTarget ? 'ring-2 ring-dashed ring-gray-500' : ''
+                  } ${isDragOver ? 'ring-[var(--nba-orange)] bg-[var(--nba-orange)]/10 scale-105' : ''}`}
                   style={{
                     borderColor: wasGuessed ? selectedTeam.colors.primary : undefined,
-                    backgroundColor: wasGuessed ? `${selectedTeam.colors.primary}15` : undefined,
+                    backgroundColor: wasGuessed ? `${selectedTeam.colors.primary}15` : isDragOver ? undefined : undefined,
                   }}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -203,7 +213,9 @@ export function ResultsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-[#888]">{player.ppg.toFixed(1)} PPG</div>
+                      {player.ppg !== undefined && (
+                        <div className="text-sm text-[#888]">{player.ppg.toFixed(1)} PPG</div>
+                      )}
                     </div>
                   </div>
                   {wasGuessed && (
@@ -216,34 +228,15 @@ export function ResultsPage() {
                       </span>
                     </div>
                   )}
+                  {isDropTarget && isDragOver && (
+                    <div className="mt-1 text-xs text-[var(--nba-orange)] sports-font">
+                      Drop to assign "{draggedGuess}"
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
           </div>
-        </motion.div>
-
-        {/* Leaderboard */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mb-8"
-        >
-          <Leaderboard
-            teamAbbreviation={selectedTeam.abbreviation}
-            season={selectedSeason}
-            title="High Scores"
-          />
-          {submitting && (
-            <p className="text-center text-[#666] text-sm mt-2 sports-font">
-              Submitting your score...
-            </p>
-          )}
-          {scoreSubmitted && (
-            <p className="text-center text-[#22c55e] text-sm mt-2 sports-font">
-              Score submitted to leaderboard!
-            </p>
-          )}
         </motion.div>
 
         {/* Actions */}

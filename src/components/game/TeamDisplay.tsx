@@ -1,7 +1,12 @@
-import type { Team } from '../../types';
+// Generic team type to support both NBA and NFL
+interface GenericTeam {
+  abbreviation: string;
+  name: string;
+  colors: { primary: string; secondary: string };
+}
 
 interface TeamDisplayProps {
-  team: Team;
+  team: GenericTeam;
   season: string;
 }
 

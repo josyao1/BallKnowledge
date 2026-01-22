@@ -3,6 +3,7 @@ import type { Team } from './team';
 
 export type GameStatus = 'idle' | 'playing' | 'paused' | 'ended';
 export type GameMode = 'random' | 'manual';
+export type Sport = 'nba' | 'nfl';
 
 export interface GameSettings {
   timerDuration: number; // seconds

@@ -1,0 +1,151 @@
+{
+  "team": "PHI",
+  "season": "2024-25",
+  "cached_at": "2026-01-22T12:33:36.801845",
+  "players": [
+    {
+      "id": 1630178,
+      "name": "Tyrese Maxey",
+      "position": "G",
+      "number": "0",
+      "ppg": 26.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 203954,
+      "name": "Joel Embiid",
+      "position": "C-F",
+      "number": "21",
+      "ppg": 23.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 202331,
+      "name": "Paul George",
+      "position": "F",
+      "number": "8",
+      "ppg": 16.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1642272,
+      "name": "Jared McCain",
+      "position": "G",
+      "number": "20",
+      "ppg": 15.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626162,
+      "name": "Kelly Oubre Jr.",
+      "position": "F-G",
+      "number": "9",
+      "ppg": 15.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629656,
+      "name": "Quentin Grimes",
+      "position": "G",
+      "number": "5",
+      "ppg": 14.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629022,
+      "name": "Lonnie Walker IV",
+      "position": "G-F",
+      "number": "16",
+      "ppg": 12.4,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627824,
+      "name": "Guerschon Yabusele",
+      "position": "F",
+      "number": "28",
+      "ppg": 11.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1642348,
+      "name": "Justin Edwards",
+      "position": "F",
+      "number": "19",
+      "ppg": 10.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630215,
+      "name": "Jared Butler",
+      "position": "G",
+      "number": "12",
+      "ppg": 9.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 203083,
+      "name": "Andre Drummond",
+      "position": "C",
+      "number": "1",
+      "ppg": 7.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641741,
+      "name": "Ricky Council IV",
+      "position": "G",
+      "number": "14",
+      "ppg": 7.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641720,
+      "name": "Jalen Hood-Schifino",
+      "position": "G",
+      "number": "17",
+      "ppg": 7.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630288,
+      "name": "Jeff Dowtin Jr.",
+      "position": "G",
+      "number": "11",
+      "ppg": 7.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 201569,
+      "name": "Eric Gordon",
+      "position": "G",
+      "number": "23",
+      "ppg": 6.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641737,
+      "name": "Adem Bona",
+      "position": "F",
+      "number": "30",
+      "ppg": 5.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642024,
+      "name": "Alex Reese",
+      "position": "F-C",
+      "number": "65",
+      "ppg": 5.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 200768,
+      "name": "Kyle Lowry",
+      "position": "G",
+      "number": "7",
+      "ppg": 3.9,
+      "isLowScorer": true
+    }
+  ]
+}

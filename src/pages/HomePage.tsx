@@ -7,20 +7,30 @@ import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
 import { SettingsModal } from '../components/home/SettingsModal';
 import { teams } from '../data/teams';
+import { nflTeams } from '../data/nfl-teams';
 import { rosters } from '../data/rosters';
 import { fetchTeamRoster } from '../services/roster';
 import { isApiAvailable, resetApiAvailability, fetchSeasonPlayers } from '../services/api';
-import type { Team, GameMode } from '../types';
+import { isNFLApiAvailable, resetNFLApiAvailability, fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import type { GameMode } from '../types';
 
 type LoadingStatus = 'idle' | 'checking' | 'fetching' | 'success' | 'error';
+
+// Generic team type that works with both NBA and NFL
+type GenericTeam = {
+  id: number;
+  abbreviation: string;
+  name: string;
+  colors: { primary: string; secondary: string };
+};
 
 export function HomePage() {
   const navigate = useNavigate();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
-  const { timerDuration, yearRange } = useSettingsStore();
+  const { sport, timerDuration, yearRange, hideResultsDuringGame, setSport } = useSettingsStore();
 
   const [gameMode, setGameMode] = useState<GameMode>('random');
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -32,14 +42,19 @@ export function HomePage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
 
-  // Check API status on mount
+  // Check API status on mount and when sport changes
   useEffect(() => {
     const checkApi = async () => {
-      const available = await isApiAvailable();
-      setApiOnline(available);
+      if (sport === 'nba') {
+        const available = await isApiAvailable();
+        setApiOnline(available);
+      } else {
+        const available = await isNFLApiAvailable();
+        setApiOnline(available);
+      }
     };
     checkApi();
-  }, []);
+  }, [sport]);
 
   const MAX_RETRIES = 5;
 
@@ -47,26 +62,36 @@ export function HomePage() {
     setLoadingStatus('checking');
     setStatusMessage('Selecting team...');
 
-    const apiAvailable = await isApiAvailable();
+    const apiAvailable = sport === 'nba' ? await isApiAvailable() : await isNFLApiAvailable();
     let retryCount = 0;
 
+    // Get the appropriate team list and year range based on sport
+    const currentTeams = sport === 'nba' ? teams : nflTeams;
+    const currentMinYear = sport === 'nba' ? randomMinYear : Math.max(randomMinYear, 2000);
+    const currentMaxYear = sport === 'nba' ? randomMaxYear : Math.min(randomMaxYear, 2024);
+
     // Helper to pick a random team/season
-    const pickRandomTeamSeason = (): { team: Team; year: number } | null => {
+    const pickRandomTeamSeason = (): { team: GenericTeam; year: number } | null => {
       if (apiAvailable) {
-        const randomTeamIndex = Math.floor(Math.random() * teams.length);
-        const team = teams[randomTeamIndex];
-        const year = Math.floor(Math.random() * (randomMaxYear - randomMinYear + 1)) + randomMinYear;
+        const randomTeamIndex = Math.floor(Math.random() * currentTeams.length);
+        const team = currentTeams[randomTeamIndex];
+        const year = Math.floor(Math.random() * (currentMaxYear - currentMinYear + 1)) + currentMinYear;
         return { team, year };
       } else {
-        // API offline: pick only from available static data
-        const availableTeamSeasons: { team: Team; season: string }[] = [];
+        // API offline: pick only from available static data (NBA only for now)
+        if (sport === 'nfl') {
+          // NFL requires API
+          return null;
+        }
+
+        const availableTeamSeasons: { team: GenericTeam; season: string }[] = [];
 
         for (const [abbr, seasons] of Object.entries(rosters)) {
           const teamData = teams.find(t => t.abbreviation === abbr);
           if (teamData) {
             for (const season of Object.keys(seasons)) {
               const seasonYear = parseInt(season.split('-')[0]);
-              if (seasonYear >= randomMinYear && seasonYear <= randomMaxYear) {
+              if (seasonYear >= currentMinYear && seasonYear <= currentMaxYear) {
                 availableTeamSeasons.push({ team: teamData, season });
               }
             }
@@ -83,41 +108,65 @@ export function HomePage() {
     };
 
     // Try to load a roster (with retries for random mode)
-    const attemptLoadRoster = async (team: Team, year: number): Promise<boolean> => {
-      const season = `${year}-${String(year + 1).slice(-2)}`;
+    const attemptLoadRoster = async (team: GenericTeam, year: number): Promise<boolean> => {
+      const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
 
       setStatusMessage(`Loading ${team.abbreviation} ${season} roster...`);
       setLoadingStatus('fetching');
 
       try {
-        const result = await fetchTeamRoster(team.abbreviation, season);
+        let players: { id: number | string; name: string; position?: string; number?: string; ppg?: number; isLowScorer?: boolean; unit?: string }[] = [];
+        let fromApi = false;
+        let cached = false;
 
-        if (result.players.length === 0) {
-          return false; // No data found
+        if (sport === 'nba') {
+          const result = await fetchTeamRoster(team.abbreviation, season);
+          if (result.players.length === 0) {
+            return false;
+          }
+          players = result.players;
+          fromApi = result.fromApi;
+          cached = result.cached;
+        } else {
+          // NFL
+          const result = await fetchNFLRosterFromApi(team.abbreviation, year);
+          if (!result || result.players.length === 0) {
+            return false;
+          }
+          players = result.players;
+          fromApi = true;
+          cached = result.cached;
         }
 
         // Fetch league-wide players for autocomplete
         setStatusMessage('Loading player database...');
-        let leaguePlayers: { id: number; name: string }[] = [];
+        let leaguePlayers: { id: number | string; name: string }[] = [];
 
-        const leagueResult = await fetchSeasonPlayers(season);
-        if (leagueResult && leagueResult.players.length > 0) {
-          leaguePlayers = leagueResult.players;
+        if (sport === 'nba') {
+          const leagueResult = await fetchSeasonPlayers(season);
+          if (leagueResult && leagueResult.players.length > 0) {
+            leaguePlayers = leagueResult.players;
+          }
+        } else {
+          const leagueResult = await fetchNFLSeasonPlayers(year);
+          if (leagueResult && leagueResult.players.length > 0) {
+            leaguePlayers = leagueResult.players;
+          }
         }
 
         setLoadingStatus('success');
         setStatusMessage(
-          result.fromApi
-            ? result.cached
+          fromApi
+            ? cached
               ? 'Loaded from cache!'
-              : 'Fetched from NBA API!'
+              : `Fetched from ${sport.toUpperCase()} API!`
             : 'Using local data'
         );
 
         // Brief delay to show success message
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        setGameConfig(team, season, gameMode, timerDuration, result.players, leaguePlayers);
+        setGameConfig(sport, team, season, gameMode, timerDuration, players, leaguePlayers, hideResultsDuringGame);
         navigate('/game');
         return true;
       } catch (error) {
@@ -172,7 +221,11 @@ export function HomePage() {
   };
 
   const handleRetry = () => {
-    resetApiAvailability();
+    if (sport === 'nba') {
+      resetApiAvailability();
+    } else {
+      resetNFLApiAvailability();
+    }
     setLoadingStatus('idle');
     setStatusMessage('');
   };
@@ -228,12 +281,41 @@ export function HomePage() {
           className="text-center mb-4"
         >
           <h2 className="retro-title text-6xl md:text-7xl mb-4 text-[var(--vintage-cream)]">
-            NBA Roster
+            {sport === 'nba' ? 'NBA' : 'NFL'} Roster
             <span className="block text-[var(--nba-gold)]">Trivia</span>
           </h2>
           <p className="sports-font text-lg text-[#888] tracking-wider">
-            How well do you know NBA rosters?
+            How well do you know {sport === 'nba' ? 'NBA' : 'NFL'} rosters?
           </p>
+        </motion.div>
+
+        {/* Sport selection */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          className="flex gap-2"
+        >
+          <button
+            onClick={() => setSport('nba')}
+            className={`px-6 py-2 rounded-lg sports-font tracking-wider transition-all ${
+              sport === 'nba'
+                ? 'bg-[var(--nba-orange)] text-white shadow-lg'
+                : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+            }`}
+          >
+            NBA
+          </button>
+          <button
+            onClick={() => setSport('nfl')}
+            className={`px-6 py-2 rounded-lg sports-font tracking-wider transition-all ${
+              sport === 'nfl'
+                ? 'bg-[#013369] text-white shadow-lg'
+                : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+            }`}
+          >
+            NFL
+          </button>
         </motion.div>
 
         {/* Decorative basketball */}
@@ -341,7 +423,7 @@ export function HomePage() {
                 >
                   <div className="scoreboard-panel p-4">
                     <div className="sports-font text-sm text-[#888] text-center mb-3 tracking-widest">
-                      Year Range
+                      Year Range {sport === 'nfl' && '(2000-2024)'}
                     </div>
                     <div className="flex items-center justify-center gap-4">
                       <select
@@ -355,7 +437,10 @@ export function HomePage() {
                         }}
                         className="retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:border-[var(--nba-orange)] focus:outline-none"
                       >
-                        {Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i).map((year) => (
+                        {Array.from(
+                          { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
+                          (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
+                        ).map((year) => (
                           <option key={year} value={year}>
                             {year}
                           </option>
@@ -373,7 +458,10 @@ export function HomePage() {
                         }}
                         className="retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:border-[var(--nba-orange)] focus:outline-none"
                       >
-                        {Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i).map((year) => (
+                        {Array.from(
+                          { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
+                          (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
+                        ).map((year) => (
                           <option key={year} value={year}>
                             {year}
                           </option>

@@ -1,0 +1,127 @@
+{
+  "team": "CHA",
+  "season": "1995-96",
+  "cached_at": "2026-01-22T14:57:24.274795",
+  "players": [
+    {
+      "id": 305,
+      "name": "Robert Parish",
+      "position": "C",
+      "number": "00",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 177,
+      "name": "Muggsy Bogues",
+      "position": "G",
+      "number": "1",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 913,
+      "name": "Larry Johnson",
+      "position": "F",
+      "number": "2",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 241,
+      "name": "Darrin Hancock",
+      "position": "G-F",
+      "number": "4",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 924,
+      "name": "Anthony Goldwire",
+      "position": "G",
+      "number": "5",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 912,
+      "name": "Rafael Addison",
+      "position": "F",
+      "number": "7",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 72,
+      "name": "Kenny Anderson",
+      "position": "G",
+      "number": "12",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1133,
+      "name": "Corey Beck",
+      "position": "G",
+      "number": "14",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 939,
+      "name": "Pete Myers",
+      "position": "G-F",
+      "number": "20",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 149,
+      "name": "Michael Adams",
+      "position": "G",
+      "number": "23",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 197,
+      "name": "Scott Burrell",
+      "position": "F",
+      "number": "24",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 678,
+      "name": "George Zidek",
+      "position": "C",
+      "number": "25",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 209,
+      "name": "Dell Curry",
+      "position": "F-G",
+      "number": "30",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 779,
+      "name": "Glen Rice",
+      "position": "G-F",
+      "number": "41",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 761,
+      "name": "Matt Geiger",
+      "position": "C",
+      "number": "52",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

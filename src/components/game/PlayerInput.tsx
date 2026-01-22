@@ -21,7 +21,7 @@ export function PlayerInput() {
   // Get all players for autocomplete
   // Priority: league-wide players > static data, but ALWAYS include current roster
   const allPlayers = useMemo(() => {
-    const playerMap = new Map<string, { id: number; name: string }>();
+    const playerMap = new Map<string, { id: number | string; name: string }>();
 
     // Always add current roster players FIRST (ensures they're always in autocomplete)
     if (currentRoster.length > 0) {
@@ -40,7 +40,7 @@ export function PlayerInput() {
 
     additionalPlayers.forEach(p => {
       if (!playerMap.has(p.name.toLowerCase())) {
-        playerMap.set(p.name.toLowerCase(), p);
+        playerMap.set(p.name.toLowerCase(), { id: p.id, name: p.name });
       }
     });
 

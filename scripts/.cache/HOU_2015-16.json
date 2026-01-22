@@ -1,0 +1,127 @@
+{
+  "team": "HOU",
+  "season": "2015-16",
+  "cached_at": "2026-01-22T15:11:37.085308",
+  "players": [
+    {
+      "id": 201935,
+      "name": "James Harden",
+      "position": "G",
+      "number": "13",
+      "ppg": 29.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 2730,
+      "name": "Dwight Howard",
+      "position": "C",
+      "number": "12",
+      "ppg": 13.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 201563,
+      "name": "Michael Beasley",
+      "position": "F",
+      "number": "8",
+      "ppg": 12.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 2772,
+      "name": "Trevor Ariza",
+      "position": "F",
+      "number": "1",
+      "ppg": 12.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 201976,
+      "name": "Patrick Beverley",
+      "position": "G",
+      "number": "2",
+      "ppg": 9.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 203093,
+      "name": "Terrence Jones",
+      "position": "F",
+      "number": "6",
+      "ppg": 8.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 201147,
+      "name": "Corey Brewer",
+      "position": "G-F",
+      "number": "33",
+      "ppg": 7.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 203991,
+      "name": "Clint Capela",
+      "position": "F-C",
+      "number": "15",
+      "ppg": 7.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 202700,
+      "name": "Donatas Motiejunas",
+      "position": "F-C",
+      "number": "20",
+      "ppg": 6.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 2746,
+      "name": "Josh Smith",
+      "position": "F",
+      "number": "5",
+      "ppg": 6.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1891,
+      "name": "Jason Terry",
+      "position": "G",
+      "number": "31",
+      "ppg": 5.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626149,
+      "name": "Montrezl Harrell",
+      "position": "F",
+      "number": "35",
+      "ppg": 3.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 202726,
+      "name": "Andrew Goudelock",
+      "position": "G",
+      "number": "0",
+      "ppg": 2.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 203909,
+      "name": "KJ McDaniels",
+      "position": "G-F",
+      "number": "32",
+      "ppg": 2.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626155,
+      "name": "Sam Dekker",
+      "position": "F",
+      "number": "7",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

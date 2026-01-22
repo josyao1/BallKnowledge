@@ -1,0 +1,151 @@
+{
+  "team": "NYK",
+  "season": "2024-25",
+  "cached_at": "2026-01-22T15:13:05.671577",
+  "players": [
+    {
+      "id": 1628973,
+      "name": "Jalen Brunson",
+      "position": "G",
+      "number": "11",
+      "ppg": 26.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626157,
+      "name": "Karl-Anthony Towns",
+      "position": "C-F",
+      "number": "32",
+      "ppg": 24.4,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628384,
+      "name": "OG Anunoby",
+      "position": "F-G",
+      "number": "8",
+      "ppg": 18.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628969,
+      "name": "Mikal Bridges",
+      "position": "G-F",
+      "number": "25",
+      "ppg": 17.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628404,
+      "name": "Josh Hart",
+      "position": "G",
+      "number": "3",
+      "ppg": 13.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630540,
+      "name": "Miles McBride",
+      "position": "G",
+      "number": "2",
+      "ppg": 9.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626166,
+      "name": "Cameron Payne",
+      "position": "G",
+      "number": "1",
+      "ppg": 6.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630173,
+      "name": "Precious Achiuwa",
+      "position": "F",
+      "number": "5",
+      "ppg": 6.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629013,
+      "name": "Landry Shamet",
+      "position": "G",
+      "number": "44",
+      "ppg": 5.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629011,
+      "name": "Mitchell Robinson",
+      "position": "C-F",
+      "number": "23",
+      "ppg": 5.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626153,
+      "name": "Delon Wright",
+      "position": "G",
+      "number": "0",
+      "ppg": 3.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 200782,
+      "name": "P.J. Tucker",
+      "position": "F",
+      "number": "",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630699,
+      "name": "MarJon Beauchamp",
+      "position": "F",
+      "number": "0",
+      "ppg": 2.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642278,
+      "name": "Tyler Kolek",
+      "position": "G",
+      "number": "13",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630574,
+      "name": "Ariel Hukporti",
+      "position": "C",
+      "number": "55",
+      "ppg": 1.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642359,
+      "name": "Pac\u00f4me Dadiet",
+      "position": "F",
+      "number": "4",
+      "ppg": 1.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641755,
+      "name": "Kevin McCullar Jr.",
+      "position": "G",
+      "number": "9",
+      "ppg": 1.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641817,
+      "name": "Anton Watson",
+      "position": "F",
+      "number": "28",
+      "ppg": 0.9,
+      "isLowScorer": true
+    }
+  ]
+}

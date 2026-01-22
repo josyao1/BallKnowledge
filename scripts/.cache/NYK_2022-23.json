@@ -1,0 +1,143 @@
+{
+  "team": "NYK",
+  "season": "2022-23",
+  "cached_at": "2026-01-22T12:33:56.969928",
+  "players": [
+    {
+      "id": 203944,
+      "name": "Julius Randle",
+      "position": "F-C",
+      "number": "30",
+      "ppg": 25.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628973,
+      "name": "Jalen Brunson",
+      "position": "G",
+      "number": "11",
+      "ppg": 24.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629628,
+      "name": "RJ Barrett",
+      "position": "F-G",
+      "number": "9",
+      "ppg": 19.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630193,
+      "name": "Immanuel Quickley",
+      "position": "G",
+      "number": "5",
+      "ppg": 14.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629656,
+      "name": "Quentin Grimes",
+      "position": "G",
+      "number": "6",
+      "ppg": 11.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628404,
+      "name": "Josh Hart",
+      "position": "G",
+      "number": "3",
+      "ppg": 9.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630613,
+      "name": "Duane Washington Jr.",
+      "position": "G",
+      "number": "4",
+      "ppg": 7.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630167,
+      "name": "Obi Toppin",
+      "position": "F",
+      "number": "1",
+      "ppg": 7.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629011,
+      "name": "Mitchell Robinson",
+      "position": "C-F",
+      "number": "23",
+      "ppg": 7.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 203095,
+      "name": "Evan Fournier",
+      "position": "G-F",
+      "number": "13",
+      "ppg": 6.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 201565,
+      "name": "Derrick Rose",
+      "position": "G",
+      "number": "4",
+      "ppg": 5.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628392,
+      "name": "Isaiah Hartenstein",
+      "position": "C-F",
+      "number": "55",
+      "ppg": 5.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629676,
+      "name": "Isaiah Roby",
+      "position": "F",
+      "number": "18",
+      "ppg": 4.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630540,
+      "name": "Miles McBride",
+      "position": "G",
+      "number": "2",
+      "ppg": 3.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630579,
+      "name": "Jericho Sims",
+      "position": "C",
+      "number": "45",
+      "ppg": 3.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631211,
+      "name": "Trevor Keels",
+      "position": "G",
+      "number": "3",
+      "ppg": 1.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629610,
+      "name": "DaQuan Jeffries",
+      "position": "G-F",
+      "number": "8",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "team": "MIN",
+  "season": "2024-25",
+  "cached_at": "2026-01-22T11:39:46.081490",
+  "players": [
+    {
+      "id": 1630162,
+      "name": "Anthony Edwards",
+      "position": "G",
+      "number": "5",
+      "ppg": 27.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 203944,
+      "name": "Julius Randle",
+      "position": "F-C",
+      "number": "30",
+      "ppg": 18.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629675,
+      "name": "Naz Reid",
+      "position": "C-F",
+      "number": "11",
+      "ppg": 14.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630183,
+      "name": "Jaden McDaniels",
+      "position": "F",
+      "number": "3",
+      "ppg": 12.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 203497,
+      "name": "Rudy Gobert",
+      "position": "C",
+      "number": "27",
+      "ppg": 12.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628978,
+      "name": "Donte DiVincenzo",
+      "position": "G",
+      "number": "0",
+      "ppg": 11.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629638,
+      "name": "Nickeil Alexander-Walker",
+      "position": "G",
+      "number": "9",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 201144,
+      "name": "Mike Conley",
+      "position": "G",
+      "number": "10",
+      "ppg": 8.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630538,
+      "name": "Bones Hyland",
+      "position": "G",
+      "number": "77",
+      "ppg": 6.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642265,
+      "name": "Rob Dillingham",
+      "position": "G",
+      "number": "4",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630545,
+      "name": "Terrence Shannon Jr.",
+      "position": "G-F",
+      "number": "00",
+      "ppg": 4.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641740,
+      "name": "Jaylen Clark",
+      "position": "G",
+      "number": "22",
+      "ppg": 4.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630568,
+      "name": "Luka Garza",
+      "position": "C",
+      "number": "55",
+      "ppg": 3.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631169,
+      "name": "Josh Minott",
+      "position": "F",
+      "number": "8",
+      "ppg": 2.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631159,
+      "name": "Leonard Miller",
+      "position": "F",
+      "number": "33",
+      "ppg": 1.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 204060,
+      "name": "Joe Ingles",
+      "position": "F-G",
+      "number": "7",
+      "ppg": 0.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641803,
+      "name": "Tristen Newton",
+      "position": "G",
+      "number": "13",
+      "ppg": 0.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642399,
+      "name": "Jesse Edwards",
+      "position": "C",
+      "number": "14",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

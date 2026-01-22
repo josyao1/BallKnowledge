@@ -1,0 +1,151 @@
+{
+  "team": "MEM",
+  "season": "2023-24",
+  "cached_at": "2026-01-22T15:14:27.608797",
+  "players": [
+    {
+      "id": 1629630,
+      "name": "Ja Morant",
+      "position": "G",
+      "number": "12",
+      "ppg": 25.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630217,
+      "name": "Desmond Bane",
+      "position": "G",
+      "number": "22",
+      "ppg": 23.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628991,
+      "name": "Jaren Jackson Jr.",
+      "position": "F-C",
+      "number": "13",
+      "ppg": 22.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1641713,
+      "name": "GG Jackson",
+      "position": "F",
+      "number": "45",
+      "ppg": 14.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 203935,
+      "name": "Marcus Smart",
+      "position": "G",
+      "number": "36",
+      "ppg": 14.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630590,
+      "name": "Scotty Pippen Jr.",
+      "position": "G",
+      "number": "1",
+      "ppg": 12.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629634,
+      "name": "Brandon Clarke",
+      "position": "F",
+      "number": "15",
+      "ppg": 11.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628379,
+      "name": "Luke Kennard",
+      "position": "G",
+      "number": "10",
+      "ppg": 11.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1631222,
+      "name": "Jake LaRavia",
+      "position": "F",
+      "number": "3",
+      "ppg": 10.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630583,
+      "name": "Santi Aldama",
+      "position": "F-C",
+      "number": "7",
+      "ppg": 10.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1631246,
+      "name": "Vince Williams Jr.",
+      "position": "G",
+      "number": "5",
+      "ppg": 10.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630533,
+      "name": "Ziaire Williams",
+      "position": "F",
+      "number": "8",
+      "ppg": 8.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 201565,
+      "name": "Derrick Rose",
+      "position": "G",
+      "number": "23",
+      "ppg": 8.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630205,
+      "name": "Lamar Stevens",
+      "position": "F",
+      "number": "24",
+      "ppg": 7.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641998,
+      "name": "Trey Jemison III",
+      "position": "C",
+      "number": "55",
+      "ppg": 6.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630692,
+      "name": "Jordan Goodwin",
+      "position": "G",
+      "number": "0",
+      "ppg": 6.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629723,
+      "name": "John Konchar",
+      "position": "G",
+      "number": "46",
+      "ppg": 4.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629139,
+      "name": "Yuta Watanabe",
+      "position": "G-F",
+      "number": "18",
+      "ppg": 3.4,
+      "isLowScorer": true
+    }
+  ]
+}

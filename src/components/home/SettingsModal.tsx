@@ -5,7 +5,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { timerDuration, yearRange, setTimerDuration, setYearRange } = useSettingsStore();
+  const { timerDuration, yearRange, hideResultsDuringGame, setTimerDuration, setYearRange, setHideResultsDuringGame } = useSettingsStore();
 
   const timerOptions = [
     { label: '1:00', value: 60 },
@@ -77,6 +77,30 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 className="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 focus:border-indigo-500 focus:outline-none"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Hide results during game */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm text-gray-300">Hide Answers During Game</label>
+              <p className="text-xs text-gray-500 mt-1">
+                Don't reveal correct/incorrect until time runs out
+              </p>
+            </div>
+            <button
+              onClick={() => setHideResultsDuringGame(!hideResultsDuringGame)}
+              className={`relative w-14 h-7 rounded-full transition-colors ${
+                hideResultsDuringGame ? 'bg-indigo-600' : 'bg-gray-600'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
+                  hideResultsDuringGame ? 'translate-x-8' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
 

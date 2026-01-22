@@ -1,0 +1,151 @@
+{
+  "team": "LAC",
+  "season": "2024-25",
+  "cached_at": "2026-01-22T15:09:51.821553",
+  "players": [
+    {
+      "id": 201935,
+      "name": "James Harden",
+      "position": "G",
+      "number": "1",
+      "ppg": 22.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626181,
+      "name": "Norman Powell",
+      "position": "G",
+      "number": "24",
+      "ppg": 21.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 202695,
+      "name": "Kawhi Leonard",
+      "position": "F",
+      "number": "2",
+      "ppg": 21.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627826,
+      "name": "Ivica Zubac",
+      "position": "C",
+      "number": "40",
+      "ppg": 16.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 203992,
+      "name": "Bogdan Bogdanovi\u0107",
+      "position": "G",
+      "number": "10",
+      "ppg": 10.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627884,
+      "name": "Derrick Jones Jr.",
+      "position": "F",
+      "number": "55",
+      "ppg": 10.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629599,
+      "name": "Amir Coffey",
+      "position": "G-F",
+      "number": "7",
+      "ppg": 9.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627739,
+      "name": "Kris Dunn",
+      "position": "G",
+      "number": "8",
+      "ppg": 6.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627732,
+      "name": "Ben Simmons",
+      "position": "G-F",
+      "number": "25",
+      "ppg": 5.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629234,
+      "name": "Drew Eubanks",
+      "position": "F-C",
+      "number": "15",
+      "ppg": 4.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641757,
+      "name": "Jordan Miller",
+      "position": "G",
+      "number": "11",
+      "ppg": 4.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 201587,
+      "name": "Nicolas Batum",
+      "position": "G-F",
+      "number": "33",
+      "ppg": 4.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 201988,
+      "name": "Patty Mills",
+      "position": "G",
+      "number": "88",
+      "ppg": 3.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631116,
+      "name": "Patrick Baldwin Jr.",
+      "position": "F",
+      "number": "23",
+      "ppg": 2.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641738,
+      "name": "Kobe Brown",
+      "position": "F",
+      "number": "21",
+      "ppg": 1.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642280,
+      "name": "Trentyn Flowers",
+      "position": "F",
+      "number": "9",
+      "ppg": 1.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642353,
+      "name": "Cam Christie",
+      "position": "G",
+      "number": "12",
+      "ppg": 1.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641754,
+      "name": "Seth Lundy",
+      "position": "G-F",
+      "number": "5",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "team": "ORL",
+  "season": "2024-25",
+  "cached_at": "2026-01-22T12:33:49.660879",
+  "players": [
+    {
+      "id": 1631094,
+      "name": "Paolo Banchero",
+      "position": "F",
+      "number": "5",
+      "ppg": 25.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630532,
+      "name": "Franz Wagner",
+      "position": "F",
+      "number": "22",
+      "ppg": 24.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630217,
+      "name": "Desmond Bane",
+      "position": "G",
+      "number": "3",
+      "ppg": 19.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630591,
+      "name": "Jalen Suggs",
+      "position": "G",
+      "number": "4",
+      "ppg": 16.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629021,
+      "name": "Moritz Wagner",
+      "position": "F-C",
+      "number": "21",
+      "ppg": 12.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1641710,
+      "name": "Anthony Black",
+      "position": "G",
+      "number": "0",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628976,
+      "name": "Wendell Carter Jr.",
+      "position": "C-F",
+      "number": "34",
+      "ppg": 9.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641783,
+      "name": "Tristan da Silva",
+      "position": "F",
+      "number": "23",
+      "ppg": 7.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629048,
+      "name": "Goga Bitadze",
+      "position": "C-F",
+      "number": "35",
+      "ppg": 7.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628371,
+      "name": "Jonathan Isaac",
+      "position": "F",
+      "number": "1",
+      "ppg": 5.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630243,
+      "name": "Trevelin Queen",
+      "position": "G",
+      "number": "12",
+      "ppg": 4.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1641724,
+      "name": "Jett Howard",
+      "position": "G",
+      "number": "13",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631216,
+      "name": "Caleb Houstan",
+      "position": "G",
+      "number": "2",
+      "ppg": 4.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 202709,
+      "name": "Cory Joseph",
+      "position": "G",
+      "number": "10",
+      "ppg": 3.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 203914,
+      "name": "Gary Harris",
+      "position": "G",
+      "number": "14",
+      "ppg": 3.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630644,
+      "name": "Mac McClung",
+      "position": "G",
+      "number": "8",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630679,
+      "name": "Ethan Thompson",
+      "position": "G",
+      "number": "55",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}
