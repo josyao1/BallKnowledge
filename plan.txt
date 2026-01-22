@@ -1,0 +1,202 @@
+ Plan saved to: ~/.claude/plans/parallel-herding-stroustrup.md · /plan to edit         
+     Ball Knowledge - NBA Roster Trivia Game Implementation Plan                           
+                                                                                           
+     Overview                                                                              
+                                                                                           
+     A React-based trivia game where players guess NBA roster members for a given          
+     team/season combination.                                                              
+                                                                                           
+     Tech Stack                                                                            
+     Layer: Build                                                                          
+     Technology: Vite                                                                      
+     Rationale: Fast HMR, modern standard                                                  
+     ────────────────────────────────────────                                              
+     Layer: Framework                                                                      
+     Technology: React 18 + TypeScript                                                     
+     Rationale: Type safety, component-based                                               
+     ────────────────────────────────────────                                              
+     Layer: Styling                                                                        
+     Technology: TailwindCSS                                                               
+     Rationale: Dark mode built-in, rapid development                                      
+     ────────────────────────────────────────                                              
+     Layer: State                                                                          
+     Technology: Zustand                                                                   
+     Rationale: Lightweight, performant for frequent game updates                          
+     ────────────────────────────────────────                                              
+     Layer: Autocomplete                                                                   
+     Technology: react-window + Fuse.js                                                    
+     Rationale: Virtualized list for 5000+ players, fuzzy search                           
+     ────────────────────────────────────────                                              
+     Layer: Animations                                                                     
+     Technology: Framer Motion                                                             
+     Rationale: Smooth transitions                                                         
+     ────────────────────────────────────────                                              
+     Layer: Backend                                                                        
+     Technology: Supabase                                                                  
+     Rationale: Free tier, auth + leaderboard                                              
+     ────────────────────────────────────────                                              
+     Layer: Data                                                                           
+     Technology: Static JSON                                                               
+     Rationale: Pre-processed roster data, no API limits                                   
+     Data Strategy                                                                         
+                                                                                           
+     Challenge                                                                             
+                                                                                           
+     No free API provides direct "roster for team X in season Y" with PPG stats.           
+                                                                                           
+     Solution: One-time data extraction pipeline                                           
+                                                                                           
+     [nba_api Python] --> [Processing Script] --> [Static JSON Files] --> [React App]      
+                                                                                           
+     Python scripts will use nba_api to extract:                                           
+     1. Team rosters by season (1985-2025)                                                 
+     2. Player season averages (for PPG bonus calculation)                                 
+                                                                                           
+     Data Files                                                                            
+                                                                                           
+     - src/data/rosters.json - Team rosters by season with PPG                             
+     - src/data/players.json - All players for autocomplete (~5000)                        
+     - src/data/teams.json - Team info with colors                                         
+                                                                                           
+     File Structure                                                                        
+                                                                                           
+     ball-knowledge/                                                                       
+     ├── scripts/                 # Python data extraction                                 
+     │   ├── extract_rosters.py                                                            
+     │   └── requirements.txt                                                              
+     ├── src/                                                                              
+     │   ├── components/                                                                   
+     │   │   ├── common/         # Button, Card, Modal                                     
+     │   │   ├── game/           # PlayerInput, Timer, ScoreDisplay                        
+     │   │   ├── home/           # TeamSelector, YearSelector                              
+     │   │   ├── results/        # RosterReveal, ScoreSummary                              
+     │   │   └── leaderboard/    # LeaderboardTable                                        
+     │   ├── data/               # Static JSON files                                       
+     │   ├── hooks/              # useGame, useTimer, useAutocomplete                      
+     │   ├── pages/              # HomePage, GamePage, ResultsPage                         
+     │   ├── stores/             # Zustand stores                                          
+     │   ├── services/           # Supabase API calls                                      
+     │   └── types/              # TypeScript types                                        
+     ├── tailwind.config.js                                                                
+     └── vite.config.ts                                                                    
+                                                                                           
+     Key Components                                                                        
+                                                                                           
+     1. Autocomplete (PlayerInput)                                                         
+                                                                                           
+     - Fuse.js for fuzzy matching ("Lebron" → "LeBron James")                              
+     - react-window for virtualized rendering (only renders visible items)                 
+     - Debounced input (150ms)                                                             
+     - Excludes already-guessed players                                                    
+                                                                                           
+     2. Timer                                                                              
+                                                                                           
+     - Configurable duration (default 90s)                                                 
+     - Visual countdown with color changes (green → yellow → red)                          
+     - Pulse animation on low time                                                         
+     - Triggers game end on expiry                                                         
+                                                                                           
+     3. Scoring System                                                                     
+                                                                                           
+     - 1 point per correct player                                                          
+     - +1 bonus for players averaging <10 PPG that season                                  
+     - Name normalization handles accents, Jr./III suffixes                                
+                                                                                           
+     Supabase Schema                                                                       
+                                                                                           
+     -- Profiles (extends auth.users)                                                      
+     CREATE TABLE profiles (                                                               
+       id UUID PRIMARY KEY,                                                                
+       username TEXT UNIQUE,                                                               
+       created_at TIMESTAMPTZ                                                              
+     );                                                                                    
+                                                                                           
+     -- Game sessions                                                                      
+     CREATE TABLE game_sessions (                                                          
+       id UUID PRIMARY KEY,                                                                
+       user_id UUID REFERENCES profiles(id),                                               
+       team_abbreviation TEXT,                                                             
+       season TEXT,                                                                        
+       score INTEGER,                                                                      
+       bonus_points INTEGER,                                                               
+       percentage DECIMAL,                                                                 
+       guessed_players JSONB,                                                              
+       incorrect_guesses JSONB,                                                            
+       created_at TIMESTAMPTZ                                                              
+     );                                                                                    
+                                                                                           
+     -- Leaderboard materialized view for performance                                      
+     CREATE MATERIALIZED VIEW leaderboard AS                                               
+     SELECT ... RANK() OVER (PARTITION BY team, season ORDER BY total_score DESC);         
+                                                                                           
+     Implementation Phases                                                                 
+                                                                                           
+     Phase 1: Setup & Data (First)                                                         
+                                                                                           
+     1. Initialize Vite + React + TypeScript + Tailwind                                    
+     2. Create Python data extraction scripts                                              
+     3. Generate static JSON files                                                         
+     4. Set up basic routing                                                               
+                                                                                           
+     Phase 2: Core Game Logic                                                              
+                                                                                           
+     1. Implement Zustand game store                                                       
+     2. Build timer hook                                                                   
+     3. Implement scoring/guess validation                                                 
+     4. Name normalization utilities                                                       
+                                                                                           
+     Phase 3: Game UI                                                                      
+                                                                                           
+     1. PlayerInput with virtualized autocomplete                                          
+     2. Timer component with animations                                                    
+     3. GuessedPlayersList                                                                 
+     4. GamePage layout                                                                    
+                                                                                           
+     Phase 4: Home & Selection                                                             
+                                                                                           
+     1. TeamSelector with logos                                                            
+     2. YearSelector with range                                                            
+     3. Random selection logic                                                             
+     4. Settings modal (timer duration, year range)                                        
+                                                                                           
+     Phase 5: Results Page                                                                 
+                                                                                           
+     1. ScoreSummary (total, bonus, percentage)                                            
+     2. RosterReveal (correct highlighted, missed shown)                                   
+     3. IncorrectGuessesList                                                               
+                                                                                           
+     Phase 6: Supabase Integration                                                         
+                                                                                           
+     1. Set up Supabase project                                                            
+     2. Implement auth (optional, for leaderboard)                                         
+     3. Score submission                                                                   
+     4. Leaderboard queries                                                                
+                                                                                           
+     Phase 7: Polish                                                                       
+                                                                                           
+     1. Team color theming                                                                 
+     2. Animations (Framer Motion)                                                         
+     3. Responsive design                                                                  
+     4. Performance optimization                                                           
+                                                                                           
+     Critical Files to Create                                                              
+                                                                                           
+     1. src/stores/gameStore.ts - Core game state (status, guesses, scoring)               
+     2. src/components/game/PlayerInput/AutocompleteDropdown.tsx - Virtualized search      
+     3. scripts/extract_rosters.py - Data pipeline                                         
+     4. src/data/rosters.json - Generated roster data                                      
+     5. src/services/leaderboard.ts - Supabase integration                                 
+                                                                                           
+     Verification Plan                                                                     
+                                                                                           
+     1. Data extraction: Run Python scripts, verify JSON output                            
+     2. Autocomplete: Test fuzzy search, verify virtualization performance                 
+     3. Game flow: Manual playthrough - start → guess → time up → results                  
+     4. Scoring: Verify correct/bonus point calculation                                    
+     5. Leaderboard: Submit score, verify it appears in Supabase                           
+                                                                                           
+     Notes                                                                                 
+                                                                                           
+     - Team relocations (e.g., Sonics → Thunder): Will include historical team mapping     
+     - Multi-team players: Player appears in both team rosters for that season             
+     - NFL expansion: Architecture supports adding /data/nfl/ directory later   

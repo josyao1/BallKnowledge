@@ -1,0 +1,111 @@
+{
+  "team": "CHI",
+  "season": "2004-05",
+  "cached_at": "2026-01-21T23:43:19.008644",
+  "players": [
+    {
+      "id": 2550,
+      "name": "Kirk Hinrich",
+      "position": "G",
+      "number": "12",
+      "ppg": 15.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 2732,
+      "name": "Ben Gordon",
+      "position": "G",
+      "number": "7",
+      "ppg": 15.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 2804,
+      "name": "Andres Nocioni",
+      "position": "F",
+      "number": "5",
+      "ppg": 8.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 2199,
+      "name": "Tyson Chandler",
+      "position": "F-C",
+      "number": "3",
+      "ppg": 8.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 970,
+      "name": "Othella Harrington",
+      "position": "F-C",
+      "number": "24",
+      "ppg": 8.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 213,
+      "name": "Antonio Davis",
+      "position": "F-C",
+      "number": "34",
+      "ppg": 7.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 2457,
+      "name": "Jannero Pargo",
+      "position": "G",
+      "number": "15",
+      "ppg": 6.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 2768,
+      "name": "Chris Duhon",
+      "position": "G",
+      "number": "21",
+      "ppg": 5.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 15,
+      "name": "Eric Piatkowski",
+      "position": "G-F",
+      "number": "52",
+      "ppg": 4.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1444,
+      "name": "Lawrence Funderburke",
+      "position": "F",
+      "number": "51",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1559,
+      "name": "Adrian Griffin",
+      "position": "G-F",
+      "number": "44",
+      "ppg": 2.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 2876,
+      "name": "Jared Reiner",
+      "position": "C",
+      "number": "35",
+      "ppg": 1.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 2421,
+      "name": "Frank Williams",
+      "position": "G",
+      "number": "30",
+      "ppg": 0.7,
+      "isLowScorer": true
+    }
+  ]
+}

@@ -111,7 +111,7 @@ export function PlayerInput() {
         <div
           style={style}
           className={`px-4 py-2 cursor-pointer transition-colors ${
-            isSelected ? 'bg-indigo-600' : 'hover:bg-gray-700'
+            isSelected ? 'bg-[var(--nba-orange)] text-white' : 'hover:bg-[#2a2a2a] text-[var(--vintage-cream)]'
           }`}
           onClick={() => handleSelect(player.name)}
           onMouseEnter={() => setSelectedIndex(index)}
@@ -141,12 +141,12 @@ export function PlayerInput() {
         onKeyDown={handleKeyDown}
         placeholder="Type a player name..."
         autoComplete="off"
-        className="w-full p-4 bg-gray-800 text-white text-lg rounded-xl border-2 border-gray-700 focus:border-indigo-500 focus:outline-none transition-colors"
+        className="retro-input w-full p-4 text-lg"
       />
 
       {/* Dropdown */}
       {isOpen && filteredPlayers.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-xl shadow-xl border border-gray-700 overflow-hidden z-50">
+        <div className="absolute top-full left-0 right-0 mt-1 vintage-card overflow-hidden z-50">
           <List
             ref={listRef}
             height={Math.min(filteredPlayers.length * 40, 200)}
@@ -160,7 +160,7 @@ export function PlayerInput() {
       )}
 
       {/* Hint */}
-      <div className="mt-2 text-xs text-gray-500 text-center">
+      <div className="mt-2 text-xs text-[#666] text-center sports-font tracking-wider">
         Press Enter to submit or use arrow keys to navigate
       </div>
     </div>

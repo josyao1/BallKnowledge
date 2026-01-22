@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
 import { SettingsModal } from '../components/home/SettingsModal';
 import { teams } from '../data/teams';
-import { getTeamRoster } from '../services/roster';
+import { rosters } from '../data/rosters';
+import { fetchTeamRoster } from '../services/roster';
+import { isApiAvailable, resetApiAvailability } from '../services/api';
 import type { Team, GameMode } from '../types';
+
+type LoadingStatus = 'idle' | 'checking' | 'fetching' | 'success' | 'error';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -18,22 +23,71 @@ export function HomePage() {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Random mode year range
+  const [randomMinYear, setRandomMinYear] = useState(2015);
+  const [randomMaxYear, setRandomMaxYear] = useState(2024);
+
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+
+  // Check API status on mount
+  useEffect(() => {
+    const checkApi = async () => {
+      const available = await isApiAvailable();
+      setApiOnline(available);
+    };
+    checkApi();
+  }, []);
 
   const handleStartGame = async () => {
-    setIsLoading(true);
+    setLoadingStatus('checking');
+    setStatusMessage('Selecting team...');
 
     let team: Team;
     let year: number;
 
     if (gameMode === 'random') {
-      // Random selection
-      const randomTeamIndex = Math.floor(Math.random() * teams.length);
-      team = teams[randomTeamIndex];
-      year = Math.floor(Math.random() * (yearRange.max - yearRange.min + 1)) + yearRange.min;
+      // Check API availability first for random mode
+      const apiAvailable = await isApiAvailable();
+
+      if (apiAvailable) {
+        // API available: pick from all teams and years within selected range
+        const randomTeamIndex = Math.floor(Math.random() * teams.length);
+        team = teams[randomTeamIndex];
+        year = Math.floor(Math.random() * (randomMaxYear - randomMinYear + 1)) + randomMinYear;
+      } else {
+        // API offline: pick only from available static data within selected range
+        const availableTeamSeasons: { team: Team; season: string }[] = [];
+
+        for (const [abbr, seasons] of Object.entries(rosters)) {
+          const teamData = teams.find(t => t.abbreviation === abbr);
+          if (teamData) {
+            for (const season of Object.keys(seasons)) {
+              // Filter by selected year range
+              const seasonYear = parseInt(season.split('-')[0]);
+              if (seasonYear >= randomMinYear && seasonYear <= randomMaxYear) {
+                availableTeamSeasons.push({ team: teamData, season });
+              }
+            }
+          }
+        }
+
+        if (availableTeamSeasons.length === 0) {
+          setLoadingStatus('error');
+          setStatusMessage(`No offline data available for ${randomMinYear}-${randomMaxYear}.`);
+          return;
+        }
+
+        const randomChoice = availableTeamSeasons[Math.floor(Math.random() * availableTeamSeasons.length)];
+        team = randomChoice.team;
+        // Parse year from season string (e.g., "2023-24" -> 2023)
+        year = parseInt(randomChoice.season.split('-')[0]);
+      }
     } else {
       if (!selectedTeam || !selectedYear) {
-        setIsLoading(false);
+        setLoadingStatus('idle');
         return;
       }
       team = selectedTeam;
@@ -41,97 +95,320 @@ export function HomePage() {
     }
 
     const season = `${year}-${String(year + 1).slice(-2)}`;
-    const roster = getTeamRoster(team.abbreviation, season);
 
-    if (roster.length === 0) {
-      alert(`No roster data available for ${team.name} in ${season}`);
-      setIsLoading(false);
-      return;
+    setStatusMessage(`Loading ${team.abbreviation} ${season} roster...`);
+    setLoadingStatus('fetching');
+
+    try {
+      const result = await fetchTeamRoster(team.abbreviation, season);
+
+      if (result.players.length === 0) {
+        setLoadingStatus('error');
+        setStatusMessage(`No roster data found for ${team.name} ${season}`);
+        return;
+      }
+
+      setLoadingStatus('success');
+      setStatusMessage(
+        result.fromApi
+          ? result.cached
+            ? 'Loaded from cache!'
+            : 'Fetched from NBA API!'
+          : 'Using local data'
+      );
+
+      // Brief delay to show success message
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      setGameConfig(team, season, gameMode, timerDuration, result.players);
+      navigate('/game');
+    } catch (error) {
+      console.error('Error fetching roster:', error);
+      setLoadingStatus('error');
+      setStatusMessage('Failed to load roster. Please try again.');
     }
-
-    setGameConfig(team, season, gameMode, timerDuration, roster);
-    setIsLoading(false);
-    navigate('/game');
   };
 
+  const handleRetry = () => {
+    resetApiAvailability();
+    setLoadingStatus('idle');
+    setStatusMessage('');
+  };
+
+  const isLoading = loadingStatus === 'checking' || loadingStatus === 'fetching';
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="p-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Ball Knowledge</h1>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+      <header className="p-6 flex justify-between items-center border-b-4 border-[#333]">
+        <motion.h1
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="retro-title text-4xl text-[var(--nba-orange)]"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
+          Ball Knowledge
+        </motion.h1>
+        <div className="flex items-center gap-3">
+          {/* API Status indicator */}
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                apiOnline === null
+                  ? 'bg-[#666]'
+                  : apiOnline
+                  ? 'bg-[#22c55e]'
+                  : 'bg-[#888]'
+              }`}
+            />
+            <span className="text-xs text-[#666] sports-font">
+              {apiOnline === null ? 'Checking...' : apiOnline ? 'Live API' : 'Offline Mode'}
+            </span>
+          </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-3 hover:bg-[#2a2a2a] rounded-lg transition-colors border-2 border-[#3d3d3d]"
+          >
+            <svg className="w-6 h-6 text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
       </header>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
-        <div className="text-center mb-8">
-          <h2 className="text-5xl font-bold mb-4">NBA Roster Trivia</h2>
-          <p className="text-gray-400 text-lg">How well do you know NBA rosters?</p>
-        </div>
+        {/* Title section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-center mb-4"
+        >
+          <h2 className="retro-title text-6xl md:text-7xl mb-4 text-[var(--vintage-cream)]">
+            NBA Roster
+            <span className="block text-[var(--nba-gold)]">Trivia</span>
+          </h2>
+          <p className="sports-font text-lg text-[#888] tracking-wider">
+            How well do you know NBA rosters?
+          </p>
+        </motion.div>
+
+        {/* Decorative basketball */}
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: isLoading ? 360 : 0 }}
+          transition={{
+            type: isLoading ? 'tween' : 'spring',
+            delay: isLoading ? 0 : 0.2,
+            duration: isLoading ? 1 : undefined,
+            repeat: isLoading ? Infinity : 0,
+            ease: isLoading ? 'linear' : undefined,
+          }}
+          className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--nba-orange)] to-[#c44a1f] flex items-center justify-center shadow-lg relative"
+        >
+          <div className="absolute w-full h-[3px] bg-[#1a1a1a] rounded-full"></div>
+          <div className="absolute w-[3px] h-full bg-[#1a1a1a] rounded-full"></div>
+          <div className="absolute w-16 h-16 border-[3px] border-[#1a1a1a] rounded-full"></div>
+        </motion.div>
+
+        {/* Loading Status */}
+        <AnimatePresence mode="wait">
+          {loadingStatus !== 'idle' && (
+            <motion.div
+              key="status"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="scoreboard-panel p-4 min-w-[300px]"
+            >
+              <div className="flex items-center justify-center gap-3">
+                {isLoading && (
+                  <div className="w-4 h-4 border-2 border-[var(--nba-orange)] border-t-transparent rounded-full animate-spin" />
+                )}
+                {loadingStatus === 'success' && (
+                  <div className="text-[#22c55e]">✓</div>
+                )}
+                {loadingStatus === 'error' && (
+                  <div className="text-[var(--nba-red)]">✗</div>
+                )}
+                <span
+                  className={`sports-font text-sm ${
+                    loadingStatus === 'error' ? 'text-[var(--nba-red)]' : 'text-[var(--vintage-cream)]'
+                  }`}
+                >
+                  {statusMessage}
+                </span>
+              </div>
+              {loadingStatus === 'error' && (
+                <button
+                  onClick={handleRetry}
+                  className="mt-3 w-full text-center text-sm text-[var(--nba-orange)] hover:underline"
+                >
+                  Try Again
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Game mode selection */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => setGameMode('random')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              gameMode === 'random'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            Random
-          </button>
-          <button
-            onClick={() => setGameMode('manual')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              gameMode === 'manual'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            Choose Team
-          </button>
-        </div>
+        {loadingStatus === 'idle' && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="scoreboard-panel p-6"
+            >
+              <div className="sports-font text-sm text-[#888] text-center mb-4 tracking-widest">
+                Select Game Mode
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setGameMode('random')}
+                  className={`px-8 py-3 rounded-lg sports-font tracking-wider transition-all ${
+                    gameMode === 'random'
+                      ? 'bg-[var(--nba-orange)] text-white shadow-lg'
+                      : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+                  }`}
+                >
+                  Random
+                </button>
+                <button
+                  onClick={() => setGameMode('manual')}
+                  className={`px-8 py-3 rounded-lg sports-font tracking-wider transition-all ${
+                    gameMode === 'manual'
+                      ? 'bg-[var(--nba-orange)] text-white shadow-lg'
+                      : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+                  }`}
+                >
+                  Choose Team
+                </button>
+              </div>
+            </motion.div>
 
-        {/* Manual selection */}
-        {gameMode === 'manual' && (
-          <div className="w-full max-w-md space-y-4">
-            <TeamSelector
-              selectedTeam={selectedTeam}
-              onSelect={setSelectedTeam}
-            />
-            <YearSelector
-              selectedYear={selectedYear}
-              onSelect={setSelectedYear}
-              minYear={yearRange.min}
-              maxYear={yearRange.max}
-            />
-          </div>
+            {/* Random year range selection */}
+            <AnimatePresence>
+              {gameMode === 'random' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="w-full max-w-md"
+                >
+                  <div className="scoreboard-panel p-4">
+                    <div className="sports-font text-sm text-[#888] text-center mb-3 tracking-widest">
+                      Year Range
+                    </div>
+                    <div className="flex items-center justify-center gap-4">
+                      <select
+                        value={randomMinYear}
+                        onChange={(e) => {
+                          const newMin = parseInt(e.target.value);
+                          setRandomMinYear(newMin);
+                          if (newMin > randomMaxYear) {
+                            setRandomMaxYear(newMin);
+                          }
+                        }}
+                        className="retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:border-[var(--nba-orange)] focus:outline-none"
+                      >
+                        {Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i).map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-[#888] sports-font">to</span>
+                      <select
+                        value={randomMaxYear}
+                        onChange={(e) => {
+                          const newMax = parseInt(e.target.value);
+                          setRandomMaxYear(newMax);
+                          if (newMax < randomMinYear) {
+                            setRandomMinYear(newMax);
+                          }
+                        }}
+                        className="retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:border-[var(--nba-orange)] focus:outline-none"
+                      >
+                        {Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i).map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Manual selection */}
+            <AnimatePresence>
+              {gameMode === 'manual' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="w-full max-w-md space-y-4"
+                >
+                  <TeamSelector
+                    selectedTeam={selectedTeam}
+                    onSelect={setSelectedTeam}
+                  />
+                  <YearSelector
+                    selectedYear={selectedYear}
+                    onSelect={setSelectedYear}
+                    minYear={yearRange.min}
+                    maxYear={yearRange.max}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Start button */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStartGame}
+              disabled={isLoading || (gameMode === 'manual' && (!selectedTeam || !selectedYear))}
+              className="retro-btn retro-btn-gold px-16 py-4 text-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Start Game
+            </motion.button>
+
+            {/* Info */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="vintage-card p-4 max-w-md text-center"
+            >
+              <p className="text-[#aaa] text-sm">
+                {apiOnline
+                  ? `Any NBA team available (${gameMode === 'random' ? `${randomMinYear}-${randomMaxYear}` : '1985-2024'})`
+                  : 'Limited rosters available in offline mode'}
+              </p>
+              <div className="mt-3 flex justify-center items-center gap-2">
+                <span className="sports-font text-xs text-[#666]">Timer:</span>
+                <span className="scoreboard-number text-lg">
+                  {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
+                </span>
+              </div>
+            </motion.div>
+          </>
         )}
-
-        {/* Start button */}
-        <button
-          onClick={handleStartGame}
-          disabled={isLoading || (gameMode === 'manual' && (!selectedTeam || !selectedYear))}
-          className="px-12 py-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-xl text-xl font-bold transition-all transform hover:scale-105 disabled:hover:scale-100"
-        >
-          {isLoading ? 'Loading...' : 'Start Game'}
-        </button>
-
-        {/* Info */}
-        <div className="text-center text-gray-500 text-sm max-w-md">
-          <p>Name as many players as you can from the selected team's roster.</p>
-          <p className="mt-2">Timer: {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}</p>
-        </div>
       </main>
+
+      {/* Footer */}
+      <footer className="p-4 text-center border-t-4 border-[#333]">
+        <p className="sports-font text-xs text-[#555] tracking-widest">
+          Test your NBA knowledge
+        </p>
+      </footer>
 
       {/* Settings Modal */}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
