@@ -63,9 +63,7 @@ app.add_middleware(
         "http://localhost:4173",
         "http://127.0.0.1:5173",
         # Production domains
-        "https://ballknowledge.vercel.app",
-        "https://ball-knowledge.vercel.app",
-        "https://ballknowledge-josyao1.vercel.app",
+        "https://ball-knowledge-delta.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
