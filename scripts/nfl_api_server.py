@@ -238,15 +238,14 @@ def fetch_team_roster(team: str, season: int) -> list[dict]:
         return []
 
     try:
-        # Import roster data for the season
-        df = nfl.import_rosters([season])
+        # Import roster data for the season using correct function name
+        df = nfl.import_seasonal_rosters([season])
 
         if df is None or df.empty:
             print(f"No roster data returned for season {season}")
             return []
 
         # Filter for the specific team
-        # nfl_data_py uses team abbreviations like 'BUF', 'KC', etc.
         team_df = df[df['team'] == team]
 
         if team_df.empty:
@@ -258,12 +257,20 @@ def fetch_team_roster(team: str, season: int) -> list[dict]:
             print(f"Available teams: {df['team'].unique().tolist()}")
             return []
 
+        # Filter out cut players - keep only active roster
+        # Status values: ACT (active), RES (reserve), PUP, IR, etc.
+        # Exclude CUT players
+        active_df = team_df[team_df['status'] != 'CUT']
+        if active_df.empty:
+            # If no active players, just use all players
+            active_df = team_df
+
         players = []
         seen_ids = set()
 
-        for _, row in team_df.iterrows():
-            # Get player ID (use gsis_id or player_id)
-            player_id = str(row.get('gsis_id') or row.get('player_id') or row.get('espn_id') or f"{row.get('player_name', 'unknown')}_{season}")
+        for _, row in active_df.iterrows():
+            # Get player ID (use player_id first, then other IDs)
+            player_id = str(row.get('player_id') or row.get('espn_id') or f"{row.get('player_name', 'unknown')}_{season}")
 
             if player_id in seen_ids:
                 continue
@@ -271,12 +278,15 @@ def fetch_team_roster(team: str, season: int) -> list[dict]:
 
             # Get player name
             name = row.get('player_name') or row.get('full_name') or "Unknown"
+            if name == "Unknown":
+                continue
 
             # Get position
             position = row.get('position') or row.get('depth_chart_position') or ""
 
-            # Get jersey number
-            number = str(row.get('jersey_number') or row.get('number') or "")
+            # Get jersey number - handle NaN
+            jersey = row.get('jersey_number')
+            number = str(int(jersey)) if jersey and not (isinstance(jersey, float) and jersey != jersey) else ""
 
             # Determine unit
             unit = get_position_unit(position)
@@ -308,7 +318,7 @@ def fetch_all_season_players(season: int) -> list[dict]:
         return []
 
     try:
-        df = nfl.import_rosters([season])
+        df = nfl.import_seasonal_rosters([season])
 
         if df is None or df.empty:
             print(f"No player data returned for season {season}")
@@ -324,7 +334,7 @@ def fetch_all_season_players(season: int) -> list[dict]:
                 continue
             seen_names.add(name.lower())
 
-            player_id = str(row.get('gsis_id') or row.get('player_id') or f"{name}_{season}")
+            player_id = str(row.get('player_id') or f"{name}_{season}")
 
             players.append({
                 "id": player_id,

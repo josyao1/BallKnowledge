@@ -1,14 +1,21 @@
-import { useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
+import { useLobbyStore } from '../stores/lobbyStore';
+import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { Timer } from '../components/game/Timer';
 import { PlayerInput } from '../components/game/PlayerInput';
 import { GuessedPlayersList } from '../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../components/game/TeamDisplay';
+import { LiveScoreboard } from '../components/multiplayer/LiveScoreboard';
 
 export function GamePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMultiplayer = location.state?.multiplayer || false;
+  const lobbyCode = useLobbyStore((state) => state.lobby?.join_code);
+
   const {
     selectedTeam,
     selectedSeason,
@@ -25,6 +32,33 @@ export function GamePage() {
     processGuesses,
     tick,
   } = useGameStore();
+
+  // Multiplayer state
+  const { lobby, players, currentPlayerId, syncScore, endGame: endLobbyGame } = useLobbyStore();
+  useLobbySubscription(isMultiplayer ? lobby?.id || null : null);
+
+  // Debounce score sync for multiplayer
+  const lastSyncRef = useRef<{ score: number; count: number }>({ score: 0, count: 0 });
+
+  // Sync score to lobby in multiplayer mode
+  useEffect(() => {
+    if (!isMultiplayer || !lobby) return;
+
+    const currentScore = score;
+    const currentCount = guessedPlayers.length;
+
+    // Only sync if changed
+    if (lastSyncRef.current.score !== currentScore || lastSyncRef.current.count !== currentCount) {
+      lastSyncRef.current = { score: currentScore, count: currentCount };
+
+      // Debounce sync
+      const timeout = setTimeout(() => {
+        syncScore(currentScore, currentCount);
+      }, 300);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [score, guessedPlayers.length, isMultiplayer, lobby, syncScore]);
 
   // Redirect if no game configured
   useEffect(() => {
@@ -65,9 +99,17 @@ export function GamePage() {
       if (hideResultsDuringGame) {
         processGuesses();
       }
-      navigate('/results');
+
+      if (isMultiplayer && lobbyCode) {
+        // Sync final score then navigate to multiplayer results
+        syncScore(score, guessedPlayers.length);
+        endLobbyGame();
+        navigate(`/lobby/${lobbyCode}/results`);
+      } else {
+        navigate('/results');
+      }
     }
-  }, [status, navigate, hideResultsDuringGame, processGuesses]);
+  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers.length, syncScore, endLobbyGame]);
 
   const handleGiveUp = useCallback(() => {
     endGame();
@@ -153,54 +195,72 @@ export function GamePage() {
       </header>
 
       {/* Main game area */}
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4 flex flex-col">
-        {/* Player input */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
-          <PlayerInput />
-        </motion.div>
+      <main className="flex-1 max-w-6xl mx-auto w-full p-4 flex gap-4">
+        {/* Game content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Player input */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <PlayerInput />
+          </motion.div>
 
-        {/* Guessed players */}
-        <div
-          className="flex-1 overflow-y-auto vintage-card p-4"
-          style={{ borderColor: `${selectedTeam.colors.primary}30` }}
-        >
-          <div className="sports-font text-xs mb-3 tracking-widest" style={{ color: selectedTeam.colors.secondary }}>
-            {hideResultsDuringGame
-              ? `Your Guesses (${pendingGuesses.length})`
-              : `Players Found (${guessedPlayers.length})`}
+          {/* Guessed players */}
+          <div
+            className="flex-1 overflow-y-auto vintage-card p-4"
+            style={{ borderColor: `${selectedTeam.colors.primary}30` }}
+          >
+            <div className="sports-font text-xs mb-3 tracking-widest" style={{ color: selectedTeam.colors.secondary }}>
+              {hideResultsDuringGame
+                ? `Your Guesses (${pendingGuesses.length})`
+                : `Players Found (${guessedPlayers.length})`}
+            </div>
+            <GuessedPlayersList
+              guessedPlayers={guessedPlayers}
+              incorrectGuesses={incorrectGuesses}
+              pendingGuesses={hideResultsDuringGame ? pendingGuesses : []}
+              hideResults={hideResultsDuringGame}
+            />
           </div>
-          <GuessedPlayersList
-            guessedPlayers={guessedPlayers}
-            incorrectGuesses={incorrectGuesses}
-            pendingGuesses={hideResultsDuringGame ? pendingGuesses : []}
-            hideResults={hideResultsDuringGame}
-          />
+
+          {/* Give up button */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-4 flex justify-center"
+          >
+            <button
+              onClick={handleGiveUp}
+              className="px-8 py-2 rounded-lg transition-colors sports-font tracking-wider"
+              style={{
+                backgroundColor: `${selectedTeam.colors.primary}20`,
+                color: selectedTeam.colors.primary,
+                borderWidth: '2px',
+                borderColor: `${selectedTeam.colors.primary}50`,
+              }}
+            >
+              Give Up
+            </button>
+          </motion.div>
         </div>
 
-        {/* Give up button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 flex justify-center"
-        >
-          <button
-            onClick={handleGiveUp}
-            className="px-8 py-2 rounded-lg transition-colors sports-font tracking-wider"
-            style={{
-              backgroundColor: `${selectedTeam.colors.primary}20`,
-              color: selectedTeam.colors.primary,
-              borderWidth: '2px',
-              borderColor: `${selectedTeam.colors.primary}50`,
-            }}
+        {/* Live scoreboard (multiplayer only) */}
+        {isMultiplayer && players.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="w-64 flex-shrink-0 hidden md:block"
           >
-            Give Up
-          </button>
-        </motion.div>
+            <LiveScoreboard
+              players={players}
+              currentPlayerId={currentPlayerId}
+              rosterSize={currentRoster.length}
+            />
+          </motion.div>
+        )}
       </main>
     </div>
   );

@@ -1,0 +1,553 @@
+{
+  "team": "TB",
+  "season": 2021,
+  "cached_at": "2026-01-22T20:43:32.152680",
+  "players": [
+    {
+      "id": "00-0034668",
+      "name": "Aaron Stinnie",
+      "position": "OL",
+      "number": "64",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0034678",
+      "name": "Alex Cappa",
+      "position": "OL",
+      "number": "65",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0032243",
+      "name": "Ali Marpet",
+      "position": "OL",
+      "number": "74",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036123",
+      "name": "Brandon Walton",
+      "position": "OL",
+      "number": "73",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0035846",
+      "name": "Donell Stanley",
+      "position": "OL",
+      "number": "73",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0032217",
+      "name": "Donovan Smith",
+      "position": "OL",
+      "number": "76",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036048",
+      "name": "John Molchon",
+      "position": "OL",
+      "number": "75",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0030829",
+      "name": "Josh Wells",
+      "position": "OL",
+      "number": "72",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036105",
+      "name": "Nick Leverett",
+      "position": "OL",
+      "number": "60",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036985",
+      "name": "Robert Hainsey",
+      "position": "OL",
+      "number": "70",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0029895",
+      "name": "Ryan Jensen",
+      "position": "OL",
+      "number": "66",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036759",
+      "name": "Sadarius Hutcherson",
+      "position": "OL",
+      "number": "61",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036406",
+      "name": "Tristan Wirfs",
+      "position": "OL",
+      "number": "78",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0027948",
+      "name": "Blaine Gabbert",
+      "position": "QB",
+      "number": "11",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036928",
+      "name": "Kyle Trask",
+      "position": "QB",
+      "number": "2",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0029857",
+      "name": "Ryan Griffin",
+      "position": "QB",
+      "number": "4",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0019596",
+      "name": "Tom Brady",
+      "position": "QB",
+      "number": "12",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0030456",
+      "name": "Giovani Bernard",
+      "position": "RB",
+      "number": "25",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036450",
+      "name": "Ke'Shawn Vaughn",
+      "position": "RB",
+      "number": "21",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0030465",
+      "name": "Kenjon Barner",
+      "position": "RB",
+      "number": "38",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0033856",
+      "name": "Leonard Fournette",
+      "position": "RB",
+      "number": "7",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0034816",
+      "name": "Ronald Jones",
+      "position": "RB",
+      "number": "27",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0031273",
+      "name": "Cameron Brate",
+      "position": "TE",
+      "number": "84",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0034735",
+      "name": "Codey McElroy",
+      "position": "TE",
+      "number": "86",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0029738",
+      "name": "Darren Fells",
+      "position": "TE",
+      "number": "88",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0033879",
+      "name": "O.J. Howard",
+      "position": "TE",
+      "number": "80",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0027656",
+      "name": "Rob Gronkowski",
+      "position": "TE",
+      "number": "87",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0032054",
+      "name": "Breshad Perriman",
+      "position": "WR",
+      "number": "16",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0033921",
+      "name": "Chris Godwin",
+      "position": "WR",
+      "number": "14",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0033215",
+      "name": "Cyril Grayson",
+      "position": "WR",
+      "number": "15",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036877",
+      "name": "Jaelon Darden",
+      "position": "WR",
+      "number": "1",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0031051",
+      "name": "John Brown",
+      "position": "WR",
+      "number": "89",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036104",
+      "name": "John Hurst",
+      "position": "WR",
+      "number": "80",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0034386",
+      "name": "Justin Watson",
+      "position": "WR",
+      "number": "17",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0031408",
+      "name": "Mike Evans",
+      "position": "WR",
+      "number": "13",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0035298",
+      "name": "Scott Miller",
+      "position": "WR",
+      "number": "10",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0036427",
+      "name": "Tyler Johnson",
+      "position": "WR",
+      "number": "18",
+      "unit": "Offense"
+    },
+    {
+      "id": "00-0032637",
+      "name": "Andrew Adams",
+      "position": "DB",
+      "number": "26",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036411",
+      "name": "Antoine Winfield",
+      "position": "DB",
+      "number": "31",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0030541",
+      "name": "Blidi Wreh-Wilson",
+      "position": "DB",
+      "number": "36",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0034778",
+      "name": "Carlton Davis",
+      "position": "DB",
+      "number": "24",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0032042",
+      "name": "Curtis Riley",
+      "position": "DB",
+      "number": "37",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0034515",
+      "name": "Dee Delaney",
+      "position": "DB",
+      "number": "30",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0035699",
+      "name": "Jamel Dean",
+      "position": "DB",
+      "number": "35",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0034374",
+      "name": "Jordan Whitehead",
+      "position": "DB",
+      "number": "33",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0035681",
+      "name": "Mike Edwards",
+      "position": "DB",
+      "number": "32",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0031331",
+      "name": "Pierre Desir",
+      "position": "DB",
+      "number": "29",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0032410",
+      "name": "Rashard Robinson",
+      "position": "DB",
+      "number": "28",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0028092",
+      "name": "Richard Sherman",
+      "position": "DB",
+      "number": "5",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0031016",
+      "name": "Ross Cockrell",
+      "position": "DB",
+      "number": "43",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0035239",
+      "name": "Sean Murphy-Bunting",
+      "position": "DB",
+      "number": "23",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036608",
+      "name": "Troy Warner",
+      "position": "DB",
+      "number": "22",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036050",
+      "name": "Benning Potoa'e",
+      "position": "DL",
+      "number": "91",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0027867",
+      "name": "Jason Pierre-Paul",
+      "position": "DL",
+      "number": "90",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036180",
+      "name": "Kobe Smith",
+      "position": "DL",
+      "number": "71",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0027855",
+      "name": "Ndamukong Suh",
+      "position": "DL",
+      "number": "93",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0033595",
+      "name": "Pat O'Connor",
+      "position": "DL",
+      "number": "79",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0031957",
+      "name": "Rakeem Nunez-Roches",
+      "position": "DL",
+      "number": "56",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0026564",
+      "name": "Steve McLendon",
+      "position": "DL",
+      "number": "96",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0034773",
+      "name": "Vita Vea",
+      "position": "DL",
+      "number": "50",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0030386",
+      "name": "William Gholston",
+      "position": "DL",
+      "number": "92",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0035969",
+      "name": "Willington Previlon",
+      "position": "DL",
+      "number": "99",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0035254",
+      "name": "Anthony Nelson",
+      "position": "LB",
+      "number": "98",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036045",
+      "name": "Cam Gill",
+      "position": "LB",
+      "number": "49",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0035707",
+      "name": "Devin White",
+      "position": "LB",
+      "number": "45",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036761",
+      "name": "Elijah Ponder",
+      "position": "LB",
+      "number": "44",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036672",
+      "name": "Grant Stuard",
+      "position": "LB",
+      "number": "48",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036967",
+      "name": "Joe Tryon",
+      "position": "LB",
+      "number": "9",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036643",
+      "name": "K.J. Britt",
+      "position": "LB",
+      "number": "52",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0030382",
+      "name": "Kevin Minter",
+      "position": "LB",
+      "number": "51",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0029562",
+      "name": "Lavonte David",
+      "position": "LB",
+      "number": "54",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0031101",
+      "name": "Shaquil Barrett",
+      "position": "LB",
+      "number": "58",
+      "unit": "Defense"
+    },
+    {
+      "id": "00-0036757",
+      "name": "Jose Borregales",
+      "position": "K",
+      "number": "19",
+      "unit": "Special Teams"
+    },
+    {
+      "id": "00-0026968",
+      "name": "Ryan Succop",
+      "position": "K",
+      "number": "3",
+      "unit": "Special Teams"
+    },
+    {
+      "id": "00-0026844",
+      "name": "Garrison Sanborn",
+      "position": "LS",
+      "number": "89",
+      "unit": "Special Teams"
+    },
+    {
+      "id": "00-0033196",
+      "name": "Zach Triner",
+      "position": "LS",
+      "number": "97",
+      "unit": "Special Teams"
+    },
+    {
+      "id": "00-0032065",
+      "name": "Bradley Pinion",
+      "position": "P",
+      "number": "8",
+      "unit": "Special Teams"
+    },
+    {
+      "id": "00-0036319",
+      "name": "Sterling Hofrichter",
+      "position": "P",
+      "number": "19",
+      "unit": "Special Teams"
+    }
+  ]
+}

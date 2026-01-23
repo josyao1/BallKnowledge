@@ -25,16 +25,16 @@ export function TeamSelector({ selectedTeam, onSelect, sport = 'nba' }: TeamSele
   const teamList = sport === 'nba' ? teams : nflTeams;
 
   // Group teams by conference
-  const getConferences = () => {
+  const getConferences = (): Record<string, GenericTeam[]> => {
     if (sport === 'nba') {
       return {
-        Eastern: teamList.filter((t) => t.conference === 'Eastern'),
-        Western: teamList.filter((t) => t.conference === 'Western'),
+        Eastern: teamList.filter((t) => t.conference === 'Eastern') as GenericTeam[],
+        Western: teamList.filter((t) => t.conference === 'Western') as GenericTeam[],
       };
     } else {
       return {
-        AFC: teamList.filter((t) => t.conference === 'AFC'),
-        NFC: teamList.filter((t) => t.conference === 'NFC'),
+        AFC: teamList.filter((t) => t.conference === 'AFC') as GenericTeam[],
+        NFC: teamList.filter((t) => t.conference === 'NFC') as GenericTeam[],
       };
     }
   };

@@ -68,6 +68,94 @@ export interface Database {
           created_at?: string;
         };
       };
+      lobbies: {
+        Row: {
+          id: string;
+          join_code: string;
+          host_id: string;
+          host_name: string;
+          sport: string;
+          team_abbreviation: string;
+          season: string;
+          timer_duration: number;
+          status: 'waiting' | 'countdown' | 'playing' | 'finished';
+          max_players: number;
+          created_at: string;
+          started_at: string | null;
+          finished_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          join_code: string;
+          host_id: string;
+          host_name: string;
+          sport?: string;
+          team_abbreviation: string;
+          season: string;
+          timer_duration?: number;
+          status?: 'waiting' | 'countdown' | 'playing' | 'finished';
+          max_players?: number;
+          created_at?: string;
+          started_at?: string | null;
+          finished_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          join_code?: string;
+          host_id?: string;
+          host_name?: string;
+          sport?: string;
+          team_abbreviation?: string;
+          season?: string;
+          timer_duration?: number;
+          status?: 'waiting' | 'countdown' | 'playing' | 'finished';
+          max_players?: number;
+          created_at?: string;
+          started_at?: string | null;
+          finished_at?: string | null;
+        };
+      };
+      lobby_players: {
+        Row: {
+          id: string;
+          lobby_id: string;
+          player_id: string;
+          player_name: string;
+          is_host: boolean;
+          is_ready: boolean;
+          score: number;
+          guessed_count: number;
+          is_connected: boolean;
+          joined_at: string;
+          finished_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          lobby_id: string;
+          player_id: string;
+          player_name: string;
+          is_host?: boolean;
+          is_ready?: boolean;
+          score?: number;
+          guessed_count?: number;
+          is_connected?: boolean;
+          joined_at?: string;
+          finished_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          lobby_id?: string;
+          player_id?: string;
+          player_name?: string;
+          is_host?: boolean;
+          is_ready?: boolean;
+          score?: number;
+          guessed_count?: number;
+          is_connected?: boolean;
+          joined_at?: string;
+          finished_at?: string | null;
+        };
+      };
     };
     Views: {
       leaderboard: {
@@ -91,3 +179,12 @@ export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type GameSession = Database['public']['Tables']['game_sessions']['Row'];
 export type GameSessionInsert = Database['public']['Tables']['game_sessions']['Insert'];
 export type LeaderboardEntry = Database['public']['Views']['leaderboard']['Row'];
+
+// Lobby types
+export type Lobby = Database['public']['Tables']['lobbies']['Row'];
+export type LobbyInsert = Database['public']['Tables']['lobbies']['Insert'];
+export type LobbyUpdate = Database['public']['Tables']['lobbies']['Update'];
+export type LobbyPlayer = Database['public']['Tables']['lobby_players']['Row'];
+export type LobbyPlayerInsert = Database['public']['Tables']['lobby_players']['Insert'];
+export type LobbyPlayerUpdate = Database['public']['Tables']['lobby_players']['Update'];
+export type LobbyStatus = Lobby['status'];

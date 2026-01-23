@@ -1,0 +1,143 @@
+{
+  "team": "WAS",
+  "season": "2021-22",
+  "cached_at": "2026-01-22T15:33:43.263984",
+  "players": [
+    {
+      "id": 203078,
+      "name": "Bradley Beal",
+      "position": "G",
+      "number": "3",
+      "ppg": 23.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 204001,
+      "name": "Kristaps Porzi\u0146\u0123is",
+      "position": "F-C",
+      "number": "6",
+      "ppg": 20.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628398,
+      "name": "Kyle Kuzma",
+      "position": "F",
+      "number": "33",
+      "ppg": 17.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 203484,
+      "name": "Kentavious Caldwell-Pope",
+      "position": "G",
+      "number": "1",
+      "ppg": 13.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629060,
+      "name": "Rui Hachimura",
+      "position": "F",
+      "number": "8",
+      "ppg": 11.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629655,
+      "name": "Daniel Gafford",
+      "position": "F-C",
+      "number": "21",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630166,
+      "name": "Deni Avdija",
+      "position": "F",
+      "number": "9",
+      "ppg": 8.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630557,
+      "name": "Corey Kispert",
+      "position": "F",
+      "number": "24",
+      "ppg": 8.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 203526,
+      "name": "Raul Neto",
+      "position": "G",
+      "number": "19",
+      "ppg": 7.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628418,
+      "name": "Thomas Bryant",
+      "position": "C-F",
+      "number": "13",
+      "ppg": 7.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 202397,
+      "name": "Ish Smith",
+      "position": "G",
+      "number": "4",
+      "ppg": 6.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630264,
+      "name": "Anthony Gill",
+      "position": "F",
+      "number": "16",
+      "ppg": 4.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 203107,
+      "name": "Tomas Satoransky",
+      "position": "G",
+      "number": "31",
+      "ppg": 3.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630176,
+      "name": "Vernon Carey Jr.",
+      "position": "F-C",
+      "number": "22",
+      "ppg": 2.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630216,
+      "name": "Cassius Winston",
+      "position": "G",
+      "number": "5",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630225,
+      "name": "Isaiah Todd",
+      "position": "F",
+      "number": "14",
+      "ppg": 1.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630648,
+      "name": "Jordan Schakel",
+      "position": "G",
+      "number": "20",
+      "ppg": 1.3,
+      "isLowScorer": true
+    }
+  ]
+}

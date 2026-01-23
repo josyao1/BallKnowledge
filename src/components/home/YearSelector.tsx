@@ -1,18 +1,21 @@
 import { useState } from 'react';
+import type { Sport } from '../../types';
 
 interface YearSelectorProps {
   selectedYear: number | null;
   onSelect: (year: number) => void;
   minYear: number;
   maxYear: number;
+  sport?: Sport;
 }
 
-export function YearSelector({ selectedYear, onSelect, minYear, maxYear }: YearSelectorProps) {
+export function YearSelector({ selectedYear, onSelect, minYear, maxYear, sport = 'nba' }: YearSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i);
 
-  const formatSeason = (year: number) => `${year}-${String(year + 1).slice(-2)}`;
+  const formatSeason = (year: number) =>
+    sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
 
   return (
     <div className="relative">

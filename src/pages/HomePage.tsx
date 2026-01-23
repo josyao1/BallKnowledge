@@ -56,6 +56,17 @@ export function HomePage() {
     checkApi();
   }, [sport]);
 
+  // Reset selection when sport changes
+  useEffect(() => {
+    setSelectedTeam(null);
+    setSelectedYear(null);
+    // Reset year range to appropriate defaults for the sport
+    if (sport === 'nfl') {
+      setRandomMinYear(Math.max(randomMinYear, 2000));
+      setRandomMaxYear(Math.min(randomMaxYear, 2024));
+    }
+  }, [sport]);
+
   const MAX_RETRIES = 5;
 
   const handleStartGame = async () => {
@@ -239,9 +250,9 @@ export function HomePage() {
         <motion.h1
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="retro-title text-4xl text-[var(--nba-orange)]"
+          className={`retro-title text-4xl ${sport === 'nba' ? 'text-[var(--nba-orange)]' : 'text-[#013369]'}`}
         >
-          Ball Knowledge
+          {sport === 'nba' ? 'Ball' : 'Pigskin'} Knowledge
         </motion.h1>
         <div className="flex items-center gap-3">
           {/* API Status indicator */}
@@ -318,23 +329,45 @@ export function HomePage() {
           </button>
         </motion.div>
 
-        {/* Decorative basketball */}
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: isLoading ? 360 : 0 }}
-          transition={{
-            type: isLoading ? 'tween' : 'spring',
-            delay: isLoading ? 0 : 0.2,
-            duration: isLoading ? 1 : undefined,
-            repeat: isLoading ? Infinity : 0,
-            ease: isLoading ? 'linear' : undefined,
-          }}
-          className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--nba-orange)] to-[#c44a1f] flex items-center justify-center shadow-lg relative"
-        >
-          <div className="absolute w-full h-[3px] bg-[#1a1a1a] rounded-full"></div>
-          <div className="absolute w-[3px] h-full bg-[#1a1a1a] rounded-full"></div>
-          <div className="absolute w-16 h-16 border-[3px] border-[#1a1a1a] rounded-full"></div>
-        </motion.div>
+        {/* Decorative ball - basketball for NBA, football for NFL */}
+        {sport === 'nba' ? (
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: isLoading ? 360 : 0 }}
+            transition={{
+              type: isLoading ? 'tween' : 'spring',
+              delay: isLoading ? 0 : 0.2,
+              duration: isLoading ? 1 : undefined,
+              repeat: isLoading ? Infinity : 0,
+              ease: isLoading ? 'linear' : undefined,
+            }}
+            className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--nba-orange)] to-[#c44a1f] flex items-center justify-center shadow-lg relative"
+          >
+            <div className="absolute w-full h-[3px] bg-[#1a1a1a] rounded-full"></div>
+            <div className="absolute w-[3px] h-full bg-[#1a1a1a] rounded-full"></div>
+            <div className="absolute w-16 h-16 border-[3px] border-[#1a1a1a] rounded-full"></div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ scale: 0, rotate: -90 }}
+            animate={{ scale: 1, rotate: isLoading ? 360 : 0 }}
+            transition={{
+              type: isLoading ? 'tween' : 'spring',
+              delay: isLoading ? 0 : 0.2,
+              duration: isLoading ? 1 : undefined,
+              repeat: isLoading ? Infinity : 0,
+              ease: isLoading ? 'linear' : undefined,
+            }}
+            className="w-24 h-14 rounded-[50%] bg-gradient-to-br from-[#8B4513] to-[#5D3A1A] flex items-center justify-center shadow-lg relative overflow-hidden"
+          >
+            {/* Football laces */}
+            <div className="absolute w-[3px] h-8 bg-white rounded-full"></div>
+            <div className="absolute w-3 h-[2px] bg-white rounded-full -translate-y-2"></div>
+            <div className="absolute w-3 h-[2px] bg-white rounded-full -translate-y-0.5"></div>
+            <div className="absolute w-3 h-[2px] bg-white rounded-full translate-y-1"></div>
+            <div className="absolute w-3 h-[2px] bg-white rounded-full translate-y-2.5"></div>
+          </motion.div>
+        )}
 
         {/* Loading Status */}
         <AnimatePresence mode="wait">
@@ -348,7 +381,7 @@ export function HomePage() {
             >
               <div className="flex items-center justify-center gap-3">
                 {isLoading && (
-                  <div className="w-4 h-4 border-2 border-[var(--nba-orange)] border-t-transparent rounded-full animate-spin" />
+                  <div className={`w-4 h-4 border-2 ${sport === 'nba' ? 'border-[var(--nba-orange)]' : 'border-[#013369]'} border-t-transparent rounded-full animate-spin`} />
                 )}
                 {loadingStatus === 'success' && (
                   <div className="text-[#22c55e]">✓</div>
@@ -367,7 +400,7 @@ export function HomePage() {
               {loadingStatus === 'error' && (
                 <button
                   onClick={handleRetry}
-                  className="mt-3 w-full text-center text-sm text-[var(--nba-orange)] hover:underline"
+                  className={`mt-3 w-full text-center text-sm ${sport === 'nba' ? 'text-[var(--nba-orange)]' : 'text-[#013369]'} hover:underline`}
                 >
                   Try Again
                 </button>
@@ -393,7 +426,7 @@ export function HomePage() {
                   onClick={() => setGameMode('random')}
                   className={`px-8 py-3 rounded-lg sports-font tracking-wider transition-all ${
                     gameMode === 'random'
-                      ? 'bg-[var(--nba-orange)] text-white shadow-lg'
+                      ? `${sport === 'nba' ? 'bg-[var(--nba-orange)]' : 'bg-[#013369]'} text-white shadow-lg`
                       : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
                   }`}
                 >
@@ -403,7 +436,7 @@ export function HomePage() {
                   onClick={() => setGameMode('manual')}
                   className={`px-8 py-3 rounded-lg sports-font tracking-wider transition-all ${
                     gameMode === 'manual'
-                      ? 'bg-[var(--nba-orange)] text-white shadow-lg'
+                      ? `${sport === 'nba' ? 'bg-[var(--nba-orange)]' : 'bg-[#013369]'} text-white shadow-lg`
                       : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
                   }`}
                 >
@@ -435,7 +468,7 @@ export function HomePage() {
                             setRandomMaxYear(newMin);
                           }
                         }}
-                        className="retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:border-[var(--nba-orange)] focus:outline-none"
+                        className={`retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:outline-none ${sport === 'nba' ? 'focus:border-[var(--nba-orange)]' : 'focus:border-[#013369]'}`}
                       >
                         {Array.from(
                           { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
@@ -456,7 +489,7 @@ export function HomePage() {
                             setRandomMinYear(newMax);
                           }
                         }}
-                        className="retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:border-[var(--nba-orange)] focus:outline-none"
+                        className={`retro-select bg-[#1a1a1a] text-[var(--vintage-cream)] px-4 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:outline-none ${sport === 'nba' ? 'focus:border-[var(--nba-orange)]' : 'focus:border-[#013369]'}`}
                       >
                         {Array.from(
                           { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
@@ -485,12 +518,14 @@ export function HomePage() {
                   <TeamSelector
                     selectedTeam={selectedTeam}
                     onSelect={setSelectedTeam}
+                    sport={sport}
                   />
                   <YearSelector
                     selectedYear={selectedYear}
                     onSelect={setSelectedYear}
-                    minYear={yearRange.min}
-                    maxYear={yearRange.max}
+                    minYear={sport === 'nba' ? yearRange.min : 2000}
+                    maxYear={sport === 'nba' ? yearRange.max : 2024}
+                    sport={sport}
                   />
                 </motion.div>
               )}
@@ -507,8 +542,33 @@ export function HomePage() {
               disabled={isLoading || (gameMode === 'manual' && (!selectedTeam || !selectedYear))}
               className="retro-btn retro-btn-gold px-16 py-4 text-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Start Game
+              Start Solo Game
             </motion.button>
+
+            {/* Multiplayer buttons */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              className="flex gap-3"
+            >
+              <button
+                onClick={() => navigate('/lobby/create')}
+                className={`px-6 py-3 rounded-lg sports-font tracking-wider transition-all border-2 ${
+                  sport === 'nba'
+                    ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white'
+                    : 'border-[#013369] text-[#013369] hover:bg-[#013369] hover:text-white'
+                }`}
+              >
+                Create Lobby
+              </button>
+              <button
+                onClick={() => navigate('/lobby/join')}
+                className="px-6 py-3 rounded-lg sports-font tracking-wider transition-all border-2 border-[#3d3d3d] text-[#888] hover:border-[#555] hover:text-[var(--vintage-cream)]"
+              >
+                Join Lobby
+              </button>
+            </motion.div>
 
             {/* Info */}
             <motion.div
@@ -519,8 +579,8 @@ export function HomePage() {
             >
               <p className="text-[#aaa] text-sm">
                 {apiOnline
-                  ? `Any NBA team available (${gameMode === 'random' ? `${randomMinYear}-${randomMaxYear}` : '1985-2024'})`
-                  : 'Limited rosters available in offline mode'}
+                  ? `Any ${sport.toUpperCase()} team available (${gameMode === 'random' ? `${randomMinYear}-${randomMaxYear}` : sport === 'nba' ? '1985-2024' : '2000-2024'})`
+                  : sport === 'nba' ? 'Limited rosters available in offline mode' : 'NFL requires Live API connection'}
               </p>
               <div className="mt-3 flex justify-center items-center gap-2">
                 <span className="sports-font text-xs text-[#666]">Timer:</span>
@@ -536,7 +596,7 @@ export function HomePage() {
       {/* Footer */}
       <footer className="p-4 text-center border-t-4 border-[#333]">
         <p className="sports-font text-xs text-[#555] tracking-widest">
-          Test your NBA knowledge
+          Test your {sport === 'nba' ? 'NBA' : 'NFL'} knowledge
         </p>
       </footer>
 

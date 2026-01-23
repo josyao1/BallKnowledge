@@ -2,6 +2,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { GamePage } from './pages/GamePage';
 import { ResultsPage } from './pages/ResultsPage';
+import { LobbyCreatePage } from './pages/LobbyCreatePage';
+import { LobbyJoinPage } from './pages/LobbyJoinPage';
+import { LobbyWaitingPage } from './pages/LobbyWaitingPage';
+import { MultiplayerResultsPage } from './pages/MultiplayerResultsPage';
 
 function App() {
   return (
@@ -10,6 +14,12 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/game" element={<GamePage />} />
         <Route path="/results" element={<ResultsPage />} />
+        {/* Multiplayer routes */}
+        <Route path="/lobby/create" element={<LobbyCreatePage />} />
+        <Route path="/lobby/join" element={<LobbyJoinPage />} />
+        <Route path="/lobby/join/:code" element={<LobbyJoinPage />} />
+        <Route path="/lobby/:code" element={<LobbyWaitingPage />} />
+        <Route path="/lobby/:code/results" element={<MultiplayerResultsPage />} />
       </Routes>
     </BrowserRouter>
   );

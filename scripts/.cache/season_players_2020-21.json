@@ -1,0 +1,2166 @@
+{
+  "season": "2020-21",
+  "cached_at": "2026-01-22T21:10:56.983591",
+  "players": [
+    {
+      "id": 203932,
+      "name": "Aaron Gordon"
+    },
+    {
+      "id": 1628988,
+      "name": "Aaron Holiday"
+    },
+    {
+      "id": 1630174,
+      "name": "Aaron Nesmith"
+    },
+    {
+      "id": 1627846,
+      "name": "Abdel Nader"
+    },
+    {
+      "id": 1629690,
+      "name": "Adam Mokoka"
+    },
+    {
+      "id": 201143,
+      "name": "Al Horford"
+    },
+    {
+      "id": 202329,
+      "name": "Al-Farouq Aminu"
+    },
+    {
+      "id": 202692,
+      "name": "Alec Burks"
+    },
+    {
+      "id": 1630197,
+      "name": "Aleksej Pokusevski"
+    },
+    {
+      "id": 1629346,
+      "name": "Alen Smailagic"
+    },
+    {
+      "id": 1627936,
+      "name": "Alex Caruso"
+    },
+    {
+      "id": 203458,
+      "name": "Alex Len"
+    },
+    {
+      "id": 1628035,
+      "name": "Alfonzo McKinnie"
+    },
+    {
+      "id": 1628993,
+      "name": "Alize Johnson"
+    },
+    {
+      "id": 1628578,
+      "name": "Amida Brimah"
+    },
+    {
+      "id": 1629599,
+      "name": "Amir Coffey"
+    },
+    {
+      "id": 2760,
+      "name": "Anderson Varejao"
+    },
+    {
+      "id": 203083,
+      "name": "Andre Drummond"
+    },
+    {
+      "id": 2738,
+      "name": "Andre Iguodala"
+    },
+    {
+      "id": 203460,
+      "name": "Andre Roberson"
+    },
+    {
+      "id": 203952,
+      "name": "Andrew Wiggins"
+    },
+    {
+      "id": 1629014,
+      "name": "Anfernee Simons"
+    },
+    {
+      "id": 203076,
+      "name": "Anthony Davis"
+    },
+    {
+      "id": 1630162,
+      "name": "Anthony Edwards"
+    },
+    {
+      "id": 1630264,
+      "name": "Anthony Gill"
+    },
+    {
+      "id": 1630237,
+      "name": "Anthony Lamb"
+    },
+    {
+      "id": 201229,
+      "name": "Anthony Tolliver"
+    },
+    {
+      "id": 1628394,
+      "name": "An\u017eejs Pase\u010d\u0146iks"
+    },
+    {
+      "id": 1629717,
+      "name": "Armoni Brooks"
+    },
+    {
+      "id": 203382,
+      "name": "Aron Baynes"
+    },
+    {
+      "id": 1630204,
+      "name": "Ashton Hagans"
+    },
+    {
+      "id": 203085,
+      "name": "Austin Rivers"
+    },
+    {
+      "id": 202340,
+      "name": "Avery Bradley"
+    },
+    {
+      "id": 1626253,
+      "name": "Axel Toupane"
+    },
+    {
+      "id": 1628389,
+      "name": "Bam Adebayo"
+    },
+    {
+      "id": 203463,
+      "name": "Ben McLemore"
+    },
+    {
+      "id": 1627732,
+      "name": "Ben Simmons"
+    },
+    {
+      "id": 202687,
+      "name": "Bismack Biyombo"
+    },
+    {
+      "id": 201933,
+      "name": "Blake Griffin"
+    },
+    {
+      "id": 1626246,
+      "name": "Boban Marjanovic"
+    },
+    {
+      "id": 1626171,
+      "name": "Bobby Portis"
+    },
+    {
+      "id": 203992,
+      "name": "Bogdan Bogdanovi\u0107"
+    },
+    {
+      "id": 202711,
+      "name": "Bojan Bogdanovic"
+    },
+    {
+      "id": 1629626,
+      "name": "Bol Bol"
+    },
+    {
+      "id": 202954,
+      "name": "Brad Wanamaker"
+    },
+    {
+      "id": 203078,
+      "name": "Bradley Beal"
+    },
+    {
+      "id": 1629634,
+      "name": "Brandon Clarke"
+    },
+    {
+      "id": 1629164,
+      "name": "Brandon Goodwin"
+    },
+    {
+      "id": 1627742,
+      "name": "Brandon Ingram"
+    },
+    {
+      "id": 1628968,
+      "name": "Brian Bowen II"
+    },
+    {
+      "id": 1630271,
+      "name": "Brodric Thomas"
+    },
+    {
+      "id": 201572,
+      "name": "Brook Lopez"
+    },
+    {
+      "id": 1628971,
+      "name": "Bruce Brown"
+    },
+    {
+      "id": 203998,
+      "name": "Bruno Caboclo"
+    },
+    {
+      "id": 1628981,
+      "name": "Bruno Fernando"
+    },
+    {
+      "id": 1627854,
+      "name": "Bryn Forbes"
+    },
+    {
+      "id": 1627741,
+      "name": "Buddy Hield"
+    },
+    {
+      "id": 1629604,
+      "name": "CJ Elleby"
+    },
+    {
+      "id": 203468,
+      "name": "CJ McCollum"
+    },
+    {
+      "id": 1628997,
+      "name": "Caleb Martin"
+    },
+    {
+      "id": 1629629,
+      "name": "Cam Reddish"
+    },
+    {
+      "id": 1629244,
+      "name": "Cam Reynolds"
+    },
+    {
+      "id": 1629661,
+      "name": "Cameron Johnson"
+    },
+    {
+      "id": 1628419,
+      "name": "Cameron Oliver"
+    },
+    {
+      "id": 1626166,
+      "name": "Cameron Payne"
+    },
+    {
+      "id": 1627747,
+      "name": "Caris LeVert"
+    },
+    {
+      "id": 2546,
+      "name": "Carmelo Anthony"
+    },
+    {
+      "id": 1629035,
+      "name": "Carsen Edwards"
+    },
+    {
+      "id": 1630199,
+      "name": "Cassius Stanley"
+    },
+    {
+      "id": 1630216,
+      "name": "Cassius Winston"
+    },
+    {
+      "id": 1626224,
+      "name": "Cedi Osman"
+    },
+    {
+      "id": 1628990,
+      "name": "Chandler Hutchison"
+    },
+    {
+      "id": 1629718,
+      "name": "Charlie Brown Jr."
+    },
+    {
+      "id": 1626184,
+      "name": "Chasson Randle"
+    },
+    {
+      "id": 1629002,
+      "name": "Chimezie Metu"
+    },
+    {
+      "id": 1628449,
+      "name": "Chris Boucher"
+    },
+    {
+      "id": 1629185,
+      "name": "Chris Chiozza"
+    },
+    {
+      "id": 101108,
+      "name": "Chris Paul"
+    },
+    {
+      "id": 1629735,
+      "name": "Chris Silva"
+    },
+    {
+      "id": 1626174,
+      "name": "Christian Wood"
+    },
+    {
+      "id": 1629643,
+      "name": "Chuma Okeke"
+    },
+    {
+      "id": 203991,
+      "name": "Clint Capela"
+    },
+    {
+      "id": 1629632,
+      "name": "Coby White"
+    },
+    {
+      "id": 1628998,
+      "name": "Cody Martin"
+    },
+    {
+      "id": 203469,
+      "name": "Cody Zeller"
+    },
+    {
+      "id": 1630175,
+      "name": "Cole Anthony"
+    },
+    {
+      "id": 1629012,
+      "name": "Collin Sexton"
+    },
+    {
+      "id": 202709,
+      "name": "Cory Joseph"
+    },
+    {
+      "id": 1626245,
+      "name": "Cristiano Felicio"
+    },
+    {
+      "id": 1626156,
+      "name": "D'Angelo Russell"
+    },
+    {
+      "id": 201571,
+      "name": "D.J. Augustin"
+    },
+    {
+      "id": 1628391,
+      "name": "D.J. Wilson"
+    },
+    {
+      "id": 1629610,
+      "name": "DaQuan Jeffries"
+    },
+    {
+      "id": 1629751,
+      "name": "Dakota Mathias"
+    },
+    {
+      "id": 1627745,
+      "name": "Damian Jones"
+    },
+    {
+      "id": 203081,
+      "name": "Damian Lillard"
+    },
+    {
+      "id": 1627814,
+      "name": "Damion Lee"
+    },
+    {
+      "id": 1628422,
+      "name": "Damyean Dotson"
+    },
+    {
+      "id": 1629655,
+      "name": "Daniel Gafford"
+    },
+    {
+      "id": 1630187,
+      "name": "Daniel Oturu"
+    },
+    {
+      "id": 1628464,
+      "name": "Daniel Theis"
+    },
+    {
+      "id": 201568,
+      "name": "Danilo Gallinari"
+    },
+    {
+      "id": 201980,
+      "name": "Danny Green"
+    },
+    {
+      "id": 203957,
+      "name": "Dant\u00e9 Exum"
+    },
+    {
+      "id": 1627863,
+      "name": "Danuel House Jr."
+    },
+    {
+      "id": 203967,
+      "name": "Dario \u0160ari\u0107"
+    },
+    {
+      "id": 1629647,
+      "name": "Darius Bazley"
+    },
+    {
+      "id": 1629636,
+      "name": "Darius Garland"
+    },
+    {
+      "id": 203121,
+      "name": "Darius Miller"
+    },
+    {
+      "id": 1628021,
+      "name": "David Nwaba"
+    },
+    {
+      "id": 202722,
+      "name": "Davis Bertans"
+    },
+    {
+      "id": 1628368,
+      "name": "De'Aaron Fox"
+    },
+    {
+      "id": 1629631,
+      "name": "De'Andre Hunter"
+    },
+    {
+      "id": 1629001,
+      "name": "De'Anthony Melton"
+    },
+    {
+      "id": 201599,
+      "name": "DeAndre Jordan"
+    },
+    {
+      "id": 1627761,
+      "name": "DeAndre' Bembry"
+    },
+    {
+      "id": 201942,
+      "name": "DeMar DeRozan"
+    },
+    {
+      "id": 202326,
+      "name": "DeMarcus Cousins"
+    },
+    {
+      "id": 1629731,
+      "name": "Dean Wade"
+    },
+    {
+      "id": 1629028,
+      "name": "Deandre Ayton"
+    },
+    {
+      "id": 1629686,
+      "name": "Deividas Sirvydis"
+    },
+    {
+      "id": 1627749,
+      "name": "Dejounte Murray"
+    },
+    {
+      "id": 1626153,
+      "name": "Delon Wright"
+    },
+    {
+      "id": 1630166,
+      "name": "Deni Avdija"
+    },
+    {
+      "id": 203471,
+      "name": "Dennis Schr\u00f6der"
+    },
+    {
+      "id": 1628372,
+      "name": "Dennis Smith Jr."
+    },
+    {
+      "id": 1627756,
+      "name": "Denzel Valentine"
+    },
+    {
+      "id": 202324,
+      "name": "Derrick Favors"
+    },
+    {
+      "id": 1627884,
+      "name": "Derrick Jones Jr."
+    },
+    {
+      "id": 201565,
+      "name": "Derrick Rose"
+    },
+    {
+      "id": 1628401,
+      "name": "Derrick White"
+    },
+    {
+      "id": 1630217,
+      "name": "Desmond Bane"
+    },
+    {
+      "id": 1626164,
+      "name": "Devin Booker"
+    },
+    {
+      "id": 1629962,
+      "name": "Devin Cannady"
+    },
+    {
+      "id": 1630170,
+      "name": "Devin Vassell"
+    },
+    {
+      "id": 1629653,
+      "name": "Devon Dotson"
+    },
+    {
+      "id": 1629719,
+      "name": "Devontae Cacok"
+    },
+    {
+      "id": 1628984,
+      "name": "Devonte' Graham"
+    },
+    {
+      "id": 203473,
+      "name": "Dewayne Dedmon"
+    },
+    {
+      "id": 1629712,
+      "name": "Didi Louzada"
+    },
+    {
+      "id": 1628415,
+      "name": "Dillon Brooks"
+    },
+    {
+      "id": 1627734,
+      "name": "Domantas Sabonis"
+    },
+    {
+      "id": 1628378,
+      "name": "Donovan Mitchell"
+    },
+    {
+      "id": 1629743,
+      "name": "Donta Hall"
+    },
+    {
+      "id": 1628978,
+      "name": "Donte DiVincenzo"
+    },
+    {
+      "id": 1627827,
+      "name": "Dorian Finney-Smith"
+    },
+    {
+      "id": 203926,
+      "name": "Doug McDermott"
+    },
+    {
+      "id": 203110,
+      "name": "Draymond Green"
+    },
+    {
+      "id": 1629234,
+      "name": "Drew Eubanks"
+    },
+    {
+      "id": 1629130,
+      "name": "Duncan Robinson"
+    },
+    {
+      "id": 1628407,
+      "name": "Dwayne Bacon"
+    },
+    {
+      "id": 2730,
+      "name": "Dwight Howard"
+    },
+    {
+      "id": 203939,
+      "name": "Dwight Powell"
+    },
+    {
+      "id": 1629685,
+      "name": "Dylan Windler"
+    },
+    {
+      "id": 202734,
+      "name": "E'Twaun Moore"
+    },
+    {
+      "id": 202334,
+      "name": "Ed Davis"
+    },
+    {
+      "id": 1628410,
+      "name": "Edmond Sumner"
+    },
+    {
+      "id": 203901,
+      "name": "Elfrid Payton"
+    },
+    {
+      "id": 1629091,
+      "name": "Elijah Bryant"
+    },
+    {
+      "id": 1630190,
+      "name": "Elijah Hughes"
+    },
+    {
+      "id": 202683,
+      "name": "Enes Freedom"
+    },
+    {
+      "id": 202339,
+      "name": "Eric Bledsoe"
+    },
+    {
+      "id": 201569,
+      "name": "Eric Gordon"
+    },
+    {
+      "id": 1629672,
+      "name": "Eric Paschall"
+    },
+    {
+      "id": 101141,
+      "name": "Ersan Ilyasova"
+    },
+    {
+      "id": 203095,
+      "name": "Evan Fournier"
+    },
+    {
+      "id": 1630267,
+      "name": "Facundo Campazzo"
+    },
+    {
+      "id": 1628402,
+      "name": "Frank Jackson"
+    },
+    {
+      "id": 1626163,
+      "name": "Frank Kaminsky"
+    },
+    {
+      "id": 1628412,
+      "name": "Frank Mason III"
+    },
+    {
+      "id": 1628373,
+      "name": "Frank Ntilikina"
+    },
+    {
+      "id": 1627832,
+      "name": "Fred VanVleet"
+    },
+    {
+      "id": 1630273,
+      "name": "Freddie Gillespie"
+    },
+    {
+      "id": 1627788,
+      "name": "Furkan Korkmaz"
+    },
+    {
+      "id": 1629216,
+      "name": "Gabe Vincent"
+    },
+    {
+      "id": 1630466,
+      "name": "Gabriel Deck"
+    },
+    {
+      "id": 202066,
+      "name": "Garrett Temple"
+    },
+    {
+      "id": 1629726,
+      "name": "Garrison Mathews"
+    },
+    {
+      "id": 1629109,
+      "name": "Gary Clark"
+    },
+    {
+      "id": 203914,
+      "name": "Gary Harris"
+    },
+    {
+      "id": 1627780,
+      "name": "Gary Payton II"
+    },
+    {
+      "id": 1629018,
+      "name": "Gary Trent Jr."
+    },
+    {
+      "id": 201588,
+      "name": "George Hill"
+    },
+    {
+      "id": 1627777,
+      "name": "Georges Niang"
+    },
+    {
+      "id": 203507,
+      "name": "Giannis Antetokounmpo"
+    },
+    {
+      "id": 203922,
+      "name": "Glenn Robinson III"
+    },
+    {
+      "id": 1629048,
+      "name": "Goga Bitadze"
+    },
+    {
+      "id": 201609,
+      "name": "Goran Dragic"
+    },
+    {
+      "id": 202330,
+      "name": "Gordon Hayward"
+    },
+    {
+      "id": 203476,
+      "name": "Gorgui Dieng"
+    },
+    {
+      "id": 1630203,
+      "name": "Grant Riller"
+    },
+    {
+      "id": 1629684,
+      "name": "Grant Williams"
+    },
+    {
+      "id": 1628960,
+      "name": "Grayson Allen"
+    },
+    {
+      "id": 204222,
+      "name": "Greg Whittington"
+    },
+    {
+      "id": 1628977,
+      "name": "Hamidou Diallo"
+    },
+    {
+      "id": 203084,
+      "name": "Harrison Barnes"
+    },
+    {
+      "id": 1628385,
+      "name": "Harry Giles III"
+    },
+    {
+      "id": 202355,
+      "name": "Hassan Whiteside"
+    },
+    {
+      "id": 1627740,
+      "name": "Henry Ellenson"
+    },
+    {
+      "id": 1629649,
+      "name": "Ignas Brazdeikis"
+    },
+    {
+      "id": 202697,
+      "name": "Iman Shumpert"
+    },
+    {
+      "id": 1630193,
+      "name": "Immanuel Quickley"
+    },
+    {
+      "id": 1629067,
+      "name": "Isaac Bonga"
+    },
+    {
+      "id": 1630171,
+      "name": "Isaac Okoro"
+    },
+    {
+      "id": 1628392,
+      "name": "Isaiah Hartenstein"
+    },
+    {
+      "id": 1630198,
+      "name": "Isaiah Joe"
+    },
+    {
+      "id": 1629676,
+      "name": "Isaiah Roby"
+    },
+    {
+      "id": 1630191,
+      "name": "Isaiah Stewart"
+    },
+    {
+      "id": 202738,
+      "name": "Isaiah Thomas"
+    },
+    {
+      "id": 202397,
+      "name": "Ish Smith"
+    },
+    {
+      "id": 1627826,
+      "name": "Ivica Zubac"
+    },
+    {
+      "id": 200755,
+      "name": "JJ Redick"
+    },
+    {
+      "id": 1629630,
+      "name": "Ja Morant"
+    },
+    {
+      "id": 203960,
+      "name": "JaKarr Sampson"
+    },
+    {
+      "id": 203210,
+      "name": "JaMychal Green"
+    },
+    {
+      "id": 201580,
+      "name": "JaVale McGee"
+    },
+    {
+      "id": 203953,
+      "name": "Jabari Parker"
+    },
+    {
+      "id": 1630183,
+      "name": "Jaden McDaniels"
+    },
+    {
+      "id": 203109,
+      "name": "Jae Crowder"
+    },
+    {
+      "id": 1630256,
+      "name": "Jae'Sean Tate"
+    },
+    {
+      "id": 1626143,
+      "name": "Jahlil Okafor"
+    },
+    {
+      "id": 1630186,
+      "name": "Jahmi'us Ramsey"
+    },
+    {
+      "id": 1627774,
+      "name": "Jake Layman"
+    },
+    {
+      "id": 1627751,
+      "name": "Jakob Poeltl"
+    },
+    {
+      "id": 1628973,
+      "name": "Jalen Brunson"
+    },
+    {
+      "id": 1630223,
+      "name": "Jalen Harris"
+    },
+    {
+      "id": 1629665,
+      "name": "Jalen Lecque"
+    },
+    {
+      "id": 1629667,
+      "name": "Jalen McDaniels"
+    },
+    {
+      "id": 1630188,
+      "name": "Jalen Smith"
+    },
+    {
+      "id": 1627750,
+      "name": "Jamal Murray"
+    },
+    {
+      "id": 203516,
+      "name": "James Ennis III"
+    },
+    {
+      "id": 201935,
+      "name": "James Harden"
+    },
+    {
+      "id": 201949,
+      "name": "James Johnson"
+    },
+    {
+      "id": 203263,
+      "name": "James Nunnally"
+    },
+    {
+      "id": 1630164,
+      "name": "James Wiseman"
+    },
+    {
+      "id": 201162,
+      "name": "Jared Dudley"
+    },
+    {
+      "id": 1629607,
+      "name": "Jared Harper"
+    },
+    {
+      "id": 1628991,
+      "name": "Jaren Jackson Jr."
+    },
+    {
+      "id": 1629020,
+      "name": "Jarred Vanderbilt"
+    },
+    {
+      "id": 1629714,
+      "name": "Jarrell Brantley"
+    },
+    {
+      "id": 1628386,
+      "name": "Jarrett Allen"
+    },
+    {
+      "id": 1629633,
+      "name": "Jarrett Culver"
+    },
+    {
+      "id": 1629750,
+      "name": "Javonte Green"
+    },
+    {
+      "id": 1629637,
+      "name": "Jaxson Hayes"
+    },
+    {
+      "id": 1630206,
+      "name": "Jay Scrubb"
+    },
+    {
+      "id": 1629121,
+      "name": "Jaylen Adams"
+    },
+    {
+      "id": 1627759,
+      "name": "Jaylen Brown"
+    },
+    {
+      "id": 1629658,
+      "name": "Jaylen Hoard"
+    },
+    {
+      "id": 1629669,
+      "name": "Jaylen Nowell"
+    },
+    {
+      "id": 1628369,
+      "name": "Jayson Tatum"
+    },
+    {
+      "id": 201145,
+      "name": "Jeff Green"
+    },
+    {
+      "id": 201952,
+      "name": "Jeff Teague"
+    },
+    {
+      "id": 203924,
+      "name": "Jerami Grant"
+    },
+    {
+      "id": 1629725,
+      "name": "Jeremiah Martin"
+    },
+    {
+      "id": 203087,
+      "name": "Jeremy Lamb"
+    },
+    {
+      "id": 1629010,
+      "name": "Jerome Robinson"
+    },
+    {
+      "id": 1628975,
+      "name": "Jevon Carter"
+    },
+    {
+      "id": 202710,
+      "name": "Jimmy Butler III"
+    },
+    {
+      "id": 203925,
+      "name": "Joe Harris"
+    },
+    {
+      "id": 204060,
+      "name": "Joe Ingles"
+    },
+    {
+      "id": 203954,
+      "name": "Joel Embiid"
+    },
+    {
+      "id": 1628381,
+      "name": "John Collins"
+    },
+    {
+      "id": 1629723,
+      "name": "John Konchar"
+    },
+    {
+      "id": 202322,
+      "name": "John Wall"
+    },
+    {
+      "id": 202685,
+      "name": "Jonas Valan\u010di\u016bnas"
+    },
+    {
+      "id": 1629007,
+      "name": "Jontay Porter"
+    },
+    {
+      "id": 1628395,
+      "name": "Jordan Bell"
+    },
+    {
+      "id": 1629648,
+      "name": "Jordan Bone"
+    },
+    {
+      "id": 203903,
+      "name": "Jordan Clarkson"
+    },
+    {
+      "id": 1629162,
+      "name": "Jordan McLaughlin"
+    },
+    {
+      "id": 1629670,
+      "name": "Jordan Nwora"
+    },
+    {
+      "id": 1629673,
+      "name": "Jordan Poole"
+    },
+    {
+      "id": 1630182,
+      "name": "Josh Green"
+    },
+    {
+      "id": 1630221,
+      "name": "Josh Hall"
+    },
+    {
+      "id": 1628404,
+      "name": "Josh Hart"
+    },
+    {
+      "id": 1628367,
+      "name": "Josh Jackson"
+    },
+    {
+      "id": 1629006,
+      "name": "Josh Okogie"
+    },
+    {
+      "id": 1626196,
+      "name": "Josh Richardson"
+    },
+    {
+      "id": 201950,
+      "name": "Jrue Holiday"
+    },
+    {
+      "id": 1629308,
+      "name": "Juan Toscano-Anderson"
+    },
+    {
+      "id": 1627823,
+      "name": "Juancho Hernangomez"
+    },
+    {
+      "id": 203944,
+      "name": "Julius Randle"
+    },
+    {
+      "id": 203200,
+      "name": "Justin Holiday"
+    },
+    {
+      "id": 1628382,
+      "name": "Justin Jackson"
+    },
+    {
+      "id": 1629713,
+      "name": "Justin James"
+    },
+    {
+      "id": 1628383,
+      "name": "Justin Patton"
+    },
+    {
+      "id": 1629620,
+      "name": "Justin Robinson"
+    },
+    {
+      "id": 1626159,
+      "name": "Justise Winslow"
+    },
+    {
+      "id": 203994,
+      "name": "Jusuf Nurki\u0107"
+    },
+    {
+      "id": 1629752,
+      "name": "Juwan Morgan"
+    },
+    {
+      "id": 1630231,
+      "name": "KJ Martin"
+    },
+    {
+      "id": 1629644,
+      "name": "KZ Okpala"
+    },
+    {
+      "id": 1630211,
+      "name": "Karim Mane"
+    },
+    {
+      "id": 1626157,
+      "name": "Karl-Anthony Towns"
+    },
+    {
+      "id": 202695,
+      "name": "Kawhi Leonard"
+    },
+    {
+      "id": 1628966,
+      "name": "Keita Bates-Diop"
+    },
+    {
+      "id": 1629103,
+      "name": "Kelan Martin"
+    },
+    {
+      "id": 1629640,
+      "name": "Keldon Johnson"
+    },
+    {
+      "id": 1629833,
+      "name": "Keljin Blevins"
+    },
+    {
+      "id": 203482,
+      "name": "Kelly Olynyk"
+    },
+    {
+      "id": 1626162,
+      "name": "Kelly Oubre Jr."
+    },
+    {
+      "id": 202689,
+      "name": "Kemba Walker"
+    },
+    {
+      "id": 1629134,
+      "name": "Kendrick Nunn"
+    },
+    {
+      "id": 1629026,
+      "name": "Kenrich Williams"
+    },
+    {
+      "id": 203145,
+      "name": "Kent Bazemore"
+    },
+    {
+      "id": 203484,
+      "name": "Kentavious Caldwell-Pope"
+    },
+    {
+      "id": 201142,
+      "name": "Kevin Durant"
+    },
+    {
+      "id": 1628989,
+      "name": "Kevin Huerter"
+    },
+    {
+      "id": 1628995,
+      "name": "Kevin Knox II"
+    },
+    {
+      "id": 201567,
+      "name": "Kevin Love"
+    },
+    {
+      "id": 1629645,
+      "name": "Kevin Porter Jr."
+    },
+    {
+      "id": 1626172,
+      "name": "Kevon Looney"
+    },
+    {
+      "id": 203920,
+      "name": "Khem Birch"
+    },
+    {
+      "id": 203114,
+      "name": "Khris Middleton"
+    },
+    {
+      "id": 1629017,
+      "name": "Khyri Thomas"
+    },
+    {
+      "id": 1630165,
+      "name": "Killian Hayes"
+    },
+    {
+      "id": 1629681,
+      "name": "Killian Tillie"
+    },
+    {
+      "id": 1630184,
+      "name": "Kira Lewis Jr."
+    },
+    {
+      "id": 1628961,
+      "name": "Kostas Antetokounmpo"
+    },
+    {
+      "id": 1627739,
+      "name": "Kris Dunn"
+    },
+    {
+      "id": 204001,
+      "name": "Kristaps Porzi\u0146\u0123is"
+    },
+    {
+      "id": 203937,
+      "name": "Kyle Anderson"
+    },
+    {
+      "id": 1629657,
+      "name": "Kyle Guy"
+    },
+    {
+      "id": 1628398,
+      "name": "Kyle Kuzma"
+    },
+    {
+      "id": 200768,
+      "name": "Kyle Lowry"
+    },
+    {
+      "id": 202681,
+      "name": "Kyrie Irving"
+    },
+    {
+      "id": 200746,
+      "name": "LaMarcus Aldridge"
+    },
+    {
+      "id": 1630163,
+      "name": "LaMelo Ball"
+    },
+    {
+      "id": 1630205,
+      "name": "Lamar Stevens"
+    },
+    {
+      "id": 1629013,
+      "name": "Landry Shamet"
+    },
+    {
+      "id": 204038,
+      "name": "Langston Galloway"
+    },
+    {
+      "id": 1626204,
+      "name": "Larry Nance Jr."
+    },
+    {
+      "id": 1628374,
+      "name": "Lauri Markkanen"
+    },
+    {
+      "id": 2544,
+      "name": "LeBron James"
+    },
+    {
+      "id": 1629022,
+      "name": "Lonnie Walker IV"
+    },
+    {
+      "id": 1628366,
+      "name": "Lonzo Ball"
+    },
+    {
+      "id": 101150,
+      "name": "Lou Williams"
+    },
+    {
+      "id": 1629663,
+      "name": "Louis King"
+    },
+    {
+      "id": 1629652,
+      "name": "Luguentz Dort"
+    },
+    {
+      "id": 1629029,
+      "name": "Luka Don\u010di\u0107"
+    },
+    {
+      "id": 1629677,
+      "name": "Luka Samanic"
+    },
+    {
+      "id": 1628379,
+      "name": "Luke Kennard"
+    },
+    {
+      "id": 1628436,
+      "name": "Luke Kornet"
+    },
+    {
+      "id": 1630201,
+      "name": "Malachi Flynn"
+    },
+    {
+      "id": 1627763,
+      "name": "Malcolm Brogdon"
+    },
+    {
+      "id": 1627736,
+      "name": "Malik Beasley"
+    },
+    {
+      "id": 1630238,
+      "name": "Malik Fitts"
+    },
+    {
+      "id": 1628370,
+      "name": "Malik Monk"
+    },
+    {
+      "id": 1629603,
+      "name": "Mamadi Diakite"
+    },
+    {
+      "id": 201188,
+      "name": "Marc Gasol"
+    },
+    {
+      "id": 202694,
+      "name": "Marcus Morris Sr."
+    },
+    {
+      "id": 203935,
+      "name": "Marcus Smart"
+    },
+    {
+      "id": 1628365,
+      "name": "Markelle Fultz"
+    },
+    {
+      "id": 202693,
+      "name": "Markieff Morris"
+    },
+    {
+      "id": 1630210,
+      "name": "Markus Howard"
+    },
+    {
+      "id": 1629716,
+      "name": "Marques Bolden"
+    },
+    {
+      "id": 1627737,
+      "name": "Marquese Chriss"
+    },
+    {
+      "id": 1628963,
+      "name": "Marvin Bagley III"
+    },
+    {
+      "id": 1630222,
+      "name": "Mason Jones"
+    },
+    {
+      "id": 203486,
+      "name": "Mason Plumlee"
+    },
+    {
+      "id": 1629680,
+      "name": "Matisse Thybulle"
+    },
+    {
+      "id": 1629744,
+      "name": "Matt Thomas"
+    },
+    {
+      "id": 203521,
+      "name": "Matthew Dellavedova"
+    },
+    {
+      "id": 203090,
+      "name": "Maurice Harkless"
+    },
+    {
+      "id": 1629622,
+      "name": "Max Strus"
+    },
+    {
+      "id": 1628467,
+      "name": "Maxi Kleber"
+    },
+    {
+      "id": 203086,
+      "name": "Meyers Leonard"
+    },
+    {
+      "id": 1629662,
+      "name": "Mfiondu Kabengele"
+    },
+    {
+      "id": 203487,
+      "name": "Michael Carter-Williams"
+    },
+    {
+      "id": 1629008,
+      "name": "Michael Porter Jr."
+    },
+    {
+      "id": 1628969,
+      "name": "Mikal Bridges"
+    },
+    {
+      "id": 201144,
+      "name": "Mike Conley"
+    },
+    {
+      "id": 1628455,
+      "name": "Mike James"
+    },
+    {
+      "id": 203488,
+      "name": "Mike Muscala"
+    },
+    {
+      "id": 203118,
+      "name": "Mike Scott"
+    },
+    {
+      "id": 1628970,
+      "name": "Miles Bridges"
+    },
+    {
+      "id": 1629011,
+      "name": "Mitchell Robinson"
+    },
+    {
+      "id": 1629671,
+      "name": "Miye Oni"
+    },
+    {
+      "id": 1628964,
+      "name": "Mo Bamba"
+    },
+    {
+      "id": 1628420,
+      "name": "Monte Morris"
+    },
+    {
+      "id": 1626149,
+      "name": "Montrezl Harrell"
+    },
+    {
+      "id": 1629021,
+      "name": "Moritz Wagner"
+    },
+    {
+      "id": 1629650,
+      "name": "Moses Brown"
+    },
+    {
+      "id": 1628539,
+      "name": "Mychal Mulder"
+    },
+    {
+      "id": 1626167,
+      "name": "Myles Turner"
+    },
+    {
+      "id": 1630230,
+      "name": "Naji Marshall"
+    },
+    {
+      "id": 1629642,
+      "name": "Nassir Little"
+    },
+    {
+      "id": 1630268,
+      "name": "Nate Darling"
+    },
+    {
+      "id": 1630207,
+      "name": "Nate Hinton"
+    },
+    {
+      "id": 1630233,
+      "name": "Nathan Knight"
+    },
+    {
+      "id": 1629675,
+      "name": "Naz Reid"
+    },
+    {
+      "id": 202357,
+      "name": "Nemanja Bjelica"
+    },
+    {
+      "id": 203457,
+      "name": "Nerlens Noel"
+    },
+    {
+      "id": 1629651,
+      "name": "Nic Claxton"
+    },
+    {
+      "id": 1630208,
+      "name": "Nick Richards"
+    },
+    {
+      "id": 1629638,
+      "name": "Nickeil Alexander-Walker"
+    },
+    {
+      "id": 1630185,
+      "name": "Nico Mannion"
+    },
+    {
+      "id": 201587,
+      "name": "Nicolas Batum"
+    },
+    {
+      "id": 1629740,
+      "name": "Nicolo Melli"
+    },
+    {
+      "id": 203999,
+      "name": "Nikola Joki\u0107"
+    },
+    {
+      "id": 202696,
+      "name": "Nikola Vu\u010devi\u0107"
+    },
+    {
+      "id": 203943,
+      "name": "Noah Vonleh"
+    },
+    {
+      "id": 1626181,
+      "name": "Norman Powell"
+    },
+    {
+      "id": 203658,
+      "name": "Norvel Pelle"
+    },
+    {
+      "id": 1628384,
+      "name": "OG Anunoby"
+    },
+    {
+      "id": 1630167,
+      "name": "Obi Toppin"
+    },
+    {
+      "id": 1630168,
+      "name": "Onyeka Okongwu"
+    },
+    {
+      "id": 1629052,
+      "name": "Oshae Brissett"
+    },
+    {
+      "id": 203490,
+      "name": "Otto Porter Jr."
+    },
+    {
+      "id": 200782,
+      "name": "P.J. Tucker"
+    },
+    {
+      "id": 1629023,
+      "name": "P.J. Washington"
+    },
+    {
+      "id": 1628408,
+      "name": "PJ Dozier"
+    },
+    {
+      "id": 1627783,
+      "name": "Pascal Siakam"
+    },
+    {
+      "id": 1626192,
+      "name": "Pat Connaughton"
+    },
+    {
+      "id": 201976,
+      "name": "Patrick Beverley"
+    },
+    {
+      "id": 1627775,
+      "name": "Patrick McCaw"
+    },
+    {
+      "id": 202335,
+      "name": "Patrick Patterson"
+    },
+    {
+      "id": 1630172,
+      "name": "Patrick Williams"
+    },
+    {
+      "id": 201988,
+      "name": "Patty Mills"
+    },
+    {
+      "id": 202331,
+      "name": "Paul George"
+    },
+    {
+      "id": 200794,
+      "name": "Paul Millsap"
+    },
+    {
+      "id": 1630194,
+      "name": "Paul Reed"
+    },
+    {
+      "id": 1628778,
+      "name": "Paul Watson"
+    },
+    {
+      "id": 1630202,
+      "name": "Payton Pritchard"
+    },
+    {
+      "id": 1630173,
+      "name": "Precious Achiuwa"
+    },
+    {
+      "id": 1626188,
+      "name": "Quinn Cook"
+    },
+    {
+      "id": 1629683,
+      "name": "Quinndary Weatherspoon"
+    },
+    {
+      "id": 1630181,
+      "name": "R.J. Hampton"
+    },
+    {
+      "id": 1629628,
+      "name": "RJ Barrett"
+    },
+    {
+      "id": 200765,
+      "name": "Rajon Rondo"
+    },
+    {
+      "id": 203526,
+      "name": "Raul Neto"
+    },
+    {
+      "id": 1629034,
+      "name": "Ray Spalding"
+    },
+    {
+      "id": 1629730,
+      "name": "Rayjon Tucker"
+    },
+    {
+      "id": 203493,
+      "name": "Reggie Bullock Jr."
+    },
+    {
+      "id": 202704,
+      "name": "Reggie Jackson"
+    },
+    {
+      "id": 1629617,
+      "name": "Reggie Perry"
+    },
+    {
+      "id": 1626158,
+      "name": "Richaun Holmes"
+    },
+    {
+      "id": 201937,
+      "name": "Ricky Rubio"
+    },
+    {
+      "id": 203496,
+      "name": "Robert Covington"
+    },
+    {
+      "id": 1629606,
+      "name": "Robert Franks"
+    },
+    {
+      "id": 1629057,
+      "name": "Robert Williams III"
+    },
+    {
+      "id": 1630218,
+      "name": "Robert Woodard II"
+    },
+    {
+      "id": 201577,
+      "name": "Robin Lopez"
+    },
+    {
+      "id": 1629066,
+      "name": "Rodions Kurucs"
+    },
+    {
+      "id": 203918,
+      "name": "Rodney Hood"
+    },
+    {
+      "id": 203585,
+      "name": "Rodney McGruder"
+    },
+    {
+      "id": 1629641,
+      "name": "Romeo Langford"
+    },
+    {
+      "id": 1626178,
+      "name": "Rondae Hollis-Jefferson"
+    },
+    {
+      "id": 1626220,
+      "name": "Royce O'Neale"
+    },
+    {
+      "id": 200752,
+      "name": "Rudy Gay"
+    },
+    {
+      "id": 203497,
+      "name": "Rudy Gobert"
+    },
+    {
+      "id": 1629060,
+      "name": "Rui Hachimura"
+    },
+    {
+      "id": 201566,
+      "name": "Russell Westbrook"
+    },
+    {
+      "id": 1627853,
+      "name": "Ryan Arcidiacono"
+    },
+    {
+      "id": 1630240,
+      "name": "Saben Lee"
+    },
+    {
+      "id": 1630180,
+      "name": "Saddiq Bey"
+    },
+    {
+      "id": 1630241,
+      "name": "Sam Merrill"
+    },
+    {
+      "id": 1630253,
+      "name": "Sean McDermott"
+    },
+    {
+      "id": 1629635,
+      "name": "Sekou Doumbouya"
+    },
+    {
+      "id": 1628400,
+      "name": "Semi Ojeleye"
+    },
+    {
+      "id": 201586,
+      "name": "Serge Ibaka"
+    },
+    {
+      "id": 203552,
+      "name": "Seth Curry"
+    },
+    {
+      "id": 1628983,
+      "name": "Shai Gilgeous-Alexander"
+    },
+    {
+      "id": 1629003,
+      "name": "Shake Milton"
+    },
+    {
+      "id": 1627885,
+      "name": "Shaquille Harrison"
+    },
+    {
+      "id": 1628414,
+      "name": "Sindarius Thornwell"
+    },
+    {
+      "id": 1630219,
+      "name": "Skylar Mays"
+    },
+    {
+      "id": 203524,
+      "name": "Solomon Hill"
+    },
+    {
+      "id": 203915,
+      "name": "Spencer Dinwiddie"
+    },
+    {
+      "id": 1626169,
+      "name": "Stanley Johnson"
+    },
+    {
+      "id": 201939,
+      "name": "Stephen Curry"
+    },
+    {
+      "id": 1628425,
+      "name": "Sterling Brown"
+    },
+    {
+      "id": 203500,
+      "name": "Steven Adams"
+    },
+    {
+      "id": 1629004,
+      "name": "Svi Mykhailiuk"
+    },
+    {
+      "id": 1628388,
+      "name": "T.J. Leaf"
+    },
+    {
+      "id": 204456,
+      "name": "T.J. McConnell"
+    },
+    {
+      "id": 203933,
+      "name": "T.J. Warren"
+    },
+    {
+      "id": 1629605,
+      "name": "Tacko Fall"
+    },
+    {
+      "id": 201959,
+      "name": "Taj Gibson"
+    },
+    {
+      "id": 1629659,
+      "name": "Talen Horton-Tucker"
+    },
+    {
+      "id": 1627752,
+      "name": "Taurean Prince"
+    },
+    {
+      "id": 1629611,
+      "name": "Terance Mann"
+    },
+    {
+      "id": 1629056,
+      "name": "Terence Davis"
+    },
+    {
+      "id": 1628390,
+      "name": "Terrance Ferguson"
+    },
+    {
+      "id": 203082,
+      "name": "Terrence Ross"
+    },
+    {
+      "id": 1626179,
+      "name": "Terry Rozier"
+    },
+    {
+      "id": 201152,
+      "name": "Thaddeus Young"
+    },
+    {
+      "id": 203648,
+      "name": "Thanasis Antetokounmpo"
+    },
+    {
+      "id": 1630177,
+      "name": "Theo Maledon"
+    },
+    {
+      "id": 1629033,
+      "name": "Theo Pinson"
+    },
+    {
+      "id": 1628418,
+      "name": "Thomas Bryant"
+    },
+    {
+      "id": 1627748,
+      "name": "Thon Maker"
+    },
+    {
+      "id": 204025,
+      "name": "Tim Frazier"
+    },
+    {
+      "id": 203501,
+      "name": "Tim Hardaway Jr."
+    },
+    {
+      "id": 1627789,
+      "name": "Timothe Luwawu-Cabarrot"
+    },
+    {
+      "id": 202699,
+      "name": "Tobias Harris"
+    },
+    {
+      "id": 203107,
+      "name": "Tomas Satoransky"
+    },
+    {
+      "id": 1628396,
+      "name": "Tony Bradley"
+    },
+    {
+      "id": 203503,
+      "name": "Tony Snell"
+    },
+    {
+      "id": 1628470,
+      "name": "Torrey Craig"
+    },
+    {
+      "id": 1629027,
+      "name": "Trae Young"
+    },
+    {
+      "id": 1630200,
+      "name": "Tre Jones"
+    },
+    {
+      "id": 1629682,
+      "name": "Tremont Waters"
+    },
+    {
+      "id": 1630235,
+      "name": "Trent Forrest"
+    },
+    {
+      "id": 2772,
+      "name": "Trevor Ariza"
+    },
+    {
+      "id": 203504,
+      "name": "Trey Burke"
+    },
+    {
+      "id": 1626168,
+      "name": "Trey Lyles"
+    },
+    {
+      "id": 202684,
+      "name": "Tristan Thompson"
+    },
+    {
+      "id": 1628972,
+      "name": "Troy Brown Jr."
+    },
+    {
+      "id": 1629660,
+      "name": "Ty Jerome"
+    },
+    {
+      "id": 1630234,
+      "name": "Ty-Shon Alexander"
+    },
+    {
+      "id": 1630189,
+      "name": "Tyler Bey"
+    },
+    {
+      "id": 1629076,
+      "name": "Tyler Cook"
+    },
+    {
+      "id": 1629639,
+      "name": "Tyler Herro"
+    },
+    {
+      "id": 204020,
+      "name": "Tyler Johnson"
+    },
+    {
+      "id": 1630179,
+      "name": "Tyrell Terry"
+    },
+    {
+      "id": 1630169,
+      "name": "Tyrese Haliburton"
+    },
+    {
+      "id": 1630178,
+      "name": "Tyrese Maxey"
+    },
+    {
+      "id": 1626145,
+      "name": "Tyus Jones"
+    },
+    {
+      "id": 1628962,
+      "name": "Udoka Azubuike"
+    },
+    {
+      "id": 2617,
+      "name": "Udonis Haslem"
+    },
+    {
+      "id": 1630176,
+      "name": "Vernon Carey Jr."
+    },
+    {
+      "id": 203506,
+      "name": "Victor Oladipo"
+    },
+    {
+      "id": 1629738,
+      "name": "Vincent Poirier"
+    },
+    {
+      "id": 1628427,
+      "name": "Vlatko \u010can\u010dar"
+    },
+    {
+      "id": 201961,
+      "name": "Wayne Ellington"
+    },
+    {
+      "id": 1628976,
+      "name": "Wendell Carter Jr."
+    },
+    {
+      "id": 1629117,
+      "name": "Wenyen Gabriel"
+    },
+    {
+      "id": 1628411,
+      "name": "Wes Iwundu"
+    },
+    {
+      "id": 202083,
+      "name": "Wesley Matthews"
+    },
+    {
+      "id": 203115,
+      "name": "Will Barton"
+    },
+    {
+      "id": 1630266,
+      "name": "Will Magnay"
+    },
+    {
+      "id": 1626161,
+      "name": "Willie Cauley-Stein"
+    },
+    {
+      "id": 1626195,
+      "name": "Willy Hernangomez"
+    },
+    {
+      "id": 1630214,
+      "name": "Xavier Tillman"
+    },
+    {
+      "id": 1627812,
+      "name": "Yogi Ferrell"
+    },
+    {
+      "id": 1629139,
+      "name": "Yuta Watanabe"
+    },
+    {
+      "id": 203897,
+      "name": "Zach LaVine"
+    },
+    {
+      "id": 1630192,
+      "name": "Zeke Nnaji"
+    },
+    {
+      "id": 1629627,
+      "name": "Zion Williamson"
+    }
+  ]
+}

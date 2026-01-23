@@ -1,0 +1,143 @@
+{
+  "team": "DEN",
+  "season": "2017-18",
+  "cached_at": "2026-01-22T17:12:18.540622",
+  "players": [
+    {
+      "id": 203999,
+      "name": "Nikola Joki\u0107",
+      "position": "C",
+      "number": "15",
+      "ppg": 18.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 203914,
+      "name": "Gary Harris",
+      "position": "G",
+      "number": "14",
+      "ppg": 17.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627750,
+      "name": "Jamal Murray",
+      "position": "G",
+      "number": "27",
+      "ppg": 16.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 203115,
+      "name": "Will Barton",
+      "position": "F-G",
+      "number": "5",
+      "ppg": 15.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 200794,
+      "name": "Paul Millsap",
+      "position": "F",
+      "number": "4",
+      "ppg": 14.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 201163,
+      "name": "Wilson Chandler",
+      "position": "F",
+      "number": "21",
+      "ppg": 10.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1626168,
+      "name": "Trey Lyles",
+      "position": "F",
+      "number": "7",
+      "ppg": 9.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 2734,
+      "name": "Devin Harris",
+      "position": "G",
+      "number": "34",
+      "ppg": 8.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 203486,
+      "name": "Mason Plumlee",
+      "position": "C-F",
+      "number": "24",
+      "ppg": 7.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 202702,
+      "name": "Kenneth Faried",
+      "position": "F",
+      "number": "35",
+      "ppg": 5.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628470,
+      "name": "Torrey Craig",
+      "position": "G-F",
+      "number": "3",
+      "ppg": 4.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628420,
+      "name": "Mont\u00e9 Morris",
+      "position": "G",
+      "number": "11",
+      "ppg": 3.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627823,
+      "name": "Juancho Hernangomez",
+      "position": "F",
+      "number": "41",
+      "ppg": 3.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627736,
+      "name": "Malik Beasley",
+      "position": "G",
+      "number": "25",
+      "ppg": 3.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 201589,
+      "name": "Darrell Arthur",
+      "position": "F",
+      "number": "00",
+      "ppg": 2.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 2210,
+      "name": "Richard Jefferson",
+      "position": "F",
+      "number": "22",
+      "ppg": 1.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628399,
+      "name": "Tyler Lydon",
+      "position": "F",
+      "number": "20",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}
