@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { Lobby, LobbyInsert, LobbyPlayer, LobbyPlayerInsert, LobbyStatus } from '../types/database';
+import { teams } from '../data/teams';
+import { nflTeams } from '../data/nfl-teams';
 
 // Generate a random 6-character join code
 function generateJoinCode(): string {
@@ -37,7 +39,8 @@ export async function createLobby(
   sport: string,
   teamAbbreviation: string,
   season: string,
-  timerDuration: number = 90
+  timerDuration: number = 90,
+  gameMode: 'random' | 'manual' = 'manual'
 ): Promise<{ lobby: Lobby; error: null } | { lobby: null; error: string }> {
   if (!supabase) {
     return { lobby: null, error: 'Multiplayer not available' };
@@ -58,6 +61,7 @@ export async function createLobby(
       team_abbreviation: teamAbbreviation,
       season,
       timer_duration: timerDuration,
+      game_mode: gameMode,
       status: 'waiting',
     };
 
@@ -325,21 +329,51 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     return { error: 'Multiplayer not available' };
   }
 
-  // Reset lobby status to waiting
+  // First, fetch the current lobby to check game_mode
+  const { data: currentLobby, error: fetchError } = await supabase
+    .from('lobbies')
+    .select('game_mode, sport')
+    .eq('id', lobbyId)
+    .single();
+
+  if (fetchError || !currentLobby) {
+    return { error: fetchError?.message || 'Lobby not found' };
+  }
+
+  // Build the update object
+  const lobbyUpdate: Record<string, unknown> = {
+    status: 'waiting',
+    started_at: null,
+    finished_at: null,
+  };
+
+  // If random mode, pick a new random team and season
+  if (currentLobby.game_mode === 'random') {
+    const sport = currentLobby.sport;
+    const teamList = sport === 'nba' ? teams : nflTeams;
+    const minYear = sport === 'nfl' ? 2000 : 2015;
+    const maxYear = 2024;
+
+    const randomTeam = teamList[Math.floor(Math.random() * teamList.length)];
+    const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+
+    lobbyUpdate.team_abbreviation = randomTeam.abbreviation;
+    lobbyUpdate.season = sport === 'nba'
+      ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+      : `${randomYear}`;
+  }
+
+  // Reset lobby status (and team/season if random)
   const { error: lobbyError } = await supabase
     .from('lobbies')
-    .update({
-      status: 'waiting',
-      started_at: null,
-      finished_at: null,
-    })
+    .update(lobbyUpdate)
     .eq('id', lobbyId);
 
   if (lobbyError) {
     return { error: lobbyError.message };
   }
 
-  // Reset all player scores and ready status
+  // Reset non-host player scores and ready status
   const { error: playersError } = await supabase
     .from('lobby_players')
     .update({
@@ -348,10 +382,27 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
       is_ready: false,
       finished_at: null,
     })
-    .eq('lobby_id', lobbyId);
+    .eq('lobby_id', lobbyId)
+    .eq('is_host', false);
 
   if (playersError) {
     return { error: playersError.message };
+  }
+
+  // Reset host scores but keep them ready
+  const { error: hostError } = await supabase
+    .from('lobby_players')
+    .update({
+      score: 0,
+      guessed_count: 0,
+      is_ready: true,
+      finished_at: null,
+    })
+    .eq('lobby_id', lobbyId)
+    .eq('is_host', true);
+
+  if (hostError) {
+    return { error: hostError.message };
   }
 
   return { error: null };

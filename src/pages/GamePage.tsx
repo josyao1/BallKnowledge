@@ -1,14 +1,17 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbyStore } from '../stores/lobbyStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { Timer } from '../components/game/Timer';
 import { PlayerInput } from '../components/game/PlayerInput';
 import { GuessedPlayersList } from '../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../components/game/TeamDisplay';
 import { LiveScoreboard } from '../components/multiplayer/LiveScoreboard';
+import { fetchTeamRecord } from '../services/api';
+import { fetchNFLTeamRecord } from '../services/nfl-api';
 
 export function GamePage() {
   const navigate = useNavigate();
@@ -36,6 +39,47 @@ export function GamePage() {
   // Multiplayer state
   const { lobby, players, currentPlayerId, syncScore, endGame: endLobbyGame } = useLobbyStore();
   useLobbySubscription(isMultiplayer ? lobby?.id || null : null);
+
+  // Settings state
+  const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
+  const [teamRecord, setTeamRecord] = useState<string | null>(null);
+
+  // Fetch team record for hints (separate call - appears after a brief delay)
+  useEffect(() => {
+    if (!showSeasonHints || !selectedTeam || !selectedSeason) {
+      setTeamRecord(null);
+      return;
+    }
+
+    const fetchRecord = async () => {
+      // Determine if NBA or NFL based on season format
+      const isNFL = !selectedSeason.includes('-');
+
+      try {
+        if (isNFL) {
+          const year = parseInt(selectedSeason);
+          const record = await fetchNFLTeamRecord(selectedTeam.abbreviation, year);
+          if (record) {
+            setTeamRecord(record.record);
+          } else {
+            setTeamRecord(null);
+          }
+        } else {
+          const record = await fetchTeamRecord(selectedTeam.abbreviation, selectedSeason);
+          if (record) {
+            setTeamRecord(record.record);
+          } else {
+            setTeamRecord(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching team record:', error);
+        setTeamRecord(null);
+      }
+    };
+
+    fetchRecord();
+  }, [showSeasonHints, selectedTeam, selectedSeason]);
 
   // Debounce score sync for multiplayer
   const lastSyncRef = useRef<{ score: number; count: number }>({ score: 0, count: 0 });
@@ -140,7 +184,7 @@ export function GamePage() {
         <div className="max-w-4xl mx-auto">
           {/* Team and Season */}
           <div className="flex justify-between items-center mb-4">
-            <TeamDisplay team={selectedTeam} season={selectedSeason} />
+            <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} />
             <Timer
               timeRemaining={timeRemaining}
               totalTime={useGameStore.getState().timerDuration}
@@ -225,26 +269,28 @@ export function GamePage() {
             />
           </div>
 
-          {/* Give up button */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-4 flex justify-center"
-          >
-            <button
-              onClick={handleGiveUp}
-              className="px-8 py-2 rounded-lg transition-colors sports-font tracking-wider"
-              style={{
-                backgroundColor: `${selectedTeam.colors.primary}20`,
-                color: selectedTeam.colors.primary,
-                borderWidth: '2px',
-                borderColor: `${selectedTeam.colors.primary}50`,
-              }}
+          {/* Give up button (single player only) */}
+          {!isMultiplayer && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-4 flex justify-center"
             >
-              Give Up
-            </button>
-          </motion.div>
+              <button
+                onClick={handleGiveUp}
+                className="px-8 py-2 rounded-lg transition-colors sports-font tracking-wider"
+                style={{
+                  backgroundColor: `${selectedTeam.colors.primary}20`,
+                  color: selectedTeam.colors.primary,
+                  borderWidth: '2px',
+                  borderColor: `${selectedTeam.colors.primary}50`,
+                }}
+              >
+                Give Up
+              </button>
+            </motion.div>
+          )}
         </div>
 
         {/* Live scoreboard (multiplayer only) */}

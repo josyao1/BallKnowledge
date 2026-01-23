@@ -38,6 +38,20 @@ interface NFLApiSeasonPlayersResponse {
   cached: boolean;
 }
 
+export interface NFLTeamRecord {
+  team: string;
+  season: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  record: string;  // e.g., "12-5" or "12-4-1"
+  winPct: number;
+}
+
+interface NFLApiTeamRecordResponse extends NFLTeamRecord {
+  cached: boolean;
+}
+
 /**
  * Check if the NFL API server is available
  */
@@ -166,4 +180,43 @@ export async function isNFLApiAvailable(): Promise<boolean> {
  */
 export function resetNFLApiAvailability(): void {
   _nflApiAvailable = null;
+}
+
+/**
+ * Fetch NFL team record for a season (for hints)
+ */
+export async function fetchNFLTeamRecord(
+  teamAbbreviation: string,
+  season: number
+): Promise<NFLTeamRecord | null> {
+  try {
+    const response = await fetch(
+      `${NFL_API_BASE_URL}/nfl/record/${teamAbbreviation}/${season}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`NFL API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data: NFLApiTeamRecordResponse = await response.json();
+    return {
+      team: data.team,
+      season: data.season,
+      wins: data.wins,
+      losses: data.losses,
+      ties: data.ties,
+      record: data.record,
+      winPct: data.winPct,
+    };
+  } catch (error) {
+    console.error('Failed to fetch NFL team record from API:', error);
+    return null;
+  }
 }

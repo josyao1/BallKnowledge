@@ -112,12 +112,17 @@ CREATE TABLE IF NOT EXISTS lobbies (
   team_abbreviation VARCHAR(5) NOT NULL,
   season VARCHAR(10) NOT NULL,
   timer_duration INTEGER NOT NULL DEFAULT 90,
+  game_mode VARCHAR(10) NOT NULL DEFAULT 'manual',
   status VARCHAR(20) NOT NULL DEFAULT 'waiting',
   max_players INTEGER NOT NULL DEFAULT 8,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   started_at TIMESTAMPTZ,
   finished_at TIMESTAMPTZ
 );
+
+-- Migration: Add game_mode column if it doesn't exist
+-- Run this if you already have the lobbies table:
+-- ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS game_mode VARCHAR(10) NOT NULL DEFAULT 'manual';
 
 -- Lobby players table
 CREATE TABLE IF NOT EXISTS lobby_players (

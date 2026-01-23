@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from nba_api.stats.static import teams as nba_teams
-from nba_api.stats.endpoints import CommonTeamRoster, LeagueDashPlayerStats, CommonAllPlayers
+from nba_api.stats.endpoints import CommonTeamRoster, LeagueDashPlayerStats, CommonAllPlayers, LeagueStandingsV3
 
 # ============================================================================
 # Configuration
@@ -93,6 +93,16 @@ class SeasonPlayer(BaseModel):
 class SeasonPlayersResponse(BaseModel):
     season: str
     players: list[SeasonPlayer]
+    cached: bool = False
+
+class TeamRecordResponse(BaseModel):
+    team: str
+    season: str
+    wins: int
+    losses: int
+    record: str  # e.g., "52-30"
+    winPct: float
+    playoffResult: Optional[str] = None  # e.g., "Lost Finals", "Won Championship"
     cached: bool = False
 
 # ============================================================================
@@ -180,6 +190,94 @@ def save_season_players_to_cache(season: str, players: list[dict]) -> None:
             }, f, indent=2)
     except Exception as e:
         print(f"Warning: Could not save season players cache: {e}")
+
+# ============================================================================
+# Team Record Caching
+# ============================================================================
+
+def get_record_cache_path(team: str, season: str) -> Path:
+    """Get the cache file path for a team record."""
+    CACHE_DIR.mkdir(exist_ok=True)
+    return CACHE_DIR / f"record_{team}_{season}.json"
+
+def get_cached_record(team: str, season: str) -> Optional[dict]:
+    """Get cached team record if it exists."""
+    cache_path = get_record_cache_path(team, season)
+
+    if not cache_path.exists():
+        return None
+
+    try:
+        with open(cache_path, "r") as f:
+            data = json.load(f)
+
+        # Records don't change, so no expiry needed
+        return data
+    except Exception:
+        return None
+
+def save_record_to_cache(team: str, season: str, record_data: dict) -> None:
+    """Save team record to cache."""
+    cache_path = get_record_cache_path(team, season)
+
+    try:
+        with open(cache_path, "w") as f:
+            json.dump(record_data, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save record cache: {e}")
+
+# In-memory cache for standings
+_standings_cache: dict[str, dict] = {}
+
+# Reverse mapping: team_id -> abbreviation
+NBA_TEAM_IDS_TO_ABBR = {v: k for k, v in NBA_TEAMS.items()}
+
+def fetch_season_standings(season: str) -> dict[str, dict]:
+    """Fetch standings for all teams in a season."""
+    try:
+        standings = LeagueStandingsV3(
+            season=season,
+            season_type="Regular Season"
+        )
+        time.sleep(REQUEST_DELAY)
+        df = standings.get_data_frames()[0]
+
+        print(f"Standings columns: {list(df.columns)}")
+        if not df.empty:
+            print(f"First row sample: {df.iloc[0].to_dict()}")
+
+        result = {}
+        for _, row in df.iterrows():
+            # Use TeamID to get the abbreviation reliably
+            team_id = row.get("TeamID")
+            if team_id and team_id in NBA_TEAM_IDS_TO_ABBR:
+                team_abbr = NBA_TEAM_IDS_TO_ABBR[team_id]
+            else:
+                # Fallback to TeamSlug if available
+                team_abbr = row.get("TeamSlug", "").upper()
+                if not team_abbr:
+                    continue
+
+            result[team_abbr] = {
+                "wins": int(row.get("WINS", 0)),
+                "losses": int(row.get("LOSSES", 0)),
+                "winPct": float(row.get("WinPCT", 0)),
+                "playoffRank": int(row.get("PlayoffRank", 0)) if row.get("PlayoffRank") else None,
+            }
+
+        print(f"Parsed standings for {len(result)} teams: {list(result.keys())}")
+        return result
+    except Exception as e:
+        print(f"Error fetching standings: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}
+
+def get_season_standings(season: str) -> dict[str, dict]:
+    """Get season standings with in-memory caching."""
+    if season not in _standings_cache:
+        _standings_cache[season] = fetch_season_standings(season)
+    return _standings_cache[season]
 
 # ============================================================================
 # NBA API Functions
@@ -503,6 +601,78 @@ async def get_season_players(season: str):
         players=[SeasonPlayer(**p) for p in players],
         cached=False
     )
+
+@app.get("/record/{team}/{season}", response_model=TeamRecordResponse)
+async def get_team_record(team: str, season: str):
+    """
+    Get win-loss record for a specific team and season.
+
+    Args:
+        team: Team abbreviation (e.g., "LAL", "GSW")
+        season: Season in format "YYYY-YY" (e.g., "2023-24")
+
+    Returns:
+        TeamRecordResponse with wins, losses, record string
+    """
+    team = team.upper()
+
+    # Validate team
+    if team not in NBA_TEAMS:
+        raise HTTPException(status_code=404, detail=f"Unknown team: {team}")
+
+    # Validate season format
+    if not (len(season) == 7 and season[4] == "-"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid season format. Expected 'YYYY-YY', got '{season}'"
+        )
+
+    # Check cache first
+    cached_record = get_cached_record(team, season)
+    if cached_record:
+        return TeamRecordResponse(**cached_record, cached=True)
+
+    print(f"Fetching record from NBA API: {team} {season}")
+
+    # Fetch standings for the season
+    standings = get_season_standings(season)
+
+    if team not in standings:
+        # Try alternate team abbreviations
+        team_mapping = {
+            "BKN": "BRK", "PHX": "PHO", "CHA": "CHO",
+            "BRK": "BKN", "PHO": "PHX", "CHO": "CHA"
+        }
+        alt_team = team_mapping.get(team)
+        if alt_team and alt_team in standings:
+            team_data = standings[alt_team]
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No record data found for {team} in {season}"
+            )
+    else:
+        team_data = standings[team]
+
+    wins = team_data["wins"]
+    losses = team_data["losses"]
+    record_str = f"{wins}-{losses}"
+    win_pct = team_data["winPct"]
+
+    record_data = {
+        "team": team,
+        "season": season,
+        "wins": wins,
+        "losses": losses,
+        "record": record_str,
+        "winPct": win_pct,
+        "playoffResult": None,  # Could be enhanced later
+    }
+
+    # Save to cache
+    save_record_to_cache(team, season, record_data)
+
+    return TeamRecordResponse(**record_data, cached=False)
 
 # ============================================================================
 # Main

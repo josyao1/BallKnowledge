@@ -1,0 +1,127 @@
+{
+  "team": "GSW",
+  "season": "2016-17",
+  "cached_at": "2026-01-23T01:37:31.892307",
+  "players": [
+    {
+      "id": 201939,
+      "name": "Stephen Curry",
+      "position": "G",
+      "number": "30",
+      "ppg": 25.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 201142,
+      "name": "Kevin Durant",
+      "position": "F",
+      "number": "35",
+      "ppg": 25.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 202691,
+      "name": "Klay Thompson",
+      "position": "G",
+      "number": "11",
+      "ppg": 22.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 203110,
+      "name": "Draymond Green",
+      "position": "F",
+      "number": "23",
+      "ppg": 10.2,
+      "isLowScorer": false
+    },
+    {
+      "id": 2738,
+      "name": "Andre Iguodala",
+      "position": "G-F",
+      "number": "9",
+      "ppg": 7.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 2440,
+      "name": "Matt Barnes",
+      "position": "F",
+      "number": "22",
+      "ppg": 7.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 203546,
+      "name": "Ian Clark",
+      "position": "G",
+      "number": "21",
+      "ppg": 6.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 201580,
+      "name": "JaVale McGee",
+      "position": "C",
+      "number": "1",
+      "ppg": 6.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 2585,
+      "name": "Zaza Pachulia",
+      "position": "C",
+      "number": "27",
+      "ppg": 6.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 2733,
+      "name": "Shaun Livingston",
+      "position": "G",
+      "number": "34",
+      "ppg": 5.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 2561,
+      "name": "David West",
+      "position": "F",
+      "number": "3",
+      "ppg": 4.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627775,
+      "name": "Patrick McCaw",
+      "position": "G",
+      "number": "0",
+      "ppg": 4.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 203949,
+      "name": "James Michael McAdoo",
+      "position": "F",
+      "number": "20",
+      "ppg": 2.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626172,
+      "name": "Kevon Looney",
+      "position": "F",
+      "number": "5",
+      "ppg": 2.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627745,
+      "name": "Damian Jones",
+      "position": "C",
+      "number": "15",
+      "ppg": 1.9,
+      "isLowScorer": true
+    }
+  ]
+}

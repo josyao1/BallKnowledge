@@ -1,0 +1,127 @@
+{
+  "team": "MEM",
+  "season": "2016-17",
+  "cached_at": "2026-01-23T01:33:48.324166",
+  "players": [
+    {
+      "id": 201144,
+      "name": "Mike Conley",
+      "position": "G",
+      "number": "11",
+      "ppg": 20.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 201188,
+      "name": "Marc Gasol",
+      "position": "C",
+      "number": "33",
+      "ppg": 19.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 2216,
+      "name": "Zach Randolph",
+      "position": "F",
+      "number": "50",
+      "ppg": 14.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 2754,
+      "name": "Tony Allen",
+      "position": "G-F",
+      "number": "9",
+      "ppg": 9.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 203210,
+      "name": "JaMychal Green",
+      "position": "F",
+      "number": "0",
+      "ppg": 8.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 203584,
+      "name": "Troy Daniels",
+      "position": "G",
+      "number": "30",
+      "ppg": 8.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1713,
+      "name": "Vince Carter",
+      "position": "G-F",
+      "number": "15",
+      "ppg": 8.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 201148,
+      "name": "Brandan Wright",
+      "position": "F",
+      "number": "34",
+      "ppg": 6.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 203516,
+      "name": "James Ennis III",
+      "position": "F",
+      "number": "8",
+      "ppg": 6.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 202718,
+      "name": "Chandler Parsons",
+      "position": "F",
+      "number": "25",
+      "ppg": 6.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626150,
+      "name": "Andrew Harrison",
+      "position": "G",
+      "number": "5",
+      "ppg": 5.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627782,
+      "name": "Wayne Selden",
+      "position": "G",
+      "number": "7",
+      "ppg": 5.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626185,
+      "name": "Jarell Martin",
+      "position": "F",
+      "number": "1",
+      "ppg": 3.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627735,
+      "name": "Wade Baldwin IV",
+      "position": "G",
+      "number": "4",
+      "ppg": 3.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627738,
+      "name": "Deyonta Davis",
+      "position": "F",
+      "number": "23",
+      "ppg": 1.6,
+      "isLowScorer": true
+    }
+  ]
+}

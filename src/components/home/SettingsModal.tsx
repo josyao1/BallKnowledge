@@ -5,7 +5,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { timerDuration, yearRange, hideResultsDuringGame, setTimerDuration, setYearRange, setHideResultsDuringGame } = useSettingsStore();
+  const { timerDuration, yearRange, hideResultsDuringGame, showSeasonHints, setTimerDuration, setYearRange, setHideResultsDuringGame, setShowSeasonHints } = useSettingsStore();
 
   const timerOptions = [
     { label: '1:00', value: 60 },
@@ -98,6 +98,30 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               <div
                 className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
                   hideResultsDuringGame ? 'translate-x-8' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Show season hints */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm text-gray-300">Show Season Hints</label>
+              <p className="text-xs text-gray-500 mt-1">
+                Display team's record for the season
+              </p>
+            </div>
+            <button
+              onClick={() => setShowSeasonHints(!showSeasonHints)}
+              className={`relative w-14 h-7 rounded-full transition-colors ${
+                showSeasonHints ? 'bg-indigo-600' : 'bg-gray-600'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
+                  showSeasonHints ? 'translate-x-8' : 'translate-x-1'
                 }`}
               />
             </button>

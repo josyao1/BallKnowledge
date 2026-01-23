@@ -130,6 +130,16 @@ class SeasonPlayersResponse(BaseModel):
     players: list[SeasonPlayer]
     cached: bool = False
 
+class TeamRecordResponse(BaseModel):
+    team: str
+    season: int
+    wins: int
+    losses: int
+    ties: int
+    record: str  # e.g., "12-5" or "12-4-1"
+    winPct: float
+    cached: bool = False
+
 # ============================================================================
 # Caching
 # ============================================================================
@@ -210,6 +220,34 @@ def save_season_players_to_cache(season: int, players: list[dict]) -> None:
             }, f, indent=2)
     except Exception as e:
         print(f"Warning: Could not save season players cache: {e}")
+
+def get_record_cache_path(team: str, season: int) -> Path:
+    """Get the cache file path for a team record."""
+    CACHE_DIR.mkdir(exist_ok=True)
+    return CACHE_DIR / f"nfl_record_{team}_{season}.json"
+
+def get_cached_record(team: str, season: int) -> Optional[dict]:
+    """Get cached team record if it exists."""
+    cache_path = get_record_cache_path(team, season)
+
+    if not cache_path.exists():
+        return None
+
+    try:
+        with open(cache_path, "r") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+def save_record_to_cache(team: str, season: int, record_data: dict) -> None:
+    """Save team record to cache."""
+    cache_path = get_record_cache_path(team, season)
+
+    try:
+        with open(cache_path, "w") as f:
+            json.dump(record_data, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save record cache: {e}")
 
 # ============================================================================
 # NFL Data Functions
@@ -358,6 +396,96 @@ def get_all_season_players(season: int) -> list[dict]:
         _season_players_cache[season] = fetch_all_season_players(season)
     return _season_players_cache[season]
 
+# In-memory cache for season schedules
+_schedules_cache: dict[int, dict] = {}
+
+def fetch_team_record(team: str, season: int) -> Optional[dict]:
+    """Fetch win-loss record for a team in a given season."""
+    if not NFL_DATA_AVAILABLE:
+        return None
+
+    try:
+        # Get schedule/game results for the season
+        if season not in _schedules_cache:
+            schedules = nfl.import_schedules([season])
+            if schedules is None or schedules.empty:
+                return None
+
+            # Calculate records for all teams
+            records = {}
+            for _, game in schedules.iterrows():
+                # Only count regular season games that have been played
+                game_type = game.get('game_type', '')
+                if game_type != 'REG':
+                    continue
+
+                home_team = game.get('home_team', '')
+                away_team = game.get('away_team', '')
+                home_score = game.get('home_score')
+                away_score = game.get('away_score')
+
+                # Skip games that haven't been played
+                if home_score is None or away_score is None:
+                    continue
+                if str(home_score) == 'nan' or str(away_score) == 'nan':
+                    continue
+
+                home_score = int(home_score)
+                away_score = int(away_score)
+
+                # Initialize team records if needed
+                for t in [home_team, away_team]:
+                    if t and t not in records:
+                        records[t] = {'wins': 0, 'losses': 0, 'ties': 0}
+
+                if home_team and away_team:
+                    if home_score > away_score:
+                        records[home_team]['wins'] += 1
+                        records[away_team]['losses'] += 1
+                    elif away_score > home_score:
+                        records[away_team]['wins'] += 1
+                        records[home_team]['losses'] += 1
+                    else:
+                        records[home_team]['ties'] += 1
+                        records[away_team]['ties'] += 1
+
+            _schedules_cache[season] = records
+
+        records = _schedules_cache[season]
+
+        if team not in records:
+            return None
+
+        team_record = records[team]
+        wins = team_record['wins']
+        losses = team_record['losses']
+        ties = team_record['ties']
+
+        # Format record string
+        if ties > 0:
+            record_str = f"{wins}-{losses}-{ties}"
+        else:
+            record_str = f"{wins}-{losses}"
+
+        total_games = wins + losses + ties
+        win_pct = wins / total_games if total_games > 0 else 0.0
+
+        return {
+            "team": team,
+            "season": season,
+            "wins": wins,
+            "losses": losses,
+            "ties": ties,
+            "record": record_str,
+            "winPct": round(win_pct, 3)
+        }
+
+    except Exception as e:
+        print(f"Error fetching NFL team record: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -499,6 +627,52 @@ async def get_season_players(season: int):
         players=[SeasonPlayer(**p) for p in players],
         cached=False
     )
+
+@app.get("/nfl/record/{team}/{season}", response_model=TeamRecordResponse)
+async def get_team_record(team: str, season: int):
+    """
+    Get win-loss record for a specific team and season.
+
+    Args:
+        team: Team abbreviation (e.g., "KC", "SF")
+        season: Season year (e.g., 2023)
+
+    Returns:
+        TeamRecordResponse with wins, losses, ties, record string
+    """
+    team = team.upper()
+
+    # Validate team
+    if team not in NFL_TEAMS:
+        raise HTTPException(status_code=404, detail=f"Unknown team: {team}")
+
+    # Validate season
+    if season < 2000 or season > 2025:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Season must be between 2000 and 2025, got {season}"
+        )
+
+    # Check cache first
+    cached_record = get_cached_record(team, season)
+    if cached_record:
+        return TeamRecordResponse(**cached_record, cached=True)
+
+    print(f"Fetching record: {team} {season}")
+
+    # Fetch record
+    record_data = fetch_team_record(team, season)
+
+    if not record_data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No record data found for {team} in {season}"
+        )
+
+    # Save to cache
+    save_record_to_cache(team, season, record_data)
+
+    return TeamRecordResponse(**record_data, cached=False)
 
 # ============================================================================
 # Main

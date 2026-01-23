@@ -8,6 +8,7 @@ interface SettingsState {
   yearRange: { min: number; max: number };
   nflYearRange: { min: number; max: number };
   hideResultsDuringGame: boolean; // Don't show correct/incorrect until game ends
+  showSeasonHints: boolean; // Show team record as a hint
 
   // Actions
   setSport: (sport: Sport) => void;
@@ -15,6 +16,7 @@ interface SettingsState {
   setYearRange: (min: number, max: number) => void;
   setNFLYearRange: (min: number, max: number) => void;
   setHideResultsDuringGame: (hide: boolean) => void;
+  setShowSeasonHints: (show: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -25,12 +27,14 @@ export const useSettingsStore = create<SettingsState>()(
       yearRange: { min: 1985, max: 2025 }, // NBA year range
       nflYearRange: { min: 2000, max: 2024 }, // NFL year range
       hideResultsDuringGame: false, // Default: show results immediately
+      showSeasonHints: false, // Default: don't show hints
 
       setSport: (sport) => set({ sport }),
       setTimerDuration: (seconds) => set({ timerDuration: seconds }),
       setYearRange: (min, max) => set({ yearRange: { min, max } }),
       setNFLYearRange: (min, max) => set({ nflYearRange: { min, max } }),
       setHideResultsDuringGame: (hide) => set({ hideResultsDuringGame: hide }),
+      setShowSeasonHints: (show) => set({ showSeasonHints: show }),
     }),
     {
       name: 'ball-knowledge-settings',

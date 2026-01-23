@@ -38,6 +38,20 @@ interface ApiSeasonPlayersResponse {
   cached: boolean;
 }
 
+export interface TeamRecord {
+  team: string;
+  season: string;
+  wins: number;
+  losses: number;
+  record: string;  // e.g., "52-30"
+  winPct: number;
+  playoffResult?: string | null;
+}
+
+interface ApiTeamRecordResponse extends TeamRecord {
+  cached: boolean;
+}
+
 /**
  * Check if the API server is available
  */
@@ -166,4 +180,43 @@ export async function isApiAvailable(): Promise<boolean> {
  */
 export function resetApiAvailability(): void {
   _apiAvailable = null;
+}
+
+/**
+ * Fetch team record for a season (for hints)
+ */
+export async function fetchTeamRecord(
+  teamAbbreviation: string,
+  season: string
+): Promise<TeamRecord | null> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/record/${teamAbbreviation}/${season}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data: ApiTeamRecordResponse = await response.json();
+    return {
+      team: data.team,
+      season: data.season,
+      wins: data.wins,
+      losses: data.losses,
+      record: data.record,
+      winPct: data.winPct,
+      playoffResult: data.playoffResult,
+    };
+  } catch (error) {
+    console.error('Failed to fetch team record from API:', error);
+    return null;
+  }
 }

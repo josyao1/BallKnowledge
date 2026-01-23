@@ -78,6 +78,7 @@ export interface Database {
           team_abbreviation: string;
           season: string;
           timer_duration: number;
+          game_mode: 'random' | 'manual';
           status: 'waiting' | 'countdown' | 'playing' | 'finished';
           max_players: number;
           created_at: string;
@@ -93,6 +94,7 @@ export interface Database {
           team_abbreviation: string;
           season: string;
           timer_duration?: number;
+          game_mode?: 'random' | 'manual';
           status?: 'waiting' | 'countdown' | 'playing' | 'finished';
           max_players?: number;
           created_at?: string;
@@ -108,6 +110,7 @@ export interface Database {
           team_abbreviation?: string;
           season?: string;
           timer_duration?: number;
+          game_mode?: 'random' | 'manual';
           status?: 'waiting' | 'countdown' | 'playing' | 'finished';
           max_players?: number;
           created_at?: string;

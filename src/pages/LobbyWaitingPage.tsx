@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
@@ -30,7 +30,10 @@ export function LobbyWaitingPage() {
 
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isLoadingRoster, setIsLoadingRoster] = useState(false);
+  const [isLoadingLobby, setIsLoadingLobby] = useState(true);
   const [copied, setCopied] = useState(false);
+  const hasStartedGame = useRef(false);
+  const hasAutoStarted = useRef(false);
 
   // Subscribe to realtime updates
   useLobbySubscription(lobby?.id || null);
@@ -43,6 +46,11 @@ export function LobbyWaitingPage() {
         return;
       }
 
+      setIsLoadingLobby(true);
+      // Reset game start flags when entering lobby
+      hasStartedGame.current = false;
+      hasAutoStarted.current = false;
+
       // Always fetch fresh lobby data
       const result = await findLobbyByCode(code);
       if (result.lobby) {
@@ -51,9 +59,14 @@ export function LobbyWaitingPage() {
         if (playersResult.players) {
           setPlayers(playersResult.players);
         }
+        // Reset countdown if lobby is in waiting state (e.g., after Play Again)
+        if (result.lobby.status === 'waiting') {
+          setCountdown(null);
+        }
       } else {
         navigate('/lobby/join');
       }
+      setIsLoadingLobby(false);
     };
 
     loadLobby();
@@ -63,11 +76,19 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     if (!lobby) return;
 
-    if (lobby.status === 'countdown') {
+    if (lobby.status === 'waiting') {
+      // Reset all flags when lobby goes back to waiting
+      setCountdown(null);
+      hasStartedGame.current = false;
+      hasAutoStarted.current = false;
+    } else if (lobby.status === 'countdown') {
       setCountdown(3);
     } else if (lobby.status === 'playing') {
-      // Load roster and navigate to game
-      loadRosterAndStart();
+      // Load roster and navigate to game (only once)
+      if (!hasStartedGame.current) {
+        hasStartedGame.current = true;
+        loadRosterAndStart();
+      }
     } else if (lobby.status === 'finished') {
       navigate(`/lobby/${code}/results`);
     }
@@ -91,6 +112,24 @@ export function LobbyWaitingPage() {
 
     return () => clearTimeout(timer);
   }, [countdown, isHost, lobby]);
+
+  // Cancel countdown if someone unreadies during countdown
+  useEffect(() => {
+    const allReady = players.length > 1 && players.every((p) => p.is_ready);
+
+    // If countdown is active but not everyone is ready, cancel it
+    if (lobby?.status === 'countdown' && !allReady && isHost) {
+      updateLobbyStatus(lobby.id, 'waiting');
+      hasAutoStarted.current = false;
+    }
+  }, [players, lobby?.status, isHost]);
+
+  // Manual start handler for host backup button
+  const handleManualStart = async () => {
+    if (!isHost || !lobby) return;
+    hasAutoStarted.current = true;
+    await startGame();
+  };
 
   const loadRosterAndStart = async () => {
     if (!lobby) return;
@@ -155,17 +194,12 @@ export function LobbyWaitingPage() {
     navigate('/');
   };
 
-  const handleStart = async () => {
-    if (!isHost) return;
-    await startGame();
-  };
-
   const currentPlayer = players.find((p) => p.player_id === currentPlayerId);
   const allReady = players.length > 1 && players.every((p) => p.is_ready);
   const sport = (lobby?.sport as Sport) || 'nba';
   const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
 
-  if (!lobby) {
+  if (!lobby || isLoadingLobby) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#888]">Loading lobby...</div>
@@ -244,9 +278,15 @@ export function LobbyWaitingPage() {
               <div className="sports-font text-sm text-[#888] tracking-widest">
                 {sport.toUpperCase()} Roster Trivia
               </div>
-              <div className="text-xl font-bold" style={{ color: accentColor }}>
-                {lobby.team_abbreviation} - {lobby.season}
-              </div>
+              {lobby.game_mode === 'random' ? (
+                <div className="text-xl font-bold" style={{ color: accentColor }}>
+                  Mystery Team
+                </div>
+              ) : (
+                <div className="text-xl font-bold" style={{ color: accentColor }}>
+                  {lobby.team_abbreviation} - {lobby.season}
+                </div>
+              )}
             </div>
             <div className="text-right">
               <div className="sports-font text-sm text-[#888] tracking-widest">Timer</div>
@@ -317,39 +357,40 @@ export function LobbyWaitingPage() {
           transition={{ delay: 0.2 }}
           className="space-y-3"
         >
-          {/* Ready toggle (non-host) */}
-          {!isHost && currentPlayer && (
+          {/* Ready toggle */}
+          {currentPlayer && (
             <button
               onClick={() => setReady(!currentPlayer.is_ready)}
-              className={`w-full py-4 rounded-lg sports-font text-lg tracking-wider transition-all ${
+              disabled={isLoadingRoster || lobby.status === 'countdown'}
+              className={`w-full py-4 rounded-lg sports-font text-lg tracking-wider transition-all disabled:opacity-50 ${
                 currentPlayer.is_ready
                   ? 'bg-green-600 text-white'
                   : 'bg-[#333] text-[#888] border-2 border-[#3d3d3d]'
               }`}
             >
-              {currentPlayer.is_ready ? 'Ready!' : 'Click when Ready'}
+              {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? 'Ready!' : 'Click when Ready'}
             </button>
           )}
 
-          {/* Start button (host only) */}
-          {isHost && (
+          {/* Host backup start button - appears when all ready */}
+          {isHost && allReady && lobby.status === 'waiting' && (
             <button
-              onClick={handleStart}
-              disabled={!allReady || isLoadingRoster}
-              className="w-full py-4 rounded-lg sports-font text-lg tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white"
-              style={{ backgroundColor: allReady ? accentColor : '#333' }}
+              onClick={handleManualStart}
+              disabled={isLoadingRoster}
+              className="w-full py-4 rounded-lg sports-font text-lg tracking-wider transition-all text-white"
+              style={{ backgroundColor: accentColor }}
             >
-              {isLoadingRoster ? 'Loading...' : allReady ? 'Start Game' : 'Waiting for players...'}
+              Start Game
             </button>
           )}
 
-          {/* Waiting message */}
+          {/* Status messages */}
           {players.length < 2 && (
             <p className="text-center text-[#666] text-sm">
               Share the code above to invite players
             </p>
           )}
-          {players.length >= 2 && !allReady && !isHost && (
+          {players.length >= 2 && !allReady && (
             <p className="text-center text-[#666] text-sm">
               Waiting for all players to be ready...
             </p>

@@ -1,29 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { resetLobbyForNewRound } from '../services/lobby';
+import { resetLobbyForNewRound, findLobbyByCode } from '../services/lobby';
 import type { Sport } from '../types';
 
 export function MultiplayerResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, currentPlayerId, isHost, reset: resetLobby } = useLobbyStore();
+  const { lobby, players, currentPlayerId, isHost, reset: resetLobby, setLobby } = useLobbyStore();
   const { currentRoster, resetGame } = useGameStore();
   const [isResetting, setIsResetting] = useState(false);
+  const hasNavigated = useRef(false);
 
   // Keep subscription active for realtime updates
   useLobbySubscription(lobby?.id || null);
 
+  // Navigate back to lobby when status changes to 'waiting'
+  const navigateToLobby = useCallback(() => {
+    if (hasNavigated.current) return;
+    hasNavigated.current = true;
+    resetGame();
+    navigate(`/lobby/${code}`);
+  }, [code, navigate, resetGame]);
+
   // Watch for lobby status change back to 'waiting' (host clicked Play Again)
   useEffect(() => {
     if (lobby?.status === 'waiting') {
-      resetGame();
-      navigate(`/lobby/${code}`);
+      navigateToLobby();
     }
-  }, [lobby?.status, code, navigate, resetGame]);
+  }, [lobby?.status, navigateToLobby]);
+
+  // Polling fallback for non-host players in case realtime misses the update
+  useEffect(() => {
+    if (isHost || !code) return;
+
+    const pollInterval = setInterval(async () => {
+      if (hasNavigated.current) {
+        clearInterval(pollInterval);
+        return;
+      }
+
+      const result = await findLobbyByCode(code);
+      if (result.lobby) {
+        setLobby(result.lobby);
+        if (result.lobby.status === 'waiting') {
+          navigateToLobby();
+        }
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [isHost, code, setLobby, navigateToLobby]);
 
   // Sort players by score
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);

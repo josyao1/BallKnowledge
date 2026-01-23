@@ -46,17 +46,17 @@ export function useLobbySubscription(lobbyId: string | null) {
           filter: `lobby_id=eq.${lobbyId}`,
         },
         async (payload) => {
-          if (payload.eventType === 'INSERT') {
-            // Refresh all players to get correct order
-            const { data } = await supabase!
-              .from('lobby_players')
-              .select()
-              .eq('lobby_id', lobbyId)
-              .order('joined_at', { ascending: true });
-            if (data) setPlayers(data as LobbyPlayer[]);
-          } else if (payload.eventType === 'UPDATE') {
-            updatePlayer(payload.new as LobbyPlayer);
-          } else if (payload.eventType === 'DELETE') {
+          // Always refresh all players to ensure consistency
+          // This handles batch updates (like reset) better than individual updates
+          const { data } = await supabase!
+            .from('lobby_players')
+            .select()
+            .eq('lobby_id', lobbyId)
+            .order('joined_at', { ascending: true });
+          if (data) setPlayers(data as LobbyPlayer[]);
+
+          // Also handle deletion specifically
+          if (payload.eventType === 'DELETE') {
             const deleted = payload.old as { player_id?: string };
             if (deleted.player_id) {
               removePlayer(deleted.player_id);

@@ -1,0 +1,151 @@
+{
+  "team": "DAL",
+  "season": "2019-20",
+  "cached_at": "2026-01-23T01:37:57.989398",
+  "players": [
+    {
+      "id": 1629029,
+      "name": "Luka Don\u010di\u0107",
+      "position": "F-G",
+      "number": "77",
+      "ppg": 28.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 204001,
+      "name": "Kristaps Porzi\u0146\u0123is",
+      "position": "F-C",
+      "number": "6",
+      "ppg": 20.4,
+      "isLowScorer": false
+    },
+    {
+      "id": 203501,
+      "name": "Tim Hardaway Jr.",
+      "position": "G-F",
+      "number": "11",
+      "ppg": 15.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 203552,
+      "name": "Seth Curry",
+      "position": "G",
+      "number": "30",
+      "ppg": 12.4,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627827,
+      "name": "Dorian Finney-Smith",
+      "position": "F",
+      "number": "10",
+      "ppg": 9.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 203939,
+      "name": "Dwight Powell",
+      "position": "F-C",
+      "number": "7",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628467,
+      "name": "Maxi Kleber",
+      "position": "F",
+      "number": "42",
+      "ppg": 9.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628973,
+      "name": "Jalen Brunson",
+      "position": "G",
+      "number": "13",
+      "ppg": 8.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 200826,
+      "name": "J.J. Barea",
+      "position": "G",
+      "number": "5",
+      "ppg": 7.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 203504,
+      "name": "Trey Burke",
+      "position": "G",
+      "number": "32",
+      "ppg": 7.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626161,
+      "name": "Willie Cauley-Stein",
+      "position": "C",
+      "number": "33",
+      "ppg": 7.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626153,
+      "name": "Delon Wright",
+      "position": "G",
+      "number": "55",
+      "ppg": 6.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626246,
+      "name": "Boban Marjanovic",
+      "position": "C",
+      "number": "51",
+      "ppg": 6.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628382,
+      "name": "Justin Jackson",
+      "position": "F",
+      "number": "44",
+      "ppg": 5.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 201584,
+      "name": "Courtney Lee",
+      "position": "G",
+      "number": "1",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 203077,
+      "name": "Michael Kidd-Gilchrist",
+      "position": "F",
+      "number": "9",
+      "ppg": 2.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629729,
+      "name": "Josh Reaves",
+      "position": "G-F",
+      "number": "23",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628499,
+      "name": "Antonius Cleveland",
+      "position": "G",
+      "number": "3",
+      "ppg": 1.0,
+      "isLowScorer": true
+    }
+  ]
+}

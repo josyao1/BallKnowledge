@@ -1,0 +1,135 @@
+{
+  "team": "BKN",
+  "season": "2018-19",
+  "cached_at": "2026-01-23T01:45:37.069779",
+  "players": [
+    {
+      "id": 1626156,
+      "name": "D'Angelo Russell",
+      "position": "G",
+      "number": "1",
+      "ppg": 21.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 203915,
+      "name": "Spencer Dinwiddie",
+      "position": "G",
+      "number": "8",
+      "ppg": 16.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 203925,
+      "name": "Joe Harris",
+      "position": "F-G",
+      "number": "12",
+      "ppg": 13.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627747,
+      "name": "Caris LeVert",
+      "position": "G",
+      "number": "22",
+      "ppg": 13.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 201960,
+      "name": "DeMarre Carroll",
+      "position": "F",
+      "number": "9",
+      "ppg": 11.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1628386,
+      "name": "Jarrett Allen",
+      "position": "C",
+      "number": "31",
+      "ppg": 10.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 203459,
+      "name": "Allen Crabbe",
+      "position": "G-F",
+      "number": "33",
+      "ppg": 9.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 203894,
+      "name": "Shabazz Napier",
+      "position": "G",
+      "number": "13",
+      "ppg": 9.4,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626178,
+      "name": "Rondae Hollis-Jefferson",
+      "position": "F",
+      "number": "24",
+      "ppg": 8.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629066,
+      "name": "Rodions Kurucs",
+      "position": "F",
+      "number": "00",
+      "ppg": 8.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 202334,
+      "name": "Ed Davis",
+      "position": "C",
+      "number": "17",
+      "ppg": 5.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626203,
+      "name": "Treveon Graham",
+      "position": "F",
+      "number": "21",
+      "ppg": 5.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 201162,
+      "name": "Jared Dudley",
+      "position": "F",
+      "number": "6",
+      "ppg": 4.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629033,
+      "name": "Theo Pinson",
+      "position": "G-F",
+      "number": "10",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626210,
+      "name": "Alan Williams",
+      "position": "F-C",
+      "number": "15",
+      "ppg": 3.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1629058,
+      "name": "Dzanan Musa",
+      "position": "G-F",
+      "number": "30",
+      "ppg": 2.1,
+      "isLowScorer": true
+    }
+  ]
+}

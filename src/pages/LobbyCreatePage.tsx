@@ -62,7 +62,7 @@ export function LobbyCreatePage() {
       season = sport === 'nba' ? `${selectedYear}-${String(selectedYear + 1).slice(-2)}` : `${selectedYear}`;
     }
 
-    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration);
+    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode);
 
     if (lobby) {
       navigate(`/lobby/${lobby.join_code}`);

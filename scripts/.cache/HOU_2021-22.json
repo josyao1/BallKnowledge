@@ -1,0 +1,143 @@
+{
+  "team": "HOU",
+  "season": "2021-22",
+  "cached_at": "2026-01-23T01:40:59.415564",
+  "players": [
+    {
+      "id": 1626174,
+      "name": "Christian Wood",
+      "position": "F",
+      "number": "35",
+      "ppg": 17.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630224,
+      "name": "Jalen Green",
+      "position": "G",
+      "number": "0",
+      "ppg": 17.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629645,
+      "name": "Kevin Porter Jr.",
+      "position": "G-F",
+      "number": "3",
+      "ppg": 15.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 203471,
+      "name": "Dennis Schr\u00f6der",
+      "position": "G",
+      "number": "17",
+      "ppg": 13.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 201569,
+      "name": "Eric Gordon",
+      "position": "G",
+      "number": "10",
+      "ppg": 13.4,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630256,
+      "name": "Jae'Sean Tate",
+      "position": "F",
+      "number": "8",
+      "ppg": 11.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 1629726,
+      "name": "Garrison Mathews",
+      "position": "G",
+      "number": "25",
+      "ppg": 10.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630578,
+      "name": "Alperen Sengun",
+      "position": "C",
+      "number": "28",
+      "ppg": 9.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630231,
+      "name": "KJ Martin",
+      "position": "F",
+      "number": "6",
+      "ppg": 8.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630528,
+      "name": "Josh Christopher",
+      "position": "G",
+      "number": "9",
+      "ppg": 7.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628021,
+      "name": "David Nwaba",
+      "position": "G-F",
+      "number": "2",
+      "ppg": 5.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630243,
+      "name": "Trevelin Queen",
+      "position": "G",
+      "number": "21",
+      "ppg": 4.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630227,
+      "name": "Daishen Nix",
+      "position": "G",
+      "number": "15",
+      "ppg": 3.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628981,
+      "name": "Bruno Fernando",
+      "position": "F-C",
+      "number": "20",
+      "ppg": 2.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630586,
+      "name": "Usman Garuba",
+      "position": "F",
+      "number": "16",
+      "ppg": 2.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 202322,
+      "name": "John Wall",
+      "position": "G",
+      "number": "1",
+      "ppg": 0.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630237,
+      "name": "Anthony Lamb",
+      "position": "F",
+      "number": "33",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

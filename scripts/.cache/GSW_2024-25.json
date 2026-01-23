@@ -1,0 +1,143 @@
+{
+  "team": "GSW",
+  "season": "2024-25",
+  "cached_at": "2026-01-23T01:37:15.971141",
+  "players": [
+    {
+      "id": 201939,
+      "name": "Stephen Curry",
+      "position": "G",
+      "number": "30",
+      "ppg": 24.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 202710,
+      "name": "Jimmy Butler III",
+      "position": "F",
+      "number": "10",
+      "ppg": 17.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630228,
+      "name": "Jonathan Kuminga",
+      "position": "F",
+      "number": "00",
+      "ppg": 15.3,
+      "isLowScorer": false
+    },
+    {
+      "id": 1641764,
+      "name": "Brandin Podziemski",
+      "position": "G",
+      "number": "2",
+      "ppg": 11.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 1627741,
+      "name": "Buddy Hield",
+      "position": "G",
+      "number": "7",
+      "ppg": 11.1,
+      "isLowScorer": false
+    },
+    {
+      "id": 1630541,
+      "name": "Moses Moody",
+      "position": "G",
+      "number": "4",
+      "ppg": 9.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 203110,
+      "name": "Draymond Green",
+      "position": "F",
+      "number": "23",
+      "ppg": 9.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642366,
+      "name": "Quinten Post",
+      "position": "C",
+      "number": "21",
+      "ppg": 8.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1631218,
+      "name": "Trayce Jackson-Davis",
+      "position": "F",
+      "number": "32",
+      "ppg": 6.6,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627780,
+      "name": "Gary Payton II",
+      "position": "G",
+      "number": "0",
+      "ppg": 6.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626172,
+      "name": "Kevon Looney",
+      "position": "F",
+      "number": "5",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630611,
+      "name": "Gui Santos",
+      "position": "F",
+      "number": "15",
+      "ppg": 4.1,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642050,
+      "name": "Jackson Rowe",
+      "position": "F",
+      "number": "44",
+      "ppg": 3.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1628995,
+      "name": "Kevin Knox II",
+      "position": "F",
+      "number": "31",
+      "ppg": 3.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630311,
+      "name": "Pat Spencer",
+      "position": "G",
+      "number": "61",
+      "ppg": 2.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1630296,
+      "name": "Braxton Key",
+      "position": "F",
+      "number": "12",
+      "ppg": 1.0,
+      "isLowScorer": true
+    },
+    {
+      "id": 1642379,
+      "name": "Taran Armstrong",
+      "position": "G",
+      "number": "1",
+      "ppg": 0.0,
+      "isLowScorer": true
+    }
+  ]
+}

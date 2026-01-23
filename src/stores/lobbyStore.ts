@@ -31,7 +31,8 @@ interface LobbyState {
     sport: Sport,
     teamAbbreviation: string,
     season: string,
-    timerDuration: number
+    timerDuration: number,
+    gameMode: 'random' | 'manual'
   ) => Promise<Lobby | null>;
   joinLobbyByCode: (joinCode: string, playerName: string) => Promise<boolean>;
   joinExistingLobby: (lobby: Lobby, playerName: string) => Promise<boolean>;
@@ -59,10 +60,10 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration) => {
+  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode) => {
     set({ isLoading: true, error: null });
 
-    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration);
+    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration, gameMode);
 
     if (result.error || !result.lobby) {
       set({ isLoading: false, error: result.error || 'Failed to create lobby' });

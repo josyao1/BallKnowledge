@@ -1,0 +1,127 @@
+{
+  "team": "CLE",
+  "season": "2017-18",
+  "cached_at": "2026-01-23T01:45:50.133187",
+  "players": [
+    {
+      "id": 2544,
+      "name": "LeBron James",
+      "position": "F-G",
+      "number": "23",
+      "ppg": 27.5,
+      "isLowScorer": false
+    },
+    {
+      "id": 201567,
+      "name": "Kevin Love",
+      "position": "C-F",
+      "number": "0",
+      "ppg": 17.6,
+      "isLowScorer": false
+    },
+    {
+      "id": 203918,
+      "name": "Rodney Hood",
+      "position": "G",
+      "number": "1",
+      "ppg": 14.7,
+      "isLowScorer": false
+    },
+    {
+      "id": 203903,
+      "name": "Jordan Clarkson",
+      "position": "G",
+      "number": "8",
+      "ppg": 13.9,
+      "isLowScorer": false
+    },
+    {
+      "id": 201145,
+      "name": "Jeff Green",
+      "position": "F",
+      "number": "32",
+      "ppg": 10.8,
+      "isLowScorer": false
+    },
+    {
+      "id": 201588,
+      "name": "George Hill",
+      "position": "G",
+      "number": "3",
+      "ppg": 10.0,
+      "isLowScorer": false
+    },
+    {
+      "id": 2594,
+      "name": "Kyle Korver",
+      "position": "G",
+      "number": "26",
+      "ppg": 9.2,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626204,
+      "name": "Larry Nance Jr.",
+      "position": "F",
+      "number": "22",
+      "ppg": 8.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 2747,
+      "name": "JR Smith",
+      "position": "G-F",
+      "number": "5",
+      "ppg": 8.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 202684,
+      "name": "Tristan Thompson",
+      "position": "C-F",
+      "number": "13",
+      "ppg": 5.8,
+      "isLowScorer": true
+    },
+    {
+      "id": 101181,
+      "name": "Jose Calderon",
+      "position": "G",
+      "number": "81",
+      "ppg": 4.5,
+      "isLowScorer": true
+    },
+    {
+      "id": 1626224,
+      "name": "Cedi Osman",
+      "position": "F-G",
+      "number": "16",
+      "ppg": 3.9,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627790,
+      "name": "Ante Zizic",
+      "position": "F-C",
+      "number": "41",
+      "ppg": 3.7,
+      "isLowScorer": true
+    },
+    {
+      "id": 1627855,
+      "name": "Okaro White",
+      "position": "F",
+      "number": "15",
+      "ppg": 3.3,
+      "isLowScorer": true
+    },
+    {
+      "id": 2570,
+      "name": "Kendrick Perkins",
+      "position": "C",
+      "number": "21",
+      "ppg": 3.0,
+      "isLowScorer": true
+    }
+  ]
+}
