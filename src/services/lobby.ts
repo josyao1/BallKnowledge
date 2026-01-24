@@ -40,7 +40,9 @@ export async function createLobby(
   teamAbbreviation: string,
   season: string,
   timerDuration: number = 90,
-  gameMode: 'random' | 'manual' = 'manual'
+  gameMode: 'random' | 'manual' = 'manual',
+  minYear: number = 2015,
+  maxYear: number = 2024
 ): Promise<{ lobby: Lobby; error: null } | { lobby: null; error: string }> {
   if (!supabase) {
     return { lobby: null, error: 'Multiplayer not available' };
@@ -62,6 +64,8 @@ export async function createLobby(
       season,
       timer_duration: timerDuration,
       game_mode: gameMode,
+      min_year: minYear,
+      max_year: maxYear,
       status: 'waiting',
     };
 
@@ -272,7 +276,8 @@ export async function updateLobbyStatus(
 export async function updatePlayerScore(
   lobbyId: string,
   score: number,
-  guessedCount: number
+  guessedCount: number,
+  guessedPlayers: string[] = []
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -282,7 +287,7 @@ export async function updatePlayerScore(
 
   const { error } = await supabase
     .from('lobby_players')
-    .update({ score, guessed_count: guessedCount })
+    .update({ score, guessed_count: guessedCount, guessed_players: guessedPlayers })
     .eq('lobby_id', lobbyId)
     .eq('player_id', playerId);
 
@@ -329,10 +334,10 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     return { error: 'Multiplayer not available' };
   }
 
-  // First, fetch the current lobby to check game_mode
+  // First, fetch the current lobby to check game_mode and year range
   const { data: currentLobby, error: fetchError } = await supabase
     .from('lobbies')
-    .select('game_mode, sport')
+    .select('game_mode, sport, min_year, max_year')
     .eq('id', lobbyId)
     .single();
 
@@ -347,12 +352,13 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     finished_at: null,
   };
 
-  // If random mode, pick a new random team and season
+  // If random mode, pick a new random team and season using stored year range
   if (currentLobby.game_mode === 'random') {
     const sport = currentLobby.sport;
     const teamList = sport === 'nba' ? teams : nflTeams;
-    const minYear = sport === 'nfl' ? 2000 : 2015;
-    const maxYear = 2024;
+    // Use stored year range, fallback to defaults if not set
+    const minYear = currentLobby.min_year || (sport === 'nfl' ? 2000 : 2015);
+    const maxYear = currentLobby.max_year || 2024;
 
     const randomTeam = teamList[Math.floor(Math.random() * teamList.length)];
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
@@ -379,6 +385,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     .update({
       score: 0,
       guessed_count: 0,
+      guessed_players: [],
       is_ready: false,
       finished_at: null,
     })
@@ -395,6 +402,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     .update({
       score: 0,
       guessed_count: 0,
+      guessed_players: [],
       is_ready: true,
       finished_at: null,
     })

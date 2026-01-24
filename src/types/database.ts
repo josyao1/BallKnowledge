@@ -79,6 +79,8 @@ export interface Database {
           season: string;
           timer_duration: number;
           game_mode: 'random' | 'manual';
+          min_year: number;
+          max_year: number;
           status: 'waiting' | 'countdown' | 'playing' | 'finished';
           max_players: number;
           created_at: string;
@@ -95,6 +97,8 @@ export interface Database {
           season: string;
           timer_duration?: number;
           game_mode?: 'random' | 'manual';
+          min_year?: number;
+          max_year?: number;
           status?: 'waiting' | 'countdown' | 'playing' | 'finished';
           max_players?: number;
           created_at?: string;
@@ -111,6 +115,8 @@ export interface Database {
           season?: string;
           timer_duration?: number;
           game_mode?: 'random' | 'manual';
+          min_year?: number;
+          max_year?: number;
           status?: 'waiting' | 'countdown' | 'playing' | 'finished';
           max_players?: number;
           created_at?: string;
@@ -128,6 +134,7 @@ export interface Database {
           is_ready: boolean;
           score: number;
           guessed_count: number;
+          guessed_players: string[];
           is_connected: boolean;
           joined_at: string;
           finished_at: string | null;
@@ -141,6 +148,7 @@ export interface Database {
           is_ready?: boolean;
           score?: number;
           guessed_count?: number;
+          guessed_players?: string[];
           is_connected?: boolean;
           joined_at?: string;
           finished_at?: string | null;
@@ -154,6 +162,7 @@ export interface Database {
           is_ready?: boolean;
           score?: number;
           guessed_count?: number;
+          guessed_players?: string[];
           is_connected?: boolean;
           joined_at?: string;
           finished_at?: string | null;

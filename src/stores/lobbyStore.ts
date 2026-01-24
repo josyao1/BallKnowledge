@@ -32,7 +32,9 @@ interface LobbyState {
     teamAbbreviation: string,
     season: string,
     timerDuration: number,
-    gameMode: 'random' | 'manual'
+    gameMode: 'random' | 'manual',
+    minYear: number,
+    maxYear: number
   ) => Promise<Lobby | null>;
   joinLobbyByCode: (joinCode: string, playerName: string) => Promise<boolean>;
   joinExistingLobby: (lobby: Lobby, playerName: string) => Promise<boolean>;
@@ -40,7 +42,7 @@ interface LobbyState {
   setReady: (isReady: boolean) => Promise<void>;
   startGame: () => Promise<void>;
   endGame: () => Promise<void>;
-  syncScore: (score: number, guessedCount: number) => Promise<void>;
+  syncScore: (score: number, guessedCount: number, guessedPlayers: string[]) => Promise<void>;
 
   // Realtime updates (called by subscription hook)
   setLobby: (lobby: Lobby | null) => void;
@@ -60,10 +62,10 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode) => {
+  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear) => {
     set({ isLoading: true, error: null });
 
-    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration, gameMode);
+    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear);
 
     if (result.error || !result.lobby) {
       set({ isLoading: false, error: result.error || 'Failed to create lobby' });
@@ -163,11 +165,11 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     await updateLobbyStatus(lobby.id, 'finished');
   },
 
-  syncScore: async (score, guessedCount) => {
+  syncScore: async (score, guessedCount, guessedPlayers) => {
     const { lobby } = get();
     if (!lobby) return;
 
-    await updatePlayerScore(lobby.id, score, guessedCount);
+    await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers);
   },
 
   // Realtime update handlers

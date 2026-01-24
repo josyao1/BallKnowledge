@@ -97,12 +97,12 @@ export function GamePage() {
 
       // Debounce sync
       const timeout = setTimeout(() => {
-        syncScore(currentScore, currentCount);
+        syncScore(currentScore, currentCount, guessedPlayers.map(p => p.name));
       }, 300);
 
       return () => clearTimeout(timeout);
     }
-  }, [score, guessedPlayers.length, isMultiplayer, lobby, syncScore]);
+  }, [score, guessedPlayers, isMultiplayer, lobby, syncScore]);
 
   // Redirect if no game configured
   useEffect(() => {
@@ -146,7 +146,7 @@ export function GamePage() {
 
       if (isMultiplayer && lobbyCode) {
         // Sync final score then navigate to multiplayer results
-        syncScore(score, guessedPlayers.length);
+        syncScore(score, guessedPlayers.length, guessedPlayers.map(p => p.name));
         endLobbyGame();
         navigate(`/lobby/${lobbyCode}/results`);
       } else {

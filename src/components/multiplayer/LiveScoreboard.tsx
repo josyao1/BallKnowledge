@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LobbyPlayer } from '../../types/database';
 
@@ -8,18 +9,63 @@ interface LiveScoreboardProps {
 }
 
 export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveScoreboardProps) {
-  // Sort players by score (descending)
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  // Calculate uniqueness bonus for each player (only when 3+ players)
+  const playerBonuses = useMemo(() => {
+    const bonuses: Record<string, number> = {};
+
+    // Only calculate uniqueness bonus with 3+ players
+    if (players.length < 3) {
+      players.forEach(p => { bonuses[p.player_id] = 0; });
+      return bonuses;
+    }
+
+    // Build a map of roster player name -> count of who guessed them
+    const guessCount: Record<string, number> = {};
+
+    players.forEach(player => {
+      const guessedPlayers = player.guessed_players || [];
+      guessedPlayers.forEach(name => {
+        guessCount[name] = (guessCount[name] || 0) + 1;
+      });
+    });
+
+    // For each player, count how many of their guesses are unique (only they guessed it)
+    players.forEach(player => {
+      const guessedPlayers = player.guessed_players || [];
+      const uniqueGuesses = guessedPlayers.filter(name => guessCount[name] === 1);
+      bonuses[player.player_id] = uniqueGuesses.length;
+    });
+
+    return bonuses;
+  }, [players]);
+
+  // Sort players by total score (base + bonus) descending
+  const sortedPlayers = useMemo(() => {
+    return [...players].sort((a, b) => {
+      const totalA = a.score + (playerBonuses[a.player_id] || 0);
+      const totalB = b.score + (playerBonuses[b.player_id] || 0);
+      return totalB - totalA;
+    });
+  }, [players, playerBonuses]);
+
+  const showBonuses = players.length >= 3;
 
   return (
     <div className="scoreboard-panel p-3 space-y-2">
       <div className="sports-font text-xs text-[#888] tracking-widest text-center mb-2">
         LIVE SCORES
       </div>
+      {showBonuses && (
+        <div className="text-[10px] text-[#555] text-center mb-1">
+          +1 for unique guesses
+        </div>
+      )}
       <AnimatePresence>
         {sortedPlayers.map((player, index) => {
           const isCurrentPlayer = player.player_id === currentPlayerId;
           const percentage = rosterSize > 0 ? Math.round((player.guessed_count / rosterSize) * 100) : 0;
+          const bonus = playerBonuses[player.player_id] || 0;
+          const totalScore = player.score + bonus;
 
           return (
             <motion.div
@@ -44,9 +90,14 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-[#666]">{percentage}%</span>
-                <span className="scoreboard-number text-lg min-w-[2ch] text-right">
-                  {player.score}
-                </span>
+                <div className="flex items-center gap-1">
+                  {showBonuses && bonus > 0 && (
+                    <span className="text-xs text-emerald-400">+{bonus}</span>
+                  )}
+                  <span className="scoreboard-number text-lg min-w-[2ch] text-right">
+                    {totalScore}
+                  </span>
+                </div>
               </div>
             </motion.div>
           );
