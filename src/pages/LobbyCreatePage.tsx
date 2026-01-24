@@ -29,7 +29,6 @@ export function LobbyCreatePage() {
   const [timerMinutes, setTimerMinutes] = useState(1);
   const [timerSeconds, setTimerSeconds] = useState(30);
 
-  // Random mode year range
   const [randomMinYear, setRandomMinYear] = useState(2015);
   const [randomMaxYear, setRandomMaxYear] = useState(2024);
 
@@ -46,7 +45,6 @@ export function LobbyCreatePage() {
     let season: string;
 
     if (gameMode === 'random') {
-      // Pick random team and year
       const teamList = sport === 'nba' ? teams : nflTeams;
       const minYear = sport === 'nfl' ? Math.max(randomMinYear, 2000) : randomMinYear;
       const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2024) : randomMaxYear;
@@ -73,55 +71,60 @@ export function LobbyCreatePage() {
     }
   };
 
-  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
-
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
+      {/* Green felt background */}
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
+      />
+
       {/* Header */}
-      <header className="p-6 border-b-4 border-[#333]">
+      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/')}
-            className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 className="retro-title text-3xl" style={{ color: accentColor }}>
-            Create Lobby
-          </h1>
+          <div>
+            <h1 className="retro-title text-3xl text-[#d4af37]">Open Table</h1>
+            <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase">Host a Private Game</p>
+          </div>
         </div>
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-md mx-auto w-full p-6 space-y-5 overflow-y-auto">
+      <main className="relative z-10 flex-1 max-w-md mx-auto w-full p-6 space-y-5 overflow-y-auto">
         {/* Sport selection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="scoreboard-panel p-4"
+          className="bg-black/50 border border-white/10 rounded-sm p-4"
         >
-          <div className="sports-font text-sm text-[#888] text-center mb-3 tracking-widest">
-            Select Sport
+          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+            Select League
           </div>
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => setSport('nba')}
-              className={`px-6 py-2 rounded-lg sports-font tracking-wider transition-all ${
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
                 sport === 'nba'
-                  ? 'bg-[var(--nba-orange)] text-white shadow-lg'
-                  : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
             >
               NBA
             </button>
             <button
               onClick={() => setSport('nfl')}
-              className={`px-6 py-2 rounded-lg sports-font tracking-wider transition-all ${
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
                 sport === 'nfl'
-                  ? 'bg-[#013369] text-white shadow-lg'
-                  : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
             >
               NFL
@@ -134,10 +137,10 @@ export function LobbyCreatePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="scoreboard-panel p-4"
+          className="bg-black/50 border border-white/10 rounded-sm p-4"
         >
-          <label className="block sports-font text-sm text-[#888] mb-2 tracking-widest">
-            Your Name
+          <label className="block sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">
+            Dealer Name
           </label>
           <input
             type="text"
@@ -145,8 +148,7 @@ export function LobbyCreatePage() {
             onChange={(e) => setHostName(e.target.value)}
             placeholder="Enter your name"
             maxLength={20}
-            className="w-full p-3 bg-[#1a1a1a] rounded-lg border-2 border-[#3d3d3d] text-[var(--vintage-cream)] focus:outline-none"
-            style={{ borderColor: hostName ? accentColor : undefined }}
+            className="w-full p-3 bg-[#111] rounded-sm border-2 border-white/20 text-white focus:outline-none focus:border-[#d4af37] transition-colors sports-font"
           />
         </motion.div>
 
@@ -155,31 +157,29 @@ export function LobbyCreatePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="scoreboard-panel p-4"
+          className="bg-black/50 border border-white/10 rounded-sm p-4"
         >
-          <div className="sports-font text-sm text-[#888] text-center mb-3 tracking-widest">
-            Roster Selection
+          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+            Deck Selection
           </div>
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => setGameMode('random')}
-              className={`px-6 py-2 rounded-lg sports-font tracking-wider transition-all ${
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
                 gameMode === 'random'
-                  ? `text-white shadow-lg`
-                  : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
-              style={{ backgroundColor: gameMode === 'random' ? accentColor : undefined }}
             >
               Random
             </button>
             <button
               onClick={() => setGameMode('manual')}
-              className={`px-6 py-2 rounded-lg sports-font tracking-wider transition-all ${
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
                 gameMode === 'manual'
-                  ? `text-white shadow-lg`
-                  : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d] hover:border-[#555]'
+                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
-              style={{ backgroundColor: gameMode === 'manual' ? accentColor : undefined }}
             >
               Choose Team
             </button>
@@ -193,9 +193,9 @@ export function LobbyCreatePage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="scoreboard-panel p-4"
+              className="bg-black/50 border border-white/10 rounded-sm p-4"
             >
-              <div className="sports-font text-sm text-[#888] text-center mb-3 tracking-widest">
+              <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
                 Year Range {sport === 'nfl' && '(2000-2024)'}
               </div>
               <div className="flex items-center justify-center gap-3">
@@ -206,7 +206,7 @@ export function LobbyCreatePage() {
                     setRandomMinYear(newMin);
                     if (newMin > randomMaxYear) setRandomMaxYear(newMin);
                   }}
-                  className="bg-[#1a1a1a] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:outline-none"
+                  className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
                 >
                   {Array.from(
                     { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
@@ -215,7 +215,7 @@ export function LobbyCreatePage() {
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
-                <span className="text-[#888]">to</span>
+                <span className="text-white/40 sports-font">to</span>
                 <select
                   value={randomMaxYear}
                   onChange={(e) => {
@@ -223,7 +223,7 @@ export function LobbyCreatePage() {
                     setRandomMaxYear(newMax);
                     if (newMax < randomMinYear) setRandomMinYear(newMax);
                   }}
-                  className="bg-[#1a1a1a] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:outline-none"
+                  className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
                 >
                   {Array.from(
                     { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
@@ -246,18 +246,8 @@ export function LobbyCreatePage() {
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4"
             >
-              <TeamSelector
-                selectedTeam={selectedTeam}
-                onSelect={setSelectedTeam}
-                sport={sport}
-              />
-              <YearSelector
-                selectedYear={selectedYear}
-                onSelect={setSelectedYear}
-                minYear={sport === 'nba' ? 1985 : 2000}
-                maxYear={2024}
-                sport={sport}
-              />
+              <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
+              <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={sport === 'nba' ? 1985 : 2000} maxYear={2024} sport={sport} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -267,38 +257,38 @@ export function LobbyCreatePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="scoreboard-panel p-4"
+          className="bg-black/50 border border-white/10 rounded-sm p-4"
         >
-          <div className="sports-font text-sm text-[#888] text-center mb-3 tracking-widest">
-            Timer Duration
+          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+            Round Timer
           </div>
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2">
               <select
                 value={timerMinutes}
                 onChange={(e) => setTimerMinutes(parseInt(e.target.value))}
-                className="bg-[#1a1a1a] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:outline-none"
+                className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
               >
                 {[0, 1, 2, 3, 4, 5].map((min) => (
                   <option key={min} value={min}>{min}</option>
                 ))}
               </select>
-              <span className="text-[#888] text-sm">min</span>
+              <span className="text-white/40 text-sm sports-font">min</span>
             </div>
             <div className="flex items-center gap-2">
               <select
                 value={timerSeconds}
                 onChange={(e) => setTimerSeconds(parseInt(e.target.value))}
-                className="bg-[#1a1a1a] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border-2 border-[#3d3d3d] sports-font focus:outline-none"
+                className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
               >
                 {[0, 15, 30, 45].map((sec) => (
                   <option key={sec} value={sec}>{sec}</option>
                 ))}
               </select>
-              <span className="text-[#888] text-sm">sec</span>
+              <span className="text-white/40 text-sm sports-font">sec</span>
             </div>
           </div>
-          <div className="text-center mt-2 scoreboard-number text-xl">
+          <div className="text-center mt-2 retro-title text-2xl text-white">
             {timerMinutes}:{String(timerSeconds).padStart(2, '0')}
           </div>
         </motion.div>
@@ -308,7 +298,7 @@ export function LobbyCreatePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm text-center"
+            className="p-3 bg-red-900/30 border border-red-700 rounded-sm text-red-400 text-sm text-center sports-font"
           >
             {error}
           </motion.div>
@@ -321,13 +311,9 @@ export function LobbyCreatePage() {
           transition={{ delay: 0.2 }}
           onClick={handleCreate}
           disabled={!canCreate || isLoading}
-          className="w-full py-4 rounded-lg sports-font text-lg tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            backgroundColor: canCreate ? accentColor : '#333',
-            color: canCreate ? '#fff' : '#666',
-          }}
+          className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
         >
-          {isLoading ? 'Creating...' : 'Create Lobby'}
+          {isLoading ? 'Opening Table...' : 'Open Table'}
         </motion.button>
 
         {/* Info */}
@@ -335,9 +321,9 @@ export function LobbyCreatePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25 }}
-          className="text-center text-[#666] text-sm pb-4"
+          className="text-center text-white/30 text-[10px] pb-4 sports-font tracking-widest uppercase"
         >
-          <p>You'll get a 6-character code to share with friends</p>
+          <p>You'll get a 6-character code to share</p>
         </motion.div>
       </main>
     </div>

@@ -42,7 +42,7 @@ interface LobbyState {
   setReady: (isReady: boolean) => Promise<void>;
   startGame: () => Promise<void>;
   endGame: () => Promise<void>;
-  syncScore: (score: number, guessedCount: number, guessedPlayers: string[]) => Promise<void>;
+  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[]) => Promise<void>;
 
   // Realtime updates (called by subscription hook)
   setLobby: (lobby: Lobby | null) => void;

@@ -277,7 +277,7 @@ export async function updatePlayerScore(
   lobbyId: string,
   score: number,
   guessedCount: number,
-  guessedPlayers: string[] = []
+  guessedPlayers?: string[]
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -285,9 +285,14 @@ export async function updatePlayerScore(
 
   const playerId = getOrCreatePlayerId();
 
+  const updateData: Record<string, unknown> = { score, guessed_count: guessedCount };
+  if (guessedPlayers !== undefined) {
+    updateData.guessed_players = guessedPlayers;
+  }
+
   const { error } = await supabase
     .from('lobby_players')
-    .update({ score, guessed_count: guessedCount, guessed_players: guessedPlayers })
+    .update(updateData)
     .eq('lobby_id', lobbyId)
     .eq('player_id', playerId);
 

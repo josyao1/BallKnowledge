@@ -19,6 +19,9 @@ export function GuessedPlayersList({
   pendingGuesses = [],
   hideResults = false,
 }: GuessedPlayersListProps) {
+  // Casino chip styles
+  const chipBase = "px-3 py-1.5 rounded-sm shadow-[2px_2px_0px_rgba(0,0,0,0.5)] sports-font text-[11px] font-bold uppercase tracking-wider";
+
   // Hidden results mode: show all guesses in neutral state
   if (hideResults) {
     return (
@@ -32,16 +35,16 @@ export function GuessedPlayersList({
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="px-3 py-1.5 bg-gray-700/50 border border-gray-600 rounded-lg"
+                  className={`${chipBase} bg-[#ddd] text-black/70 border-b-2 border-gray-400`}
                 >
-                  <span className="text-gray-300 font-medium">{guess}</span>
+                  {guess}
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         ) : (
-          <div className="text-center text-gray-500 py-8">
-            Start typing player names...
+          <div className="text-center text-white/30 py-8 sports-font tracking-widest">
+            Place your bets...
           </div>
         )}
       </div>
@@ -50,24 +53,24 @@ export function GuessedPlayersList({
 
   // Standard mode: show correct and incorrect separately
   return (
-    <div className="space-y-4">
-      {/* Correct guesses */}
+    <div className="space-y-6">
+      {/* Correct guesses - Gold winning chips */}
       {guessedPlayers.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-2">
-            Correct ({guessedPlayers.length})
+          <h3 className="retro-title text-[10px] text-white/40 mb-3 tracking-widest uppercase flex justify-between">
+            Winners <span className="text-emerald-400">+{guessedPlayers.length}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
             <AnimatePresence>
               {guessedPlayers.map((player) => (
                 <motion.div
                   key={player.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="px-3 py-1.5 bg-green-900/40 border border-green-700 rounded-lg"
+                  className={`${chipBase} bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black border-b-2 border-[#a89860]`}
                 >
-                  <span className="text-green-400 font-medium">{player.name}</span>
+                  {player.name}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -75,11 +78,11 @@ export function GuessedPlayersList({
         </div>
       )}
 
-      {/* Incorrect guesses */}
+      {/* Incorrect guesses - Faded/busted chips */}
       {incorrectGuesses.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-2">
-            Incorrect ({incorrectGuesses.length})
+          <h3 className="retro-title text-[10px] text-white/40 mb-3 tracking-widest uppercase flex justify-between">
+            Busted <span className="text-red-400/60">-{incorrectGuesses.length}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
             <AnimatePresence>
@@ -87,11 +90,11 @@ export function GuessedPlayersList({
                 <motion.div
                   key={`${guess}-${index}`}
                   initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  animate={{ opacity: 0.6, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg"
+                  className={`${chipBase} bg-[#444] text-white/50 border-b-2 border-[#222] line-through decoration-red-500/50`}
                 >
-                  <span className="text-red-400">{guess}</span>
+                  {guess}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -101,8 +104,8 @@ export function GuessedPlayersList({
 
       {/* Empty state */}
       {guessedPlayers.length === 0 && incorrectGuesses.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          Start typing player names...
+        <div className="text-center text-white/30 py-8 sports-font tracking-widest">
+          Place your bets...
         </div>
       )}
     </div>

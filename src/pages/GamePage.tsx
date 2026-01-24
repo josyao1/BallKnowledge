@@ -1,11 +1,10 @@
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { Timer } from '../components/game/Timer';
 import { PlayerInput } from '../components/game/PlayerInput';
 import { GuessedPlayersList } from '../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../components/game/TeamDisplay';
@@ -36,55 +35,31 @@ export function GamePage() {
     tick,
   } = useGameStore();
 
-  // Multiplayer state
   const { lobby, players, currentPlayerId, syncScore, endGame: endLobbyGame } = useLobbyStore();
   useLobbySubscription(isMultiplayer ? lobby?.id || null : null);
 
-  // Settings state
   const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
   const [teamRecord, setTeamRecord] = useState<string | null>(null);
 
-  // Fetch team record for hints (separate call - appears after a brief delay)
   useEffect(() => {
-    if (!showSeasonHints || !selectedTeam || !selectedSeason) {
-      setTeamRecord(null);
-      return;
-    }
-
+    if (!showSeasonHints || !selectedTeam || !selectedSeason) return;
     const fetchRecord = async () => {
-      // Determine if NBA or NFL based on season format
       const isNFL = !selectedSeason.includes('-');
-
       try {
         if (isNFL) {
-          const year = parseInt(selectedSeason);
-          const record = await fetchNFLTeamRecord(selectedTeam.abbreviation, year);
-          if (record) {
-            setTeamRecord(record.record);
-          } else {
-            setTeamRecord(null);
-          }
+          const record = await fetchNFLTeamRecord(selectedTeam.abbreviation, parseInt(selectedSeason));
+          setTeamRecord(record?.record || null);
         } else {
           const record = await fetchTeamRecord(selectedTeam.abbreviation, selectedSeason);
-          if (record) {
-            setTeamRecord(record.record);
-          } else {
-            setTeamRecord(null);
-          }
+          setTeamRecord(record?.record || null);
         }
-      } catch (error) {
-        console.error('Error fetching team record:', error);
-        setTeamRecord(null);
-      }
+      } catch (error) { console.error(error); }
     };
-
     fetchRecord();
   }, [showSeasonHints, selectedTeam, selectedSeason]);
 
-  // Debounce score sync for multiplayer
-  const lastSyncRef = useRef<{ score: number; count: number }>({ score: 0, count: 0 });
+  const lastSyncRef = useRef({ score: 0, count: 0 });
 
-  // Sync score to lobby in multiplayer mode
   useEffect(() => {
     if (!isMultiplayer || !lobby) return;
 
@@ -104,210 +79,141 @@ export function GamePage() {
     }
   }, [score, guessedPlayers, isMultiplayer, lobby, syncScore]);
 
-  // Redirect if no game configured
-  useEffect(() => {
-    if (!selectedTeam || !selectedSeason) {
-      navigate('/');
-    }
-  }, [selectedTeam, selectedSeason, navigate]);
-
-  // Start game on mount
-  useEffect(() => {
-    if (status === 'idle' && selectedTeam) {
-      startGame();
-    }
-  }, [status, selectedTeam, startGame]);
-
-  // Timer tick
+  useEffect(() => { if (!selectedTeam || !selectedSeason) navigate('/'); }, [selectedTeam, selectedSeason, navigate]);
+  useEffect(() => { if (status === 'idle' && selectedTeam) startGame(); }, [status, selectedTeam, startGame]);
   useEffect(() => {
     if (status !== 'playing') return;
-
-    const interval = setInterval(() => {
-      tick();
-    }, 1000);
-
+    const interval = setInterval(() => tick(), 1000);
     return () => clearInterval(interval);
   }, [status, tick]);
 
-  // End game when time runs out
-  useEffect(() => {
-    if (timeRemaining <= 0 && status === 'playing') {
-      endGame();
-    }
-  }, [timeRemaining, status, endGame]);
+  useEffect(() => { if (timeRemaining <= 0 && status === 'playing') endGame(); }, [timeRemaining, status, endGame]);
 
-  // Navigate to results when game ends
   useEffect(() => {
     if (status === 'ended') {
-      // Process pending guesses before showing results (when in hidden mode)
-      if (hideResultsDuringGame) {
-        processGuesses();
-      }
-
+      if (hideResultsDuringGame) processGuesses();
       if (isMultiplayer && lobbyCode) {
-        // Sync final score then navigate to multiplayer results
-        syncScore(score, guessedPlayers.length, guessedPlayers.map(p => p.name));
-        endLobbyGame();
-        navigate(`/lobby/${lobbyCode}/results`);
+        // Send final score with guessed player names, then navigate
+        const finishGame = async () => {
+          const guessedNames = guessedPlayers.map(p => p.name);
+          await syncScore(score, guessedPlayers.length, guessedNames);
+          await endLobbyGame();
+          navigate(`/lobby/${lobbyCode}/results`);
+        };
+        finishGame();
       } else {
         navigate('/results');
       }
     }
-  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers.length, syncScore, endLobbyGame]);
+  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers, syncScore, endLobbyGame]);
 
-  const handleGiveUp = useCallback(() => {
-    endGame();
-  }, [endGame]);
-
-  if (!selectedTeam || !selectedSeason) {
-    return null;
-  }
-
-  // Team color CSS variables
-  const teamColorStyles = {
-    '--team-primary': selectedTeam.colors.primary,
-    '--team-secondary': selectedTeam.colors.secondary,
-    '--team-primary-20': `${selectedTeam.colors.primary}33`,
-    '--team-secondary-20': `${selectedTeam.colors.secondary}33`,
-  } as React.CSSProperties;
+  if (!selectedTeam || !selectedSeason) return null;
 
   return (
-    <div className="min-h-screen flex flex-col" style={teamColorStyles}>
-      {/* Header - Scoreboard style */}
-      <header
-        className="p-4 border-b-4"
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden"
+    >
+      {/* GREEN FELT BACKGROUND */}
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
         style={{
-          borderColor: selectedTeam.colors.primary,
-          background: `linear-gradient(90deg, ${selectedTeam.colors.primary}20 0%, transparent 50%, ${selectedTeam.colors.secondary}20 100%)`,
+          backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
+          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
         }}
-      >
-        <div className="max-w-4xl mx-auto">
-          {/* Team and Season */}
-          <div className="flex justify-between items-center mb-4">
+      />
+
+      {/* SPACE FOR USER SVGS */}
+      <div className="absolute inset-0 z-0 pointer-events-none" />
+
+      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+
+          <div className="flex items-center gap-8">
             <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} />
-            <Timer
-              timeRemaining={timeRemaining}
-              totalTime={useGameStore.getState().timerDuration}
-            />
+            <div className="h-10 w-[1px] bg-white/20 hidden md:block" />
+
+            {/* SIMPLIFIED TIMER DESIGN */}
+            <div className="flex flex-col items-center">
+                <span className="sports-font text-[9px] text-white/40 tracking-[0.4em] uppercase mb-1">Time</span>
+                <div className="retro-title text-3xl text-white">
+                    {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, '0')}
+                </div>
+            </div>
           </div>
 
-          {/* Score Panel */}
-          <div
-            className="scoreboard-panel p-4"
-            style={{ borderColor: `${selectedTeam.colors.primary}50` }}
-          >
-            <div className="grid grid-cols-3 gap-4">
-              <div className="stat-display">
-                <div className="stat-value" style={{ color: selectedTeam.colors.secondary }}>
-                  {hideResultsDuringGame ? '?' : score}
-                </div>
-                <div className="stat-label">Points</div>
-              </div>
-              <div className="stat-display">
-                <div className="stat-value" style={{ color: selectedTeam.colors.primary }}>
-                  {hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length}
-                </div>
-                <div className="stat-label">{hideResultsDuringGame ? 'Guesses' : 'Found'}</div>
-              </div>
-              <div className="stat-display">
-                <div className="stat-value">{currentRoster.length}</div>
-                <div className="stat-label">Roster</div>
+          {/* THREE MECHANICAL SCORE PANELS */}
+          <div className="flex gap-4">
+            <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
+              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Score</div>
+              <div className="retro-title text-3xl text-white">
+                {hideResultsDuringGame ? '?' : score}
               </div>
             </div>
-
-            {/* Progress bar - hidden mode shows guesses, normal mode shows correct */}
-            <div className="mt-4 retro-progress" style={{ borderColor: `${selectedTeam.colors.primary}30` }}>
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: hideResultsDuringGame
-                    ? `${Math.min((pendingGuesses.length / currentRoster.length) * 100, 100)}%`
-                    : `${(guessedPlayers.length / currentRoster.length) * 100}%`,
-                  background: hideResultsDuringGame
-                    ? `linear-gradient(90deg, ${selectedTeam.colors.primary}80, ${selectedTeam.colors.secondary}80)`
-                    : `linear-gradient(90deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`
-                }}
-              />
+            <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
+              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Found</div>
+              <div className="retro-title text-3xl text-white">
+                {hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length}
+              </div>
             </div>
-            <div className="mt-2 text-center sports-font text-xs text-[#666]">
-              {hideResultsDuringGame
-                ? `${pendingGuesses.length} guesses`
-                : `${Math.round((guessedPlayers.length / currentRoster.length) * 100)}% Complete`}
+            <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
+              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Total</div>
+              <div className="retro-title text-3xl text-white/40">
+                {currentRoster.length}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main game area */}
-      <main className="flex-1 max-w-6xl mx-auto w-full p-4 flex gap-4">
-        {/* Game content */}
+      <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col md:flex-row gap-8 overflow-hidden">
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Player input */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
+          <div className="mb-8">
             <PlayerInput />
-          </motion.div>
-
-          {/* Guessed players */}
-          <div
-            className="flex-1 overflow-y-auto vintage-card p-4"
-            style={{ borderColor: `${selectedTeam.colors.primary}30` }}
-          >
-            <div className="sports-font text-xs mb-3 tracking-widest" style={{ color: selectedTeam.colors.secondary }}>
-              {hideResultsDuringGame
-                ? `Your Guesses (${pendingGuesses.length})`
-                : `Players Found (${guessedPlayers.length})`}
-            </div>
-            <GuessedPlayersList
-              guessedPlayers={guessedPlayers}
-              incorrectGuesses={incorrectGuesses}
-              pendingGuesses={hideResultsDuringGame ? pendingGuesses : []}
-              hideResults={hideResultsDuringGame}
-            />
           </div>
 
-          {/* Give up button (single player only) */}
+          <div className="flex-1 bg-black/60 border-2 border-white/10 rounded-sm flex flex-col overflow-hidden">
+            <div className="p-3 border-b border-white/10 bg-white/5 flex justify-between items-center">
+              <span className="sports-font text-[10px] tracking-[0.4em] text-white/60 uppercase">
+                Guesses
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              <GuessedPlayersList
+                guessedPlayers={guessedPlayers}
+                incorrectGuesses={incorrectGuesses}
+                pendingGuesses={hideResultsDuringGame ? pendingGuesses : []}
+                hideResults={hideResultsDuringGame}
+              />
+            </div>
+          </div>
+
           {!isMultiplayer && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-4 flex justify-center"
-            >
+            <div className="mt-4 flex justify-end">
               <button
-                onClick={handleGiveUp}
-                className="px-8 py-2 rounded-lg transition-colors sports-font tracking-wider"
-                style={{
-                  backgroundColor: `${selectedTeam.colors.primary}20`,
-                  color: selectedTeam.colors.primary,
-                  borderWidth: '2px',
-                  borderColor: `${selectedTeam.colors.primary}50`,
-                }}
+                onClick={() => endGame()}
+                className="retro-title text-xs tracking-widest text-white/30 hover:text-white transition-all uppercase"
               >
-                Give Up
+                // Terminate Session
               </button>
-            </motion.div>
+            </div>
           )}
         </div>
 
-        {/* Live scoreboard (multiplayer only) */}
         {isMultiplayer && players.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="w-64 flex-shrink-0 hidden md:block"
-          >
-            <LiveScoreboard
-              players={players}
-              currentPlayerId={currentPlayerId}
-              rosterSize={currentRoster.length}
-            />
-          </motion.div>
+          <aside className="w-full md:w-72 flex-shrink-0">
+             <div className="bg-black/60 border-2 border-white/10 rounded-sm p-4 h-full">
+                <h3 className="retro-title text-xs text-white/40 tracking-[0.3em] uppercase mb-6 text-center">Standings</h3>
+                <LiveScoreboard
+                  players={players}
+                  currentPlayerId={currentPlayerId}
+                  rosterSize={currentRoster.length}
+                />
+             </div>
+          </aside>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 }
