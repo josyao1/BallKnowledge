@@ -1,22 +1,62 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { resetLobbyForNewRound, findLobbyByCode } from '../services/lobby';
-import type { Sport } from '../types';
+import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers } from '../services/lobby';
+
+// Generate distinct colors for players
+const PLAYER_COLORS = [
+  '#d4af37', // Gold
+  '#4ade80', // Green
+  '#f472b6', // Pink
+  '#60a5fa', // Blue
+  '#fb923c', // Orange
+  '#a78bfa', // Purple
+  '#fbbf24', // Yellow
+  '#34d399', // Teal
+];
 
 export function MultiplayerResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, currentPlayerId, isHost, reset: resetLobby, setLobby } = useLobbyStore();
+  const { lobby, players, currentPlayerId, isHost, reset: resetLobby, setLobby, setPlayers } = useLobbyStore();
   const { currentRoster, resetGame } = useGameStore();
   const [isResetting, setIsResetting] = useState(false);
+  const [showRosterBreakdown, setShowRosterBreakdown] = useState(false);
   const hasNavigated = useRef(false);
 
   // Keep subscription active for realtime updates
   useLobbySubscription(lobby?.id || null);
+
+  // Fetch fresh player data on mount and poll until all have guessed_players
+  useEffect(() => {
+    if (!lobby?.id) return;
+
+    const fetchPlayers = async () => {
+      const result = await getLobbyPlayers(lobby.id);
+      if (result.players) {
+        setPlayers(result.players);
+      }
+    };
+
+    // Initial fetch
+    fetchPlayers();
+
+    // Poll every 2 seconds for a bit to catch late syncs
+    const pollInterval = setInterval(fetchPlayers, 2000);
+
+    // Stop polling after 10 seconds (should be enough for all players to sync)
+    const stopPolling = setTimeout(() => {
+      clearInterval(pollInterval);
+    }, 10000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(stopPolling);
+    };
+  }, [lobby?.id, setPlayers]);
 
   // Navigate back to lobby when status changes to 'waiting'
   const navigateToLobby = useCallback(() => {
@@ -60,8 +100,44 @@ export function MultiplayerResultsPage() {
   const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
   const winner = sortedPlayers[0];
 
-  const sport = (lobby?.sport as Sport) || 'nba';
-  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
+  // Build roster breakdown - which players each participant guessed
+  const rosterBreakdown = useMemo(() => {
+    // Create a map of roster player name -> array of participants who guessed them
+    const breakdown: Map<string, { playerId: string; playerName: string; color: string }[]> = new Map();
+
+    // Initialize with all roster players
+    currentRoster.forEach(rosterPlayer => {
+      breakdown.set(rosterPlayer.name, []);
+    });
+
+    // Assign colors to each participant
+    const playerColors: Map<string, string> = new Map();
+    sortedPlayers.forEach((player, index) => {
+      playerColors.set(player.player_id, PLAYER_COLORS[index % PLAYER_COLORS.length]);
+    });
+
+    // Fill in who guessed each player
+    players.forEach(participant => {
+      const color = playerColors.get(participant.player_id) || '#888';
+      const guessedPlayers = participant.guessed_players || [];
+
+      guessedPlayers.forEach(guessedName => {
+        const existing = breakdown.get(guessedName);
+        if (existing) {
+          existing.push({
+            playerId: participant.player_id,
+            playerName: participant.player_name,
+            color
+          });
+        }
+      });
+    });
+
+    return {
+      breakdown,
+      playerColors
+    };
+  }, [currentRoster, players, sortedPlayers]);
 
   const handlePlayAgain = async () => {
     if (!lobby) return;
@@ -87,14 +163,14 @@ export function MultiplayerResultsPage() {
 
   if (!lobby) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#0d2a0b]">
         <div className="text-center">
-          <p className="text-[#888] mb-4">Lobby ended</p>
+          <p className="text-white/50 mb-4 sports-font">Table closed</p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-2 bg-[var(--nba-orange)] text-white rounded-lg"
+            className="px-6 py-3 rounded-sm retro-title tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860]"
           >
-            Back to Home
+            Back to Lobby
           </button>
         </div>
       </div>
@@ -102,34 +178,43 @@ export function MultiplayerResultsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
+      {/* Green felt background */}
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
+      />
+
       {/* Header */}
-      <header className="p-6 border-b-4 border-[#333]">
+      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="text-center">
-          <h1 className="retro-title text-4xl" style={{ color: accentColor }}>
-            Game Over!
+          <h1 className="retro-title text-4xl text-[#d4af37]">
+            Final Score
           </h1>
-          <div className="text-[#888] mt-1">
-            {lobby.team_abbreviation} - {lobby.season}
-          </div>
+          <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase mt-1">
+            {lobby.team_abbreviation} • {lobby.season}
+          </p>
         </div>
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
+      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
         {/* Winner announcement */}
         {winner && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-6"
+            className="text-center py-6 bg-black/50 border border-[#d4af37]/30 rounded-sm"
           >
-            <div className="text-[#888] text-sm mb-2">Winner</div>
-            <div className="text-4xl font-bold" style={{ color: accentColor }}>
+            <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">Champion</div>
+            <div className="retro-title text-4xl text-[#d4af37]">
               {winner.player_name}
             </div>
-            <div className="text-2xl text-[var(--nba-gold)] mt-2">
-              {winner.score} points ({currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}%)
+            <div className="retro-title text-2xl text-white mt-2">
+              {winner.score} points
+            </div>
+            <div className="text-white/40 text-sm sports-font">
+              {currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}% of roster
             </div>
           </motion.div>
         )}
@@ -139,10 +224,10 @@ export function MultiplayerResultsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="scoreboard-panel p-4"
+          className="bg-black/50 border border-white/10 rounded-sm p-4"
         >
-          <div className="sports-font text-sm text-[#888] mb-4 tracking-widest text-center">
-            Final Rankings
+          <div className="sports-font text-[10px] text-white/40 mb-4 tracking-[0.3em] uppercase text-center">
+            Final Standings
           </div>
           <div className="space-y-2">
             {sortedPlayers.map((player, index) => {
@@ -155,39 +240,39 @@ export function MultiplayerResultsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className={`flex items-center justify-between p-4 rounded-lg ${
+                  className={`flex items-center justify-between p-4 rounded-sm border transition-all ${
                     index === 0
-                      ? 'bg-[var(--nba-gold)]/20 border-2 border-[var(--nba-gold)]'
+                      ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
                       : isCurrentPlayer
-                      ? 'bg-[var(--nba-orange)]/10 border-2 border-[var(--nba-orange)]/30'
-                      : 'bg-[#1a1a1a] border-2 border-[#3d3d3d]'
+                      ? 'bg-[#d4af37]/10 border-[#d4af37]/30'
+                      : 'bg-black/30 border-white/10'
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      className={`w-8 h-8 rounded-sm flex items-center justify-center retro-title ${
                         index === 0
-                          ? 'bg-[var(--nba-gold)] text-black'
+                          ? 'bg-gradient-to-b from-[#f5e6c8] to-[#d4af37] text-black'
                           : index === 1
-                          ? 'bg-gray-400 text-black'
+                          ? 'bg-gradient-to-b from-gray-300 to-gray-500 text-black'
                           : index === 2
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-[#333] text-[#888]'
+                          ? 'bg-gradient-to-b from-amber-600 to-amber-800 text-white'
+                          : 'bg-black/50 text-white/40 border border-white/10'
                       }`}
                     >
                       {index + 1}
                     </div>
                     <div>
-                      <div className={`font-medium ${isCurrentPlayer ? 'text-[var(--nba-orange)]' : ''}`}>
+                      <div className={`sports-font font-medium ${isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/90'}`}>
                         {player.player_name}
-                        {isCurrentPlayer && <span className="text-xs ml-2 text-[#888]">(you)</span>}
+                        {isCurrentPlayer && <span className="text-[10px] ml-2 text-white/40">(you)</span>}
                       </div>
-                      <div className="text-xs text-[#666]">
+                      <div className="text-[10px] text-white/40 sports-font">
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
                       </div>
                     </div>
                   </div>
-                  <div className="scoreboard-number text-3xl" style={{ color: index === 0 ? 'var(--nba-gold)' : accentColor }}>
+                  <div className={`retro-title text-3xl ${index === 0 ? 'text-[#d4af37]' : 'text-white'}`}>
                     {player.score}
                   </div>
                 </motion.div>
@@ -202,11 +287,104 @@ export function MultiplayerResultsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center text-[#888]"
+            className="text-center text-white/50 sports-font"
           >
-            You finished in <span className="text-[var(--nba-gold)] font-bold">{currentPlayerRank}{getOrdinalSuffix(currentPlayerRank)}</span> place!
+            You finished in <span className="text-[#d4af37] font-bold">{currentPlayerRank}{getOrdinalSuffix(currentPlayerRank)}</span> place!
           </motion.div>
         )}
+
+        {/* Roster Breakdown Toggle */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55 }}
+          onClick={() => setShowRosterBreakdown(!showRosterBreakdown)}
+          className="w-full py-3 bg-black/50 border border-white/10 rounded-sm sports-font text-sm tracking-wider text-white/60 hover:text-white/90 hover:border-white/30 transition-all flex items-center justify-center gap-2"
+        >
+          <span>{showRosterBreakdown ? 'Hide' : 'Show'} Roster Breakdown</span>
+          <svg
+            className={`w-4 h-4 transition-transform ${showRosterBreakdown ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </motion.button>
+
+        {/* Roster Breakdown */}
+        <AnimatePresence>
+          {showRosterBreakdown && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-black/50 border border-white/10 rounded-sm p-4">
+                {/* Player Legend */}
+                <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-white/10">
+                  {sortedPlayers.map((player) => (
+                    <div
+                      key={player.player_id}
+                      className="flex items-center gap-1.5 px-2 py-1 bg-black/30 rounded-sm"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: rosterBreakdown.playerColors.get(player.player_id) || '#888' }}
+                      />
+                      <span className="text-[10px] text-white/70 sports-font">
+                        {player.player_name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Roster Grid */}
+                <div className="sports-font text-[10px] text-white/40 mb-3 tracking-[0.3em] uppercase text-center">
+                  Full Roster ({currentRoster.length} players)
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                  {currentRoster.map((rosterPlayer) => {
+                    const guessers = rosterBreakdown.breakdown.get(rosterPlayer.name) || [];
+                    const wasGuessed = guessers.length > 0;
+
+                    return (
+                      <div
+                        key={rosterPlayer.id}
+                        className={`flex items-center justify-between p-2 rounded-sm border ${
+                          wasGuessed
+                            ? 'bg-black/30 border-white/20'
+                            : 'bg-black/10 border-white/5'
+                        }`}
+                      >
+                        <span className={`text-sm truncate mr-2 ${wasGuessed ? 'text-white/90' : 'text-white/30'}`}>
+                          {rosterPlayer.name}
+                        </span>
+                        <div className="flex gap-0.5 flex-shrink-0">
+                          {guessers.length > 0 ? (
+                            guessers.map((guesser, idx) => (
+                              <div
+                                key={`${guesser.playerId}-${idx}`}
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
+                                style={{ backgroundColor: guesser.color }}
+                                title={guesser.playerName}
+                              >
+                                {guesser.playerName.charAt(0).toUpperCase()}
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-[9px] text-white/20">missed</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Actions */}
         <motion.div
@@ -219,22 +397,21 @@ export function MultiplayerResultsPage() {
             <button
               onClick={handlePlayAgain}
               disabled={isResetting}
-              className="w-full py-4 rounded-lg sports-font text-lg tracking-wider text-white disabled:opacity-50"
-              style={{ backgroundColor: accentColor }}
+              className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all disabled:opacity-50 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
             >
-              {isResetting ? 'Resetting...' : 'Play Again'}
+              {isResetting ? 'Shuffling...' : 'Deal Again'}
             </button>
           )}
           {!isHost && (
-            <p className="text-center text-[#666] text-sm">
-              Waiting for host to start another round...
+            <p className="text-center text-white/30 text-sm sports-font tracking-widest">
+              Waiting for dealer to start another round...
             </p>
           )}
           <button
             onClick={handleBackToHome}
-            className="w-full py-3 rounded-lg sports-font tracking-wider border-2 border-[#3d3d3d] text-[#888] hover:border-[#555] hover:text-[var(--vintage-cream)] transition-all"
+            className="w-full py-3 rounded-sm sports-font tracking-wider border border-white/20 text-white/50 hover:border-[#d4af37] hover:text-[#d4af37] transition-all"
           >
-            Back to Home
+            Leave Table
           </button>
         </motion.div>
       </main>

@@ -12,14 +12,12 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
   return (
-    <div className="scoreboard-panel p-3 space-y-2">
-      <div className="sports-font text-xs text-[#888] tracking-widest text-center mb-2">
-        LIVE SCORES
-      </div>
+    <div className="space-y-3">
       <AnimatePresence>
         {sortedPlayers.map((player, index) => {
           const isCurrentPlayer = player.player_id === currentPlayerId;
           const percentage = rosterSize > 0 ? Math.round((player.guessed_count / rosterSize) * 100) : 0;
+          const isLeader = index === 0;
 
           return (
             <motion.div
@@ -27,26 +25,34 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
               layout
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex items-center justify-between p-2 rounded-lg ${
+              className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
                 isCurrentPlayer
-                  ? 'bg-[var(--nba-gold)]/20 border border-[var(--nba-gold)]/30'
-                  : 'bg-[#1a1a1a]'
+                  ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
+                  : 'bg-black/40 border-white/10'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#666] w-4">{index + 1}.</span>
-                <span className={`text-sm font-medium truncate max-w-[100px] ${
-                  isCurrentPlayer ? 'text-[var(--nba-gold)]' : 'text-[var(--vintage-cream)]'
-                }`}>
-                  {player.player_name}
-                  {isCurrentPlayer && <span className="text-xs ml-1">(you)</span>}
-                </span>
-              </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-[#666]">{percentage}%</span>
-                <span className="scoreboard-number text-lg min-w-[2ch] text-right">
+                <span className={`retro-title text-lg w-6 ${
+                  isLeader ? 'text-[#d4af37]' : 'text-white/30'
+                }`}>
+                  {index + 1}
+                </span>
+                <div className="flex flex-col">
+                  <span className={`sports-font text-sm font-medium truncate max-w-[100px] ${
+                    isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/80'
+                  }`}>
+                    {player.player_name}
+                  </span>
+                  {isCurrentPlayer && (
+                    <span className="text-[8px] text-white/40 uppercase tracking-widest">You</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="retro-title text-xl text-white">
                   {player.score}
                 </span>
+                <span className="text-[9px] text-white/40">{percentage}%</span>
               </div>
             </motion.div>
           );

@@ -83,12 +83,17 @@ export function GamePage() {
     if (status === 'ended') {
       if (hideResultsDuringGame) processGuesses();
       if (isMultiplayer && lobbyCode) {
-        syncScore(score, guessedPlayers.length);
-        endLobbyGame();
-        navigate(`/lobby/${lobbyCode}/results`);
+        // Send final score with guessed player names, then navigate
+        const finishGame = async () => {
+          const guessedNames = guessedPlayers.map(p => p.name);
+          await syncScore(score, guessedPlayers.length, guessedNames);
+          await endLobbyGame();
+          navigate(`/lobby/${lobbyCode}/results`);
+        };
+        finishGame();
       } else { navigate('/results'); }
     }
-  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers.length, syncScore, endLobbyGame]);
+  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers, syncScore, endLobbyGame]);
 
   if (!selectedTeam || !selectedSeason) return null;
 

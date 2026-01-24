@@ -40,7 +40,7 @@ interface LobbyState {
   setReady: (isReady: boolean) => Promise<void>;
   startGame: () => Promise<void>;
   endGame: () => Promise<void>;
-  syncScore: (score: number, guessedCount: number) => Promise<void>;
+  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[]) => Promise<void>;
 
   // Realtime updates (called by subscription hook)
   setLobby: (lobby: Lobby | null) => void;
@@ -163,11 +163,11 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     await updateLobbyStatus(lobby.id, 'finished');
   },
 
-  syncScore: async (score, guessedCount) => {
+  syncScore: async (score, guessedCount, guessedPlayers) => {
     const { lobby } = get();
     if (!lobby) return;
 
-    await updatePlayerScore(lobby.id, score, guessedCount);
+    await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers);
   },
 
   // Realtime update handlers
