@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { TeamSelector } from '../components/home/TeamSelector';
@@ -10,8 +10,8 @@ import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import { rosters } from '../data/rosters';
 import { fetchTeamRoster } from '../services/roster';
-import { isApiAvailable, resetApiAvailability, fetchSeasonPlayers } from '../services/api';
-import { isNFLApiAvailable, resetNFLApiAvailability, fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import { isApiAvailable, fetchSeasonPlayers } from '../services/api';
+import { isNFLApiAvailable, fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
 import type { GameMode } from '../types';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 
@@ -27,7 +27,7 @@ type GenericTeam = {
 export function HomePage() {
   const navigate = useNavigate();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
-  const { sport, timerDuration, yearRange, hideResultsDuringGame, setSport } = useSettingsStore();
+  const { sport, timerDuration, hideResultsDuringGame, setSport } = useSettingsStore();
 
   const [gameMode, setGameMode] = useState<GameMode>('random');
   const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);

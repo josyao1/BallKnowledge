@@ -1,11 +1,10 @@
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { Timer } from '../components/game/Timer';
 import { PlayerInput } from '../components/game/PlayerInput';
 import { GuessedPlayersList } from '../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../components/game/TeamDisplay';

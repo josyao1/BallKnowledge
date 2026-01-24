@@ -35,9 +35,6 @@ export function ResultsPage() {
   const accuracy = totalAttempts > 0 
     ? Math.round((guessedPlayers.length / totalAttempts) * 100) 
     : 0;
-  const completion = currentRoster.length > 0
-    ? Math.round((guessedPlayers.length / currentRoster.length) * 100)
-    : 0;
   const timeTaken = timerDuration - timeRemaining;
   const guessedIds = new Set(guessedPlayers.map((p) => p.id));
 

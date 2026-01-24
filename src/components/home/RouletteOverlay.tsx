@@ -217,7 +217,7 @@ function RevealCard({ value, side, color, label, cardBack, isActive }: any) {
   );
 }
 
-function CardFace({ side, image, color, label, value }: any) {
+function CardFace({ side, image, label, value }: any) {
   const isBack = side === 'back';
 
   return (
