@@ -29,12 +29,18 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
       });
     });
 
+    // Debug: log the guess counts
+    console.log('[Uniqueness] guessCount:', guessCount);
+    console.log('[Uniqueness] players guessed_players:', players.map(p => ({ name: p.player_name, guesses: p.guessed_players })));
+
     // For each player, count how many of their guesses are unique (only they guessed it)
     players.forEach(player => {
       const guessedPlayers = player.guessed_players || [];
       const uniqueGuesses = guessedPlayers.filter(name => guessCount[name] === 1);
       bonuses[player.player_id] = uniqueGuesses.length;
     });
+
+    console.log('[Uniqueness] bonuses:', bonuses);
 
     return bonuses;
   }, [players]);
