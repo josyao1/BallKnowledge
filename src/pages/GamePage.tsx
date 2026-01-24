@@ -62,12 +62,22 @@ export function GamePage() {
 
   useEffect(() => {
     if (!isMultiplayer || !lobby) return;
-    if (lastSyncRef.current.score !== score || lastSyncRef.current.count !== guessedPlayers.length) {
-      lastSyncRef.current = { score, count: guessedPlayers.length };
-      const timeout = setTimeout(() => syncScore(score, guessedPlayers.length), 300);
+
+    const currentScore = score;
+    const currentCount = guessedPlayers.length;
+
+    // Only sync if changed
+    if (lastSyncRef.current.score !== currentScore || lastSyncRef.current.count !== currentCount) {
+      lastSyncRef.current = { score: currentScore, count: currentCount };
+
+      // Debounce sync
+      const timeout = setTimeout(() => {
+        syncScore(currentScore, currentCount, guessedPlayers.map(p => p.name));
+      }, 300);
+
       return () => clearTimeout(timeout);
     }
-  }, [score, guessedPlayers.length, isMultiplayer, lobby, syncScore]);
+  }, [score, guessedPlayers, isMultiplayer, lobby, syncScore]);
 
   useEffect(() => { if (!selectedTeam || !selectedSeason) navigate('/'); }, [selectedTeam, selectedSeason, navigate]);
   useEffect(() => { if (status === 'idle' && selectedTeam) startGame(); }, [status, selectedTeam, startGame]);
@@ -91,24 +101,26 @@ export function GamePage() {
           navigate(`/lobby/${lobbyCode}/results`);
         };
         finishGame();
-      } else { navigate('/results'); }
+      } else {
+        navigate('/results');
+      }
     }
   }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers, syncScore, endLobbyGame]);
 
   if (!selectedTeam || !selectedSeason) return null;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden"
     >
       {/* GREEN FELT BACKGROUND */}
-      <div 
-        className="absolute inset-0 opacity-40 pointer-events-none" 
-        style={{ 
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{
           backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` 
-        }} 
+          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
+        }}
       />
 
       {/* SPACE FOR USER SVGS */}
@@ -116,11 +128,11 @@ export function GamePage() {
 
       <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          
+
           <div className="flex items-center gap-8">
             <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} />
             <div className="h-10 w-[1px] bg-white/20 hidden md:block" />
-            
+
             {/* SIMPLIFIED TIMER DESIGN */}
             <div className="flex flex-col items-center">
                 <span className="sports-font text-[9px] text-white/40 tracking-[0.4em] uppercase mb-1">Time</span>
@@ -166,7 +178,7 @@ export function GamePage() {
                 Guesses
               </span>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
               <GuessedPlayersList
                 guessedPlayers={guessedPlayers}

@@ -60,7 +60,11 @@ export function LobbyCreatePage() {
       season = sport === 'nba' ? `${selectedYear}-${String(selectedYear + 1).slice(-2)}` : `${selectedYear}`;
     }
 
-    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode);
+    // Pass year range for random mode replays
+    const minYear = sport === 'nfl' ? Math.max(randomMinYear, 2000) : randomMinYear;
+    const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2024) : randomMaxYear;
+
+    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode, minYear, maxYear);
 
     if (lobby) {
       navigate(`/lobby/${lobby.join_code}`);

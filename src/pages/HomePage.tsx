@@ -6,6 +6,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
 import { SettingsModal } from '../components/home/SettingsModal';
+import { ServerWarmup } from '../components/home/ServerWarmup';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import { rosters } from '../data/rosters';
@@ -42,14 +43,32 @@ export function HomePage() {
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [showWarmup, setShowWarmup] = useState(true);
+  const [warmupComplete, setWarmupComplete] = useState(false);
 
+  // Show warmup screen on initial load
+  const handleWarmupReady = () => {
+    setApiOnline(true);
+    setWarmupComplete(true);
+    setShowWarmup(false);
+  };
+
+  const handleWarmupSkip = () => {
+    setApiOnline(false);
+    setWarmupComplete(true);
+    setShowWarmup(false);
+  };
+
+  // Re-check API when sport changes (after initial warmup)
   useEffect(() => {
+    if (!warmupComplete) return;
+
     const checkApi = async () => {
       const available = sport === 'nba' ? await isApiAvailable() : await isNFLApiAvailable();
       setApiOnline(available);
     };
     checkApi();
-  }, [sport]);
+  }, [sport, warmupComplete]);
 
   useEffect(() => {
     setSelectedTeam(null);
@@ -229,7 +248,15 @@ export function HomePage() {
         </section>
       </motion.div>
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      {/* Server Warmup */}
+      {showWarmup && (
+        <ServerWarmup
+          sport={sport}
+          onReady={handleWarmupReady}
+          onSkip={handleWarmupSkip}
+        />
+      )}
     </div>
   );
 }
-

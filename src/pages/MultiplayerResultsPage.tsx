@@ -95,10 +95,49 @@ export function MultiplayerResultsPage() {
     return () => clearInterval(pollInterval);
   }, [isHost, code, setLobby, navigateToLobby]);
 
-  // Sort players by score
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  // Calculate uniqueness bonus for each player (only when 3+ players)
+  const playerBonuses = useMemo(() => {
+    const bonuses: Record<string, number> = {};
+
+    if (players.length < 3) {
+      players.forEach(p => { bonuses[p.player_id] = 0; });
+      return bonuses;
+    }
+
+    // Build a map of roster player name -> count of who guessed them
+    const guessCount: Record<string, number> = {};
+    players.forEach(player => {
+      const guessedPlayers = player.guessed_players || [];
+      guessedPlayers.forEach(name => {
+        guessCount[name] = (guessCount[name] || 0) + 1;
+      });
+    });
+
+    // For each player, count unique guesses
+    players.forEach(player => {
+      const guessedPlayers = player.guessed_players || [];
+      const uniqueGuesses = guessedPlayers.filter(name => guessCount[name] === 1);
+      bonuses[player.player_id] = uniqueGuesses.length;
+    });
+
+    return bonuses;
+  }, [players]);
+
+  const showBonuses = players.length >= 3;
+
+  // Sort players by total score (base + bonus)
+  const sortedPlayers = useMemo(() => {
+    return [...players].sort((a, b) => {
+      const totalA = a.score + (playerBonuses[a.player_id] || 0);
+      const totalB = b.score + (playerBonuses[b.player_id] || 0);
+      return totalB - totalA;
+    });
+  }, [players, playerBonuses]);
+
   const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
   const winner = sortedPlayers[0];
+  const winnerBonus = winner ? (playerBonuses[winner.player_id] || 0) : 0;
+  const winnerTotal = winner ? winner.score + winnerBonus : 0;
 
   // Build roster breakdown - which players each participant guessed
   const rosterBreakdown = useMemo(() => {
@@ -211,7 +250,10 @@ export function MultiplayerResultsPage() {
               {winner.player_name}
             </div>
             <div className="retro-title text-2xl text-white mt-2">
-              {winner.score} points
+              {winnerTotal} points
+              {showBonuses && winnerBonus > 0 && (
+                <span className="text-emerald-400 text-lg ml-2">(+{winnerBonus} unique)</span>
+              )}
             </div>
             <div className="text-white/40 text-sm sports-font">
               {currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}% of roster
@@ -229,10 +271,17 @@ export function MultiplayerResultsPage() {
           <div className="sports-font text-[10px] text-white/40 mb-4 tracking-[0.3em] uppercase text-center">
             Final Standings
           </div>
+          {showBonuses && (
+            <div className="text-xs text-white/30 text-center mb-2">
+              +1 bonus for each unique guess
+            </div>
+          )}
           <div className="space-y-2">
             {sortedPlayers.map((player, index) => {
               const isCurrentPlayer = player.player_id === currentPlayerId;
               const percentage = currentRoster.length > 0 ? Math.round((player.guessed_count / currentRoster.length) * 100) : 0;
+              const bonus = playerBonuses[player.player_id] || 0;
+              const totalScore = player.score + bonus;
 
               return (
                 <motion.div
@@ -269,11 +318,14 @@ export function MultiplayerResultsPage() {
                       </div>
                       <div className="text-[10px] text-white/40 sports-font">
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
+                        {showBonuses && bonus > 0 && (
+                          <span className="text-emerald-400 ml-2">+{bonus} unique</span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className={`retro-title text-3xl ${index === 0 ? 'text-[#d4af37]' : 'text-white'}`}>
-                    {player.score}
+                    {totalScore}
                   </div>
                 </motion.div>
               );
