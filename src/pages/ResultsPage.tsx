@@ -6,8 +6,6 @@ import { useGameStore } from '../stores/gameStore';
 export function ResultsPage() {
   const navigate = useNavigate();
   const [isExiting, setIsExiting] = useState(false);
-  const [draggedGuess, setDraggedGuess] = useState<string | null>(null);
-  const [dragOverPlayerId, setDragOverPlayerId] = useState<number | string | null>(null);
 
   const {
     selectedTeam,
@@ -18,8 +16,6 @@ export function ResultsPage() {
     score,
     timerDuration,
     timeRemaining,
-    hideResultsDuringGame,
-    overrideGuess,
     resetGame,
   } = useGameStore();
 
