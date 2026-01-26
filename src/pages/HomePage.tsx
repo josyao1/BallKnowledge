@@ -149,34 +149,66 @@ export function HomePage() {
         </filter>
       </svg>
 
-      <header className="p-4 flex justify-between items-center border-b-4 border-[#333] z-50 bg-[#111] relative">
-        <motion.h1 style={{ filter: 'url(#whiteOutline)' }} className={`retro-title text-3xl ${sport === 'nba' ? 'text-[var(--nba-orange)]' : 'text-[#013369]'}`}>
-          {sport === 'nba' ? 'Ball' : 'Pigskin'} Knowledge
-        </motion.h1>
+      <header className="p-4 flex justify-between items-center border-b-4 border-[#333] z-50 bg-[#111] relative gap-2">
+  {/* Left: Title - Responsive font and wrapping */}
+  <div className="flex-1 min-w-0">
+    <motion.h1 
+      style={{ filter: 'url(#whiteOutline)' }} 
+      className={`retro-title text-xl sm:text-2xl md:text-3xl truncate ${sport === 'nba' ? 'text-[var(--nba-orange)]' : 'text-[#013369]'}`}
+    >
+      {sport === 'nba' ? (
+        <>Ball <span className="xs:inline">Knowledge</span></>
+      ) : (
+        <>Pigskin <span className="xs:inline">Knowledge</span></>
+      )}
+    </motion.h1>
+  </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex gap-2">
-          {['nba', 'nfl'].map(s => (
-            <button key={s} onClick={() => setSport(s as any)} className={`px-4 py-2 rounded-lg sports-font tracking-wider text-xs transition-all ${sport === s ? (s === 'nba' ? 'bg-[var(--nba-orange)]' : 'bg-[#013369]') + ' text-white shadow-lg' : 'bg-[#1a1a1a] text-[#888] border-2 border-[#3d3d3d]'}`}>
-              {s.toUpperCase()}
-            </button>
-          ))}
-        </div>
+  {/* Center: Sport Toggle - No longer absolute, uses flex to stay centered while space allows */}
+  <div className="flex shrink-0 gap-1 sm:gap-2 bg-[#1a1a1a] p-1 rounded-xl border border-[#3d3d3d]">
+    {['nba', 'nfl'].map(s => (
+      <button 
+        key={s} 
+        onClick={() => setSport(s as any)} 
+        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sports-font tracking-wider text-[10px] sm:text-xs transition-all ${
+          sport === s 
+            ? (s === 'nba' ? 'bg-[var(--nba-orange)]' : 'bg-[#013369]') + ' text-white shadow-lg' 
+            : 'text-[#666] hover:text-[#888]'
+        }`}
+      >
+        {s.toUpperCase()}
+      </button>
+    ))}
+  </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${apiOnline ? 'bg-[#22c55e]' : 'bg-[#888]'}`} />
-            <span className="text-xs text-[#666] sports-font">{apiOnline ? 'Live API' : 'Offline'}</span>
-          </div>
-          <button onClick={() => setShowSettings(true)} className="p-2 border-2 border-[#3d3d3d] rounded-lg">
-            <svg className="w-5 h-5 text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          </button>
-        </div>
-      </header>
+  {/* Right: API Status & Settings */}
+  <div className="flex-1 flex justify-end items-center gap-1.5 md:gap-3">
+  {/* API Status: Removed 'hidden' so it stays on mobile */}
+  <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/20 border border-white/5">
+    <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${apiOnline ? 'bg-[#22c55e] shadow-[0_0_8px_#22c55e]' : 'bg-[#888]'}`} />
+    
+    {/* Label: Hides the text on tiny screens (< 380px) to prevent overlap, but keeps the dot */}
+    <span className="hidden xs:block text-[9px] md:text-[10px] text-[#666] sports-font uppercase tracking-tighter whitespace-nowrap">
+      {apiOnline ? 'Live' : 'Offline'}
+    </span>
+  </div>
+
+  <button 
+    onClick={() => setShowSettings(true)} 
+    className="p-1.5 md:p-2 border-2 border-[#3d3d3d] rounded-lg hover:bg-[#1a1a1a] transition-colors shrink-0"
+  >
+    <svg className="w-4 h-4 md:w-5 md:h-5 text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  </button>
+</div>
+</header>
 
       <motion.div animate={{ y: showRoulette ? '-100vh' : '0vh' }} transition={{ duration: 1.2, ease: [0.65, 0, 0.35, 1] }} className="flex-1 flex flex-col">
         <main className="h-screen w-full flex-shrink-0 flex flex-col items-center justify-center p-4 space-y-6 relative overflow-hidden bg-[#111]">
           {/* Restored Decorative SVGs */}
-          <div className="absolute -bottom-5 -left-5 w-70 h-70 opacity-40 pointer-events-none">
+          <div className="absolute bottom-15 left-1 w-70 h-70 opacity-40 pointer-events-none">
             <img src={sport === 'nba' ? "/images/Group 27.svg" : "/images/group23.svg"} alt="" />
           </div>
           <div className="absolute -top-10 -right-10 w-55 h-55 opacity-40 pointer-events-none">
