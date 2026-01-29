@@ -17,6 +17,7 @@ export function ResultsPage() {
     timerDuration,
     timeRemaining,
     resetGame,
+    resetForRematch,
   } = useGameStore();
 
   useEffect(() => {
@@ -39,6 +40,15 @@ export function ResultsPage() {
     setTimeout(() => {
       resetGame();
       navigate('/');
+    }, 900);
+  };
+
+  // Rematch - play same team/season again immediately
+  const handleRematch = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      resetForRematch();
+      navigate('/game');
     }, 900);
   };
 
@@ -119,14 +129,26 @@ export function ResultsPage() {
               ))}
             </div>
 
-            {/* ACTION BUTTON */}
-            <button
-              onClick={handleExit}
-              disabled={isExiting}
-              className="group relative bg-[#eee] py-6 md:py-10 rounded-sm shadow-[0_6px_0_#999] active:translate-y-1 active:shadow-none"
-            >
-              <span className="relative z-10 retro-title text-2xl md:text-3xl text-black uppercase tracking-widest">Play Again</span>
-            </button>
+            {/* ACTION BUTTONS */}
+            <div className="flex flex-col gap-2">
+              {/* Play Again - Same team/season */}
+              <button
+                onClick={handleRematch}
+                disabled={isExiting}
+                className="group relative bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] py-4 md:py-6 rounded-sm shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50"
+              >
+                <span className="relative z-10 retro-title text-xl md:text-2xl text-black uppercase tracking-widest">Play Again</span>
+              </button>
+
+              {/* New Game - Back to home */}
+              <button
+                onClick={handleExit}
+                disabled={isExiting}
+                className="group relative bg-[#1a1a1a] border border-white/20 py-3 md:py-4 rounded-sm hover:border-white/40 transition-colors disabled:opacity-50"
+              >
+                <span className="relative z-10 retro-title text-lg md:text-xl text-white/70 uppercase tracking-widest">New Game</span>
+              </button>
+            </div>
 
             {/* DEAD BETS - Collapsible height on mobile */}
             <div className="h-32 md:h-48 lg:flex-1 bg-black/50 border border-white/5 rounded-sm p-4 flex flex-col overflow-hidden">

@@ -78,6 +78,7 @@ interface GameState {
   processGuesses: () => void;
   overrideGuess: (incorrectGuess: string, correctPlayerId: number) => boolean;
   resetGame: () => void;
+  resetForRematch: () => void;
   tick: () => void;
 }
 
@@ -288,6 +289,20 @@ export const useGameStore = create<GameState>((set, get) => ({
       guessedPlayers: [],
       incorrectGuesses: [],
       leaguePlayers: [],
+      score: 0,
+    });
+  },
+
+  // Reset for rematch - keep team, season, roster, settings but reset game progress
+  resetForRematch: () => {
+    const state = get();
+    set({
+      status: 'idle',
+      timeRemaining: state.timerDuration,
+      startTime: null,
+      pendingGuesses: [],
+      guessedPlayers: [],
+      incorrectGuesses: [],
       score: 0,
     });
   },

@@ -39,12 +39,14 @@ export function HomePage() {
 
   const [randomMinYear, setRandomMinYear] = useState(2015);
   const [randomMaxYear, setRandomMaxYear] = useState(2024);
+  const [skipAnimation, setSkipAnimation] = useState(false);
 
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
   const [showWarmup, setShowWarmup] = useState(true);
   const [warmupComplete, setWarmupComplete] = useState(false);
+
 
   // Show warmup screen on initial load
   const handleWarmupReady = () => {
@@ -82,6 +84,11 @@ export function HomePage() {
   const handleStartGame = async () => {
     setLoadingStatus('checking');
     setStatusMessage('Selecting team...');
+
+    // Skip animation for manual mode (user already knows team/season)
+    const shouldSkipAnimation = gameMode === 'manual';
+    setSkipAnimation(shouldSkipAnimation);
+
     const apiAvailable = sport === 'nba' ? await isApiAvailable() : await isNFLApiAvailable();
     const currentTeams = sport === 'nba' ? teams : nflTeams;
     const currentMinYear = sport === 'nba' ? randomMinYear : Math.max(randomMinYear, 2000);
@@ -270,7 +277,12 @@ export function HomePage() {
         <section className="h-screen w-full flex-shrink-0 flex items-center justify-center relative bg-[#0d2a0b]">
           <div className="absolute inset-0 opacity-50" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`, background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }} />
           {showRoulette && preparedGameData && (
-            <RouletteOverlay winningTeam={preparedGameData.team.name} winningYear={preparedGameData.season} sport={sport} winningTeamData={preparedGameData.team}
+            <RouletteOverlay
+              winningTeam={preparedGameData.team.name}
+              winningYear={preparedGameData.season}
+              sport={sport}
+              winningTeamData={preparedGameData.team}
+              skipAnimation={skipAnimation}
               onComplete={() => {
                 setGameConfig(preparedGameData.sport, preparedGameData.team, preparedGameData.season, preparedGameData.gameMode, preparedGameData.timerDuration, preparedGameData.players, preparedGameData.leaguePlayers, preparedGameData.hideResultsDuringGame);
                 navigate('/game');

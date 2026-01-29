@@ -72,11 +72,11 @@ export function GamePage() {
     if (lastSyncRef.current.score !== currentScore || lastSyncRef.current.count !== currentCount) {
       lastSyncRef.current = { score: currentScore, count: currentCount };
       const timeout = setTimeout(() => {
-        syncScore(currentScore, currentCount, guessedPlayers.map(p => p.name));
+        syncScore(currentScore, currentCount, guessedPlayers.map(p => p.name), incorrectGuesses);
       }, 300);
       return () => clearTimeout(timeout);
     }
-  }, [score, guessedPlayers, isMultiplayer, lobby, syncScore]);
+  }, [score, guessedPlayers, incorrectGuesses, isMultiplayer, lobby, syncScore]);
 
   useEffect(() => { if (!selectedTeam || !selectedSeason) navigate('/'); }, [selectedTeam, selectedSeason, navigate]);
   useEffect(() => { if (status === 'idle' && selectedTeam) startGame(); }, [status, selectedTeam, startGame]);
@@ -95,7 +95,9 @@ export function GamePage() {
       if (isMultiplayer && lobbyCode) {
         const finishGame = async () => {
           const guessedNames = guessedPlayers.map(p => p.name);
-          await syncScore(score, guessedPlayers.length, guessedNames);
+          // Mark this player as finished and sync final score with incorrect guesses
+          await syncScore(score, guessedPlayers.length, guessedNames, incorrectGuesses, true);
+          // This will only set lobby to finished if all players are done
           await endLobbyGame();
           navigate(`/lobby/${lobbyCode}/results`);
         };
@@ -104,7 +106,7 @@ export function GamePage() {
         navigate('/results');
       }
     }
-  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers, syncScore, endLobbyGame]);
+  }, [status, navigate, hideResultsDuringGame, processGuesses, isMultiplayer, lobbyCode, score, guessedPlayers, incorrectGuesses, syncScore, endLobbyGame]);
 
   if (!selectedTeam || !selectedSeason) return null;
 
