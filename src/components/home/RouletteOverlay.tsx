@@ -1,10 +1,29 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
-export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport }: any) {
+interface RouletteOverlayProps {
+  winningTeam: string;
+  winningYear: string;
+  onComplete: () => void;
+  sport: 'nba' | 'nfl';
+  winningTeamData?: any;
+  skipAnimation?: boolean; // If true, skip animation entirely
+  canSkip?: boolean; // If false, hide skip button (default: true for solo, set to isHost for multiplayer)
+}
+
+export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, skipAnimation, canSkip = true }: RouletteOverlayProps) {
   const [phase, setPhase] = useState<'shuffling' | 'settling' | 'dealing-1' | 'dealing-2' | 'countdown'>('shuffling');
   const [count, setCount] = useState(5);
   const [isMobile, setIsMobile] = useState(false);
+  const hasSkipped = useRef(false);
+
+  // Skip animation immediately if skipAnimation prop is true
+  useEffect(() => {
+    if (skipAnimation && !hasSkipped.current) {
+      hasSkipped.current = true;
+      onComplete();
+    }
+  }, [skipAnimation, onComplete]);
 
   // Check for mobile screen size to adjust card slide distance
   useEffect(() => {
@@ -17,36 +36,62 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport }:
   const cardBackImage = sport === 'nba' ? '/images/Group 29.svg' : '/images/g29.svg';
 
   useEffect(() => {
+    if (skipAnimation) return; // Don't set timers if skipping
+
     const shuffleTimer = setTimeout(() => setPhase('settling'), 4000);
     const settleTimer = setTimeout(() => setPhase('dealing-1'), 5500);
     const secondCardTimer = setTimeout(() => setPhase('dealing-2'), 6700);
     const countdownTimer = setTimeout(() => {
       setPhase('countdown');
-    }, 10500); 
+    }, 10500);
 
     return () => {
       [shuffleTimer, settleTimer, secondCardTimer, countdownTimer].forEach(clearTimeout);
     };
-  }, []);
+  }, [skipAnimation]);
 
   useEffect(() => {
+    if (skipAnimation) return; // Don't run countdown if skipping
+
     if (phase === 'countdown' && count > 0) {
       const timer = setTimeout(() => setCount(count - 1), 1000);
       return () => clearTimeout(timer);
     } else if (phase === 'countdown' && count === 0) {
       onComplete();
     }
-  }, [phase, count, onComplete]);
+  }, [phase, count, onComplete, skipAnimation]);
+
+  // Handle skip button click
+  const handleSkip = () => {
+    if (hasSkipped.current) return;
+    hasSkipped.current = true;
+    onComplete();
+  };
+
+  // If skipping, render nothing
+  if (skipAnimation) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen w-full relative overflow-hidden bg-[#0d2a0b] pt-10 md:pt-20">
-      <div 
-        className="absolute inset-0 opacity-40 pointer-events-none" 
-        style={{ 
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{
           backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` 
-        }} 
+          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
+        }}
       />
+
+      {/* Skip Button - only shown in single player */}
+      {canSkip && (
+        <button
+          onClick={handleSkip}
+          className="absolute top-4 right-4 z-50 px-4 py-2 bg-black/50 border border-white/20 rounded-lg text-white/60 hover:text-white hover:border-white/40 transition-all sports-font text-sm tracking-wider"
+        >
+          Skip →
+        </button>
+      )}
 
       <AnimatePresence mode="wait">
         {phase !== 'countdown' ? (

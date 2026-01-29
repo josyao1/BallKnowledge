@@ -135,6 +135,7 @@ export interface Database {
           score: number;
           guessed_count: number;
           guessed_players: string[];
+          incorrect_guesses: string[];
           is_connected: boolean;
           joined_at: string;
           finished_at: string | null;
@@ -149,6 +150,7 @@ export interface Database {
           score?: number;
           guessed_count?: number;
           guessed_players?: string[];
+          incorrect_guesses?: string[];
           is_connected?: boolean;
           joined_at?: string;
           finished_at?: string | null;
@@ -163,6 +165,7 @@ export interface Database {
           score?: number;
           guessed_count?: number;
           guessed_players?: string[];
+          incorrect_guesses?: string[];
           is_connected?: boolean;
           joined_at?: string;
           finished_at?: string | null;

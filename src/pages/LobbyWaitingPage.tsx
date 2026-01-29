@@ -11,7 +11,16 @@ import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus } from '../services/lobby';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
+import { TeamSelector } from '../components/home/TeamSelector';
+import { YearSelector } from '../components/home/YearSelector';
 import type { Sport } from '../types';
+
+type GenericTeam = {
+  id: number;
+  abbreviation: string;
+  name: string;
+  colors: { primary: string; secondary: string };
+};
 
 export function LobbyWaitingPage() {
   const navigate = useNavigate();
@@ -26,6 +35,7 @@ export function LobbyWaitingPage() {
     leaveLobby,
     setReady,
     startGame,
+    updateSettings,
   } = useLobbyStore();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
 
@@ -36,7 +46,40 @@ export function LobbyWaitingPage() {
   const hasStartedGame = useRef(false);
   const hasAutoStarted = useRef(false);
 
+  // Host settings state
+  const [showSettings, setShowSettings] = useState(false);
+  const [editSport, setEditSport] = useState<Sport>('nba');
+  const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
+  const [editTeam, setEditTeam] = useState<GenericTeam | null>(null);
+  const [editYear, setEditYear] = useState<number | null>(null);
+  const [editTimer, setEditTimer] = useState(90);
+  const [editMinYear, setEditMinYear] = useState(2015);
+  const [editMaxYear, setEditMaxYear] = useState(2024);
+
   useLobbySubscription(lobby?.id || null);
+
+  // Sync edit state with lobby when it changes
+  useEffect(() => {
+    if (lobby) {
+      const lobbySport = lobby.sport as Sport;
+      setEditSport(lobbySport);
+      setEditGameMode(lobby.game_mode as 'random' | 'manual');
+      setEditTimer(lobby.timer_duration);
+      setEditMinYear(lobby.min_year || (lobbySport === 'nfl' ? 2000 : 2015));
+      setEditMaxYear(lobby.max_year || 2024);
+
+      // Find team from the current lobby
+      const teamList = lobbySport === 'nba' ? teams : nflTeams;
+      const foundTeam = teamList.find(t => t.abbreviation === lobby.team_abbreviation);
+      setEditTeam(foundTeam || null);
+
+      // Parse year from season
+      const yearMatch = lobby.season.match(/^(\d{4})/);
+      if (yearMatch) {
+        setEditYear(parseInt(yearMatch[1]));
+      }
+    }
+  }, [lobby?.id, lobby?.sport, lobby?.game_mode, lobby?.timer_duration, lobby?.team_abbreviation, lobby?.season, lobby?.min_year, lobby?.max_year]);
 
   useEffect(() => {
     const loadLobby = async () => {
@@ -68,6 +111,69 @@ export function LobbyWaitingPage() {
     loadLobby();
   }, [code, navigate, setLobby, setPlayers]);
 
+  // Handle dealing animation complete
+  const handleDealingComplete = useCallback(async () => {
+    if (hasStartedGame.current) return;
+    hasStartedGame.current = true;
+
+    // Host updates status to playing if not already
+    if (isHost && lobby && lobby.status === 'countdown') {
+      await updateLobbyStatus(lobby.id, 'playing');
+    }
+
+    // Load roster and start game - fetch fresh lobby data to ensure we have latest settings
+    if (!lobby) return;
+    setIsLoadingRoster(true);
+
+    try {
+      // Fetch fresh lobby data to get the latest settings
+      const freshLobbyResult = await findLobbyByCode(lobby.join_code);
+      const freshLobby = freshLobbyResult.lobby || lobby;
+
+      const lobbySport = freshLobby.sport as Sport;
+      const lobbyTeamList = lobbySport === 'nba' ? teams : nflTeams;
+      const lobbyTeam = lobbyTeamList.find((t) => t.abbreviation === freshLobby.team_abbreviation);
+
+      if (!lobbyTeam) {
+        console.error('Team not found:', freshLobby.team_abbreviation);
+        setIsLoadingRoster(false);
+        return;
+      }
+
+      let rosterPlayers: { id: number | string; name: string; position?: string; number?: string; ppg?: number; isLowScorer?: boolean; unit?: string }[] = [];
+      let leaguePlayers: { id: number | string; name: string }[] = [];
+
+      if (lobbySport === 'nba') {
+        const result = await fetchTeamRoster(lobbyTeam.abbreviation, freshLobby.season);
+        rosterPlayers = result.players;
+
+        const leagueResult = await fetchSeasonPlayers(freshLobby.season);
+        if (leagueResult?.players) {
+          leaguePlayers = leagueResult.players;
+        }
+      } else {
+        const year = parseInt(freshLobby.season);
+        const result = await fetchNFLRosterFromApi(lobbyTeam.abbreviation, year);
+        if (result?.players) {
+          rosterPlayers = result.players;
+        }
+
+        const leagueResult = await fetchNFLSeasonPlayers(year);
+        if (leagueResult?.players) {
+          leaguePlayers = leagueResult.players;
+        }
+      }
+
+      setGameConfig(lobbySport, lobbyTeam, freshLobby.season, 'manual', freshLobby.timer_duration, rosterPlayers, leaguePlayers, false);
+      navigate('/game', { state: { multiplayer: true, lobbyId: freshLobby.id } });
+    } catch (error) {
+      console.error('Error loading roster:', error);
+    } finally {
+      setIsLoadingRoster(false);
+    }
+  }, [isHost, lobby, navigate, setGameConfig]);
+
+  // Watch lobby status changes
   useEffect(() => {
     if (!lobby) return;
 
@@ -79,28 +185,19 @@ export function LobbyWaitingPage() {
       // Show the dealing animation instead of simple countdown
       setShowDealingAnimation(true);
     } else if (lobby.status === 'playing') {
-      // If animation isn't showing yet, show it now
-      if (!showDealingAnimation && !hasStartedGame.current) {
+      // If status is 'playing' and we haven't started the game yet,
+      // the host must have skipped - immediately complete for all players
+      if (!hasStartedGame.current) {
         setShowDealingAnimation(true);
+        // Trigger game start for non-host players (host already triggered via skip)
+        if (!isHost) {
+          handleDealingComplete();
+        }
       }
     } else if (lobby.status === 'finished') {
       navigate(`/lobby/${code}/results`);
     }
-  }, [lobby?.status, showDealingAnimation]);
-
-  // Handle dealing animation complete
-  const handleDealingComplete = useCallback(async () => {
-    if (hasStartedGame.current) return;
-    hasStartedGame.current = true;
-
-    // Host updates status to playing if not already
-    if (isHost && lobby && lobby.status === 'countdown') {
-      await updateLobbyStatus(lobby.id, 'playing');
-    }
-
-    // Load roster and start game
-    await loadRosterAndStart();
-  }, [isHost, lobby]);
+  }, [lobby?.status, showDealingAnimation, isHost, handleDealingComplete, lobby, navigate, code]);
 
   useEffect(() => {
     const allReady = players.length > 1 && players.every((p) => p.is_ready);
@@ -117,58 +214,67 @@ export function LobbyWaitingPage() {
     await startGame();
   };
 
-  const loadRosterAndStart = async () => {
-    if (!lobby) return;
-    setIsLoadingRoster(true);
-
-    try {
-      const sport = lobby.sport as Sport;
-      const teamList = sport === 'nba' ? teams : nflTeams;
-      const team = teamList.find((t) => t.abbreviation === lobby.team_abbreviation);
-
-      if (!team) {
-        console.error('Team not found');
-        return;
-      }
-
-      let rosterPlayers: { id: number | string; name: string; position?: string; number?: string; ppg?: number; isLowScorer?: boolean; unit?: string }[] = [];
-      let leaguePlayers: { id: number | string; name: string }[] = [];
-
-      if (sport === 'nba') {
-        const result = await fetchTeamRoster(team.abbreviation, lobby.season);
-        rosterPlayers = result.players;
-
-        const leagueResult = await fetchSeasonPlayers(lobby.season);
-        if (leagueResult?.players) {
-          leaguePlayers = leagueResult.players;
-        }
-      } else {
-        const year = parseInt(lobby.season);
-        const result = await fetchNFLRosterFromApi(team.abbreviation, year);
-        if (result?.players) {
-          rosterPlayers = result.players;
-        }
-
-        const leagueResult = await fetchNFLSeasonPlayers(year);
-        if (leagueResult?.players) {
-          leaguePlayers = leagueResult.players;
-        }
-      }
-
-      setGameConfig(sport, team, lobby.season, 'manual', lobby.timer_duration, rosterPlayers, leaguePlayers, false);
-      navigate('/game', { state: { multiplayer: true, lobbyId: lobby.id } });
-    } catch (error) {
-      console.error('Error loading roster:', error);
-    } finally {
-      setIsLoadingRoster(false);
-    }
-  };
-
   const handleCopyCode = () => {
     if (lobby?.join_code) {
       navigator.clipboard.writeText(lobby.join_code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Apply settings changes (host only)
+  const handleApplySettings = async () => {
+    if (!isHost || !lobby) return;
+
+    // Get the appropriate team list for the selected sport
+    const newTeamList = editSport === 'nba' ? teams : nflTeams;
+
+    // Determine team abbreviation
+    let newTeamAbbreviation: string;
+    let newSeason: string;
+
+    if (editGameMode === 'manual' && editTeam) {
+      // Manual mode with team selected
+      newTeamAbbreviation = editTeam.abbreviation;
+      newSeason = editSport === 'nba' && editYear
+        ? `${editYear}-${String(editYear + 1).slice(-2)}`
+        : editYear ? `${editYear}` : lobby.season;
+    } else {
+      // Random mode OR manual mode without team - pick a random team for the new sport
+      const randomTeam = newTeamList[Math.floor(Math.random() * newTeamList.length)];
+      newTeamAbbreviation = randomTeam.abbreviation;
+
+      // Pick a random year within the range
+      const minYear = editSport === 'nfl' ? Math.max(editMinYear, 2000) : editMinYear;
+      const maxYear = editSport === 'nfl' ? Math.min(editMaxYear, 2024) : editMaxYear;
+      const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+
+      newSeason = editSport === 'nba'
+        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+        : `${randomYear}`;
+    }
+
+    await updateSettings({
+      sport: editSport,
+      teamAbbreviation: newTeamAbbreviation,
+      season: newSeason,
+      timerDuration: editTimer,
+      gameMode: editGameMode,
+      minYear: editMinYear,
+      maxYear: editMaxYear,
+    });
+
+    setShowSettings(false);
+  };
+
+  // Handle sport change in settings
+  const handleEditSportChange = (newSport: Sport) => {
+    setEditSport(newSport);
+    setEditTeam(null);
+    setEditYear(null);
+    if (newSport === 'nfl') {
+      setEditMinYear(Math.max(editMinYear, 2000));
+      setEditMaxYear(Math.min(editMaxYear, 2024));
     }
   };
 
@@ -183,7 +289,20 @@ export function LobbyWaitingPage() {
   // Get team info for the dealing animation
   const sport = (lobby?.sport as Sport) || 'nba';
   const teamList = sport === 'nba' ? teams : nflTeams;
-  const team = lobby ? teamList.find((t) => t.abbreviation === lobby.team_abbreviation) : null;
+  let team = lobby ? teamList.find((t) => t.abbreviation === lobby.team_abbreviation) : null;
+
+  // Fallback: if team not found (e.g., sport changed but team_abbreviation hasn't synced yet),
+  // try to find the team in both lists or use a default
+  if (!team && lobby) {
+    // Try the other sport's team list
+    const otherTeamList = sport === 'nba' ? nflTeams : teams;
+    team = otherTeamList.find((t) => t.abbreviation === lobby.team_abbreviation);
+
+    // If still not found, use first team from current sport as fallback
+    if (!team) {
+      team = teamList[0];
+    }
+  }
 
   if (!lobby || isLoadingLobby) {
     return (
@@ -210,6 +329,7 @@ export function LobbyWaitingPage() {
             sport={sport}
             winningTeamData={team}
             onComplete={handleDealingComplete}
+            canSkip={isHost}
           />
         </div>
       )}
@@ -269,14 +389,172 @@ export function LobbyWaitingPage() {
                 </div>
               )}
             </div>
-            <div className="text-right">
-              <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
-              <div className="retro-title text-2xl text-white">
-                {Math.floor(lobby.timer_duration / 60)}:{String(lobby.timer_duration % 60).padStart(2, '0')}
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
+                <div className="retro-title text-2xl text-white">
+                  {Math.floor(lobby.timer_duration / 60)}:{String(lobby.timer_duration % 60).padStart(2, '0')}
+                </div>
               </div>
+              {isHost && lobby.status === 'waiting' && (
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-2 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
+                  title="Change Settings"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
+
+        {/* Host Settings Panel */}
+        <AnimatePresence>
+          {isHost && showSettings && lobby.status === 'waiting' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-black/50 border border-[#d4af37]/30 rounded-sm p-4 space-y-4">
+                <div className="sports-font text-[10px] text-[#d4af37] tracking-[0.3em] uppercase text-center">
+                  Host Settings
+                </div>
+
+                {/* Sport Toggle */}
+                <div className="flex justify-center gap-2">
+                  {(['nba', 'nfl'] as Sport[]).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleEditSportChange(s)}
+                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                        editSport === s
+                          ? (s === 'nba' ? 'bg-orange-500' : 'bg-[#013369]') + ' text-white'
+                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      {s.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Game Mode Toggle */}
+                <div className="flex justify-center gap-2">
+                  <button
+                    onClick={() => setEditGameMode('random')}
+                    className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                      editGameMode === 'random'
+                        ? 'bg-[#d4af37] text-black'
+                        : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    Random
+                  </button>
+                  <button
+                    onClick={() => setEditGameMode('manual')}
+                    className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                      editGameMode === 'manual'
+                        ? 'bg-[#d4af37] text-black'
+                        : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    Manual
+                  </button>
+                </div>
+
+                {/* Manual Mode: Team & Year Selection */}
+                {editGameMode === 'manual' && (
+                  <div className="space-y-3">
+                    <TeamSelector
+                      selectedTeam={editTeam}
+                      onSelect={setEditTeam}
+                      sport={editSport}
+                    />
+                    <YearSelector
+                      selectedYear={editYear}
+                      onSelect={setEditYear}
+                      minYear={editSport === 'nba' ? 1985 : 2000}
+                      maxYear={2024}
+                      sport={editSport}
+                    />
+                  </div>
+                )}
+
+                {/* Random Mode: Year Range */}
+                {editGameMode === 'random' && (
+                  <div className="bg-black/30 border border-white/10 rounded-sm p-3">
+                    <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
+                      Year Range {editSport === 'nfl' && '(2000-2024)'}
+                    </div>
+                    <div className="flex items-center justify-center gap-3">
+                      <select
+                        value={editMinYear}
+                        onChange={(e) => setEditMinYear(parseInt(e.target.value))}
+                        className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
+                      >
+                        {Array.from(
+                          { length: 2024 - (editSport === 'nfl' ? 2000 : 1985) + 1 },
+                          (_, i) => (editSport === 'nfl' ? 2000 : 1985) + i
+                        ).map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                      <span className="text-white/40 sports-font">to</span>
+                      <select
+                        value={editMaxYear}
+                        onChange={(e) => setEditMaxYear(parseInt(e.target.value))}
+                        className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
+                      >
+                        {Array.from(
+                          { length: 2024 - (editSport === 'nfl' ? 2000 : 1985) + 1 },
+                          (_, i) => (editSport === 'nfl' ? 2000 : 1985) + i
+                        ).map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Timer Selection */}
+                <div className="bg-black/30 border border-white/10 rounded-sm p-3">
+                  <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
+                    Timer Duration
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {[60, 90, 120, 180, 300].map((seconds) => (
+                      <button
+                        key={seconds}
+                        onClick={() => setEditTimer(seconds)}
+                        className={`px-3 py-1.5 rounded-lg sports-font text-sm transition-all ${
+                          editTimer === seconds
+                            ? 'bg-[#d4af37] text-black'
+                            : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                        }`}
+                      >
+                        {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Apply Button */}
+                <button
+                  onClick={handleApplySettings}
+                  disabled={editGameMode === 'manual' && (!editTeam || !editYear)}
+                  className="w-full py-3 rounded-sm retro-title tracking-wider transition-all disabled:opacity-50 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
+                >
+                  Apply Changes
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Players list */}
         <motion.div

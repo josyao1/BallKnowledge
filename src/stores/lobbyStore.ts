@@ -12,6 +12,8 @@ import {
   setPlayerReady,
   deleteLobby,
   getOrCreatePlayerId,
+  updateLobbySettings,
+  checkAllPlayersFinished,
 } from '../services/lobby';
 
 interface LobbyState {
@@ -42,7 +44,16 @@ interface LobbyState {
   setReady: (isReady: boolean) => Promise<void>;
   startGame: () => Promise<void>;
   endGame: () => Promise<void>;
-  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[]) => Promise<void>;
+  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[], incorrectGuesses?: string[], isFinished?: boolean) => Promise<void>;
+  updateSettings: (settings: {
+    sport?: Sport;
+    teamAbbreviation?: string;
+    season?: string;
+    timerDuration?: number;
+    gameMode?: 'random' | 'manual';
+    minYear?: number;
+    maxYear?: number;
+  }) => Promise<void>;
 
   // Realtime updates (called by subscription hook)
   setLobby: (lobby: Lobby | null) => void;
@@ -162,14 +173,35 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     const { lobby } = get();
     if (!lobby) return;
 
-    await updateLobbyStatus(lobby.id, 'finished');
+    // Check if all players have finished before setting lobby to finished
+    const allFinished = await checkAllPlayersFinished(lobby.id);
+    if (allFinished) {
+      await updateLobbyStatus(lobby.id, 'finished');
+    }
   },
 
-  syncScore: async (score, guessedCount, guessedPlayers) => {
+  syncScore: async (score, guessedCount, guessedPlayers, incorrectGuesses, isFinished) => {
     const { lobby } = get();
     if (!lobby) return;
 
-    await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers);
+    await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers, incorrectGuesses, isFinished);
+  },
+
+  updateSettings: async (settings) => {
+    const { lobby, isHost } = get();
+    if (!lobby || !isHost) return;
+
+    // Map camelCase to snake_case for database
+    const dbSettings: Record<string, unknown> = {};
+    if (settings.sport !== undefined) dbSettings.sport = settings.sport;
+    if (settings.teamAbbreviation !== undefined) dbSettings.team_abbreviation = settings.teamAbbreviation;
+    if (settings.season !== undefined) dbSettings.season = settings.season;
+    if (settings.timerDuration !== undefined) dbSettings.timer_duration = settings.timerDuration;
+    if (settings.gameMode !== undefined) dbSettings.game_mode = settings.gameMode;
+    if (settings.minYear !== undefined) dbSettings.min_year = settings.minYear;
+    if (settings.maxYear !== undefined) dbSettings.max_year = settings.maxYear;
+
+    await updateLobbySettings(lobby.id, dbSettings as Parameters<typeof updateLobbySettings>[1]);
   },
 
   // Realtime update handlers

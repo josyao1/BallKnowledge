@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers } from '../services/lobby';
+import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus } from '../services/lobby';
 
 // Generate distinct colors for players
 const PLAYER_COLORS = [
@@ -30,7 +30,13 @@ export function MultiplayerResultsPage() {
   // Keep subscription active for realtime updates
   useLobbySubscription(lobby?.id || null);
 
-  // Fetch fresh player data on mount and poll until all have guessed_players
+  // Check if all players have finished
+  const allPlayersFinished = useMemo(() => {
+    if (players.length === 0) return false;
+    return players.every(p => p.finished_at !== null);
+  }, [players]);
+
+  // Fetch fresh player data on mount and poll until all have finished
   useEffect(() => {
     if (!lobby?.id) return;
 
@@ -38,25 +44,25 @@ export function MultiplayerResultsPage() {
       const result = await getLobbyPlayers(lobby.id);
       if (result.players) {
         setPlayers(result.players);
+
+        // Check if all players are finished and update lobby status if needed
+        const allFinished = result.players.every(p => p.finished_at !== null);
+        if (allFinished && lobby.status !== 'finished') {
+          await updateLobbyStatus(lobby.id, 'finished');
+        }
       }
     };
 
     // Initial fetch
     fetchPlayers();
 
-    // Poll every 2 seconds for a bit to catch late syncs
+    // Poll every 2 seconds until all players have finished
     const pollInterval = setInterval(fetchPlayers, 2000);
-
-    // Stop polling after 10 seconds (should be enough for all players to sync)
-    const stopPolling = setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 10000);
 
     return () => {
       clearInterval(pollInterval);
-      clearTimeout(stopPolling);
     };
-  }, [lobby?.id, setPlayers]);
+  }, [lobby?.id, lobby?.status, setPlayers]);
 
   // Navigate back to lobby when status changes to 'waiting'
   const navigateToLobby = useCallback(() => {
@@ -125,19 +131,32 @@ export function MultiplayerResultsPage() {
 
   const showBonuses = players.length >= 3;
 
-  // Sort players by total score (base + bonus)
-  const sortedPlayers = useMemo(() => {
-    return [...players].sort((a, b) => {
+  // Sort players by total score (base + bonus), with incorrect guesses as tiebreaker
+  const { sortedPlayers, tiebreakerUsed } = useMemo(() => {
+    let tiebreaker = false;
+    const sorted = [...players].sort((a, b) => {
       const totalA = a.score + (playerBonuses[a.player_id] || 0);
       const totalB = b.score + (playerBonuses[b.player_id] || 0);
+
+      // If scores are equal, use incorrect guesses as tiebreaker (fewer is better)
+      if (totalA === totalB) {
+        const incorrectA = (a.incorrect_guesses || []).length;
+        const incorrectB = (b.incorrect_guesses || []).length;
+        if (incorrectA !== incorrectB) {
+          tiebreaker = true;
+          return incorrectA - incorrectB; // Fewer incorrect guesses wins
+        }
+      }
       return totalB - totalA;
     });
+    return { sortedPlayers: sorted, tiebreakerUsed: tiebreaker };
   }, [players, playerBonuses]);
 
   const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
   const winner = sortedPlayers[0];
   const winnerBonus = winner ? (playerBonuses[winner.player_id] || 0) : 0;
   const winnerTotal = winner ? winner.score + winnerBonus : 0;
+  const winnerIncorrect = winner ? (winner.incorrect_guesses || []).length : 0;
 
   // Build roster breakdown - which players each participant guessed
   const rosterBreakdown = useMemo(() => {
@@ -216,6 +235,43 @@ export function MultiplayerResultsPage() {
     );
   }
 
+  // Show waiting screen if not all players have finished
+  if (!allPlayersFinished) {
+    const finishedCount = players.filter(p => p.finished_at !== null).length;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d2a0b]">
+        <div
+          className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
+        />
+        <div className="relative z-10 text-center space-y-6">
+          <div className="w-12 h-12 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div>
+            <h2 className="retro-title text-2xl text-[#d4af37] mb-2">Waiting for Players</h2>
+            <p className="sports-font text-white/50 tracking-widest">
+              {finishedCount}/{players.length} players finished
+            </p>
+          </div>
+          <div className="space-y-2">
+            {players.map(player => (
+              <div
+                key={player.player_id}
+                className={`flex items-center justify-between px-4 py-2 rounded-sm ${
+                  player.finished_at ? 'bg-emerald-900/30 border border-emerald-700/50' : 'bg-black/30 border border-white/10'
+                }`}
+              >
+                <span className="sports-font text-sm text-white/70">{player.player_name}</span>
+                <span className={`text-xs ${player.finished_at ? 'text-emerald-400' : 'text-white/30'}`}>
+                  {player.finished_at ? '✓ Finished' : 'Playing...'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
       {/* Green felt background */}
@@ -258,6 +314,11 @@ export function MultiplayerResultsPage() {
             <div className="text-white/40 text-sm sports-font">
               {currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}% of roster
             </div>
+            {tiebreakerUsed && (
+              <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
+                Won by tiebreaker ({winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'})
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -276,12 +337,18 @@ export function MultiplayerResultsPage() {
               +1 bonus for each unique guess
             </div>
           )}
+          {tiebreakerUsed && (
+            <div className="text-xs text-amber-400/70 text-center mb-2">
+              Tiebreaker: fewer incorrect guesses wins
+            </div>
+          )}
           <div className="space-y-2">
             {sortedPlayers.map((player, index) => {
               const isCurrentPlayer = player.player_id === currentPlayerId;
               const percentage = currentRoster.length > 0 ? Math.round((player.guessed_count / currentRoster.length) * 100) : 0;
               const bonus = playerBonuses[player.player_id] || 0;
               const totalScore = player.score + bonus;
+              const incorrectCount = (player.incorrect_guesses || []).length;
 
               return (
                 <motion.div
@@ -320,6 +387,9 @@ export function MultiplayerResultsPage() {
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
                         {showBonuses && bonus > 0 && (
                           <span className="text-emerald-400 ml-2">+{bonus} unique</span>
+                        )}
+                        {tiebreakerUsed && (
+                          <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>
                         )}
                       </div>
                     </div>

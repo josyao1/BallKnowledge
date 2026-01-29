@@ -277,7 +277,9 @@ export async function updatePlayerScore(
   lobbyId: string,
   score: number,
   guessedCount: number,
-  guessedPlayers?: string[]
+  guessedPlayers?: string[],
+  incorrectGuesses?: string[],
+  isFinished?: boolean
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -289,6 +291,12 @@ export async function updatePlayerScore(
   if (guessedPlayers !== undefined) {
     updateData.guessed_players = guessedPlayers;
   }
+  if (incorrectGuesses !== undefined) {
+    updateData.incorrect_guesses = incorrectGuesses;
+  }
+  if (isFinished) {
+    updateData.finished_at = new Date().toISOString();
+  }
 
   const { error } = await supabase
     .from('lobby_players')
@@ -297,6 +305,21 @@ export async function updatePlayerScore(
     .eq('player_id', playerId);
 
   return { error: error?.message || null };
+}
+
+// Check if all players have finished
+export async function checkAllPlayersFinished(lobbyId: string): Promise<boolean> {
+  if (!supabase) return false;
+
+  const { data: players, error } = await supabase
+    .from('lobby_players')
+    .select('finished_at, is_connected')
+    .eq('lobby_id', lobbyId);
+
+  if (error || !players) return false;
+
+  // All connected players must have finished_at set
+  return players.every(p => p.finished_at !== null);
 }
 
 // Set player ready status
@@ -328,6 +351,31 @@ export async function deleteLobby(lobbyId: string): Promise<{ error: string | nu
   const { error } = await supabase
     .from('lobbies')
     .delete()
+    .eq('id', lobbyId);
+
+  return { error: error?.message || null };
+}
+
+// Update lobby settings (host only)
+export async function updateLobbySettings(
+  lobbyId: string,
+  settings: {
+    sport?: string;
+    team_abbreviation?: string;
+    season?: string;
+    timer_duration?: number;
+    game_mode?: 'random' | 'manual';
+    min_year?: number;
+    max_year?: number;
+  }
+): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobbies')
+    .update(settings)
     .eq('id', lobbyId);
 
   return { error: error?.message || null };
@@ -391,6 +439,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
       score: 0,
       guessed_count: 0,
       guessed_players: [],
+      incorrect_guesses: [],
       is_ready: false,
       finished_at: null,
     })
@@ -408,6 +457,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
       score: 0,
       guessed_count: 0,
       guessed_players: [],
+      incorrect_guesses: [],
       is_ready: true,
       finished_at: null,
     })
