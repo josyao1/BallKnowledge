@@ -698,6 +698,11 @@ export function LobbyWaitingPage() {
               Waiting for all players to be ready...
             </p>
           )}
+
+          {/* Tip for stuck screens */}
+          <p className="text-center text-white/20 text-[10px] sports-font tracking-wider mt-4">
+            Tip: If stuck on empty screen, refresh page to rejoin
+          </p>
         </motion.div>
       </main>
     </div>
