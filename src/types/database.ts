@@ -139,6 +139,7 @@ export interface Database {
           is_connected: boolean;
           joined_at: string;
           finished_at: string | null;
+          wins: number;
         };
         Insert: {
           id?: string;
@@ -154,6 +155,7 @@ export interface Database {
           is_connected?: boolean;
           joined_at?: string;
           finished_at?: string | null;
+          wins?: number;
         };
         Update: {
           id?: string;
@@ -169,6 +171,7 @@ export interface Database {
           is_connected?: boolean;
           joined_at?: string;
           finished_at?: string | null;
+          wins?: number;
         };
       };
     };

@@ -258,6 +258,23 @@ export function HomePage() {
                 </div>
               )}
 
+              {/* Timer Indicator */}
+              <button
+                onClick={() => setShowSettings(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg hover:border-[#555] transition-colors group"
+              >
+                <svg className="w-4 h-4 text-[#888] group-hover:text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="sports-font text-sm text-[var(--vintage-cream)]">
+                  {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
+                </span>
+                <span className="text-[10px] text-[#666] sports-font tracking-wider">TIMER</span>
+                <svg className="w-3 h-3 text-[#666] group-hover:text-[#888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+
               {/* Restored Action Buttons */}
               <div className="flex flex-wrap gap-3 items-center justify-center">
                 <button onClick={handleStartGame} disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)} className="retro-btn retro-btn-gold px-10 py-3 text-lg disabled:opacity-50">Start Solo</button>

@@ -381,6 +381,33 @@ export async function updateLobbySettings(
   return { error: error?.message || null };
 }
 
+// Increment wins for a player
+export async function incrementPlayerWins(lobbyId: string, playerId: string): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  // First get the current wins count
+  const { data: player, error: fetchError } = await supabase
+    .from('lobby_players')
+    .select('wins')
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId)
+    .single();
+
+  if (fetchError || !player) {
+    return { error: fetchError?.message || 'Player not found' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ wins: (player.wins || 0) + 1 })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId);
+
+  return { error: error?.message || null };
+}
+
 // Reset lobby for a new round (host only)
 export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: string | null }> {
   if (!supabase) {

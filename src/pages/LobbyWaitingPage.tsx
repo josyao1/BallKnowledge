@@ -382,7 +382,12 @@ export function LobbyWaitingPage() {
                 {lobby.sport.toUpperCase()} Roster Challenge
               </div>
               {lobby.game_mode === 'random' ? (
-                <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
+                <div>
+                  <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
+                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                    {lobby.min_year || (lobby.sport === 'nfl' ? 2000 : 2015)} - {lobby.max_year || 2024}
+                  </div>
+                </div>
               ) : (
                 <div className="retro-title text-xl text-[#d4af37]">
                   {lobby.team_abbreviation} • {lobby.season}
@@ -411,6 +416,32 @@ export function LobbyWaitingPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Session Wins Scoreboard */}
+        {players.some(p => (p.wins || 0) > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-black/50 border border-[#d4af37]/30 rounded-sm p-4"
+          >
+            <div className="sports-font text-[10px] text-[#d4af37] mb-3 tracking-[0.3em] uppercase text-center">
+              Session Wins
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {[...players]
+                .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+                .map((player) => (
+                  <div
+                    key={player.player_id}
+                    className="flex items-center gap-2 px-3 py-2 bg-black/30 rounded-sm border border-white/10"
+                  >
+                    <span className="sports-font text-sm text-white/80">{player.player_name}</span>
+                    <span className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</span>
+                  </div>
+                ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Host Settings Panel */}
         <AnimatePresence>

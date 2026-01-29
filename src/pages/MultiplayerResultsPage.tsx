@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus } from '../services/lobby';
+import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins } from '../services/lobby';
 
 // Generate distinct colors for players
 const PLAYER_COLORS = [
@@ -26,6 +26,7 @@ export function MultiplayerResultsPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [showRosterBreakdown, setShowRosterBreakdown] = useState(false);
   const hasNavigated = useRef(false);
+  const hasIncrementedWins = useRef(false);
 
   // Keep subscription active for realtime updates
   useLobbySubscription(lobby?.id || null);
@@ -157,6 +158,14 @@ export function MultiplayerResultsPage() {
   const winnerBonus = winner ? (playerBonuses[winner.player_id] || 0) : 0;
   const winnerTotal = winner ? winner.score + winnerBonus : 0;
   const winnerIncorrect = winner ? (winner.incorrect_guesses || []).length : 0;
+
+  // Increment winner's wins count (host only, once per game)
+  useEffect(() => {
+    if (!isHost || !allPlayersFinished || !winner || !lobby || hasIncrementedWins.current) return;
+
+    hasIncrementedWins.current = true;
+    incrementPlayerWins(lobby.id, winner.player_id);
+  }, [isHost, allPlayersFinished, winner, lobby]);
 
   // Build roster breakdown - which players each participant guessed
   const rosterBreakdown = useMemo(() => {
