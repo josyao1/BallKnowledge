@@ -14,6 +14,7 @@ import {
   getOrCreatePlayerId,
   updateLobbySettings,
   checkAllPlayersFinished,
+  incrementPlayerWins,
 } from '../services/lobby';
 
 interface LobbyState {
@@ -54,6 +55,7 @@ interface LobbyState {
     minYear?: number;
     maxYear?: number;
   }) => Promise<void>;
+  incrementWins: (playerId: string) => Promise<void>;
 
   // Realtime updates (called by subscription hook)
   setLobby: (lobby: Lobby | null) => void;
@@ -202,6 +204,13 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     if (settings.maxYear !== undefined) dbSettings.max_year = settings.maxYear;
 
     await updateLobbySettings(lobby.id, dbSettings as Parameters<typeof updateLobbySettings>[1]);
+  },
+
+  incrementWins: async (playerId) => {
+    const { lobby } = get();
+    if (!lobby) return;
+
+    await incrementPlayerWins(lobby.id, playerId);
   },
 
   // Realtime update handlers
