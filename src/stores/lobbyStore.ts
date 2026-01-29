@@ -45,7 +45,7 @@ interface LobbyState {
   setReady: (isReady: boolean) => Promise<void>;
   startGame: () => Promise<void>;
   endGame: () => Promise<void>;
-  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[], incorrectGuesses?: string[], isFinished?: boolean) => Promise<void>;
+  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[], incorrectGuesses?: string[], isFinished?: boolean, fallbackLobbyId?: string) => Promise<void>;
   updateSettings: (settings: {
     sport?: Sport;
     teamAbbreviation?: string;
@@ -182,14 +182,16 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     }
   },
 
-  syncScore: async (score, guessedCount, guessedPlayers, incorrectGuesses, isFinished) => {
+  syncScore: async (score, guessedCount, guessedPlayers, incorrectGuesses, isFinished, fallbackLobbyId) => {
     const { lobby } = get();
-    if (!lobby) {
-      console.error('syncScore called but lobby is null');
+    const lobbyId = lobby?.id || fallbackLobbyId;
+
+    if (!lobbyId) {
+      console.error('syncScore called but no lobby ID available (store lobby is null and no fallback provided)');
       return;
     }
 
-    const result = await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers, incorrectGuesses, isFinished);
+    const result = await updatePlayerScore(lobbyId, score, guessedCount, guessedPlayers, incorrectGuesses, isFinished);
     if (result.error) {
       console.error('syncScore error:', result.error);
     }

@@ -17,6 +17,13 @@ export function GamePage() {
   const location = useLocation();
   const isMultiplayer = location.state?.multiplayer || false;
   const lobbyCode = useLobbyStore((state) => state.lobby?.join_code);
+  const lobbyId = useLobbyStore((state) => state.lobby?.id);
+
+  // Store lobby ID in a ref so we always have it even if store's lobby becomes null
+  const lobbyIdRef = useRef<string | null>(null);
+  if (lobbyId) {
+    lobbyIdRef.current = lobbyId;
+  }
 
   const {
     selectedTeam,
@@ -72,7 +79,7 @@ export function GamePage() {
     if (lastSyncRef.current.score !== currentScore || lastSyncRef.current.count !== currentCount) {
       lastSyncRef.current = { score: currentScore, count: currentCount };
       const timeout = setTimeout(() => {
-        syncScore(currentScore, currentCount, guessedPlayers.map(p => p.name), incorrectGuesses);
+        syncScore(currentScore, currentCount, guessedPlayers.map(p => p.name), incorrectGuesses, false, lobbyIdRef.current || undefined);
       }, 300);
       return () => clearTimeout(timeout);
     }
@@ -96,7 +103,8 @@ export function GamePage() {
         const finishGame = async () => {
           const guessedNames = guessedPlayers.map(p => p.name);
           // Mark this player as finished and sync final score with incorrect guesses
-          await syncScore(score, guessedPlayers.length, guessedNames, incorrectGuesses, true);
+          // Pass lobbyIdRef.current as fallback in case store's lobby becomes null
+          await syncScore(score, guessedPlayers.length, guessedNames, incorrectGuesses, true, lobbyIdRef.current || undefined);
           // This will only set lobby to finished if all players are done
           await endLobbyGame();
           navigate(`/lobby/${lobbyCode}/results`);

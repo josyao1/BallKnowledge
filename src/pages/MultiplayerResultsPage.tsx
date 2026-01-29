@@ -28,6 +28,24 @@ export function MultiplayerResultsPage() {
   const hasNavigated = useRef(false);
   const hasIncrementedWins = useRef(false);
 
+  // If lobby is null but we have a code, try to fetch it
+  useEffect(() => {
+    if (!lobby && code) {
+      const fetchLobby = async () => {
+        const result = await findLobbyByCode(code);
+        if (result.lobby) {
+          setLobby(result.lobby);
+          // Also fetch players
+          const playersResult = await getLobbyPlayers(result.lobby.id);
+          if (playersResult.players) {
+            setPlayers(playersResult.players);
+          }
+        }
+      };
+      fetchLobby();
+    }
+  }, [lobby, code, setLobby, setPlayers]);
+
   // Keep subscription active for realtime updates
   useLobbySubscription(lobby?.id || null);
 
