@@ -55,6 +55,30 @@ export function MultiplayerResultsPage() {
     return players.every(p => p.finished_at !== null);
   }, [players]);
 
+  // Detect broken state: on results page but 0 players finished - redirect to lobby
+  useEffect(() => {
+    if (!code || players.length === 0) return;
+
+    const finishedCount = players.filter(p => p.finished_at !== null).length;
+
+    // If we have players but none are finished, this is a broken state
+    // Wait a moment to make sure it's not just loading, then redirect
+    if (finishedCount === 0) {
+      const brokenStateTimeout = setTimeout(() => {
+        // Re-check in case data updated
+        const currentFinished = players.filter(p => p.finished_at !== null).length;
+        if (currentFinished === 0 && !hasNavigated.current) {
+          console.warn('Broken state detected: 0 players finished on results page, redirecting to lobby');
+          hasNavigated.current = true;
+          resetGame();
+          navigate(`/lobby/${code}`);
+        }
+      }, 3000); // Give 3 seconds for data to potentially update
+
+      return () => clearTimeout(brokenStateTimeout);
+    }
+  }, [players, code, navigate, resetGame]);
+
   // Fetch fresh player data on mount and poll until all have finished
   useEffect(() => {
     if (!lobby?.id) return;
@@ -177,13 +201,34 @@ export function MultiplayerResultsPage() {
   const winnerTotal = winner ? winner.score + winnerBonus : 0;
   const winnerIncorrect = winner ? (winner.incorrect_guesses || []).length : 0;
 
-  // Increment winner's wins count (host only, once per game)
+  // Find all players tied for first place
+  const tiedWinners = useMemo(() => {
+    if (sortedPlayers.length === 0) return [];
+    const first = sortedPlayers[0];
+    const firstTotal = first.score + (playerBonuses[first.player_id] || 0);
+    const firstIncorrect = (first.incorrect_guesses || []).length;
+
+    // Find all players with the same score AND same incorrect guesses as first place
+    return sortedPlayers.filter(p => {
+      const total = p.score + (playerBonuses[p.player_id] || 0);
+      const incorrect = (p.incorrect_guesses || []).length;
+      return total === firstTotal && incorrect === firstIncorrect;
+    });
+  }, [sortedPlayers, playerBonuses]);
+
+  const isTrueTie = tiedWinners.length > 1;
+
+  // Increment wins for all tied winners (host only, once per game)
   useEffect(() => {
-    if (!isHost || !allPlayersFinished || !winner || !lobby || hasIncrementedWins.current) return;
+    if (!isHost || !allPlayersFinished || !lobby || hasIncrementedWins.current) return;
+    if (tiedWinners.length === 0) return;
 
     hasIncrementedWins.current = true;
-    incrementPlayerWins(lobby.id, winner.player_id);
-  }, [isHost, allPlayersFinished, winner, lobby]);
+    // Give a win to all tied players
+    tiedWinners.forEach(player => {
+      incrementPlayerWins(lobby.id, player.player_id);
+    });
+  }, [isHost, allPlayersFinished, lobby, tiedWinners]);
 
   // Build roster breakdown - which players each participant guessed
   const rosterBreakdown = useMemo(() => {
@@ -327,30 +372,47 @@ export function MultiplayerResultsPage() {
 
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
-        {/* Winner announcement */}
+        {/* Winner announcement or Tie */}
         {winner && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-6 bg-black/50 border border-[#d4af37]/30 rounded-sm"
           >
-            <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">Champion</div>
-            <div className="retro-title text-4xl text-[#d4af37]">
-              {winner.player_name}
-            </div>
-            <div className="retro-title text-2xl text-white mt-2">
-              {winnerTotal} points
-              {showBonuses && winnerBonus > 0 && (
-                <span className="text-emerald-400 text-lg ml-2">(+{winnerBonus} unique)</span>
-              )}
-            </div>
-            <div className="text-white/40 text-sm sports-font">
-              {currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}% of roster
-            </div>
-            {tiebreakerUsed && (
-              <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
-                Won by tiebreaker ({winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'})
-              </div>
+            {isTrueTie ? (
+              <>
+                <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">Result</div>
+                <div className="retro-title text-4xl text-[#d4af37]">
+                  It's a Tie!
+                </div>
+                <div className="retro-title text-2xl text-white mt-2">
+                  {winnerTotal} points each
+                </div>
+                <div className="text-emerald-400 text-sm sports-font mt-1">
+                  {tiedWinners.length} players share the win
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">Champion</div>
+                <div className="retro-title text-4xl text-[#d4af37]">
+                  {winner.player_name}
+                </div>
+                <div className="retro-title text-2xl text-white mt-2">
+                  {winnerTotal} points
+                  {showBonuses && winnerBonus > 0 && (
+                    <span className="text-emerald-400 text-lg ml-2">(+{winnerBonus} unique)</span>
+                  )}
+                </div>
+                <div className="text-white/40 text-sm sports-font">
+                  {currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}% of roster
+                </div>
+                {tiebreakerUsed && (
+                  <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
+                    Won by tiebreaker ({winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'})
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         )}
