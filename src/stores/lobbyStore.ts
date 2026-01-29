@@ -184,9 +184,15 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   syncScore: async (score, guessedCount, guessedPlayers, incorrectGuesses, isFinished) => {
     const { lobby } = get();
-    if (!lobby) return;
+    if (!lobby) {
+      console.error('syncScore called but lobby is null');
+      return;
+    }
 
-    await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers, incorrectGuesses, isFinished);
+    const result = await updatePlayerScore(lobby.id, score, guessedCount, guessedPlayers, incorrectGuesses, isFinished);
+    if (result.error) {
+      console.error('syncScore error:', result.error);
+    }
   },
 
   updateSettings: async (settings) => {
@@ -219,7 +225,11 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   },
 
   setPlayers: (players) => {
-    set({ players });
+    // Also update isHost based on whether current player is the host
+    const currentPlayerId = get().currentPlayerId;
+    const currentPlayer = players.find(p => p.player_id === currentPlayerId);
+    const isHost = currentPlayer?.is_host ?? false;
+    set({ players, isHost });
   },
 
   updatePlayer: (updatedPlayer) => {

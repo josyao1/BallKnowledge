@@ -282,8 +282,15 @@ def fetch_team_roster(team: str, season: int) -> list[dict]:
         return []
 
     try:
-        # Import roster data for the season using correct function name
+        # Try seasonal rosters first, fall back to weekly rosters for older seasons
         df = nfl.import_seasonal_rosters([season])
+
+        if df is None or df.empty:
+            print(f"Seasonal rosters empty for {season}, trying weekly rosters...")
+            df = nfl.import_weekly_rosters([season])
+            if df is not None and not df.empty:
+                # Weekly rosters have multiple entries per player, deduplicate
+                df = df.drop_duplicates(subset=['player_id'], keep='first')
 
         if df is None or df.empty:
             print(f"No roster data returned for season {season}")

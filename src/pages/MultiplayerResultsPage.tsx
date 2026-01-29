@@ -207,17 +207,23 @@ export function MultiplayerResultsPage() {
   }, [currentRoster, players, sortedPlayers]);
 
   const handlePlayAgain = async () => {
-    if (!lobby) return;
+    if (!lobby || hasNavigated.current) return;
+
+    // Set flag immediately to prevent race condition with realtime subscription
+    hasNavigated.current = true;
     setIsResetting(true);
 
-    // Reset lobby status and player scores
-    const result = await resetLobbyForNewRound(lobby.id);
-    if (result.error) {
-      console.error('Failed to reset lobby:', result.error);
-      setIsResetting(false);
-      return;
+    try {
+      // Reset lobby status and player scores
+      const result = await resetLobbyForNewRound(lobby.id);
+      if (result.error) {
+        console.error('Failed to reset lobby:', result.error);
+      }
+    } catch (err) {
+      console.error('Error resetting lobby:', err);
     }
 
+    // Always navigate regardless of reset success - the lobby page will fetch fresh data
     resetGame();
     navigate(`/lobby/${code}`);
   };

@@ -58,6 +58,20 @@ export function LobbyWaitingPage() {
 
   useLobbySubscription(lobby?.id || null);
 
+  // Stuck detection - auto-reload if lobby doesn't load within 8 seconds
+  useEffect(() => {
+    if (!isLoadingLobby && lobby) return; // Already loaded, no need for timeout
+
+    const stuckTimeout = setTimeout(() => {
+      if (isLoadingLobby || !lobby) {
+        console.warn('Lobby stuck in loading state, reloading page...');
+        window.location.reload();
+      }
+    }, 8000);
+
+    return () => clearTimeout(stuckTimeout);
+  }, [isLoadingLobby, lobby]);
+
   // Sync edit state with lobby when it changes
   useEffect(() => {
     if (lobby) {
