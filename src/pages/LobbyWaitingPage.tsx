@@ -139,100 +139,53 @@ export function LobbyWaitingPage() {
     if (!lobby) return;
     setIsLoadingRoster(true);
 
-    const MAX_RETRIES = 5;
-    let retryCount = 0;
+    try {
+      // Fetch fresh lobby data to get the latest settings
+      const freshLobbyResult = await findLobbyByCode(lobby.join_code);
+      const freshLobby = freshLobbyResult.lobby || lobby;
 
-    const tryLoadRoster = async (): Promise<boolean> => {
-      try {
-        // Fetch fresh lobby data to get the latest settings
-        const freshLobbyResult = await findLobbyByCode(lobby.join_code);
-        const freshLobby = freshLobbyResult.lobby || lobby;
+      const lobbySport = freshLobby.sport as Sport;
+      const lobbyTeamList = lobbySport === 'nba' ? teams : nflTeams;
+      const lobbyTeam = lobbyTeamList.find((t) => t.abbreviation === freshLobby.team_abbreviation);
 
-        const lobbySport = freshLobby.sport as Sport;
-        const lobbyTeamList = lobbySport === 'nba' ? teams : nflTeams;
-        const lobbyTeam = lobbyTeamList.find((t) => t.abbreviation === freshLobby.team_abbreviation);
-
-        if (!lobbyTeam) {
-          console.error('Team not found:', freshLobby.team_abbreviation);
-          return false;
-        }
-
-        let rosterPlayers: { id: number | string; name: string; position?: string; number?: string; ppg?: number; isLowScorer?: boolean; unit?: string }[] = [];
-        let leaguePlayers: { id: number | string; name: string }[] = [];
-
-        if (lobbySport === 'nba') {
-          const result = await fetchTeamRoster(lobbyTeam.abbreviation, freshLobby.season);
-          rosterPlayers = result.players;
-
-          const leagueResult = await fetchSeasonPlayers(freshLobby.season);
-          if (leagueResult?.players) {
-            leaguePlayers = leagueResult.players;
-          }
-        } else {
-          const year = parseInt(freshLobby.season);
-          const result = await fetchNFLRosterFromApi(lobbyTeam.abbreviation, year);
-          if (result?.players) {
-            rosterPlayers = result.players;
-          }
-
-          const leagueResult = await fetchNFLSeasonPlayers(year);
-          if (leagueResult?.players) {
-            leaguePlayers = leagueResult.players;
-          }
-        }
-
-        // Check if roster is empty
-        if (rosterPlayers.length === 0) {
-          console.warn(`Empty roster for ${lobbyTeam.abbreviation} ${freshLobby.season}`);
-
-          // If random mode and host, pick a new team/year and retry
-          if (freshLobby.game_mode === 'random' && isHost && retryCount < MAX_RETRIES) {
-            retryCount++;
-            console.log(`Retrying with different team/year (attempt ${retryCount}/${MAX_RETRIES})`);
-
-            // Pick a new random team and year
-            const minYear = freshLobby.min_year || (lobbySport === 'nfl' ? 2000 : 2015);
-            const maxYear = freshLobby.max_year || 2024;
-            const randomTeam = lobbyTeamList[Math.floor(Math.random() * lobbyTeamList.length)];
-            const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
-            const newSeason = lobbySport === 'nba'
-              ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
-              : `${randomYear}`;
-
-            // Update lobby settings
-            await updateSettings({
-              teamAbbreviation: randomTeam.abbreviation,
-              season: newSeason,
-            });
-
-            // Small delay to let settings propagate
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Retry
-            return tryLoadRoster();
-          }
-
-          // Manual mode or max retries reached - can't proceed
-          console.error('Could not load roster, returning to lobby');
-          if (isHost) {
-            await updateLobbyStatus(lobby.id, 'waiting');
-          }
-          hasStartedGame.current = false;
-          return false;
-        }
-
-        setGameConfig(lobbySport, lobbyTeam, freshLobby.season, 'manual', freshLobby.timer_duration, rosterPlayers, leaguePlayers, false);
-        navigate('/game', { state: { multiplayer: true, lobbyId: freshLobby.id } });
-        return true;
-      } catch (error) {
-        console.error('Error loading roster:', error);
-        return false;
+      if (!lobbyTeam) {
+        console.error('Team not found:', freshLobby.team_abbreviation);
+        setIsLoadingRoster(false);
+        return;
       }
-    };
 
-    await tryLoadRoster();
-    setIsLoadingRoster(false);
-  }, [isHost, lobby, navigate, setGameConfig, updateSettings]);
+      let rosterPlayers: { id: number | string; name: string; position?: string; number?: string; ppg?: number; isLowScorer?: boolean; unit?: string }[] = [];
+      let leaguePlayers: { id: number | string; name: string }[] = [];
+
+      if (lobbySport === 'nba') {
+        const result = await fetchTeamRoster(lobbyTeam.abbreviation, freshLobby.season);
+        rosterPlayers = result.players;
+
+        const leagueResult = await fetchSeasonPlayers(freshLobby.season);
+        if (leagueResult?.players) {
+          leaguePlayers = leagueResult.players;
+        }
+      } else {
+        const year = parseInt(freshLobby.season);
+        const result = await fetchNFLRosterFromApi(lobbyTeam.abbreviation, year);
+        if (result?.players) {
+          rosterPlayers = result.players;
+        }
+
+        const leagueResult = await fetchNFLSeasonPlayers(year);
+        if (leagueResult?.players) {
+          leaguePlayers = leagueResult.players;
+        }
+      }
+
+      setGameConfig(lobbySport, lobbyTeam, freshLobby.season, 'manual', freshLobby.timer_duration, rosterPlayers, leaguePlayers, false);
+      navigate('/game', { state: { multiplayer: true, lobbyId: freshLobby.id } });
+    } catch (error) {
+      console.error('Error loading roster:', error);
+    } finally {
+      setIsLoadingRoster(false);
+    }
+  }, [isHost, lobby, navigate, setGameConfig]);
 
   // Watch lobby status changes
   useEffect(() => {

@@ -510,45 +510,6 @@ export function MultiplayerResultsPage() {
           </motion.div>
         )}
 
-        {/* Incorrect Guesses Comparison */}
-        {sortedPlayers.some(p => (p.incorrect_guesses || []).length > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-black/50 border border-red-900/30 rounded-sm p-4"
-          >
-            <div className="sports-font text-[10px] text-red-400/70 mb-4 tracking-[0.3em] uppercase text-center">
-              Incorrect Guesses
-            </div>
-            <div className="space-y-3">
-              {sortedPlayers.map((player) => {
-                const incorrectList = player.incorrect_guesses || [];
-                if (incorrectList.length === 0) return null;
-                const isCurrentPlayer = player.player_id === currentPlayerId;
-
-                return (
-                  <div key={player.player_id} className="space-y-1">
-                    <div className={`text-xs sports-font ${isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/60'}`}>
-                      {player.player_name} ({incorrectList.length})
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {incorrectList.map((guess, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 bg-red-900/20 border border-red-900/30 rounded text-[10px] text-red-300/70"
-                        >
-                          {guess}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
         {/* Roster Breakdown Toggle */}
         <motion.button
           initial={{ opacity: 0 }}
