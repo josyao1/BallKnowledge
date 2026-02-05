@@ -16,6 +16,7 @@ export function ResultsPage() {
     score,
     timerDuration,
     timeRemaining,
+    gameMode,
     resetGame,
     resetForRematch,
   } = useGameStore();
@@ -43,12 +44,17 @@ export function ResultsPage() {
     }, 900);
   };
 
-  // Rematch - play same team/season again immediately
+  // Rematch - if random mode, go home for a new random team; otherwise replay same team
   const handleRematch = () => {
     setIsExiting(true);
     setTimeout(() => {
-      resetForRematch();
-      navigate('/game');
+      if (gameMode === 'random') {
+        resetGame();
+        navigate('/');
+      } else {
+        resetForRematch();
+        navigate('/game');
+      }
     }, 900);
   };
 
