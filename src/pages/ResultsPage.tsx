@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
+import { useSettingsStore } from '../stores/settingsStore';
+import { teams } from '../data/teams';
+import { nflTeams } from '../data/nfl-teams';
+import { fetchTeamRoster } from '../services/roster';
+import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import { fetchSeasonPlayers } from '../services/api';
 
 export function ResultsPage() {
   const navigate = useNavigate();
   const [isExiting, setIsExiting] = useState(false);
+  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
 
   const {
     selectedTeam,
@@ -14,12 +21,16 @@ export function ResultsPage() {
     guessedPlayers,
     incorrectGuesses,
     score,
+    sport,
     timerDuration,
     timeRemaining,
     gameMode,
     resetGame,
     resetForRematch,
+    setGameConfig,
   } = useGameStore();
+
+  const { hideResultsDuringGame } = useSettingsStore();
 
   useEffect(() => {
     if (!selectedTeam || !selectedSeason) navigate('/');
@@ -44,18 +55,50 @@ export function ResultsPage() {
     }, 900);
   };
 
-  // Rematch - if random mode, go home for a new random team; otherwise replay same team
-  const handleRematch = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      if (gameMode === 'random') {
-        resetGame();
-        navigate('/');
-      } else {
+  const handleRematch = async () => {
+    if (gameMode === 'random') {
+      // Start a new random game immediately
+      setIsLoadingRandom(true);
+      const currentTeams = sport === 'nba' ? teams : nflTeams;
+      const minYear = sport === 'nfl' ? 2000 : 2015;
+      const maxYear = 2024;
+
+      for (let i = 0; i < 5; i++) {
+        const team = currentTeams[Math.floor(Math.random() * currentTeams.length)];
+        const year = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+        const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
+
+        try {
+          const roster = sport === 'nba'
+            ? await fetchTeamRoster(team.abbreviation, season)
+            : await fetchNFLRosterFromApi(team.abbreviation, year);
+
+          if (roster?.players?.length) {
+            const league = sport === 'nba'
+              ? await fetchSeasonPlayers(season)
+              : await fetchNFLSeasonPlayers(year);
+
+            setGameConfig(sport, team, season, 'random', timerDuration, roster.players, league?.players || [], hideResultsDuringGame);
+            navigate('/game');
+            return;
+          }
+        } catch {
+          // Try next team
+        }
+      }
+
+      // All attempts failed, fall back to home
+      setIsLoadingRandom(false);
+      resetGame();
+      navigate('/');
+    } else {
+      // Manual mode - replay same team
+      setIsExiting(true);
+      setTimeout(() => {
         resetForRematch();
         navigate('/game');
-      }
-    }, 900);
+      }, 900);
+    }
   };
 
   return (
@@ -137,22 +180,24 @@ export function ResultsPage() {
 
             {/* ACTION BUTTONS */}
             <div className="flex flex-col gap-2">
-              {/* Play Again - Same team/season */}
+              {/* Play Again */}
               <button
                 onClick={handleRematch}
-                disabled={isExiting}
+                disabled={isExiting || isLoadingRandom}
                 className="group relative bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] py-4 md:py-6 rounded-sm shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50"
               >
-                <span className="relative z-10 retro-title text-xl md:text-2xl text-black uppercase tracking-widest">Play Again</span>
+                <span className="relative z-10 retro-title text-xl md:text-2xl text-black uppercase tracking-widest">
+                  {isLoadingRandom ? 'Shuffling...' : 'Play Again'}
+                </span>
               </button>
 
-              {/* New Game - Back to home */}
+              {/* Exit Game - Back to home */}
               <button
                 onClick={handleExit}
-                disabled={isExiting}
+                disabled={isExiting || isLoadingRandom}
                 className="group relative bg-[#1a1a1a] border border-white/20 py-3 md:py-4 rounded-sm hover:border-white/40 transition-colors disabled:opacity-50"
               >
-                <span className="relative z-10 retro-title text-lg md:text-xl text-white/70 uppercase tracking-widest">New Game</span>
+                <span className="relative z-10 retro-title text-lg md:text-xl text-white/70 uppercase tracking-widest">Exit Game</span>
               </button>
             </div>
 

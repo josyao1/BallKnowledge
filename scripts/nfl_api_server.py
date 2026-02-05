@@ -80,6 +80,37 @@ NFL_TEAMS = {
     "SEA": {"name": "Seattle Seahawks", "conference": "NFC", "division": "West"},
 }
 
+# All known abbreviations for each franchise.
+# nfl_data_py uses different abbreviations depending on the season
+# (e.g. "BLT" for Ravens in older data, "BAL" in newer data).
+# We try to match any of these when looking up a team in the data.
+TEAM_ALIASES: dict[str, list[str]] = {
+    "LAR": ["LA", "LAR", "SL", "STL"],       # Rams
+    "LV":  ["LV", "OAK"],                     # Raiders
+    "LAC": ["LAC", "SD"],                      # Chargers
+    "ARI": ["ARI", "ARZ"],                     # Cardinals
+    "BAL": ["BAL", "BLT"],                     # Ravens
+    "CLE": ["CLE", "CLV"],                     # Browns
+    "HOU": ["HOU", "HST"],                     # Texans
+}
+
+
+def find_team_in_data(team: str, available_teams: list[str]) -> Optional[str]:
+    """Find the matching abbreviation in the actual data.
+
+    First checks if our abbreviation is already in the data.
+    Then checks all known aliases for the franchise.
+    """
+    if team in available_teams:
+        return team
+
+    aliases = TEAM_ALIASES.get(team, [])
+    for alias in aliases:
+        if alias in available_teams:
+            return alias
+
+    return None
+
 # ============================================================================
 # FastAPI App
 # ============================================================================
@@ -296,16 +327,23 @@ def fetch_team_roster(team: str, season: int) -> list[dict]:
             print(f"No roster data returned for season {season}")
             return []
 
-        # Filter for the specific team
-        team_df = df[df['team'] == team]
+        # Find the correct abbreviation in the actual data (handles nfl_data_py quirks)
+        available = df['team'].unique().tolist()
+        data_team = find_team_in_data(team, available)
+
+        if data_team and data_team != team:
+            print(f"Abbreviation matched: {team} → {data_team} for season {season}")
+
+        if not data_team:
+            print(f"No alias found for team {team} in {season}")
+            print(f"Available teams: {sorted(available)}")
+            return []
+
+        team_df = df[df['team'] == data_team]
 
         if team_df.empty:
-            # Try alternate team name formats
-            team_df = df[df['team'].str.upper() == team.upper()]
-
-        if team_df.empty:
-            print(f"No players found for team {team} in {season}")
-            print(f"Available teams: {df['team'].unique().tolist()}")
+            print(f"No players found for team {data_team} (requested as {team}) in {season}")
+            print(f"Available teams: {sorted(available)}")
             return []
 
         # Filter out cut players - keep only active roster
@@ -466,10 +504,12 @@ def fetch_team_record(team: str, season: int) -> Optional[dict]:
 
         records = _schedules_cache[season]
 
-        if team not in records:
+        # Find the correct abbreviation in the schedule data
+        data_team = find_team_in_data(team, list(records.keys()))
+        if not data_team:
             return None
 
-        team_record = records[team]
+        team_record = records[data_team]
         wins = team_record['wins']
         losses = team_record['losses']
         ties = team_record['ties']
