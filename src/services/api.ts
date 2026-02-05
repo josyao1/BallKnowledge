@@ -6,8 +6,14 @@
  */
 
 import type { Player } from '../types';
+import { getApiAbbreviation } from '../utils/teamHistory';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/** Extract the starting year from an NBA season string like "2023-24" → 2023 */
+function parseSeasonYear(season: string): number {
+  return parseInt(season.split('-')[0]);
+}
 
 interface ApiRosterResponse {
   team: string;
@@ -75,9 +81,10 @@ export async function fetchRosterFromApi(
   teamAbbreviation: string,
   season: string
 ): Promise<{ players: Player[]; cached: boolean } | null> {
+  const apiAbbr = getApiAbbreviation(teamAbbreviation, parseSeasonYear(season), 'nba');
   try {
     const response = await fetch(
-      `${API_BASE_URL}/roster/${teamAbbreviation}/${season}`,
+      `${API_BASE_URL}/roster/${apiAbbr}/${season}`,
       {
         method: 'GET',
         headers: {
@@ -189,9 +196,10 @@ export async function fetchTeamRecord(
   teamAbbreviation: string,
   season: string
 ): Promise<TeamRecord | null> {
+  const apiAbbr = getApiAbbreviation(teamAbbreviation, parseSeasonYear(season), 'nba');
   try {
     const response = await fetch(
-      `${API_BASE_URL}/record/${teamAbbreviation}/${season}`,
+      `${API_BASE_URL}/record/${apiAbbr}/${season}`,
       {
         method: 'GET',
         headers: {
