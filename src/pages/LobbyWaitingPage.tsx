@@ -49,6 +49,7 @@ export function LobbyWaitingPage() {
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
   const [editSport, setEditSport] = useState<Sport>('nba');
+  const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
   const [editTeam, setEditTeam] = useState<GenericTeam | null>(null);
   const [editYear, setEditYear] = useState<number | null>(null);
@@ -77,6 +78,7 @@ export function LobbyWaitingPage() {
     if (lobby) {
       const lobbySport = lobby.sport as Sport;
       setEditSport(lobbySport);
+      setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
       setEditTimer(lobby.timer_duration);
       setEditMinYear(lobby.min_year || (lobbySport === 'nfl' ? 2000 : 2015));
@@ -240,40 +242,45 @@ export function LobbyWaitingPage() {
   const handleApplySettings = async () => {
     if (!isHost || !lobby) return;
 
+    // Determine the sport (random picks one)
+    const finalSport: Sport = editRandomSport
+      ? (Math.random() < 0.5 ? 'nba' : 'nfl')
+      : editSport;
+
     // Get the appropriate team list for the selected sport
-    const newTeamList = editSport === 'nba' ? teams : nflTeams;
+    const newTeamList = finalSport === 'nba' ? teams : nflTeams;
 
     // Determine team abbreviation
     let newTeamAbbreviation: string;
     let newSeason: string;
 
-    if (editGameMode === 'manual' && editTeam) {
-      // Manual mode with team selected
+    if (editGameMode === 'manual' && editTeam && !editRandomSport) {
+      // Manual mode with team selected (only if sport is not random)
       newTeamAbbreviation = editTeam.abbreviation;
-      newSeason = editSport === 'nba' && editYear
+      newSeason = finalSport === 'nba' && editYear
         ? `${editYear}-${String(editYear + 1).slice(-2)}`
         : editYear ? `${editYear}` : lobby.season;
     } else {
-      // Random mode OR manual mode without team - pick a random team for the new sport
+      // Random mode OR random sport - pick a random team
       const randomTeam = newTeamList[Math.floor(Math.random() * newTeamList.length)];
       newTeamAbbreviation = randomTeam.abbreviation;
 
       // Pick a random year within the range
-      const minYear = editSport === 'nfl' ? Math.max(editMinYear, 2000) : editMinYear;
-      const maxYear = editSport === 'nfl' ? Math.min(editMaxYear, 2024) : editMaxYear;
+      const minYear = finalSport === 'nfl' ? Math.max(editMinYear, 2000) : editMinYear;
+      const maxYear = finalSport === 'nfl' ? Math.min(editMaxYear, 2024) : editMaxYear;
       const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
 
-      newSeason = editSport === 'nba'
+      newSeason = finalSport === 'nba'
         ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
         : `${randomYear}`;
     }
 
     await updateSettings({
-      sport: editSport,
+      sport: finalSport,
       teamAbbreviation: newTeamAbbreviation,
       season: newSeason,
       timerDuration: editTimer,
-      gameMode: editGameMode,
+      gameMode: editRandomSport ? 'random' : editGameMode,
       minYear: editMinYear,
       maxYear: editMaxYear,
     });
@@ -282,13 +289,21 @@ export function LobbyWaitingPage() {
   };
 
   // Handle sport change in settings
-  const handleEditSportChange = (newSport: Sport) => {
-    setEditSport(newSport);
-    setEditTeam(null);
-    setEditYear(null);
-    if (newSport === 'nfl') {
-      setEditMinYear(Math.max(editMinYear, 2000));
-      setEditMaxYear(Math.min(editMaxYear, 2024));
+  const handleEditSportChange = (newSport: Sport | 'random') => {
+    if (newSport === 'random') {
+      setEditRandomSport(true);
+      setEditGameMode('random'); // Random sport implies random team
+      setEditTeam(null);
+      setEditYear(null);
+    } else {
+      setEditRandomSport(false);
+      setEditSport(newSport);
+      setEditTeam(null);
+      setEditYear(null);
+      if (newSport === 'nfl') {
+        setEditMinYear(Math.max(editMinYear, 2000));
+        setEditMaxYear(Math.min(editMaxYear, 2024));
+      }
     }
   };
 
@@ -399,7 +414,7 @@ export function LobbyWaitingPage() {
                 <div>
                   <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
                   <div className="sports-font text-[9px] text-white/40 tracking-widest">
-                    {lobby.min_year || (lobby.sport === 'nfl' ? 2000 : 2015)} - {lobby.max_year || 2024}
+                    {lobby.min_year || 2000} - {lobby.max_year || 2024}
                   </div>
                 </div>
               ) : (
@@ -473,47 +488,56 @@ export function LobbyWaitingPage() {
 
                 {/* Sport Toggle */}
                 <div className="flex justify-center gap-2">
-                  {(['nba', 'nfl'] as Sport[]).map((s) => (
+                  {(['nba', 'nfl', 'random'] as const).map((s) => (
                     <button
                       key={s}
                       onClick={() => handleEditSportChange(s)}
                       className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                        editSport === s
-                          ? (s === 'nba' ? 'bg-orange-500' : 'bg-[#013369]') + ' text-white'
+                        (s === 'random' && editRandomSport) || (s !== 'random' && !editRandomSport && editSport === s)
+                          ? (s === 'nba' ? 'bg-orange-500' : s === 'nfl' ? 'bg-[#013369]' : 'bg-[#d4af37]') + ' text-white'
                           : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
                       }`}
                     >
-                      {s.toUpperCase()}
+                      {s === 'random' ? '?' : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
 
-                {/* Game Mode Toggle */}
-                <div className="flex justify-center gap-2">
-                  <button
-                    onClick={() => setEditGameMode('random')}
-                    className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                      editGameMode === 'random'
-                        ? 'bg-[#d4af37] text-black'
-                        : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                    }`}
-                  >
-                    Random
-                  </button>
-                  <button
-                    onClick={() => setEditGameMode('manual')}
-                    className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                      editGameMode === 'manual'
-                        ? 'bg-[#d4af37] text-black'
-                        : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                    }`}
-                  >
-                    Manual
-                  </button>
-                </div>
+                {/* Game Mode Toggle - hidden when random sport selected */}
+                {!editRandomSport && (
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={() => setEditGameMode('random')}
+                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                        editGameMode === 'random'
+                          ? 'bg-[#d4af37] text-black'
+                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      Random
+                    </button>
+                    <button
+                      onClick={() => setEditGameMode('manual')}
+                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                        editGameMode === 'manual'
+                          ? 'bg-[#d4af37] text-black'
+                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      Manual
+                    </button>
+                  </div>
+                )}
+
+                {/* Random sport info */}
+                {editRandomSport && (
+                  <div className="text-center text-white/40 text-xs sports-font tracking-wider">
+                    Sport and team will be randomly selected
+                  </div>
+                )}
 
                 {/* Manual Mode: Team & Year Selection */}
-                {editGameMode === 'manual' && (
+                {!editRandomSport && editGameMode === 'manual' && (
                   <div className="space-y-3">
                     <TeamSelector
                       selectedTeam={editTeam}
@@ -531,10 +555,11 @@ export function LobbyWaitingPage() {
                 )}
 
                 {/* Random Mode: Year Range */}
-                {editGameMode === 'random' && (
+                {(editRandomSport || editGameMode === 'random') && (
                   <div className="bg-black/30 border border-white/10 rounded-sm p-3">
                     <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
-                      Year Range {editSport === 'nfl' && '(2000-2024)'}
+                      Year Range {!editRandomSport && editSport === 'nfl' && '(2000-2024)'}
+                      {editRandomSport && '(2000-2024 for NFL)'}
                     </div>
                     <div className="flex items-center justify-center gap-3">
                       <select
@@ -543,8 +568,8 @@ export function LobbyWaitingPage() {
                         className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
                       >
                         {Array.from(
-                          { length: 2024 - (editSport === 'nfl' ? 2000 : 1985) + 1 },
-                          (_, i) => (editSport === 'nfl' ? 2000 : 1985) + i
+                          { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
+                          (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
                         ).map((y) => (
                           <option key={y} value={y}>{y}</option>
                         ))}
@@ -556,8 +581,8 @@ export function LobbyWaitingPage() {
                         className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
                       >
                         {Array.from(
-                          { length: 2024 - (editSport === 'nfl' ? 2000 : 1985) + 1 },
-                          (_, i) => (editSport === 'nfl' ? 2000 : 1985) + i
+                          { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
+                          (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
                         ).map((y) => (
                           <option key={y} value={y}>{y}</option>
                         ))}
