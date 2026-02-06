@@ -435,6 +435,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   // If random mode, pick a new random team and season using stored year range
   if (currentLobby.game_mode === 'random') {
     const sport = currentLobby.sport;
+
     const teamList = sport === 'nba' ? teams : nflTeams;
     // Use stored year range, fallback to defaults if not set
     const minYear = currentLobby.min_year || (sport === 'nfl' ? 2000 : 2015);

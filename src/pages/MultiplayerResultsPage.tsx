@@ -171,19 +171,37 @@ export function MultiplayerResultsPage() {
     return { sortedPlayers: sorted, tiebreakerUsed: tiebreaker };
   }, [players, playerBonuses]);
 
-  const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
-  const winner = sortedPlayers[0];
-  const winnerBonus = winner ? (playerBonuses[winner.player_id] || 0) : 0;
-  const winnerTotal = winner ? winner.score + winnerBonus : 0;
-  const winnerIncorrect = winner ? (winner.incorrect_guesses || []).length : 0;
+  // Find all winners (tied players with same score AND same incorrect guesses)
+  const winners = useMemo(() => {
+    if (sortedPlayers.length === 0) return [];
 
-  // Increment winner's wins count (host only, once per game)
+    const first = sortedPlayers[0];
+    const firstTotal = first.score + (playerBonuses[first.player_id] || 0);
+    const firstIncorrect = (first.incorrect_guesses || []).length;
+
+    return sortedPlayers.filter(p => {
+      const total = p.score + (playerBonuses[p.player_id] || 0);
+      const incorrect = (p.incorrect_guesses || []).length;
+      return total === firstTotal && incorrect === firstIncorrect;
+    });
+  }, [sortedPlayers, playerBonuses]);
+
+  const isTie = winners.length > 1;
+  const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
+  const winnerBonus = winners[0] ? (playerBonuses[winners[0].player_id] || 0) : 0;
+  const winnerTotal = winners[0] ? winners[0].score + winnerBonus : 0;
+  const winnerIncorrect = winners[0] ? (winners[0].incorrect_guesses || []).length : 0;
+
+  // Increment wins for all winners (host only, once per game)
   useEffect(() => {
-    if (!isHost || !allPlayersFinished || !winner || !lobby || hasIncrementedWins.current) return;
+    if (!isHost || !allPlayersFinished || winners.length === 0 || !lobby || hasIncrementedWins.current) return;
 
     hasIncrementedWins.current = true;
-    incrementPlayerWins(lobby.id, winner.player_id);
-  }, [isHost, allPlayersFinished, winner, lobby]);
+    // Increment wins for all tied winners
+    winners.forEach(winner => {
+      incrementPlayerWins(lobby.id, winner.player_id);
+    });
+  }, [isHost, allPlayersFinished, winners, lobby]);
 
   // Build roster breakdown - which players each participant guessed
   const rosterBreakdown = useMemo(() => {
@@ -328,15 +346,19 @@ export function MultiplayerResultsPage() {
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
         {/* Winner announcement */}
-        {winner && (
+        {winners.length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-6 bg-black/50 border border-[#d4af37]/30 rounded-sm"
           >
-            <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">Champion</div>
+            <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">
+              {isTie ? 'Co-Champions' : 'Champion'}
+            </div>
             <div className="retro-title text-4xl text-[#d4af37]">
-              {winner.player_name}
+              {isTie
+                ? winners.map(w => w.player_name).join(' & ')
+                : winners[0].player_name}
             </div>
             <div className="retro-title text-2xl text-white mt-2">
               {winnerTotal} points
@@ -345,9 +367,14 @@ export function MultiplayerResultsPage() {
               )}
             </div>
             <div className="text-white/40 text-sm sports-font">
-              {currentRoster.length > 0 ? Math.round((winner.guessed_count / currentRoster.length) * 100) : 0}% of roster
+              {currentRoster.length > 0 ? Math.round((winners[0].guessed_count / currentRoster.length) * 100) : 0}% of roster
             </div>
-            {tiebreakerUsed && (
+            {isTie && (
+              <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
+                Tied with {winnerTotal} points and {winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'}
+              </div>
+            )}
+            {tiebreakerUsed && !isTie && (
               <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
                 Won by tiebreaker ({winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'})
               </div>
@@ -378,10 +405,14 @@ export function MultiplayerResultsPage() {
           <div className="space-y-2">
             {sortedPlayers.map((player, index) => {
               const isCurrentPlayer = player.player_id === currentPlayerId;
+              const isWinner = winners.some(w => w.player_id === player.player_id);
               const percentage = currentRoster.length > 0 ? Math.round((player.guessed_count / currentRoster.length) * 100) : 0;
               const bonus = playerBonuses[player.player_id] || 0;
               const totalScore = player.score + bonus;
               const incorrectCount = (player.incorrect_guesses || []).length;
+
+              // Calculate display rank (all winners share rank 1)
+              const displayRank = isWinner ? 1 : index + 1;
 
               return (
                 <motion.div
@@ -390,7 +421,7 @@ export function MultiplayerResultsPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
                   className={`flex items-center justify-between p-4 rounded-sm border transition-all ${
-                    index === 0
+                    isWinner
                       ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
                       : isCurrentPlayer
                       ? 'bg-[#d4af37]/10 border-[#d4af37]/30'
@@ -400,16 +431,16 @@ export function MultiplayerResultsPage() {
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-8 h-8 rounded-sm flex items-center justify-center retro-title ${
-                        index === 0
+                        isWinner
                           ? 'bg-gradient-to-b from-[#f5e6c8] to-[#d4af37] text-black'
-                          : index === 1
+                          : displayRank === 2
                           ? 'bg-gradient-to-b from-gray-300 to-gray-500 text-black'
-                          : index === 2
+                          : displayRank === 3
                           ? 'bg-gradient-to-b from-amber-600 to-amber-800 text-white'
                           : 'bg-black/50 text-white/40 border border-white/10'
                       }`}
                     >
-                      {index + 1}
+                      {displayRank}
                     </div>
                     <div>
                       <div className={`sports-font font-medium ${isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/90'}`}>
@@ -421,13 +452,13 @@ export function MultiplayerResultsPage() {
                         {showBonuses && bonus > 0 && (
                           <span className="text-emerald-400 ml-2">+{bonus} unique</span>
                         )}
-                        {tiebreakerUsed && (
+                        {(tiebreakerUsed || isTie) && (
                           <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className={`retro-title text-3xl ${index === 0 ? 'text-[#d4af37]' : 'text-white'}`}>
+                  <div className={`retro-title text-3xl ${isWinner ? 'text-[#d4af37]' : 'text-white'}`}>
                     {totalScore}
                   </div>
                 </motion.div>
@@ -437,7 +468,7 @@ export function MultiplayerResultsPage() {
         </motion.div>
 
         {/* Your position highlight */}
-        {currentPlayerRank > 1 && (
+        {currentPlayerRank > 1 && !winners.some(w => w.player_id === currentPlayerId) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
