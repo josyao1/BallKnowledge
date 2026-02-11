@@ -218,9 +218,9 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     const allReady = players.length > 1 && players.every((p) => p.is_ready);
 
-    if (lobby?.status === 'countdown' && !allReady && isHost) {
+    // Only revert to waiting if not all ready AND host didn't force start
+    if (lobby?.status === 'countdown' && !allReady && isHost && !hasAutoStarted.current) {
       updateLobbyStatus(lobby.id, 'waiting');
-      hasAutoStarted.current = false;
     }
   }, [players, lobby?.status, isHost]);
 
@@ -693,22 +693,33 @@ export function LobbyWaitingPage() {
               disabled={isLoadingRoster || lobby.status === 'countdown'}
               className={`w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all disabled:opacity-50 ${
                 currentPlayer.is_ready
-                  ? 'bg-emerald-600 text-white shadow-[0_4px_0_#166534]'
-                  : 'bg-black/50 text-white/50 border border-white/20 hover:border-[#d4af37]'
+                  ? 'bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1'
+                  : 'bg-black/50 text-white/70 border-2 border-[#d4af37] hover:bg-[#d4af37]/10'
               }`}
             >
-              {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? 'Ready!' : 'Click When Ready'}
+              {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? '✓ Ready (click to unready)' : 'Ready Up'}
             </button>
           )}
 
-          {/* Host start button */}
+          {/* Host start button - shows when all ready */}
           {isHost && allReady && lobby.status === 'waiting' && (
             <button
               onClick={handleManualStart}
               disabled={isLoadingRoster}
-              className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
+              className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1"
             >
               Deal Cards
+            </button>
+          )}
+
+          {/* Host force start - shows when 2+ players but not all ready */}
+          {isHost && players.length >= 2 && !allReady && lobby.status === 'waiting' && (
+            <button
+              onClick={handleManualStart}
+              disabled={isLoadingRoster}
+              className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+            >
+              Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
             </button>
           )}
 
@@ -716,11 +727,6 @@ export function LobbyWaitingPage() {
           {players.length < 2 && (
             <p className="text-center text-white/30 text-sm sports-font tracking-widest">
               Share the code above to invite players
-            </p>
-          )}
-          {players.length >= 2 && !allReady && (
-            <p className="text-center text-white/30 text-sm sports-font tracking-widest">
-              Waiting for all players to be ready...
             </p>
           )}
 

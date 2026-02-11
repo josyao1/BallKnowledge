@@ -58,7 +58,7 @@ export function GuessedPlayersList({
       {guessedPlayers.length > 0 && (
         <div>
           <h3 className="retro-title text-[10px] text-white/40 mb-3 tracking-widest uppercase flex justify-between">
-            Winners <span className="text-emerald-400">+{guessedPlayers.length}</span>
+            Winners <span className="text-emerald-400">{guessedPlayers.length}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
             <AnimatePresence>
@@ -82,7 +82,7 @@ export function GuessedPlayersList({
       {incorrectGuesses.length > 0 && (
         <div>
           <h3 className="retro-title text-[10px] text-white/40 mb-3 tracking-widest uppercase flex justify-between">
-            Busted <span className="text-red-400/60">-{incorrectGuesses.length}</span>
+            Busted <span className="text-red-400/60">{incorrectGuesses.length}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
             <AnimatePresence>
