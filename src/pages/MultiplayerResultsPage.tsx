@@ -286,6 +286,18 @@ export function MultiplayerResultsPage() {
     );
   }
 
+  // If lobby is resetting (status changed to waiting), show redirecting screen
+  if (lobby.status === 'waiting') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0d2a0b]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/50 sports-font tracking-widest">Shuffling deck...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show waiting screen if not all players have finished
   if (!allPlayersFinished) {
     const finishedCount = players.filter(p => p.finished_at !== null).length;
