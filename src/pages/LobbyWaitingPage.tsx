@@ -9,7 +9,7 @@ import { fetchSeasonPlayers } from '../services/api';
 import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus } from '../services/lobby';
+import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode } from '../services/lobby';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
@@ -648,7 +648,9 @@ export function LobbyWaitingPage() {
                   className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
                     player.player_id === currentPlayerId
                       ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
-                      : 'border-white/10 bg-black/30'
+                      : player.is_dummy
+                        ? 'border-purple-500/50 bg-purple-900/20'
+                        : 'border-white/10 bg-black/30'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -663,15 +665,34 @@ export function LobbyWaitingPage() {
                     {player.player_id === currentPlayerId && (
                       <span className="text-[10px] text-white/40 sports-font">(you)</span>
                     )}
+                    {player.is_dummy && (
+                      <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded">2x</span>
+                    )}
                   </div>
-                  <div
-                    className={`px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
-                      player.is_ready
-                        ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
-                        : 'bg-black/40 text-white/40 border border-white/10'
-                    }`}
-                  >
-                    {player.is_ready ? 'Ready' : 'Waiting'}
+                  <div className="flex items-center gap-2">
+                    {/* Dummy mode toggle - host only, for non-host players */}
+                    {isHost && !player.is_host && lobby.status === 'waiting' && (
+                      <button
+                        onClick={() => setPlayerDummyMode(lobby.id, player.player_id, !player.is_dummy)}
+                        className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
+                          player.is_dummy
+                            ? 'bg-purple-600 text-white border border-purple-400'
+                            : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
+                        }`}
+                        title={player.is_dummy ? 'Disable 2x points' : 'Enable 2x points (for beginners)'}
+                      >
+                        {player.is_dummy ? '2x ON' : '2x'}
+                      </button>
+                    )}
+                    <div
+                      className={`px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
+                        player.is_ready
+                          ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
+                          : 'bg-black/40 text-white/40 border border-white/10'
+                      }`}
+                    >
+                      {player.is_ready ? 'Ready' : 'Waiting'}
+                    </div>
                   </div>
                 </motion.div>
               ))}

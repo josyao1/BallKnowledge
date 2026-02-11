@@ -149,13 +149,20 @@ export function MultiplayerResultsPage() {
   }, [players]);
 
   const showBonuses = players.length >= 3;
+  const hasDummyPlayers = players.some(p => p.is_dummy);
 
-  // Sort players by total score (base + bonus), with incorrect guesses as tiebreaker
+  // Helper to calculate total score including dummy multiplier
+  const getEffectiveScore = useCallback((player: typeof players[0]) => {
+    const baseScore = player.score + (playerBonuses[player.player_id] || 0);
+    return player.is_dummy ? baseScore * 2 : baseScore;
+  }, [playerBonuses]);
+
+  // Sort players by total score (base + bonus + dummy multiplier), with incorrect guesses as tiebreaker
   const { sortedPlayers, tiebreakerUsed } = useMemo(() => {
     let tiebreaker = false;
     const sorted = [...players].sort((a, b) => {
-      const totalA = a.score + (playerBonuses[a.player_id] || 0);
-      const totalB = b.score + (playerBonuses[b.player_id] || 0);
+      const totalA = getEffectiveScore(a);
+      const totalB = getEffectiveScore(b);
 
       // If scores are equal, use incorrect guesses as tiebreaker (fewer is better)
       if (totalA === totalB) {
@@ -169,27 +176,27 @@ export function MultiplayerResultsPage() {
       return totalB - totalA;
     });
     return { sortedPlayers: sorted, tiebreakerUsed: tiebreaker };
-  }, [players, playerBonuses]);
+  }, [players, getEffectiveScore]);
 
   // Find all winners (tied players with same score AND same incorrect guesses)
   const winners = useMemo(() => {
     if (sortedPlayers.length === 0) return [];
 
     const first = sortedPlayers[0];
-    const firstTotal = first.score + (playerBonuses[first.player_id] || 0);
+    const firstTotal = getEffectiveScore(first);
     const firstIncorrect = (first.incorrect_guesses || []).length;
 
     return sortedPlayers.filter(p => {
-      const total = p.score + (playerBonuses[p.player_id] || 0);
+      const total = getEffectiveScore(p);
       const incorrect = (p.incorrect_guesses || []).length;
       return total === firstTotal && incorrect === firstIncorrect;
     });
-  }, [sortedPlayers, playerBonuses]);
+  }, [sortedPlayers, getEffectiveScore]);
 
   const isTie = winners.length > 1;
   const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
   const winnerBonus = winners[0] ? (playerBonuses[winners[0].player_id] || 0) : 0;
-  const winnerTotal = winners[0] ? winners[0].score + winnerBonus : 0;
+  const winnerTotal = winners[0] ? getEffectiveScore(winners[0]) : 0;
   const winnerIncorrect = winners[0] ? (winners[0].incorrect_guesses || []).length : 0;
 
   // Increment wins for all winners (host only, once per game)
@@ -414,13 +421,19 @@ export function MultiplayerResultsPage() {
               Tiebreaker: fewer incorrect guesses wins
             </div>
           )}
+          {hasDummyPlayers && (
+            <div className="text-xs text-purple-400/70 text-center mb-2">
+              Players with 2x have doubled points
+            </div>
+          )}
           <div className="space-y-2">
             {sortedPlayers.map((player, index) => {
               const isCurrentPlayer = player.player_id === currentPlayerId;
               const isWinner = winners.some(w => w.player_id === player.player_id);
               const percentage = currentRoster.length > 0 ? Math.round((player.guessed_count / currentRoster.length) * 100) : 0;
               const bonus = playerBonuses[player.player_id] || 0;
-              const totalScore = player.score + bonus;
+              const baseScore = player.score + bonus;
+              const effectiveScore = player.is_dummy ? baseScore * 2 : baseScore;
               const incorrectCount = (player.incorrect_guesses || []).length;
 
               // Calculate display rank (all winners share rank 1)
@@ -437,6 +450,8 @@ export function MultiplayerResultsPage() {
                       ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
                       : isCurrentPlayer
                       ? 'bg-[#d4af37]/10 border-[#d4af37]/30'
+                      : player.is_dummy
+                      ? 'bg-purple-900/20 border-purple-500/30'
                       : 'bg-black/30 border-white/10'
                   }`}
                 >
@@ -458,11 +473,15 @@ export function MultiplayerResultsPage() {
                       <div className={`sports-font font-medium ${isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/90'}`}>
                         {player.player_name}
                         {isCurrentPlayer && <span className="text-[10px] ml-2 text-white/40">(you)</span>}
+                        {player.is_dummy && <span className="text-[10px] ml-2 text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">2x</span>}
                       </div>
                       <div className="text-[10px] text-white/40 sports-font">
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
                         {showBonuses && bonus > 0 && (
                           <span className="text-emerald-400 ml-2">+{bonus} unique</span>
+                        )}
+                        {player.is_dummy && (
+                          <span className="text-purple-400 ml-2">×2 = {effectiveScore}</span>
                         )}
                         {(tiebreakerUsed || isTie) && (
                           <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>
@@ -471,7 +490,7 @@ export function MultiplayerResultsPage() {
                     </div>
                   </div>
                   <div className={`retro-title text-3xl ${isWinner ? 'text-[#d4af37]' : 'text-white'}`}>
-                    {totalScore}
+                    {effectiveScore}
                   </div>
                 </motion.div>
               );

@@ -4,6 +4,15 @@ import Fuse from 'fuse.js';
 import { useGameStore } from '../../stores/gameStore';
 import { getAllPlayersForAutocomplete } from '../../services/roster';
 
+// Normalize name for searching - removes periods, apostrophes, etc.
+function normalizeForSearch(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[.']/g, '') // Remove periods and apostrophes (T.J. -> TJ, O'Neal -> ONeal)
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+}
+
 export function PlayerInput() {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -21,13 +30,17 @@ export function PlayerInput() {
   // Get all players for autocomplete
   // Priority: league-wide players > static data, but ALWAYS include current roster
   const allPlayers = useMemo(() => {
-    const playerMap = new Map<string, { id: number | string; name: string }>();
+    const playerMap = new Map<string, { id: number | string; name: string; searchName: string }>();
 
     // Always add current roster players FIRST (ensures they're always in autocomplete)
     if (currentRoster.length > 0) {
       console.log('Adding roster players to autocomplete:', currentRoster.map(p => p.name));
       currentRoster.forEach(p => {
-        playerMap.set(p.name.toLowerCase(), { id: p.id, name: p.name });
+        playerMap.set(p.name.toLowerCase(), {
+          id: p.id,
+          name: p.name,
+          searchName: normalizeForSearch(p.name) // "T.J. Watt" -> "tj watt"
+        });
       });
     } else {
       console.warn('currentRoster is empty!');
@@ -40,7 +53,11 @@ export function PlayerInput() {
 
     additionalPlayers.forEach(p => {
       if (!playerMap.has(p.name.toLowerCase())) {
-        playerMap.set(p.name.toLowerCase(), { id: p.id, name: p.name });
+        playerMap.set(p.name.toLowerCase(), {
+          id: p.id,
+          name: p.name,
+          searchName: normalizeForSearch(p.name)
+        });
       }
     });
 
@@ -59,10 +76,11 @@ export function PlayerInput() {
 
   // Initialize Fuse.js for fuzzy search
   // Threshold 0.4 allows for typos while still being reasonably strict
+  // Search on both 'name' (original) and 'searchName' (normalized without periods)
   const fuse = useMemo(
     () =>
       new Fuse(allPlayers, {
-        keys: ['name'],
+        keys: ['name', 'searchName'],
         threshold: 0.4,
         ignoreLocation: true,
         minMatchCharLength: 2,
@@ -74,8 +92,13 @@ export function PlayerInput() {
   const filteredPlayers = useMemo(() => {
     if (!query || query.length < 3) return [];
 
-    return fuse
-      .search(query)
+    // Normalize the query to match against searchName (e.g., "TJ" matches "tj" from "T.J.")
+    const normalizedQuery = normalizeForSearch(query);
+
+    // Search with both original and normalized query for best results
+    const results = fuse.search(normalizedQuery);
+
+    return results
       .slice(0, 50)
       .map((result) => result.item)
       .filter((player) => !guessedNames.has(player.name.toLowerCase()));

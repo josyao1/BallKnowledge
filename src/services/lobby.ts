@@ -414,10 +414,10 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     return { error: 'Multiplayer not available' };
   }
 
-  // First, fetch the current lobby to check game_mode and year range
+  // First, fetch the current lobby to check game_mode, year range, and used teams
   const { data: currentLobby, error: fetchError } = await supabase
     .from('lobbies')
-    .select('game_mode, sport, min_year, max_year')
+    .select('game_mode, sport, min_year, max_year, used_nba_teams, used_nfl_teams, team_abbreviation')
     .eq('id', lobbyId)
     .single();
 
@@ -435,16 +435,50 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   // If random mode, pick a new random team and season using stored year range
   if (currentLobby.game_mode === 'random') {
     const sport = currentLobby.sport;
-
     const teamList = sport === 'nba' ? teams : nflTeams;
+    const allTeamAbbrs = teamList.map(t => t.abbreviation);
+
+    // Get used teams for this sport, including the current team
+    const usedTeamsKey = sport === 'nba' ? 'used_nba_teams' : 'used_nfl_teams';
+    let usedTeams: string[] = (currentLobby[usedTeamsKey] as string[]) || [];
+
+    // Add current team to used list if not already there
+    if (currentLobby.team_abbreviation && !usedTeams.includes(currentLobby.team_abbreviation)) {
+      usedTeams = [...usedTeams, currentLobby.team_abbreviation];
+    }
+
+    // Filter out used teams
+    let availableTeams = allTeamAbbrs.filter(abbr => !usedTeams.includes(abbr));
+
+    console.log(`[Team Tracking] Sport: ${sport}`);
+    console.log(`[Team Tracking] Total teams: ${allTeamAbbrs.length}`);
+    console.log(`[Team Tracking] Used teams (${usedTeams.length}): ${usedTeams.join(', ')}`);
+    console.log(`[Team Tracking] Available teams (${availableTeams.length}): ${availableTeams.join(', ')}`);
+
+    // If all teams used, reset the list
+    if (availableTeams.length === 0) {
+      console.log(`[Team Tracking] All ${sport.toUpperCase()} teams used! Resetting list.`);
+      usedTeams = [];
+      availableTeams = allTeamAbbrs;
+    }
+
+    // Pick a random team from available
+    const randomTeamAbbr = availableTeams[Math.floor(Math.random() * availableTeams.length)];
+    const randomTeam = teamList.find(t => t.abbreviation === randomTeamAbbr)!;
+
+    // Update used teams list
+    const newUsedTeams = [...usedTeams, randomTeamAbbr];
+    lobbyUpdate[usedTeamsKey] = newUsedTeams;
+
+    console.log(`[Team Tracking] Selected: ${randomTeamAbbr} (${randomTeam.name})`);
+    console.log(`[Team Tracking] Updated used teams (${newUsedTeams.length}): ${newUsedTeams.join(', ')}`);
+
     // Use stored year range, fallback to defaults if not set
     const minYear = currentLobby.min_year || (sport === 'nfl' ? 2000 : 2015);
     const maxYear = currentLobby.max_year || 2024;
-
-    const randomTeam = teamList[Math.floor(Math.random() * teamList.length)];
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
 
-    lobbyUpdate.team_abbreviation = randomTeam.abbreviation;
+    lobbyUpdate.team_abbreviation = randomTeamAbbr;
     lobbyUpdate.season = sport === 'nba'
       ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
       : `${randomYear}`;
@@ -497,4 +531,23 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   }
 
   return { error: null };
+}
+
+// Toggle dummy mode for a player (host only)
+export async function setPlayerDummyMode(
+  lobbyId: string,
+  playerId: string,
+  isDummy: boolean
+): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ is_dummy: isDummy })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId);
+
+  return { error: error?.message || null };
 }
