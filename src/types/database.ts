@@ -86,6 +86,8 @@ export interface Database {
           created_at: string;
           started_at: string | null;
           finished_at: string | null;
+          used_nba_teams: string[];
+          used_nfl_teams: string[];
         };
         Insert: {
           id?: string;
@@ -96,7 +98,7 @@ export interface Database {
           team_abbreviation: string;
           season: string;
           timer_duration?: number;
-          game_mode?: 'random' | 'manual' | 'random_sport';
+          game_mode?: 'random' | 'manual';
           min_year?: number;
           max_year?: number;
           status?: 'waiting' | 'countdown' | 'playing' | 'finished';
@@ -104,6 +106,8 @@ export interface Database {
           created_at?: string;
           started_at?: string | null;
           finished_at?: string | null;
+          used_nba_teams?: string[];
+          used_nfl_teams?: string[];
         };
         Update: {
           id?: string;
@@ -114,7 +118,7 @@ export interface Database {
           team_abbreviation?: string;
           season?: string;
           timer_duration?: number;
-          game_mode?: 'random' | 'manual' | 'random_sport';
+          game_mode?: 'random' | 'manual';
           min_year?: number;
           max_year?: number;
           status?: 'waiting' | 'countdown' | 'playing' | 'finished';
@@ -122,6 +126,8 @@ export interface Database {
           created_at?: string;
           started_at?: string | null;
           finished_at?: string | null;
+          used_nba_teams?: string[];
+          used_nfl_teams?: string[];
         };
       };
       lobby_players: {
@@ -132,6 +138,7 @@ export interface Database {
           player_name: string;
           is_host: boolean;
           is_ready: boolean;
+          is_dummy: boolean;
           score: number;
           guessed_count: number;
           guessed_players: string[];
@@ -148,6 +155,7 @@ export interface Database {
           player_name: string;
           is_host?: boolean;
           is_ready?: boolean;
+          is_dummy?: boolean;
           score?: number;
           guessed_count?: number;
           guessed_players?: string[];
@@ -164,6 +172,7 @@ export interface Database {
           player_name?: string;
           is_host?: boolean;
           is_ready?: boolean;
+          is_dummy?: boolean;
           score?: number;
           guessed_count?: number;
           guessed_players?: string[];
