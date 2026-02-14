@@ -5,6 +5,17 @@ import { useLobbyStore } from '../stores/lobbyStore';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins } from '../services/lobby';
+import {
+  buildScoringEntities,
+  computeEntityBonuses,
+  hasTeams,
+  getEntityScore,
+  getEntityGuessedCount,
+  getEntityIncorrectGuesses,
+  getEntityDisplayName,
+  isCurrentPlayerInEntity,
+  type ScoringEntity,
+} from '../utils/teamUtils';
 
 // Generate distinct colors for players
 const PLAYER_COLORS = [
@@ -35,7 +46,6 @@ export function MultiplayerResultsPage() {
         const result = await findLobbyByCode(code);
         if (result.lobby) {
           setLobby(result.lobby);
-          // Also fetch players
           const playersResult = await getLobbyPlayers(result.lobby.id);
           if (playersResult.players) {
             setPlayers(playersResult.players);
@@ -63,8 +73,6 @@ export function MultiplayerResultsPage() {
       const result = await getLobbyPlayers(lobby.id);
       if (result.players) {
         setPlayers(result.players);
-
-        // Check if all players are finished and update lobby status if needed
         const allFinished = result.players.every(p => p.finished_at !== null);
         if (allFinished && lobby.status !== 'finished') {
           await updateLobbyStatus(lobby.id, 'finished');
@@ -72,15 +80,9 @@ export function MultiplayerResultsPage() {
       }
     };
 
-    // Initial fetch
     fetchPlayers();
-
-    // Poll every 2 seconds until all players have finished
     const pollInterval = setInterval(fetchPlayers, 2000);
-
-    return () => {
-      clearInterval(pollInterval);
-    };
+    return () => clearInterval(pollInterval);
   }, [lobby?.id, lobby?.status, setPlayers]);
 
   // Navigate back to lobby when status changes to 'waiting'
@@ -91,14 +93,13 @@ export function MultiplayerResultsPage() {
     navigate(`/lobby/${code}`);
   }, [code, navigate, resetGame]);
 
-  // Watch for lobby status change back to 'waiting' (host clicked Play Again)
   useEffect(() => {
     if (lobby?.status === 'waiting') {
       navigateToLobby();
     }
   }, [lobby?.status, navigateToLobby]);
 
-  // Polling fallback for non-host players in case realtime misses the update
+  // Polling fallback for non-host players
   useEffect(() => {
     if (isHost || !code) return;
 
@@ -107,7 +108,6 @@ export function MultiplayerResultsPage() {
         clearInterval(pollInterval);
         return;
       }
-
       const result = await findLobbyByCode(code);
       if (result.lobby) {
         setLobby(result.lobby);
@@ -115,149 +115,157 @@ export function MultiplayerResultsPage() {
           navigateToLobby();
         }
       }
-    }, 2000); // Poll every 2 seconds
+    }, 2000);
 
     return () => clearInterval(pollInterval);
   }, [isHost, code, setLobby, navigateToLobby]);
 
-  // Calculate uniqueness bonus for each player (only when 3+ players)
-  const playerBonuses = useMemo(() => {
-    const bonuses: Record<string, number> = {};
+  // Entity-based scoring
+  const isTeamMode = useMemo(() => hasTeams(players), [players]);
+  const entities = useMemo(() => buildScoringEntities(players), [players]);
+  const entityBonuses = useMemo(() => computeEntityBonuses(entities), [entities]);
 
-    if (players.length < 3) {
-      players.forEach(p => { bonuses[p.player_id] = 0; });
-      return bonuses;
-    }
-
-    // Build a map of roster player name -> count of who guessed them
-    const guessCount: Record<string, number> = {};
-    players.forEach(player => {
-      const guessedPlayers = player.guessed_players || [];
-      guessedPlayers.forEach(name => {
-        guessCount[name] = (guessCount[name] || 0) + 1;
-      });
-    });
-
-    // For each player, count unique guesses
-    players.forEach(player => {
-      const guessedPlayers = player.guessed_players || [];
-      const uniqueGuesses = guessedPlayers.filter(name => guessCount[name] === 1);
-      bonuses[player.player_id] = uniqueGuesses.length;
-    });
-
-    return bonuses;
-  }, [players]);
-
-  const showBonuses = players.length >= 3;
+  const showBonuses = entities.length >= 3;
   const hasDummyPlayers = players.some(p => p.is_dummy);
 
-  // Helper to calculate total score including dummy multiplier
-  const getEffectiveScore = useCallback((player: typeof players[0]) => {
-    const baseScore = player.score + (playerBonuses[player.player_id] || 0);
-    return player.is_dummy ? baseScore * 2 : baseScore;
-  }, [playerBonuses]);
+  // Get effective score for an entity (handles dummy multiplier for solo players)
+  const getEffectiveEntityScore = useCallback((entity: ScoringEntity): number => {
+    const bonus = entityBonuses.get(entity.entityId) || 0;
+    if (entity.type === 'solo') {
+      const base = entity.player.score + bonus;
+      return entity.player.is_dummy ? base * 2 : base;
+    }
+    return getEntityScore(entity) + bonus;
+  }, [entityBonuses]);
 
-  // Sort players by total score (base + bonus + dummy multiplier), with incorrect guesses as tiebreaker
-  const { sortedPlayers, tiebreakerUsed } = useMemo(() => {
+  // Sort entities by total score, with incorrect guesses as tiebreaker
+  const { sortedEntities, tiebreakerUsed } = useMemo(() => {
     let tiebreaker = false;
-    const sorted = [...players].sort((a, b) => {
-      const totalA = getEffectiveScore(a);
-      const totalB = getEffectiveScore(b);
+    const sorted = [...entities].sort((a, b) => {
+      const totalA = getEffectiveEntityScore(a);
+      const totalB = getEffectiveEntityScore(b);
 
-      // If scores are equal, use incorrect guesses as tiebreaker (fewer is better)
       if (totalA === totalB) {
-        const incorrectA = (a.incorrect_guesses || []).length;
-        const incorrectB = (b.incorrect_guesses || []).length;
+        const incorrectA = getEntityIncorrectGuesses(a).length;
+        const incorrectB = getEntityIncorrectGuesses(b).length;
         if (incorrectA !== incorrectB) {
           tiebreaker = true;
-          return incorrectA - incorrectB; // Fewer incorrect guesses wins
+          return incorrectA - incorrectB;
         }
       }
       return totalB - totalA;
     });
-    return { sortedPlayers: sorted, tiebreakerUsed: tiebreaker };
-  }, [players, getEffectiveScore]);
+    return { sortedEntities: sorted, tiebreakerUsed: tiebreaker };
+  }, [entities, getEffectiveEntityScore]);
 
-  // Find all winners (tied players with same score AND same incorrect guesses)
-  const winners = useMemo(() => {
-    if (sortedPlayers.length === 0) return [];
+  // Find all winning entities
+  const winnerEntities = useMemo(() => {
+    if (sortedEntities.length === 0) return [];
 
-    const first = sortedPlayers[0];
-    const firstTotal = getEffectiveScore(first);
-    const firstIncorrect = (first.incorrect_guesses || []).length;
+    const first = sortedEntities[0];
+    const firstTotal = getEffectiveEntityScore(first);
+    const firstIncorrect = getEntityIncorrectGuesses(first).length;
 
-    return sortedPlayers.filter(p => {
-      const total = getEffectiveScore(p);
-      const incorrect = (p.incorrect_guesses || []).length;
+    return sortedEntities.filter(e => {
+      const total = getEffectiveEntityScore(e);
+      const incorrect = getEntityIncorrectGuesses(e).length;
       return total === firstTotal && incorrect === firstIncorrect;
     });
-  }, [sortedPlayers, getEffectiveScore]);
+  }, [sortedEntities, getEffectiveEntityScore]);
 
-  const isTie = winners.length > 1;
-  const currentPlayerRank = sortedPlayers.findIndex((p) => p.player_id === currentPlayerId) + 1;
-  const winnerBonus = winners[0] ? (playerBonuses[winners[0].player_id] || 0) : 0;
-  const winnerTotal = winners[0] ? getEffectiveScore(winners[0]) : 0;
-  const winnerIncorrect = winners[0] ? (winners[0].incorrect_guesses || []).length : 0;
+  const isTie = winnerEntities.length > 1;
+  const winnerTotal = winnerEntities[0] ? getEffectiveEntityScore(winnerEntities[0]) : 0;
+  const winnerBonus = winnerEntities[0] ? (entityBonuses.get(winnerEntities[0].entityId) || 0) : 0;
+  const winnerIncorrect = winnerEntities[0] ? getEntityIncorrectGuesses(winnerEntities[0]).length : 0;
+  const winnerGuessedCount = winnerEntities[0] ? getEntityGuessedCount(winnerEntities[0]) : 0;
+
+  // Current player's rank
+  const currentEntityRank = sortedEntities.findIndex(e => isCurrentPlayerInEntity(e, currentPlayerId)) + 1;
+  const currentIsWinner = winnerEntities.some(e => isCurrentPlayerInEntity(e, currentPlayerId));
 
   // Increment wins for all winners (host only, once per game)
+  // Individual wins: all members of a winning team get +1
   useEffect(() => {
-    if (!isHost || !allPlayersFinished || winners.length === 0 || !lobby || hasIncrementedWins.current) return;
+    if (!isHost || !allPlayersFinished || winnerEntities.length === 0 || !lobby || hasIncrementedWins.current) return;
 
     hasIncrementedWins.current = true;
-    // Increment wins for all tied winners
-    winners.forEach(winner => {
-      incrementPlayerWins(lobby.id, winner.player_id);
-    });
-  }, [isHost, allPlayersFinished, winners, lobby]);
+    for (const entity of winnerEntities) {
+      if (entity.type === 'solo') {
+        incrementPlayerWins(lobby.id, entity.player.player_id);
+      } else {
+        for (const member of entity.team.members) {
+          incrementPlayerWins(lobby.id, member.player_id);
+        }
+      }
+    }
+  }, [isHost, allPlayersFinished, winnerEntities, lobby]);
 
-  // Build roster breakdown - which players each participant guessed
+  // Build roster breakdown - which individual players guessed each roster player
   const rosterBreakdown = useMemo(() => {
-    // Create a map of roster player name -> array of participants who guessed them
-    const breakdown: Map<string, { playerId: string; playerName: string; color: string }[]> = new Map();
+    const breakdown: Map<string, { playerId: string; displayName: string; color: string; initial: string }[]> = new Map();
 
-    // Initialize with all roster players
     currentRoster.forEach(rosterPlayer => {
       breakdown.set(rosterPlayer.name, []);
     });
 
-    // Assign colors to each participant
-    const playerColors: Map<string, string> = new Map();
-    sortedPlayers.forEach((player, index) => {
-      playerColors.set(player.player_id, PLAYER_COLORS[index % PLAYER_COLORS.length]);
+    // Assign colors: use team colors for team members, PLAYER_COLORS for solos
+    const entityColors: Map<string, string> = new Map();
+    let soloColorIndex = 0;
+
+    sortedEntities.forEach(entity => {
+      if (entity.type === 'team') {
+        const color = entity.team.color.bg;
+        entityColors.set(entity.entityId, color);
+        entity.team.members.forEach(m => entityColors.set(m.player_id, color));
+      } else {
+        const color = PLAYER_COLORS[soloColorIndex % PLAYER_COLORS.length];
+        entityColors.set(entity.entityId, color);
+        entityColors.set(entity.player.player_id, color);
+        soloColorIndex++;
+      }
     });
 
-    // Fill in who guessed each player
-    players.forEach(participant => {
-      const color = playerColors.get(participant.player_id) || '#888';
-      const guessedPlayers = participant.guessed_players || [];
+    // Fill in who guessed each roster player (by individual player, not entity)
+    sortedEntities.forEach(entity => {
+      if (entity.type === 'team') {
+        // For teams, attribute each guess to the specific member who made it
+        entity.team.members.forEach(member => {
+          const memberGuesses = member.guessed_players || [];
+          const color = entityColors.get(member.player_id) || '#888';
+          const initial = member.player_name.charAt(0).toUpperCase();
 
-      guessedPlayers.forEach(guessedName => {
-        const existing = breakdown.get(guessedName);
-        if (existing) {
-          existing.push({
-            playerId: participant.player_id,
-            playerName: participant.player_name,
-            color
+          memberGuesses.forEach(guessedName => {
+            const existing = breakdown.get(guessedName);
+            if (existing && !existing.some(e => e.playerId === member.player_id)) {
+              existing.push({ playerId: member.player_id, displayName: member.player_name, color, initial });
+            }
           });
-        }
-      });
+        });
+      } else {
+        const { player } = entity;
+        const guesses = player.guessed_players || [];
+        const color = entityColors.get(player.player_id) || '#888';
+        const initial = player.player_name.charAt(0).toUpperCase();
+
+        guesses.forEach(guessedName => {
+          const existing = breakdown.get(guessedName);
+          if (existing && !existing.some(e => e.playerId === player.player_id)) {
+            existing.push({ playerId: player.player_id, displayName: player.player_name, color, initial });
+          }
+        });
+      }
     });
 
-    return {
-      breakdown,
-      playerColors
-    };
-  }, [currentRoster, players, sortedPlayers]);
+    return { breakdown, entityColors };
+  }, [currentRoster, sortedEntities]);
 
   const handlePlayAgain = async () => {
     if (!lobby || hasNavigated.current) return;
 
-    // Set flag immediately to prevent race condition with realtime subscription
     hasNavigated.current = true;
     setIsResetting(true);
 
     try {
-      // Reset lobby status and player scores
       const result = await resetLobbyForNewRound(lobby.id);
       if (result.error) {
         console.error('Failed to reset lobby:', result.error);
@@ -266,7 +274,6 @@ export function MultiplayerResultsPage() {
       console.error('Error resetting lobby:', err);
     }
 
-    // Always navigate regardless of reset success - the lobby page will fetch fresh data
     resetGame();
     navigate(`/lobby/${code}`);
   };
@@ -293,7 +300,6 @@ export function MultiplayerResultsPage() {
     );
   }
 
-  // If lobby is resetting (status changed to waiting), show redirecting screen
   if (lobby.status === 'waiting') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0d2a0b]">
@@ -305,7 +311,6 @@ export function MultiplayerResultsPage() {
     );
   }
 
-  // Show waiting screen if not all players have finished
   if (!allPlayersFinished) {
     const finishedCount = players.filter(p => p.finished_at !== null).length;
     return (
@@ -365,7 +370,7 @@ export function MultiplayerResultsPage() {
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
         {/* Winner announcement */}
-        {winners.length > 0 && (
+        {winnerEntities.length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -376,8 +381,8 @@ export function MultiplayerResultsPage() {
             </div>
             <div className="retro-title text-4xl text-[#d4af37]">
               {isTie
-                ? winners.map(w => w.player_name).join(' & ')
-                : winners[0].player_name}
+                ? winnerEntities.map(e => getEntityDisplayName(e)).join(' & ')
+                : getEntityDisplayName(winnerEntities[0])}
             </div>
             <div className="retro-title text-2xl text-white mt-2">
               {winnerTotal} points
@@ -386,7 +391,7 @@ export function MultiplayerResultsPage() {
               )}
             </div>
             <div className="text-white/40 text-sm sports-font">
-              {currentRoster.length > 0 ? Math.round((winners[0].guessed_count / currentRoster.length) * 100) : 0}% of roster
+              {currentRoster.length > 0 ? Math.round((winnerGuessedCount / currentRoster.length) * 100) : 0}% of roster
             </div>
             {isTie && (
               <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
@@ -413,7 +418,7 @@ export function MultiplayerResultsPage() {
           </div>
           {showBonuses && (
             <div className="text-xs text-white/30 text-center mb-2">
-              +1 bonus for each unique guess
+              {isTeamMode ? '+1 bonus for each unique guess (teams = one)' : '+1 bonus for each unique guess'}
             </div>
           )}
           {tiebreakerUsed && (
@@ -427,21 +432,96 @@ export function MultiplayerResultsPage() {
             </div>
           )}
           <div className="space-y-2">
-            {sortedPlayers.map((player, index) => {
-              const isCurrentPlayer = player.player_id === currentPlayerId;
-              const isWinner = winners.some(w => w.player_id === player.player_id);
-              const percentage = currentRoster.length > 0 ? Math.round((player.guessed_count / currentRoster.length) * 100) : 0;
-              const bonus = playerBonuses[player.player_id] || 0;
-              const baseScore = player.score + bonus;
-              const effectiveScore = player.is_dummy ? baseScore * 2 : baseScore;
-              const incorrectCount = (player.incorrect_guesses || []).length;
-
-              // Calculate display rank (all winners share rank 1)
+            {sortedEntities.map((entity, index) => {
+              const isCurrent = isCurrentPlayerInEntity(entity, currentPlayerId);
+              const isWinner = winnerEntities.some(w => w.entityId === entity.entityId);
+              const bonus = entityBonuses.get(entity.entityId) || 0;
+              const effectiveScore = getEffectiveEntityScore(entity);
+              const guessedCount = getEntityGuessedCount(entity);
+              const percentage = currentRoster.length > 0 ? Math.round((guessedCount / currentRoster.length) * 100) : 0;
+              const incorrectCount = getEntityIncorrectGuesses(entity).length;
               const displayRank = isWinner ? 1 : index + 1;
+
+              if (entity.type === 'team') {
+                const { team } = entity;
+                return (
+                  <motion.div
+                    key={entity.entityId}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className={`p-4 rounded-sm border transition-all ${
+                      isWinner
+                        ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
+                        : isCurrent
+                        ? 'bg-[#d4af37]/10 border-[#d4af37]/30'
+                        : 'bg-black/30 border-white/10'
+                    }`}
+                    style={{
+                      borderLeftWidth: '4px',
+                      borderLeftColor: team.color.bg,
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-8 h-8 rounded-sm flex items-center justify-center retro-title ${
+                            isWinner
+                              ? 'bg-gradient-to-b from-[#f5e6c8] to-[#d4af37] text-black'
+                              : displayRank === 2
+                              ? 'bg-gradient-to-b from-gray-300 to-gray-500 text-black'
+                              : displayRank === 3
+                              ? 'bg-gradient-to-b from-amber-600 to-amber-800 text-white'
+                              : 'bg-black/50 text-white/40 border border-white/10'
+                          }`}
+                        >
+                          {displayRank}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3.5 h-3.5 rounded-full"
+                              style={{ backgroundColor: team.color.bg }}
+                            />
+                            <span className={`sports-font font-medium ${isCurrent ? 'text-[#d4af37]' : 'text-white/90'}`}>
+                              {team.members.map(m => m.player_name).join(' & ')}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-white/40 sports-font mt-0.5">
+                            {guessedCount}/{currentRoster.length} found ({percentage}%)
+                            {showBonuses && bonus > 0 && (
+                              <span className="text-emerald-400 ml-2">+{bonus} unique</span>
+                            )}
+                            {(tiebreakerUsed || isTie) && (
+                              <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>
+                            )}
+                          </div>
+                          {/* Individual member scores */}
+                          <div className="flex gap-3 mt-1.5">
+                            {team.members.map(member => (
+                              <span key={member.player_id} className="text-[9px] text-white/30 sports-font">
+                                {member.player_name}: {member.score}
+                                {member.player_id === currentPlayerId && <span className="text-white/50"> (you)</span>}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`retro-title text-3xl ${isWinner ? 'text-[#d4af37]' : 'text-white'}`}>
+                        {effectiveScore}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // Solo player entity
+              const { player } = entity;
+              const isCurrentPlayer = player.player_id === currentPlayerId;
 
               return (
                 <motion.div
-                  key={player.player_id}
+                  key={entity.entityId}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
@@ -499,19 +579,19 @@ export function MultiplayerResultsPage() {
         </motion.div>
 
         {/* Your position highlight */}
-        {currentPlayerRank > 1 && !winners.some(w => w.player_id === currentPlayerId) && (
+        {currentEntityRank > 1 && !currentIsWinner && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
             className="text-center text-white/50 sports-font"
           >
-            You finished in <span className="text-[#d4af37] font-bold">{currentPlayerRank}{getOrdinalSuffix(currentPlayerRank)}</span> place!
+            You finished in <span className="text-[#d4af37] font-bold">{currentEntityRank}{getOrdinalSuffix(currentEntityRank)}</span> place!
           </motion.div>
         )}
 
         {/* Incorrect Guesses Comparison */}
-        {sortedPlayers.some(p => (p.incorrect_guesses || []).length > 0) && (
+        {sortedEntities.some(e => getEntityIncorrectGuesses(e).length > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -522,15 +602,20 @@ export function MultiplayerResultsPage() {
               Incorrect Guesses
             </div>
             <div className="space-y-3">
-              {sortedPlayers.map((player) => {
-                const incorrectList = player.incorrect_guesses || [];
+              {sortedEntities.map((entity) => {
+                const incorrectList = getEntityIncorrectGuesses(entity);
                 if (incorrectList.length === 0) return null;
-                const isCurrentPlayer = player.player_id === currentPlayerId;
+                const isCurrent = isCurrentPlayerInEntity(entity, currentPlayerId);
+                const displayName = getEntityDisplayName(entity);
+                const teamColor = entity.type === 'team' ? entity.team.color.bg : null;
 
                 return (
-                  <div key={player.player_id} className="space-y-1">
-                    <div className={`text-xs sports-font ${isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/60'}`}>
-                      {player.player_name} ({incorrectList.length})
+                  <div key={entity.entityId} className="space-y-1">
+                    <div className={`text-xs sports-font flex items-center gap-2 ${isCurrent ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                      {teamColor && (
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: teamColor }} />
+                      )}
+                      {displayName} ({incorrectList.length})
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {incorrectList.map((guess, idx) => (
@@ -580,20 +665,42 @@ export function MultiplayerResultsPage() {
               <div className="bg-black/50 border border-white/10 rounded-sm p-4">
                 {/* Player Legend */}
                 <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-white/10">
-                  {sortedPlayers.map((player) => (
-                    <div
-                      key={player.player_id}
-                      className="flex items-center gap-1.5 px-2 py-1 bg-black/30 rounded-sm"
-                    >
+                  {sortedEntities.flatMap((entity) => {
+                    if (entity.type === 'team') {
+                      return entity.team.members.map(member => {
+                        const color = rosterBreakdown.entityColors.get(member.player_id) || '#888';
+                        return (
+                          <div
+                            key={member.player_id}
+                            className="flex items-center gap-1.5 px-2 py-1 bg-black/30 rounded-sm"
+                          >
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="text-[10px] text-white/70 sports-font">
+                              {member.player_name}
+                            </span>
+                          </div>
+                        );
+                      });
+                    }
+                    const color = rosterBreakdown.entityColors.get(entity.player.player_id) || '#888';
+                    return [(
                       <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: rosterBreakdown.playerColors.get(player.player_id) || '#888' }}
-                      />
-                      <span className="text-[10px] text-white/70 sports-font">
-                        {player.player_name}
-                      </span>
-                    </div>
-                  ))}
+                        key={entity.player.player_id}
+                        className="flex items-center gap-1.5 px-2 py-1 bg-black/30 rounded-sm"
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="text-[10px] text-white/70 sports-font">
+                          {entity.player.player_name}
+                        </span>
+                      </div>
+                    )];
+                  })}
                 </div>
 
                 {/* Roster Grid */}
@@ -627,14 +734,14 @@ export function MultiplayerResultsPage() {
                         </div>
                         <div className="flex gap-0.5 flex-shrink-0">
                           {guessers.length > 0 ? (
-                            guessers.map((guesser, idx) => (
+                            guessers.map((guesser) => (
                               <div
-                                key={`${guesser.playerId}-${idx}`}
+                                key={guesser.playerId}
                                 className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
                                 style={{ backgroundColor: guesser.color }}
-                                title={guesser.playerName}
+                                title={guesser.displayName}
                               >
-                                {guesser.playerName.charAt(0).toUpperCase()}
+                                {guesser.initial}
                               </div>
                             ))
                           ) : (

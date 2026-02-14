@@ -1,6 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LobbyPlayer } from '../../types/database';
+import {
+  buildScoringEntities,
+  computeEntityBonuses,
+  hasTeams,
+  getEntityScore,
+  getEntityGuessedCount,
+  isCurrentPlayerInEntity,
+  type ScoringEntity,
+} from '../../utils/teamUtils';
 
 interface LiveScoreboardProps {
   players: LobbyPlayer[];
@@ -9,73 +18,172 @@ interface LiveScoreboardProps {
 }
 
 export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveScoreboardProps) {
-  // Calculate uniqueness bonus for each player (only when 3+ players)
-  const playerBonuses = useMemo(() => {
-    const bonuses: Record<string, number> = {};
+  const [expandedTeams, setExpandedTeams] = useState<Set<number>>(new Set());
 
-    // Only calculate uniqueness bonus with 3+ players
-    if (players.length < 3) {
-      players.forEach(p => { bonuses[p.player_id] = 0; });
-      return bonuses;
+  const isTeamMode = useMemo(() => hasTeams(players), [players]);
+
+  const entities = useMemo(() => buildScoringEntities(players), [players]);
+  const entityBonuses = useMemo(() => computeEntityBonuses(entities), [entities]);
+
+  // For solo players with dummy mode, calculate effective score
+  const getEffectiveEntityScore = (entity: ScoringEntity): number => {
+    const bonus = entityBonuses.get(entity.entityId) || 0;
+    if (entity.type === 'solo') {
+      const base = entity.player.score + bonus;
+      return entity.player.is_dummy ? base * 2 : base;
     }
-
-    // Build a map of roster player name -> count of who guessed them
-    const guessCount: Record<string, number> = {};
-
-    players.forEach(player => {
-      const guessedPlayers = player.guessed_players || [];
-      guessedPlayers.forEach(name => {
-        guessCount[name] = (guessCount[name] || 0) + 1;
-      });
-    });
-
-    // For each player, count how many of their guesses are unique (only they guessed it)
-    players.forEach(player => {
-      const guessedPlayers = player.guessed_players || [];
-      const uniqueGuesses = guessedPlayers.filter(name => guessCount[name] === 1);
-      bonuses[player.player_id] = uniqueGuesses.length;
-    });
-
-    return bonuses;
-  }, [players]);
-
-  // Calculate effective score including dummy multiplier
-  const getEffectiveScore = (player: LobbyPlayer) => {
-    const baseScore = player.score + (playerBonuses[player.player_id] || 0);
-    return player.is_dummy ? baseScore * 2 : baseScore;
+    return getEntityScore(entity) + bonus;
   };
 
-  // Sort players by total score (base + bonus + dummy multiplier) descending
-  const sortedPlayers = useMemo(() => {
-    return [...players].sort((a, b) => {
-      return getEffectiveScore(b) - getEffectiveScore(a);
-    });
-  }, [players, playerBonuses]);
+  // Sort entities by total score descending
+  const sortedEntities = useMemo(() => {
+    return [...entities].sort((a, b) => getEffectiveEntityScore(b) - getEffectiveEntityScore(a));
+  }, [entities, entityBonuses]);
 
-  const showBonuses = players.length >= 3;
+  const showBonuses = entities.length >= 3;
   const hasDummyPlayers = players.some(p => p.is_dummy);
+
+  const toggleTeam = (teamNumber: number) => {
+    setExpandedTeams(prev => {
+      const next = new Set(prev);
+      if (next.has(teamNumber)) next.delete(teamNumber);
+      else next.add(teamNumber);
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-3">
       {(showBonuses || hasDummyPlayers) && (
         <div className="text-[10px] text-white/40 text-center mb-1 sports-font">
-          {showBonuses && '+1 for unique guesses'}
+          {showBonuses && (isTeamMode ? '+1 for unique guesses (teams = one)' : '+1 for unique guesses')}
           {showBonuses && hasDummyPlayers && ' • '}
           {hasDummyPlayers && <span className="text-purple-400">2x for beginners</span>}
         </div>
       )}
       <AnimatePresence>
-        {sortedPlayers.map((player, index) => {
-          const isCurrentPlayer = player.player_id === currentPlayerId;
-          const percentage = rosterSize > 0 ? Math.round((player.guessed_count / rosterSize) * 100) : 0;
+        {sortedEntities.map((entity, index) => {
           const isLeader = index === 0;
-          const bonus = playerBonuses[player.player_id] || 0;
-          const baseScore = player.score + bonus;
-          const effectiveScore = player.is_dummy ? baseScore * 2 : baseScore;
+          const bonus = entityBonuses.get(entity.entityId) || 0;
+          const isCurrent = isCurrentPlayerInEntity(entity, currentPlayerId);
+          const effectiveScore = getEffectiveEntityScore(entity);
+          const guessedCount = getEntityGuessedCount(entity);
+          const percentage = rosterSize > 0 ? Math.round((guessedCount / rosterSize) * 100) : 0;
+
+          if (entity.type === 'team') {
+            const { team } = entity;
+            const isExpanded = expandedTeams.has(team.teamNumber);
+
+            return (
+              <motion.div
+                key={entity.entityId}
+                layout
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`rounded-sm border transition-all overflow-hidden ${
+                  isCurrent
+                    ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
+                    : 'bg-black/40 border-white/10'
+                }`}
+                style={{
+                  borderLeftWidth: '3px',
+                  borderLeftColor: team.color.bg,
+                }}
+              >
+                {/* Team header row */}
+                <div
+                  onClick={() => toggleTeam(team.teamNumber)}
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`retro-title text-lg w-6 ${
+                      isLeader ? 'text-[#d4af37]' : 'text-white/30'
+                    }`}>
+                      {index + 1}
+                    </span>
+                    <div
+                      className="w-4 h-4 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: team.color.bg }}
+                    />
+                    <div className="flex flex-col">
+                      <span className={`sports-font text-sm font-medium truncate max-w-[100px] ${
+                        isCurrent ? 'text-[#d4af37]' : 'text-white/80'
+                      }`}>
+                        {team.members.map(m => m.player_name).join(' & ')}
+                      </span>
+                      <span className="text-[8px] text-white/40 uppercase tracking-widest">
+                        Team {team.teamNumber} • {team.members.length}p
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1">
+                        {showBonuses && bonus > 0 && (
+                          <span className="text-xs text-emerald-400">+{bonus}</span>
+                        )}
+                        <span className="retro-title text-xl text-white">
+                          {effectiveScore}
+                        </span>
+                      </div>
+                      <span className="text-[9px] text-white/40">{percentage}%</span>
+                    </div>
+                    <svg
+                      className={`w-4 h-4 text-white/30 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Expanded member details */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      {team.members.map(member => {
+                        const isMemberCurrent = member.player_id === currentPlayerId;
+                        return (
+                          <div
+                            key={member.player_id}
+                            className="flex items-center justify-between px-6 py-2 border-t border-white/5"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`sports-font text-xs ${isMemberCurrent ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                                {member.player_name}
+                              </span>
+                              {isMemberCurrent && (
+                                <span className="text-[7px] text-white/40 uppercase">you</span>
+                              )}
+                              {member.is_dummy && (
+                                <span className="text-[7px] text-purple-400 px-1 bg-purple-900/40 rounded">2x</span>
+                              )}
+                            </div>
+                            <span className="text-xs text-white/40">{member.score} pts</span>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          // Solo player entity - render same as before
+          const { player } = entity;
+          const isCurrentPlayer = player.player_id === currentPlayerId;
 
           return (
             <motion.div
-              key={player.player_id}
+              key={entity.entityId}
               layout
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}

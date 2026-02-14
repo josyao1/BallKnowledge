@@ -13,6 +13,7 @@ import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
+import { TEAM_COLORS } from '../utils/teamUtils';
 import type { Sport } from '../types';
 
 type GenericTeam = {
@@ -36,6 +37,7 @@ export function LobbyWaitingPage() {
     setReady,
     startGame,
     updateSettings,
+    assignTeam,
   } = useLobbyStore();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
 
@@ -310,6 +312,12 @@ export function LobbyWaitingPage() {
   const handleLeave = async () => {
     await leaveLobby();
     navigate('/');
+  };
+
+  const handleCycleTeam = async (playerId: string, currentTeamNumber: number | null) => {
+    if (!isHost || lobby?.status !== 'waiting') return;
+    const nextTeam = currentTeamNumber === null ? 1 : currentTeamNumber >= 4 ? null : currentTeamNumber + 1;
+    await assignTeam(playerId, nextTeam);
   };
 
   const currentPlayer = players.find((p) => p.player_id === currentPlayerId);
@@ -638,64 +646,109 @@ export function LobbyWaitingPage() {
           </div>
           <div className="space-y-2">
             <AnimatePresence>
-              {players.map((player, index) => (
-                <motion.div
-                  key={player.player_id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ delay: index * 0.05 }}
-                  className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
-                    player.player_id === currentPlayerId
-                      ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
-                      : player.is_dummy
-                        ? 'border-purple-500/50 bg-purple-900/20'
-                        : 'border-white/10 bg-black/30'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {player.is_host && (
-                      <span className="text-[#d4af37]" title="Host">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </span>
-                    )}
-                    <span className="font-medium text-white/90 sports-font">{player.player_name}</span>
-                    {player.player_id === currentPlayerId && (
-                      <span className="text-[10px] text-white/40 sports-font">(you)</span>
-                    )}
-                    {player.is_dummy && (
-                      <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded">2x</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Dummy mode toggle - host only, for non-host players */}
-                    {isHost && !player.is_host && lobby.status === 'waiting' && (
-                      <button
-                        onClick={() => setPlayerDummyMode(lobby.id, player.player_id, !player.is_dummy)}
-                        className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
-                          player.is_dummy
-                            ? 'bg-purple-600 text-white border border-purple-400'
-                            : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
-                        }`}
-                        title={player.is_dummy ? 'Disable 2x points' : 'Enable 2x points (for beginners)'}
-                      >
-                        {player.is_dummy ? '2x ON' : '2x'}
-                      </button>
-                    )}
-                    <div
-                      className={`px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
-                        player.is_ready
-                          ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
-                          : 'bg-black/40 text-white/40 border border-white/10'
-                      }`}
-                    >
-                      {player.is_ready ? 'Ready' : 'Waiting'}
+              {players.map((player, index) => {
+                const teamColor = player.team_number ? TEAM_COLORS[player.team_number - 1] : null;
+                return (
+                  <motion.div
+                    key={player.player_id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
+                      player.player_id === currentPlayerId
+                        ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
+                        : player.is_dummy
+                          ? 'border-purple-500/50 bg-purple-900/20'
+                          : 'border-white/10 bg-black/30'
+                    }`}
+                    style={teamColor ? {
+                      borderLeftWidth: '4px',
+                      borderLeftColor: teamColor.bg,
+                    } : undefined}
+                  >
+                    <div className="flex items-center gap-3">
+                      {teamColor && (
+                        <div
+                          className="w-4 h-4 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: teamColor.bg }}
+                        />
+                      )}
+                      {player.is_host && (
+                        <span className="text-[#d4af37]" title="Host">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </span>
+                      )}
+                      <span className="font-medium text-white/90 sports-font">{player.player_name}</span>
+                      {player.player_id === currentPlayerId && (
+                        <span className="text-[10px] text-white/40 sports-font">(you)</span>
+                      )}
+                      {player.is_dummy && (
+                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded">2x</span>
+                      )}
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex items-center gap-2">
+                      {/* Team assignment button - host only, waiting state */}
+                      {isHost && lobby.status === 'waiting' && (
+                        <button
+                          onClick={() => handleCycleTeam(player.player_id, player.team_number)}
+                          className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
+                            player.team_number
+                              ? 'text-white border'
+                              : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                          style={player.team_number ? {
+                            backgroundColor: teamColor!.bg + '40',
+                            borderColor: teamColor!.bg,
+                            color: teamColor!.bg,
+                          } : undefined}
+                          title="Click to assign team"
+                        >
+                          {player.team_number ? `T${player.team_number}` : 'Team'}
+                        </button>
+                      )}
+                      {/* Show team label for non-host when teams are assigned */}
+                      {!isHost && player.team_number && (
+                        <span
+                          className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider border"
+                          style={{
+                            backgroundColor: teamColor!.bg + '40',
+                            borderColor: teamColor!.bg,
+                            color: teamColor!.bg,
+                          }}
+                        >
+                          T{player.team_number}
+                        </span>
+                      )}
+                      {/* Dummy mode toggle - host only, for non-host players */}
+                      {isHost && !player.is_host && lobby.status === 'waiting' && (
+                        <button
+                          onClick={() => setPlayerDummyMode(lobby.id, player.player_id, !player.is_dummy)}
+                          className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
+                            player.is_dummy
+                              ? 'bg-purple-600 text-white border border-purple-400'
+                              : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
+                          }`}
+                          title={player.is_dummy ? 'Disable 2x points' : 'Enable 2x points (for beginners)'}
+                        >
+                          {player.is_dummy ? '2x ON' : '2x'}
+                        </button>
+                      )}
+                      <div
+                        className={`px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
+                          player.is_ready
+                            ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
+                            : 'bg-black/40 text-white/40 border border-white/10'
+                        }`}
+                      >
+                        {player.is_ready ? 'Ready' : 'Waiting'}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         </motion.div>
