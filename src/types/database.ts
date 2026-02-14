@@ -147,6 +147,7 @@ export interface Database {
           joined_at: string;
           finished_at: string | null;
           wins: number;
+          team_number: number | null;
         };
         Insert: {
           id?: string;
@@ -164,6 +165,7 @@ export interface Database {
           joined_at?: string;
           finished_at?: string | null;
           wins?: number;
+          team_number?: number | null;
         };
         Update: {
           id?: string;
@@ -181,6 +183,7 @@ export interface Database {
           joined_at?: string;
           finished_at?: string | null;
           wins?: number;
+          team_number?: number | null;
         };
       };
     };

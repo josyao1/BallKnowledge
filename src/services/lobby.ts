@@ -533,6 +533,25 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   return { error: null };
 }
 
+// Update team assignment for a player (host only)
+export async function updatePlayerTeam(
+  lobbyId: string,
+  targetPlayerId: string,
+  teamNumber: number | null
+): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ team_number: teamNumber })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', targetPlayerId);
+
+  return { error: error?.message || null };
+}
+
 // Toggle dummy mode for a player (host only)
 export async function setPlayerDummyMode(
   lobbyId: string,

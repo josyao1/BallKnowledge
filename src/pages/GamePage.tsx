@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
@@ -11,6 +11,7 @@ import { TeamDisplay } from '../components/game/TeamDisplay';
 import { LiveScoreboard } from '../components/multiplayer/LiveScoreboard';
 import { fetchTeamRecord } from '../services/api';
 import { fetchNFLTeamRecord } from '../services/nfl-api';
+import { getTeammateGuessedPlayers, TEAM_COLORS } from '../utils/teamUtils';
 
 export function GamePage() {
   const navigate = useNavigate();
@@ -44,6 +45,14 @@ export function GamePage() {
 
   const { lobby, players, currentPlayerId, syncScore, endGame: endLobbyGame } = useLobbyStore();
   useLobbySubscription(isMultiplayer ? lobby?.id || null : null);
+
+  // Team mode: compute teammate guesses for blocking and display
+  const currentPlayerData = players.find(p => p.player_id === currentPlayerId);
+  const currentPlayerTeamNumber = currentPlayerData?.team_number ?? null;
+  const teammateGuessedNames = useMemo(() => {
+    if (!isMultiplayer || currentPlayerTeamNumber == null) return [];
+    return getTeammateGuessedPlayers(players, currentPlayerId, currentPlayerTeamNumber);
+  }, [isMultiplayer, players, currentPlayerId, currentPlayerTeamNumber]);
 
   const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
   const [teamRecord, setTeamRecord] = useState<string | null>(null);
@@ -196,7 +205,7 @@ export function GamePage() {
       <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col md:flex-row gap-8 overflow-hidden">
         <div className="flex-1 flex flex-col min-w-0">
           <div className="mb-8">
-            <PlayerInput />
+            <PlayerInput teammateGuessedNames={teammateGuessedNames} />
           </div>
 
           <div className="flex-1 bg-black/60 border-2 border-white/10 rounded-sm flex flex-col overflow-hidden">
@@ -215,6 +224,36 @@ export function GamePage() {
               />
             </div>
           </div>
+
+          {/* Teammate guesses - visible when on a team */}
+          {isMultiplayer && currentPlayerTeamNumber != null && teammateGuessedNames.length > 0 && (
+            <div className="mt-4 bg-black/60 border-2 border-white/10 rounded-sm p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg }}
+                />
+                <span className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                  Teammate Guesses ({teammateGuessedNames.length})
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {teammateGuessedNames.map((name, idx) => (
+                  <span
+                    key={`tm-${idx}`}
+                    className="px-2.5 py-1 rounded-sm sports-font text-[10px] font-bold uppercase tracking-wider border"
+                    style={{
+                      backgroundColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg + '20',
+                      borderColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg + '40',
+                      color: TEAM_COLORS[currentPlayerTeamNumber - 1].bg,
+                    }}
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {!isMultiplayer && (
             <div className="mt-4 flex justify-end">

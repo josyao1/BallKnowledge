@@ -13,7 +13,11 @@ function normalizeForSearch(name: string): string {
     .trim();
 }
 
-export function PlayerInput() {
+interface PlayerInputProps {
+  teammateGuessedNames?: string[];
+}
+
+export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1); // -1 means no selection
@@ -66,13 +70,14 @@ export function PlayerInput() {
     return Array.from(playerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [leaguePlayers, currentRoster]);
 
-  // Set of already guessed names (normalized)
+  // Set of already guessed names (normalized) - includes teammate guesses
   const guessedNames = useMemo(() => {
     const names = new Set<string>();
     guessedPlayers.forEach((p) => names.add(p.name.toLowerCase()));
     incorrectGuesses.forEach((g) => names.add(g.toLowerCase()));
+    teammateGuessedNames.forEach((name) => names.add(name.toLowerCase()));
     return names;
-  }, [guessedPlayers, incorrectGuesses]);
+  }, [guessedPlayers, incorrectGuesses, teammateGuessedNames]);
 
   // Initialize Fuse.js for fuzzy search
   // Threshold 0.4 allows for typos while still being reasonably strict
@@ -113,12 +118,12 @@ export function PlayerInput() {
   // Handle selection
   const handleSelect = useCallback(
     (playerName: string) => {
-      makeGuess(playerName);
+      makeGuess(playerName, teammateGuessedNames.length > 0 ? teammateGuessedNames : undefined);
       setQuery('');
       setIsOpen(false);
       inputRef.current?.focus();
     },
-    [makeGuess]
+    [makeGuess, teammateGuessedNames]
   );
 
   // Handle keyboard navigation

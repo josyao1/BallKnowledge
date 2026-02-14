@@ -71,7 +71,7 @@ interface GameState {
   // Actions
   setGameConfig: (sport: Sport, team: GenericTeam, season: string, mode: GameMode, duration: number, roster: GenericPlayer[], leaguePlayers?: LeaguePlayer[], hideResultsDuringGame?: boolean) => void;
   startGame: () => void;
-  makeGuess: (playerName: string) => GuessResult;
+  makeGuess: (playerName: string, teammateGuessedNames?: string[]) => GuessResult;
   pauseGame: () => void;
   resumeGame: () => void;
   endGame: () => void;
@@ -138,7 +138,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  makeGuess: (playerName: string): GuessResult => {
+  makeGuess: (playerName: string, teammateGuessedNames?: string[]): GuessResult => {
     const state = get();
 
     if (state.status !== 'playing') {
@@ -146,6 +146,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
 
     const normalizedGuess = normalizePlayerName(playerName);
+
+    // Check if a teammate already guessed this player (team mode)
+    if (teammateGuessedNames && teammateGuessedNames.length > 0) {
+      const guessedByTeammate = teammateGuessedNames.some(
+        (name) => normalizePlayerName(name) === normalizedGuess
+      );
+      if (guessedByTeammate) {
+        return { isCorrect: false, alreadyGuessed: true };
+      }
+    }
 
     // Hidden results mode: use pendingGuesses, don't reveal correctness
     if (state.hideResultsDuringGame) {
