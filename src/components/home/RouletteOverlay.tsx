@@ -23,10 +23,11 @@ interface RouletteOverlayProps {
   winningTeamData?: any;
   skipAnimation?: boolean; // If true, skip animation entirely
   canSkip?: boolean; // If false, hide skip button (default: true for solo, set to isHost for multiplayer)
+  onReroll?: () => void; // Called when host clicks Reroll (multiplayer only)
 }
 
-export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, skipAnimation, canSkip = true }: RouletteOverlayProps) {
-  const [phase, setPhase] = useState<'shuffling' | 'settling' | 'dealing-1' | 'dealing-2' | 'countdown'>('shuffling');
+export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, skipAnimation, canSkip = true, onReroll }: RouletteOverlayProps) {
+  const [phase, setPhase] = useState<'shuffling' | 'settling' | 'dealing-1' | 'dealing-2' | 'paused' | 'countdown'>('shuffling');
   const [count, setCount] = useState(5);
   const [isMobile, setIsMobile] = useState(false);
   const hasSkipped = useRef(false);
@@ -62,13 +63,14 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, s
     const settleTimer = setTimeout(() => setPhase('dealing-1'), SETTLE_END);
     const secondCardTimer = setTimeout(() => setPhase('dealing-2'), DEAL_SECOND_CARD);
     const countdownTimer = setTimeout(() => {
-      setPhase('countdown');
+      // In multiplayer (onReroll defined), pause for host to review; in solo, go straight to countdown
+      setPhase(onReroll ? 'paused' : 'countdown');
     }, COUNTDOWN_START);
 
     return () => {
       [shuffleTimer, settleTimer, secondCardTimer, countdownTimer].forEach(clearTimeout);
     };
-  }, [skipAnimation]);
+  }, [skipAnimation, onReroll]);
 
   useEffect(() => {
     if (skipAnimation) return; // Don't run countdown if skipping
@@ -115,25 +117,25 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, s
 
       <AnimatePresence mode="wait">
         {phase !== 'countdown' ? (
-          <motion.div 
-            key="table" 
-            exit={{ opacity: 0, scale: 0.9 }} 
+          <motion.div
+            key="table"
+            exit={{ opacity: 0, scale: 0.9 }}
             className="flex flex-col items-center w-full relative z-10 px-4"
           >
             <h2 className="retro-title text-lg md:text-2xl mb-8 md:mb-12 text-white uppercase tracking-[0.4em] text-center opacity-80">
-              {phase === 'shuffling' ? 'Shuffling Deck' : phase === 'settling' ? 'Cutting Deck' : 'The Draw'}
+              {phase === 'shuffling' ? 'Shuffling Deck' : phase === 'settling' ? 'Cutting Deck' : phase === 'paused' ? 'The Draw' : 'The Draw'}
             </h2>
-            
+
             {/* Responsively sized deck container */}
             <div className="relative w-28 h-40 md:w-36 md:h-48 [perspective:1500px]">
                {Array.from({ length: 12 }).map((_, i) => (
                  <motion.div
                    key={i}
-                   animate={phase === 'shuffling' ? { 
+                   animate={phase === 'shuffling' ? {
                      x: i % 2 === 0 ? [0, isMobile ? -30 : -60, 0] : [0, isMobile ? 30 : 60, 0],
                      rotateZ: i % 2 === 0 ? [0, -8, 0] : [0, 8, 0],
-                   } : { 
-                     x: 0, rotateZ: 0, y: -i * 0.4 
+                   } : {
+                     x: 0, rotateZ: 0, y: -i * 0.4
                    }}
                    transition={{ repeat: phase === 'shuffling' ? Infinity : 0, duration: 0.6, delay: i * 0.04 }}
                    className="absolute inset-0 rounded-lg shadow-xl border border-white/10"
@@ -141,27 +143,63 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, s
                  />
                ))}
 
-               {(phase === 'dealing-1' || phase === 'dealing-2') && (
+               {(phase === 'dealing-1' || phase === 'dealing-2' || phase === 'paused') && (
                  <>
-                   <RevealCard 
-                    value={winningYear} 
-                    side="left" 
-                    label="SEASON" 
-                    cardBack={cardBackImage} 
+                   <RevealCard
+                    value={winningYear}
+                    side="left"
+                    label="SEASON"
+                    cardBack={cardBackImage}
                     isActive={true}
                     isMobile={isMobile}
                    />
-                   <RevealCard 
-                    value={winningTeam} 
-                    side="right" 
-                    label="TEAM" 
-                    cardBack={cardBackImage} 
-                    isActive={phase === 'dealing-2'} 
+                   <RevealCard
+                    value={winningTeam}
+                    side="right"
+                    label="TEAM"
+                    cardBack={cardBackImage}
+                    isActive={phase === 'dealing-2' || phase === 'paused'}
                     isMobile={isMobile}
                    />
                  </>
                )}
             </div>
+
+            {/* Paused phase: host sees Reroll + Start, non-host sees waiting message */}
+            {phase === 'paused' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-48 md:mt-64 flex flex-col items-center gap-4 z-50"
+              >
+                {canSkip ? (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => onReroll?.()}
+                      className="px-6 py-3 bg-black/60 border border-white/20 rounded-lg text-white/80 hover:text-white hover:border-[#d4af37] transition-all sports-font text-sm tracking-wider"
+                    >
+                      Reroll
+                    </button>
+                    <button
+                      onClick={handleSkip}
+                      className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-lg text-white shadow-[0_3px_0_#166534] active:shadow-none active:translate-y-[3px] transition-all sports-font text-sm tracking-wider"
+                    >
+                      Start Game
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-white/40 sports-font text-sm tracking-wider">
+                    <motion.span
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      Waiting for host...
+                    </motion.span>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </motion.div>
         ) : (
           /* Responsive Countdown Ring */
