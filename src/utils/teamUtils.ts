@@ -1,3 +1,13 @@
+/**
+ * teamUtils.ts — Entity-based scoring for multiplayer team mode.
+ *
+ * Abstracts players into "scoring entities" — either solo players or teams —
+ * so the scoreboard, results, and bonus calculations work uniformly regardless
+ * of whether teams are enabled. Also computes the uniqueness bonus (+1 per
+ * roster player only one entity guessed, requires 3+ entities).
+ * Exports `buildScoringEntities`, `computeEntityBonuses`, and entity helpers.
+ */
+
 import type { LobbyPlayer } from '../types/database';
 
 export const TEAM_COLORS = [

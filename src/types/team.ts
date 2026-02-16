@@ -1,3 +1,5 @@
+/** team.ts — NBA team type definitions. */
+
 export interface Team {
   id: number;
   abbreviation: string;

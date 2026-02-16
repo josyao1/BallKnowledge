@@ -33,3 +33,5 @@ scripts/.cache/
 scripts/.nfl_cache/
 __pycache__/
 *.pyc
+
+MCPs/

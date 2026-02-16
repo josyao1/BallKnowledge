@@ -1,3 +1,12 @@
+/**
+ * PlayerInput.tsx — Fuzzy search input with autocomplete dropdown.
+ *
+ * Combines the current roster with league-wide players (or static data fallback)
+ * into a single autocomplete pool. Uses Fuse.js for fuzzy matching and
+ * react-window for virtualized rendering of large result sets.
+ * Supports keyboard navigation (arrows + enter) and mouse selection.
+ */
+
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import Fuse from 'fuse.js';
@@ -38,7 +47,6 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
 
     // Always add current roster players FIRST (ensures they're always in autocomplete)
     if (currentRoster.length > 0) {
-      console.log('Adding roster players to autocomplete:', currentRoster.map(p => p.name));
       currentRoster.forEach(p => {
         playerMap.set(p.name.toLowerCase(), {
           id: p.id,
@@ -46,8 +54,6 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
           searchName: normalizeForSearch(p.name) // "T.J. Watt" -> "tj watt"
         });
       });
-    } else {
-      console.warn('currentRoster is empty!');
     }
 
     // Then add league players if available, otherwise add static data
@@ -64,8 +70,6 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
         });
       }
     });
-
-    console.log(`Autocomplete pool: ${playerMap.size} players (${currentRoster.length} from roster, ${leaguePlayers.length} from API)`);
 
     return Array.from(playerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [leaguePlayers, currentRoster]);
@@ -214,7 +218,8 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
         }}
         onFocus={() => setIsOpen(true)}
         onBlur={() => {
-          // Delay closing to allow click on dropdown
+          // 200ms delay so a click on a dropdown item registers before the
+          // dropdown unmounts. Without this, the click event is lost.
           setTimeout(() => setIsOpen(false), 200);
         }}
         onKeyDown={handleKeyDown}

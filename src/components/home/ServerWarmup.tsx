@@ -1,3 +1,12 @@
+/**
+ * ServerWarmup.tsx — Splash screen that wakes the backend API on first load.
+ *
+ * Free-tier backends (e.g. Render) sleep after inactivity. This component
+ * does an initial health check; if the server is cold, it retries every 5s
+ * for up to 60s (12 attempts) with a progress bar. Users can skip to play
+ * offline with static roster data.
+ */
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 

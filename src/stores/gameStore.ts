@@ -1,3 +1,12 @@
+/**
+ * gameStore.ts — Core game state machine for solo and multiplayer gameplay.
+ *
+ * Manages the full game lifecycle: idle → playing → paused → ended.
+ * Supports two guess modes: standard (immediate feedback) and hidden results
+ * (guesses collected as pending, revealed after game ends via processGuesses).
+ * Exports the `useGameStore` Zustand store.
+ */
+
 import { create } from 'zustand';
 import type { GameStatus, GameMode, Sport } from '../types';
 
@@ -82,12 +91,16 @@ interface GameState {
   tick: () => void;
 }
 
-// Normalize player name for comparison
+/**
+ * Normalize a player name for fuzzy comparison.
+ * Strips accents (e.g. Dončić → Doncic), punctuation, and extra whitespace
+ * so that user input doesn't need to be an exact match.
+ */
 function normalizePlayerName(name: string): string {
   return name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks (accents)
     .replace(/[^a-z\s]/g, '') // Remove non-letters except spaces
     .replace(/\s+/g, ' ')
     .trim();
@@ -111,6 +124,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   leaguePlayers: [],
   score: 0,
 
+  // 8 params — intentionally wide as a one-shot config setter for all game options
   setGameConfig: (sport, team, season, mode, duration, roster, leaguePlayers = [], hideResultsDuringGame = false) => {
     set({
       sport,
@@ -157,7 +171,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     }
 
-    // Hidden results mode: use pendingGuesses, don't reveal correctness
+    // Hidden-results mode (multiplayer): collect guesses without revealing
+    // correctness. They are resolved after the timer ends via processGuesses().
     if (state.hideResultsDuringGame) {
       // Check if already guessed (pending guesses)
       const alreadyGuessed = state.pendingGuesses.some(

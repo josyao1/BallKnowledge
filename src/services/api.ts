@@ -1,8 +1,11 @@
 /**
- * NBA Roster API Service
+ * api.ts — NBA API client for the Python backend.
  *
- * Fetches roster data from the Python backend API.
- * Falls back to static data if API is unavailable.
+ * Provides roster fetching, random team selection, season player lists (autocomplete),
+ * and team record lookups. Uses `getApiAbbreviation` to translate current team
+ * abbreviations to historical ones for relocated franchises (e.g. NJN for BKN pre-2012).
+ * API availability is cached in a module-level singleton (`_apiAvailable`) to avoid
+ * repeated health checks; call `resetApiAvailability()` to force a recheck.
  */
 
 import type { Player } from '../types';
@@ -169,7 +172,8 @@ export async function fetchSeasonPlayers(
 }
 
 /**
- * Check if API is configured and available
+ * Singleton availability cache — avoids hitting /health on every roster fetch.
+ * Set to null initially; once checked, the result is memoized for the session.
  */
 let _apiAvailable: boolean | null = null;
 

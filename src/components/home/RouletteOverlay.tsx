@@ -1,3 +1,17 @@
+/**
+ * RouletteOverlay.tsx — Card-dealing animation before gameplay starts.
+ *
+ * Animation phases (times are cumulative from mount):
+ *   0–4s     "shuffling"  — cards fan left/right in a riffle pattern
+ *   4–5.5s   "settling"   — cards settle into a neat stack
+ *   5.5–6.7s "dealing-1"  — season card slides out and flips face-up
+ *   6.7–10.5s "dealing-2" — team card slides out and flips face-up
+ *   10.5s+   "countdown"  — 5-second countdown ring before game starts
+ *
+ * Can be skipped entirely via `skipAnimation` (manual mode) or by host
+ * clicking the skip button (multiplayer). Fires `onComplete` when done.
+ */
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 
@@ -38,12 +52,18 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, s
   useEffect(() => {
     if (skipAnimation) return; // Don't set timers if skipping
 
-    const shuffleTimer = setTimeout(() => setPhase('settling'), 4000);
-    const settleTimer = setTimeout(() => setPhase('dealing-1'), 5500);
-    const secondCardTimer = setTimeout(() => setPhase('dealing-2'), 6700);
+    // Phase transition timings (ms from mount) — see header comment for timeline
+    const SHUFFLE_END = 4000;
+    const SETTLE_END = 5500;
+    const DEAL_SECOND_CARD = 6700;
+    const COUNTDOWN_START = 10500;
+
+    const shuffleTimer = setTimeout(() => setPhase('settling'), SHUFFLE_END);
+    const settleTimer = setTimeout(() => setPhase('dealing-1'), SETTLE_END);
+    const secondCardTimer = setTimeout(() => setPhase('dealing-2'), DEAL_SECOND_CARD);
     const countdownTimer = setTimeout(() => {
       setPhase('countdown');
-    }, 10500);
+    }, COUNTDOWN_START);
 
     return () => {
       [shuffleTimer, settleTimer, secondCardTimer, countdownTimer].forEach(clearTimeout);

@@ -1,3 +1,12 @@
+/**
+ * lobbyStore.ts — Multiplayer lobby state management.
+ *
+ * Wraps the lobby service layer in a Zustand store so React components can
+ * reactively read lobby/player state. Handles lobby creation, joining,
+ * readiness, score syncing, and realtime update callbacks from Supabase.
+ * Exports the `useLobbyStore` Zustand store.
+ */
+
 import { create } from 'zustand';
 import type { Lobby, LobbyPlayer } from '../types/database';
 import type { Sport } from '../types';
@@ -203,7 +212,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     const { lobby, isHost } = get();
     if (!lobby || !isHost) return;
 
-    // Map camelCase to snake_case for database
+    // Map camelCase frontend keys to snake_case Supabase column names
     const dbSettings: Record<string, unknown> = {};
     if (settings.sport !== undefined) dbSettings.sport = settings.sport;
     if (settings.teamAbbreviation !== undefined) dbSettings.team_abbreviation = settings.teamAbbreviation;

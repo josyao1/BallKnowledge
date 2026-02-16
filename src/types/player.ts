@@ -1,3 +1,5 @@
+/** player.ts — NBA player type definitions. */
+
 export interface Player {
   id: number;
   name: string;

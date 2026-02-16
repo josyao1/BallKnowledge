@@ -1,11 +1,20 @@
+/**
+ * lobby.ts — Supabase multiplayer lobby service.
+ *
+ * Handles lobby CRUD, player management, score tracking, and round resets.
+ * All functions are thin wrappers around Supabase queries with consistent
+ * `{ data, error }` return patterns. Player identity is stored in localStorage
+ * via `getOrCreatePlayerId()`.
+ */
+
 import { supabase } from '../lib/supabase';
 import type { Lobby, LobbyInsert, LobbyPlayer, LobbyPlayerInsert, LobbyStatus } from '../types/database';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 
-// Generate a random 6-character join code
+// Generate a random 6-character join code using unambiguous characters
 function generateJoinCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (I, O, 0, 1)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Omits I/O/0/1 to avoid visual confusion
   let code = '';
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -381,7 +390,10 @@ export async function updateLobbySettings(
   return { error: error?.message || null };
 }
 
-// Increment wins for a player
+// Increment wins for a player.
+// NOTE: This uses read-then-write which has a race condition if two clients
+// call it simultaneously. Acceptable for casual multiplayer; a Supabase RPC
+// with atomic increment would be needed for strict correctness.
 export async function incrementPlayerWins(lobbyId: string, playerId: string): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -408,7 +420,11 @@ export async function incrementPlayerWins(lobbyId: string, playerId: string): Pr
   return { error: error?.message || null };
 }
 
-// Reset lobby for a new round (host only)
+// Reset lobby for a new round (host only).
+// This is the most complex lobby operation: it resets status/timestamps,
+// optionally picks a new random team (avoiding recently used teams),
+// then resets all player scores in two passes (non-host and host separately,
+// since the host stays marked as ready).
 export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -450,28 +466,19 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     // Filter out used teams
     let availableTeams = allTeamAbbrs.filter(abbr => !usedTeams.includes(abbr));
 
-    console.log(`[Team Tracking] Sport: ${sport}`);
-    console.log(`[Team Tracking] Total teams: ${allTeamAbbrs.length}`);
-    console.log(`[Team Tracking] Used teams (${usedTeams.length}): ${usedTeams.join(', ')}`);
-    console.log(`[Team Tracking] Available teams (${availableTeams.length}): ${availableTeams.join(', ')}`);
 
-    // If all teams used, reset the list
+    // If all teams used, reset the list so every team is available again
     if (availableTeams.length === 0) {
-      console.log(`[Team Tracking] All ${sport.toUpperCase()} teams used! Resetting list.`);
       usedTeams = [];
       availableTeams = allTeamAbbrs;
     }
 
     // Pick a random team from available
     const randomTeamAbbr = availableTeams[Math.floor(Math.random() * availableTeams.length)];
-    const randomTeam = teamList.find(t => t.abbreviation === randomTeamAbbr)!;
 
     // Update used teams list
     const newUsedTeams = [...usedTeams, randomTeamAbbr];
     lobbyUpdate[usedTeamsKey] = newUsedTeams;
-
-    console.log(`[Team Tracking] Selected: ${randomTeamAbbr} (${randomTeam.name})`);
-    console.log(`[Team Tracking] Updated used teams (${newUsedTeams.length}): ${newUsedTeams.join(', ')}`);
 
     // Use stored year range, fallback to defaults if not set
     const minYear = currentLobby.min_year || (sport === 'nfl' ? 2000 : 2015);

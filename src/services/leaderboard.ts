@@ -1,3 +1,11 @@
+/**
+ * leaderboard.ts — Solo leaderboard service backed by Supabase.
+ *
+ * Stores and retrieves game session scores for per-roster and global leaderboards.
+ * Scores are ranked by player count first, then by percentage. All operations
+ * gracefully no-op when Supabase is not configured (local-only mode).
+ */
+
 import { supabase, isSupabaseEnabled } from '../lib/supabase';
 import type { LeaderboardEntry } from '../types/database';
 

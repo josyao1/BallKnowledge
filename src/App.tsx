@@ -1,3 +1,10 @@
+/**
+ * App.tsx — Top-level router configuration.
+ *
+ * Maps URL paths to page components for solo gameplay (/game, /results),
+ * multiplayer lobby flow (/lobby/*), and the home page (/).
+ */
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { GamePage } from './pages/GamePage';

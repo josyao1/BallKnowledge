@@ -1,10 +1,14 @@
 /**
- * Supabase Database Types
+ * database.ts — Supabase schema types for all tables and views.
  *
- * These types match the schema defined in plan.txt:
- * - profiles: User profiles (extends auth.users)
- * - game_sessions: Individual game records
- * - leaderboard: Materialized view for rankings
+ * Mirrors the Supabase Postgres schema. Key tables:
+ * - profiles: user accounts (extends Supabase auth.users)
+ * - game_sessions: individual game records for solo leaderboards
+ * - lobbies: multiplayer lobby configuration and lifecycle state
+ * - lobby_players: per-player state within a lobby (scores, guesses, wins)
+ * - leaderboard (view): materialized ranking view
+ *
+ * Convenience type aliases (Lobby, LobbyPlayer, etc.) are exported at the bottom.
  */
 
 export interface Database {

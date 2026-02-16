@@ -1,6 +1,4 @@
-/**
- * NFL-specific types
- */
+/** nfl.ts — NFL-specific type definitions (teams, players, game state). */
 
 export interface NFLTeam {
   id: number;

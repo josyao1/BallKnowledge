@@ -1,3 +1,12 @@
+/**
+ * HomePage.tsx — Landing page with game mode selection.
+ *
+ * Lets users pick solo or multiplayer, choose random vs. manual team/season,
+ * and configure timer settings. On "Start Solo", fetches the roster then
+ * shows the RouletteOverlay (dealing animation) before navigating to GamePage.
+ * The page slides upward to reveal the roulette section beneath.
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -94,6 +103,8 @@ export function HomePage() {
     const currentMinYear = sport === 'nba' ? randomMinYear : Math.max(randomMinYear, 2000);
     const currentMaxYear = sport === 'nba' ? randomMaxYear : Math.min(randomMaxYear, 2024);
 
+    // Picks a random team/year. When API is offline and sport is NFL, returns
+    // null (no static NFL data); for NBA, falls back to bundled static rosters.
     const pickRandomTeamSeason = (): { team: GenericTeam; year: number } | null => {
       if (apiAvailable) {
         const team = currentTeams[Math.floor(Math.random() * currentTeams.length)];

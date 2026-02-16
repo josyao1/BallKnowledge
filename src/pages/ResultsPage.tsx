@@ -1,3 +1,11 @@
+/**
+ * ResultsPage.tsx — Solo results screen shown after a game ends.
+ *
+ * Displays final stats (score, accuracy, roster coverage, time taken),
+ * the full roster with guessed/missed highlights, and options to
+ * rematch (same or random team) or exit back to home.
+ */
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,10 +46,11 @@ export function ResultsPage() {
 
   if (!selectedTeam || !selectedSeason) return null;
 
-  // --- UPDATED ACCURACY LOGIC ---
+  // Accuracy = correct guesses / total guess attempts (correct + incorrect).
+  // This measures naming precision, not roster coverage.
   const totalNamingAttempts = guessedPlayers.length + incorrectGuesses.length;
-  const accuracy = totalNamingAttempts > 0 
-    ? Math.round((guessedPlayers.length / totalNamingAttempts) * 100) 
+  const accuracy = totalNamingAttempts > 0
+    ? Math.round((guessedPlayers.length / totalNamingAttempts) * 100)
     : 0;
   
   const timeTaken = timerDuration - timeRemaining;

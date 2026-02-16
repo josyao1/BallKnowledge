@@ -1,3 +1,11 @@
+/**
+ * GuessedPlayersList.tsx — Displays guessed players as casino-themed chips.
+ *
+ * In standard mode, shows correct guesses as gold "winning" chips and
+ * incorrect guesses as faded "busted" chips. In hidden-results mode
+ * (multiplayer), all guesses appear as neutral chips until the game ends.
+ */
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Generic player type that works with both NBA and NFL

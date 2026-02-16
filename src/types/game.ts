@@ -1,3 +1,5 @@
+/** game.ts — Game state, settings, and session type definitions. */
+
 import type { Player } from './player';
 import type { Team } from './team';
 

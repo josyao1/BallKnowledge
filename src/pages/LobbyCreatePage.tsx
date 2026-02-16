@@ -1,3 +1,10 @@
+/**
+ * LobbyCreatePage.tsx — Multiplayer lobby creation page.
+ *
+ * Allows the host to set their name, choose sport/game mode/team/timer,
+ * and open a new lobby. On success, navigates to the waiting room.
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';

@@ -1,11 +1,13 @@
 /**
- * Team abbreviation translation for API calls.
+ * teamHistory.ts — Relocated franchise abbreviation mapping.
  *
- * Some NBA franchises relocated and changed abbreviations. The nba_api
- * expects the abbreviation that was in use *during* the requested season.
+ * Some NBA franchises relocated and changed abbreviations (e.g. NJN → BKN,
+ * SEA → OKC). The nba_api expects the abbreviation that was in use *during*
+ * the requested season, so this module translates our current abbreviations
+ * to historical ones based on the season year.
  *
- * NFL translations are handled server-side in nfl_api_server.py since
- * the backend validates abbreviations before querying nfl_data_py.
+ * NFL translations are handled server-side in nfl_api_server.py.
+ * Exports `getApiAbbreviation()`.
  */
 
 interface AbbreviationEra {

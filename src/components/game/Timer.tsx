@@ -1,3 +1,12 @@
+/**
+ * Timer.tsx — Circular countdown timer with SVG progress ring.
+ *
+ * Renders a ring that depletes as time runs out. The SVG is rotated -90deg
+ * so the arc starts at 12 o'clock. strokeDashoffset is calculated as
+ * circumference - (progress% * circumference) to animate the remaining arc.
+ * Color shifts green → yellow (≤30s) → red (≤10s) with a pulse animation.
+ */
+
 import { motion } from 'framer-motion';
 
 interface TimerProps {
@@ -20,6 +29,8 @@ export function Timer({ timeRemaining, totalTime }: TimerProps) {
     return '#22c55e'; // green-500
   };
 
+  // Full circle perimeter at radius 40. strokeDashoffset subtracts the
+  // "filled" portion so only the remaining arc is visible.
   const circumference = 2 * Math.PI * 40;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 

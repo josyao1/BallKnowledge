@@ -1,8 +1,6 @@
-import type { NFLTeam } from '../types/nfl';
+/** nfl-teams.ts — Static list of all 32 NFL teams with colors, conference, and division. */
 
-/**
- * All 32 NFL teams with their colors and division info
- */
+import type { NFLTeam } from '../types/nfl';
 export const nflTeams: NFLTeam[] = [
   // AFC East
   {

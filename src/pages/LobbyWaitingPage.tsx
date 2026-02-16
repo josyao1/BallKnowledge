@@ -1,3 +1,13 @@
+/**
+ * LobbyWaitingPage.tsx — Multiplayer waiting room.
+ *
+ * Shows lobby info, player list with ready states, and host settings.
+ * When all players ready (or host force-starts), triggers a dealing
+ * animation (RouletteOverlay) then loads the roster and navigates to
+ * GamePage. Includes stuck-detection that auto-reloads after 8s if
+ * the lobby fails to load (e.g. after a network hiccup).
+ */
+
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,13 +71,13 @@ export function LobbyWaitingPage() {
 
   useLobbySubscription(lobby?.id || null);
 
-  // Stuck detection - auto-reload if lobby doesn't load within 8 seconds
+  // Stuck detection: if the lobby hasn't loaded within 8 seconds (e.g. Supabase
+  // realtime missed the initial payload), force a full page reload to recover.
   useEffect(() => {
-    if (!isLoadingLobby && lobby) return; // Already loaded, no need for timeout
+    if (!isLoadingLobby && lobby) return;
 
     const stuckTimeout = setTimeout(() => {
       if (isLoadingLobby || !lobby) {
-        console.warn('Lobby stuck in loading state, reloading page...');
         window.location.reload();
       }
     }, 8000);

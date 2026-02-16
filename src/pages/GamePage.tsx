@@ -1,3 +1,11 @@
+/**
+ * GamePage.tsx — Main gameplay screen for solo and multiplayer modes.
+ *
+ * Renders the timer, score panels, player input, and guessed-players list.
+ * In multiplayer, maintains a live scoreboard sidebar and syncs scores to
+ * the lobby via debounced updates. Navigates to results when the timer ends.
+ */
+
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +28,9 @@ export function GamePage() {
   const lobbyCode = useLobbyStore((state) => state.lobby?.join_code);
   const lobbyId = useLobbyStore((state) => state.lobby?.id);
 
-  // Store lobby ID in a ref so we always have it even if store's lobby becomes null
+  // Store lobby ID in a ref so we always have it even if the Zustand store's
+  // lobby object becomes null during the end-of-game transition. Without this,
+  // the final score sync would fail because lobby.id is already gone.
   const lobbyIdRef = useRef<string | null>(null);
   if (lobbyId) {
     lobbyIdRef.current = lobbyId;
@@ -57,7 +67,7 @@ export function GamePage() {
   const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
   const [teamRecord, setTeamRecord] = useState<string | null>(null);
 
-  // SHOT CLOCK LOGIC
+  // Shot clock: activates red pulsing background in the final 5 seconds
   const isShotClockActive = timeRemaining <= 5 && timeRemaining > 0 && status === 'playing';
 
   useEffect(() => {
@@ -85,6 +95,7 @@ export function GamePage() {
     const currentScore = score;
     const currentCount = guessedPlayers.length;
 
+    // Debounce score syncs to Supabase (300ms) to avoid flooding during rapid guesses
     if (lastSyncRef.current.score !== currentScore || lastSyncRef.current.count !== currentCount) {
       lastSyncRef.current = { score: currentScore, count: currentCount };
       const timeout = setTimeout(() => {

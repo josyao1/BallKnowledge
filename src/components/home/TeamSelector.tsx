@@ -1,3 +1,10 @@
+/**
+ * TeamSelector.tsx — Dropdown picker for NBA/NFL teams grouped by conference.
+ *
+ * Renders a styled select button that expands to show teams organized by
+ * conference (Eastern/Western for NBA, AFC/NFC for NFL).
+ */
+
 import { useState } from 'react';
 import { teams } from '../../data/teams';
 import { nflTeams } from '../../data/nfl-teams';

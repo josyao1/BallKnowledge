@@ -1,3 +1,10 @@
+/**
+ * YearSelector.tsx — Dropdown picker for selecting a season year.
+ *
+ * Lists years from maxYear down to minYear. Formats the display as
+ * "YYYY-YY" for NBA (e.g. "2023-24") or just "YYYY" for NFL.
+ */
+
 import { useState } from 'react';
 import type { Sport } from '../../types';
 

@@ -1,7 +1,10 @@
 /**
- * NFL Roster API Service
+ * nfl-api.ts — NFL API client for the Python backend.
  *
- * Fetches NFL roster data from the Python backend API.
+ * Mirrors the NBA api.ts pattern: roster fetching, random team selection,
+ * season player lists (autocomplete), and team record lookups.
+ * API availability is cached in a module-level singleton (`_nflApiAvailable`)
+ * to avoid repeated health checks; call `resetNFLApiAvailability()` to force a recheck.
  */
 
 import type { NFLPlayer } from '../types/nfl';
@@ -162,7 +165,8 @@ export async function fetchNFLSeasonPlayers(
 }
 
 /**
- * Check if NFL API is configured and available
+ * Singleton availability cache — avoids hitting /nfl/health on every roster fetch.
+ * Set to null initially; once checked, the result is memoized for the session.
  */
 let _nflApiAvailable: boolean | null = null;
 

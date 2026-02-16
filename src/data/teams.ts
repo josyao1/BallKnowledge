@@ -1,3 +1,5 @@
+/** teams.ts — Static list of all 30 NBA teams with colors, conference, and division. */
+
 import type { Team } from '../types';
 
 export const teams: Team[] = [

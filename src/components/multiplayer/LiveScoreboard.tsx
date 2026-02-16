@@ -1,3 +1,12 @@
+/**
+ * LiveScoreboard.tsx — Real-time multiplayer score sidebar during gameplay.
+ *
+ * Displays all players sorted by effective score (base + uniqueness bonus,
+ * optionally doubled for 2x/dummy players). Uniqueness bonus (+1 per
+ * exclusively-guessed roster player) only activates with 3+ players.
+ * Re-sorts on every score update via Zustand subscription.
+ */
+
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LobbyPlayer } from '../../types/database';

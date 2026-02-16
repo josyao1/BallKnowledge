@@ -1,3 +1,11 @@
+/**
+ * roster.ts — Roster data layer with API-first + static fallback.
+ *
+ * Attempts to fetch rosters from the live Python API for the freshest data.
+ * Falls back to bundled static roster JSON when the API is unavailable.
+ * Also exposes helper functions for season/team lookups and autocomplete.
+ */
+
 import { rosters, getAllPlayers, getAvailableSeasons as getSeasons, getTeamsWithSeason } from '../data/rosters';
 import { fetchRosterFromApi, isApiAvailable } from './api';
 import type { Player } from '../types';

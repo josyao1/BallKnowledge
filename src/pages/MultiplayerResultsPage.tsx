@@ -1,3 +1,13 @@
+/**
+ * MultiplayerResultsPage.tsx — Multiplayer results and standings.
+ *
+ * Waits for all players to finish, then displays rankings with:
+ * - Uniqueness bonus: +1 point per roster player only you guessed (requires 3+ players)
+ * - 2x dummy multiplier: doubles total score for handicapped players
+ * - Tiebreaker: fewer incorrect guesses wins when total scores are equal
+ * The host can "Deal Again" to reset the lobby for another round.
+ */
+
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -120,7 +130,8 @@ export function MultiplayerResultsPage() {
     return () => clearInterval(pollInterval);
   }, [isHost, code, setLobby, navigateToLobby]);
 
-  // Entity-based scoring
+  // Entity-based scoring (supports both solo players and teams as scoring units).
+  // Uniqueness bonus: +1 per roster player only this entity guessed (3+ entities required).
   const isTeamMode = useMemo(() => hasTeams(players), [players]);
   const entities = useMemo(() => buildScoringEntities(players), [players]);
   const entityBonuses = useMemo(() => computeEntityBonuses(entities), [entities]);
@@ -138,7 +149,7 @@ export function MultiplayerResultsPage() {
     return getEntityScore(entity) + bonus;
   }, [entityBonuses]);
 
-  // Sort entities by total score, with incorrect guesses as tiebreaker
+  // Sort entities by total score descending; break ties by fewest incorrect guesses
   const { sortedEntities, tiebreakerUsed } = useMemo(() => {
     let tiebreaker = false;
     const sorted = [...entities].sort((a, b) => {

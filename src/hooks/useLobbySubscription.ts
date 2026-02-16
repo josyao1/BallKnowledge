@@ -1,3 +1,13 @@
+/**
+ * useLobbySubscription.ts — Supabase realtime subscription for lobby updates.
+ *
+ * Subscribes to Postgres changes on both the `lobbies` and `lobby_players`
+ * tables filtered by lobby ID. On any player change, re-fetches all players
+ * (rather than applying individual deltas) to ensure consistency after
+ * batch operations like round resets. Automatically cleans up the channel
+ * on unmount or lobby ID change.
+ */
+
 import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useLobbyStore } from '../stores/lobbyStore';

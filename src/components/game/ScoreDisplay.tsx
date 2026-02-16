@@ -1,3 +1,10 @@
+/**
+ * ScoreDisplay.tsx — Score summary with points, roster progress, and bonus.
+ *
+ * Shows total points (base + bonus), player count vs. roster size with
+ * percentage, and an optional bonus badge when bonus points are earned.
+ */
+
 interface ScoreDisplayProps {
   score: number;
   bonusPoints: number;

@@ -1,3 +1,10 @@
+/**
+ * TeamDisplay.tsx — Shows team badge, name, season, and optional record.
+ *
+ * Renders a colored abbreviation badge using team primary/secondary colors
+ * alongside the team name, season string, and win-loss record when available.
+ */
+
 // Generic team type to support both NBA and NFL
 interface GenericTeam {
   abbreviation: string;

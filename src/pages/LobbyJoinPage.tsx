@@ -1,3 +1,10 @@
+/**
+ * LobbyJoinPage.tsx — Multiplayer lobby join page.
+ *
+ * Lets a player enter their name and a 6-character join code to
+ * join an existing lobby. Supports pre-filled codes via URL params.
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';

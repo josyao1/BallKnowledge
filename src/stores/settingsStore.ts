@@ -1,3 +1,12 @@
+/**
+ * settingsStore.ts — Persisted user preferences.
+ *
+ * Stores sport selection, timer duration, year ranges, and gameplay options.
+ * Uses Zustand's `persist` middleware to save/restore from localStorage
+ * under the key "ball-knowledge-settings".
+ * Exports the `useSettingsStore` Zustand store.
+ */
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Sport } from '../types';

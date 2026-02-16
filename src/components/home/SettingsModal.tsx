@@ -1,3 +1,11 @@
+/**
+ * SettingsModal.tsx — Modal for configuring game preferences.
+ *
+ * Allows users to adjust timer duration, year range for random mode,
+ * toggle hidden results (deferred answer reveal), and toggle season
+ * hints (team record display). Changes auto-persist via settingsStore.
+ */
+
 import { useSettingsStore } from '../../stores/settingsStore';
 
 interface SettingsModalProps {
