@@ -182,7 +182,7 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, s
                       Reroll
                     </button>
                     <button
-                      onClick={() => setPhase('countdown')}
+                      onClick={handleSkip}
                       className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-lg text-white shadow-[0_3px_0_#166534] active:shadow-none active:translate-y-[3px] transition-all sports-font text-sm tracking-wider"
                     >
                       Start Game
