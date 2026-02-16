@@ -55,8 +55,11 @@ export function LobbyWaitingPage() {
   const [isLoadingLobby, setIsLoadingLobby] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showDealingAnimation, setShowDealingAnimation] = useState(false);
+  const [rerollCount, setRerollCount] = useState(0);
   const hasStartedGame = useRef(false);
   const hasAutoStarted = useRef(false);
+  const prevTeamRef = useRef<string | null>(null);
+  const prevSeasonRef = useRef<string | null>(null);
 
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
@@ -227,6 +230,26 @@ export function LobbyWaitingPage() {
     }
   }, [lobby?.status, showDealingAnimation, isHost, handleDealingComplete, lobby, navigate, code]);
 
+  // Non-host reroll detection: when team/season changes during dealing animation, remount overlay
+  useEffect(() => {
+    if (!lobby) return;
+    const teamAbbr = lobby.team_abbreviation;
+    const season = lobby.season;
+
+    if (prevTeamRef.current === null) {
+      prevTeamRef.current = teamAbbr;
+      prevSeasonRef.current = season;
+      return;
+    }
+
+    if (showDealingAnimation && !isHost && (teamAbbr !== prevTeamRef.current || season !== prevSeasonRef.current)) {
+      setRerollCount(prev => prev + 1);
+    }
+
+    prevTeamRef.current = teamAbbr;
+    prevSeasonRef.current = season;
+  }, [lobby?.team_abbreviation, lobby?.season, showDealingAnimation, isHost]);
+
   useEffect(() => {
     const allReady = players.length > 1 && players.every((p) => p.is_ready);
 
@@ -241,6 +264,28 @@ export function LobbyWaitingPage() {
     hasAutoStarted.current = true;
     await startGame();
   };
+
+  const handleReroll = useCallback(async () => {
+    if (!isHost || !lobby) return;
+
+    const currentSport = lobby.sport as Sport;
+    const currentTeamList = currentSport === 'nba' ? teams : nflTeams;
+    const randomTeam = currentTeamList[Math.floor(Math.random() * currentTeamList.length)];
+
+    const minYear = currentSport === 'nfl' ? Math.max(lobby.min_year || 2000, 2000) : (lobby.min_year || 2000);
+    const maxYear = currentSport === 'nfl' ? Math.min(lobby.max_year || 2024, 2024) : (lobby.max_year || 2024);
+    const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+    const newSeason = currentSport === 'nba'
+      ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+      : `${randomYear}`;
+
+    await updateSettings({
+      teamAbbreviation: randomTeam.abbreviation,
+      season: newSeason,
+    });
+
+    setRerollCount(prev => prev + 1);
+  }, [isHost, lobby, updateSettings]);
 
   const handleCopyCode = () => {
     if (lobby?.join_code) {
@@ -371,12 +416,14 @@ export function LobbyWaitingPage() {
       {showDealingAnimation && lobby && team && (
         <div className="fixed inset-0 z-50">
           <RouletteOverlay
+            key={rerollCount}
             winningTeam={team.name}
             winningYear={lobby.season}
             sport={sport}
             winningTeamData={team}
             onComplete={handleDealingComplete}
             canSkip={isHost}
+            onReroll={handleReroll}
           />
         </div>
       )}
