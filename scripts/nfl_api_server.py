@@ -728,6 +728,302 @@ async def get_team_record(team: str, season: int):
     return TeamRecordResponse(**record_data, cached=False)
 
 # ============================================================================
+# Career Mode Endpoints
+# ============================================================================
+
+CAREER_POSITIONS = ["QB", "RB", "WR", "TE"]
+
+# Lightweight cache: just the eligible player list for /career/random
+_career_eligible_cache: list[dict] | None = None
+
+# Per-player career cache: player_id -> full response dict
+_career_player_cache: dict[str, dict] = {}
+
+# Lazy-loaded DataFrames (only loaded once, on first use)
+_career_stats_df = None   # seasonal stats (heavy)
+_career_roster_df = None  # seasonal rosters (medium)
+
+
+def _safe_int(val, default=0):
+    try:
+        if val is None or (isinstance(val, float) and val != val):
+            return default
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_str(val, default=""):
+    if val is None or (isinstance(val, float) and val != val):
+        return default
+    s = str(val)
+    return s if s and s != "nan" and s != "None" else default
+
+
+def _get_roster_df():
+    """Lazy-load roster data (lightweight — just names, positions, teams, bio)."""
+    global _career_roster_df
+    if _career_roster_df is not None:
+        return _career_roster_df
+
+    if not NFL_DATA_AVAILABLE:
+        return None
+
+    try:
+        years = list(range(2010, 2025))
+        print("Career mode: loading roster data...")
+        df = nfl.import_seasonal_rosters(years)
+        if df is not None and not df.empty:
+            # One row per (player_id, season)
+            _career_roster_df = df.drop_duplicates(subset=["player_id", "season"], keep="first")
+            print(f"Career mode: roster loaded — {len(_career_roster_df)} rows")
+        return _career_roster_df
+    except Exception as e:
+        print(f"Error loading career roster data: {e}")
+        return None
+
+
+def _get_stats_df():
+    """Lazy-load seasonal stats (heavier — only called when building a specific player's career)."""
+    global _career_stats_df
+    if _career_stats_df is not None:
+        return _career_stats_df
+
+    if not NFL_DATA_AVAILABLE:
+        return None
+
+    try:
+        years = list(range(2010, 2025))
+        print("Career mode: loading seasonal stats...")
+        _career_stats_df = nfl.import_seasonal_data(years)
+        print(f"Career mode: stats loaded — {len(_career_stats_df)} rows")
+        return _career_stats_df
+    except Exception as e:
+        print(f"Error loading career stats data: {e}")
+        return None
+
+
+def _peak_yards(player_stats) -> int:
+    """Return the highest single-season yardage for a player across all yard types."""
+    yard_cols = ["passing_yards", "rushing_yards", "receiving_yards"]
+    peak = 0
+    for col in yard_cols:
+        if col in player_stats.columns:
+            col_max = player_stats[col].max()
+            if col_max and not (isinstance(col_max, float) and col_max != col_max):
+                peak = max(peak, int(col_max))
+    return peak
+
+
+def _build_eligible_players() -> list[dict]:
+    """Build eligible players list using roster (position/name) + stats (production filter)."""
+    global _career_eligible_cache
+    if _career_eligible_cache is not None:
+        return _career_eligible_cache
+
+    roster = _get_roster_df()
+    stats = _get_stats_df()
+    if roster is None or roster.empty:
+        return []
+    if stats is None or stats.empty:
+        print("Career mode: stats data unavailable, cannot filter by production")
+        return []
+
+    eligible = []
+    for pid, group in roster.groupby("player_id"):
+        if len(group) < 5:
+            continue
+
+        # Check position
+        positions = group["position"].dropna().unique()
+        player_pos = None
+        for p in positions:
+            if p in CAREER_POSITIONS:
+                player_pos = p
+                break
+        if not player_pos:
+            continue
+
+        # Filter out low-production players: must have at least one 500+ yard season
+        player_stats = stats[stats["player_id"] == pid]
+        if player_stats.empty or _peak_yards(player_stats) < 500:
+            continue
+
+        # Get name from most recent season
+        latest = group.sort_values("season", ascending=False).iloc[0]
+        name = _safe_str(latest.get("player_name"))
+        if not name:
+            continue
+
+        eligible.append({
+            "player_id": str(pid),
+            "player_name": name,
+            "position": player_pos,
+        })
+
+    _career_eligible_cache = eligible
+    print(f"Career mode: {len(eligible)} eligible players")
+    return eligible
+
+
+@app.get("/nfl/career/random")
+async def get_random_career_player(position: Optional[str] = None):
+    """Pick a random NFL player with 5+ seasons for Career Mode.
+
+    Only loads roster data (lightweight) — stats are deferred to /career/{id}.
+    """
+    if not NFL_DATA_AVAILABLE:
+        raise HTTPException(status_code=503, detail="NFL data not available")
+
+    try:
+        eligible = _build_eligible_players()
+        if not eligible:
+            raise HTTPException(status_code=404, detail="No eligible players found")
+
+        # Filter by position if requested
+        if position and position.upper() in CAREER_POSITIONS:
+            pos = position.upper()
+            filtered = [p for p in eligible if p["position"] == pos]
+            if not filtered:
+                raise HTTPException(status_code=404, detail=f"No eligible {pos} players found")
+            return random.choice(filtered)
+
+        return random.choice(eligible)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error finding random NFL career player: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/nfl/career/{player_id}")
+async def get_nfl_career_stats(player_id: str):
+    """Get full career stats for an NFL player (Career Mode).
+
+    Loads stats data lazily on first call, then caches per-player results.
+    """
+    if not NFL_DATA_AVAILABLE:
+        raise HTTPException(status_code=503, detail="NFL data not available")
+
+    # Check per-player cache
+    if player_id in _career_player_cache:
+        return _career_player_cache[player_id]
+
+    try:
+        stats = _get_stats_df()
+        roster = _get_roster_df()
+        if stats is None or roster is None:
+            raise HTTPException(status_code=500, detail="Could not load career data")
+
+        # Get this player's stats
+        player_stats = stats[stats["player_id"] == player_id].sort_values("season")
+        if player_stats.empty:
+            raise HTTPException(status_code=404, detail=f"No career data for player {player_id}")
+
+        # Get this player's roster info (for position, team, name, bio)
+        player_roster = roster[roster["player_id"] == player_id].sort_values("season")
+
+        # Determine position from roster
+        position = "QB"
+        if not player_roster.empty:
+            positions = player_roster["position"].dropna()
+            if not positions.empty:
+                mode = positions.mode()
+                position = mode.iloc[0] if not mode.empty else "QB"
+
+        # Build a lookup: season -> roster row (for team, name)
+        roster_by_season = {}
+        for _, rrow in player_roster.iterrows():
+            roster_by_season[_safe_int(rrow.get("season"))] = rrow
+
+        # Build seasons array
+        seasons = []
+        for _, row in player_stats.iterrows():
+            season_year = _safe_int(row.get("season"))
+            rrow = roster_by_season.get(season_year)
+            team = _safe_str(rrow.get("team"), "???") if rrow is not None else "???"
+
+            base = {
+                "season": str(season_year),
+                "team": team,
+                "gp": _safe_int(row.get("games")),
+            }
+
+            if position == "QB":
+                base.update({
+                    "completions": _safe_int(row.get("completions")),
+                    "attempts": _safe_int(row.get("attempts")),
+                    "passing_yards": _safe_int(row.get("passing_yards")),
+                    "passing_tds": _safe_int(row.get("passing_tds")),
+                    "interceptions": _safe_int(row.get("interceptions")),
+                    "rushing_yards": _safe_int(row.get("rushing_yards")),
+                })
+            elif position == "RB":
+                base.update({
+                    "carries": _safe_int(row.get("carries")),
+                    "rushing_yards": _safe_int(row.get("rushing_yards")),
+                    "rushing_tds": _safe_int(row.get("rushing_tds")),
+                    "receptions": _safe_int(row.get("receptions")),
+                    "receiving_yards": _safe_int(row.get("receiving_yards")),
+                })
+            else:  # WR/TE
+                base.update({
+                    "targets": _safe_int(row.get("targets")),
+                    "receptions": _safe_int(row.get("receptions")),
+                    "receiving_yards": _safe_int(row.get("receiving_yards")),
+                    "receiving_tds": _safe_int(row.get("receiving_tds")),
+                })
+
+            seasons.append(base)
+
+        # Bio from the most recent roster row
+        latest_roster = player_roster.iloc[-1] if not player_roster.empty else None
+        height_str = ""
+        if latest_roster is not None:
+            height_val = latest_roster.get("height")
+            if height_val and not (isinstance(height_val, float) and height_val != height_val):
+                try:
+                    inches = int(float(height_val))
+                    height_str = f"{inches // 12}-{inches % 12}"
+                except (ValueError, TypeError):
+                    height_str = str(height_val)
+
+        bio = {
+            "height": height_str,
+            "weight": _safe_int(latest_roster.get("weight")) if latest_roster is not None else 0,
+            "college": _safe_str(latest_roster.get("college")) if latest_roster is not None else "",
+            "years_exp": _safe_int(latest_roster.get("years_exp")) if latest_roster is not None else 0,
+            "draft_club": _safe_str(latest_roster.get("draft_club")) if latest_roster is not None else "",
+            "draft_number": _safe_int(latest_roster.get("draft_number")) if latest_roster is not None else 0,
+        }
+
+        player_name = _safe_str(latest_roster.get("player_name")) if latest_roster is not None else ""
+
+        result = {
+            "player_id": player_id,
+            "player_name": player_name,
+            "position": position,
+            "seasons": seasons,
+            "bio": bio,
+        }
+
+        # Cache for future requests
+        _career_player_cache[player_id] = result
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching NFL career stats for {player_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # Main
 # ============================================================================
 
