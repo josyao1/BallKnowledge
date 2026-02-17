@@ -199,7 +199,7 @@ export function HomePage() {
     ))}
   </div>
 
-  {/* Right: API Status & Settings */}
+  {/* Right: API Status & Quick Actions */}
   <div className="flex-1 flex justify-end items-center gap-1.5 md:gap-3">
   {/* API Status: Removed 'hidden' so it stays on mobile */}
   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/20 border border-white/5">
@@ -211,9 +211,26 @@ export function HomePage() {
     </span>
   </div>
 
+  {/* Roll Call Button */}
+  <button 
+    onClick={() => navigate('/roll-call/create')} 
+    className="px-2.5 md:px-3 py-1 text-[20px] md:text-[13px] sports-font uppercase tracking-tighter text-[#d4af37] border border-[#d4af37] rounded hover:bg-[#d4af37] hover:text-black transition-colors whitespace-nowrap"
+  >
+    Roll Call
+  </button>
+
+  {/* Career Mode Button */}
+  <button 
+    onClick={() => navigate('/career')} 
+    className="px-2.5 md:px-3 py-1 text-[20px] md:text-[13px] sports-font uppercase tracking-tighter text-[#22c55e] border border-[#22c55e] rounded hover:bg-[#22c55e] hover:text-black transition-colors whitespace-nowrap"
+  >
+    Career
+  </button>
+
   <button 
     onClick={() => setShowSettings(true)} 
     className="p-1.5 md:p-2 border-2 border-[#3d3d3d] rounded-lg hover:bg-[#1a1a1a] transition-colors shrink-0"
+    title="Settings"
   >
     <svg className="w-4 h-4 md:w-5 md:h-5 text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -291,8 +308,6 @@ export function HomePage() {
                 <button onClick={handleStartGame} disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)} className="retro-btn retro-btn-gold px-10 py-3 text-lg disabled:opacity-50">Start Solo</button>
                 <button onClick={() => navigate('/lobby/create')} className={`px-5 py-3 rounded-lg sports-font border-2 text-sm transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#013369] text-[#013369] hover:bg-[#013369] hover:text-white'}`}>Create Lobby</button>
                 <button onClick={() => navigate('/lobby/join')} className="px-5 py-3 rounded-lg sports-font border-2 border-[#3d3d3d] text-[#888] hover:border-[#555] text-sm">Join Lobby</button>
-                <button onClick={() => navigate('/roll-call/create')} className="px-5 py-3 rounded-lg sports-font border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black text-sm transition-all">Roll Call</button>
-                <button onClick={() => navigate('/career')} className={`px-5 py-3 rounded-lg sports-font border-2 text-sm transition-all ${sport === 'nba' ? 'border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-black' : 'border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-black'}`}>Career Mode</button>
               </div>
             </div>
           ) : (
