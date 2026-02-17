@@ -165,6 +165,54 @@ export async function fetchNFLSeasonPlayers(
 }
 
 /**
+ * Career Mode: Fetch a random NFL player with 5+ seasons
+ */
+export async function fetchNFLRandomCareerPlayer(position?: string): Promise<{
+  player_id: string;
+  player_name: string;
+  position: string;
+} | null> {
+  try {
+    const url = position
+      ? `${NFL_API_BASE_URL}/nfl/career/random?position=${position}`
+      : `${NFL_API_BASE_URL}/nfl/career/random`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch random NFL career player:', error);
+    return null;
+  }
+}
+
+/**
+ * Career Mode: Fetch full career stats for an NFL player
+ */
+export async function fetchNFLCareerStats(playerId: string): Promise<{
+  player_id: string;
+  player_name: string;
+  position: string;
+  seasons: Array<Record<string, any>>;
+  bio: {
+    height: string;
+    weight: number;
+    college: string;
+    years_exp: number;
+    draft_club: string;
+    draft_number: number;
+  };
+} | null> {
+  try {
+    const response = await fetch(`${NFL_API_BASE_URL}/nfl/career/${playerId}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch NFL career stats:', error);
+    return null;
+  }
+}
+
+/**
  * Singleton availability cache — avoids hitting /nfl/health on every roster fetch.
  * Set to null initially; once checked, the result is memoized for the session.
  */

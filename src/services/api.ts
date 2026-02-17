@@ -194,6 +194,56 @@ export function resetApiAvailability(): void {
 }
 
 /**
+ * Career Mode: Fetch a random player with 5+ NBA seasons
+ */
+export async function fetchRandomCareerPlayer(): Promise<{ player_id: number; player_name: string } | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/career/random`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch random career player:', error);
+    return null;
+  }
+}
+
+/**
+ * Career Mode: Fetch full career stats for a player
+ */
+export async function fetchCareerStats(playerId: number): Promise<{
+  player_id: number;
+  seasons: Array<{
+    season: string;
+    team: string;
+    gp: number;
+    min: number;
+    pts: number;
+    reb: number;
+    ast: number;
+    stl: number;
+    blk: number;
+    fg_pct: number;
+    fg3_pct: number;
+  }>;
+  bio: {
+    height: string;
+    weight: number;
+    school: string;
+    exp: number;
+    draft_year: number;
+  };
+} | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/career/${playerId}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch career stats:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch team record for a season (for hints)
  */
 export async function fetchTeamRecord(
