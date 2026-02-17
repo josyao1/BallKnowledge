@@ -10,7 +10,8 @@
 import { supabase } from '../lib/supabase';
 import type { Lobby, LobbyInsert, LobbyPlayer, LobbyPlayerInsert, LobbyStatus } from '../types/database';
 import { teams } from '../data/teams';
-import { nflTeams } from '../data/nfl-teams';
+import { getNBADivisions, getNBATeamsByDivision } from '../data/teams';
+import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 
 // Generate a random 6-character join code using unambiguous characters
 function generateJoinCode(): string {
@@ -52,7 +53,10 @@ export async function createLobby(
   gameMode: 'random' | 'manual' = 'manual',
   minYear: number = 2015,
   maxYear: number = 2024,
-  gameType: string = 'roster'
+  gameType: string = 'roster',
+  selectionScope: string = 'team',
+  divisionConference?: string | null,
+  divisionName?: string | null
 ): Promise<{ lobby: Lobby; error: null } | { lobby: null; error: string }> {
   if (!supabase) {
     return { lobby: null, error: 'Multiplayer not available' };
@@ -78,6 +82,9 @@ export async function createLobby(
       max_year: maxYear,
       status: 'waiting',
       game_type: gameType,
+      selection_scope: selectionScope,
+      division_conference: divisionConference ?? null,
+      division_name: divisionName ?? null,
     };
 
     const { data: lobby, error } = await supabase
@@ -378,6 +385,9 @@ export async function updateLobbySettings(
     game_mode?: 'random' | 'manual';
     min_year?: number;
     max_year?: number;
+    selection_scope?: string;
+    division_conference?: string | null;
+    division_name?: string | null;
   }
 ): Promise<{ error: string | null }> {
   if (!supabase) {
@@ -435,7 +445,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   // First, fetch the current lobby to check game_mode, year range, and used teams
   const { data: currentLobby, error: fetchError } = await supabase
     .from('lobbies')
-    .select('game_mode, sport, min_year, max_year, used_nba_teams, used_nfl_teams, team_abbreviation')
+    .select('game_mode, sport, min_year, max_year, used_nba_teams, used_nfl_teams, team_abbreviation, selection_scope, division_conference, division_name, used_nba_divisions, used_nfl_divisions')
     .eq('id', lobbyId)
     .single();
 
@@ -450,47 +460,85 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     finished_at: null,
   };
 
-  // If random mode, pick a new random team and season using stored year range
+  // If random mode, pick a new random team/division and season using stored year range
   if (currentLobby.game_mode === 'random') {
     const sport = currentLobby.sport;
-    const teamList = sport === 'nba' ? teams : nflTeams;
-    const allTeamAbbrs = teamList.map(t => t.abbreviation);
-
-    // Get used teams for this sport, including the current team
-    const usedTeamsKey = sport === 'nba' ? 'used_nba_teams' : 'used_nfl_teams';
-    let usedTeams: string[] = (currentLobby[usedTeamsKey] as string[]) || [];
-
-    // Add current team to used list if not already there
-    if (currentLobby.team_abbreviation && !usedTeams.includes(currentLobby.team_abbreviation)) {
-      usedTeams = [...usedTeams, currentLobby.team_abbreviation];
-    }
-
-    // Filter out used teams
-    let availableTeams = allTeamAbbrs.filter(abbr => !usedTeams.includes(abbr));
-
-
-    // If all teams used, reset the list so every team is available again
-    if (availableTeams.length === 0) {
-      usedTeams = [];
-      availableTeams = allTeamAbbrs;
-    }
-
-    // Pick a random team from available
-    const randomTeamAbbr = availableTeams[Math.floor(Math.random() * availableTeams.length)];
-
-    // Update used teams list
-    const newUsedTeams = [...usedTeams, randomTeamAbbr];
-    lobbyUpdate[usedTeamsKey] = newUsedTeams;
+    const selectionScope = currentLobby.selection_scope || 'team';
 
     // Use stored year range, fallback to defaults if not set
     const minYear = currentLobby.min_year || (sport === 'nfl' ? 2000 : 2015);
     const maxYear = currentLobby.max_year || 2024;
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
 
-    lobbyUpdate.team_abbreviation = randomTeamAbbr;
-    lobbyUpdate.season = sport === 'nba'
-      ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
-      : `${randomYear}`;
+    if (selectionScope === 'division') {
+      // Division mode: pick a random division avoiding recently used ones
+      const allDivisions = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
+      const usedDivisionsKey = sport === 'nba' ? 'used_nba_divisions' : 'used_nfl_divisions';
+      let usedDivisions: string[] = (currentLobby[usedDivisionsKey] as string[]) || [];
+
+      // Add current division to used list
+      if (currentLobby.division_conference && currentLobby.division_name) {
+        const currentDivKey = `${currentLobby.division_conference}_${currentLobby.division_name}`;
+        if (!usedDivisions.includes(currentDivKey)) {
+          usedDivisions = [...usedDivisions, currentDivKey];
+        }
+      }
+
+      // Filter out used divisions
+      let availableDivisions = allDivisions.filter(d => !usedDivisions.includes(`${d.conference}_${d.division}`));
+
+      // If all used, reset
+      if (availableDivisions.length === 0) {
+        usedDivisions = [];
+        availableDivisions = allDivisions;
+      }
+
+      // Pick random division
+      const randomDiv = availableDivisions[Math.floor(Math.random() * availableDivisions.length)];
+
+      // Update used divisions
+      const newUsedDivisions = [...usedDivisions, `${randomDiv.conference}_${randomDiv.division}`];
+      lobbyUpdate[usedDivisionsKey] = newUsedDivisions;
+      lobbyUpdate.division_conference = randomDiv.conference;
+      lobbyUpdate.division_name = randomDiv.division;
+
+      // Set team_abbreviation to first team in division as reference
+      const divTeams = sport === 'nba'
+        ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+        : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+      lobbyUpdate.team_abbreviation = divTeams[0]?.abbreviation || currentLobby.team_abbreviation;
+
+      lobbyUpdate.season = sport === 'nba'
+        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+        : `${randomYear}`;
+    } else {
+      // Team mode: pick a random team
+      const teamList = sport === 'nba' ? teams : nflTeams;
+      const allTeamAbbrs = teamList.map(t => t.abbreviation);
+
+      const usedTeamsKey = sport === 'nba' ? 'used_nba_teams' : 'used_nfl_teams';
+      let usedTeams: string[] = (currentLobby[usedTeamsKey] as string[]) || [];
+
+      if (currentLobby.team_abbreviation && !usedTeams.includes(currentLobby.team_abbreviation)) {
+        usedTeams = [...usedTeams, currentLobby.team_abbreviation];
+      }
+
+      let availableTeams = allTeamAbbrs.filter(abbr => !usedTeams.includes(abbr));
+
+      if (availableTeams.length === 0) {
+        usedTeams = [];
+        availableTeams = allTeamAbbrs;
+      }
+
+      const randomTeamAbbr = availableTeams[Math.floor(Math.random() * availableTeams.length)];
+      const newUsedTeams = [...usedTeams, randomTeamAbbr];
+      lobbyUpdate[usedTeamsKey] = newUsedTeams;
+
+      lobbyUpdate.team_abbreviation = randomTeamAbbr;
+      lobbyUpdate.season = sport === 'nba'
+        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+        : `${randomYear}`;
+    }
   }
 
   // Reset lobby status (and team/season if random)
@@ -555,6 +603,43 @@ export async function updatePlayerTeam(
   const { error } = await supabase
     .from('lobby_players')
     .update({ team_number: teamNumber })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', targetPlayerId);
+
+  return { error: error?.message || null };
+}
+
+// Kick a player from the lobby (host only)
+export async function kickPlayer(
+  lobbyId: string,
+  targetPlayerId: string
+): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .delete()
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', targetPlayerId);
+
+  return { error: error?.message || null };
+}
+
+// Rename a player in the lobby (host only)
+export async function renamePlayer(
+  lobbyId: string,
+  targetPlayerId: string,
+  newName: string
+): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ player_name: newName })
     .eq('lobby_id', lobbyId)
     .eq('player_id', targetPlayerId);
 

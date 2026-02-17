@@ -74,11 +74,16 @@ interface GameState {
   // League-wide players for autocomplete (all players from the season)
   leaguePlayers: LeaguePlayer[];
 
+  // Division mode
+  divisionRosters: Record<string, GenericPlayer[]>;
+  divisionTeams: string[];
+
   // Scoring
   score: number;
 
   // Actions
   setGameConfig: (sport: Sport, team: GenericTeam, season: string, mode: GameMode, duration: number, roster: GenericPlayer[], leaguePlayers?: LeaguePlayer[], hideResultsDuringGame?: boolean) => void;
+  setDivisionRosters: (rosters: Record<string, GenericPlayer[]>, teams: string[]) => void;
   startGame: () => void;
   makeGuess: (playerName: string, teammateGuessedNames?: string[]) => GuessResult;
   pauseGame: () => void;
@@ -122,6 +127,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   guessedPlayers: [],
   incorrectGuesses: [],
   leaguePlayers: [],
+  divisionRosters: {},
+  divisionTeams: [],
   score: 0,
 
   // 8 params — intentionally wide as a one-shot config setter for all game options
@@ -143,6 +150,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       score: 0,
       startTime: null,
     });
+  },
+
+  setDivisionRosters: (rosters, divTeams) => {
+    set({ divisionRosters: rosters, divisionTeams: divTeams });
   },
 
   startGame: () => {
@@ -314,6 +325,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       guessedPlayers: [],
       incorrectGuesses: [],
       leaguePlayers: [],
+      divisionRosters: {},
+      divisionTeams: [],
       score: 0,
     });
   },

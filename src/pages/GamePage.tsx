@@ -47,11 +47,15 @@ export function GamePage() {
     incorrectGuesses,
     score,
     hideResultsDuringGame,
+    divisionTeams,
     startGame,
     endGame,
     processGuesses,
     tick,
   } = useGameStore();
+
+  const lobbyDivisionConference = useLobbyStore((state) => state.lobby?.division_conference);
+  const lobbyDivisionName = useLobbyStore((state) => state.lobby?.division_name);
 
   const { lobby, players, currentPlayerId, syncScore, endGame: endLobbyGame } = useLobbyStore();
   useLobbySubscription(isMultiplayer ? lobby?.id || null : null);
@@ -63,6 +67,25 @@ export function GamePage() {
     if (!isMultiplayer || currentPlayerTeamNumber == null) return [];
     return getTeammateGuessedPlayers(players, currentPlayerId, currentPlayerTeamNumber);
   }, [isMultiplayer, players, currentPlayerId, currentPlayerTeamNumber]);
+
+  // Compute unique guesses: names this player guessed that no other player has guessed
+  // Only active in 3+ player multiplayer games with standard (non-hidden) results
+  const uniqueGuessNames = useMemo(() => {
+    if (!isMultiplayer || players.length < 3 || hideResultsDuringGame) return new Set<string>();
+    const myNames = new Set(guessedPlayers.map(p => p.name));
+    const otherNames = new Set<string>();
+    for (const p of players) {
+      if (p.player_id === currentPlayerId) continue;
+      for (const name of (p.guessed_players || [])) {
+        otherNames.add(name);
+      }
+    }
+    const unique = new Set<string>();
+    for (const name of myNames) {
+      if (!otherNames.has(name)) unique.add(name);
+    }
+    return unique;
+  }, [isMultiplayer, players, currentPlayerId, guessedPlayers, hideResultsDuringGame]);
 
   const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
   const [teamRecord, setTeamRecord] = useState<string | null>(null);
@@ -177,7 +200,25 @@ export function GamePage() {
       <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-8">
-            <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} />
+            {divisionTeams.length > 0 && lobbyDivisionConference && lobbyDivisionName ? (
+              <div className="flex flex-col">
+                <div className="retro-title text-xl text-[#d4af37]">
+                  {lobbyDivisionConference} {lobbyDivisionName}
+                </div>
+                <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                  {selectedSeason}
+                </div>
+                <div className="flex gap-1.5 mt-1">
+                  {divisionTeams.map(abbr => (
+                    <span key={abbr} className="text-[9px] text-white/50 sports-font px-1.5 py-0.5 bg-white/5 rounded">
+                      {abbr}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} />
+            )}
             <div className="h-10 w-[1px] bg-white/20 hidden md:block" />
 
             {/* RESPONSIVE TIMER DESIGN */}
@@ -232,6 +273,7 @@ export function GamePage() {
                 incorrectGuesses={incorrectGuesses}
                 pendingGuesses={hideResultsDuringGame ? pendingGuesses : []}
                 hideResults={hideResultsDuringGame}
+                uniqueGuessNames={uniqueGuessNames}
               />
             </div>
           </div>

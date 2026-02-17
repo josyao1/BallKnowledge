@@ -48,7 +48,10 @@ interface LobbyState {
     gameMode: 'random' | 'manual',
     minYear: number,
     maxYear: number,
-    gameType?: string
+    gameType?: string,
+    selectionScope?: string,
+    divisionConference?: string | null,
+    divisionName?: string | null
   ) => Promise<Lobby | null>;
   joinLobbyByCode: (joinCode: string, playerName: string) => Promise<boolean>;
   joinExistingLobby: (lobby: Lobby, playerName: string) => Promise<boolean>;
@@ -65,6 +68,9 @@ interface LobbyState {
     gameMode?: 'random' | 'manual';
     minYear?: number;
     maxYear?: number;
+    selectionScope?: string;
+    divisionConference?: string | null;
+    divisionName?: string | null;
   }) => Promise<void>;
   incrementWins: (playerId: string) => Promise<void>;
   assignTeam: (targetPlayerId: string, teamNumber: number | null) => Promise<void>;
@@ -87,10 +93,10 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType) => {
+  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName) => {
     set({ isLoading: true, error: null });
 
-    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType);
+    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName);
 
     if (result.error || !result.lobby) {
       set({ isLoading: false, error: result.error || 'Failed to create lobby' });
@@ -222,6 +228,9 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     if (settings.gameMode !== undefined) dbSettings.game_mode = settings.gameMode;
     if (settings.minYear !== undefined) dbSettings.min_year = settings.minYear;
     if (settings.maxYear !== undefined) dbSettings.max_year = settings.maxYear;
+    if (settings.selectionScope !== undefined) dbSettings.selection_scope = settings.selectionScope;
+    if (settings.divisionConference !== undefined) dbSettings.division_conference = settings.divisionConference;
+    if (settings.divisionName !== undefined) dbSettings.division_name = settings.divisionName;
 
     await updateLobbySettings(lobby.id, dbSettings as Parameters<typeof updateLobbySettings>[1]);
   },

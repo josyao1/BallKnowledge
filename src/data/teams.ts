@@ -49,3 +49,20 @@ export const teams: Team[] = [
 export function getTeamByAbbreviation(abbr: string): Team | undefined {
   return teams.find((t) => t.abbreviation === abbr);
 }
+
+export function getNBADivisions(): { conference: string; division: string }[] {
+  const seen = new Set<string>();
+  const result: { conference: string; division: string }[] = [];
+  for (const t of teams) {
+    const key = `${t.conference}_${t.division}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push({ conference: t.conference, division: t.division });
+    }
+  }
+  return result;
+}
+
+export function getNBATeamsByDivision(conference: string, division: string): Team[] {
+  return teams.filter(t => t.conference === conference && t.division === division);
+}

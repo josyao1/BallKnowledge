@@ -13,8 +13,8 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
 import { getStoredPlayerName } from '../services/lobby';
-import { teams } from '../data/teams';
-import { nflTeams } from '../data/nfl-teams';
+import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
+import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import type { GameMode } from '../types';
 
 type GenericTeam = {
@@ -31,15 +31,20 @@ export function LobbyCreatePage() {
 
   const [hostName, setHostName] = useState(getStoredPlayerName() || '');
   const [gameMode, setGameMode] = useState<GameMode>('random');
+  const [selectionScope, setSelectionScope] = useState<'team' | 'division'>('team');
   const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [timerMinutes, setTimerMinutes] = useState(1);
   const [timerSeconds, setTimerSeconds] = useState(30);
+  const [customTimerInput, setCustomTimerInput] = useState('');
+  const [selectedPreset, setSelectedPreset] = useState<number | null>(90);
 
   const [randomMinYear, setRandomMinYear] = useState(2015);
   const [randomMaxYear, setRandomMaxYear] = useState(2024);
 
-  const timerDuration = timerMinutes * 60 + timerSeconds;
+  const timerDuration = customTimerInput
+    ? Math.max(10, Math.min(600, parseInt(customTimerInput) || 90))
+    : timerMinutes * 60 + timerSeconds;
 
   const canCreate = hostName.trim() && (
     gameMode === 'random' || (selectedTeam && selectedYear)
@@ -50,28 +55,42 @@ export function LobbyCreatePage() {
 
     let teamAbbr: string;
     let season: string;
+    let divisionConference: string | null = null;
+    let divisionName: string | null = null;
+
+    const minYear = sport === 'nfl' ? Math.max(randomMinYear, 2000) : randomMinYear;
+    const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2024) : randomMaxYear;
 
     if (gameMode === 'random') {
-      const teamList = sport === 'nba' ? teams : nflTeams;
-      const minYear = sport === 'nfl' ? Math.max(randomMinYear, 2000) : randomMinYear;
-      const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2024) : randomMaxYear;
-
-      const randomTeam = teamList[Math.floor(Math.random() * teamList.length)];
       const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
-
-      teamAbbr = randomTeam.abbreviation;
       season = sport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
+
+      if (selectionScope === 'division') {
+        // Pick a random division
+        const allDivisions = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
+        const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
+        divisionConference = randomDiv.conference;
+        divisionName = randomDiv.division;
+
+        const divTeams = sport === 'nba'
+          ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+          : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+        teamAbbr = divTeams[0]?.abbreviation || (sport === 'nba' ? teams : nflTeams)[0].abbreviation;
+      } else {
+        const teamList = sport === 'nba' ? teams : nflTeams;
+        const randomTeam = teamList[Math.floor(Math.random() * teamList.length)];
+        teamAbbr = randomTeam.abbreviation;
+      }
     } else {
       if (!selectedTeam || !selectedYear) return;
       teamAbbr = selectedTeam.abbreviation;
       season = sport === 'nba' ? `${selectedYear}-${String(selectedYear + 1).slice(-2)}` : `${selectedYear}`;
     }
 
-    // Pass year range for random mode replays
-    const minYear = sport === 'nfl' ? Math.max(randomMinYear, 2000) : randomMinYear;
-    const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2024) : randomMaxYear;
-
-    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode, minYear, maxYear);
+    const lobby = await createLobby(
+      hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode, minYear, maxYear,
+      'roster', selectionScope, divisionConference, divisionName
+    );
 
     if (lobby) {
       navigate(`/lobby/${lobby.join_code}`);
@@ -193,6 +212,49 @@ export function LobbyCreatePage() {
           </div>
         </motion.div>
 
+        {/* Scope toggle - visible in random mode */}
+        <AnimatePresence>
+          {gameMode === 'random' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-black/50 border border-white/10 rounded-sm p-4"
+            >
+              <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+                Scope
+              </div>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => setSelectionScope('team')}
+                  className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                    selectionScope === 'team'
+                      ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                      : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  Team
+                </button>
+                <button
+                  onClick={() => setSelectionScope('division')}
+                  className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                    selectionScope === 'division'
+                      ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                      : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  Division
+                </button>
+              </div>
+              {selectionScope === 'division' && (
+                <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
+                  Random division — name players from all 4 teams
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Random year range */}
         <AnimatePresence>
           {gameMode === 'random' && (
@@ -269,34 +331,50 @@ export function LobbyCreatePage() {
           <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
             Round Timer
           </div>
-          <div className="flex items-center justify-center gap-3">
-            <div className="flex items-center gap-2">
-              <select
-                value={timerMinutes}
-                onChange={(e) => setTimerMinutes(parseInt(e.target.value))}
-                className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
+          {/* Preset buttons */}
+          <div className="flex flex-wrap justify-center gap-2 mb-3">
+            {[60, 90, 120, 180, 300].map((seconds) => (
+              <button
+                key={seconds}
+                onClick={() => {
+                  setSelectedPreset(seconds);
+                  setCustomTimerInput('');
+                  setTimerMinutes(Math.floor(seconds / 60));
+                  setTimerSeconds(seconds % 60);
+                }}
+                className={`px-3 py-1.5 rounded-sm sports-font text-sm transition-all ${
+                  selectedPreset === seconds && !customTimerInput
+                    ? 'bg-[#d4af37] text-black font-bold'
+                    : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
+                }`}
               >
-                {[0, 1, 2, 3, 4, 5].map((min) => (
-                  <option key={min} value={min}>{min}</option>
-                ))}
-              </select>
-              <span className="text-white/40 text-sm sports-font">min</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={timerSeconds}
-                onChange={(e) => setTimerSeconds(parseInt(e.target.value))}
-                className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
-              >
-                {[0, 15, 30, 45].map((sec) => (
-                  <option key={sec} value={sec}>{sec}</option>
-                ))}
-              </select>
-              <span className="text-white/40 text-sm sports-font">sec</span>
-            </div>
+                {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+              </button>
+            ))}
+          </div>
+          {/* Custom input */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
+            <input
+              type="number"
+              value={customTimerInput}
+              onChange={(e) => {
+                setCustomTimerInput(e.target.value);
+                if (e.target.value) setSelectedPreset(null);
+              }}
+              placeholder="sec"
+              min={10}
+              max={600}
+              className="w-20 px-2 py-1.5 bg-[#111] rounded-sm border border-white/20 text-white text-center sports-font focus:outline-none focus:border-[#d4af37]"
+            />
+            {customTimerInput && (
+              <span className="text-white/50 sports-font text-sm">
+                = {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
+              </span>
+            )}
           </div>
           <div className="text-center mt-2 retro-title text-2xl text-white">
-            {timerMinutes}:{String(timerSeconds).padStart(2, '0')}
+            {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
           </div>
         </motion.div>
 

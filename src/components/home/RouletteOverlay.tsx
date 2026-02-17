@@ -18,6 +18,7 @@ import { useEffect, useState, useRef } from 'react';
 interface RouletteOverlayProps {
   winningTeam: string;
   winningYear: string;
+  winningLabel?: string; // Label for the team/division card (default: "TEAM")
   onComplete: () => void;
   sport: 'nba' | 'nfl';
   winningTeamData?: any;
@@ -26,7 +27,7 @@ interface RouletteOverlayProps {
   onReroll?: () => void; // Called when host clicks Reroll (multiplayer only)
 }
 
-export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, skipAnimation, canSkip = true, onReroll }: RouletteOverlayProps) {
+export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM', onComplete, sport, skipAnimation, canSkip = true, onReroll }: RouletteOverlayProps) {
   const [phase, setPhase] = useState<'shuffling' | 'settling' | 'dealing-1' | 'dealing-2' | 'paused' | 'countdown'>('shuffling');
   const [count, setCount] = useState(5);
   const [isMobile, setIsMobile] = useState(false);
@@ -156,7 +157,7 @@ export function RouletteOverlay({ winningTeam, winningYear, onComplete, sport, s
                    <RevealCard
                     value={winningTeam}
                     side="right"
-                    label="TEAM"
+                    label={winningLabel}
                     cardBack={cardBackImage}
                     isActive={phase === 'dealing-2' || phase === 'paused'}
                     isMobile={isMobile}

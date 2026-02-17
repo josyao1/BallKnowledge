@@ -93,6 +93,11 @@ export interface Database {
           used_nba_teams: string[];
           used_nfl_teams: string[];
           game_type: string;
+          selection_scope: string;
+          division_conference: string | null;
+          division_name: string | null;
+          used_nba_divisions: string[];
+          used_nfl_divisions: string[];
         };
         Insert: {
           id?: string;
@@ -114,6 +119,11 @@ export interface Database {
           used_nba_teams?: string[];
           used_nfl_teams?: string[];
           game_type?: string;
+          selection_scope?: string;
+          division_conference?: string | null;
+          division_name?: string | null;
+          used_nba_divisions?: string[];
+          used_nfl_divisions?: string[];
         };
         Update: {
           id?: string;
@@ -135,6 +145,11 @@ export interface Database {
           used_nba_teams?: string[];
           used_nfl_teams?: string[];
           game_type?: string;
+          selection_scope?: string;
+          division_conference?: string | null;
+          division_name?: string | null;
+          used_nba_divisions?: string[];
+          used_nfl_divisions?: string[];
         };
       };
       roll_call_entries: {
