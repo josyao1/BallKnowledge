@@ -14,12 +14,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { useGameStore } from '../stores/gameStore';
-import { fetchTeamRoster } from '../services/roster';
+import { fetchTeamRoster, fetchDivisionRosters } from '../services/roster';
 import { fetchSeasonPlayers } from '../services/api';
 import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
-import { teams } from '../data/teams';
-import { nflTeams } from '../data/nfl-teams';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode } from '../services/lobby';
+import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
+import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
+import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode, kickPlayer, renamePlayer, getStoredPlayerName } from '../services/lobby';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
@@ -48,8 +48,10 @@ export function LobbyWaitingPage() {
     startGame,
     updateSettings,
     assignTeam,
+    joinExistingLobby,
   } = useLobbyStore();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
+  const setDivisionRosters = useGameStore((state) => state.setDivisionRosters);
 
   const [isLoadingRoster, setIsLoadingRoster] = useState(false);
   const [isLoadingLobby, setIsLoadingLobby] = useState(true);
@@ -66,11 +68,22 @@ export function LobbyWaitingPage() {
   const [editSport, setEditSport] = useState<Sport>('nba');
   const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
+  const [editSelectionScope, setEditSelectionScope] = useState<'team' | 'division'>('team');
   const [editTeam, setEditTeam] = useState<GenericTeam | null>(null);
   const [editYear, setEditYear] = useState<number | null>(null);
   const [editTimer, setEditTimer] = useState(90);
+  const [editCustomTimer, setEditCustomTimer] = useState('');
   const [editMinYear, setEditMinYear] = useState(2015);
   const [editMaxYear, setEditMaxYear] = useState(2024);
+
+  // Join prompt for new players arriving via direct link
+  const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+
+  // Rename editing state (host only)
+  const [renamingPlayerId, setRenamingPlayerId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useLobbySubscription(lobby?.id || null);
 
@@ -95,7 +108,9 @@ export function LobbyWaitingPage() {
       setEditSport(lobbySport);
       setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
+      setEditSelectionScope((lobby.selection_scope as 'team' | 'division') || 'team');
       setEditTimer(lobby.timer_duration);
+      setEditCustomTimer('');
       setEditMinYear(lobby.min_year || (lobbySport === 'nfl' ? 2000 : 2015));
       setEditMaxYear(lobby.max_year || 2024);
 
@@ -174,7 +189,29 @@ export function LobbyWaitingPage() {
       let rosterPlayers: { id: number | string; name: string; position?: string; number?: string; ppg?: number; isLowScorer?: boolean; unit?: string }[] = [];
       let leaguePlayers: { id: number | string; name: string }[] = [];
 
-      if (lobbySport === 'nba') {
+      const isDivisionMode = freshLobby.selection_scope === 'division' && freshLobby.division_conference && freshLobby.division_name;
+
+      if (isDivisionMode) {
+        // Division mode: fetch all 4 teams' rosters
+        const divTeams = lobbySport === 'nba'
+          ? getNBATeamsByDivision(freshLobby.division_conference!, freshLobby.division_name!)
+          : getNFLTeamsByDivision(freshLobby.division_conference! as 'AFC' | 'NFC', freshLobby.division_name!);
+        const teamAbbrs = divTeams.map(t => t.abbreviation);
+
+        const divResult = await fetchDivisionRosters(lobbySport, teamAbbrs, freshLobby.season);
+        rosterPlayers = divResult.combined;
+        setDivisionRosters(divResult.byTeam, teamAbbrs);
+
+        // Fetch league players for autocomplete
+        if (lobbySport === 'nba') {
+          const leagueResult = await fetchSeasonPlayers(freshLobby.season);
+          if (leagueResult?.players) leaguePlayers = leagueResult.players;
+        } else {
+          const year = parseInt(freshLobby.season);
+          const leagueResult = await fetchNFLSeasonPlayers(year);
+          if (leagueResult?.players) leaguePlayers = leagueResult.players;
+        }
+      } else if (lobbySport === 'nba') {
         const result = await fetchTeamRoster(lobbyTeam.abbreviation, freshLobby.season);
         rosterPlayers = result.players;
 
@@ -269,9 +306,6 @@ export function LobbyWaitingPage() {
     if (!isHost || !lobby) return;
 
     const currentSport = lobby.sport as Sport;
-    const currentTeamList = currentSport === 'nba' ? teams : nflTeams;
-    const randomTeam = currentTeamList[Math.floor(Math.random() * currentTeamList.length)];
-
     const minYear = currentSport === 'nfl' ? Math.max(lobby.min_year || 2000, 2000) : (lobby.min_year || 2000);
     const maxYear = currentSport === 'nfl' ? Math.min(lobby.max_year || 2024, 2024) : (lobby.max_year || 2024);
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
@@ -279,10 +313,29 @@ export function LobbyWaitingPage() {
       ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
       : `${randomYear}`;
 
-    await updateSettings({
-      teamAbbreviation: randomTeam.abbreviation,
-      season: newSeason,
-    });
+    if (lobby.selection_scope === 'division') {
+      // Reroll division
+      const allDivisions = currentSport === 'nba' ? getNBADivisions() : getNFLDivisions();
+      const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
+      const divTeams = currentSport === 'nba'
+        ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+        : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+
+      await updateSettings({
+        teamAbbreviation: divTeams[0]?.abbreviation || lobby.team_abbreviation,
+        season: newSeason,
+        divisionConference: randomDiv.conference,
+        divisionName: randomDiv.division,
+      });
+    } else {
+      const currentTeamList = currentSport === 'nba' ? teams : nflTeams;
+      const randomTeam = currentTeamList[Math.floor(Math.random() * currentTeamList.length)];
+
+      await updateSettings({
+        teamAbbreviation: randomTeam.abbreviation,
+        season: newSeason,
+      });
+    }
 
     setRerollCount(prev => prev + 1);
   }, [isHost, lobby, updateSettings]);
@@ -332,14 +385,36 @@ export function LobbyWaitingPage() {
         : `${randomYear}`;
     }
 
+    // Division mode: pick a random division when scope is division
+    let divisionConference: string | null = null;
+    let divisionNameVal: string | null = null;
+
+    const finalScope = editRandomSport ? 'team' : editSelectionScope;
+    const finalGameMode = editRandomSport ? 'random' : editGameMode;
+
+    if (finalScope === 'division' && finalGameMode === 'random') {
+      const allDivisions = finalSport === 'nba' ? getNBADivisions() : getNFLDivisions();
+      const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
+      divisionConference = randomDiv.conference;
+      divisionNameVal = randomDiv.division;
+
+      const divTeams = finalSport === 'nba'
+        ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+        : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+      newTeamAbbreviation = divTeams[0]?.abbreviation || newTeamAbbreviation;
+    }
+
     await updateSettings({
       sport: finalSport,
       teamAbbreviation: newTeamAbbreviation,
       season: newSeason,
       timerDuration: editTimer,
-      gameMode: editRandomSport ? 'random' : editGameMode,
+      gameMode: finalGameMode,
       minYear: editMinYear,
       maxYear: editMaxYear,
+      selectionScope: finalScope,
+      divisionConference,
+      divisionName: divisionNameVal,
     });
 
     setShowSettings(false);
@@ -375,7 +450,51 @@ export function LobbyWaitingPage() {
     await assignTeam(playerId, nextTeam);
   };
 
+  const handleJoinFromLink = async () => {
+    if (!joinName.trim() || !lobby) return;
+    setIsJoining(true);
+    setJoinError(null);
+    const success = await joinExistingLobby(lobby, joinName.trim());
+    if (success) {
+      // Refresh players list
+      const playersResult = await getLobbyPlayers(lobby.id);
+      if (playersResult.players) {
+        setPlayers(playersResult.players);
+      }
+    } else {
+      setJoinError('Failed to join lobby');
+    }
+    setIsJoining(false);
+  };
+
+  const handleKickPlayer = async (targetPlayerId: string) => {
+    if (!isHost || !lobby) return;
+    await kickPlayer(lobby.id, targetPlayerId);
+    // Manually refresh players since realtime DELETE events may not fire
+    // when the filter column (lobby_id) isn't in the replica identity
+    const result = await getLobbyPlayers(lobby.id);
+    if (result.players) setPlayers(result.players);
+  };
+
+  const handleStartRename = (playerId: string, currentName: string) => {
+    setRenamingPlayerId(playerId);
+    setRenameValue(currentName);
+  };
+
+  const handleConfirmRename = async () => {
+    if (!isHost || !lobby || !renamingPlayerId || !renameValue.trim()) return;
+    await renamePlayer(lobby.id, renamingPlayerId, renameValue.trim());
+    setRenamingPlayerId(null);
+    setRenameValue('');
+  };
+
+  const handleCancelRename = () => {
+    setRenamingPlayerId(null);
+    setRenameValue('');
+  };
+
   const currentPlayer = players.find((p) => p.player_id === currentPlayerId);
+  const isSpectator = !isLoadingLobby && lobby && !currentPlayer;
   const allReady = players.length > 1 && players.every((p) => p.is_ready);
 
   // Get team info for the dealing animation
@@ -404,6 +523,101 @@ export function LobbyWaitingPage() {
     );
   }
 
+  // Show join prompt for players who arrived via direct link and aren't in the lobby yet
+  if (isSpectator && lobby.status === 'waiting') {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
+        />
+        <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/')}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="retro-title text-3xl text-[#d4af37]">Join Table</h1>
+              <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase">
+                {lobby.host_name}'s Game • {players.length}/{lobby.max_players} seated
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <main className="relative z-10 flex-1 max-w-md mx-auto w-full p-6 space-y-5 flex flex-col justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-black/50 border border-white/10 rounded-sm p-6 space-y-4"
+          >
+            <div className="text-center">
+              <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase mb-2">
+                {lobby.sport.toUpperCase()} Roster Challenge
+              </div>
+              <div className="retro-title text-xl text-[#d4af37] mb-1">
+                Take a Seat
+              </div>
+              <div className="sports-font text-[10px] text-white/30 tracking-wider">
+                Enter your name to join
+              </div>
+            </div>
+
+            <input
+              type="text"
+              value={joinName}
+              onChange={(e) => setJoinName(e.target.value)}
+              placeholder="Enter your name"
+              maxLength={20}
+              onKeyDown={(e) => e.key === 'Enter' && handleJoinFromLink()}
+              className="w-full p-3 bg-[#111] rounded-sm border-2 border-white/20 text-white focus:outline-none focus:border-[#d4af37] transition-colors sports-font"
+            />
+
+            {joinError && (
+              <div className="p-2 bg-red-900/30 border border-red-700 rounded-sm text-red-400 text-sm text-center sports-font">
+                {joinError}
+              </div>
+            )}
+
+            <button
+              onClick={handleJoinFromLink}
+              disabled={!joinName.trim() || isJoining}
+              className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
+            >
+              {isJoining ? 'Joining...' : 'Take a Seat'}
+            </button>
+          </motion.div>
+
+          {/* Show current players */}
+          {players.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-center space-y-2"
+            >
+              <div className="sports-font text-[10px] text-white/30 tracking-[0.3em] uppercase">
+                Already Seated
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {players.map(p => (
+                  <span key={p.player_id} className="px-3 py-1 bg-black/40 border border-white/10 rounded-sm sports-font text-sm text-white/60">
+                    {p.is_host && '★ '}{p.player_name}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
       {/* Green felt background */}
@@ -417,7 +631,12 @@ export function LobbyWaitingPage() {
         <div className="fixed inset-0 z-50">
           <RouletteOverlay
             key={rerollCount}
-            winningTeam={team.name}
+            winningTeam={
+              lobby.selection_scope === 'division' && lobby.division_conference && lobby.division_name
+                ? `${lobby.division_conference} ${lobby.division_name}`
+                : team.name
+            }
+            winningLabel={lobby.selection_scope === 'division' ? 'DIVISION' : 'TEAM'}
             winningYear={lobby.season}
             sport={sport}
             winningTeamData={team}
@@ -479,6 +698,7 @@ export function LobbyWaitingPage() {
                 <div>
                   <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
                   <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                    {lobby.selection_scope === 'division' ? 'Division Mode • ' : ''}
                     {lobby.min_year || 2000} - {lobby.max_year || 2024}
                   </div>
                 </div>
@@ -594,6 +814,32 @@ export function LobbyWaitingPage() {
                   </div>
                 )}
 
+                {/* Scope Toggle - visible when random mode and not random sport */}
+                {!editRandomSport && editGameMode === 'random' && (
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={() => setEditSelectionScope('team')}
+                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                        editSelectionScope === 'team'
+                          ? 'bg-[#d4af37] text-black'
+                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      Team
+                    </button>
+                    <button
+                      onClick={() => setEditSelectionScope('division')}
+                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                        editSelectionScope === 'division'
+                          ? 'bg-[#d4af37] text-black'
+                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      Division
+                    </button>
+                  </div>
+                )}
+
                 {/* Random sport info */}
                 {editRandomSport && (
                   <div className="text-center text-white/40 text-xs sports-font tracking-wider">
@@ -661,13 +907,16 @@ export function LobbyWaitingPage() {
                   <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
                     Timer Duration
                   </div>
-                  <div className="flex flex-wrap justify-center gap-2">
+                  <div className="flex flex-wrap justify-center gap-2 mb-2">
                     {[60, 90, 120, 180, 300].map((seconds) => (
                       <button
                         key={seconds}
-                        onClick={() => setEditTimer(seconds)}
+                        onClick={() => {
+                          setEditTimer(seconds);
+                          setEditCustomTimer('');
+                        }}
                         className={`px-3 py-1.5 rounded-lg sports-font text-sm transition-all ${
-                          editTimer === seconds
+                          editTimer === seconds && !editCustomTimer
                             ? 'bg-[#d4af37] text-black'
                             : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
                         }`}
@@ -675,6 +924,29 @@ export function LobbyWaitingPage() {
                         {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
                       </button>
                     ))}
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
+                    <input
+                      type="number"
+                      value={editCustomTimer}
+                      onChange={(e) => {
+                        setEditCustomTimer(e.target.value);
+                        if (e.target.value) {
+                          const val = Math.max(10, Math.min(600, parseInt(e.target.value) || 90));
+                          setEditTimer(val);
+                        }
+                      }}
+                      placeholder="sec"
+                      min={10}
+                      max={600}
+                      className="w-20 px-2 py-1 bg-black/50 rounded-lg border border-white/20 text-white text-center sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                    />
+                    {editCustomTimer && (
+                      <span className="text-white/50 sports-font text-sm">
+                        = {Math.floor(editTimer / 60)}:{String(editTimer % 60).padStart(2, '0')}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -724,7 +996,7 @@ export function LobbyWaitingPage() {
                       borderLeftColor: teamColor.bg,
                     } : undefined}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       {teamColor && (
                         <div
                           className="w-4 h-4 rounded-full flex-shrink-0"
@@ -732,21 +1004,80 @@ export function LobbyWaitingPage() {
                         />
                       )}
                       {player.is_host && (
-                        <span className="text-[#d4af37]" title="Host">
+                        <span className="text-[#d4af37] flex-shrink-0" title="Host">
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                           </svg>
                         </span>
                       )}
-                      <span className="font-medium text-white/90 sports-font">{player.player_name}</span>
-                      {player.player_id === currentPlayerId && (
-                        <span className="text-[10px] text-white/40 sports-font">(you)</span>
+                      {renamingPlayerId === player.player_id ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleConfirmRename();
+                              if (e.key === 'Escape') handleCancelRename();
+                            }}
+                            maxLength={20}
+                            autoFocus
+                            className="w-28 px-2 py-0.5 bg-[#111] rounded-sm border border-[#d4af37] text-white text-sm sports-font focus:outline-none"
+                          />
+                          <button
+                            onClick={handleConfirmRename}
+                            className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                            title="Confirm"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={handleCancelRename}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                            title="Cancel"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium text-white/90 sports-font truncate">{player.player_name}</span>
+                          {player.player_id === currentPlayerId && (
+                            <span className="text-[10px] text-white/40 sports-font flex-shrink-0">(you)</span>
+                          )}
+                          {/* Rename button - host only, for non-host players */}
+                          {isHost && !player.is_host && lobby.status === 'waiting' && (
+                            <button
+                              onClick={() => handleStartRename(player.player_id, player.player_name)}
+                              className="text-white/20 hover:text-[#d4af37] transition-colors flex-shrink-0"
+                              title="Rename player"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
+                          )}
+                        </>
                       )}
                       {player.is_dummy && (
-                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded">2x</span>
+                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">2x</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Kick button - host only, for non-host players */}
+                      {isHost && !player.is_host && lobby.status === 'waiting' && (
+                        <button
+                          onClick={() => handleKickPlayer(player.player_id)}
+                          className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all bg-black/40 text-red-400/60 border border-white/10 hover:border-red-500 hover:text-red-400"
+                          title="Kick player"
+                        >
+                          Kick
+                        </button>
+                      )}
                       {/* Team assignment button - host only, waiting state */}
                       {isHost && lobby.status === 'waiting' && (
                         <button

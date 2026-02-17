@@ -43,9 +43,17 @@ export function MultiplayerResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const { lobby, players, currentPlayerId, isHost, reset: resetLobby, setLobby, setPlayers } = useLobbyStore();
-  const { currentRoster, resetGame } = useGameStore();
+  const { currentRoster, divisionRosters, divisionTeams, resetGame } = useGameStore();
   const [isResetting, setIsResetting] = useState(false);
   const [showRosterBreakdown, setShowRosterBreakdown] = useState(false);
+  const [activeRosterTab, setActiveRosterTab] = useState<string | null>(null);
+
+  // Set initial tab when division teams are available
+  useEffect(() => {
+    if (divisionTeams.length > 0 && !activeRosterTab) {
+      setActiveRosterTab(divisionTeams[0]);
+    }
+  }, [divisionTeams, activeRosterTab]);
   const hasNavigated = useRef(false);
   const hasIncrementedWins = useRef(false);
 
@@ -373,7 +381,9 @@ export function MultiplayerResultsPage() {
             Final Score
           </h1>
           <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase mt-1">
-            {lobby.team_abbreviation} • {lobby.season}
+            {lobby.selection_scope === 'division' && lobby.division_conference && lobby.division_name
+              ? `${lobby.division_conference} ${lobby.division_name} • ${lobby.season}`
+              : `${lobby.team_abbreviation} • ${lobby.season}`}
           </p>
         </div>
       </header>
@@ -714,12 +724,36 @@ export function MultiplayerResultsPage() {
                   })}
                 </div>
 
+                {/* Division tabs */}
+                {divisionTeams.length > 0 && (
+                  <div className="flex gap-1 mb-3 justify-center flex-wrap">
+                    {divisionTeams.map(abbr => (
+                      <button
+                        key={abbr}
+                        onClick={() => setActiveRosterTab(abbr)}
+                        className={`px-3 py-1.5 rounded-sm sports-font text-xs tracking-wider transition-all ${
+                          activeRosterTab === abbr
+                            ? 'bg-[#d4af37] text-black font-bold'
+                            : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
+                        }`}
+                      >
+                        {abbr}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Roster Grid */}
                 <div className="sports-font text-[10px] text-white/40 mb-3 tracking-[0.3em] uppercase text-center">
-                  Full Roster ({currentRoster.length} players)
+                  {divisionTeams.length > 0 && activeRosterTab
+                    ? `${activeRosterTab} Roster (${(divisionRosters[activeRosterTab] || []).length} players)`
+                    : `Full Roster (${currentRoster.length} players)`}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                  {currentRoster.map((rosterPlayer) => {
+                  {(divisionTeams.length > 0 && activeRosterTab
+                    ? (divisionRosters[activeRosterTab] || [])
+                    : currentRoster
+                  ).map((rosterPlayer) => {
                     const guessers = rosterBreakdown.breakdown.get(rosterPlayer.name) || [];
                     const wasGuessed = guessers.length > 0;
 

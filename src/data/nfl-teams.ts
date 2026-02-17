@@ -314,3 +314,16 @@ export function getNFLTeamsByConference(conference: 'AFC' | 'NFC'): NFLTeam[] {
 export function getNFLTeamsByDivision(conference: 'AFC' | 'NFC', division: string): NFLTeam[] {
   return nflTeams.filter(t => t.conference === conference && t.division === division);
 }
+
+export function getNFLDivisions(): { conference: string; division: string }[] {
+  const seen = new Set<string>();
+  const result: { conference: string; division: string }[] = [];
+  for (const t of nflTeams) {
+    const key = `${t.conference}_${t.division}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push({ conference: t.conference, division: t.division });
+    }
+  }
+  return result;
+}

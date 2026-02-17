@@ -8,6 +8,7 @@
 
 import { rosters, getAllPlayers, getAvailableSeasons as getSeasons, getTeamsWithSeason } from '../data/rosters';
 import { fetchRosterFromApi, isApiAvailable } from './api';
+import { fetchNFLRosterFromApi } from './nfl-api';
 import type { Player } from '../types';
 
 /**
@@ -90,4 +91,64 @@ export function getAllTeamsWithData(): string[] {
  */
 export function hasStaticData(teamAbbreviation: string, season: string): boolean {
   return hasRosterData(teamAbbreviation, season);
+}
+
+interface GenericPlayer {
+  id: number | string;
+  name: string;
+  position?: string;
+  number?: string;
+  ppg?: number;
+  isLowScorer?: boolean;
+  unit?: string;
+}
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Fetch rosters for all teams in a division (4 teams).
+ * Fetches sequentially with 300ms delay between each to avoid rate limiting.
+ * On failure, retries once after 500ms.
+ */
+export async function fetchDivisionRosters(
+  sport: string,
+  teamAbbreviations: string[],
+  season: string
+): Promise<{ combined: GenericPlayer[]; byTeam: Record<string, GenericPlayer[]> }> {
+  const byTeam: Record<string, GenericPlayer[]> = {};
+  const combined: GenericPlayer[] = [];
+
+  for (let i = 0; i < teamAbbreviations.length; i++) {
+    const abbr = teamAbbreviations[i];
+    if (i > 0) await delay(300);
+
+    let players: GenericPlayer[] = [];
+    try {
+      players = await fetchSingleTeamRoster(sport, abbr, season);
+    } catch {
+      // Retry once after 500ms
+      await delay(500);
+      try {
+        players = await fetchSingleTeamRoster(sport, abbr, season);
+      } catch (retryErr) {
+        console.error(`Failed to fetch roster for ${abbr} after retry:`, retryErr);
+      }
+    }
+
+    byTeam[abbr] = players;
+    combined.push(...players);
+  }
+
+  return { combined, byTeam };
+}
+
+async function fetchSingleTeamRoster(sport: string, abbr: string, season: string): Promise<GenericPlayer[]> {
+  if (sport === 'nba') {
+    const result = await fetchTeamRoster(abbr, season);
+    return result.players;
+  } else {
+    const year = parseInt(season);
+    const result = await fetchNFLRosterFromApi(abbr, year);
+    return result?.players || [];
+  }
 }

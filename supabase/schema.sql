@@ -179,3 +179,12 @@ CREATE POLICY "Anyone can leave lobbies"
 -- Enable realtime for lobby tables
 ALTER PUBLICATION supabase_realtime ADD TABLE lobbies;
 ALTER PUBLICATION supabase_realtime ADD TABLE lobby_players;
+
+-- ============================================================================
+-- DIVISION MODE MIGRATION
+-- ============================================================================
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS selection_scope TEXT NOT NULL DEFAULT 'team';
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS division_conference TEXT;
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS division_name TEXT;
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS used_nba_divisions TEXT[] DEFAULT '{}';
+ALTER TABLE lobbies ADD COLUMN IF NOT EXISTS used_nfl_divisions TEXT[] DEFAULT '{}';

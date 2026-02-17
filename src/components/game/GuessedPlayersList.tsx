@@ -19,6 +19,7 @@ interface GuessedPlayersListProps {
   incorrectGuesses: string[];
   pendingGuesses?: string[];
   hideResults?: boolean;
+  uniqueGuessNames?: Set<string>;
 }
 
 export function GuessedPlayersList({
@@ -26,6 +27,7 @@ export function GuessedPlayersList({
   incorrectGuesses,
   pendingGuesses = [],
   hideResults = false,
+  uniqueGuessNames,
 }: GuessedPlayersListProps) {
   // Casino chip styles
   const chipBase = "px-3 py-1.5 rounded-sm shadow-[2px_2px_0px_rgba(0,0,0,0.5)] sports-font text-[11px] font-bold uppercase tracking-wider";
@@ -76,9 +78,14 @@ export function GuessedPlayersList({
                   initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
                   animate={{ opacity: 1, scale: 1, rotate: 0 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className={`${chipBase} bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black border-b-2 border-[#a89860]`}
+                  className={`${chipBase} bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black border-b-2 border-[#a89860] relative`}
                 >
                   {player.name}
+                  {uniqueGuessNames && uniqueGuessNames.has(player.name) && (
+                    <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
+                      +1
+                    </span>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
