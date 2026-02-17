@@ -315,6 +315,11 @@ export function HomePage() {
                 <button onClick={handleStartGame} disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)} className="retro-btn retro-btn-gold px-10 py-3 text-lg disabled:opacity-50">Start Solo</button>
                 <button onClick={() => navigate('/lobby/create')} className={`px-5 py-3 rounded-lg sports-font border-2 text-sm transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#013369] text-[#013369] hover:bg-[#013369] hover:text-white'}`}>Create Lobby</button>
                 <button onClick={() => navigate('/lobby/join')} className="px-5 py-3 rounded-lg sports-font border-2 border-[#3d3d3d] text-[#888] hover:border-[#555] text-sm">Join Lobby</button>
+<<<<<<< HEAD
+=======
+                <button onClick={() => navigate('/career')} className={`px-5 py-3 rounded-lg sports-font border-2 text-sm transition-all ${sport === 'nba' ? 'border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-black' : 'border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-black'}`}>Career Mode</button>
+
+>>>>>>> 29684ec57421863545d46090997c3436c102757a
               </div>
             </div>
           ) : (
