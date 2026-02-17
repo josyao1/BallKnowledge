@@ -13,6 +13,9 @@ import { LobbyCreatePage } from './pages/LobbyCreatePage';
 import { LobbyJoinPage } from './pages/LobbyJoinPage';
 import { LobbyWaitingPage } from './pages/LobbyWaitingPage';
 import { MultiplayerResultsPage } from './pages/MultiplayerResultsPage';
+import { RollCallCreatePage } from './pages/RollCallCreatePage';
+import { RollCallSessionPage } from './pages/RollCallSessionPage';
+import { RollCallResultsPage } from './pages/RollCallResultsPage';
 
 function App() {
   return (
@@ -27,6 +30,12 @@ function App() {
         <Route path="/lobby/join/:code" element={<LobbyJoinPage />} />
         <Route path="/lobby/:code" element={<LobbyWaitingPage />} />
         <Route path="/lobby/:code/results" element={<MultiplayerResultsPage />} />
+        {/* Roll Call routes */}
+        <Route path="/roll-call/create" element={<RollCallCreatePage />} />
+        <Route path="/roll-call/join" element={<LobbyJoinPage />} />
+        <Route path="/roll-call/join/:code" element={<LobbyJoinPage />} />
+        <Route path="/roll-call/:code" element={<RollCallSessionPage />} />
+        <Route path="/roll-call/:code/results" element={<RollCallResultsPage />} />
       </Routes>
     </BrowserRouter>
   );

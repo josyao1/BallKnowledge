@@ -51,7 +51,8 @@ export async function createLobby(
   timerDuration: number = 90,
   gameMode: 'random' | 'manual' = 'manual',
   minYear: number = 2015,
-  maxYear: number = 2024
+  maxYear: number = 2024,
+  gameType: string = 'roster'
 ): Promise<{ lobby: Lobby; error: null } | { lobby: null; error: string }> {
   if (!supabase) {
     return { lobby: null, error: 'Multiplayer not available' };
@@ -76,6 +77,7 @@ export async function createLobby(
       min_year: minYear,
       max_year: maxYear,
       status: 'waiting',
+      game_type: gameType,
     };
 
     const { data: lobby, error } = await supabase

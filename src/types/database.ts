@@ -92,6 +92,7 @@ export interface Database {
           finished_at: string | null;
           used_nba_teams: string[];
           used_nfl_teams: string[];
+          game_type: string;
         };
         Insert: {
           id?: string;
@@ -112,6 +113,7 @@ export interface Database {
           finished_at?: string | null;
           used_nba_teams?: string[];
           used_nfl_teams?: string[];
+          game_type?: string;
         };
         Update: {
           id?: string;
@@ -132,6 +134,62 @@ export interface Database {
           finished_at?: string | null;
           used_nba_teams?: string[];
           used_nfl_teams?: string[];
+          game_type?: string;
+        };
+      };
+      roll_call_entries: {
+        Row: {
+          id: string;
+          lobby_id: string;
+          player_id: string;
+          player_name: string;
+          entry_text: string;
+          submitted_at: string;
+        };
+        Insert: {
+          id?: string;
+          lobby_id: string;
+          player_id: string;
+          player_name: string;
+          entry_text: string;
+          submitted_at?: string;
+        };
+        Update: {
+          id?: string;
+          lobby_id?: string;
+          player_id?: string;
+          player_name?: string;
+          entry_text?: string;
+          submitted_at?: string;
+        };
+      };
+      roll_call_merges: {
+        Row: {
+          id: string;
+          lobby_id: string;
+          suggestion_key: string;
+          entry_ids: string[];
+          canonical: string;
+          is_dismissed: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lobby_id: string;
+          suggestion_key: string;
+          entry_ids: string[];
+          canonical: string;
+          is_dismissed?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lobby_id?: string;
+          suggestion_key?: string;
+          entry_ids?: string[];
+          canonical?: string;
+          is_dismissed?: boolean;
+          created_at?: string;
         };
       };
       lobby_players: {
@@ -222,3 +280,9 @@ export type LobbyPlayer = Database['public']['Tables']['lobby_players']['Row'];
 export type LobbyPlayerInsert = Database['public']['Tables']['lobby_players']['Insert'];
 export type LobbyPlayerUpdate = Database['public']['Tables']['lobby_players']['Update'];
 export type LobbyStatus = Lobby['status'];
+
+// Roll Call types
+export type RollCallEntry = Database['public']['Tables']['roll_call_entries']['Row'];
+export type RollCallEntryInsert = Database['public']['Tables']['roll_call_entries']['Insert'];
+export type RollCallMerge = Database['public']['Tables']['roll_call_merges']['Row'];
+export type RollCallMergeInsert = Database['public']['Tables']['roll_call_merges']['Insert'];

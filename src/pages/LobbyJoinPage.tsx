@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
-import { getStoredPlayerName } from '../services/lobby';
+import { getStoredPlayerName, findLobbyByCode } from '../services/lobby';
 
 export function LobbyJoinPage() {
   const navigate = useNavigate();
@@ -31,7 +31,13 @@ export function LobbyJoinPage() {
 
     const success = await joinLobbyByCode(joinCode, playerName.trim());
     if (success) {
-      navigate(`/lobby/${joinCode}`);
+      // Check game type to route to the right page
+      const lobbyResult = await findLobbyByCode(joinCode);
+      if (lobbyResult.lobby?.game_type === 'roll_call') {
+        navigate(`/roll-call/${joinCode}`);
+      } else {
+        navigate(`/lobby/${joinCode}`);
+      }
     }
   };
 
