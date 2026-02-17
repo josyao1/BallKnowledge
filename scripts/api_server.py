@@ -23,7 +23,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from nba_api.stats.static import teams as nba_teams
-from nba_api.stats.endpoints import CommonTeamRoster, LeagueDashPlayerStats, CommonAllPlayers, LeagueStandingsV3
+from nba_api.stats.endpoints import CommonTeamRoster, LeagueDashPlayerStats, CommonAllPlayers, LeagueStandingsV3, PlayerCareerStats
+from nba_api.stats.endpoints import commonplayerinfo as CommonPlayerInfoModule
 
 # ============================================================================
 # Configuration
@@ -679,6 +680,248 @@ async def get_team_record(team: str, season: str):
     save_record_to_cache(team, season, record_data)
 
     return TeamRecordResponse(**record_data, cached=False)
+
+# ============================================================================
+# Career Mode Endpoints
+# ============================================================================
+
+# In-memory cache for career data
+_career_cache: dict[int, dict] = {}
+
+# Cached eligible NBA career players
+_nba_career_eligible: list[dict] | None = None
+
+
+def _build_nba_eligible() -> list[dict]:
+    """Build and cache the list of NBA players eligible for Career Mode.
+
+    Criteria:
+      - 5+ seasons in the league
+      - Averaged 10+ PPG in at least one season (recognizable player)
+      - Active from 1980 onward (modern era)
+
+    Uses LeagueDashPlayerStats across sampled seasons to build a set of
+    player IDs with 10+ PPG, then cross-references with CommonAllPlayers
+    for the career-length filter. Only a handful of API calls total.
+    """
+    global _nba_career_eligible
+    if _nba_career_eligible is not None:
+        return _nba_career_eligible
+
+    try:
+        # Step 1: Gather player IDs who scored 10+ PPG in any season
+        # Sample seasons from 1985 to 2024 (every 2 years to keep API calls manageable)
+        productive_ids: dict[int, str] = {}  # player_id -> player_name
+        sample_seasons = [f"{y}-{str(y+1)[-2:]}" for y in range(1985, 2025, 2)]
+
+        print(f"Career mode: scanning {len(sample_seasons)} seasons for productive NBA players...")
+        for season in sample_seasons:
+            try:
+                stats = LeagueDashPlayerStats(
+                    season=season,
+                    per_mode_detailed="PerGame",
+                    season_type_all_star="Regular Season"
+                )
+                time.sleep(REQUEST_DELAY)
+                sdf = stats.get_data_frames()[0]
+
+                name_col = "PLAYER_NAME" if "PLAYER_NAME" in sdf.columns else "PLAYER"
+                for _, row in sdf.iterrows():
+                    try:
+                        pts = float(row.get("PTS", 0) or 0)
+                        if pts >= 10.0:
+                            pid = int(row["PLAYER_ID"])
+                            productive_ids[pid] = row.get(name_col, "")
+                    except (ValueError, TypeError):
+                        continue
+            except Exception as e:
+                print(f"  Skipping season {season}: {e}")
+                continue
+
+        print(f"Career mode: found {len(productive_ids)} productive player IDs")
+
+        # Step 2: Get all players and filter to 5+ seasons + in productive set
+        all_players = CommonAllPlayers(is_only_current_season=0)
+        time.sleep(REQUEST_DELAY)
+        df = all_players.get_data_frames()[0]
+
+        eligible = []
+        for _, row in df.iterrows():
+            try:
+                from_year = int(row.get("FROM_YEAR", 0))
+                to_year = int(row.get("TO_YEAR", 0))
+                if to_year - from_year < 4:
+                    continue
+                if to_year < 1980:
+                    continue
+                player_id = int(row.get("PERSON_ID", 0))
+                if player_id not in productive_ids:
+                    continue
+                player_name = row.get("DISPLAY_FIRST_LAST", "") or productive_ids.get(player_id, "")
+                if player_id and player_name:
+                    eligible.append({
+                        "player_id": player_id,
+                        "player_name": player_name,
+                    })
+            except (ValueError, TypeError):
+                continue
+
+        print(f"Career mode: {len(eligible)} eligible NBA players")
+        _nba_career_eligible = eligible
+        return eligible
+    except Exception as e:
+        print(f"Error building NBA career eligible list: {e}")
+        return []
+
+
+@app.get("/career/random")
+async def get_random_career_player():
+    """Pick a random NBA player with 5+ seasons and meaningful stats for Career Mode."""
+    import random
+
+    try:
+        eligible = _build_nba_eligible()
+
+        if not eligible:
+            raise HTTPException(status_code=404, detail="No eligible players found")
+
+        chosen = random.choice(eligible)
+        return chosen
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error finding random career player: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/career/{player_id}")
+async def get_career_stats(player_id: int):
+    """Get full career stats for a player (Career Mode)."""
+
+    # Check cache
+    if player_id in _career_cache:
+        return _career_cache[player_id]
+
+    try:
+        # Fetch career stats
+        career = PlayerCareerStats(player_id=player_id, per_mode36="PerGame")
+        time.sleep(REQUEST_DELAY)
+        dfs = career.get_data_frames()
+        season_df = dfs[0]  # SeasonTotalsRegularSeason
+
+        if season_df.empty:
+            raise HTTPException(status_code=404, detail=f"No career data for player {player_id}")
+
+        import math
+
+        def safe_float(val, decimals=1):
+            try:
+                if val is None:
+                    return 0.0
+                f = float(val)
+                if math.isnan(f) or math.isinf(f):
+                    return 0.0
+                return round(f, decimals)
+            except (ValueError, TypeError):
+                return 0.0
+
+        def safe_int(val):
+            try:
+                if val is None:
+                    return 0
+                f = float(val)
+                if math.isnan(f) or math.isinf(f):
+                    return 0
+                return int(f)
+            except (ValueError, TypeError):
+                return 0
+
+        # Merge multi-team seasons into a single row:
+        #   - Team column becomes "LAC/DET"
+        #   - Counting stats (GP, PTS, REB, etc.) use the TOT row if available
+        #   - Per-game averages and percentages come from the TOT row
+        #   - If no TOT row exists, just keep the single row as-is
+        COUNT_STATS = ["GP"]
+        PER_GAME_STATS = ["MIN", "PTS", "REB", "AST", "STL", "BLK"]
+        PCT_STATS = ["FG_PCT", "FG3_PCT"]
+
+        seasons = []
+        for season_id, group in season_df.groupby("SEASON_ID", sort=False):
+            tot_rows = group[group["TEAM_ABBREVIATION"] == "TOT"]
+            team_rows = group[group["TEAM_ABBREVIATION"] != "TOT"]
+
+            if len(team_rows) <= 1 and tot_rows.empty:
+                # Single-team season, no trade
+                row = group.iloc[0]
+                seasons.append({
+                    "season": row.get("SEASON_ID", ""),
+                    "team": row.get("TEAM_ABBREVIATION", "???"),
+                    "gp": safe_int(row.get("GP")),
+                    "min": safe_float(row.get("MIN")),
+                    "pts": safe_float(row.get("PTS")),
+                    "reb": safe_float(row.get("REB")),
+                    "ast": safe_float(row.get("AST")),
+                    "stl": safe_float(row.get("STL")),
+                    "blk": safe_float(row.get("BLK")),
+                    "fg_pct": safe_float(row.get("FG_PCT"), 3),
+                    "fg3_pct": safe_float(row.get("FG3_PCT"), 3),
+                })
+            else:
+                # Multi-team season — combine team names, use TOT row for stats
+                team_names = "/".join(team_rows["TEAM_ABBREVIATION"].tolist()) if not team_rows.empty else "???"
+                # Use the TOT row for aggregate stats; fall back to summing team rows
+                if not tot_rows.empty:
+                    src = tot_rows.iloc[0]
+                else:
+                    src = team_rows.iloc[0]  # shouldn't happen, but safe fallback
+
+                seasons.append({
+                    "season": str(season_id),
+                    "team": team_names,
+                    "gp": safe_int(src.get("GP")),
+                    "min": safe_float(src.get("MIN")),
+                    "pts": safe_float(src.get("PTS")),
+                    "reb": safe_float(src.get("REB")),
+                    "ast": safe_float(src.get("AST")),
+                    "stl": safe_float(src.get("STL")),
+                    "blk": safe_float(src.get("BLK")),
+                    "fg_pct": safe_float(src.get("FG_PCT"), 3),
+                    "fg3_pct": safe_float(src.get("FG3_PCT"), 3),
+                })
+
+        # Fetch player bio info
+        bio = {"height": "", "weight": 0, "school": "", "exp": 0, "draft_year": 0}
+        try:
+            player_info = CommonPlayerInfoModule.CommonPlayerInfo(player_id=player_id)
+            time.sleep(REQUEST_DELAY)
+            info_df = player_info.get_data_frames()[0]
+            if not info_df.empty:
+                row = info_df.iloc[0]
+                bio["height"] = row.get("HEIGHT", "")
+                bio["weight"] = int(row.get("WEIGHT", 0)) if row.get("WEIGHT") else 0
+                bio["school"] = row.get("SCHOOL", "") or ""
+                bio["exp"] = int(row.get("SEASON_EXP", 0)) if row.get("SEASON_EXP") else 0
+                bio["draft_year"] = int(row.get("DRAFT_YEAR", 0)) if row.get("DRAFT_YEAR") and str(row.get("DRAFT_YEAR")).isdigit() else 0
+        except Exception as e:
+            print(f"Warning: Could not fetch bio for player {player_id}: {e}")
+
+        result = {
+            "player_id": player_id,
+            "seasons": seasons,
+            "bio": bio,
+        }
+
+        # Cache result
+        _career_cache[player_id] = result
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching career stats for {player_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ============================================================================
 # Main
