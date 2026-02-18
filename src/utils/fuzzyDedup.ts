@@ -76,6 +76,15 @@ function areSimilar(normA: string, normB: string): boolean {
   return false;
 }
 
+/**
+ * Returns true if two raw name strings are similar enough to be considered
+ * the same player. Used in career mode answer validation to allow typos and
+ * partial names (e.g. "Michael Pittman" matching "Michael Pittman Jr").
+ */
+export function areSimilarNames(a: string, b: string): boolean {
+  return areSimilar(normalize(a), normalize(b));
+}
+
 // --- Suggestion generation ---
 
 /** Build a stable key for a set of entry IDs (sorted + joined). */

@@ -167,16 +167,21 @@ export async function fetchNFLSeasonPlayers(
 /**
  * Career Mode: Fetch a random NFL player with 5+ seasons
  */
-export async function fetchNFLRandomCareerPlayer(position?: string): Promise<{
+export async function fetchNFLRandomCareerPlayer(
+  position?: string,
+  filters?: { careerFrom?: number; careerTo?: number }
+): Promise<{
   player_id: string;
   player_name: string;
   position: string;
 } | null> {
   try {
-    const url = position
-      ? `${NFL_API_BASE_URL}/nfl/career/random?position=${position}`
-      : `${NFL_API_BASE_URL}/nfl/career/random`;
-    const response = await fetch(url);
+    const params = new URLSearchParams();
+    if (position) params.set('position', position);
+    if (filters?.careerFrom) params.set('career_from', String(filters.careerFrom));
+    if (filters?.careerTo) params.set('career_to', String(filters.careerTo));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${NFL_API_BASE_URL}/nfl/career/random${qs}`);
     if (!response.ok) return null;
     return await response.json();
   } catch (error) {

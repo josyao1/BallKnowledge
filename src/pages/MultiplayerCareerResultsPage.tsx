@@ -6,18 +6,28 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, resetMatchForPlayAgain } from '../services/lobby';
 
+interface RoundSummary {
+  answer: string;
+  round: number;
+  scores: Record<string, number>;
+  finishedAt: Record<string, string | null>;
+}
+
 export function MultiplayerCareerResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
+  const location = useLocation();
   const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } = useLobbyStore();
   const [isLeaving, setIsLeaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+
+  const roundHistory: RoundSummary[] = (location.state as any)?.roundHistory ?? [];
 
   useLobbySubscription(lobby?.id || null);
 
@@ -52,8 +62,8 @@ export function MultiplayerCareerResultsPage() {
   const handlePlayAgain = async () => {
     if (!lobby || !isHost) return;
     setIsResetting(true);
-    const winTarget = (lobby.career_state as any)?.win_target || 3;
-    await resetMatchForPlayAgain(lobby.id, winTarget);
+    const cs = (lobby.career_state as any) || {};
+    await resetMatchForPlayAgain(lobby.id, cs.win_target || 3, cs.career_from || 0, cs.career_to || 0);
     navigate(`/lobby/${code}`);
   };
 
@@ -167,6 +177,90 @@ export function MultiplayerCareerResultsPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Round-by-round history */}
+      {roundHistory.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="max-w-md mx-auto w-full mb-8"
+        >
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
+            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
+              Round History
+            </div>
+            <div className="space-y-3">
+              {roundHistory.map((round) => {
+                const topScore = Math.max(0, ...players.map(p => round.scores[p.player_id] ?? 0));
+                const topScorers = topScore > 0 ? players.filter(p => (round.scores[p.player_id] ?? 0) === topScore) : [];
+                const isTiebreaker = topScorers.length > 1 && topScorers.every(p => round.finishedAt[p.player_id]);
+                const sortedTopScorers = isTiebreaker
+                  ? [...topScorers].sort((a, b) =>
+                      new Date(round.finishedAt[a.player_id]!).getTime() - new Date(round.finishedAt[b.player_id]!).getTime()
+                    )
+                  : topScorers;
+                const roundWinnerId = sortedTopScorers[0]?.player_id;
+                const timeDiffMs = isTiebreaker && sortedTopScorers.length >= 2
+                  ? new Date(round.finishedAt[sortedTopScorers[1].player_id]!).getTime() -
+                    new Date(round.finishedAt[sortedTopScorers[0].player_id]!).getTime()
+                  : 0;
+
+                return (
+                  <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
+                    {/* Round header */}
+                    <div className="flex items-center justify-between px-3 py-2 bg-[#111]">
+                      <span className="sports-font text-[10px] text-[#666] tracking-wider uppercase">Round {round.round}</span>
+                      <span className="sports-font text-xs text-[var(--vintage-cream)]">{round.answer}</span>
+                    </div>
+                    {/* Player rows */}
+                    <div className="divide-y divide-[#222]">
+                      {[...players]
+                        .sort((a, b) => (round.scores[b.player_id] ?? 0) - (round.scores[a.player_id] ?? 0))
+                        .map(player => {
+                          const score = round.scores[player.player_id] ?? 0;
+                          const isMe = player.player_id === currentPlayerId;
+                          const isWinner = player.player_id === roundWinnerId && topScore > 0;
+                          const gotIt = score > 0;
+                          return (
+                            <div
+                              key={player.player_id}
+                              className={`flex items-center justify-between px-3 py-2 ${isMe ? 'bg-[#d4af37]/5' : ''}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className={`sports-font text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
+                                  {player.player_name}
+                                  {isMe && <span className="text-white/30 ml-1">(you)</span>}
+                                </span>
+                                {isWinner && (
+                                  <span className="sports-font text-[9px] text-[#d4af37]">
+                                    {isTiebreaker ? '⚡' : '★'}
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`retro-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
+                                {gotIt ? score : '—'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                    {/* Tiebreaker note */}
+                    {isTiebreaker && timeDiffMs > 0 && (
+                      <div className="px-3 py-1.5 bg-[#0a0a0a] text-center sports-font text-[9px] text-[#666]">
+                        {players.find(p => p.player_id === roundWinnerId)?.player_name} won by{' '}
+                        <span className="text-[#d4af37]">
+                          {timeDiffMs < 1000 ? `${timeDiffMs}ms` : `${(timeDiffMs / 1000).toFixed(1)}s`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Actions */}
       <motion.div

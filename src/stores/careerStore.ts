@@ -7,6 +7,7 @@
  */
 
 import { create } from 'zustand';
+import { areSimilarNames } from '../utils/fuzzyDedup';
 import type { Sport } from '../types';
 
 export interface CareerSeason {
@@ -49,6 +50,7 @@ interface CareerGameState {
   status: 'idle' | 'playing' | 'won' | 'lost';
   yearsRevealed: boolean;
   bioRevealed: boolean;
+  initialsRevealed: boolean;
   guesses: string[];
   score: number;
 
@@ -56,20 +58,12 @@ interface CareerGameState {
   initGame: (data: CareerGameData, sport: Sport) => void;
   revealYears: () => void;
   revealBio: () => void;
+  revealInitials: () => void;
   giveUp: () => void;
   makeGuess: (name: string) => { correct: boolean };
   resetGame: () => void;
 }
 
-function normalizeCareerName(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z\s]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 export const useCareerStore = create<CareerGameState>((set, get) => ({
   playerId: '',
@@ -82,6 +76,7 @@ export const useCareerStore = create<CareerGameState>((set, get) => ({
   status: 'idle',
   yearsRevealed: false,
   bioRevealed: false,
+  initialsRevealed: false,
   guesses: [],
   score: 20,
 
@@ -96,6 +91,7 @@ export const useCareerStore = create<CareerGameState>((set, get) => ({
       status: 'playing',
       yearsRevealed: false,
       bioRevealed: false,
+      initialsRevealed: false,
       guesses: [],
       score: 20,
     });
@@ -125,6 +121,18 @@ export const useCareerStore = create<CareerGameState>((set, get) => ({
     }
   },
 
+  revealInitials: () => {
+    const state = get();
+    if (state.status !== 'playing' || state.initialsRevealed) return;
+
+    const newScore = Math.max(0, state.score - 10);
+    set({ initialsRevealed: true, score: newScore });
+
+    if (newScore === 0) {
+      set({ status: 'lost' });
+    }
+  },
+
   giveUp: () => {
     const state = get();
     if (state.status !== 'playing') return;
@@ -135,10 +143,7 @@ export const useCareerStore = create<CareerGameState>((set, get) => ({
     const state = get();
     if (state.status !== 'playing') return { correct: false };
 
-    const normalizedGuess = normalizeCareerName(name);
-    const normalizedAnswer = normalizeCareerName(state.playerName);
-
-    if (normalizedGuess === normalizedAnswer) {
+    if (areSimilarNames(name, state.playerName)) {
       set({ status: 'won' });
       return { correct: true };
     }
@@ -167,6 +172,7 @@ export const useCareerStore = create<CareerGameState>((set, get) => ({
       status: 'idle',
       yearsRevealed: false,
       bioRevealed: false,
+      initialsRevealed: false,
       guesses: [],
       score: 20,
     });

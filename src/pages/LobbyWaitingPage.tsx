@@ -50,6 +50,7 @@ export function LobbyWaitingPage() {
     updateSettings,
     assignTeam,
     joinExistingLobby,
+    updateCareerState,
   } = useLobbyStore();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
   const setDivisionRosters = useGameStore((state) => state.setDivisionRosters);
@@ -66,6 +67,7 @@ export function LobbyWaitingPage() {
 
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
+  const [editGameType, setEditGameType] = useState<'roster' | 'career'>('roster');
   const [editSport, setEditSport] = useState<Sport>('nba');
   const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
@@ -76,6 +78,9 @@ export function LobbyWaitingPage() {
   const [editCustomTimer, setEditCustomTimer] = useState('');
   const [editMinYear, setEditMinYear] = useState(2015);
   const [editMaxYear, setEditMaxYear] = useState(2024);
+  const [editWinTarget, setEditWinTarget] = useState(3);
+  const [editCareerFrom, setEditCareerFrom] = useState(0);
+  const [editCareerTo, setEditCareerTo] = useState(0);
 
   // Join prompt for new players arriving via direct link
   const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
@@ -102,10 +107,11 @@ export function LobbyWaitingPage() {
     return () => clearTimeout(stuckTimeout);
   }, [isLoadingLobby, lobby]);
 
-  // Sync edit state with lobby when it changes
+  // Sync edit state with lobby when it changes (only when settings panel is closed)
   useEffect(() => {
-    if (lobby) {
+    if (lobby && !showSettings) {
       const lobbySport = lobby.sport as Sport;
+      setEditGameType((lobby.game_type as 'roster' | 'career') || 'roster');
       setEditSport(lobbySport);
       setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
@@ -114,6 +120,12 @@ export function LobbyWaitingPage() {
       setEditCustomTimer('');
       setEditMinYear(lobby.min_year || (lobbySport === 'nfl' ? 2000 : 2015));
       setEditMaxYear(lobby.max_year || 2024);
+
+      // Career state
+      const cs = (lobby.career_state as any) || {};
+      setEditWinTarget(cs.win_target || 3);
+      setEditCareerFrom(cs.career_from || 0);
+      setEditCareerTo(cs.career_to || 0);
 
       // Find team from the current lobby
       const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -126,7 +138,7 @@ export function LobbyWaitingPage() {
         setEditYear(parseInt(yearMatch[1]));
       }
     }
-  }, [lobby?.id, lobby?.sport, lobby?.game_mode, lobby?.timer_duration, lobby?.team_abbreviation, lobby?.season, lobby?.min_year, lobby?.max_year]);
+  }, [lobby?.id, lobby?.sport, lobby?.game_mode, lobby?.timer_duration, lobby?.team_abbreviation, lobby?.season, lobby?.min_year, lobby?.max_year, lobby?.game_type, lobby?.career_state, showSettings]);
 
   useEffect(() => {
     const loadLobby = async () => {
@@ -321,15 +333,19 @@ export function LobbyWaitingPage() {
 
     const sport = lobby.sport as Sport;
     try {
-      const game = await getNextGame(sport);
+      const careerState = (lobby.career_state as any) || {};
+      const careerFrom = careerState.career_from || 0;
+      const careerTo   = careerState.career_to   || 0;
+      const game = await getNextGame(sport, { careerFrom, careerTo });
       if (!game) { setIsLoadingRoster(false); return; }
 
-      const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...game.data,
         sport: game.sport,
         round: 1,
-        win_target: existingState.win_target || 3,
+        win_target: careerState.win_target || 3,
+        career_from: careerFrom,
+        career_to: careerTo,
       };
 
       await startCareerRound(lobby.id, newCareerState);
@@ -393,70 +409,92 @@ export function LobbyWaitingPage() {
   const handleApplySettings = async () => {
     if (!isHost || !lobby) return;
 
-    // Determine the sport (random picks one)
-    const finalSport: Sport = editRandomSport
-      ? (Math.random() < 0.5 ? 'nba' : 'nfl')
-      : editSport;
+    // If switching game type, update game_type column
+    if (editGameType !== lobby.game_type) {
+      await updateSettings({ gameType: editGameType });
+    }
 
-    // Get the appropriate team list for the selected sport
-    const newTeamList = finalSport === 'nba' ? teams : nflTeams;
-
-    // Determine team abbreviation
-    let newTeamAbbreviation: string;
-    let newSeason: string;
-
-    if (editGameMode === 'manual' && editTeam && !editRandomSport) {
-      // Manual mode with team selected (only if sport is not random)
-      newTeamAbbreviation = editTeam.abbreviation;
-      newSeason = finalSport === 'nba' && editYear
-        ? `${editYear}-${String(editYear + 1).slice(-2)}`
-        : editYear ? `${editYear}` : lobby.season;
+    if (editGameType === 'career') {
+      // Career mode: update career_state with win target and era filters
+      const existingState = (lobby.career_state as any) || {};
+      const newCareerState = {
+        ...existingState,
+        win_target: editWinTarget,
+        career_from: editCareerFrom,
+        career_to: editCareerTo,
+      };
+      await updateCareerState(newCareerState);
+      // Update local store immediately — don't wait for Supabase realtime to avoid
+      // a race condition where handleCareerStart reads stale career_state
+      setLobby({ ...lobby, career_state: newCareerState });
     } else {
-      // Random mode OR random sport - pick a random team
-      const randomTeam = newTeamList[Math.floor(Math.random() * newTeamList.length)];
-      newTeamAbbreviation = randomTeam.abbreviation;
+      // Roster mode: apply normal roster settings
 
-      // Pick a random year within the range
-      const minYear = finalSport === 'nfl' ? Math.max(editMinYear, 2000) : editMinYear;
-      const maxYear = finalSport === 'nfl' ? Math.min(editMaxYear, 2024) : editMaxYear;
-      const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+      // Determine the sport (random picks one)
+      const finalSport: Sport = editRandomSport
+        ? (Math.random() < 0.5 ? 'nba' : 'nfl')
+        : editSport;
 
-      newSeason = finalSport === 'nba'
-        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
-        : `${randomYear}`;
+      // Get the appropriate team list for the selected sport
+      const newTeamList = finalSport === 'nba' ? teams : nflTeams;
+
+      // Determine team abbreviation
+      let newTeamAbbreviation: string;
+      let newSeason: string;
+
+      if (editGameMode === 'manual' && editTeam && !editRandomSport) {
+        // Manual mode with team selected (only if sport is not random)
+        newTeamAbbreviation = editTeam.abbreviation;
+        newSeason = finalSport === 'nba' && editYear
+          ? `${editYear}-${String(editYear + 1).slice(-2)}`
+          : editYear ? `${editYear}` : lobby.season;
+      } else {
+        // Random mode OR random sport - pick a random team
+        const randomTeam = newTeamList[Math.floor(Math.random() * newTeamList.length)];
+        newTeamAbbreviation = randomTeam.abbreviation;
+
+        // Pick a random year within the range
+        const minYear = finalSport === 'nfl' ? Math.max(editMinYear, 2000) : editMinYear;
+        const maxYear = finalSport === 'nfl' ? Math.min(editMaxYear, 2024) : editMaxYear;
+        const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
+
+        newSeason = finalSport === 'nba'
+          ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+          : `${randomYear}`;
+      }
+
+      // Division mode: pick a random division when scope is division
+      let divisionConference: string | null = null;
+      let divisionNameVal: string | null = null;
+
+      const finalScope = editRandomSport ? 'team' : editSelectionScope;
+      const finalGameMode = editRandomSport ? 'random' : editGameMode;
+
+      if (finalScope === 'division' && finalGameMode === 'random') {
+        const allDivisions = finalSport === 'nba' ? getNBADivisions() : getNFLDivisions();
+        const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
+        divisionConference = randomDiv.conference;
+        divisionNameVal = randomDiv.division;
+
+        const divTeams = finalSport === 'nba'
+          ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+          : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+        newTeamAbbreviation = divTeams[0]?.abbreviation || newTeamAbbreviation;
+      }
+
+      await updateSettings({
+        sport: finalSport,
+        teamAbbreviation: newTeamAbbreviation,
+        season: newSeason,
+        timerDuration: editTimer,
+        gameMode: finalGameMode,
+        minYear: editMinYear,
+        maxYear: editMaxYear,
+        selectionScope: finalScope,
+        divisionConference,
+        divisionName: divisionNameVal,
+      });
     }
-
-    // Division mode: pick a random division when scope is division
-    let divisionConference: string | null = null;
-    let divisionNameVal: string | null = null;
-
-    const finalScope = editRandomSport ? 'team' : editSelectionScope;
-    const finalGameMode = editRandomSport ? 'random' : editGameMode;
-
-    if (finalScope === 'division' && finalGameMode === 'random') {
-      const allDivisions = finalSport === 'nba' ? getNBADivisions() : getNFLDivisions();
-      const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
-      divisionConference = randomDiv.conference;
-      divisionNameVal = randomDiv.division;
-
-      const divTeams = finalSport === 'nba'
-        ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
-        : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
-      newTeamAbbreviation = divTeams[0]?.abbreviation || newTeamAbbreviation;
-    }
-
-    await updateSettings({
-      sport: finalSport,
-      teamAbbreviation: newTeamAbbreviation,
-      season: newSeason,
-      timerDuration: editTimer,
-      gameMode: finalGameMode,
-      minYear: editMinYear,
-      maxYear: editMaxYear,
-      selectionScope: finalScope,
-      divisionConference,
-      divisionName: divisionNameVal,
-    });
 
     setShowSettings(false);
   };
@@ -772,7 +810,7 @@ export function LobbyWaitingPage() {
                   </div>
                 </div>
               )}
-              {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
+              {isHost && lobby.status === 'waiting' && (
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className="p-2 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
@@ -828,189 +866,268 @@ export function LobbyWaitingPage() {
                   Host Settings
                 </div>
 
-                {/* Sport Toggle */}
-                <div className="flex justify-center gap-2">
-                  {(['nba', 'nfl', 'random'] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => handleEditSportChange(s)}
-                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                        (s === 'random' && editRandomSport) || (s !== 'random' && !editRandomSport && editSport === s)
-                          ? (s === 'nba' ? 'bg-orange-500' : s === 'nfl' ? 'bg-[#013369]' : 'bg-[#d4af37]') + ' text-white'
-                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      {s === 'random' ? '?' : s.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Game Mode Toggle - hidden when random sport selected */}
-                {!editRandomSport && (
-                  <div className="flex justify-center gap-2">
-                    <button
-                      onClick={() => setEditGameMode('random')}
-                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                        editGameMode === 'random'
-                          ? 'bg-[#d4af37] text-black'
-                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      Random
-                    </button>
-                    <button
-                      onClick={() => setEditGameMode('manual')}
-                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                        editGameMode === 'manual'
-                          ? 'bg-[#d4af37] text-black'
-                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      Manual
-                    </button>
-                  </div>
-                )}
-
-                {/* Scope Toggle - visible when random mode and not random sport */}
-                {!editRandomSport && editGameMode === 'random' && (
-                  <div className="flex justify-center gap-2">
-                    <button
-                      onClick={() => setEditSelectionScope('team')}
-                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                        editSelectionScope === 'team'
-                          ? 'bg-[#d4af37] text-black'
-                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      Team
-                    </button>
-                    <button
-                      onClick={() => setEditSelectionScope('division')}
-                      className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                        editSelectionScope === 'division'
-                          ? 'bg-[#d4af37] text-black'
-                          : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                      }`}
-                    >
-                      Division
-                    </button>
-                  </div>
-                )}
-
-                {/* Random sport info */}
-                {editRandomSport && (
-                  <div className="text-center text-white/40 text-xs sports-font tracking-wider">
-                    Sport and team will be randomly selected
-                  </div>
-                )}
-
-                {/* Manual Mode: Team & Year Selection */}
-                {!editRandomSport && editGameMode === 'manual' && (
-                  <div className="space-y-3">
-                    <TeamSelector
-                      selectedTeam={editTeam}
-                      onSelect={setEditTeam}
-                      sport={editSport}
-                    />
-                    <YearSelector
-                      selectedYear={editYear}
-                      onSelect={setEditYear}
-                      minYear={editSport === 'nba' ? 1985 : 2000}
-                      maxYear={2024}
-                      sport={editSport}
-                    />
-                  </div>
-                )}
-
-                {/* Random Mode: Year Range */}
-                {(editRandomSport || editGameMode === 'random') && (
-                  <div className="bg-black/30 border border-white/10 rounded-sm p-3">
-                    <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
-                      Year Range {!editRandomSport && editSport === 'nfl' && '(2000-2024)'}
-                      {editRandomSport && '(2000-2024 for NFL)'}
-                    </div>
-                    <div className="flex items-center justify-center gap-3">
-                      <select
-                        value={editMinYear}
-                        onChange={(e) => setEditMinYear(parseInt(e.target.value))}
-                        className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
-                      >
-                        {Array.from(
-                          { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
-                          (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
-                        ).map((y) => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                      <span className="text-white/40 sports-font">to</span>
-                      <select
-                        value={editMaxYear}
-                        onChange={(e) => setEditMaxYear(parseInt(e.target.value))}
-                        className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
-                      >
-                        {Array.from(
-                          { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
-                          (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
-                        ).map((y) => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Timer Selection */}
-                <div className="bg-black/30 border border-white/10 rounded-sm p-3">
-                  <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
-                    Timer Duration
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2 mb-2">
-                    {[60, 90, 120, 180, 300].map((seconds) => (
+                {/* Mode Toggle */}
+                <div>
+                  <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Mode</div>
+                  <div className="flex gap-2">
+                    {(['roster', 'career'] as const).map(m => (
                       <button
-                        key={seconds}
-                        onClick={() => {
-                          setEditTimer(seconds);
-                          setEditCustomTimer('');
-                        }}
-                        className={`px-3 py-1.5 rounded-lg sports-font text-sm transition-all ${
-                          editTimer === seconds && !editCustomTimer
+                        key={m}
+                        onClick={() => setEditGameType(m)}
+                        className={`flex-1 py-2 rounded-sm sports-font text-xs uppercase tracking-wider transition-all ${
+                          editGameType === m
                             ? 'bg-[#d4af37] text-black'
                             : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
                         }`}
                       >
-                        {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+                        {m === 'roster' ? 'Roster' : 'Career Arc'}
                       </button>
                     ))}
                   </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
-                    <input
-                      type="number"
-                      value={editCustomTimer}
-                      onChange={(e) => {
-                        setEditCustomTimer(e.target.value);
-                        if (e.target.value) {
-                          const val = Math.max(10, Math.min(600, parseInt(e.target.value) || 90));
-                          setEditTimer(val);
-                        }
-                      }}
-                      placeholder="sec"
-                      min={10}
-                      max={600}
-                      className="w-20 px-2 py-1 bg-black/50 rounded-lg border border-white/20 text-white text-center sports-font text-sm focus:outline-none focus:border-[#d4af37]"
-                    />
-                    {editCustomTimer && (
-                      <span className="text-white/50 sports-font text-sm">
-                        = {Math.floor(editTimer / 60)}:{String(editTimer % 60).padStart(2, '0')}
-                      </span>
-                    )}
-                  </div>
                 </div>
+
+                {editGameType === 'career' ? (
+                  <>
+                    {/* Win Target */}
+                    <div>
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">First To</div>
+                      <div className="flex gap-2">
+                        {[2, 3, 4, 5, 7].map(n => (
+                          <button
+                            key={n}
+                            onClick={() => setEditWinTarget(n)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editWinTarget === n
+                                ? 'bg-[#d4af37] text-black'
+                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Era Filters */}
+                    <div>
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Era Filter</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="sports-font text-[9px] text-[#666] block mb-1">Career started from</label>
+                          <select
+                            value={editCareerFrom}
+                            onChange={(e) => setEditCareerFrom(parseInt(e.target.value))}
+                            className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                          >
+                            <option value={0}>Any</option>
+                            {Array.from({ length: 2015 - 1980 + 1 }, (_, i) => 1980 + i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="sports-font text-[9px] text-[#666] block mb-1">Active into</label>
+                          <select
+                            value={editCareerTo}
+                            onChange={(e) => setEditCareerTo(parseInt(e.target.value))}
+                            className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                          >
+                            <option value={0}>Any</option>
+                            {Array.from({ length: 2024 - 1990 + 1 }, (_, i) => 1990 + i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Sport Toggle */}
+                    <div className="flex justify-center gap-2">
+                      {(['nba', 'nfl', 'random'] as const).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => handleEditSportChange(s)}
+                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                            (s === 'random' && editRandomSport) || (s !== 'random' && !editRandomSport && editSport === s)
+                              ? (s === 'nba' ? 'bg-orange-500' : s === 'nfl' ? 'bg-[#013369]' : 'bg-[#d4af37]') + ' text-white'
+                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          {s === 'random' ? '?' : s.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Game Mode Toggle - hidden when random sport selected */}
+                    {!editRandomSport && (
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => setEditGameMode('random')}
+                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                            editGameMode === 'random'
+                              ? 'bg-[#d4af37] text-black'
+                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          Random
+                        </button>
+                        <button
+                          onClick={() => setEditGameMode('manual')}
+                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                            editGameMode === 'manual'
+                              ? 'bg-[#d4af37] text-black'
+                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          Manual
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Scope Toggle - visible when random mode and not random sport */}
+                    {!editRandomSport && editGameMode === 'random' && (
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => setEditSelectionScope('team')}
+                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                            editSelectionScope === 'team'
+                              ? 'bg-[#d4af37] text-black'
+                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          Team
+                        </button>
+                        <button
+                          onClick={() => setEditSelectionScope('division')}
+                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
+                            editSelectionScope === 'division'
+                              ? 'bg-[#d4af37] text-black'
+                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          Division
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Random sport info */}
+                    {editRandomSport && (
+                      <div className="text-center text-white/40 text-xs sports-font tracking-wider">
+                        Sport and team will be randomly selected
+                      </div>
+                    )}
+
+                    {/* Manual Mode: Team & Year Selection */}
+                    {!editRandomSport && editGameMode === 'manual' && (
+                      <div className="space-y-3">
+                        <TeamSelector
+                          selectedTeam={editTeam}
+                          onSelect={setEditTeam}
+                          sport={editSport}
+                        />
+                        <YearSelector
+                          selectedYear={editYear}
+                          onSelect={setEditYear}
+                          minYear={editSport === 'nba' ? 1985 : 2000}
+                          maxYear={2024}
+                          sport={editSport}
+                        />
+                      </div>
+                    )}
+
+                    {/* Random Mode: Year Range */}
+                    {(editRandomSport || editGameMode === 'random') && (
+                      <div className="bg-black/30 border border-white/10 rounded-sm p-3">
+                        <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
+                          Year Range {!editRandomSport && editSport === 'nfl' && '(2000-2024)'}
+                          {editRandomSport && '(2000-2024 for NFL)'}
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <select
+                            value={editMinYear}
+                            onChange={(e) => setEditMinYear(parseInt(e.target.value))}
+                            className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
+                          >
+                            {Array.from(
+                              { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
+                              (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
+                            ).map((y) => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                          <span className="text-white/40 sports-font">to</span>
+                          <select
+                            value={editMaxYear}
+                            onChange={(e) => setEditMaxYear(parseInt(e.target.value))}
+                            className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
+                          >
+                            {Array.from(
+                              { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
+                              (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
+                            ).map((y) => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Timer Selection */}
+                    <div className="bg-black/30 border border-white/10 rounded-sm p-3">
+                      <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
+                        Timer Duration
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-2 mb-2">
+                        {[60, 90, 120, 180, 300].map((seconds) => (
+                          <button
+                            key={seconds}
+                            onClick={() => {
+                              setEditTimer(seconds);
+                              setEditCustomTimer('');
+                            }}
+                            className={`px-3 py-1.5 rounded-lg sports-font text-sm transition-all ${
+                              editTimer === seconds && !editCustomTimer
+                                ? 'bg-[#d4af37] text-black'
+                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                            }`}
+                          >
+                            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
+                        <input
+                          type="number"
+                          value={editCustomTimer}
+                          onChange={(e) => {
+                            setEditCustomTimer(e.target.value);
+                            if (e.target.value) {
+                              const val = Math.max(10, Math.min(600, parseInt(e.target.value) || 90));
+                              setEditTimer(val);
+                            }
+                          }}
+                          placeholder="sec"
+                          min={10}
+                          max={600}
+                          className="w-20 px-2 py-1 bg-black/50 rounded-lg border border-white/20 text-white text-center sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                        />
+                        {editCustomTimer && (
+                          <span className="text-white/50 sports-font text-sm">
+                            = {Math.floor(editTimer / 60)}:{String(editTimer % 60).padStart(2, '0')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Apply Button */}
                 <button
                   onClick={handleApplySettings}
-                  disabled={editGameMode === 'manual' && (!editTeam || !editYear)}
+                  disabled={editGameType === 'roster' && editGameMode === 'manual' && (!editTeam || !editYear)}
                   className="w-full py-3 rounded-sm retro-title tracking-wider transition-all disabled:opacity-50 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
                 >
                   Apply Changes
@@ -1120,7 +1237,7 @@ export function LobbyWaitingPage() {
                           )}
                         </>
                       )}
-                      {player.is_dummy && (
+                      {player.is_dummy && lobby.game_type !== 'career' && (
                         <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">2x</span>
                       )}
                     </div>
@@ -1135,8 +1252,8 @@ export function LobbyWaitingPage() {
                           Kick
                         </button>
                       )}
-                      {/* Team assignment button - host only, waiting state */}
-                      {isHost && lobby.status === 'waiting' && (
+                      {/* Team assignment button - host only, waiting state, roster mode only */}
+                      {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
                         <button
                           onClick={() => handleCycleTeam(player.player_id, player.team_number)}
                           className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
@@ -1154,8 +1271,8 @@ export function LobbyWaitingPage() {
                           {player.team_number ? `T${player.team_number}` : 'Team'}
                         </button>
                       )}
-                      {/* Show team label for non-host when teams are assigned */}
-                      {!isHost && player.team_number && (
+                      {/* Show team label for non-host when teams are assigned, roster mode only */}
+                      {!isHost && player.team_number && lobby.game_type !== 'career' && (
                         <span
                           className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider border"
                           style={{
@@ -1167,8 +1284,8 @@ export function LobbyWaitingPage() {
                           T{player.team_number}
                         </span>
                       )}
-                      {/* Dummy mode toggle - host only, for non-host players */}
-                      {isHost && !player.is_host && lobby.status === 'waiting' && (
+                      {/* Dummy mode toggle - host only, for non-host players, roster mode only */}
+                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
                         <button
                           onClick={() => setPlayerDummyMode(lobby.id, player.player_id, !player.is_dummy)}
                           className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${

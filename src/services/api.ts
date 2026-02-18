@@ -196,9 +196,15 @@ export function resetApiAvailability(): void {
 /**
  * Career Mode: Fetch a random player with 5+ NBA seasons
  */
-export async function fetchRandomCareerPlayer(): Promise<{ player_id: number; player_name: string } | null> {
+export async function fetchRandomCareerPlayer(
+  filters?: { careerFrom?: number; careerTo?: number }
+): Promise<{ player_id: number; player_name: string } | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/career/random`);
+    const params = new URLSearchParams();
+    if (filters?.careerFrom) params.set('career_from', String(filters.careerFrom));
+    if (filters?.careerTo) params.set('career_to', String(filters.careerTo));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/career/random${qs}`);
     if (!response.ok) return null;
     return await response.json();
   } catch (error) {

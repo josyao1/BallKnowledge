@@ -388,6 +388,7 @@ export async function updateLobbySettings(
     selection_scope?: string;
     division_conference?: string | null;
     division_name?: string | null;
+    game_type?: string;
   }
 ): Promise<{ error: string | null }> {
   if (!supabase) {
@@ -643,7 +644,9 @@ export async function startCareerRound(
 // Reset all player wins/scores and lobby state for a new career match (Play Again)
 export async function resetMatchForPlayAgain(
   lobbyId: string,
-  winTarget: number
+  winTarget: number,
+  careerFrom?: number,
+  careerTo?: number
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
@@ -656,6 +659,7 @@ export async function resetMatchForPlayAgain(
       guessed_count: 0,
       guessed_players: [],
       incorrect_guesses: [],
+      is_ready: false,
     })
     .eq('lobby_id', lobbyId);
 
@@ -664,7 +668,12 @@ export async function resetMatchForPlayAgain(
   const { error } = await supabase
     .from('lobbies')
     .update({
-      career_state: { win_target: winTarget, round: 0 },
+      career_state: {
+        win_target: winTarget,
+        round: 0,
+        career_from: careerFrom || 0,
+        career_to: careerTo || 0,
+      },
       status: 'waiting',
       finished_at: null,
     })
