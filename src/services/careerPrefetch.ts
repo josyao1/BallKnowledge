@@ -11,6 +11,11 @@ import type { CareerGameData } from '../stores/careerStore';
 import { fetchRandomCareerPlayer, fetchCareerStats } from './api';
 import { fetchNFLRandomCareerPlayer, fetchNFLCareerStats } from './nfl-api';
 
+export interface CareerFilters {
+  careerFrom?: number;
+  careerTo?: number;
+}
+
 interface PrefetchedGame {
   data: CareerGameData;
   sport: Sport;
@@ -65,15 +70,15 @@ function buildNFLGame(career: any): PrefetchedGame | null {
   };
 }
 
-async function fetchOneGame(sport: Sport): Promise<PrefetchedGame | null> {
+async function fetchOneGame(sport: Sport, filters?: CareerFilters): Promise<PrefetchedGame | null> {
   try {
     if (sport === 'nba') {
-      const player = await fetchRandomCareerPlayer();
+      const player = await fetchRandomCareerPlayer(filters);
       if (!player) return null;
       const career = await fetchCareerStats(player.player_id);
       return buildNBAGame(player, career);
     } else {
-      const player = await fetchNFLRandomCareerPlayer();
+      const player = await fetchNFLRandomCareerPlayer(undefined, filters);
       if (!player) return null;
       const career = await fetchNFLCareerStats(player.player_id);
       return buildNFLGame(career);
@@ -113,14 +118,16 @@ export function popPrefetched(sport: Sport): PrefetchedGame | null {
 }
 
 /**
- * Fetch a game — tries cache first, falls back to live fetch.
+ * Fetch a game — tries cache first (unless filters are active), falls back to live fetch.
  * After returning, kicks off another prefetch to refill the cache.
  */
-export async function getNextGame(sport: Sport): Promise<PrefetchedGame | null> {
-  const cached = popPrefetched(sport);
+export async function getNextGame(sport: Sport, filters?: CareerFilters): Promise<PrefetchedGame | null> {
+  const hasFilters = filters && (filters.careerFrom || filters.careerTo);
+  // Skip prefetch cache when era filters are active — cache has no filter awareness
+  const cached = hasFilters ? null : popPrefetched(sport);
   // Always refill in background
   startPrefetch(sport);
   if (cached) return cached;
-  // Cache miss — live fetch
-  return fetchOneGame(sport);
+  // Cache miss (or filtered) — live fetch
+  return fetchOneGame(sport, hasFilters ? filters : undefined);
 }

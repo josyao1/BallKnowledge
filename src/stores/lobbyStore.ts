@@ -72,6 +72,7 @@ interface LobbyState {
     selectionScope?: string;
     divisionConference?: string | null;
     divisionName?: string | null;
+    gameType?: string;
   }) => Promise<void>;
   incrementWins: (playerId: string) => Promise<void>;
   assignTeam: (targetPlayerId: string, teamNumber: number | null) => Promise<void>;
@@ -233,6 +234,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     if (settings.selectionScope !== undefined) dbSettings.selection_scope = settings.selectionScope;
     if (settings.divisionConference !== undefined) dbSettings.division_conference = settings.divisionConference;
     if (settings.divisionName !== undefined) dbSettings.division_name = settings.divisionName;
+    if (settings.gameType !== undefined) dbSettings.game_type = settings.gameType;
 
     await updateLobbySettings(lobby.id, dbSettings as Parameters<typeof updateLobbySettings>[1]);
   },

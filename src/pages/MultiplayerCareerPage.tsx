@@ -20,6 +20,8 @@ import {
   startCareerRound,
 } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
+import { areSimilarNames } from '../utils/fuzzyDedup';
+import { normalizeTeamAbbr } from '../utils/teamAbbr';
 import type { Sport } from '../types';
 
 // ─── Column definitions ──────────────────────────────────────────────────────
@@ -93,16 +95,6 @@ const POSITION_NAMES: Record<string, string> = {
   QB: 'Quarterback', RB: 'Running Back', WR: 'Wide Receiver', TE: 'Tight End',
 };
 
-function normalizeName(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z\s]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface CareerState {
@@ -120,6 +112,7 @@ interface RoundSummary {
   answer: string;
   round: number;
   scores: Record<string, number>;
+  finishedAt: Record<string, string | null>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -151,6 +144,8 @@ export function MultiplayerCareerPage() {
   const prevStatusRef = useRef<string | null>(null);
   const hasSubmittedRef = useRef(false);
   const hasAdvancedRef = useRef(false);
+  // Ref mirror of roundHistory so navigate always gets the latest value
+  const roundHistoryRef = useRef<RoundSummary[]>([]);
   // Guard: only advance once we've confirmed at least one player had finished_at===null
   // this round. Without this, stale finished_at values from the previous round can
   // trigger an immediate advance when status flips to 'playing'.
@@ -177,20 +172,27 @@ export function MultiplayerCareerPage() {
     const prev = prevStatusRef.current;
     prevStatusRef.current = lobby.status;
 
-    // Save round summary when round ends (playing → waiting)
-    if (prev === 'playing' && lobby.status === 'waiting' && careerState) {
+    // Capture round summary whenever a round ends (playing → waiting OR playing → finished)
+    if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState) {
       const scores: Record<string, number> = {};
-      players.forEach(p => { scores[p.player_id] = p.score || 0; });
-      setRoundSummary({
+      const finishedAt: Record<string, string | null> = {};
+      players.forEach(p => {
+        scores[p.player_id] = p.score || 0;
+        finishedAt[p.player_id] = p.finished_at;
+      });
+      const newSummary: RoundSummary = {
         answer: careerState.playerName || '',
         round: careerState.round || 0,
         scores,
-      });
+        finishedAt,
+      };
+      setRoundSummary(newSummary);
+      roundHistoryRef.current = [...roundHistoryRef.current, newSummary];
       hasAdvancedRef.current = false;
     }
 
     if (lobby.status === 'finished') {
-      navigate(`/lobby/${code}/career/results`);
+      navigate(`/lobby/${code}/career/results`, { state: { roundHistory: roundHistoryRef.current } });
     }
   }, [lobby?.status]);
 
@@ -271,7 +273,7 @@ export function MultiplayerCareerPage() {
 
     setGuessInput('');
 
-    if (normalizeName(name) === normalizeName(careerState.playerName)) {
+    if (areSimilarNames(name, careerState.playerName)) {
       setFeedbackMsg('Correct!');
       setFeedbackType('correct');
       setLocalStatus('done');
@@ -322,7 +324,7 @@ export function MultiplayerCareerPage() {
   function handleRevealInitials() {
     if (initialsRevealed || localStatus !== 'playing') return;
     setInitialsRevealed(true);
-    setLocalScore(prev => Math.max(0, prev - 5));
+    setLocalScore(prev => Math.max(0, prev - 10));
   }
 
   // Derive initials from playerName (first letter of first + last word)
@@ -340,8 +342,10 @@ export function MultiplayerCareerPage() {
     setIsLoadingNext(true);
 
     const sport = (careerState.sport || lobby.sport) as Sport;
+    const careerFrom = (careerState as any).career_from || 0;
+    const careerTo   = (careerState as any).career_to   || 0;
     try {
-      const game = await getNextGame(sport);
+      const game = await getNextGame(sport, { careerFrom, careerTo });
       if (!game) { setIsLoadingNext(false); return; }
 
       const newState = {
@@ -349,6 +353,8 @@ export function MultiplayerCareerPage() {
         sport: game.sport,
         round: (careerState.round || 0) + 1,
         win_target: careerState.win_target || 3,
+        career_from: careerFrom,
+        career_to: careerTo,
       };
 
       await startCareerRound(lobby.id, newState);
@@ -409,7 +415,7 @@ export function MultiplayerCareerPage() {
           </motion.div>
         )}
 
-        {/* Scores this round */}
+        {/* Scores this round + round winner + tiebreaker */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -420,35 +426,78 @@ export function MultiplayerCareerPage() {
             Round Scores
           </div>
           <div className="space-y-2">
-            {[...players]
-              .sort((a, b) => (summary?.scores[b.player_id] ?? b.score ?? 0) - (summary?.scores[a.player_id] ?? a.score ?? 0))
-              .map(player => {
-                const score = summary?.scores[player.player_id] ?? player.score ?? 0;
-                const isMe = player.player_id === currentPlayerId;
-                return (
-                  <div
-                    key={player.player_id}
-                    className={`flex items-center justify-between p-3 rounded-lg ${
-                      isMe ? 'bg-[#d4af37]/10 border border-[#d4af37]/30' : 'bg-black/30'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="sports-font text-sm text-white/80">{player.player_name}</span>
-                      {isMe && <span className="text-[10px] text-white/40 sports-font">(you)</span>}
+            {(() => {
+              const scores = summary?.scores ?? {};
+              const finishedAt = summary?.finishedAt ?? {};
+              const topScore = Math.max(0, ...players.map(p => scores[p.player_id] ?? 0));
+              const topScorers = topScore > 0 ? players.filter(p => (scores[p.player_id] ?? 0) === topScore) : [];
+              const isTiebreaker = topScorers.length > 1 && topScorers.every(p => finishedAt[p.player_id]);
+              const roundWinnerId = isTiebreaker
+                ? [...topScorers].sort((a, b) => {
+                    const aT = new Date(finishedAt[a.player_id]!).getTime();
+                    const bT = new Date(finishedAt[b.player_id]!).getTime();
+                    return aT - bT;
+                  })[0]?.player_id
+                : topScorers[0]?.player_id;
+              const timeDiffMs = isTiebreaker && topScorers.length >= 2
+                ? (() => {
+                    const sorted = [...topScorers].sort((a, b) =>
+                      new Date(finishedAt[a.player_id]!).getTime() - new Date(finishedAt[b.player_id]!).getTime()
+                    );
+                    return new Date(finishedAt[sorted[1].player_id]!).getTime() - new Date(finishedAt[sorted[0].player_id]!).getTime();
+                  })()
+                : 0;
+
+              return (
+                <>
+                  {[...players]
+                    .sort((a, b) => (scores[b.player_id] ?? 0) - (scores[a.player_id] ?? 0))
+                    .map(player => {
+                      const score = scores[player.player_id] ?? 0;
+                      const isMe = player.player_id === currentPlayerId;
+                      const isRoundWinner = player.player_id === roundWinnerId;
+                      return (
+                        <div
+                          key={player.player_id}
+                          className={`flex items-center justify-between p-3 rounded-lg ${
+                            isMe ? 'bg-[#d4af37]/10 border border-[#d4af37]/30' : 'bg-black/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="sports-font text-sm text-white/80">{player.player_name}</span>
+                            {isMe && <span className="text-[10px] text-white/40 sports-font">(you)</span>}
+                            {isRoundWinner && topScore > 0 && (
+                              <span className="text-[10px] sports-font text-[#d4af37] tracking-wider">
+                                {isTiebreaker ? '⚡ FASTEST' : '★ WINNER'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="sports-font text-[8px] text-[#888] tracking-wider">ROUND</div>
+                              <div className={`retro-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="sports-font text-[8px] text-[#888] tracking-wider">WINS</div>
+                              <div className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {isTiebreaker && timeDiffMs > 0 && (
+                    <div className="mt-2 pt-2 border-t border-[#333] text-center sports-font text-[10px] text-[#888]">
+                      Tiebreaker — {players.find(p => p.player_id === roundWinnerId)?.player_name} was{' '}
+                      <span className="text-[#d4af37]">
+                        {timeDiffMs < 1000
+                          ? `${timeDiffMs}ms`
+                          : `${(timeDiffMs / 1000).toFixed(1)}s`} faster
+                      </span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="sports-font text-[8px] text-[#888] tracking-wider">ROUND</div>
-                        <div className={`retro-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="sports-font text-[8px] text-[#888] tracking-wider">WINS</div>
-                        <div className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  )}
+                </>
+              );
+            })()}
           </div>
         </motion.div>
 
@@ -546,6 +595,35 @@ export function MultiplayerCareerPage() {
         ))}
       </div>
 
+      {/* Live player status panel */}
+      <div className="mb-4 flex gap-2 flex-wrap">
+        {players.map(player => {
+          const isMe = player.player_id === currentPlayerId;
+          const finished = player.finished_at !== null;
+          const score = player.score || 0;
+          const gotIt = finished && score > 0;
+          return (
+            <div
+              key={player.player_id}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border sports-font text-xs ${
+                gotIt
+                  ? 'bg-green-900/20 border-green-700/40 text-green-300'
+                  : finished
+                  ? 'bg-red-900/20 border-red-900/40 text-red-400'
+                  : 'bg-[#1a1a1a] border-[#333] text-white/60'
+              }`}
+            >
+              <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
+              {gotIt && <span className="text-green-400">✓ {score}pts</span>}
+              {finished && !gotIt && <span>✗</span>}
+              {!finished && (
+                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin opacity-70" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       {/* Stat table */}
       <div className="flex-1 overflow-x-auto mb-4">
         <table className="w-full text-sm border-collapse">
@@ -572,7 +650,9 @@ export function MultiplayerCareerPage() {
                     <td key={col.key} className="px-3 py-2 sports-font text-xs text-[var(--vintage-cream)] whitespace-nowrap">
                       {col.key === 'season'
                         ? (yearsRevealed ? season.season : '???')
-                        : formatStat(col.key, season[col.key])
+                        : col.key === 'team'
+                          ? normalizeTeamAbbr(formatStat(col.key, season[col.key]), sport)
+                          : formatStat(col.key, season[col.key])
                       }
                     </td>
                   ))}
@@ -721,7 +801,7 @@ export function MultiplayerCareerPage() {
               disabled={initialsRevealed}
               className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
             >
-              {initialsRevealed ? 'Initials Shown' : 'Show Initials (-5)'}
+              {initialsRevealed ? 'Initials Shown' : 'Show Initials (-10)'}
             </button>
             <button
               onClick={handleGiveUp}

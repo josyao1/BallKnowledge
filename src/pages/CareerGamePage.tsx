@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCareerStore } from '../stores/careerStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
+import { normalizeTeamAbbr } from '../utils/teamAbbr';
 import type { Sport } from '../types';
 
 type LoadingState = 'loading' | 'ready' | 'error';
@@ -91,6 +92,15 @@ export function CareerGamePage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
+
+  // Derive initials from playerName (first letter of first + last word)
+  const playerInitials = (() => {
+    if (!store.playerName) return null;
+    const parts = store.playerName.trim().split(/\s+/);
+    const first = parts[0]?.[0]?.toUpperCase() ?? '';
+    const last = parts.length > 1 ? parts[parts.length - 1][0]?.toUpperCase() : '';
+    return last ? `${first}. ${last}.` : `${first}.`;
+  })();
 
   // Load a random player on mount — use a ref to prevent the Strict Mode
   // double-invoke from loading two different players in sequence.
@@ -240,7 +250,9 @@ export function CareerGamePage() {
                     <td key={col.key} className="px-3 py-2 sports-font text-xs text-[var(--vintage-cream)] whitespace-nowrap">
                       {col.key === 'season'
                         ? (store.yearsRevealed ? season.season : '???')
-                        : formatStat(col.key, season[col.key])
+                        : col.key === 'team'
+                          ? normalizeTeamAbbr(formatStat(col.key, season[col.key]), store.sport)
+                          : formatStat(col.key, season[col.key])
                       }
                     </td>
                   ))}
@@ -308,6 +320,20 @@ export function CareerGamePage() {
           ))}
         </div>
       )}
+
+      {/* Initials hint display */}
+      <AnimatePresence>
+        {store.initialsRevealed && playerInitials && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-3 flex items-center justify-center gap-3"
+          >
+            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Initials</div>
+            <div className="retro-title text-2xl text-[#d4af37] tracking-widest">{playerInitials}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Game Over Banner */}
       <AnimatePresence>
@@ -377,6 +403,13 @@ export function CareerGamePage() {
               className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
             >
               {store.bioRevealed ? 'Bio Shown' : 'Hint: Show Bio (-3)'}
+            </button>
+            <button
+              onClick={() => store.revealInitials()}
+              disabled={store.initialsRevealed}
+              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
+            >
+              {store.initialsRevealed ? 'Initials Shown' : 'Hint: Show Initials (-10)'}
             </button>
             <button
               onClick={() => store.giveUp()}
