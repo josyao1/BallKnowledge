@@ -19,7 +19,8 @@ import { fetchSeasonPlayers } from '../services/api';
 import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode, kickPlayer, renamePlayer, getStoredPlayerName } from '../services/lobby';
+import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
+import { getNextGame, startPrefetch } from '../services/careerPrefetch';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
@@ -250,20 +251,31 @@ export function LobbyWaitingPage() {
       hasStartedGame.current = false;
       hasAutoStarted.current = false;
     } else if (lobby.status === 'countdown') {
-      // Show the dealing animation instead of simple countdown
-      setShowDealingAnimation(true);
-    } else if (lobby.status === 'playing') {
-      // If status is 'playing' and we haven't started the game yet,
-      // the host must have skipped - immediately complete for all players
-      if (!hasStartedGame.current) {
+      if (lobby.game_type !== 'career') {
         setShowDealingAnimation(true);
-        // Trigger game start for non-host players (host already triggered via skip)
-        if (!isHost) {
-          handleDealingComplete();
+      }
+    } else if (lobby.status === 'playing') {
+      if (lobby.game_type === 'career') {
+        // Career mode: navigate directly to career page
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/career`);
+        }
+      } else {
+        // Roster mode: show dealing animation
+        if (!hasStartedGame.current) {
+          setShowDealingAnimation(true);
+          if (!isHost) {
+            handleDealingComplete();
+          }
         }
       }
     } else if (lobby.status === 'finished') {
-      navigate(`/lobby/${code}/results`);
+      if (lobby.game_type === 'career') {
+        navigate(`/lobby/${code}/career/results`);
+      } else {
+        navigate(`/lobby/${code}/results`);
+      }
     }
   }, [lobby?.status, showDealingAnimation, isHost, handleDealingComplete, lobby, navigate, code]);
 
@@ -300,6 +312,35 @@ export function LobbyWaitingPage() {
     if (!isHost || !lobby) return;
     hasAutoStarted.current = true;
     await startGame();
+  };
+
+  const handleCareerStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+
+    const sport = lobby.sport as Sport;
+    try {
+      const game = await getNextGame(sport);
+      if (!game) { setIsLoadingRoster(false); return; }
+
+      const existingState = (lobby.career_state as any) || {};
+      const newCareerState = {
+        ...game.data,
+        sport: game.sport,
+        round: 1,
+        win_target: existingState.win_target || 3,
+      };
+
+      await startCareerRound(lobby.id, newCareerState);
+      startPrefetch(sport);
+      // Update local store immediately so host sees correct state on navigation
+      // (realtime event may not arrive before the navigate call)
+      setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
+      navigate(`/lobby/${code}/career`);
+    } catch {
+      setIsLoadingRoster(false);
+    }
   };
 
   const handleReroll = useCallback(async () => {
@@ -691,31 +732,47 @@ export function LobbyWaitingPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
-                {lobby.sport.toUpperCase()} Roster Challenge
-              </div>
-              {lobby.game_mode === 'random' ? (
-                <div>
-                  <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
-                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
-                    {lobby.selection_scope === 'division' ? 'Division Mode • ' : ''}
-                    {lobby.min_year || 2000} - {lobby.max_year || 2024}
+              {lobby.game_type === 'career' ? (
+                <>
+                  <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                    {lobby.sport.toUpperCase()} Career Mode
                   </div>
-                </div>
+                  <div className="retro-title text-xl text-[#22c55e]">Guess the Career</div>
+                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                    First to {(lobby.career_state as any)?.win_target ?? '?'} wins
+                  </div>
+                </>
               ) : (
-                <div className="retro-title text-xl text-[#d4af37]">
-                  {lobby.team_abbreviation} • {lobby.season}
-                </div>
+                <>
+                  <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                    {lobby.sport.toUpperCase()} Roster Challenge
+                  </div>
+                  {lobby.game_mode === 'random' ? (
+                    <div>
+                      <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
+                      <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                        {lobby.selection_scope === 'division' ? 'Division Mode • ' : ''}
+                        {lobby.min_year || 2000} - {lobby.max_year || 2024}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="retro-title text-xl text-[#d4af37]">
+                      {lobby.team_abbreviation} • {lobby.season}
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
-                <div className="retro-title text-2xl text-white">
-                  {Math.floor(lobby.timer_duration / 60)}:{String(lobby.timer_duration % 60).padStart(2, '0')}
+              {lobby.game_type !== 'career' && (
+                <div className="text-right">
+                  <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
+                  <div className="retro-title text-2xl text-white">
+                    {Math.floor(lobby.timer_duration / 60)}:{String(lobby.timer_duration % 60).padStart(2, '0')}
+                  </div>
                 </div>
-              </div>
-              {isHost && lobby.status === 'waiting' && (
+              )}
+              {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className="p-2 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
@@ -1163,26 +1220,43 @@ export function LobbyWaitingPage() {
             </button>
           )}
 
-          {/* Host start button - shows when all ready */}
-          {isHost && allReady && lobby.status === 'waiting' && (
-            <button
-              onClick={handleManualStart}
-              disabled={isLoadingRoster}
-              className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1"
-            >
-              Deal Cards
-            </button>
-          )}
+          {lobby.game_type === 'career' ? (
+            <>
+              {/* Career mode: start button */}
+              {isHost && players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleCareerStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1 disabled:opacity-50"
+                >
+                  {isLoadingRoster ? 'Loading Player...' : 'Start Career Mode'}
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Roster mode: host start button - shows when all ready */}
+              {isHost && allReady && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleManualStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1"
+                >
+                  Deal Cards
+                </button>
+              )}
 
-          {/* Host force start - shows when 2+ players but not all ready */}
-          {isHost && players.length >= 2 && !allReady && lobby.status === 'waiting' && (
-            <button
-              onClick={handleManualStart}
-              disabled={isLoadingRoster}
-              className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
-            >
-              Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
-            </button>
+              {/* Roster mode: host force start */}
+              {isHost && players.length >= 2 && !allReady && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleManualStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+                >
+                  Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
+                </button>
+              )}
+            </>
           )}
 
           {/* Status messages */}

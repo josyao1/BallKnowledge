@@ -12,7 +12,7 @@ import { useLobbyStore } from '../stores/lobbyStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
-import { getStoredPlayerName } from '../services/lobby';
+import { getStoredPlayerName, updateCareerState } from '../services/lobby';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import type { GameMode } from '../types';
@@ -29,6 +29,8 @@ export function LobbyCreatePage() {
   const { createLobby, isLoading, error } = useLobbyStore();
   const { sport, setSport } = useSettingsStore();
 
+  const [lobbyMode, setLobbyMode] = useState<'roster' | 'career'>('roster');
+  const [winTarget, setWinTarget] = useState<3 | 5 | 7>(3);
   const [hostName, setHostName] = useState(getStoredPlayerName() || '');
   const [gameMode, setGameMode] = useState<GameMode>('random');
   const [selectionScope, setSelectionScope] = useState<'team' | 'division'>('team');
@@ -47,12 +49,31 @@ export function LobbyCreatePage() {
     : timerMinutes * 60 + timerSeconds;
 
   const canCreate = hostName.trim() && (
-    gameMode === 'random' || (selectedTeam && selectedYear)
+    lobbyMode === 'career' ||
+    gameMode === 'random' ||
+    (selectedTeam && selectedYear)
   );
 
   const handleCreate = async () => {
     if (!hostName.trim()) return;
 
+    // Career mode: create a career lobby
+    if (lobbyMode === 'career') {
+      const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'NE';
+      const dummySeason = sport === 'nba' ? '2023-24' : '2023';
+      const lobby = await createLobby(
+        hostName.trim(), sport, dummyTeamAbbr, dummySeason,
+        90, 'random', 2000, 2024, 'career', 'team', null, null
+      );
+      if (lobby) {
+        // Initialize career_state with win_target
+        await updateCareerState(lobby.id, { win_target: winTarget, round: 0 });
+        navigate(`/lobby/${lobby.join_code}`);
+      }
+      return;
+    }
+
+    // Roster mode
     let teamAbbr: string;
     let season: string;
     let divisionConference: string | null = null;
@@ -66,7 +87,6 @@ export function LobbyCreatePage() {
       season = sport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
 
       if (selectionScope === 'division') {
-        // Pick a random division
         const allDivisions = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
         const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
         divisionConference = randomDiv.conference;
@@ -125,6 +145,39 @@ export function LobbyCreatePage() {
 
       {/* Main */}
       <main className="relative z-10 flex-1 max-w-md mx-auto w-full p-6 space-y-5 overflow-y-auto">
+        {/* Game Type */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-black/50 border border-white/10 rounded-sm p-4"
+        >
+          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+            Game Type
+          </div>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setLobbyMode('roster')}
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                lobbyMode === 'roster'
+                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+              }`}
+            >
+              Roster
+            </button>
+            <button
+              onClick={() => setLobbyMode('career')}
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                lobbyMode === 'career'
+                  ? 'bg-[#22c55e] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+              }`}
+            >
+              Career
+            </button>
+          </div>
+        </motion.div>
+
         {/* Sport selection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -178,156 +231,170 @@ export function LobbyCreatePage() {
           />
         </motion.div>
 
-        {/* Game mode selection */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-black/50 border border-white/10 rounded-sm p-4"
-        >
-          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-            Deck Selection
-          </div>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => setGameMode('random')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                gameMode === 'random'
-                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              Random
-            </button>
-            <button
-              onClick={() => setGameMode('manual')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                gameMode === 'manual'
-                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              Choose Team
-            </button>
-          </div>
-        </motion.div>
-
-        {/* Scope toggle - visible in random mode */}
+        {/* Career mode: win target */}
         <AnimatePresence>
-          {gameMode === 'random' && (
+          {lobbyMode === 'career' && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-black/50 border border-white/10 rounded-sm p-4"
+              className="bg-black/50 border border-[#22c55e]/30 rounded-sm p-4"
             >
               <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                Scope
+                Win Target
               </div>
               <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => setSelectionScope('team')}
-                  className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                    selectionScope === 'team'
-                      ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                      : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                  }`}
-                >
-                  Team
-                </button>
-                <button
-                  onClick={() => setSelectionScope('division')}
-                  className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                    selectionScope === 'division'
-                      ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                      : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                  }`}
-                >
-                  Division
-                </button>
+                {([3, 5, 7] as const).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setWinTarget(n)}
+                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                      winTarget === n
+                        ? 'bg-[#22c55e] text-black shadow-lg font-bold'
+                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    {n} Wins
+                  </button>
+                ))}
               </div>
-              {selectionScope === 'division' && (
-                <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
-                  Random division — name players from all 4 teams
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Random year range */}
-        <AnimatePresence>
-          {gameMode === 'random' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-black/50 border border-white/10 rounded-sm p-4"
-            >
-              <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                Year Range {sport === 'nfl' && '(2000-2024)'}
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <select
-                  value={randomMinYear}
-                  onChange={(e) => {
-                    const newMin = parseInt(e.target.value);
-                    setRandomMinYear(newMin);
-                    if (newMin > randomMaxYear) setRandomMaxYear(newMin);
-                  }}
-                  className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
-                >
-                  {Array.from(
-                    { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
-                    (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
-                  ).map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-                <span className="text-white/40 sports-font">to</span>
-                <select
-                  value={randomMaxYear}
-                  onChange={(e) => {
-                    const newMax = parseInt(e.target.value);
-                    setRandomMaxYear(newMax);
-                    if (newMax < randomMinYear) setRandomMinYear(newMax);
-                  }}
-                  className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
-                >
-                  {Array.from(
-                    { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
-                    (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
-                  ).map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
+              <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
+                First player to {winTarget} wins takes the match
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Manual team/year selection */}
+        {/* Roster-only settings */}
         <AnimatePresence>
-          {gameMode === 'manual' && (
+          {lobbyMode === 'roster' && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4"
             >
-              <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-              <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={sport === 'nba' ? 1985 : 2000} maxYear={2024} sport={sport} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {/* Game mode selection */}
+              <div className="bg-black/50 border border-white/10 rounded-sm p-4">
+                <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+                  Deck Selection
+                </div>
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => setGameMode('random')}
+                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                      gameMode === 'random'
+                        ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    Random
+                  </button>
+                  <button
+                    onClick={() => setGameMode('manual')}
+                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                      gameMode === 'manual'
+                        ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    Choose Team
+                  </button>
+                </div>
+              </div>
 
-        {/* Timer duration */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-black/50 border border-white/10 rounded-sm p-4"
-        >
+              {/* Scope toggle */}
+              {gameMode === 'random' && (
+                <div className="bg-black/50 border border-white/10 rounded-sm p-4">
+                  <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+                    Scope
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => setSelectionScope('team')}
+                      className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                        selectionScope === 'team'
+                          ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                          : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                      }`}
+                    >
+                      Team
+                    </button>
+                    <button
+                      onClick={() => setSelectionScope('division')}
+                      className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                        selectionScope === 'division'
+                          ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                          : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                      }`}
+                    >
+                      Division
+                    </button>
+                  </div>
+                  {selectionScope === 'division' && (
+                    <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
+                      Random division — name players from all 4 teams
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Random year range */}
+              {gameMode === 'random' && (
+                <div className="bg-black/50 border border-white/10 rounded-sm p-4">
+                  <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+                    Year Range {sport === 'nfl' && '(2000-2024)'}
+                  </div>
+                  <div className="flex items-center justify-center gap-3">
+                    <select
+                      value={randomMinYear}
+                      onChange={(e) => {
+                        const newMin = parseInt(e.target.value);
+                        setRandomMinYear(newMin);
+                        if (newMin > randomMaxYear) setRandomMaxYear(newMin);
+                      }}
+                      className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
+                    >
+                      {Array.from(
+                        { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
+                        (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
+                      ).map((year) => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                    <span className="text-white/40 sports-font">to</span>
+                    <select
+                      value={randomMaxYear}
+                      onChange={(e) => {
+                        const newMax = parseInt(e.target.value);
+                        setRandomMaxYear(newMax);
+                        if (newMax < randomMinYear) setRandomMinYear(newMax);
+                      }}
+                      className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
+                    >
+                      {Array.from(
+                        { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
+                        (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
+                      ).map((year) => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual team/year selection */}
+              {gameMode === 'manual' && (
+                <div className="space-y-4">
+                  <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
+                  <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={sport === 'nba' ? 1985 : 2000} maxYear={2024} sport={sport} />
+                </div>
+              )}
+
+              {/* Timer duration */}
+              <div
+                className="bg-black/50 border border-white/10 rounded-sm p-4"
+              >
           <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
             Round Timer
           </div>
@@ -376,7 +443,10 @@ export function LobbyCreatePage() {
           <div className="text-center mt-2 retro-title text-2xl text-white">
             {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
           </div>
-        </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Error message */}
         {error && (

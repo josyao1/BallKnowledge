@@ -1,0 +1,737 @@
+/**
+ * MultiplayerCareerPage.tsx — Multiplayer "Guess the Career" gameplay.
+ *
+ * Each player independently guesses the mystery player from stat lines.
+ * Years and bio hints are per-player local choices (no voting).
+ * Round winner (highest score) earns a win; first to win_target wins the match.
+ */
+
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLobbyStore } from '../stores/lobbyStore';
+import { useLobbySubscription } from '../hooks/useLobbySubscription';
+import {
+  findLobbyByCode,
+  getLobbyPlayers,
+  updateLobbyStatus,
+  updatePlayerScore,
+  incrementPlayerWins,
+  startCareerRound,
+} from '../services/lobby';
+import { getNextGame, startPrefetch } from '../services/careerPrefetch';
+import type { Sport } from '../types';
+
+// ─── Column definitions ──────────────────────────────────────────────────────
+
+const NBA_COLUMNS = [
+  { key: 'season', label: 'Season' },
+  { key: 'team', label: 'Team' },
+  { key: 'gp', label: 'GP' },
+  { key: 'min', label: 'MIN' },
+  { key: 'pts', label: 'PTS' },
+  { key: 'reb', label: 'REB' },
+  { key: 'ast', label: 'AST' },
+  { key: 'stl', label: 'STL' },
+  { key: 'blk', label: 'BLK' },
+  { key: 'fg_pct', label: 'FG%' },
+  { key: 'fg3_pct', label: '3P%' },
+];
+
+const NFL_QB_COLUMNS = [
+  { key: 'season', label: 'Season' },
+  { key: 'team', label: 'Team' },
+  { key: 'gp', label: 'GP' },
+  { key: 'completions', label: 'Comp' },
+  { key: 'attempts', label: 'Att' },
+  { key: 'passing_yards', label: 'Pass Yds' },
+  { key: 'passing_tds', label: 'Pass TD' },
+  { key: 'interceptions', label: 'INT' },
+  { key: 'rushing_yards', label: 'Rush Yds' },
+];
+
+const NFL_RB_COLUMNS = [
+  { key: 'season', label: 'Season' },
+  { key: 'team', label: 'Team' },
+  { key: 'gp', label: 'GP' },
+  { key: 'carries', label: 'Rush Att' },
+  { key: 'rushing_yards', label: 'Rush Yds' },
+  { key: 'rushing_tds', label: 'Rush TD' },
+  { key: 'receptions', label: 'Rec' },
+  { key: 'receiving_yards', label: 'Rec Yds' },
+];
+
+const NFL_WR_TE_COLUMNS = [
+  { key: 'season', label: 'Season' },
+  { key: 'team', label: 'Team' },
+  { key: 'gp', label: 'GP' },
+  { key: 'targets', label: 'Targets' },
+  { key: 'receptions', label: 'Rec' },
+  { key: 'receiving_yards', label: 'Rec Yds' },
+  { key: 'receiving_tds', label: 'Rec TD' },
+];
+
+function getColumns(sport: Sport, position: string) {
+  if (sport === 'nba') return NBA_COLUMNS;
+  switch (position) {
+    case 'QB': return NFL_QB_COLUMNS;
+    case 'RB': return NFL_RB_COLUMNS;
+    default: return NFL_WR_TE_COLUMNS;
+  }
+}
+
+function formatStat(key: string, value: any): string {
+  if (key === 'fg_pct' || key === 'fg3_pct') {
+    return (value * 100).toFixed(1);
+  }
+  return String(value ?? 0);
+}
+
+const POSITION_NAMES: Record<string, string> = {
+  PG: 'Point Guard', SG: 'Shooting Guard', SF: 'Small Forward',
+  PF: 'Power Forward', C: 'Center',
+  QB: 'Quarterback', RB: 'Running Back', WR: 'Wide Receiver', TE: 'Tight End',
+};
+
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface CareerState {
+  playerId: string | number;
+  playerName: string;
+  position: string;
+  sport: 'nba' | 'nfl';
+  seasons: any[];
+  bio: any;
+  round: number;
+  win_target: number;
+}
+
+interface RoundSummary {
+  answer: string;
+  round: number;
+  scores: Record<string, number>;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export function MultiplayerCareerPage() {
+  const navigate = useNavigate();
+  const { code } = useParams<{ code: string }>();
+  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers } = useLobbyStore();
+
+  useLobbySubscription(lobby?.id || null);
+
+  const careerState = lobby?.career_state as CareerState | null;
+
+  // ── Per-player local round state (no shared DB sync for hints) ──
+  const [localScore, setLocalScore] = useState(20);
+  const [localGuesses, setLocalGuesses] = useState<string[]>([]);
+  const [localStatus, setLocalStatus] = useState<'playing' | 'done'>('playing');
+  const [yearsRevealed, setYearsRevealed] = useState(false);
+  const [bioRevealed, setBioRevealed] = useState(false);
+  const [initialsRevealed, setInitialsRevealed] = useState(false);
+  const [guessInput, setGuessInput] = useState('');
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
+
+  // ── Refs ──
+  const prevRoundRef = useRef(-1);
+  const prevStatusRef = useRef<string | null>(null);
+  const hasSubmittedRef = useRef(false);
+  const hasAdvancedRef = useRef(false);
+  // Guard: only advance once we've confirmed at least one player had finished_at===null
+  // this round. Without this, stale finished_at values from the previous round can
+  // trigger an immediate advance when status flips to 'playing'.
+  const atLeastOnePlayerWasActiveRef = useRef(false);
+
+  // ── Load lobby on mount (handles page refresh) ──
+  useEffect(() => {
+    if (!code) { navigate('/'); return; }
+    if (lobby) return;
+
+    findLobbyByCode(code).then(result => {
+      if (!result.lobby) { navigate('/'); return; }
+      setLobby(result.lobby);
+      getLobbyPlayers(result.lobby.id).then(pr => {
+        if (pr.players) setPlayers(pr.players);
+      });
+    });
+  }, []);
+
+  // ── Handle lobby status transitions ──
+  useEffect(() => {
+    if (!lobby) return;
+
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = lobby.status;
+
+    // Save round summary when round ends (playing → waiting)
+    if (prev === 'playing' && lobby.status === 'waiting' && careerState) {
+      const scores: Record<string, number> = {};
+      players.forEach(p => { scores[p.player_id] = p.score || 0; });
+      setRoundSummary({
+        answer: careerState.playerName || '',
+        round: careerState.round || 0,
+        scores,
+      });
+      hasAdvancedRef.current = false;
+    }
+
+    if (lobby.status === 'finished') {
+      navigate(`/lobby/${code}/career/results`);
+    }
+  }, [lobby?.status]);
+
+  // ── Detect new round — reset all local state ──
+  const currentRound = careerState?.round ?? 0;
+  useEffect(() => {
+    if (currentRound > 0 && currentRound !== prevRoundRef.current) {
+      prevRoundRef.current = currentRound;
+      setLocalScore(20);
+      setLocalGuesses([]);
+      setLocalStatus('playing');
+      setYearsRevealed(false);
+      setBioRevealed(false);
+      setInitialsRevealed(false);
+      setGuessInput('');
+      setFeedbackMsg('');
+      setFeedbackType('');
+      hasSubmittedRef.current = false;
+      atLeastOnePlayerWasActiveRef.current = false;
+    }
+  }, [currentRound]);
+
+  // ── Track when players are active (finished_at === null) ──
+  // This guards against the race condition where the lobby status event arrives
+  // before the player reset events, causing stale finished_at to look like all done.
+  useEffect(() => {
+    if (players.some(p => p.finished_at === null)) {
+      atLeastOnePlayerWasActiveRef.current = true;
+    }
+  }, [players]);
+
+  // ── HOST: Advance round when all players genuinely finish ──
+  const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
+
+  const advanceRound = useCallback(async () => {
+    if (!lobby || !careerState) return;
+    hasAdvancedRef.current = true;
+
+    // Award a win to the player with the highest score; break ties by who finished first
+    const sorted = [...players].sort((a, b) => {
+      const scoreDiff = (b.score || 0) - (a.score || 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      const aTime = a.finished_at ? new Date(a.finished_at).getTime() : Infinity;
+      const bTime = b.finished_at ? new Date(b.finished_at).getTime() : Infinity;
+      return aTime - bTime;
+    });
+    const winner = sorted[0];
+    if (winner && (winner.score || 0) > 0) {
+      await incrementPlayerWins(lobby.id, winner.player_id);
+    }
+
+    // Check win condition with fresh data
+    const freshResult = await getLobbyPlayers(lobby.id);
+    const freshPlayers = freshResult.players || [];
+    const winTarget = careerState.win_target || 3;
+    const gameWinner = freshPlayers.find(p => (p.wins || 0) >= winTarget);
+
+    if (gameWinner) {
+      await updateLobbyStatus(lobby.id, 'finished');
+    } else {
+      await updateLobbyStatus(lobby.id, 'waiting');
+    }
+  }, [lobby, careerState, players]);
+
+  useEffect(() => {
+    if (!isHost || !allPlayersFinished || lobby?.status !== 'playing' || hasAdvancedRef.current) return;
+    // Don't advance until we've seen at least one player with finished_at===null
+    // (confirms the player resets have propagated)
+    if (!atLeastOnePlayerWasActiveRef.current) return;
+    advanceRound();
+  }, [allPlayersFinished, lobby?.status, isHost]);
+
+  // ── Guess handler ──
+  function handleGuess() {
+    if (!careerState || localStatus !== 'playing' || !lobby) return;
+    const name = guessInput.trim();
+    if (!name) return;
+
+    setGuessInput('');
+
+    if (normalizeName(name) === normalizeName(careerState.playerName)) {
+      setFeedbackMsg('Correct!');
+      setFeedbackType('correct');
+      setLocalStatus('done');
+      if (!hasSubmittedRef.current) {
+        hasSubmittedRef.current = true;
+        updatePlayerScore(lobby.id, localScore, 0, [], localGuesses, true);
+      }
+    } else {
+      const newScore = Math.max(0, localScore - 1);
+      const newGuesses = [...localGuesses, name];
+      setLocalScore(newScore);
+      setLocalGuesses(newGuesses);
+      setFeedbackMsg(`"${name}" is wrong`);
+      setFeedbackType('wrong');
+      setTimeout(() => { setFeedbackMsg(''); setFeedbackType(''); }, 2000);
+
+      if (newScore === 0) {
+        setLocalStatus('done');
+        if (!hasSubmittedRef.current) {
+          hasSubmittedRef.current = true;
+          updatePlayerScore(lobby.id, 0, 0, [], newGuesses, true);
+        }
+      }
+    }
+  }
+
+  function handleGiveUp() {
+    if (localStatus !== 'playing' || hasSubmittedRef.current || !lobby) return;
+    hasSubmittedRef.current = true;
+    setLocalScore(0);
+    setLocalStatus('done');
+    updatePlayerScore(lobby.id, 0, 0, [], localGuesses, true);
+  }
+
+  // ── Per-player hint reveals (local only) ──
+  function handleRevealYears() {
+    if (yearsRevealed || localStatus !== 'playing') return;
+    setYearsRevealed(true);
+    setLocalScore(prev => Math.max(0, prev - 3));
+  }
+
+  function handleRevealBio() {
+    if (bioRevealed || localStatus !== 'playing') return;
+    setBioRevealed(true);
+    setLocalScore(prev => Math.max(0, prev - 3));
+  }
+
+  function handleRevealInitials() {
+    if (initialsRevealed || localStatus !== 'playing') return;
+    setInitialsRevealed(true);
+    setLocalScore(prev => Math.max(0, prev - 5));
+  }
+
+  // Derive initials from playerName (first letter of first + last word)
+  const playerInitials = (() => {
+    if (!careerState?.playerName) return null;
+    const parts = careerState.playerName.trim().split(/\s+/);
+    const first = parts[0]?.[0]?.toUpperCase() ?? '';
+    const last = parts.length > 1 ? parts[parts.length - 1][0]?.toUpperCase() : '';
+    return last ? `${first}. ${last}.` : `${first}.`;
+  })();
+
+  // ── HOST: Load and start next round ──
+  async function handleNextRound() {
+    if (!isHost || !lobby || isLoadingNext || !careerState) return;
+    setIsLoadingNext(true);
+
+    const sport = (careerState.sport || lobby.sport) as Sport;
+    try {
+      const game = await getNextGame(sport);
+      if (!game) { setIsLoadingNext(false); return; }
+
+      const newState = {
+        ...game.data,
+        sport: game.sport,
+        round: (careerState.round || 0) + 1,
+        win_target: careerState.win_target || 3,
+      };
+
+      await startCareerRound(lobby.id, newState);
+      startPrefetch(sport);
+    } catch {
+      // ignore
+    }
+    setIsLoadingNext(false);
+  }
+
+  // ─── Render ──────────────────────────────────────────────────────────────
+
+  if (!lobby || !careerState) {
+    return (
+      <div className="min-h-screen bg-[#111] flex items-center justify-center">
+        <div className="text-white/50 sports-font">Loading...</div>
+      </div>
+    );
+  }
+
+  const sport = (careerState.sport || 'nba') as Sport;
+  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
+  const columns = getColumns(sport, careerState.position || '');
+  const winTarget = careerState.win_target || 3;
+
+  // ── BETWEEN-ROUND INTERSTITIAL ──
+  if (lobby.status === 'waiting') {
+    const summary = roundSummary;
+    return (
+      <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+        <header className="flex justify-between items-center mb-6">
+          <div>
+            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <h1 className="retro-title text-2xl text-[var(--vintage-cream)]">
+              Round {summary?.round ?? careerState.round}
+            </h1>
+            {careerState.position && (
+              <div className="sports-font text-xs text-[#888] mt-0.5">
+                {sport.toUpperCase()} {POSITION_NAMES[careerState.position] ?? careerState.position}
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="sports-font text-[8px] text-[#888] tracking-widest">FIRST TO</div>
+            <div className="retro-title text-2xl text-[#d4af37]">{winTarget}</div>
+          </div>
+        </header>
+
+        {/* Answer reveal */}
+        {summary && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6 p-6 bg-[#1a1a1a] border-2 border-[#d4af37]/50 rounded-lg text-center"
+          >
+            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-2 uppercase">The Answer Was</div>
+            <div className="retro-title text-3xl text-[#d4af37]">{summary.answer}</div>
+          </motion.div>
+        )}
+
+        {/* Scores this round */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+        >
+          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
+            Round Scores
+          </div>
+          <div className="space-y-2">
+            {[...players]
+              .sort((a, b) => (summary?.scores[b.player_id] ?? b.score ?? 0) - (summary?.scores[a.player_id] ?? a.score ?? 0))
+              .map(player => {
+                const score = summary?.scores[player.player_id] ?? player.score ?? 0;
+                const isMe = player.player_id === currentPlayerId;
+                return (
+                  <div
+                    key={player.player_id}
+                    className={`flex items-center justify-between p-3 rounded-lg ${
+                      isMe ? 'bg-[#d4af37]/10 border border-[#d4af37]/30' : 'bg-black/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="sports-font text-sm text-white/80">{player.player_name}</span>
+                      {isMe && <span className="text-[10px] text-white/40 sports-font">(you)</span>}
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="sports-font text-[8px] text-[#888] tracking-wider">ROUND</div>
+                        <div className={`retro-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="sports-font text-[8px] text-[#888] tracking-wider">WINS</div>
+                        <div className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </motion.div>
+
+        {/* Win progress dots */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6 flex justify-center gap-6 flex-wrap"
+        >
+          {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => (
+            <div key={player.player_id} className="text-center">
+              <div className="sports-font text-[10px] text-[#888] tracking-wider mb-1">{player.player_name}</div>
+              <div className="flex gap-1 justify-center">
+                {Array.from({ length: winTarget }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-4 h-4 rounded-full border-2 ${
+                      i < (player.wins || 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-[#333]'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </motion.div>
+
+        {isHost ? (
+          <button
+            onClick={handleNextRound}
+            disabled={isLoadingNext}
+            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+          >
+            {isLoadingNext ? 'Loading Next Player...' : 'Next Round'}
+          </button>
+        ) : (
+          <div className="text-center text-white/30 sports-font text-sm tracking-wider">
+            Waiting for host to start next round...
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── GAMEPLAY ──
+  const isDone = localStatus === 'done';
+  const doneCount = players.filter(p => p.finished_at !== null).length;
+  const totalCount = players.length;
+
+  return (
+    <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider text-white" style={{ backgroundColor: accentColor }}>
+              {sport.toUpperCase()}
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#1a1a1a] text-[#888]">
+              Round {careerState.round}
+            </span>
+          </div>
+          {careerState.position && (
+            <div className="sports-font text-sm text-white/70 tracking-wider">
+              Guess the <span className="text-white font-bold">{POSITION_NAMES[careerState.position] ?? careerState.position}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-2 text-center">
+            <div className="sports-font text-[8px] text-[#888] tracking-widest">SCORE</div>
+            <div className="retro-title text-2xl" style={{ color: localScore > 10 ? '#22c55e' : localScore > 5 ? '#eab308' : '#ef4444' }}>
+              {localScore}
+            </div>
+          </div>
+          <div className="bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-2 text-center">
+            <div className="sports-font text-[8px] text-[#888] tracking-widest">DONE</div>
+            <div className="retro-title text-2xl text-white">{doneCount}/{totalCount}</div>
+          </div>
+        </div>
+      </header>
+
+      {/* Win progress dots */}
+      <div className="flex gap-4 mb-4 flex-wrap">
+        {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => (
+          <div key={player.player_id} className={`flex items-center gap-1.5 px-2 py-1 rounded ${player.player_id === currentPlayerId ? 'bg-[#d4af37]/10' : ''}`}>
+            <span className="sports-font text-[10px] text-white/60">{player.player_name}</span>
+            <div className="flex gap-0.5">
+              {Array.from({ length: winTarget }).map((_, i) => (
+                <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (player.wins || 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Stat table */}
+      <div className="flex-1 overflow-x-auto mb-4">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b-2 border-[#333]">
+              {columns.map(col => (
+                <th key={col.key} className="px-3 py-2 text-left sports-font text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <AnimatePresence>
+              {(careerState.seasons || []).map((season: any, idx: number) => (
+                <motion.tr
+                  key={idx}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: idx * 0.03 }}
+                  className="border-b border-[#222] hover:bg-[#1a1a1a]"
+                >
+                  {columns.map(col => (
+                    <td key={col.key} className="px-3 py-2 sports-font text-xs text-[var(--vintage-cream)] whitespace-nowrap">
+                      {col.key === 'season'
+                        ? (yearsRevealed ? season.season : '???')
+                        : formatStat(col.key, season[col.key])
+                      }
+                    </td>
+                  ))}
+                </motion.tr>
+              ))}
+            </AnimatePresence>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Bio panel */}
+      <AnimatePresence>
+        {bioRevealed && careerState.bio && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-4 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+          >
+            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-2 uppercase">Player Bio</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {careerState.bio.height && (
+                <div>
+                  <div className="sports-font text-[8px] text-[#666] tracking-wider">HEIGHT</div>
+                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.height}</div>
+                </div>
+              )}
+              {careerState.bio.weight > 0 && (
+                <div>
+                  <div className="sports-font text-[8px] text-[#666] tracking-wider">WEIGHT</div>
+                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.weight} lbs</div>
+                </div>
+              )}
+              {(careerState.bio.school || careerState.bio.college) && (
+                <div>
+                  <div className="sports-font text-[8px] text-[#666] tracking-wider">SCHOOL</div>
+                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.school || careerState.bio.college}</div>
+                </div>
+              )}
+              {careerState.bio.draftYear ? (
+                <div>
+                  <div className="sports-font text-[8px] text-[#666] tracking-wider">DRAFT</div>
+                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.draftYear}</div>
+                </div>
+              ) : careerState.bio.draftClub ? (
+                <div>
+                  <div className="sports-font text-[8px] text-[#666] tracking-wider">DRAFT</div>
+                  <div className="sports-font text-sm text-[var(--vintage-cream)]">
+                    {careerState.bio.draftClub} #{careerState.bio.draftNumber}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Wrong guesses */}
+      {localGuesses.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {localGuesses.map((g, i) => (
+            <span key={i} className="px-2 py-1 bg-red-900/30 border border-red-800/50 rounded text-xs sports-font text-red-300">
+              {g}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Done message */}
+      <AnimatePresence>
+        {isDone && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-4 p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
+          >
+            <div className="sports-font text-sm text-[#888]">
+              {localScore > 0
+                ? `Score: ${localScore} — waiting for ${doneCount}/${totalCount} players`
+                : 'No points this round — waiting for others...'}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Initials hint display */}
+      <AnimatePresence>
+        {initialsRevealed && playerInitials && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-3 flex items-center justify-center gap-3"
+          >
+            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Initials</div>
+            <div className="retro-title text-2xl text-[#d4af37] tracking-widest">{playerInitials}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Controls */}
+      {!isDone && (
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={guessInput}
+              onChange={e => setGuessInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleGuess()}
+              placeholder="Type player name..."
+              className="flex-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none focus:border-[#555]"
+              autoFocus
+            />
+            <button
+              onClick={handleGuess}
+              disabled={!guessInput.trim()}
+              className="px-6 py-3 rounded-lg sports-font text-sm text-white disabled:opacity-50 transition-all"
+              style={{ backgroundColor: accentColor }}
+            >
+              Guess
+            </button>
+          </div>
+
+          {feedbackMsg && (
+            <div className={`text-center sports-font text-sm ${feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
+              {feedbackMsg}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={handleRevealYears}
+              disabled={yearsRevealed}
+              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
+            >
+              {yearsRevealed ? 'Years Shown' : 'Show Years (-3)'}
+            </button>
+            <button
+              onClick={handleRevealBio}
+              disabled={bioRevealed}
+              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
+            >
+              {bioRevealed ? 'Bio Shown' : 'Show Bio (-3)'}
+            </button>
+            <button
+              onClick={handleRevealInitials}
+              disabled={initialsRevealed}
+              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
+            >
+              {initialsRevealed ? 'Initials Shown' : 'Show Initials (-5)'}
+            </button>
+            <button
+              onClick={handleGiveUp}
+              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all"
+            >
+              Give Up
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
