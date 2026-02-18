@@ -199,20 +199,34 @@ export function HomePage() {
     ))}
   </div>
 
-  {/* Right: API Status & Settings */}
-  <div className="flex-1 flex justify-end items-center gap-1.5 md:gap-3">
-  {/* API Status: Removed 'hidden' so it stays on mobile */}
+  {/* Right: Extra Modes + API Status & Settings */}
+  <div className="flex-1 flex justify-end items-center gap-1.5 md:gap-2">
+  {/* Roll Call button */}
+  <button
+    onClick={() => navigate('/roll-call/create')}
+    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#d4af37] border border-[#d4af37] rounded hover:bg-[#d4af37] hover:text-black transition-colors whitespace-nowrap"
+  >
+    Roll Call
+  </button>
+
+  {/* Career Mode button */}
+  <button
+    onClick={() => navigate('/career')}
+    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#22c55e] border border-[#22c55e] rounded hover:bg-[#22c55e] hover:text-black transition-colors whitespace-nowrap"
+  >
+    Career
+  </button>
+
+  {/* API Status dot */}
   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/20 border border-white/5">
     <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${apiOnline ? 'bg-[#22c55e] shadow-[0_0_8px_#22c55e]' : 'bg-[#888]'}`} />
-    
-    {/* Label: Hides the text on tiny screens (< 380px) to prevent overlap, but keeps the dot */}
     <span className="hidden xs:block text-[9px] md:text-[10px] text-[#666] sports-font uppercase tracking-tighter whitespace-nowrap">
       {apiOnline ? 'Live' : 'Offline'}
     </span>
   </div>
 
-  <button 
-    onClick={() => setShowSettings(true)} 
+  <button
+    onClick={() => setShowSettings(true)}
     className="p-1.5 md:p-2 border-2 border-[#3d3d3d] rounded-lg hover:bg-[#1a1a1a] transition-colors shrink-0"
   >
     <svg className="w-4 h-4 md:w-5 md:h-5 text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,8 +305,6 @@ export function HomePage() {
                 <button onClick={handleStartGame} disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)} className="retro-btn retro-btn-gold px-10 py-3 text-lg disabled:opacity-50">Start Solo</button>
                 <button onClick={() => navigate('/lobby/create')} className={`px-5 py-3 rounded-lg sports-font border-2 text-sm transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#013369] text-[#013369] hover:bg-[#013369] hover:text-white'}`}>Create Lobby</button>
                 <button onClick={() => navigate('/lobby/join')} className="px-5 py-3 rounded-lg sports-font border-2 border-[#3d3d3d] text-[#888] hover:border-[#555] text-sm">Join Lobby</button>
-                <button onClick={() => navigate('/roll-call/create')} className="px-5 py-3 rounded-lg sports-font border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37] hover:text-black text-sm transition-all">Roll Call</button>
-                <button onClick={() => navigate('/career')} className={`px-5 py-3 rounded-lg sports-font border-2 text-sm transition-all ${sport === 'nba' ? 'border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-black' : 'border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-black'}`}>Career Mode</button>
               </div>
             </div>
           ) : (

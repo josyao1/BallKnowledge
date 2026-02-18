@@ -734,7 +734,7 @@ async def get_team_record(team: str, season: int):
 CAREER_POSITIONS = ["QB", "RB", "WR", "TE"]
 
 # Lightweight cache: just the eligible player list for /career/random
-_career_eligible_cache: list[dict] | None = None
+_career_eligible_cache: Optional[list[dict]] = None
 
 # Per-player career cache: player_id -> full response dict
 _career_player_cache: dict[str, dict] = {}
@@ -803,20 +803,29 @@ def _get_stats_df():
         return None
 
 
-def _peak_yards(player_stats) -> int:
-    """Return the highest single-season yardage for a player across all yard types."""
-    yard_cols = ["passing_yards", "rushing_yards", "receiving_yards"]
-    peak = 0
-    for col in yard_cols:
-        if col in player_stats.columns:
-            col_max = player_stats[col].max()
-            if col_max and not (isinstance(col_max, float) and col_max != col_max):
-                peak = max(peak, int(col_max))
-    return peak
+def _career_yard_totals(player_stats) -> tuple:
+    """Return (total_rushing_yards, total_receiving_yards, total_passing_yards) for a player."""
+    def col_sum(col):
+        if col not in player_stats.columns:
+            return 0
+        total = player_stats[col].fillna(0).sum()
+        return int(total) if total == total else 0  # guard against NaN
+
+    return (
+        col_sum("rushing_yards"),
+        col_sum("receiving_yards"),
+        col_sum("passing_yards"),
+    )
 
 
 def _build_eligible_players() -> list[dict]:
-    """Build eligible players list using roster (position/name) + stats (production filter)."""
+    """Build eligible players list using roster (position/name) + stats (production filter).
+
+    Eligibility requires 5+ seasons AND career production:
+      - 1000+ career rushing yards, OR
+      - 1000+ career receiving yards, OR
+      - 3000+ career passing yards
+    """
     global _career_eligible_cache
     if _career_eligible_cache is not None:
         return _career_eligible_cache
@@ -844,9 +853,12 @@ def _build_eligible_players() -> list[dict]:
         if not player_pos:
             continue
 
-        # Filter out low-production players: must have at least one 500+ yard season
+        # Career production filter: 1000+ rush yds, 1000+ rec yds, or 3000+ pass yds
         player_stats = stats[stats["player_id"] == pid]
-        if player_stats.empty or _peak_yards(player_stats) < 500:
+        if player_stats.empty:
+            continue
+        rush_yds, rec_yds, pass_yds = _career_yard_totals(player_stats)
+        if rush_yds < 1000 and rec_yds < 1000 and pass_yds < 3000:
             continue
 
         # Get name from most recent season

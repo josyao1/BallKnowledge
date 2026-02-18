@@ -92,7 +92,7 @@ export function MultiplayerResultsPage() {
       if (result.players) {
         setPlayers(result.players);
         const allFinished = result.players.every(p => p.finished_at !== null);
-        if (allFinished && lobby.status !== 'finished') {
+        if (allFinished && lobby.status === 'playing') {
           await updateLobbyStatus(lobby.id, 'finished');
         }
       }

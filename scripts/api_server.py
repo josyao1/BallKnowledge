@@ -689,7 +689,7 @@ async def get_team_record(team: str, season: str):
 _career_cache: dict[int, dict] = {}
 
 # Cached eligible NBA career players
-_nba_career_eligible: list[dict] | None = None
+_nba_career_eligible: Optional[list[dict]] = None
 
 
 def _build_nba_eligible() -> list[dict]:
