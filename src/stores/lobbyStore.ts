@@ -25,6 +25,7 @@ import {
   checkAllPlayersFinished,
   incrementPlayerWins,
   updatePlayerTeam,
+  updateCareerState,
 } from '../services/lobby';
 
 interface LobbyState {
@@ -74,6 +75,7 @@ interface LobbyState {
   }) => Promise<void>;
   incrementWins: (playerId: string) => Promise<void>;
   assignTeam: (targetPlayerId: string, teamNumber: number | null) => Promise<void>;
+  updateCareerState: (state: Record<string, unknown>) => Promise<void>;
 
   // Realtime updates (called by subscription hook)
   setLobby: (lobby: Lobby | null) => void;
@@ -247,6 +249,12 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     if (!lobby || !isHost) return;
 
     await updatePlayerTeam(lobby.id, targetPlayerId, teamNumber);
+  },
+
+  updateCareerState: async (state) => {
+    const { lobby } = get();
+    if (!lobby) return;
+    await updateCareerState(lobby.id, state);
   },
 
   // Realtime update handlers

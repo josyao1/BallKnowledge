@@ -590,6 +590,89 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   return { error: null };
 }
 
+// Update the career_state JSONB for a career-mode lobby
+export async function updateCareerState(
+  lobbyId: string,
+  state: Record<string, unknown>
+): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Multiplayer not available' };
+
+  const { error } = await supabase
+    .from('lobbies')
+    .update({ career_state: state })
+    .eq('id', lobbyId);
+
+  return { error: error?.message || null };
+}
+
+// Start a new career round: reset all player scores/finished_at, write new career_state, set status=playing.
+export async function startCareerRound(
+  lobbyId: string,
+  careerState: Record<string, unknown>
+): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Multiplayer not available' };
+
+  // Reset player scores and round state
+  const { error: playersError } = await supabase
+    .from('lobby_players')
+    .update({
+      finished_at: null,
+      score: 0,
+      guessed_count: 0,
+      guessed_players: [],
+      incorrect_guesses: [],
+    })
+    .eq('lobby_id', lobbyId);
+
+  if (playersError) return { error: playersError.message };
+
+  // Write new career state and set lobby to playing
+  const { error } = await supabase
+    .from('lobbies')
+    .update({
+      career_state: careerState,
+      status: 'playing',
+      started_at: new Date().toISOString(),
+      finished_at: null,
+    })
+    .eq('id', lobbyId);
+
+  return { error: error?.message || null };
+}
+
+// Reset all player wins/scores and lobby state for a new career match (Play Again)
+export async function resetMatchForPlayAgain(
+  lobbyId: string,
+  winTarget: number
+): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Multiplayer not available' };
+
+  const { error: playersError } = await supabase
+    .from('lobby_players')
+    .update({
+      wins: 0,
+      score: 0,
+      finished_at: null,
+      guessed_count: 0,
+      guessed_players: [],
+      incorrect_guesses: [],
+    })
+    .eq('lobby_id', lobbyId);
+
+  if (playersError) return { error: playersError.message };
+
+  const { error } = await supabase
+    .from('lobbies')
+    .update({
+      career_state: { win_target: winTarget, round: 0 },
+      status: 'waiting',
+      finished_at: null,
+    })
+    .eq('id', lobbyId);
+
+  return { error: error?.message || null };
+}
+
 // Update team assignment for a player (host only)
 export async function updatePlayerTeam(
   lobbyId: string,

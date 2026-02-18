@@ -98,6 +98,7 @@ export interface Database {
           division_name: string | null;
           used_nba_divisions: string[];
           used_nfl_divisions: string[];
+          career_state: any | null;
         };
         Insert: {
           id?: string;
@@ -124,6 +125,7 @@ export interface Database {
           division_name?: string | null;
           used_nba_divisions?: string[];
           used_nfl_divisions?: string[];
+          career_state?: any | null;
         };
         Update: {
           id?: string;
@@ -150,6 +152,7 @@ export interface Database {
           division_name?: string | null;
           used_nba_divisions?: string[];
           used_nfl_divisions?: string[];
+          career_state?: any | null;
         };
       };
       roll_call_entries: {

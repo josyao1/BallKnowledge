@@ -18,6 +18,8 @@ import { RollCallSessionPage } from './pages/RollCallSessionPage';
 import { RollCallResultsPage } from './pages/RollCallResultsPage';
 import { CareerGamePage } from './pages/CareerGamePage';
 import { CareerResultsPage } from './pages/CareerResultsPage';
+import { MultiplayerCareerPage } from './pages/MultiplayerCareerPage';
+import { MultiplayerCareerResultsPage } from './pages/MultiplayerCareerResultsPage';
 
 function App() {
   return (
@@ -41,6 +43,9 @@ function App() {
         {/* Career Mode routes */}
         <Route path="/career" element={<CareerGamePage />} />
         <Route path="/career/results" element={<CareerResultsPage />} />
+        {/* Multiplayer Career routes */}
+        <Route path="/lobby/:code/career" element={<MultiplayerCareerPage />} />
+        <Route path="/lobby/:code/career/results" element={<MultiplayerCareerResultsPage />} />
       </Routes>
     </BrowserRouter>
   );
