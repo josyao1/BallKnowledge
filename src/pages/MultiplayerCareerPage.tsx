@@ -6,7 +6,7 @@
  * Round winner (highest score) earns a win; first to win_target wins the match.
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
@@ -380,6 +380,18 @@ export function MultiplayerCareerPage() {
   const columns = getColumns(sport, careerState.position || '');
   const winTarget = careerState.win_target || 3;
 
+  // Career highs: max value per numeric column across all seasons.
+  const careerHighs = useMemo(() => {
+    const highs: Record<string, number> = {};
+    const allSeasons: any[] = careerState.seasons || [];
+    for (const col of columns) {
+      if (col.key === 'season' || col.key === 'team') continue;
+      const max = Math.max(0, ...allSeasons.map((s: any) => Number(s[col.key]) || 0));
+      if (max > 0) highs[col.key] = max;
+    }
+    return highs;
+  }, [careerState.seasons, columns]);
+
   // ── BETWEEN-ROUND INTERSTITIAL ──
   if (lobby.status === 'waiting') {
     const summary = roundSummary;
@@ -646,16 +658,28 @@ export function MultiplayerCareerPage() {
                   transition={{ duration: 0.2, delay: idx * 0.03 }}
                   className="border-b border-[#222] hover:bg-[#1a1a1a]"
                 >
-                  {columns.map(col => (
-                    <td key={col.key} className="px-3 py-2 sports-font text-xs text-[var(--vintage-cream)] whitespace-nowrap">
-                      {col.key === 'season'
-                        ? (yearsRevealed ? season.season : '???')
-                        : col.key === 'team'
-                          ? normalizeTeamAbbr(formatStat(col.key, season[col.key]), sport)
-                          : formatStat(col.key, season[col.key])
-                      }
-                    </td>
-                  ))}
+                  {columns.map(col => {
+                    const isHigh = col.key !== 'season' && col.key !== 'team'
+                      && careerHighs[col.key] !== undefined
+                      && (Number(season[col.key]) || 0) === careerHighs[col.key];
+                    return (
+                      <td
+                        key={col.key}
+                        className={`px-3 py-2 sports-font text-xs whitespace-nowrap ${
+                          isHigh
+                            ? 'text-[#d4af37] bg-[#d4af37]/10 font-bold'
+                            : 'text-[var(--vintage-cream)]'
+                        }`}
+                      >
+                        {col.key === 'season'
+                          ? (yearsRevealed ? season.season : '???')
+                          : col.key === 'team'
+                            ? normalizeTeamAbbr(formatStat(col.key, season[col.key]), sport)
+                            : formatStat(col.key, season[col.key])
+                        }
+                      </td>
+                    );
+                  })}
                 </motion.tr>
               ))}
             </AnimatePresence>
