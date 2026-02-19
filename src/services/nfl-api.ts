@@ -1,10 +1,12 @@
 /**
  * nfl-api.ts — NFL API client for the Python backend.
  *
- * Mirrors the NBA api.ts pattern: roster fetching, random team selection,
- * season player lists (autocomplete), and team record lookups.
- * API availability is cached in a module-level singleton (`_nflApiAvailable`)
- * to avoid repeated health checks; call `resetNFLApiAvailability()` to force a recheck.
+ * *** ARCHIVED — NOT IMPORTED ANYWHERE ***
+ * All roster and career data is now served as static JSON from the Vercel CDN.
+ * - Roster/autocomplete: roster.ts → /public/data/nfl/rosters/ and /public/data/nfl/players/
+ * - Career mode: careerData.ts → /public/data/nfl_careers.json
+ * The Render backend (nfl_api_server.py) and these API calls are fully superseded.
+ * This file is kept for reference only. Safe to delete.
  */
 
 import type { NFLPlayer } from '../types/nfl';

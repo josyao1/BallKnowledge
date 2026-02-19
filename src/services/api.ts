@@ -1,11 +1,12 @@
 /**
  * api.ts — NBA API client for the Python backend.
  *
- * Provides roster fetching, random team selection, season player lists (autocomplete),
- * and team record lookups. Uses `getApiAbbreviation` to translate current team
- * abbreviations to historical ones for relocated franchises (e.g. NJN for BKN pre-2012).
- * API availability is cached in a module-level singleton (`_apiAvailable`) to avoid
- * repeated health checks; call `resetApiAvailability()` to force a recheck.
+ * *** ARCHIVED — NOT IMPORTED ANYWHERE ***
+ * All roster and career data is now served as static JSON from the Vercel CDN.
+ * - Roster/autocomplete: roster.ts → /public/data/rosters/ and /public/data/players/
+ * - Career mode: careerData.ts → /public/data/nba_careers.json
+ * The Render backend (api_server.py) and these API calls are fully superseded.
+ * This file is kept for reference only. Safe to delete.
  */
 
 import type { Player } from '../types';

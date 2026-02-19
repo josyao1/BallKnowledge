@@ -2,6 +2,13 @@
 """
 NBA Roster Data Extraction Script
 
+*** ARCHIVED — SUPERSEDED BY generate_nba_rosters.py ***
+This script wrote a monolithic rosters.json into src/data/ (bundled with the app).
+It has been replaced by generate_nba_rosters.py which writes individual per-team
+per-season JSON files into public/data/rosters/ for static CDN serving.
+Safe to delete.
+
+Original description:
 Extracts team rosters and player stats from nba_api for the Ball Knowledge trivia game.
 Outputs JSON files for use in the React frontend.
 

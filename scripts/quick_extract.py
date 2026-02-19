@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """
 Quick extraction script for testing - extracts a few popular teams/seasons.
+
+*** ARCHIVED — SUPERSEDED BY generate_nba_rosters.py ***
+Was used to test the old extract_rosters.py pipeline before a full run.
+Both this and extract_rosters.py are replaced by generate_nba_rosters.py.
+Safe to delete.
+
+Original description:
 Run this first to verify the pipeline works before running the full extraction.
 
 Usage:

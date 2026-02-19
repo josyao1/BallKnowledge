@@ -2,6 +2,12 @@
 """
 Ball Knowledge - NBA Roster API Server
 
+*** ARCHIVED — NO LONGER USED IN PRODUCTION ***
+All roster data is served as static JSON from Vercel CDN (public/data/rosters/).
+Career mode data is also static (public/data/nba_careers.json via careerData.ts).
+This Render backend is fully superseded. Safe to decommission on Render.
+
+Original description:
 FastAPI server that fetches NBA roster data on-demand using nba_api.
 Includes caching to avoid rate limits and improve performance.
 

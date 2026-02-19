@@ -1,9 +1,24 @@
 ================================================================================
-BALL KNOWLEDGE — CLAUDE CONTEXT FILE
+BALL KNOWLEDGE — CONTEXT FILE
 ================================================================================
 Last Updated: 2026-02-19
+
+================================================================================
+PENDING / MONITOR
+================================================================================
+
+[ ] NFL 2025 CAREER STATS — NOT YET AVAILABLE
+    nfl_data_py import_seasonal_data([2025]) returns HTTP 404 — the post-season
+    parquet files have not been published yet (as of 2026-02-19, Seattle just won
+    the Super Bowl). Check periodically:
+      cd scripts && python -c "import nfl_data_py as nfl; print(nfl.import_seasonal_data([2025]))"
+    When it works (no 404), run:
+      python generate_nfl_careers.py   (or update_nba_careers.py equivalent for NFL)
+      cp data/nfl_careers.json ../public/data/nfl_careers.json
+    NFL rosters for 2025 ARE already generated (nfl_data_py handles rosters
+    separately from season stats). Only career stats are missing.
 Sports: NBA + NFL
-Deployment: Vercel (frontend + static data), Render (career mode only)
+Deployment: Vercel only (frontend + all static data). Render fully decommissioned.
 
 ================================================================================
 WHAT THIS APP IS
@@ -19,7 +34,7 @@ Tech Stack:
 - Search:    Fuse.js fuzzy matching + react-window virtualized lists
 - Realtime:  Supabase (multiplayer lobbies, leaderboard)
 - Data:      Static JSON files on Vercel CDN (roster/career data)
-- Backend:   FastAPI on Render — ONLY for career mode (see below)
+- Backend:   None. Everything is static JSON on Vercel CDN.
 
 ================================================================================
 ARCHITECTURE — DATA FLOW (CRITICAL TO UNDERSTAND)
@@ -40,6 +55,11 @@ Game start flow:
    NFL:  /data/nfl/players/{YEAR}.json
 4. Game starts instantly — no API calls, no cold starts, no race conditions
 
+Career mode flow:
+1. careerData.ts fetches /data/nba_careers.json or /data/nfl_careers.json once
+2. Caches in memory for the session
+3. Random player selection + stat lookup happen entirely client-side
+
 NBA abbreviation translation (src/utils/teamHistory.ts → getApiAbbreviation()):
   BKN pre-2012  → NJN    OKC pre-2008  → SEA
   NOP pre-2013  → NOH    MEM pre-2001  → VAN
@@ -49,16 +69,13 @@ NFL uses CURRENT abbreviations always (LAR for all Rams years, LV for all
 Raiders years, LAC for all Chargers years). Alias normalisation is done
 at script generation time, not at runtime.
 
-CAREER MODE — STILL USES RENDER BACKEND
-----------------------------------------
-Career mode hits api_server.py (NBA) and nfl_api_server.py (NFL) on Render.
-These servers load pre-built JSON files into memory at startup and serve:
-  GET /career/random?career_from=X&career_to=Y  → random player from pool
-  GET /career/{player_id}                        → full career stats
-
-NOTE: Career mode could also be moved to static (same pattern — just load
-nba_careers.json / nfl_careers.json in the browser and pick randomly
-client-side). This would kill Render entirely. Not done yet.
+CAREER MODE — FULLY STATIC
+---------------------------
+Career mode uses careerData.ts which fetches static JSON from Vercel CDN:
+  NBA:  /data/nba_careers.json   (736 players, season-by-season stats)
+  NFL:  /data/nfl_careers.json   (584 players, QB/RB/WR/TE only)
+Random selection and filtering happen client-side. No backend needed.
+Render is fully decommissioned — api_server.py and nfl_api_server.py are archived.
 
 MULTIPLAYER — SUPABASE REALTIME
 ---------------------------------
@@ -71,21 +88,23 @@ STATIC DATA FILES (public/data/)
 
 public/data/
   rosters/
-    {HIST_ABBR}_{SEASON}.json     NBA roster per team per season (2000-2024)
+    {HIST_ABBR}_{SEASON}.json     NBA roster per team per season (2000-2025)
     e.g. LAL_2023-24.json, NJN_2004-05.json, SEA_2006-07.json
-    ~750 files total (30 teams × 25 seasons), ~5-8 KB each
+    ~775 files total (30 teams × 26 seasons), ~5-8 KB each
   players/
     {SEASON}.json                 All NBA players that season (autocomplete)
     e.g. 2023-24.json
-    25 files, ~15 KB each
+    26 files, ~15 KB each
+  nba_careers.json                736 NBA players, full season-by-season stats (1.1 MB)
+  nfl_careers.json                584 NFL players, QB/RB/WR/TE only (596 KB)
   nfl/
     rosters/
-      {TEAM}_{YEAR}.json          NFL roster per team per season (2000-2024)
+      {TEAM}_{YEAR}.json          NFL roster per team per season (2000-2025)
       e.g. KC_2023.json, LAR_2015.json
-      ~800 files total (32 teams × 25 seasons), ~15-20 KB each
+      ~754 files total (32 teams × 26 seasons), ~15-20 KB each
     players/
       {YEAR}.json                 All NFL players that season (autocomplete)
-      25 files, ~50 KB each
+      26 files, ~50 KB each
 
 Roster file format (NBA):
   { "team": "NJN", "season": "2004-05", "players": [
@@ -103,8 +122,8 @@ scripts/data/ (NOT served publicly — used by Render for career mode):
   nba_careers.json   1.1 MB, 736 players, full season-by-season stats
   nfl_careers.json   596 KB, 584 players (QB/RB/WR/TE only)
 
-scripts/.cache/        NBA api_server file cache (team_season.json, 24hr expiry)
-scripts/.nfl_cache/    NFL api_server file cache (nfl_team_year.json, 1wk expiry)
+scripts/.cache/        NBA roster generation cache (team_season.json, 24hr expiry)
+scripts/.nfl_cache/    NFL roster generation cache (nfl_team_year.json, 1wk expiry)
 
 ================================================================================
 SOURCE FILE MAP
@@ -134,16 +153,14 @@ SERVICES (src/services/)
                       fetchStaticNFLRoster(abbr, year)     NFL static
                       fetchStaticNFLSeasonPlayers(year)    NFL autocomplete
                       fetchDivisionRosters(sport, abbrs, season)  4-team merge
-  api.ts            NBA backend client (Render). Now only used for CAREER MODE:
-                      fetchRandomCareerPlayer(filters)
-                      fetchCareerStats(playerId)
-                    Legacy roster functions still exist but are NOT called for
-                    roster mode anymore (static files used instead).
-  nfl-api.ts        NFL backend client (Render). Now only used for CAREER MODE:
-                      fetchNFLRandomCareerPlayer(position, filters)
-                      fetchNFLCareerStats(playerId)
-                    NFL roster functions are fallback only (static preferred).
+  careerData.ts     Static career data loader. Fetches nba_careers.json /
+                    nfl_careers.json from Vercel CDN once per session.
+                    Random selection + filtering are client-side.
   careerPrefetch.ts Background prefetch for career mode (keeps 2 players cached)
+  api.ts            *** ARCHIVED — NOT IMPORTED ANYWHERE ***
+                    Was the NBA Render backend client. Superseded by static files.
+  nfl-api.ts        *** ARCHIVED — NOT IMPORTED ANYWHERE ***
+                    Was the NFL Render backend client. Superseded by static files.
   lobby.ts          Supabase lobby operations
   leaderboard.ts    Supabase leaderboard operations
   rollCall.ts       Roll Call mode Supabase operations
@@ -216,46 +233,46 @@ DATA GENERATION (run once, output goes to public/data/):
                             Output: scripts/data/nfl_careers.json (596 KB, 584 players)
                             Uses nfl_data_py (fast, local)
 
-  extract_rosters.py        OLD extraction script — outputs monolithic rosters.json
-                            to src/data/. Superseded by generate_nba_rosters.py.
+  update_nba_careers.py     Incremental NBA career stats updater. Appends new
+                            seasons to existing players in nba_careers.json.
+                            1 API call per season + 2 per new player only.
+                            Run: python update_nba_careers.py --years 2025 2026
 
-BACKEND SERVERS (only needed for career mode):
-  api_server.py             FastAPI, port 8000. Serves:
-                              GET /career/random   random NBA career player
-                              GET /career/{id}     NBA career stats
-                            Also has legacy roster endpoints (now bypassed by
-                            static files). Loads nba_careers.json at startup.
+  extract_rosters.py        *** ARCHIVED *** Old monolithic extraction to src/data/.
+                            Superseded by generate_nba_rosters.py. Safe to delete.
 
-  nfl_api_server.py         FastAPI, port 8001. Serves:
-                              GET /nfl/career/random   random NFL career player
-                              GET /nfl/career/{id}     NFL career stats
-                            Also has legacy NFL roster endpoints. Loads
-                            nfl_careers.json at startup.
+  quick_extract.py          *** ARCHIVED *** Test script for extract_rosters.py.
+                            Safe to delete.
+
+BACKEND SERVERS (*** ARCHIVED — RENDER FULLY DECOMMISSIONED ***):
+  api_server.py             *** ARCHIVED *** Was NBA FastAPI server on Render.
+                            Career mode now uses static nba_careers.json.
+                            Roster endpoints were already bypassed by static files.
+
+  nfl_api_server.py         *** ARCHIVED *** Was NFL FastAPI server on Render.
+                            Career mode now uses static nfl_careers.json.
+                            Roster endpoints were already bypassed by static files.
 
 ================================================================================
 ENVIRONMENT VARIABLES
 ================================================================================
 
-VITE_API_URL          NBA backend URL (default: http://localhost:8000)
-                      Production: Render URL. Only needed for career mode.
-VITE_NFL_API_URL      NFL backend URL (default: http://localhost:8001)
-                      Production: Render URL. Only needed for career mode.
-VITE_SUPABASE_URL     Supabase project URL
+VITE_SUPABASE_URL      Supabase project URL
 VITE_SUPABASE_ANON_KEY Supabase anon key
+
+VITE_API_URL           *** UNUSED *** Was NBA Render backend URL. Safe to delete
+                       from Vercel env vars.
+VITE_NFL_API_URL       *** UNUSED *** Was NFL Render backend URL. Safe to delete
+                       from Vercel env vars.
 
 ================================================================================
 COMMANDS
 ================================================================================
 
-# Dev (no Python servers needed for roster mode)
+# Dev — no Python servers needed, everything is static
 npm run dev           # localhost:5173
 
-# If you need career mode locally:
-cd scripts
-uvicorn api_server:app --port 8000      # NBA career
-uvicorn nfl_api_server:app --port 8001  # NFL career
-
-# Generate static roster files (one-time setup)
+# Generate static roster files (one-time setup or to add new seasons)
 cd scripts
 python generate_nba_rosters.py          # ~30-40 min first run
 python generate_nfl_rosters.py          # ~2-5 min (nfl_data_py is local)
@@ -264,9 +281,16 @@ python generate_nfl_rosters.py          # ~2-5 min (nfl_data_py is local)
 tail -f /tmp/nba_roster_gen.log
 tail -f /tmp/nfl_roster_gen.log
 
-# Regenerate career pools
+# Regenerate career pools (full rebuild — slow)
 python generate_nba_careers.py          # ~30-40 min
-python generate_nfl_careers.py          # fast
+python generate_nfl_careers.py          # fast (nfl_data_py local)
+
+# Incremental NBA career update (append new seasons to existing players)
+python update_nba_careers.py --years 2025 2026   # 2-5 min
+
+# After generating careers, copy to public/data/ for Vercel:
+cp data/nba_careers.json ../public/data/nba_careers.json
+cp data/nfl_careers.json ../public/data/nfl_careers.json
 
 ================================================================================
 KEY DECISIONS & GOTCHAS
@@ -287,10 +311,10 @@ KEY DECISIONS & GOTCHAS
    ServerWarmup.tsx still exists but is DISABLED (showWarmup=false in HomePage).
    Both sports use static files so no warmup delay. Component kept for reference.
 
-4. CAREER MODE ON RENDER — COLD START STILL EXISTS
-   Career mode first load is slow (~15-30s) due to Render free tier cold starts.
-   Fix: move nba_careers.json + nfl_careers.json to public/data/ and do
-   random selection client-side. Not yet implemented.
+4. CAREER MODE IS NOW FULLY STATIC
+   nba_careers.json + nfl_careers.json live in public/data/ and are fetched
+   client-side by careerData.ts. No Render cold start. First load downloads
+   the JSON once per session (~1-2s); subsequent lookups are instant.
 
 5. DIVISION MODE
    fetchDivisionRosters() in roster.ts fetches 4 teams in parallel.

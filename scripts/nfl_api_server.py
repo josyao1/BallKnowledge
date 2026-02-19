@@ -2,6 +2,12 @@
 """
 Roster Knowledge - NFL Roster API Server
 
+*** ARCHIVED — NO LONGER USED IN PRODUCTION ***
+All roster data is served as static JSON from Vercel CDN (public/data/nfl/rosters/).
+Career mode data is also static (public/data/nfl_careers.json via careerData.ts).
+This Render backend is fully superseded. Safe to decommission on Render.
+
+Original description:
 FastAPI server that fetches NFL roster data using nfl_data_py.
 Includes caching to improve performance.
 
