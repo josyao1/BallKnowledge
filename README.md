@@ -2,6 +2,10 @@
 
 NBA + NFL roster trivia game. Name as many players as you can from a team's roster in a given season before the clock runs out.
 
+## Official Link
+
+[ball-knowledge-delta.vercel.app](https://ball-knowledge-delta.vercel.app)
+
 ## Quick Start
 
 ```bash
