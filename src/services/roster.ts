@@ -11,7 +11,6 @@
 
 import { rosters, getAllPlayers, getAvailableSeasons as getSeasons, getTeamsWithSeason } from '../data/rosters';
 import { getApiAbbreviation } from '../utils/teamHistory';
-import { fetchNFLRosterFromApi } from './nfl-api';
 import type { Player } from '../types';
 import type { NFLPlayer } from '../types/nfl';
 
@@ -216,9 +215,6 @@ async function fetchSingleTeamRoster(sport: string, abbr: string, season: string
     return result.players;
   } else {
     const year = parseInt(season);
-    const staticPlayers = await fetchStaticNFLRoster(abbr, year);
-    if (staticPlayers && staticPlayers.length > 0) return staticPlayers;
-    const result = await fetchNFLRosterFromApi(abbr, year);
-    return result?.players || [];
+    return await fetchStaticNFLRoster(abbr, year) ?? [];
   }
 }

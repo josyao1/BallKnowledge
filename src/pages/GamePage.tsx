@@ -6,7 +6,7 @@
  * the lobby via debounced updates. Navigates to results when the timer ends.
  */
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
@@ -86,7 +86,7 @@ export function GamePage() {
   }, [isMultiplayer, players, currentPlayerId, guessedPlayers, hideResultsDuringGame]);
 
   const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
-  const [teamRecord, setTeamRecord] = useState<string | null>(null);
+  const teamRecord = null;
 
   // Shot clock: activates red pulsing background in the final 5 seconds
   const isShotClockActive = timeRemaining <= 5 && timeRemaining > 0 && status === 'playing';
