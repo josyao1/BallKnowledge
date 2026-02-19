@@ -268,20 +268,19 @@ function CardFace({ side, image, label, value }: any) {
   const isBack = side === 'back';
   return (
     <div 
-      className={`absolute inset-0 rounded-lg shadow-xl overflow-hidden bg-white ${isBack ? 'border-white/10' : ''}`}
+      className={`absolute inset-0 rounded-xl overflow-hidden ${isBack ? '' : 'bg-white'}`}
       style={{ 
         backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
         transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
         backgroundImage: isBack ? `url("${image}")` : 'none',
-        backgroundSize: 'cover'
+        backgroundSize: 'cover',
+        boxShadow: !isBack ? '0 25px 50px rgba(0,0,0,0.2), 0 0 1px rgba(0,0,0,0.1)' : '0 15px 35px rgba(0,0,0,0.3)'
       }}
     >
       {!isBack && (
-        <div className="w-full h-full p-[4px] bg-black">
-          <div className="w-full h-full bg-white rounded-[4px] flex flex-col items-center justify-center p-2 md:p-3 overflow-hidden">
-            <span className="sports-font text-[7px] md:text-[9px] text-black/30 mb-1 tracking-[0.2em] uppercase font-bold text-center">{label}</span>
-            <span className="retro-title text-sm md:text-xl text-black leading-tight uppercase font-bold text-center break-words w-full px-1">{value}</span>
-          </div>
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-5 overflow-hidden relative">
+          <span className="sports-font text-[8px] md:text-[10px] text-amber-600 tracking-[0.3em] uppercase font-semibold text-center">{label}</span>
+          <span className="retro-title text-base md:text-2xl text-slate-800 leading-tight uppercase font-bold text-center break-words w-full px-2 mt-1">{value}</span>
         </div>
       )}
     </div>
