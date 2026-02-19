@@ -58,7 +58,7 @@ export async function fetchStaticSeasonPlayers(
  * Fetch NFL roster from preloaded static JSON in /public/data/nfl/rosters/.
  * NFL uses plain year integers (2023), no historical abbreviation translation.
  */
-async function fetchStaticNFLRoster(
+export async function fetchStaticNFLRoster(
   teamAbbreviation: string,
   year: number
 ): Promise<NFLPlayer[] | null> {

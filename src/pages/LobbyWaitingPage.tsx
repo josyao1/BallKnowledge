@@ -14,9 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { useGameStore } from '../stores/gameStore';
-import { fetchTeamRoster, fetchDivisionRosters } from '../services/roster';
-import { fetchSeasonPlayers } from '../services/api';
-import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import { fetchTeamRoster, fetchDivisionRosters, fetchStaticSeasonPlayers, fetchStaticNFLRoster, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
@@ -217,32 +215,20 @@ export function LobbyWaitingPage() {
 
         // Fetch league players for autocomplete
         if (lobbySport === 'nba') {
-          const leagueResult = await fetchSeasonPlayers(freshLobby.season);
-          if (leagueResult?.players) leaguePlayers = leagueResult.players;
+          leaguePlayers = await fetchStaticSeasonPlayers(freshLobby.season) ?? [];
         } else {
           const year = parseInt(freshLobby.season);
-          const leagueResult = await fetchNFLSeasonPlayers(year);
-          if (leagueResult?.players) leaguePlayers = leagueResult.players;
+          leaguePlayers = await fetchStaticNFLSeasonPlayers(year) ?? [];
         }
       } else if (lobbySport === 'nba') {
         const result = await fetchTeamRoster(lobbyTeam.abbreviation, freshLobby.season);
         rosterPlayers = result.players;
 
-        const leagueResult = await fetchSeasonPlayers(freshLobby.season);
-        if (leagueResult?.players) {
-          leaguePlayers = leagueResult.players;
-        }
+        leaguePlayers = await fetchStaticSeasonPlayers(freshLobby.season) ?? [];
       } else {
         const year = parseInt(freshLobby.season);
-        const result = await fetchNFLRosterFromApi(lobbyTeam.abbreviation, year);
-        if (result?.players) {
-          rosterPlayers = result.players;
-        }
-
-        const leagueResult = await fetchNFLSeasonPlayers(year);
-        if (leagueResult?.players) {
-          leaguePlayers = leagueResult.players;
-        }
+        rosterPlayers = await fetchStaticNFLRoster(lobbyTeam.abbreviation, year) ?? [];
+        leaguePlayers = await fetchStaticNFLSeasonPlayers(year) ?? [];
       }
 
       setGameConfig(lobbySport, lobbyTeam, freshLobby.season, 'manual', freshLobby.timer_duration, rosterPlayers, leaguePlayers, false);
