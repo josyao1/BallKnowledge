@@ -8,13 +8,10 @@
 
 import type { Sport } from '../types';
 import type { CareerGameData } from '../stores/careerStore';
-import { fetchRandomCareerPlayer, fetchCareerStats } from './api';
-import { fetchNFLRandomCareerPlayer, fetchNFLCareerStats } from './nfl-api';
+import { getRandomNBACareer, getRandomNFLCareer } from './careerData';
+import type { CareerFilters } from './careerData';
 
-export interface CareerFilters {
-  careerFrom?: number;
-  careerTo?: number;
-}
+export type { CareerFilters };
 
 interface PrefetchedGame {
   data: CareerGameData;
@@ -73,15 +70,14 @@ function buildNFLGame(career: any): PrefetchedGame | null {
 async function fetchOneGame(sport: Sport, filters?: CareerFilters): Promise<PrefetchedGame | null> {
   try {
     if (sport === 'nba') {
-      const player = await fetchRandomCareerPlayer(filters);
+      // Full player object is returned directly — no second fetch needed
+      const player = await getRandomNBACareer(filters);
       if (!player) return null;
-      const career = await fetchCareerStats(player.player_id);
-      return buildNBAGame(player, career);
+      return buildNBAGame(player, player);
     } else {
-      const player = await fetchNFLRandomCareerPlayer(undefined, filters);
+      const player = await getRandomNFLCareer(undefined, filters);
       if (!player) return null;
-      const career = await fetchNFLCareerStats(player.player_id);
-      return buildNFLGame(career);
+      return buildNFLGame(player);
     }
   } catch {
     return null;

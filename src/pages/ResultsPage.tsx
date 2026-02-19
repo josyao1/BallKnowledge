@@ -69,8 +69,8 @@ export function ResultsPage() {
       // Start a new random game immediately
       setIsLoadingRandom(true);
       const currentTeams = sport === 'nba' ? teams : nflTeams;
-      const minYear = sport === 'nfl' ? 2000 : 2015;
-      const maxYear = 2024;
+      const minYear = 2000;
+      const maxYear = 2025;
 
       for (let i = 0; i < 5; i++) {
         const team = currentTeams[Math.floor(Math.random() * currentTeams.length)];

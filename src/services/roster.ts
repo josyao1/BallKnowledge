@@ -1,38 +1,106 @@
 /**
- * roster.ts — Roster data layer with API-first + static fallback.
+ * roster.ts — Roster data layer backed by preloaded static JSON files.
  *
- * Attempts to fetch rosters from the live Python API for the freshest data.
- * Falls back to bundled static roster JSON when the API is unavailable.
- * Also exposes helper functions for season/team lookups and autocomplete.
+ * Fetches from /public/data/rosters/ and /public/data/players/ — static assets
+ * served by Vercel CDN with no backend required. Falls back to the legacy bundled
+ * rosters.ts data if a static file is not found (e.g. pre-2000 seasons).
+ *
+ * File names use historical abbreviations (NJN_2004-05, SEA_2006-07) matching
+ * the output of getApiAbbreviation() in utils/teamHistory.ts.
  */
 
 import { rosters, getAllPlayers, getAvailableSeasons as getSeasons, getTeamsWithSeason } from '../data/rosters';
-import { fetchRosterFromApi, isApiAvailable } from './api';
+import { getApiAbbreviation } from '../utils/teamHistory';
 import { fetchNFLRosterFromApi } from './nfl-api';
 import type { Player } from '../types';
+import type { NFLPlayer } from '../types/nfl';
+
+function parseSeasonYear(season: string): number {
+  return parseInt(season.split('-')[0]);
+}
 
 /**
- * Get roster for a team/season - tries API first, falls back to static data
+ * Fetch roster from preloaded static JSON in /public/data/rosters/.
+ * Returns null if the file doesn't exist (team/season not preloaded).
+ */
+async function fetchStaticRoster(
+  teamAbbreviation: string,
+  season: string
+): Promise<Player[] | null> {
+  const hist = getApiAbbreviation(teamAbbreviation, parseSeasonYear(season), 'nba');
+  try {
+    const res = await fetch(`/data/rosters/${hist}_${season}.json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.players ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch all players for a season from preloaded static JSON (for autocomplete).
+ * Returns null if the file doesn't exist.
+ */
+export async function fetchStaticSeasonPlayers(
+  season: string
+): Promise<{ id: number; name: string }[] | null> {
+  try {
+    const res = await fetch(`/data/players/${season}.json`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch NFL roster from preloaded static JSON in /public/data/nfl/rosters/.
+ * NFL uses plain year integers (2023), no historical abbreviation translation.
+ */
+async function fetchStaticNFLRoster(
+  teamAbbreviation: string,
+  year: number
+): Promise<NFLPlayer[] | null> {
+  try {
+    const res = await fetch(`/data/nfl/rosters/${teamAbbreviation}_${year}.json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.players ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch all NFL players for a season from preloaded static JSON (for autocomplete).
+ */
+export async function fetchStaticNFLSeasonPlayers(
+  year: number
+): Promise<{ id: string; name: string }[] | null> {
+  try {
+    const res = await fetch(`/data/nfl/players/${year}.json`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get roster for a team/season.
+ * Tries preloaded static JSON first, then falls back to bundled static data.
  */
 export async function fetchTeamRoster(
   teamAbbreviation: string,
   season: string
 ): Promise<{ players: Player[]; fromApi: boolean; cached: boolean }> {
-  // Try API first
-  const apiAvailable = await isApiAvailable();
-
-  if (apiAvailable) {
-    const apiResult = await fetchRosterFromApi(teamAbbreviation, season);
-    if (apiResult && apiResult.players.length > 0) {
-      return {
-        players: apiResult.players,
-        fromApi: true,
-        cached: apiResult.cached,
-      };
-    }
+  const staticPlayers = await fetchStaticRoster(teamAbbreviation, season);
+  if (staticPlayers && staticPlayers.length > 0) {
+    return { players: staticPlayers, fromApi: false, cached: true };
   }
 
-  // Fall back to static data
+  // Fall back to bundled legacy data (pre-2000 or missing seasons)
   const staticRoster = getTeamRosterSync(teamAbbreviation, season);
   return {
     players: staticRoster,
@@ -148,6 +216,8 @@ async function fetchSingleTeamRoster(sport: string, abbr: string, season: string
     return result.players;
   } else {
     const year = parseInt(season);
+    const staticPlayers = await fetchStaticNFLRoster(abbr, year);
+    if (staticPlayers && staticPlayers.length > 0) return staticPlayers;
     const result = await fetchNFLRosterFromApi(abbr, year);
     return result?.players || [];
   }

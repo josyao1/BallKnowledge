@@ -33,8 +33,8 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       sport: 'nba', // Default to NBA
       timerDuration: 90, // 1:30 default
-      yearRange: { min: 1985, max: 2025 }, // NBA year range
-      nflYearRange: { min: 2000, max: 2024 }, // NFL year range
+      yearRange: { min: 1985, max: 2026 }, // NBA year range
+      nflYearRange: { min: 2000, max: 2025 }, // NFL year range
       hideResultsDuringGame: false, // Default: show results immediately
       showSeasonHints: false, // Default: don't show hints
 
