@@ -18,8 +18,7 @@ import { SettingsModal } from '../components/home/SettingsModal';
 import { ServerWarmup } from '../components/home/ServerWarmup';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import { fetchTeamRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
-import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { warmCareerCache } from '../services/careerData';
 import type { GameMode } from '../types';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
@@ -106,18 +105,10 @@ export function HomePage() {
           players = roster.players;
           league = await fetchStaticSeasonPlayers(season) ?? [];
         } else {
-          // Try static JSON first, fall back to live API
-          const staticRes = await fetch(`/data/nfl/rosters/${team.abbreviation}_${year}.json`).catch(() => null);
-          const staticData = staticRes?.ok ? await staticRes.json().catch(() => null) : null;
-          if (staticData?.players?.length) {
-            players = staticData.players;
-            league = await fetchStaticNFLSeasonPlayers(year) ?? [];
-          } else {
-            const apiResult = await fetchNFLRosterFromApi(team.abbreviation, year);
-            if (!apiResult?.players?.length) return false;
-            players = apiResult.players;
-            league = (await fetchNFLSeasonPlayers(year))?.players ?? [];
-          }
+          const nflPlayers = await fetchStaticNFLRoster(team.abbreviation, year);
+          if (!nflPlayers?.length) return false;
+          players = nflPlayers;
+          league = await fetchStaticNFLSeasonPlayers(year) ?? [];
         }
 
         setLoadingStatus('success');

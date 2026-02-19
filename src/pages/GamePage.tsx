@@ -6,7 +6,7 @@
  * the lobby via debounced updates. Navigates to results when the timer ends.
  */
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
@@ -17,8 +17,6 @@ import { PlayerInput } from '../components/game/PlayerInput';
 import { GuessedPlayersList } from '../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../components/game/TeamDisplay';
 import { LiveScoreboard } from '../components/multiplayer/LiveScoreboard';
-import { fetchTeamRecord } from '../services/api';
-import { fetchNFLTeamRecord } from '../services/nfl-api';
 import { getTeammateGuessedPlayers, TEAM_COLORS } from '../utils/teamUtils';
 
 export function GamePage() {
@@ -88,27 +86,11 @@ export function GamePage() {
   }, [isMultiplayer, players, currentPlayerId, guessedPlayers, hideResultsDuringGame]);
 
   const showSeasonHints = useSettingsStore((state) => state.showSeasonHints);
-  const [teamRecord, setTeamRecord] = useState<string | null>(null);
+  const teamRecord = null;
 
   // Shot clock: activates red pulsing background in the final 5 seconds
   const isShotClockActive = timeRemaining <= 5 && timeRemaining > 0 && status === 'playing';
 
-  useEffect(() => {
-    if (!showSeasonHints || !selectedTeam || !selectedSeason) return;
-    const fetchRecord = async () => {
-      const isNFL = !selectedSeason.includes('-');
-      try {
-        if (isNFL) {
-          const record = await fetchNFLTeamRecord(selectedTeam.abbreviation, parseInt(selectedSeason));
-          setTeamRecord(record?.record || null);
-        } else {
-          const record = await fetchTeamRecord(selectedTeam.abbreviation, selectedSeason);
-          setTeamRecord(record?.record || null);
-        }
-      } catch (error) { console.error(error); }
-    };
-    fetchRecord();
-  }, [showSeasonHints, selectedTeam, selectedSeason]);
 
   const lastSyncRef = useRef({ score: 0, count: 0 });
 

@@ -13,9 +13,7 @@ import { useGameStore } from '../stores/gameStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import { fetchTeamRoster } from '../services/roster';
-import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
-import { fetchSeasonPlayers } from '../services/api';
+import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
 
 export function ResultsPage() {
   const navigate = useNavigate();
@@ -78,16 +76,20 @@ export function ResultsPage() {
         const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
 
         try {
-          const roster = sport === 'nba'
-            ? await fetchTeamRoster(team.abbreviation, season)
-            : await fetchNFLRosterFromApi(team.abbreviation, year);
+          let rosterPlayers;
+          if (sport === 'nba') {
+            const result = await fetchTeamRoster(team.abbreviation, season);
+            rosterPlayers = result.players;
+          } else {
+            rosterPlayers = await fetchStaticNFLRoster(team.abbreviation, year) ?? [];
+          }
 
-          if (roster?.players?.length) {
-            const league = sport === 'nba'
-              ? await fetchSeasonPlayers(season)
-              : await fetchNFLSeasonPlayers(year);
+          if (rosterPlayers.length) {
+            const leaguePlayers = sport === 'nba'
+              ? await fetchStaticSeasonPlayers(season) ?? []
+              : await fetchStaticNFLSeasonPlayers(year) ?? [];
 
-            setGameConfig(sport, team, season, 'random', timerDuration, roster.players, league?.players || [], hideResultsDuringGame);
+            setGameConfig(sport, team, season, 'random', timerDuration, rosterPlayers, leaguePlayers, hideResultsDuringGame);
             navigate('/game');
             return;
           }
