@@ -152,7 +152,7 @@ export async function createRollCallLobby(
     0,
     'manual',
     2000,
-    2024,
+    2025,
     'roll_call'
   );
 

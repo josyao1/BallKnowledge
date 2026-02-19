@@ -18,10 +18,9 @@ import { SettingsModal } from '../components/home/SettingsModal';
 import { ServerWarmup } from '../components/home/ServerWarmup';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import { rosters } from '../data/rosters';
-import { fetchTeamRoster } from '../services/roster';
-import { isApiAvailable, fetchSeasonPlayers } from '../services/api';
-import { isNFLApiAvailable, fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import { fetchTeamRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
+import { fetchNFLRosterFromApi, fetchNFLSeasonPlayers } from '../services/nfl-api';
+import { warmCareerCache } from '../services/careerData';
 import type { GameMode } from '../types';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 
@@ -47,38 +46,27 @@ export function HomePage() {
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
 
   const [randomMinYear, setRandomMinYear] = useState(2015);
-  const [randomMaxYear, setRandomMaxYear] = useState(2024);
+  const [randomMaxYear, setRandomMaxYear] = useState(2025);
   const [skipAnimation, setSkipAnimation] = useState(false);
 
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
-  const [showWarmup, setShowWarmup] = useState(true);
-  const [warmupComplete, setWarmupComplete] = useState(false);
+  // Both sports use static files — no server warmup needed.
+  const [showWarmup] = useState(false);
+  const [warmupComplete, setWarmupComplete] = useState(true);
 
 
-  // Show warmup screen on initial load
-  const handleWarmupReady = () => {
-    setApiOnline(true);
-    setWarmupComplete(true);
-    setShowWarmup(false);
-  };
+  // No-op handlers kept for ServerWarmup prop compatibility (warmup is disabled)
+  const handleWarmupReady = () => { setApiOnline(true); setWarmupComplete(true); };
+  const handleWarmupSkip  = () => { setApiOnline(false); setWarmupComplete(true); };
 
-  const handleWarmupSkip = () => {
-    setApiOnline(false);
-    setWarmupComplete(true);
-    setShowWarmup(false);
-  };
-
-  // Re-check API when sport changes (after initial warmup)
+  // Both sports use static files — always online.
   useEffect(() => {
     if (!warmupComplete) return;
-
-    const checkApi = async () => {
-      const available = sport === 'nba' ? await isApiAvailable() : await isNFLApiAvailable();
-      setApiOnline(available);
-    };
-    checkApi();
+    setApiOnline(true);
+    // Kick off career JSON download in background so it's ready if user clicks Career
+    warmCareerCache(sport);
   }, [sport, warmupComplete]);
 
   useEffect(() => {
@@ -86,7 +74,7 @@ export function HomePage() {
     setSelectedYear(null);
     if (sport === 'nfl') {
       setRandomMinYear(Math.max(randomMinYear, 2000));
-      setRandomMaxYear(Math.min(randomMaxYear, 2024));
+      setRandomMaxYear(Math.min(randomMaxYear, 2025));
     }
   }, [sport]);
 
@@ -94,48 +82,52 @@ export function HomePage() {
     setLoadingStatus('checking');
     setStatusMessage('Selecting team...');
 
-    // Skip animation for manual mode (user already knows team/season)
     const shouldSkipAnimation = gameMode === 'manual';
     setSkipAnimation(shouldSkipAnimation);
 
-    const apiAvailable = sport === 'nba' ? await isApiAvailable() : await isNFLApiAvailable();
     const currentTeams = sport === 'nba' ? teams : nflTeams;
-    const currentMinYear = sport === 'nba' ? randomMinYear : Math.max(randomMinYear, 2000);
-    const currentMaxYear = sport === 'nba' ? randomMaxYear : Math.min(randomMaxYear, 2024);
+    const currentMinYear = Math.max(randomMinYear, 2000);
+    const currentMaxYear = sport === 'nba' ? Math.min(randomMaxYear, 2025) : Math.min(randomMaxYear, 2025);
 
-    // Picks a random team/year. When API is offline and sport is NFL, returns
-    // null (no static NFL data); for NBA, falls back to bundled static rosters.
     const pickRandomTeamSeason = (): { team: GenericTeam; year: number } | null => {
-      if (apiAvailable) {
-        const team = currentTeams[Math.floor(Math.random() * currentTeams.length)];
-        const year = Math.floor(Math.random() * (currentMaxYear - currentMinYear + 1)) + currentMinYear;
-        return { team, year };
-      } else {
-        if (sport === 'nfl') return null;
-        const available: any[] = [];
-        Object.entries(rosters).forEach(([abbr, seasons]) => {
-          const teamData = teams.find(t => t.abbreviation === abbr);
-          if (teamData) {
-            Object.keys(seasons).forEach(s => {
-              const yr = parseInt(s.split('-')[0]);
-              if (yr >= currentMinYear && yr <= currentMaxYear) available.push({ team: teamData, year: yr });
-            });
-          }
-        });
-        return available.length ? available[Math.floor(Math.random() * available.length)] : null;
-      }
+      const team = currentTeams[Math.floor(Math.random() * currentTeams.length)];
+      const year = Math.floor(Math.random() * (currentMaxYear - currentMinYear + 1)) + currentMinYear;
+      return { team, year };
     };
 
     const attemptLoadRoster = async (team: GenericTeam, year: number) => {
       const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
       setLoadingStatus('fetching');
       try {
-        const roster = sport === 'nba' ? await fetchTeamRoster(team.abbreviation, season) : await fetchNFLRosterFromApi(team.abbreviation, year);
-        if (!roster?.players?.length) return false;
-        const league = sport === 'nba' ? await fetchSeasonPlayers(season) : await fetchNFLSeasonPlayers(year);
+        let players, league;
+        if (sport === 'nba') {
+          const roster = await fetchTeamRoster(team.abbreviation, season);
+          if (!roster?.players?.length) return false;
+          players = roster.players;
+          league = await fetchStaticSeasonPlayers(season) ?? [];
+        } else {
+          // Try static JSON first, fall back to live API
+          const staticRes = await fetch(`/data/nfl/rosters/${team.abbreviation}_${year}.json`).catch(() => null);
+          const staticData = staticRes?.ok ? await staticRes.json().catch(() => null) : null;
+          if (staticData?.players?.length) {
+            players = staticData.players;
+            league = await fetchStaticNFLSeasonPlayers(year) ?? [];
+          } else {
+            const apiResult = await fetchNFLRosterFromApi(team.abbreviation, year);
+            if (!apiResult?.players?.length) return false;
+            players = apiResult.players;
+            league = (await fetchNFLSeasonPlayers(year))?.players ?? [];
+          }
+        }
+
         setLoadingStatus('success');
         await new Promise(r => setTimeout(r, 500));
-        setPreparedGameData({ sport, team, season, gameMode, timerDuration, players: roster.players, leaguePlayers: league?.players || [], hideResultsDuringGame });
+        setPreparedGameData({
+          sport, team, season, gameMode, timerDuration,
+          players,
+          leaguePlayers: league,
+          hideResultsDuringGame,
+        });
         setShowRoulette(true);
         return true;
       } catch { return false; }
@@ -266,18 +258,18 @@ export function HomePage() {
               {gameMode === 'manual' ? (
                 <>
                   <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-                  <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={sport === 'nba' ? 1985 : 2000} maxYear={2024} sport={sport} />
+                  <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={sport === 'nba' ? 2025 : 2025} sport={sport} />
                 </>
               ) : (
                 <div className="scoreboard-panel p-3 w-full text-center">
-                  <div className="sports-font text-xs text-[#888] mb-2 tracking-widest">Year Range {sport === 'nfl' && '(2000-2024)'}</div>
+                  <div className="sports-font text-xs text-[#888] mb-2 tracking-widest">Year Range</div>
                   <div className="flex items-center justify-center gap-3">
                     <select value={randomMinYear} onChange={(e) => setRandomMinYear(parseInt(e.target.value))} className="bg-[#1a1a1a] text-[var(--vintage-cream)] px-3 py-1.5 rounded-lg border-2 border-[#3d3d3d] sports-font text-sm">
-                      {Array.from({length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1}, (_,i) => (sport === 'nfl' ? 2000 : 1985) + i).map(y => <option key={y} value={y}>{y}</option>)}
+                      {Array.from({length: (sport === 'nba' ? 2025 : 2025) - 2000 + 1}, (_,i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                     <span className="text-[#888] sports-font">to</span>
                     <select value={randomMaxYear} onChange={(e) => setRandomMaxYear(parseInt(e.target.value))} className="bg-[#1a1a1a] text-[var(--vintage-cream)] px-3 py-1.5 rounded-lg border-2 border-[#3d3d3d] sports-font text-sm">
-                      {Array.from({length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1}, (_,i) => (sport === 'nfl' ? 2000 : 1985) + i).map(y => <option key={y} value={y}>{y}</option>)}
+                      {Array.from({length: (sport === 'nba' ? 2025 : 2025) - 2000 + 1}, (_,i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
                 </div>
@@ -335,7 +327,7 @@ export function HomePage() {
       </motion.div>
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
 
-      {/* Server Warmup */}
+      {/* Server Warmup — disabled, both sports now use static files */}
       {showWarmup && (
         <ServerWarmup
           sport={sport}

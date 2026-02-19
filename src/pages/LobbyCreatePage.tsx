@@ -42,7 +42,7 @@ export function LobbyCreatePage() {
   const [selectedPreset, setSelectedPreset] = useState<number | null>(90);
 
   const [randomMinYear, setRandomMinYear] = useState(2015);
-  const [randomMaxYear, setRandomMaxYear] = useState(2024);
+  const [randomMaxYear, setRandomMaxYear] = useState(2025);
 
   const timerDuration = customTimerInput
     ? Math.max(10, Math.min(600, parseInt(customTimerInput) || 90))
@@ -63,7 +63,7 @@ export function LobbyCreatePage() {
       const dummySeason = sport === 'nba' ? '2023-24' : '2023';
       const lobby = await createLobby(
         hostName.trim(), sport, dummyTeamAbbr, dummySeason,
-        90, 'random', 2000, 2024, 'career', 'team', null, null
+        90, 'random', 2000, 2025, 'career', 'team', null, null
       );
       if (lobby) {
         // Initialize career_state with win_target
@@ -79,8 +79,8 @@ export function LobbyCreatePage() {
     let divisionConference: string | null = null;
     let divisionName: string | null = null;
 
-    const minYear = sport === 'nfl' ? Math.max(randomMinYear, 2000) : randomMinYear;
-    const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2024) : randomMaxYear;
+    const minYear = Math.max(randomMinYear, 2000);
+    const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2025) : Math.min(randomMaxYear, 2025);
 
     if (gameMode === 'random') {
       const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
@@ -343,7 +343,7 @@ export function LobbyCreatePage() {
               {gameMode === 'random' && (
                 <div className="bg-black/50 border border-white/10 rounded-sm p-4">
                   <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                    Year Range {sport === 'nfl' && '(2000-2024)'}
+                    Year Range
                   </div>
                   <div className="flex items-center justify-center gap-3">
                     <select
@@ -356,8 +356,8 @@ export function LobbyCreatePage() {
                       className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
                     >
                       {Array.from(
-                        { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
-                        (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
+                        { length: (sport === 'nba' ? 2025 : 2025) - 2000 + 1 },
+                        (_, i) => 2000 + i
                       ).map((year) => (
                         <option key={year} value={year}>{year}</option>
                       ))}
@@ -373,8 +373,8 @@ export function LobbyCreatePage() {
                       className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
                     >
                       {Array.from(
-                        { length: 2024 - (sport === 'nfl' ? 2000 : 1985) + 1 },
-                        (_, i) => (sport === 'nfl' ? 2000 : 1985) + i
+                        { length: (sport === 'nba' ? 2025 : 2025) - 2000 + 1 },
+                        (_, i) => 2000 + i
                       ).map((year) => (
                         <option key={year} value={year}>{year}</option>
                       ))}
@@ -387,7 +387,7 @@ export function LobbyCreatePage() {
               {gameMode === 'manual' && (
                 <div className="space-y-4">
                   <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-                  <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={sport === 'nba' ? 1985 : 2000} maxYear={2024} sport={sport} />
+                  <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={2025} sport={sport} />
                 </div>
               )}
 

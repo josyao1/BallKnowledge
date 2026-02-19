@@ -77,7 +77,7 @@ export function LobbyWaitingPage() {
   const [editTimer, setEditTimer] = useState(90);
   const [editCustomTimer, setEditCustomTimer] = useState('');
   const [editMinYear, setEditMinYear] = useState(2015);
-  const [editMaxYear, setEditMaxYear] = useState(2024);
+  const [editMaxYear, setEditMaxYear] = useState(2025);
   const [editWinTarget, setEditWinTarget] = useState(3);
   const [editCareerFrom, setEditCareerFrom] = useState(0);
   const [editCareerTo, setEditCareerTo] = useState(0);
@@ -118,8 +118,8 @@ export function LobbyWaitingPage() {
       setEditSelectionScope((lobby.selection_scope as 'team' | 'division') || 'team');
       setEditTimer(lobby.timer_duration);
       setEditCustomTimer('');
-      setEditMinYear(lobby.min_year || (lobbySport === 'nfl' ? 2000 : 2015));
-      setEditMaxYear(lobby.max_year || 2024);
+      setEditMinYear(lobby.min_year || 2000);
+      setEditMaxYear(lobby.max_year || 2025);
 
       // Career state
       const cs = (lobby.career_state as any) || {};
@@ -363,8 +363,8 @@ export function LobbyWaitingPage() {
     if (!isHost || !lobby) return;
 
     const currentSport = lobby.sport as Sport;
-    const minYear = currentSport === 'nfl' ? Math.max(lobby.min_year || 2000, 2000) : (lobby.min_year || 2000);
-    const maxYear = currentSport === 'nfl' ? Math.min(lobby.max_year || 2024, 2024) : (lobby.max_year || 2024);
+    const minYear = Math.max(lobby.min_year || 2000, 2000);
+    const maxYear = Math.min(lobby.max_year || 2025, 2025);
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
     const newSeason = currentSport === 'nba'
       ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
@@ -454,8 +454,8 @@ export function LobbyWaitingPage() {
         newTeamAbbreviation = randomTeam.abbreviation;
 
         // Pick a random year within the range
-        const minYear = finalSport === 'nfl' ? Math.max(editMinYear, 2000) : editMinYear;
-        const maxYear = finalSport === 'nfl' ? Math.min(editMaxYear, 2024) : editMaxYear;
+        const minYear = Math.max(editMinYear, 2000);
+        const maxYear = Math.min(editMaxYear, 2025);
         const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
 
         newSeason = finalSport === 'nba'
@@ -790,7 +790,7 @@ export function LobbyWaitingPage() {
                       <div className="retro-title text-xl text-[#d4af37]">Mystery Deck</div>
                       <div className="sports-font text-[9px] text-white/40 tracking-widest">
                         {lobby.selection_scope === 'division' ? 'Division Mode • ' : ''}
-                        {lobby.min_year || 2000} - {lobby.max_year || 2024}
+                        {lobby.min_year || 2000} - {lobby.max_year || 2025}
                       </div>
                     </div>
                   ) : (
@@ -933,7 +933,7 @@ export function LobbyWaitingPage() {
                             className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
                           >
                             <option value={0}>Any</option>
-                            {Array.from({ length: 2024 - 1990 + 1 }, (_, i) => 1990 + i).map(y => (
+                            {Array.from({ length: 2026 - 1990 + 1 }, (_, i) => 1990 + i).map(y => (
                               <option key={y} value={y}>{y}</option>
                             ))}
                           </select>
@@ -1030,8 +1030,8 @@ export function LobbyWaitingPage() {
                         <YearSelector
                           selectedYear={editYear}
                           onSelect={setEditYear}
-                          minYear={editSport === 'nba' ? 1985 : 2000}
-                          maxYear={2024}
+                          minYear={2000}
+                          maxYear={2025}
                           sport={editSport}
                         />
                       </div>
@@ -1041,8 +1041,7 @@ export function LobbyWaitingPage() {
                     {(editRandomSport || editGameMode === 'random') && (
                       <div className="bg-black/30 border border-white/10 rounded-sm p-3">
                         <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
-                          Year Range {!editRandomSport && editSport === 'nfl' && '(2000-2024)'}
-                          {editRandomSport && '(2000-2024 for NFL)'}
+                          Year Range
                         </div>
                         <div className="flex items-center justify-center gap-3">
                           <select
@@ -1051,8 +1050,8 @@ export function LobbyWaitingPage() {
                             className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
                           >
                             {Array.from(
-                              { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
-                              (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
+                              { length: 2025 - 2000 + 1 },
+                              (_, i) => 2000 + i
                             ).map((y) => (
                               <option key={y} value={y}>{y}</option>
                             ))}
@@ -1064,8 +1063,8 @@ export function LobbyWaitingPage() {
                             className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
                           >
                             {Array.from(
-                              { length: 2024 - (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + 1 },
-                              (_, i) => (editRandomSport ? 2000 : editSport === 'nfl' ? 2000 : 1985) + i
+                              { length: 2025 - 2000 + 1 },
+                              (_, i) => 2000 + i
                             ).map((y) => (
                               <option key={y} value={y}>{y}</option>
                             ))}

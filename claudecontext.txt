@@ -1,363 +1,337 @@
 ================================================================================
-BALL KNOWLEDGE - CLAUDE CODE CONTEXT FILE
+BALL KNOWLEDGE — CLAUDE CONTEXT FILE
 ================================================================================
-Last Updated: 2026-01-22
-Current Phase: Phase 7 (Polish) complete, Dynamic Roster Fetching + Autocomplete Rework implemented
+Last Updated: 2026-02-19
+Sports: NBA + NFL
+Deployment: Vercel (frontend + static data), Render (career mode only)
 
 ================================================================================
-PROJECT OVERVIEW
+WHAT THIS APP IS
 ================================================================================
-Ball Knowledge is an NBA Roster Trivia game built with React + TypeScript.
-Players guess NBA team rosters from selected seasons within a time limit.
+Multiplayer + solo sports roster trivia game. Players guess who was on a team's
+roster in a given season within a time limit. Supports NBA and NFL. Multiple
+game modes: Roster Guessing, Division Mode, Career Mode, Roll Call.
 
 Tech Stack:
-- Frontend: React 19 + TypeScript + Vite 7
-- State: Zustand (with persistence middleware)
-- Styling: Tailwind CSS 4 + Framer Motion + Custom Retro NBA Theme
-- Search: Fuse.js (fuzzy matching) + react-window 1.8.x (virtualized lists)
-- Data: Dynamic fetching via Python FastAPI backend (with static fallback)
-- Backend: FastAPI + nba_api (roster data) + Supabase (leaderboard, optional)
+- Frontend:  React 19 + TypeScript + Vite 7
+- Styling:   Tailwind CSS 4 + Framer Motion + custom retro theme (index.css)
+- State:     Zustand (with persistence middleware)
+- Search:    Fuse.js fuzzy matching + react-window virtualized lists
+- Realtime:  Supabase (multiplayer lobbies, leaderboard)
+- Data:      Static JSON files on Vercel CDN (roster/career data)
+- Backend:   FastAPI on Render — ONLY for career mode (see below)
 
 ================================================================================
-COMPLETED WORK
+ARCHITECTURE — DATA FLOW (CRITICAL TO UNDERSTAND)
 ================================================================================
 
-[Phase 1: Setup & Data]
-✅ Vite + React + TypeScript + Tailwind initialized
-✅ Basic routing set up (HomePage, GamePage, ResultsPage)
-✅ Python data extraction scripts created:
-   - scripts/requirements.txt (nba_api, pandas, tqdm)
-   - scripts/extract_rosters.py (main extraction - all teams/seasons)
-   - scripts/quick_extract.py (test extraction - few iconic teams)
-✅ Sample roster data in src/data/rosters.ts (8 team-seasons)
-✅ Roster service with helper functions
+ROSTER MODE (NBA + NFL) — FULLY STATIC, NO BACKEND NEEDED
+----------------------------------------------------------
+All roster data is pre-generated and served as static JSON files from Vercel.
+No api_server.py or nfl_api_server.py needed for roster/division/roll call modes.
 
-[Phase 2-5: Core Game + UI + Results]
-✅ Full game flow implemented
-✅ Zustand stores for game state and settings
-✅ All game components (Timer, PlayerInput, ScoreDisplay, etc.)
-✅ Results page with roster reveal
+Game start flow:
+1. User picks team + season (or random)
+2. Frontend fetches ONE static JSON file from Vercel CDN:
+   NBA:  /data/rosters/{HIST_ABBR}_{SEASON}.json   e.g. NJN_2004-05.json
+   NFL:  /data/nfl/rosters/{TEAM}_{YEAR}.json       e.g. KC_2023.json
+3. Frontend fetches ONE autocomplete file:
+   NBA:  /data/players/{SEASON}.json
+   NFL:  /data/nfl/players/{YEAR}.json
+4. Game starts instantly — no API calls, no cold starts, no race conditions
 
-[Phase 6: Supabase Integration]
-✅ Supabase client configured (src/lib/supabase.ts)
-✅ Database types defined (src/types/database.ts)
-✅ Leaderboard service (src/services/leaderboard.ts)
-✅ Leaderboard components (src/components/leaderboard/)
-✅ SQL schema created (supabase/schema.sql)
-✅ Environment variables documented (.env.example)
-✅ Auto score submission on results page
+NBA abbreviation translation (src/utils/teamHistory.ts → getApiAbbreviation()):
+  BKN pre-2012  → NJN    OKC pre-2008  → SEA
+  NOP pre-2013  → NOH    MEM pre-2001  → VAN
+  (All other teams: abbreviation unchanged)
 
-[Phase 7: Polish - RETRO NBA THEME]
-✅ Custom retro NBA theme implemented in index.css:
-   - Retro color palette (nba-orange, nba-gold, nba-red, nba-blue)
-   - LED scoreboard-style numbers
-   - Vintage card effects
-   - Custom button styles (retro-btn, retro-btn-gold, retro-btn-blue)
-   - Sports fonts (Bebas Neue, Oswald, Roboto Condensed)
-   - Player card styles with guessed state
-   - Progress bar with gradient
-✅ HomePage updated with retro styling
-✅ GamePage updated with scoreboard panel design
-✅ ResultsPage updated with retro theme
-✅ PlayerInput updated with retro input styling
+NFL uses CURRENT abbreviations always (LAR for all Rams years, LV for all
+Raiders years, LAC for all Chargers years). Alias normalisation is done
+at script generation time, not at runtime.
 
-[Dynamic Roster Fetching - COMPLETE]
-✅ FastAPI backend created (scripts/api_server.py):
-   - GET /health - Health check endpoint
-   - GET /roster/{team}/{season} - Fetch roster with PPG stats
-   - GET /teams - List all NBA teams
-   - GET /random - Get random team/season combo
-   - Caching: 24-hour file cache + in-memory stats cache
-   - Rate limiting: 0.6s delay between nba_api calls
-✅ Frontend API service (src/services/api.ts):
-   - checkApiHealth() - Check if backend is available
-   - fetchRosterFromApi() - Fetch roster from backend
-   - isApiAvailable() - Cached availability check
-✅ Roster service updated (src/services/roster.ts):
-   - Async fetchTeamRoster() - API first, static fallback
-   - Returns { players, fromApi, cached } for UI feedback
-✅ HomePage updated with:
-   - API status indicator ("Live API" / "Offline Mode")
-   - Loading states with spinning basketball animation
-   - Status messages ("Loading LAL 2023-24 roster...")
-   - Success/error feedback with retry option
-✅ CORS configured for localhost development
+CAREER MODE — STILL USES RENDER BACKEND
+----------------------------------------
+Career mode hits api_server.py (NBA) and nfl_api_server.py (NFL) on Render.
+These servers load pre-built JSON files into memory at startup and serve:
+  GET /career/random?career_from=X&career_to=Y  → random player from pool
+  GET /career/{player_id}                        → full career stats
+
+NOTE: Career mode could also be moved to static (same pattern — just load
+nba_careers.json / nfl_careers.json in the browser and pick randomly
+client-side). This would kill Render entirely. Not done yet.
+
+MULTIPLAYER — SUPABASE REALTIME
+---------------------------------
+Lobby creation, player sync, roll call sessions all use Supabase Realtime.
+No custom backend needed. Works independently of Render.
 
 ================================================================================
-PRIORITY TODOS
+STATIC DATA FILES (public/data/)
 ================================================================================
 
-[✓] YEAR RANGE SELECTOR FOR RANDOM MODE - COMPLETE
+public/data/
+  rosters/
+    {HIST_ABBR}_{SEASON}.json     NBA roster per team per season (2000-2024)
+    e.g. LAL_2023-24.json, NJN_2004-05.json, SEA_2006-07.json
+    ~750 files total (30 teams × 25 seasons), ~5-8 KB each
+  players/
+    {SEASON}.json                 All NBA players that season (autocomplete)
+    e.g. 2023-24.json
+    25 files, ~15 KB each
+  nfl/
+    rosters/
+      {TEAM}_{YEAR}.json          NFL roster per team per season (2000-2024)
+      e.g. KC_2023.json, LAR_2015.json
+      ~800 files total (32 teams × 25 seasons), ~15-20 KB each
+    players/
+      {YEAR}.json                 All NFL players that season (autocomplete)
+      25 files, ~50 KB each
 
-Implementation:
-- Added randomMinYear/randomMaxYear state to HomePage (default 2015-2024)
-- Two dropdown selects appear when "Random" mode is selected
-- Selecting min > max auto-adjusts the other value
-- Random selection uses these values instead of global settings
-- Offline mode filters static data by selected range
-- Info text updates to show selected range
+Roster file format (NBA):
+  { "team": "NJN", "season": "2004-05", "players": [
+    { "id": 123, "name": "Jason Kidd", "position": "G",
+      "number": "5", "ppg": 15.4, "isLowScorer": false }, ... ] }
 
-Files modified:
-- src/pages/HomePage.tsx - added year range UI and state
+Roster file format (NFL):
+  { "team": "KC", "season": 2023, "players": [
+    { "id": "00-0033873", "name": "Patrick Mahomes", "position": "QB",
+      "number": "15", "unit": "Offense" }, ... ] }
 
---------------------------------------------------------------------------------
+Player file format (both sports): [{ "id": ..., "name": "..." }, ...]
 
-[✓] AUTOCOMPLETE REWORK - COMPLETE
+scripts/data/ (NOT served publicly — used by Render for career mode):
+  nba_careers.json   1.1 MB, 736 players, full season-by-season stats
+  nfl_careers.json   596 KB, 584 players (QB/RB/WR/TE only)
 
-Problem Solved:
-- Autocomplete now uses ALL NBA players from the season, not just the team roster
-- This prevents the autocomplete from giving away answers
-- Stricter fuzzy matching (threshold 0.2) requires more precise typing
-- Minimum 3 characters required before showing suggestions
-- Current roster players are ALWAYS included in autocomplete (even if API fails)
-
-Implementation:
-- Added GET /players/{season} endpoint to API server (scripts/api_server.py)
-- Added fetchSeasonPlayers() function to src/services/api.ts
-- Added leaguePlayers field to gameStore (src/stores/gameStore.ts)
-- HomePage fetches league-wide players when starting game
-- PlayerInput merges: roster players (guaranteed) + league players OR static fallback
-- Fuse.js threshold lowered to 0.2, minMatchCharLength: 2
-- Autocomplete requires 3+ characters to show suggestions
-- API handles different column names (PLAYER_NAME vs PLAYER) for historical seasons
-
-
-MANDATORY FUTURE IMPROVEMENT:
-1.
-New validation system. The user will not be able to know who is right and who is wrong until the end 
-of the timer. Then itll show the correct and wrong answers like normal. Along with that, the user should be 
-able to override incase they spelled a name wrong, no autofill helped. They should be able to 
-drag an incorrect name into the right name slot to count to benefit people who cant spell. 
-
-2. 
-We need to fix the autofill feature still. It's unacceptable for a player in a certain year to just not appear in the 
-autofill. Look over and fix the autofilling. Whenever a year is selected, all players who played that year should
-be available in the autofill. This issue is common for older years. not the 2010s and 2020s. In an older year
-like the 95-95 hornets, there's only autofill for loaded in players from the recent seasons as well as those specific
-old teams saved in the cache. not all the players from 95-96.
-
+scripts/.cache/        NBA api_server file cache (team_season.json, 24hr expiry)
+scripts/.nfl_cache/    NFL api_server file cache (nfl_team_year.json, 1wk expiry)
 
 ================================================================================
-OPTIONAL FUTURE IMPROVEMENTS
+SOURCE FILE MAP
 ================================================================================
 
-[ ] Multiplayer / Online Play (High Priority)
-    - Allow players to create lobbies and play together
-    - Real-time competition with WebSockets
-    - Implementation options:
-      a) Socket.io / WebSockets for real-time communication
-      b) Supabase Realtime for lobby management and live updates
-      c) Dedicated game server (Node.js/Python) for state management
-    - Features to consider:
-      - Lobby creation with join codes
-      - Real-time score updates
-      - Turn-based or simultaneous gameplay modes
-      - Leaderboards per game session
-      - Chat functionality
+PAGES (src/pages/)
+  HomePage.tsx              Landing page: mode select, team/year picker, start game
+  GamePage.tsx              Active game: input, timer, score, player cards
+  ResultsPage.tsx           End screen: roster reveal, score, leaderboard submit
+  CareerGamePage.tsx        Career mode game (NBA)
+  CareerResultsPage.tsx     Career mode results
+  MultiplayerCareerPage.tsx Multiplayer career mode game
+  MultiplayerCareerResultsPage.tsx
+  LobbyCreatePage.tsx       Create multiplayer lobby
+  LobbyJoinPage.tsx         Join multiplayer lobby
+  LobbyWaitingPage.tsx      Waiting room pre-game
+  MultiplayerResultsPage.tsx
+  RollCallCreatePage.tsx    Roll Call mode setup
+  RollCallSessionPage.tsx   Roll Call active session
+  RollCallResultsPage.tsx
 
-[ ] Additional Polish
-    - More responsive design improvements
-    - Additional animations
-    - Performance optimization if needed
+SERVICES (src/services/)
+  roster.ts         PRIMARY DATA LAYER for roster mode. Fetches static JSON
+                    files. Functions:
+                      fetchTeamRoster(abbr, season)        NBA static → legacy fallback
+                      fetchStaticSeasonPlayers(season)     NBA autocomplete
+                      fetchStaticNFLRoster(abbr, year)     NFL static
+                      fetchStaticNFLSeasonPlayers(year)    NFL autocomplete
+                      fetchDivisionRosters(sport, abbrs, season)  4-team merge
+  api.ts            NBA backend client (Render). Now only used for CAREER MODE:
+                      fetchRandomCareerPlayer(filters)
+                      fetchCareerStats(playerId)
+                    Legacy roster functions still exist but are NOT called for
+                    roster mode anymore (static files used instead).
+  nfl-api.ts        NFL backend client (Render). Now only used for CAREER MODE:
+                      fetchNFLRandomCareerPlayer(position, filters)
+                      fetchNFLCareerStats(playerId)
+                    NFL roster functions are fallback only (static preferred).
+  careerPrefetch.ts Background prefetch for career mode (keeps 2 players cached)
+  lobby.ts          Supabase lobby operations
+  leaderboard.ts    Supabase leaderboard operations
+  rollCall.ts       Roll Call mode Supabase operations
 
-[ ] Production Deployment
-    - Deploy FastAPI backend to cloud (Railway, Render, etc.)
-    - Update VITE_API_URL for production
+STORES (src/stores/)
+  gameStore.ts      Active game state (team, season, players, guesses, score)
+  settingsStore.ts  Persisted settings (timer duration, sport, hide results)
+  lobbyStore.ts     Multiplayer lobby state
+  careerStore.ts    Career mode game state
+  rollCallStore.ts  Roll Call session state
+
+UTILS (src/utils/)
+  teamHistory.ts    getApiAbbreviation(abbr, year, sport) — NBA historical
+                    abbreviation translation. CRITICAL for static file lookups.
+  teamUtils.ts      Team helper functions
+  teamAbbr.ts       Abbreviation utilities
+  fuzzyDedup.ts     Fuzzy deduplication for player name matching
+
+DATA (src/data/)
+  teams.ts          All 30 NBA teams (id, abbreviation, name, colors)
+  nfl-teams.ts      All 32 NFL teams (id, abbreviation, name, colors, division)
+  rosters.ts        LEGACY — handful of hardcoded team-seasons. Only used as
+                    last-resort fallback if static JSON file not found.
+
+COMPONENTS (src/components/)
+  home/
+    TeamSelector.tsx      Team picker dropdown
+    YearSelector.tsx      Season/year picker
+    RouletteOverlay.tsx   Dealing animation before game starts
+    SettingsModal.tsx     Timer + settings UI
+    ServerWarmup.tsx      OLD warmup splash — now disabled (showWarmup=false)
+  game/
+    PlayerInput.tsx       Autocomplete input with fuzzy search
+    Timer.tsx             Countdown timer
+    ScoreDisplay.tsx      Score + progress
+    TeamDisplay.tsx       Team name + season header
+    GuessedPlayersList.tsx  Correct/incorrect player cards
+  multiplayer/
+    LiveScoreboard.tsx    Real-time multiplayer scores
+  leaderboard/
+    Leaderboard.tsx, LeaderboardTable.tsx
+
+HOOKS (src/hooks/)
+  useLobbySubscription.ts    Supabase realtime lobby updates
+  useRollCallSubscription.ts Supabase realtime roll call updates
 
 ================================================================================
-IMPORTANT FILES & LOCATIONS
+SCRIPTS (scripts/)
 ================================================================================
 
-Config & Entry:
-- vite.config.ts          - Vite configuration
-- tsconfig.json           - TypeScript config
-- package.json            - Dependencies and scripts
-- .env.example            - Environment variable template
+DATA GENERATION (run once, output goes to public/data/):
+  generate_nba_rosters.py   Generates NBA static roster + player JSON files
+                            Uses: .cache/ first (fast), NBA API for misses
+                            Output: public/data/rosters/ + public/data/players/
+                            Run: python generate_nba_rosters.py
+                            Resume-safe: skips existing files by default
+                            Options: --start-year --end-year --teams --force
 
-Styling:
-- src/index.css           - Global styles + RETRO NBA THEME (important!)
+  generate_nfl_rosters.py   Generates NFL static roster + player JSON files
+                            Uses: .nfl_cache/ first, then nfl_data_py (local, fast)
+                            Output: public/data/nfl/rosters/ + public/data/nfl/players/
+                            Run: python generate_nfl_rosters.py
+                            Resume-safe: skips existing files by default
 
-Data:
-- src/data/rosters.ts     - Sample roster data (8 team-seasons)
-- src/data/teams.ts       - All 30 NBA teams with colors
+  generate_nba_careers.py   Generates nba_careers.json for career mode
+                            Output: scripts/data/nba_careers.json (1.1 MB, 736 players)
+                            Slow (~30-40 min), resumable with --resume
 
-State Management:
-- src/stores/gameStore.ts     - Game state
-- src/stores/settingsStore.ts - Settings (persisted)
+  generate_nfl_careers.py   Generates nfl_careers.json for career mode
+                            Output: scripts/data/nfl_careers.json (596 KB, 584 players)
+                            Uses nfl_data_py (fast, local)
 
-Services:
-- src/services/roster.ts      - Roster fetching (async API + static fallback)
-- src/services/api.ts         - FastAPI backend client
-- src/services/leaderboard.ts - Supabase leaderboard operations
+  extract_rosters.py        OLD extraction script — outputs monolithic rosters.json
+                            to src/data/. Superseded by generate_nba_rosters.py.
 
-Supabase:
-- src/lib/supabase.ts         - Supabase client (optional)
-- src/types/database.ts       - Database types
-- supabase/schema.sql         - Database schema
+BACKEND SERVERS (only needed for career mode):
+  api_server.py             FastAPI, port 8000. Serves:
+                              GET /career/random   random NBA career player
+                              GET /career/{id}     NBA career stats
+                            Also has legacy roster endpoints (now bypassed by
+                            static files). Loads nba_careers.json at startup.
 
-Pages:
-- src/pages/HomePage.tsx      - Retro-styled home page
-- src/pages/GamePage.tsx      - Retro scoreboard game interface
-- src/pages/ResultsPage.tsx   - Retro results display
-
-Key Components:
-- src/components/game/PlayerInput.tsx    - Retro-styled autocomplete
-- src/components/game/Timer.tsx          - Countdown timer
-- src/components/leaderboard/            - Leaderboard components
-
-Scripts:
-- scripts/api_server.py       - FastAPI backend for dynamic roster fetching
-- scripts/extract_rosters.py  - NBA data extraction (Python)
-- scripts/quick_extract.py    - Quick test extraction
-- scripts/requirements.txt    - Python dependencies (nba_api, fastapi, uvicorn)
+  nfl_api_server.py         FastAPI, port 8001. Serves:
+                              GET /nfl/career/random   random NFL career player
+                              GET /nfl/career/{id}     NFL career stats
+                            Also has legacy NFL roster endpoints. Loads
+                            nfl_careers.json at startup.
 
 ================================================================================
-RETRO NBA THEME - CSS CLASSES
+ENVIRONMENT VARIABLES
 ================================================================================
 
-Key CSS classes defined in src/index.css:
+VITE_API_URL          NBA backend URL (default: http://localhost:8000)
+                      Production: Render URL. Only needed for career mode.
+VITE_NFL_API_URL      NFL backend URL (default: http://localhost:8001)
+                      Production: Render URL. Only needed for career mode.
+VITE_SUPABASE_URL     Supabase project URL
+VITE_SUPABASE_ANON_KEY Supabase anon key
 
-Typography:
-- .retro-title     - Bebas Neue font, uppercase, letter-spacing
-- .sports-font     - Oswald font, uppercase
+================================================================================
+COMMANDS
+================================================================================
 
-Scoreboard:
-- .scoreboard-panel   - Dark gradient panel with border
-- .scoreboard-number  - LED-style glowing numbers
-- .stat-display       - Individual stat box
-- .stat-value         - Large LED number
-- .stat-label         - Small label text
+# Dev (no Python servers needed for roster mode)
+npm run dev           # localhost:5173
 
-Cards & Containers:
-- .vintage-card    - Gradient background with border
-- .player-card     - Player list item (+ .guessed state)
+# If you need career mode locally:
+cd scripts
+uvicorn api_server:app --port 8000      # NBA career
+uvicorn nfl_api_server:app --port 8001  # NFL career
 
-Buttons:
-- .retro-btn           - Orange gradient button with 3D effect
-- .retro-btn-blue      - Blue variant
-- .retro-btn-gold      - Gold variant (for main actions)
+# Generate static roster files (one-time setup)
+cd scripts
+python generate_nba_rosters.py          # ~30-40 min first run
+python generate_nfl_rosters.py          # ~2-5 min (nfl_data_py is local)
 
-Inputs:
-- .retro-input     - Dark input with orange focus border
-- .retro-select    - Custom dropdown styling
+# Monitor generation progress
+tail -f /tmp/nba_roster_gen.log
+tail -f /tmp/nfl_roster_gen.log
 
-Progress:
-- .retro-progress       - Progress bar container
-- .retro-progress-fill  - Gradient fill
+# Regenerate career pools
+python generate_nba_careers.py          # ~30-40 min
+python generate_nfl_careers.py          # fast
 
-Utilities:
-- .team-badge      - Pill-shaped team indicator
-- .pulse-glow      - Pulsing glow animation
+================================================================================
+KEY DECISIONS & GOTCHAS
+================================================================================
+
+1. NBA HISTORICAL ABBREVIATIONS
+   Static files use historical abbrs (NJN not BKN for pre-2012).
+   getApiAbbreviation() in teamHistory.ts handles translation at fetch time.
+   If adding a new relocated team, update BOTH teamHistory.ts AND
+   HISTORICAL_ABBR dict in generate_nba_rosters.py.
+
+2. NFL ABBREVIATIONS
+   Always use current abbreviations in filenames (LAR, LV, LAC for all years).
+   Alias mapping (STL→LAR etc.) is done in generate_nfl_rosters.py at write time.
+   Frontend uses current abbr directly — no translation layer needed.
+
+3. SERVER WARMUP SCREEN
+   ServerWarmup.tsx still exists but is DISABLED (showWarmup=false in HomePage).
+   Both sports use static files so no warmup delay. Component kept for reference.
+
+4. CAREER MODE ON RENDER — COLD START STILL EXISTS
+   Career mode first load is slow (~15-30s) due to Render free tier cold starts.
+   Fix: move nba_careers.json + nfl_careers.json to public/data/ and do
+   random selection client-side. Not yet implemented.
+
+5. DIVISION MODE
+   fetchDivisionRosters() in roster.ts fetches 4 teams in parallel.
+   Uses static JSON files (fetchSingleTeamRoster → fetchStaticNFLRoster / fetchTeamRoster).
+   Was previously slow due to sequential API calls; now instant from CDN.
+
+6. AUTOCOMPLETE
+   NBA: fetchStaticSeasonPlayers(season) → /data/players/{season}.json
+   NFL: fetchStaticNFLSeasonPlayers(year) → /data/nfl/players/{year}.json
+   These contain ALL players league-wide that season (not just the team roster)
+   so autocomplete doesn't give away answers.
+
+7. PPG / isLowScorer
+   NBA roster files include ppg and isLowScorer (true if ppg < 10) for players
+   fetched from .cache/ (which has real PPG). Players fetched via API fallback
+   have ppg=0.0 and isLowScorer=false (acceptable — only affects display hints).
+
+8. PLAYER ID TYPES
+   NBA player IDs are integers. NFL player IDs are strings ("00-0033873").
+   Keep this in mind when comparing or storing IDs.
+
+9. react-window: use v1.8.x (NOT v2.x — breaking API changes in v2)
+
+10. SUPABASE IS OPTIONAL
+    App fully works without Supabase (leaderboard shows "not configured").
+    Required only for multiplayer and leaderboard features.
+
+================================================================================
+RETRO THEME CSS CLASSES (src/index.css)
+================================================================================
+
+Typography:   .retro-title (Bebas Neue)   .sports-font (Oswald)
+Panels:       .scoreboard-panel   .vintage-card   .player-card (.guessed)
+Buttons:      .retro-btn   .retro-btn-gold   .retro-btn-blue
+Inputs:       .retro-input   .retro-select
+Progress:     .retro-progress   .retro-progress-fill
+Utilities:    .team-badge   .pulse-glow   .scoreboard-number
 
 CSS Variables:
-- --nba-orange: #f15a29
-- --nba-gold: #fdb927
-- --nba-red: #c8102e
-- --nba-blue: #17408b
-- --vintage-cream: #f5f5dc
-- --led-active: #ff6b35
-
-================================================================================
-IMPORTANT SETTINGS & NOTES
-================================================================================
-
-1. react-window version: Must use v1.8.x (NOT v2.x)
-   - v2 has breaking API changes
-
-2. Supabase is OPTIONAL
-   - App works without it (leaderboard just shows "not configured")
-   - To enable: create .env with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-   - Run supabase/schema.sql in Supabase SQL editor
-
-3. Retro Theme
-   - All custom styles in src/index.css
-   - Uses Google Fonts: Bebas Neue, Oswald, Roboto Condensed
-   - Color scheme based on classic NBA/basketball aesthetics
-
-4. Player data format:
-   ```typescript
-   interface Player {
-     id: number;
-     name: string;
-     position: string;
-     number: string;
-     ppg: number;
-     isLowScorer: boolean;  // true if PPG < 10
-   }
-   ```
-
-5. Available Sample Rosters:
-   - LAL 2023-24, 2019-20
-   - GSW 2021-22, 2015-16
-   - CHI 1995-96
-   - BOS 2023-24
-   - MIA 2012-13
-   - DEN 2022-23
-   - MIL 2020-21
-
-================================================================================
-ARCHITECTURE: DYNAMIC ROSTER FETCHING
-================================================================================
-
-Flow when starting a game:
-1. User selects mode (random/manual) and starts game
-2. HomePage shows "Loading {team} {season} roster..." with spinning basketball
-3. Frontend calls isApiAvailable() to check if backend is running
-4. If API available:
-   a. Random mode: picks from all 30 teams + any year in range
-   b. fetchRosterFromApi(team, season) is called
-   c. Backend checks file cache first (24hr expiry)
-   d. If not cached, fetches from nba_api (with 0.6s delays)
-   e. Returns players with PPG stats, saves to cache
-   f. Frontend shows "Fetched from NBA API!" or "Loaded from cache!"
-5. If API unavailable:
-   a. Random mode: ONLY picks from available static data (8 team-seasons)
-   b. Falls back to static data in src/data/rosters.ts
-   c. Frontend shows "Using local data"
-6. If roster fetch fails (random mode):
-   a. Shows "Roster unavailable, trying another (1/5)..."
-   b. Automatically picks new random team/season
-   c. Retries up to 5 times before showing error
-   d. Manual mode shows error immediately (no auto-retry)
-7. Game starts with roster data
-
-Available Static Rosters (when offline):
-- LAL: 2023-24, 2019-20
-- GSW: 2021-22, 2015-16
-- CHI: 1995-96
-- BOS: 2023-24
-- MIA: 2012-13
-- DEN: 2022-23
-- MIL: 2020-21
-
-API Endpoints:
-- GET /health              → { status: "ok", timestamp: "..." }
-- GET /roster/{team}/{season} → { team, season, players[], cached }
-- GET /teams               → { teams: [{abbreviation, id}, ...] }
-- GET /random?min_year=2015&max_year=2024 → { team, season, team_id }
-- GET /players/{season}    → { season, players: [{id, name}...], cached } (all NBA players that season)
-
-Caching Strategy:
-- File cache: scripts/.cache/{team}_{season}.json (24hr expiry)
-- In-memory: Season stats cached to avoid redundant API calls
-- Rate limit protection: 0.6s delay between nba_api requests
-
-================================================================================
-COMMANDS REFERENCE
-================================================================================
-
-# Development
-npm install          # Install dependencies
-npm run dev          # Start dev server (localhost:5173)
-npm run build        # Production build
-npm run preview      # Preview production build
-
-# Data Extraction (Python)
-cd scripts
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-python quick_extract.py                           # Quick test
-python extract_rosters.py --start-year 2020      # Recent years only
-python extract_rosters.py                         # Full extraction
+  --nba-orange: #f15a29    --nba-gold: #fdb927
+  --nba-red: #c8102e       --nba-blue: #17408b
+  --vintage-cream: #f5f5dc --led-active: #ff6b35
 
 ================================================================================
