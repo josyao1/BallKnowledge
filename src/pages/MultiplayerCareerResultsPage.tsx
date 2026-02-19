@@ -46,7 +46,7 @@ export function MultiplayerCareerResultsPage() {
   }, []);
 
   const careerState = lobby?.career_state as any;
-  const winTarget = careerState?.win_target || 3;
+  const winTarget = careerState?.win_target || 100;
   const sortedPlayers = [...players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
   const matchWinner = sortedPlayers[0];
   const isWinner = matchWinner?.player_id === currentPlayerId;
@@ -88,7 +88,7 @@ export function MultiplayerCareerResultsPage() {
         <div className="sports-font text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
         <h1 className="retro-title text-4xl md:text-5xl text-[#d4af37]">Career Mode</h1>
         <div className="sports-font text-[10px] text-[#555] tracking-widest mt-1 uppercase">
-          {lobby.sport.toUpperCase()} · First to {winTarget}
+          {lobby.sport.toUpperCase()} · Race to {winTarget} pts
         </div>
       </header>
 
@@ -110,7 +110,7 @@ export function MultiplayerCareerResultsPage() {
             </div>
             <div className="retro-title text-3xl text-[#d4af37]">{matchWinner.player_name}</div>
             <div className="sports-font text-sm text-[#888] mt-1">
-              {matchWinner.wins || 0} wins
+              {matchWinner.wins || 0} pts
             </div>
           </div>
         </motion.div>
@@ -157,19 +157,15 @@ export function MultiplayerCareerResultsPage() {
                     </div>
                   </div>
 
-                  {/* Win pips */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      {Array.from({ length: winTarget }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-3 h-3 rounded-full ${
-                            i < wins ? 'bg-[#d4af37]' : 'bg-[#333]'
-                          }`}
-                        />
-                      ))}
+                  {/* Points bar */}
+                  <div className="flex items-center gap-2 min-w-[120px]">
+                    <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#d4af37] rounded-full"
+                        style={{ width: `${Math.min(100, Math.round((wins / winTarget) * 100))}%` }}
+                      />
                     </div>
-                    <span className="retro-title text-xl text-[#d4af37] ml-1">{wins}</span>
+                    <span className="retro-title text-lg text-[#d4af37] w-20 text-right">{wins}/{winTarget}</span>
                   </div>
                 </motion.div>
               );
@@ -206,6 +202,10 @@ export function MultiplayerCareerResultsPage() {
                     new Date(round.finishedAt[sortedTopScorers[0].player_id]!).getTime()
                   : 0;
 
+                const tiebreakerBonus = isTiebreaker && timeDiffMs > 0
+                  ? Math.min(Math.max(1, Math.ceil(timeDiffMs / 1000)), topScore)
+                  : 0;
+
                 return (
                   <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
                     {/* Round header */}
@@ -220,7 +220,8 @@ export function MultiplayerCareerResultsPage() {
                         .map(player => {
                           const score = round.scores[player.player_id] ?? 0;
                           const isMe = player.player_id === currentPlayerId;
-                          const isWinner = player.player_id === roundWinnerId && topScore > 0;
+                          const isRoundWinner = player.player_id === roundWinnerId && topScore > 0;
+                          const bonus = isRoundWinner && isTiebreaker ? tiebreakerBonus : 0;
                           const gotIt = score > 0;
                           return (
                             <div
@@ -232,15 +233,22 @@ export function MultiplayerCareerResultsPage() {
                                   {player.player_name}
                                   {isMe && <span className="text-white/30 ml-1">(you)</span>}
                                 </span>
-                                {isWinner && (
+                                {isRoundWinner && (
                                   <span className="sports-font text-[9px] text-[#d4af37]">
                                     {isTiebreaker ? '⚡' : '★'}
                                   </span>
                                 )}
                               </div>
-                              <span className={`retro-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
-                                {gotIt ? score : '—'}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                {bonus > 0 && (
+                                  <span className="sports-font text-[9px] text-[#d4af37] bg-[#d4af37]/10 px-1.5 py-0.5 rounded">
+                                    +{bonus} bonus
+                                  </span>
+                                )}
+                                <span className={`retro-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
+                                  {gotIt ? score : '—'}
+                                </span>
+                              </div>
                             </div>
                           );
                         })}
@@ -248,10 +256,13 @@ export function MultiplayerCareerResultsPage() {
                     {/* Tiebreaker note */}
                     {isTiebreaker && timeDiffMs > 0 && (
                       <div className="px-3 py-1.5 bg-[#0a0a0a] text-center sports-font text-[9px] text-[#666]">
-                        {players.find(p => p.player_id === roundWinnerId)?.player_name} won by{' '}
+                        {players.find(p => p.player_id === roundWinnerId)?.player_name} was{' '}
                         <span className="text-[#d4af37]">
-                          {timeDiffMs < 1000 ? `${timeDiffMs}ms` : `${(timeDiffMs / 1000).toFixed(1)}s`}
+                          {timeDiffMs < 1000 ? `${timeDiffMs}ms` : `${(timeDiffMs / 1000).toFixed(1)}s`} faster
                         </span>
+                        {tiebreakerBonus > 0 && (
+                          <span className="text-[#d4af37]"> · +{tiebreakerBonus} bonus pts awarded</span>
+                        )}
                       </div>
                     )}
                   </div>

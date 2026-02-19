@@ -738,6 +738,48 @@ export async function renamePlayer(
   return { error: error?.message || null };
 }
 
+// Add career points to a player (host only, race-to-100 mode).
+// Uses read-then-write — safe since only the host calls this sequentially.
+export async function addCareerPoints(lobbyId: string, playerId: string, points: number): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { data: player, error: fetchError } = await supabase
+    .from('lobby_players')
+    .select('wins')
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId)
+    .single();
+
+  if (fetchError || !player) {
+    return { error: fetchError?.message || 'Player not found' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ wins: (player.wins || 0) + points })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId);
+
+  return { error: error?.message || null };
+}
+
+// Set score multiplier for a player (host only)
+export async function setPlayerMultiplier(lobbyId: string, playerId: string, multiplier: number): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ score_multiplier: multiplier })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId);
+
+  return { error: error?.message || null };
+}
+
 // Toggle dummy mode for a player (host only)
 export async function setPlayerDummyMode(
   lobbyId: string,

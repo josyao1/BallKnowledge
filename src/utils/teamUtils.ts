@@ -65,7 +65,12 @@ export function buildScoringEntities(players: LobbyPlayer[]): ScoringEntity[] {
         teamNumber: teamNum,
         color: TEAM_COLORS[teamNum - 1],
         members,
-        combinedScore: uniqueGuessed.length,
+        combinedScore: uniqueGuessed.reduce((sum, name) => {
+          const mult = Math.max(...members
+            .filter(m => (m.guessed_players || []).includes(name))
+            .map(m => m.score_multiplier ?? 1.0));
+          return sum + mult;
+        }, 0),
         combinedGuessedPlayers: uniqueGuessed,
         combinedIncorrectGuesses: uniqueIncorrect,
         combinedGuessedCount: uniqueGuessed.length,
