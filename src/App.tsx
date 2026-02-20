@@ -20,6 +20,9 @@ import { CareerGamePage } from './pages/CareerGamePage';
 import { CareerResultsPage } from './pages/CareerResultsPage';
 import { MultiplayerCareerPage } from './pages/MultiplayerCareerPage';
 import { MultiplayerCareerResultsPage } from './pages/MultiplayerCareerResultsPage';
+import { MultiplayerNameScramblePage } from './pages/MultiplayerNameScramblePage';
+import { MultiplayerNameScrambleResultsPage } from './pages/MultiplayerNameScrambleResultsPage';
+import { SoloScramblePage } from './pages/SoloScramblePage';
 
 function App() {
   return (
@@ -46,6 +49,11 @@ function App() {
         {/* Multiplayer Career routes */}
         <Route path="/lobby/:code/career" element={<MultiplayerCareerPage />} />
         <Route path="/lobby/:code/career/results" element={<MultiplayerCareerResultsPage />} />
+        {/* Solo Scramble */}
+        <Route path="/scramble" element={<SoloScramblePage />} />
+        {/* Name Scramble routes */}
+        <Route path="/lobby/:code/scramble" element={<MultiplayerNameScramblePage />} />
+        <Route path="/lobby/:code/scramble/results" element={<MultiplayerNameScrambleResultsPage />} />
       </Routes>
     </BrowserRouter>
   );

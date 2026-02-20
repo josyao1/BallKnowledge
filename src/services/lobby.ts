@@ -403,6 +403,33 @@ export async function updateLobbySettings(
   return { error: error?.message || null };
 }
 
+// Add pts to a player's wins column (used for Name Scramble positional scoring).
+// Safe to call from host only — no concurrent callers, so no race condition.
+export async function addCareerPoints(lobbyId: string, playerId: string, pts: number): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { data: player, error: fetchError } = await supabase
+    .from('lobby_players')
+    .select('wins')
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId)
+    .single();
+
+  if (fetchError || !player) {
+    return { error: fetchError?.message || 'Player not found' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ wins: (player.wins || 0) + pts })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId);
+
+  return { error: error?.message || null };
+}
+
 // Increment wins for a player.
 // NOTE: This uses read-then-write which has a race condition if two clients
 // call it simultaneously. Acceptable for casual multiplayer; a Supabase RPC
@@ -734,6 +761,25 @@ export async function renamePlayer(
     .update({ player_name: newName })
     .eq('lobby_id', lobbyId)
     .eq('player_id', targetPlayerId);
+
+  return { error: error?.message || null };
+}
+
+// Set score multiplier for a player (host only)
+export async function setPlayerScoreMultiplier(
+  lobbyId: string,
+  playerId: string,
+  multiplier: number
+): Promise<{ error: string | null }> {
+  if (!supabase) {
+    return { error: 'Multiplayer not available' };
+  }
+
+  const { error } = await supabase
+    .from('lobby_players')
+    .update({ score_multiplier: multiplier })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId);
 
   return { error: error?.message || null };
 }

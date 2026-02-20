@@ -200,6 +200,14 @@ export function HomePage() {
     Career
   </button>
 
+  {/* Name Scramble button */}
+  <button
+    onClick={() => navigate('/scramble')}
+    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#3b82f6] border border-[#3b82f6] rounded hover:bg-[#3b82f6] hover:text-white transition-colors whitespace-nowrap"
+  >
+    Scramble
+  </button>
+
   {/* API Status dot */}
   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/20 border border-white/5">
     <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${apiOnline ? 'bg-[#22c55e] shadow-[0_0_8px_#22c55e]' : 'bg-[#888]'}`} />

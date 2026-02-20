@@ -57,6 +57,8 @@ export function buildScoringEntities(players: LobbyPlayer[]): ScoringEntity[] {
     const uniqueGuessed = [...new Set(allGuessed)];
     const allIncorrect = members.flatMap(m => m.incorrect_guesses || []);
     const uniqueIncorrect = [...new Set(allIncorrect)];
+    // Team score = sum of each member's individual score weighted by their multiplier
+    const weightedScore = members.reduce((sum, m) => sum + m.score * (m.score_multiplier ?? 1), 0);
 
     entities.push({
       type: 'team',
@@ -65,7 +67,7 @@ export function buildScoringEntities(players: LobbyPlayer[]): ScoringEntity[] {
         teamNumber: teamNum,
         color: TEAM_COLORS[teamNum - 1],
         members,
-        combinedScore: uniqueGuessed.length,
+        combinedScore: weightedScore,
         combinedGuessedPlayers: uniqueGuessed,
         combinedIncorrectGuesses: uniqueIncorrect,
         combinedGuessedCount: uniqueGuessed.length,

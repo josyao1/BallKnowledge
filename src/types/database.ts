@@ -219,6 +219,7 @@ export interface Database {
           is_host: boolean;
           is_ready: boolean;
           is_dummy: boolean;
+          score_multiplier: number;
           score: number;
           guessed_count: number;
           guessed_players: string[];
@@ -237,6 +238,7 @@ export interface Database {
           is_host?: boolean;
           is_ready?: boolean;
           is_dummy?: boolean;
+          score_multiplier?: number;
           score?: number;
           guessed_count?: number;
           guessed_players?: string[];
@@ -255,6 +257,7 @@ export interface Database {
           is_host?: boolean;
           is_ready?: boolean;
           is_dummy?: boolean;
+          score_multiplier?: number;
           score?: number;
           guessed_count?: number;
           guessed_players?: string[];
