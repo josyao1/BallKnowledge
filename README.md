@@ -20,9 +20,10 @@ App runs at `http://localhost:5173`. No backend required — all data is served 
 
 ## Game Modes
 
-- **Roster Royale** — Solo or multiplayer. Guess players from a random or manually selected team/season.
+- **Roster Royale** — Solo or multiplayer. Guess players from a random or manually selected team/season. Host can assign adaptive score multipliers (1×–4×) per player in the lobby.
 - **Division Mode** — Multiplayer. Each player is assigned a different team from the same division.
 - **Career Mode** — Identify a player from their season-by-season stat line.
+- **Name Scramble** — Solo or multiplayer. Unscramble a shuffled player name. Multiplayer: race-to-answer with positional scoring (1st=5pts, 2nd=3pts, 3rd=2pts, 4th=1pt) and a 30-second pressure timer; first to reach the point target wins.
 - **Roll Call** — Open-ended multiplayer: name anyone who ever played for a franchise.
 
 ## Tech Stack
