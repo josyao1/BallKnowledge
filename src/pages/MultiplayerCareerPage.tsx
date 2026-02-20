@@ -16,7 +16,7 @@ import {
   getLobbyPlayers,
   updateLobbyStatus,
   updatePlayerScore,
-  incrementPlayerWins,
+  addCareerPoints,
   startCareerRound,
 } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
@@ -113,6 +113,7 @@ interface RoundSummary {
   round: number;
   scores: Record<string, number>;
   finishedAt: Record<string, string | null>;
+  timeBonuses: Record<string, number>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ export function MultiplayerCareerPage() {
   const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
+  const [pressureSecondsLeft, setPressureSecondsLeft] = useState<number | null>(null);
 
   // ── Refs ──
   const prevRoundRef = useRef(-1);
@@ -150,6 +152,9 @@ export function MultiplayerCareerPage() {
   // this round. Without this, stale finished_at values from the previous round can
   // trigger an immediate advance when status flips to 'playing'.
   const atLeastOnePlayerWasActiveRef = useRef(false);
+  // Guard: 30s pressure timer fires only once per round
+  const firstCorrectTimerStartedRef = useRef(false);
+  const pressureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Load lobby on mount (handles page refresh) ──
   useEffect(() => {
@@ -180,11 +185,28 @@ export function MultiplayerCareerPage() {
         scores[p.player_id] = p.score || 0;
         finishedAt[p.player_id] = p.finished_at;
       });
+
+      // Compute time bonus at capture time (same logic as advanceRound) so it's
+      // stored explicitly rather than re-derived later from finishedAt timestamps.
+      const timeBonuses: Record<string, number> = {};
+      const topScoreNow = Math.max(0, ...players.map(p => p.score || 0));
+      const topScorersNow = topScoreNow > 0 ? players.filter(p => (p.score || 0) === topScoreNow) : [];
+      const isTieNow = topScorersNow.length >= 2 && topScorersNow.every(p => p.finished_at !== null);
+      if (isTieNow) {
+        const sortedNow = [...topScorersNow].sort((a, b) =>
+          new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime()
+        );
+        const diffMsNow = new Date(sortedNow[1].finished_at!).getTime() - new Date(sortedNow[0].finished_at!).getTime();
+        const rawBonusNow = Math.max(1, Math.ceil(diffMsNow / 1000));
+        timeBonuses[sortedNow[0].player_id] = Math.min(rawBonusNow, topScoreNow);
+      }
+
       const newSummary: RoundSummary = {
         answer: careerState.playerName || '',
         round: careerState.round || 0,
         scores,
         finishedAt,
+        timeBonuses,
       };
       setRoundSummary(newSummary);
       roundHistoryRef.current = [...roundHistoryRef.current, newSummary];
@@ -212,6 +234,12 @@ export function MultiplayerCareerPage() {
       setFeedbackType('');
       hasSubmittedRef.current = false;
       atLeastOnePlayerWasActiveRef.current = false;
+      firstCorrectTimerStartedRef.current = false;
+      if (pressureIntervalRef.current) {
+        clearInterval(pressureIntervalRef.current);
+        pressureIntervalRef.current = null;
+      }
+      setPressureSecondsLeft(null);
     }
   }, [currentRound]);
 
@@ -224,6 +252,47 @@ export function MultiplayerCareerPage() {
     }
   }, [players]);
 
+  // ── 30s pressure timer: fires when any player gets it correct ──
+  useEffect(() => {
+    if (lobby?.status !== 'playing') return;
+    if (firstCorrectTimerStartedRef.current) return;
+    // Guard against stale round-1 player data arriving before the players-reset event:
+    // only start the timer once we've confirmed this round's player data is live.
+    if (!atLeastOnePlayerWasActiveRef.current) return;
+
+    const anyCorrect = players.some(p => p.finished_at !== null && (p.score || 0) > 0);
+    if (!anyCorrect) return;
+
+    firstCorrectTimerStartedRef.current = true;
+    setPressureSecondsLeft(30);
+
+    pressureIntervalRef.current = setInterval(() => {
+      setPressureSecondsLeft(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(pressureIntervalRef.current!);
+          pressureIntervalRef.current = null;
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (pressureIntervalRef.current) {
+        clearInterval(pressureIntervalRef.current);
+      }
+    };
+  }, [players, lobby?.status]);
+
+  // ── Auto give-up when pressure timer expires ──
+  useEffect(() => {
+    if (pressureSecondsLeft === null && firstCorrectTimerStartedRef.current && localStatus === 'playing' && !hasSubmittedRef.current) {
+      // Timer just hit zero: give up
+      handleGiveUp();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pressureSecondsLeft]);
+
   // ── HOST: Advance round when all players genuinely finish ──
   const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
 
@@ -231,24 +300,36 @@ export function MultiplayerCareerPage() {
     if (!lobby || !careerState) return;
     hasAdvancedRef.current = true;
 
-    // Award a win to the player with the highest score; break ties by who finished first
-    const sorted = [...players].sort((a, b) => {
-      const scoreDiff = (b.score || 0) - (a.score || 0);
-      if (scoreDiff !== 0) return scoreDiff;
-      const aTime = a.finished_at ? new Date(a.finished_at).getTime() : Infinity;
-      const bTime = b.finished_at ? new Date(b.finished_at).getTime() : Infinity;
-      return aTime - bTime;
-    });
-    const winner = sorted[0];
-    if (winner && (winner.score || 0) > 0) {
-      await incrementPlayerWins(lobby.id, winner.player_id);
+    // Determine tiebreaker: find top score and whether multiple players tied
+    const topScore = Math.max(0, ...players.map(p => p.score || 0));
+    const topScorers = topScore > 0 ? players.filter(p => (p.score || 0) === topScore) : [];
+    const isTiebreaker = topScorers.length >= 2 && topScorers.every(p => p.finished_at !== null);
+
+    let tiebreakerWinnerId: string | null = null;
+    let tiebreakerBonus = 0;
+
+    if (isTiebreaker) {
+      const sortedByTime = [...topScorers].sort((a, b) =>
+        new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime()
+      );
+      tiebreakerWinnerId = sortedByTime[0].player_id;
+      const diffMs = new Date(sortedByTime[1].finished_at!).getTime() - new Date(sortedByTime[0].finished_at!).getTime();
+      const rawBonus = Math.max(1, Math.ceil(diffMs / 1000));
+      tiebreakerBonus = Math.min(rawBonus, topScore); // cap at winner's own score
     }
 
-    // Check win condition with fresh data
+    // Award career points to every player (round score + tiebreaker bonus for fastest)
+    await Promise.all(players.map(p => {
+      const roundScore = p.score || 0;
+      const bonus = p.player_id === tiebreakerWinnerId ? tiebreakerBonus : 0;
+      return addCareerPoints(lobby.id, p.player_id, roundScore + bonus);
+    }));
+
+    // Check win condition with fresh data (race to 100)
     const freshResult = await getLobbyPlayers(lobby.id);
     const freshPlayers = freshResult.players || [];
-    const winTarget = careerState.win_target || 3;
-    const gameWinner = freshPlayers.find(p => (p.wins || 0) >= winTarget);
+    const pointsTarget = careerState.win_target || 100;
+    const gameWinner = freshPlayers.find(p => (p.wins || 0) >= pointsTarget);
 
     if (gameWinner) {
       await updateLobbyStatus(lobby.id, 'finished');
@@ -352,7 +433,7 @@ export function MultiplayerCareerPage() {
         ...game.data,
         sport: game.sport,
         round: (careerState.round || 0) + 1,
-        win_target: careerState.win_target || 3,
+        win_target: careerState.win_target || 100,
         career_from: careerFrom,
         career_to: careerTo,
       };
@@ -378,7 +459,7 @@ export function MultiplayerCareerPage() {
   const sport = (careerState.sport || 'nba') as Sport;
   const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
   const columns = getColumns(sport, careerState.position || '');
-  const winTarget = careerState.win_target || 3;
+  const winTarget = careerState.win_target || 100;
 
   // Career highs: max value per numeric column across all seasons.
   const careerHighs = useMemo(() => {
@@ -410,7 +491,7 @@ export function MultiplayerCareerPage() {
             )}
           </div>
           <div className="text-right">
-            <div className="sports-font text-[8px] text-[#888] tracking-widest">FIRST TO</div>
+            <div className="sports-font text-[8px] text-[#888] tracking-widest">RACE TO</div>
             <div className="retro-title text-2xl text-[#d4af37]">{winTarget}</div>
           </div>
         </header>
@@ -459,6 +540,8 @@ export function MultiplayerCareerPage() {
                     return new Date(finishedAt[sorted[1].player_id]!).getTime() - new Date(finishedAt[sorted[0].player_id]!).getTime();
                   })()
                 : 0;
+              const rawBonus = isTiebreaker && timeDiffMs > 0 ? Math.max(1, Math.ceil(timeDiffMs / 1000)) : 0;
+              const tiebreakerBonus = rawBonus > 0 ? Math.min(rawBonus, topScore) : 0;
 
               return (
                 <>
@@ -485,12 +568,21 @@ export function MultiplayerCareerPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-4">
+                            {(() => {
+                              const tb = summary?.timeBonuses?.[player.player_id] ?? 0;
+                              return tb > 0 ? (
+                                <div className="text-right">
+                                  <div className="sports-font text-[8px] text-[#888] tracking-wider">TIME BONUS</div>
+                                  <div className="retro-title text-lg text-[#d4af37]">+{tb}</div>
+                                </div>
+                              ) : null;
+                            })()}
                             <div className="text-right">
                               <div className="sports-font text-[8px] text-[#888] tracking-wider">ROUND</div>
                               <div className={`retro-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
                             </div>
                             <div className="text-right">
-                              <div className="sports-font text-[8px] text-[#888] tracking-wider">WINS</div>
+                              <div className="sports-font text-[8px] text-[#888] tracking-wider">TOTAL PTS</div>
                               <div className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</div>
                             </div>
                           </div>
@@ -505,6 +597,7 @@ export function MultiplayerCareerPage() {
                           ? `${timeDiffMs}ms`
                           : `${(timeDiffMs / 1000).toFixed(1)}s`} faster
                       </span>
+                      {tiebreakerBonus > 0 && <span className="text-[#d4af37]"> (+{tiebreakerBonus} bonus pts)</span>}
                     </div>
                   )}
                 </>
@@ -513,28 +606,31 @@ export function MultiplayerCareerPage() {
           </div>
         </motion.div>
 
-        {/* Win progress dots */}
+        {/* Points progress bars (race to 100) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-6 flex justify-center gap-6 flex-wrap"
+          className="mb-6 space-y-3"
         >
-          {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => (
-            <div key={player.player_id} className="text-center">
-              <div className="sports-font text-[10px] text-[#888] tracking-wider mb-1">{player.player_name}</div>
-              <div className="flex gap-1 justify-center">
-                {Array.from({ length: winTarget }).map((_, i) => (
+          {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => {
+            const pts = player.wins || 0;
+            const pct = Math.min(100, Math.round((pts / winTarget) * 100));
+            return (
+              <div key={player.player_id}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="sports-font text-[10px] text-[#888] tracking-wider">{player.player_name}</span>
+                  <span className="sports-font text-[10px] text-[#d4af37] tracking-wider">{pts} / {winTarget} PTS</span>
+                </div>
+                <div className="h-2 bg-[#222] rounded-full overflow-hidden">
                   <div
-                    key={i}
-                    className={`w-4 h-4 rounded-full border-2 ${
-                      i < (player.wins || 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-[#333]'
-                    }`}
+                    className="h-full bg-[#d4af37] rounded-full transition-all"
+                    style={{ width: `${pct}%` }}
                   />
-                ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </motion.div>
 
         {isHost ? (
@@ -593,19 +689,34 @@ export function MultiplayerCareerPage() {
         </div>
       </header>
 
-      {/* Win progress dots */}
-      <div className="flex gap-4 mb-4 flex-wrap">
-        {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => (
-          <div key={player.player_id} className={`flex items-center gap-1.5 px-2 py-1 rounded ${player.player_id === currentPlayerId ? 'bg-[#d4af37]/10' : ''}`}>
-            <span className="sports-font text-[10px] text-white/60">{player.player_name}</span>
-            <div className="flex gap-0.5">
-              {Array.from({ length: winTarget }).map((_, i) => (
-                <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (player.wins || 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`} />
-              ))}
+      {/* Points progress bars (race to 100) */}
+      <div className="mb-4 space-y-1.5">
+        {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => {
+          const pts = player.wins || 0;
+          const pct = Math.min(100, Math.round((pts / winTarget) * 100));
+          const isMe = player.player_id === currentPlayerId;
+          return (
+            <div key={player.player_id} className={`flex items-center gap-2 px-2 py-1 rounded ${isMe ? 'bg-[#d4af37]/10' : ''}`}>
+              <span className="sports-font text-[10px] text-white/60 w-20 truncate">{player.player_name}</span>
+              <div className="flex-1 h-1.5 bg-[#333] rounded-full overflow-hidden">
+                <div className="h-full bg-[#d4af37] rounded-full" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="sports-font text-[9px] text-[#d4af37] w-16 text-right">{pts}/{winTarget}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Pressure timer banner */}
+      {pressureSecondsLeft !== null && (
+        <div className={`mb-4 p-3 rounded-lg text-center sports-font text-sm tracking-wider border ${
+          pressureSecondsLeft <= 10
+            ? 'bg-red-900/30 border-red-700/60 text-red-300'
+            : 'bg-yellow-900/20 border-yellow-700/40 text-yellow-300'
+        }`}>
+          ⚡ {pressureSecondsLeft}s — someone got it!
+        </div>
+      )}
 
       {/* Live player status panel */}
       <div className="mb-4 flex gap-2 flex-wrap">

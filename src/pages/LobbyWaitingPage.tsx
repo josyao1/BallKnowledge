@@ -17,13 +17,15 @@ import { useGameStore } from '../stores/gameStore';
 import { fetchTeamRoster, fetchDivisionRosters, fetchStaticSeasonPlayers, fetchStaticNFLRoster, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
+import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerMultiplier, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
 import { TEAM_COLORS } from '../utils/teamUtils';
 import type { Sport } from '../types';
+
+const MULTIPLIERS = [1.0, 1.5, 2.0, 3.0, 4.0];
 
 type GenericTeam = {
   id: number;
@@ -121,7 +123,7 @@ export function LobbyWaitingPage() {
 
       // Career state
       const cs = (lobby.career_state as any) || {};
-      setEditWinTarget(cs.win_target || 3);
+      setEditWinTarget(cs.win_target || 100);
       setEditCareerFrom(cs.career_from || 0);
       setEditCareerTo(cs.career_to || 0);
 
@@ -329,7 +331,7 @@ export function LobbyWaitingPage() {
         ...game.data,
         sport: game.sport,
         round: 1,
-        win_target: careerState.win_target || 3,
+        win_target: careerState.win_target || 100,
         career_from: careerFrom,
         career_to: careerTo,
       };
@@ -507,6 +509,14 @@ export function LobbyWaitingPage() {
   const handleLeave = async () => {
     await leaveLobby();
     navigate('/');
+  };
+
+  const handleCycleMultiplier = async (playerId: string, currentMultiplier: number) => {
+    if (!isHost || !lobby || lobby.status !== 'waiting') return;
+    const current = currentMultiplier ?? 1.0;
+    const currentIndex = MULTIPLIERS.indexOf(current);
+    const next = MULTIPLIERS[(currentIndex === -1 ? 0 : currentIndex + 1) % MULTIPLIERS.length];
+    await setPlayerMultiplier(lobby.id, playerId, next);
   };
 
   const handleCycleTeam = async (playerId: string, currentTeamNumber: number | null) => {
@@ -763,7 +773,7 @@ export function LobbyWaitingPage() {
                   </div>
                   <div className="retro-title text-xl text-[#22c55e]">Guess the Career</div>
                   <div className="sports-font text-[9px] text-white/40 tracking-widest">
-                    First to {(lobby.career_state as any)?.win_target ?? '?'} wins
+                    Race to {(lobby.career_state as any)?.win_target ?? '?'} pts
                   </div>
                 </>
               ) : (
@@ -812,29 +822,62 @@ export function LobbyWaitingPage() {
           </div>
         </motion.div>
 
-        {/* Session Wins Scoreboard */}
+        {/* Session Wins / Career Points Scoreboard */}
         {players.some(p => (p.wins || 0) > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-black/50 border border-[#d4af37]/30 rounded-sm p-4"
           >
-            <div className="sports-font text-[10px] text-[#d4af37] mb-3 tracking-[0.3em] uppercase text-center">
-              Session Wins
-            </div>
-            <div className="flex flex-wrap justify-center gap-4">
-              {[...players]
-                .sort((a, b) => (b.wins || 0) - (a.wins || 0))
-                .map((player) => (
-                  <div
-                    key={player.player_id}
-                    className="flex items-center gap-2 px-3 py-2 bg-black/30 rounded-sm border border-white/10"
-                  >
-                    <span className="sports-font text-sm text-white/80">{player.player_name}</span>
-                    <span className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</span>
-                  </div>
-                ))}
-            </div>
+            {lobby.game_type === 'career' ? (
+              <>
+                <div className="sports-font text-[10px] text-[#d4af37] mb-1 tracking-[0.3em] uppercase text-center">
+                  Career Points
+                </div>
+                <div className="sports-font text-[9px] text-white/30 mb-3 tracking-widest text-center">
+                  Race to {(lobby.career_state as any)?.win_target ?? 100} pts
+                </div>
+                <div className="space-y-2">
+                  {[...players]
+                    .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+                    .map((player) => {
+                      const pts = player.wins || 0;
+                      const target = (lobby.career_state as any)?.win_target ?? 100;
+                      const pct = Math.min(100, Math.round((pts / target) * 100));
+                      return (
+                        <div key={player.player_id}>
+                          <div className="flex justify-between items-center mb-0.5">
+                            <span className="sports-font text-xs text-white/70">{player.player_name}</span>
+                            <span className="sports-font text-[10px] text-[#d4af37]">{pts} / {target} pts</span>
+                          </div>
+                          <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
+                            <div className="h-full bg-[#d4af37] rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="sports-font text-[10px] text-[#d4af37] mb-3 tracking-[0.3em] uppercase text-center">
+                  Session Wins
+                </div>
+                <div className="flex flex-wrap justify-center gap-4">
+                  {[...players]
+                    .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+                    .map((player) => (
+                      <div
+                        key={player.player_id}
+                        className="flex items-center gap-2 px-3 py-2 bg-black/30 rounded-sm border border-white/10"
+                      >
+                        <span className="sports-font text-sm text-white/80">{player.player_name}</span>
+                        <span className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</span>
+                      </div>
+                    ))}
+                </div>
+              </>
+            )}
           </motion.div>
         )}
 
@@ -874,11 +917,11 @@ export function LobbyWaitingPage() {
 
                 {editGameType === 'career' ? (
                   <>
-                    {/* Win Target */}
+                    {/* Points Target */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">First To</div>
-                      <div className="flex gap-2">
-                        {[2, 3, 4, 5, 7].map(n => (
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Race to ___ pts</div>
+                      <div className="flex gap-2 flex-wrap">
+                        {[25, 50, 75, 100, 150, 200].map(n => (
                           <button
                             key={n}
                             onClick={() => setEditWinTarget(n)}
@@ -1146,7 +1189,7 @@ export function LobbyWaitingPage() {
                     className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
                       player.player_id === currentPlayerId
                         ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
-                        : player.is_dummy
+                        : (player.score_multiplier ?? 1) > 1
                           ? 'border-purple-500/50 bg-purple-900/20'
                           : 'border-white/10 bg-black/30'
                     }`}
@@ -1222,8 +1265,8 @@ export function LobbyWaitingPage() {
                           )}
                         </>
                       )}
-                      {player.is_dummy && lobby.game_type !== 'career' && (
-                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">2x</span>
+                      {(player.score_multiplier ?? 1) > 1 && lobby.game_type !== 'career' && (
+                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">{player.score_multiplier}x</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -1269,18 +1312,18 @@ export function LobbyWaitingPage() {
                           T{player.team_number}
                         </span>
                       )}
-                      {/* Dummy mode toggle - host only, for non-host players, roster mode only */}
+                      {/* Score multiplier toggle - host only, for non-host players, roster mode only */}
                       {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
                         <button
-                          onClick={() => setPlayerDummyMode(lobby.id, player.player_id, !player.is_dummy)}
+                          onClick={() => handleCycleMultiplier(player.player_id, player.score_multiplier ?? 1.0)}
                           className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
-                            player.is_dummy
+                            (player.score_multiplier ?? 1) > 1
                               ? 'bg-purple-600 text-white border border-purple-400'
                               : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
                           }`}
-                          title={player.is_dummy ? 'Disable 2x points' : 'Enable 2x points (for beginners)'}
+                          title="Click to cycle score multiplier (1x → 1.5x → 2x → 3x → 4x)"
                         >
-                          {player.is_dummy ? '2x ON' : '2x'}
+                          {(player.score_multiplier ?? 1) > 1 ? `${player.score_multiplier}x` : '1x'}
                         </button>
                       )}
                       <div

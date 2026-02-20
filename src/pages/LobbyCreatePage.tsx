@@ -30,7 +30,7 @@ export function LobbyCreatePage() {
   const { sport, setSport } = useSettingsStore();
 
   const [lobbyMode, setLobbyMode] = useState<'roster' | 'career'>('roster');
-  const [winTarget, setWinTarget] = useState<3 | 5 | 7>(3);
+  const [winTarget, setWinTarget] = useState<25 | 50 | 75 | 100 | 150 | 200>(100);
   const [hostName, setHostName] = useState(getStoredPlayerName() || '');
   const [gameMode, setGameMode] = useState<GameMode>('random');
   const [selectionScope, setSelectionScope] = useState<'team' | 'division'>('team');
@@ -241,25 +241,25 @@ export function LobbyCreatePage() {
               className="bg-black/50 border border-[#22c55e]/30 rounded-sm p-4"
             >
               <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                Win Target
+                Race to ___ pts
               </div>
-              <div className="flex gap-2 justify-center">
-                {([3, 5, 7] as const).map((n) => (
+              <div className="flex gap-2 justify-center flex-wrap">
+                {([25, 50, 75, 100, 150, 200] as const).map((n) => (
                   <button
                     key={n}
                     onClick={() => setWinTarget(n)}
-                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                    className={`px-4 py-2 rounded-sm sports-font tracking-wider transition-all ${
                       winTarget === n
                         ? 'bg-[#22c55e] text-black shadow-lg font-bold'
                         : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
                     }`}
                   >
-                    {n} Wins
+                    {n}
                   </button>
                 ))}
               </div>
               <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
-                First player to {winTarget} wins takes the match
+                First player to {winTarget} pts takes the match
               </div>
             </motion.div>
           )}
