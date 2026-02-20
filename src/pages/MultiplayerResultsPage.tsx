@@ -145,14 +145,14 @@ export function MultiplayerResultsPage() {
   const entityBonuses = useMemo(() => computeEntityBonuses(entities), [entities]);
 
   const showBonuses = entities.length >= 3;
-  const hasDummyPlayers = players.some(p => p.is_dummy);
+  const hasMultiplierPlayers = players.some(p => (p.score_multiplier ?? 1) > 1);
 
-  // Get effective score for an entity (handles dummy multiplier for solo players)
+  // Get effective score for an entity (handles score_multiplier for solo players)
   const getEffectiveEntityScore = useCallback((entity: ScoringEntity): number => {
     const bonus = entityBonuses.get(entity.entityId) || 0;
     if (entity.type === 'solo') {
       const base = entity.player.score + bonus;
-      return entity.player.is_dummy ? base * 2 : base;
+      return base * (entity.player.score_multiplier ?? 1.0);
     }
     return getEntityScore(entity) + bonus;
   }, [entityBonuses]);
@@ -447,9 +447,9 @@ export function MultiplayerResultsPage() {
               Tiebreaker: fewer incorrect guesses wins
             </div>
           )}
-          {hasDummyPlayers && (
+          {hasMultiplierPlayers && (
             <div className="text-xs text-purple-400/70 text-center mb-2">
-              Players with 2x have doubled points
+              Score multipliers are active for some players
             </div>
           )}
           <div className="space-y-2">
@@ -551,7 +551,7 @@ export function MultiplayerResultsPage() {
                       ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
                       : isCurrentPlayer
                       ? 'bg-[#d4af37]/10 border-[#d4af37]/30'
-                      : player.is_dummy
+                      : (player.score_multiplier ?? 1) > 1
                       ? 'bg-purple-900/20 border-purple-500/30'
                       : 'bg-black/30 border-white/10'
                   }`}
@@ -574,15 +574,15 @@ export function MultiplayerResultsPage() {
                       <div className={`sports-font font-medium ${isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/90'}`}>
                         {player.player_name}
                         {isCurrentPlayer && <span className="text-[10px] ml-2 text-white/40">(you)</span>}
-                        {player.is_dummy && <span className="text-[10px] ml-2 text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">2x</span>}
+                        {(player.score_multiplier ?? 1) > 1 && <span className="text-[10px] ml-2 text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">{player.score_multiplier}x</span>}
                       </div>
                       <div className="text-[10px] text-white/40 sports-font">
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
                         {showBonuses && bonus > 0 && (
                           <span className="text-emerald-400 ml-2">+{bonus} unique</span>
                         )}
-                        {player.is_dummy && (
-                          <span className="text-purple-400 ml-2">×2 = {effectiveScore}</span>
+                        {(player.score_multiplier ?? 1) > 1 && (
+                          <span className="text-purple-400 ml-2">×{player.score_multiplier} = {effectiveScore}</span>
                         )}
                         {(tiebreakerUsed || isTie) && (
                           <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>

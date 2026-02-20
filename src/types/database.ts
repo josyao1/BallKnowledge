@@ -228,6 +228,7 @@ export interface Database {
           finished_at: string | null;
           wins: number;
           team_number: number | null;
+          score_multiplier: number;
         };
         Insert: {
           id?: string;
@@ -246,6 +247,7 @@ export interface Database {
           finished_at?: string | null;
           wins?: number;
           team_number?: number | null;
+          score_multiplier?: number;
         };
         Update: {
           id?: string;
@@ -264,6 +266,7 @@ export interface Database {
           finished_at?: string | null;
           wins?: number;
           team_number?: number | null;
+          score_multiplier?: number;
         };
       };
     };

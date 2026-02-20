@@ -34,12 +34,12 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
   const entities = useMemo(() => buildScoringEntities(players), [players]);
   const entityBonuses = useMemo(() => computeEntityBonuses(entities), [entities]);
 
-  // For solo players with dummy mode, calculate effective score
+  // For solo players, calculate effective score using score_multiplier
   const getEffectiveEntityScore = (entity: ScoringEntity): number => {
     const bonus = entityBonuses.get(entity.entityId) || 0;
     if (entity.type === 'solo') {
       const base = entity.player.score + bonus;
-      return entity.player.is_dummy ? base * 2 : base;
+      return base * (entity.player.score_multiplier ?? 1.0);
     }
     return getEntityScore(entity) + bonus;
   };
@@ -50,7 +50,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
   }, [entities, entityBonuses]);
 
   const showBonuses = entities.length >= 3;
-  const hasDummyPlayers = players.some(p => p.is_dummy);
+  const hasMultiplierPlayers = players.some(p => (p.score_multiplier ?? 1) > 1);
 
   const toggleTeam = (teamNumber: number) => {
     setExpandedTeams(prev => {
@@ -63,11 +63,11 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
 
   return (
     <div className="space-y-3">
-      {(showBonuses || hasDummyPlayers) && (
+      {(showBonuses || hasMultiplierPlayers) && (
         <div className="text-[10px] text-white/40 text-center mb-1 sports-font">
           {showBonuses && (isTeamMode ? '+1 for unique guesses (teams = one)' : '+1 for unique guesses')}
-          {showBonuses && hasDummyPlayers && ' • '}
-          {hasDummyPlayers && <span className="text-purple-400">2x for beginners</span>}
+          {showBonuses && hasMultiplierPlayers && ' • '}
+          {hasMultiplierPlayers && <span className="text-purple-400">score multipliers active</span>}
         </div>
       )}
       <AnimatePresence>
@@ -171,8 +171,8 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                               {isMemberCurrent && (
                                 <span className="text-[7px] text-white/40 uppercase">you</span>
                               )}
-                              {member.is_dummy && (
-                                <span className="text-[7px] text-purple-400 px-1 bg-purple-900/40 rounded">2x</span>
+                              {(member.score_multiplier ?? 1) > 1 && (
+                                <span className="text-[7px] text-purple-400 px-1 bg-purple-900/40 rounded">{member.score_multiplier}x</span>
                               )}
                             </div>
                             <span className="text-xs text-white/40">{member.score} pts</span>
@@ -199,7 +199,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
               className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
                 isCurrentPlayer
                   ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
-                  : player.is_dummy
+                  : (player.score_multiplier ?? 1) > 1
                   ? 'bg-purple-900/20 border-purple-500/30'
                   : 'bg-black/40 border-white/10'
               }`}
@@ -217,8 +217,8 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                     }`}>
                       {player.player_name}
                     </span>
-                    {player.is_dummy && (
-                      <span className="text-[8px] text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">2x</span>
+                    {(player.score_multiplier ?? 1) > 1 && (
+                      <span className="text-[8px] text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">{player.score_multiplier}x</span>
                     )}
                   </div>
                   {isCurrentPlayer && (
@@ -231,8 +231,8 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                   {showBonuses && bonus > 0 && (
                     <span className="text-xs text-emerald-400">+{bonus}</span>
                   )}
-                  {player.is_dummy && (
-                    <span className="text-xs text-purple-400">×2</span>
+                  {(player.score_multiplier ?? 1) > 1 && (
+                    <span className="text-xs text-purple-400">×{player.score_multiplier}</span>
                   )}
                   <span className="retro-title text-xl text-white">
                     {effectiveScore}
