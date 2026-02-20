@@ -17,6 +17,7 @@ interface RoundSummary {
   round: number;
   scores: Record<string, number>;
   finishedAt: Record<string, string | null>;
+  timeBonuses?: Record<string, number>;
 }
 
 export function MultiplayerCareerResultsPage() {
@@ -219,9 +220,9 @@ export function MultiplayerCareerResultsPage() {
                         .sort((a, b) => (round.scores[b.player_id] ?? 0) - (round.scores[a.player_id] ?? 0))
                         .map(player => {
                           const score = round.scores[player.player_id] ?? 0;
+                          const timeBonus = round.timeBonuses?.[player.player_id] ?? 0;
                           const isMe = player.player_id === currentPlayerId;
                           const isRoundWinner = player.player_id === roundWinnerId && topScore > 0;
-                          const bonus = isRoundWinner && isTiebreaker ? tiebreakerBonus : 0;
                           const gotIt = score > 0;
                           return (
                             <div
@@ -240,13 +241,13 @@ export function MultiplayerCareerResultsPage() {
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                {bonus > 0 && (
+                                {timeBonus > 0 && (
                                   <span className="sports-font text-[9px] text-[#d4af37] bg-[#d4af37]/10 px-1.5 py-0.5 rounded">
-                                    +{bonus} bonus
+                                    +{timeBonus} time bonus
                                   </span>
                                 )}
                                 <span className={`retro-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
-                                  {gotIt ? score : '—'}
+                                  {gotIt ? score + timeBonus : '—'}
                                 </span>
                               </div>
                             </div>

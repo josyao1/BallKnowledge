@@ -113,6 +113,7 @@ interface RoundSummary {
   round: number;
   scores: Record<string, number>;
   finishedAt: Record<string, string | null>;
+  timeBonuses: Record<string, number>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -184,11 +185,28 @@ export function MultiplayerCareerPage() {
         scores[p.player_id] = p.score || 0;
         finishedAt[p.player_id] = p.finished_at;
       });
+
+      // Compute time bonus at capture time (same logic as advanceRound) so it's
+      // stored explicitly rather than re-derived later from finishedAt timestamps.
+      const timeBonuses: Record<string, number> = {};
+      const topScoreNow = Math.max(0, ...players.map(p => p.score || 0));
+      const topScorersNow = topScoreNow > 0 ? players.filter(p => (p.score || 0) === topScoreNow) : [];
+      const isTieNow = topScorersNow.length >= 2 && topScorersNow.every(p => p.finished_at !== null);
+      if (isTieNow) {
+        const sortedNow = [...topScorersNow].sort((a, b) =>
+          new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime()
+        );
+        const diffMsNow = new Date(sortedNow[1].finished_at!).getTime() - new Date(sortedNow[0].finished_at!).getTime();
+        const rawBonusNow = Math.max(1, Math.ceil(diffMsNow / 1000));
+        timeBonuses[sortedNow[0].player_id] = Math.min(rawBonusNow, topScoreNow);
+      }
+
       const newSummary: RoundSummary = {
         answer: careerState.playerName || '',
         round: careerState.round || 0,
         scores,
         finishedAt,
+        timeBonuses,
       };
       setRoundSummary(newSummary);
       roundHistoryRef.current = [...roundHistoryRef.current, newSummary];
@@ -550,12 +568,15 @@ export function MultiplayerCareerPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-4">
-                            {isRoundWinner && isTiebreaker && tiebreakerBonus > 0 && (
-                              <div className="text-right">
-                                <div className="sports-font text-[8px] text-[#888] tracking-wider">BONUS</div>
-                                <div className="retro-title text-lg text-[#d4af37]">+{tiebreakerBonus}</div>
-                              </div>
-                            )}
+                            {(() => {
+                              const tb = summary?.timeBonuses?.[player.player_id] ?? 0;
+                              return tb > 0 ? (
+                                <div className="text-right">
+                                  <div className="sports-font text-[8px] text-[#888] tracking-wider">TIME BONUS</div>
+                                  <div className="retro-title text-lg text-[#d4af37]">+{tb}</div>
+                                </div>
+                              ) : null;
+                            })()}
                             <div className="text-right">
                               <div className="sports-font text-[8px] text-[#888] tracking-wider">ROUND</div>
                               <div className={`retro-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
