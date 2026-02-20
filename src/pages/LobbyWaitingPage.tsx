@@ -17,8 +17,10 @@ import { useGameStore } from '../stores/gameStore';
 import { fetchTeamRoster, fetchDivisionRosters, fetchStaticSeasonPlayers, fetchStaticNFLRoster, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerDummyMode, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
+import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerScoreMultiplier, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
+import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
+import { scrambleName } from '../utils/scramble';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
@@ -65,7 +67,7 @@ export function LobbyWaitingPage() {
 
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
-  const [editGameType, setEditGameType] = useState<'roster' | 'career'>('roster');
+  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble'>('roster');
   const [editSport, setEditSport] = useState<Sport>('nba');
   const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
@@ -109,7 +111,7 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     if (lobby && !showSettings) {
       const lobbySport = lobby.sport as Sport;
-      setEditGameType((lobby.game_type as 'roster' | 'career') || 'roster');
+      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble') || 'roster');
       setEditSport(lobbySport);
       setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
@@ -249,11 +251,16 @@ export function LobbyWaitingPage() {
       hasStartedGame.current = false;
       hasAutoStarted.current = false;
     } else if (lobby.status === 'countdown') {
-      if (lobby.game_type !== 'career') {
+      if (lobby.game_type !== 'career' && lobby.game_type !== 'scramble') {
         setShowDealingAnimation(true);
       }
     } else if (lobby.status === 'playing') {
-      if (lobby.game_type === 'career') {
+      if (lobby.game_type === 'scramble') {
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/scramble`);
+        }
+      } else if (lobby.game_type === 'career') {
         // Career mode: navigate directly to career page
         if (!hasStartedGame.current) {
           hasStartedGame.current = true;
@@ -271,6 +278,8 @@ export function LobbyWaitingPage() {
     } else if (lobby.status === 'finished') {
       if (lobby.game_type === 'career') {
         navigate(`/lobby/${code}/career/results`);
+      } else if (lobby.game_type === 'scramble') {
+        navigate(`/lobby/${code}/scramble/results`);
       } else {
         navigate(`/lobby/${code}/results`);
       }
@@ -345,6 +354,44 @@ export function LobbyWaitingPage() {
     }
   };
 
+  const handleScrambleStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+
+    try {
+      const careerState = (lobby.career_state as any) || {};
+      const winTarget = careerState.win_target || 20;
+      const careerTo = careerState.career_to || 0;
+      const sport = lobby.sport as Sport;
+      const filters = careerTo ? { careerTo } : undefined;
+
+      const player = sport === 'nba'
+        ? await getRandomNBAScramblePlayer(filters)
+        : await getRandomNFLScramblePlayer(filters);
+
+      if (!player) { setIsLoadingRoster(false); return; }
+
+      const playerName = player.player_name;
+      const scrambledName = scrambleName(playerName);
+
+      const newCareerState = {
+        playerName,
+        scrambledName,
+        sport,
+        round: 1,
+        win_target: winTarget,
+        career_to: careerTo,
+      };
+
+      await startCareerRound(lobby.id, newCareerState);
+      setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
+      navigate(`/lobby/${code}/scramble`);
+    } catch {
+      setIsLoadingRoster(false);
+    }
+  };
+
   const handleReroll = useCallback(async () => {
     if (!isHost || !lobby) return;
 
@@ -400,7 +447,17 @@ export function LobbyWaitingPage() {
       await updateSettings({ gameType: editGameType });
     }
 
-    if (editGameType === 'career') {
+    if (editGameType === 'scramble') {
+      // Scramble mode: update career_state with points target and era filter
+      const existingState = (lobby.career_state as any) || {};
+      const newCareerState = {
+        ...existingState,
+        win_target: editWinTarget,
+        career_to: editCareerTo,
+      };
+      await updateCareerState(newCareerState);
+      setLobby({ ...lobby, career_state: newCareerState });
+    } else if (editGameType === 'career') {
       // Career mode: update career_state with win target and era filters
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
@@ -756,7 +813,17 @@ export function LobbyWaitingPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              {lobby.game_type === 'career' ? (
+              {lobby.game_type === 'scramble' ? (
+                <>
+                  <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                    {lobby.sport.toUpperCase()} Name Scramble
+                  </div>
+                  <div className="retro-title text-xl text-[#3b82f6]">Name Scramble</div>
+                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                    First to {(lobby.career_state as any)?.win_target ?? '?'} pts
+                  </div>
+                </>
+              ) : lobby.game_type === 'career' ? (
                 <>
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
                     {lobby.sport.toUpperCase()} Career Mode
@@ -788,7 +855,7 @@ export function LobbyWaitingPage() {
               )}
             </div>
             <div className="flex items-center gap-4">
-              {lobby.game_type !== 'career' && (
+              {lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
                 <div className="text-right">
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
                   <div className="retro-title text-2xl text-white">
@@ -855,24 +922,62 @@ export function LobbyWaitingPage() {
                 {/* Mode Toggle */}
                 <div>
                   <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Mode</div>
-                  <div className="flex gap-2">
-                    {(['roster', 'career'] as const).map(m => (
+                  <div className="flex gap-2 flex-wrap">
+                    {(['roster', 'career', 'scramble'] as const).map(m => (
                       <button
                         key={m}
                         onClick={() => setEditGameType(m)}
                         className={`flex-1 py-2 rounded-sm sports-font text-xs uppercase tracking-wider transition-all ${
                           editGameType === m
-                            ? 'bg-[#d4af37] text-black'
+                            ? m === 'scramble'
+                              ? 'bg-[#3b82f6] text-white'
+                              : 'bg-[#d4af37] text-black'
                             : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
                         }`}
                       >
-                        {m === 'roster' ? 'Roster' : 'Career Arc'}
+                        {m === 'roster' ? 'Roster' : m === 'career' ? 'Career Arc' : 'Scramble'}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {editGameType === 'career' ? (
+                {editGameType === 'scramble' ? (
+                  <>
+                    {/* Scramble Win Target */}
+                    <div>
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Points Target</div>
+                      <div className="flex gap-2 flex-wrap">
+                        {[10, 20, 30, 40, 50].map(n => (
+                          <button
+                            key={n}
+                            onClick={() => setEditWinTarget(n)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editWinTarget === n
+                                ? 'bg-[#3b82f6] text-white'
+                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Era Filter */}
+                    <div>
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Career Era</div>
+                      <select
+                        value={editCareerTo}
+                        onChange={(e) => setEditCareerTo(parseInt(e.target.value))}
+                        className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#3b82f6]"
+                      >
+                        <option value={0}>Any Era</option>
+                        {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map(y => (
+                          <option key={y} value={y}>Active into {y}+</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                ) : editGameType === 'career' ? (
                   <>
                     {/* Win Target */}
                     <div>
@@ -1112,7 +1217,7 @@ export function LobbyWaitingPage() {
                 {/* Apply Button */}
                 <button
                   onClick={handleApplySettings}
-                  disabled={editGameType === 'roster' && editGameMode === 'manual' && (!editTeam || !editYear)}
+                  disabled={editGameType === 'roster' && editGameMode === 'manual' && (!editTeam || !editYear) || false}
                   className="w-full py-3 rounded-sm retro-title tracking-wider transition-all disabled:opacity-50 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
                 >
                   Apply Changes
@@ -1146,7 +1251,7 @@ export function LobbyWaitingPage() {
                     className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
                       player.player_id === currentPlayerId
                         ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
-                        : player.is_dummy
+                        : (player.score_multiplier ?? 1) > 1
                           ? 'border-purple-500/50 bg-purple-900/20'
                           : 'border-white/10 bg-black/30'
                     }`}
@@ -1222,8 +1327,8 @@ export function LobbyWaitingPage() {
                           )}
                         </>
                       )}
-                      {player.is_dummy && lobby.game_type !== 'career' && (
-                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">2x</span>
+                      {(player.score_multiplier ?? 1) > 1 && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
+                        <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">{player.score_multiplier}x</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -1238,7 +1343,7 @@ export function LobbyWaitingPage() {
                         </button>
                       )}
                       {/* Team assignment button - host only, waiting state, roster mode only */}
-                      {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
+                      {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
                         <button
                           onClick={() => handleCycleTeam(player.player_id, player.team_number)}
                           className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
@@ -1257,7 +1362,7 @@ export function LobbyWaitingPage() {
                         </button>
                       )}
                       {/* Show team label for non-host when teams are assigned, roster mode only */}
-                      {!isHost && player.team_number && lobby.game_type !== 'career' && (
+                      {!isHost && player.team_number && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
                         <span
                           className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider border"
                           style={{
@@ -1269,18 +1374,24 @@ export function LobbyWaitingPage() {
                           T{player.team_number}
                         </span>
                       )}
-                      {/* Dummy mode toggle - host only, for non-host players, roster mode only */}
-                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && (
+                      {/* Score multiplier cycle - host only, for non-host players, roster mode only */}
+                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
                         <button
-                          onClick={() => setPlayerDummyMode(lobby.id, player.player_id, !player.is_dummy)}
+                          onClick={() => {
+                            const MULTIPLIERS = [1, 1.5, 2, 3, 4];
+                            const cur = player.score_multiplier ?? 1;
+                            const idx = MULTIPLIERS.indexOf(cur);
+                            const next = MULTIPLIERS[(idx + 1) % MULTIPLIERS.length];
+                            setPlayerScoreMultiplier(lobby.id, player.player_id, next);
+                          }}
                           className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
-                            player.is_dummy
+                            (player.score_multiplier ?? 1) > 1
                               ? 'bg-purple-600 text-white border border-purple-400'
                               : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
                           }`}
-                          title={player.is_dummy ? 'Disable 2x points' : 'Enable 2x points (for beginners)'}
+                          title="Click to cycle score multiplier (1x → 1.5x → 2x → 3x → 4x)"
                         >
-                          {player.is_dummy ? '2x ON' : '2x'}
+                          {(player.score_multiplier ?? 1) > 1 ? `${player.score_multiplier}x` : '1x'}
                         </button>
                       )}
                       <div
@@ -1322,7 +1433,20 @@ export function LobbyWaitingPage() {
             </button>
           )}
 
-          {lobby.game_type === 'career' ? (
+          {lobby.game_type === 'scramble' ? (
+            <>
+              {/* Scramble mode: start button */}
+              {isHost && players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleScrambleStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_0_#1d4ed8] active:shadow-none active:translate-y-1 disabled:opacity-50"
+                >
+                  {isLoadingRoster ? 'Loading Player...' : 'Start Name Scramble'}
+                </button>
+              )}
+            </>
+          ) : lobby.game_type === 'career' ? (
             <>
               {/* Career mode: start button */}
               {isHost && players.every(p => p.is_ready) && lobby.status === 'waiting' && (
