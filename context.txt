@@ -1,7 +1,7 @@
 ================================================================================
 BALL KNOWLEDGE — CONTEXT FILE
 ================================================================================
-Last Updated: 2026-02-19
+Last Updated: 2026-02-20
 
 ================================================================================
 PENDING / MONITOR
@@ -25,7 +25,7 @@ WHAT THIS APP IS
 ================================================================================
 Multiplayer + solo sports roster trivia game. Players guess who was on a team's
 roster in a given season within a time limit. Supports NBA and NFL. Multiple
-game modes: Roster Guessing, Division Mode, Career Mode, Roll Call.
+game modes: Roster Royale, Division Mode, Career Mode, Name Scramble, Roll Call.
 
 Tech Stack:
 - Frontend:  React 19 + TypeScript + Vite 7
@@ -45,6 +45,14 @@ ROSTER MODE (NBA + NFL) — FULLY STATIC, NO BACKEND NEEDED
 All roster data is pre-generated and served as static JSON files from Vercel.
 No api_server.py or nfl_api_server.py needed for roster/division/roll call modes.
 
+Host can assign adaptive score multipliers (1×, 1.5×, 2×, 3×, 4×) per player
+in the lobby waiting room. Multiplier affects:
+  - Effective score in LiveScoreboard during gameplay (solo: score × multiplier)
+  - Team combined score (weighted sum: Σ member.score × member.score_multiplier)
+  - Results display in MultiplayerResultsPage (badge + breakdown line)
+Multiplier state stored as score_multiplier column in lobby_players table.
+setPlayerScoreMultiplier() in lobby.ts updates it; cycles via button in LobbyWaitingPage.
+
 Game start flow:
 1. User picks team + season (or random)
 2. Frontend fetches ONE static JSON file from Vercel CDN:
@@ -59,6 +67,32 @@ Career mode flow:
 1. careerData.ts fetches /data/nba_careers.json or /data/nfl_careers.json once
 2. Caches in memory for the session
 3. Random player selection + stat lookup happen entirely client-side
+
+NAME SCRAMBLE MODE — FULLY STATIC
+-----------------------------------
+Uses the same career JSON pools (nba_careers.json / nfl_careers.json).
+getRandomNBAScramblePlayer() / getRandomNFLScramblePlayer() in careerData.ts
+pick a random player from the career pool (no stat display needed).
+scrambleName() in scramble.ts shuffles each word independently (Fisher-Yates),
+preserving words ≤2 chars and guaranteeing the result differs from the original.
+
+Solo flow (SoloScramblePage):
+  Player sees scrambled name → types guesses (fuzzy match via areSimilarNames)
+  → reveals answer on correct/give-up → Next Player continues the streak.
+
+Multiplayer flow (MultiplayerNameScramblePage):
+  Host picks sport + win_target at lobby creation. Host starts each round by
+  calling startCareerRound() with a new ScrambleState (playerName, scrambledName,
+  round, win_target, career_to) stored in lobby.career_state.
+  - All players see the scrambled name and type guesses simultaneously.
+  - First correct answer triggers a 30-second pressure timer for remaining players.
+  - When all players submit (correct or give-up), host awards positional points:
+    1st=5, 2nd=3, 3rd=2, 4th=1 via addCareerPoints() → stored in player.wins.
+  - Between rounds: interstitial shows scramble/answer reveal, per-round pts,
+    and race-to-target progress bars.
+  - Host clicks "Next Round" to load a fresh scrambled player.
+  - First player to reach win_target total pts triggers lobby status='finished'
+    → navigate to MultiplayerNameScrambleResultsPage with full roundHistory.
 
 NBA abbreviation translation (src/utils/teamHistory.ts → getApiAbbreviation()):
   BKN pre-2012  → NJN    OKC pre-2008  → SEA
@@ -137,9 +171,17 @@ PAGES (src/pages/)
   CareerResultsPage.tsx     Career mode results
   MultiplayerCareerPage.tsx Multiplayer career mode game
   MultiplayerCareerResultsPage.tsx
+  SoloScramblePage.tsx      Solo Name Scramble: unscramble one player at a time,
+                            streak tracking, NBA/NFL toggle
+  MultiplayerNameScramblePage.tsx
+                            Multiplayer Name Scramble: positional race scoring,
+                            pressure timer, between-round interstitial
+  MultiplayerNameScrambleResultsPage.tsx
+                            Final results + round-by-round history for scramble
   LobbyCreatePage.tsx       Create multiplayer lobby
   LobbyJoinPage.tsx         Join multiplayer lobby
-  LobbyWaitingPage.tsx      Waiting room pre-game
+  LobbyWaitingPage.tsx      Waiting room pre-game; host sets score multipliers
+                            (1×→1.5×→2×→3×→4×→1× cycle) per player
   MultiplayerResultsPage.tsx
   RollCallCreatePage.tsx    Roll Call mode setup
   RollCallSessionPage.tsx   Roll Call active session
@@ -161,7 +203,9 @@ SERVICES (src/services/)
                     Was the NBA Render backend client. Superseded by static files.
   nfl-api.ts        *** ARCHIVED — NOT IMPORTED ANYWHERE ***
                     Was the NFL Render backend client. Superseded by static files.
-  lobby.ts          Supabase lobby operations
+  lobby.ts          Supabase lobby operations. setPlayerScoreMultiplier() updates
+                    score_multiplier for a player; startCareerRound() writes
+                    career_state for scramble/career rounds.
   leaderboard.ts    Supabase leaderboard operations
   rollCall.ts       Roll Call mode Supabase operations
 
@@ -175,9 +219,12 @@ STORES (src/stores/)
 UTILS (src/utils/)
   teamHistory.ts    getApiAbbreviation(abbr, year, sport) — NBA historical
                     abbreviation translation. CRITICAL for static file lookups.
-  teamUtils.ts      Team helper functions
+  teamUtils.ts      Team helper functions. combinedScore now uses
+                    Σ(member.score × member.score_multiplier) for weighted teams.
   teamAbbr.ts       Abbreviation utilities
   fuzzyDedup.ts     Fuzzy deduplication for player name matching
+  scramble.ts       scrambleName(name) — Fisher-Yates word-by-word shuffle.
+                    Words ≤2 chars unchanged. Guarantees result ≠ original.
 
 DATA (src/data/)
   teams.ts          All 30 NBA teams (id, abbreviation, name, colors)
