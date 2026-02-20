@@ -95,9 +95,23 @@ export function loadNBACareers(): Promise<NBACareerPlayer[]> {
 
 export function loadNFLCareers(): Promise<NFLCareerPlayer[]> {
   if (!_nflPromise) {
-    _nflPromise = fetch('/data/nfl_careers.json')
-      .then(r => { if (!r.ok) throw new Error('Failed to load NFL careers'); return r.json(); })
-      .catch(err => { _nflPromise = null; throw err; });
+    _nflPromise = Promise.all([
+      fetch('/data/nfl_careers.json').then(r => { if (!r.ok) throw new Error('Failed to load NFL careers'); return r.json(); }),
+      fetch('/data/nfl_careers 2.json').then(r => { if (!r.ok) throw new Error('Failed to load NFL careers 2'); return r.json(); })
+    ])
+    .then(([careers1, careers2]) => {
+      // Merge both arrays, deduplicating by player_id
+      const playerMap = new Map<string, NFLCareerPlayer>();
+      
+      // Add all players from first file
+      careers1.forEach((player: NFLCareerPlayer) => playerMap.set(player.player_id, player));
+      
+      // Add/overwrite with players from second file (prefer careers 2 data as it's more complete)
+      careers2.forEach((player: NFLCareerPlayer) => playerMap.set(player.player_id, player));
+      
+      return Array.from(playerMap.values());
+    })
+    .catch(err => { _nflPromise = null; throw err; });
   }
   return _nflPromise;
 }

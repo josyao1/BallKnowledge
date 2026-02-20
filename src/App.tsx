@@ -23,6 +23,9 @@ import { MultiplayerCareerResultsPage } from './pages/MultiplayerCareerResultsPa
 import { MultiplayerNameScramblePage } from './pages/MultiplayerNameScramblePage';
 import { MultiplayerNameScrambleResultsPage } from './pages/MultiplayerNameScrambleResultsPage';
 import { SoloScramblePage } from './pages/SoloScramblePage';
+import { SoloLineupIsRightPage } from './pages/SoloLineupIsRightPage';
+import { MultiplayerLineupIsRightPage } from './pages/MultiplayerLineupIsRightPage';
+import { MultiplayerLineupIsRightResultsPage } from './pages/MultiplayerLineupIsRightResultsPage';
 
 function App() {
   return (
@@ -51,9 +54,14 @@ function App() {
         <Route path="/lobby/:code/career/results" element={<MultiplayerCareerResultsPage />} />
         {/* Solo Scramble */}
         <Route path="/scramble" element={<SoloScramblePage />} />
+        {/* Solo Lineup Is Right */}
+        <Route path="/lineup-is-right" element={<SoloLineupIsRightPage />} />
         {/* Name Scramble routes */}
         <Route path="/lobby/:code/scramble" element={<MultiplayerNameScramblePage />} />
         <Route path="/lobby/:code/scramble/results" element={<MultiplayerNameScrambleResultsPage />} />
+        {/* Lineup Is Right routes */}
+        <Route path="/lobby/:code/lineup-is-right" element={<MultiplayerLineupIsRightPage />} />
+        <Route path="/lobby/:code/lineup-is-right/results" element={<MultiplayerLineupIsRightResultsPage />} />
       </Routes>
     </BrowserRouter>
   );
