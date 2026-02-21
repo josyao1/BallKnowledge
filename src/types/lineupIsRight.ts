@@ -49,7 +49,8 @@ export type StatCategory =
   | 'rushing_yards'  // NFL: rushing yards
   | 'rushing_tds'    // NFL: rushing touchdowns
   | 'receiving_yards'  // NFL: receiving yards
-  | 'receiving_tds';   // NFL: receiving touchdowns
+  | 'receiving_tds'    // NFL: receiving touchdowns
+  | 'total_gp';        // NFL: total games played for a team (career, no year selection)
 
 export interface LineupIsRightGameState {
   sport: Sport;

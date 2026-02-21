@@ -431,7 +431,7 @@ export function LobbyWaitingPage() {
         };
       });
 
-      const firstTeam = assignRandomTeam(sport);
+      const firstTeam = assignRandomTeam(sport, statCategory);
 
       const newCareerState = {
         sport,

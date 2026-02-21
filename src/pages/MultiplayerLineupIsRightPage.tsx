@@ -24,9 +24,12 @@ import {
   searchPlayersByNameOnly,
   getPlayerYearsOnTeam,
   getPlayerStatForYearAndTeam,
+  getPlayerTotalGPForTeam,
   addPlayerToLineup,
   calculateLineupStat,
   assignRandomTeam,
+  isDivisionRound,
+  NFL_DIVISIONS,
 } from '../services/lineupIsRight';
 import { getTeamByAbbreviation } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
@@ -46,6 +49,7 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'rushing_tds': return 'RUSH TD';
     case 'receiving_yards': return 'REC YD';
     case 'receiving_tds': return 'REC TD';
+    case 'total_gp': return 'TOT GP';
     default: return 'STAT';
   }
 }
@@ -83,6 +87,7 @@ export function MultiplayerLineupIsRightPage() {
   const [selectedYear, setSelectedYear] = useState('');
   const [loadingYears, setLoadingYears] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   // Prevent realtime sync from clobbering state mid-pick
   const addingPlayerRef = useRef(false);
@@ -96,6 +101,9 @@ export function MultiplayerLineupIsRightPage() {
   // Derived: my lineup and whether I can pick this round
   const myLineup = allLineups[currentPlayerId || ''] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
   const canPickThisRound = !myLineup?.hasPickedThisRound && !myLineup?.isFinished;
+
+  // Players I've already used this game (no repeats allowed)
+  const usedPlayerNames = new Set(myLineup?.selectedPlayers.map(p => p.playerName) ?? []);
 
   useLobbySubscription(lobby?.id || null);
 
@@ -194,7 +202,9 @@ export function MultiplayerLineupIsRightPage() {
         await updateCareerState(lobbyId, { ...cs, phase: 'results' });
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
-        const newTeam = assignRandomTeam(cs.sport || 'nba');
+        const newTeam = cs.statCategory === 'total_gp'
+          ? cs.currentTeam  // same team all 5 rounds in GP mode
+          : assignRandomTeam(cs.sport || 'nba', cs.statCategory);
         const resetLineups: Record<string, any> = {};
         playerIds.forEach(pid => {
           resetLineups[pid] = {
@@ -230,6 +240,7 @@ export function MultiplayerLineupIsRightPage() {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
+    setDuplicateError(null);
     if (!selectedSport || query.trim().length < 2) {
       setSearchResults([]);
       return;
@@ -247,9 +258,17 @@ export function MultiplayerLineupIsRightPage() {
   };
 
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
+    if (usedPlayerNames.has(player.playerName)) {
+      setDuplicateError(`You already used ${player.playerName} this game.`);
+      return;
+    }
+    setDuplicateError(null);
     setSelectedPlayerName(player.playerName);
     setSelectedYear('');
     setAvailableYears([]);
+
+    // total_gp mode: no year needed, go straight to confirm
+    if (statCategory === 'total_gp') return;
 
     setLoadingYears(true);
     try {
@@ -262,19 +281,24 @@ export function MultiplayerLineupIsRightPage() {
     }
   };
 
+  const isTotalGP = statCategory === 'total_gp';
+
   const handleConfirmYear = async () => {
-    if (!selectedPlayerName || !selectedYear || !selectedSport || !statCategory || !lobby || !currentPlayerId) return;
+    if (!selectedPlayerName || !selectedSport || !statCategory || !lobby || !currentPlayerId) return;
+    if (!isTotalGP && !selectedYear) return;
 
     addingPlayerRef.current = true;
     setAddingPlayer(true);
     try {
-      const statValue = await getPlayerStatForYearAndTeam(
-        selectedSport as any,
-        selectedPlayerName,
-        currentTeam,
-        selectedYear,
-        statCategory
-      );
+      const statValue = isTotalGP
+        ? await getPlayerTotalGPForTeam(selectedPlayerName, currentTeam)
+        : await getPlayerStatForYearAndTeam(
+            selectedSport as any,
+            selectedPlayerName,
+            currentTeam,
+            selectedYear,
+            statCategory
+          );
 
       // Read latest career_state from store (synced via realtime) to minimize race window
       const latestCS = (lobby.career_state as any) || {};
@@ -291,7 +315,7 @@ export function MultiplayerLineupIsRightPage() {
       const newSelectedPlayer: SelectedPlayer = {
         playerName: selectedPlayerName,
         team: currentTeam,
-        selectedYear,
+        selectedYear: isTotalGP ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
       };
@@ -381,21 +405,61 @@ export function MultiplayerLineupIsRightPage() {
                   className="w-full px-4 py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-3 text-base"
                 />
                 {loading && <p className="text-white/60 text-sm">Loading...</p>}
+                {duplicateError && (
+                  <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
+                )}
                 {searchResults.length > 0 && (
                   <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                    {searchResults.map((result, idx) => (
-                      <button
-                        key={String(result.playerId) + idx}
-                        onClick={() => handleSelectPlayer(result)}
-                        className="w-full text-left px-4 py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-sm"
-                      >
-                        {result.playerName}
-                      </button>
-                    ))}
+                    {searchResults.map((result, idx) => {
+                      const alreadyUsed = usedPlayerNames.has(result.playerName);
+                      return (
+                        <button
+                          key={String(result.playerId) + idx}
+                          onClick={() => handleSelectPlayer(result)}
+                          className={`w-full text-left px-4 py-3 rounded border transition text-sm font-semibold ${
+                            alreadyUsed
+                              ? 'bg-[#111] border-white/5 text-white/25 cursor-not-allowed line-through'
+                              : 'bg-[#1a1a1a] hover:bg-[#2a2a2a] border-white/10 text-white'
+                          }`}
+                        >
+                          {result.playerName}
+                          {alreadyUsed && <span className="ml-2 text-[10px] text-white/20 no-underline not-italic font-normal">(already used)</span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
+            ) : isTotalGP ? (
+              // ── Total GP mode: no year selection, just confirm the player ──
+              <div className="flex flex-col gap-3 h-full">
+                <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
+                  <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
+                  <p className="text-xs text-white/60 mt-0.5">Will count all career GP with {currentTeam}</p>
+                </div>
+                <div className="flex-1 flex items-center justify-center text-center">
+                  <p className="text-white/30 sports-font text-xs leading-relaxed">
+                    Games played across every season<br />this player was on the team
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-auto pt-2">
+                  <button
+                    onClick={() => { setSelectedPlayerName(null); setSelectedYear(''); setAvailableYears([]); }}
+                    className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleConfirmYear}
+                    disabled={addingPlayer}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm retro-title"
+                  >
+                    {addingPlayer ? 'Adding...' : 'Confirm'}
+                  </button>
+                </div>
+              </div>
             ) : (
+              // ── Normal mode: pick a year ──
               <div className="flex flex-col gap-3 h-full">
                 <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
                   <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
@@ -483,8 +547,8 @@ export function MultiplayerLineupIsRightPage() {
             const visiblePicks = maskCurrentRound
               ? (lineup?.selectedPlayers.slice(0, currentRound - 1) ?? [])
               : (lineup?.selectedPlayers ?? []);
-            const showBusted = lineup?.isBusted &&
-              (!maskCurrentRound || (lineup.selectedPlayers.length < currentRound));
+            // Only reveal busted status on your own row — opponents just see ✓
+            const showBusted = isMe && !!lineup?.isBusted;
 
             return (
               <div
@@ -567,15 +631,27 @@ export function MultiplayerLineupIsRightPage() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="flex items-center gap-2"
             >
-              <div
-                className="px-4 py-1.5 rounded border-2 bg-black"
-                style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
-              >
-                <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Team</p>
-                <p className="retro-title text-xl font-bold" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
-                  {currentTeam}
-                </p>
-              </div>
+              {isDivisionRound(currentTeam) ? (
+                <div className="px-4 py-1.5 rounded border-2 bg-black border-[#d4af37]/60">
+                  <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
+                  <p className="retro-title text-base font-bold text-[#d4af37] leading-tight">
+                    {currentTeam}
+                  </p>
+                  <p className="sports-font text-[8px] text-white/35 leading-none mt-0.5">
+                    {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="px-4 py-1.5 rounded border-2 bg-black"
+                  style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
+                >
+                  <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Team</p>
+                  <p className="retro-title text-xl font-bold" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
+                    {currentTeam}
+                  </p>
+                </div>
+              )}
             </motion.div>
             <div className="flex gap-2 ml-auto">
               <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
@@ -586,8 +662,8 @@ export function MultiplayerLineupIsRightPage() {
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Stat</div>
                 <p className="retro-title text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
               </div>
-              {/* My running total — mobile only, always visible across both tabs */}
-              <div className={`md:hidden border px-3 py-1.5 rounded-sm text-center ${
+              {/* My running total — always visible */}
+              <div className={`border px-3 py-1.5 rounded-sm text-center ${
                 myLineup?.isBusted
                   ? 'bg-red-900/20 border-red-500/50'
                   : 'bg-[#d4af37]/10 border-[#d4af37]/40'
@@ -595,6 +671,17 @@ export function MultiplayerLineupIsRightPage() {
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
                 <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-[#d4af37]'}`}>
                   {myLineup?.totalStat ?? 0}
+                </p>
+              </div>
+              {/* Remaining to cap */}
+              <div className={`border px-3 py-1.5 rounded-sm text-center ${
+                myLineup?.isBusted
+                  ? 'bg-red-900/20 border-red-500/50'
+                  : 'bg-[#111] border-white/10'
+              }`}>
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
+                <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-white'}`}>
+                  {myLineup?.isBusted ? '—' : targetCap - (myLineup?.totalStat ?? 0)}
                 </p>
               </div>
             </div>
@@ -650,13 +737,19 @@ export function MultiplayerLineupIsRightPage() {
 
   // ── Results screen ─────────────────────────────────────────────────────────
   if (phase === 'results') {
+    const everyoneBusted = players.length > 0 && players.every(p => (allLineups[p.player_id] as any)?.isBusted);
+
     const sortedLineups = players
       .map((p) => ({
         ...p,
         lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, isBusted: false, isFinished: false }) as PlayerLineup,
       }))
       .sort((a, b) => {
-        // Non-busted beat busted; among non-busted, highest total wins
+        if (everyoneBusted) {
+          // All busted: least over the cap wins (lowest total stat)
+          return a.lineup.totalStat - b.lineup.totalStat;
+        }
+        // Normal: non-busted beat busted; among non-busted, highest total wins
         if (a.lineup.isBusted && !b.lineup.isBusted) return 1;
         if (!a.lineup.isBusted && b.lineup.isBusted) return -1;
         return b.lineup.totalStat - a.lineup.totalStat;
@@ -685,6 +778,11 @@ export function MultiplayerLineupIsRightPage() {
               <p className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Target Cap</p>
               <p className="retro-title text-3xl text-[#d4af37]">{targetCap}</p>
             </div>
+            {everyoneBusted && (
+              <div className="mb-4 p-3 bg-red-900/20 border border-red-500/30 rounded text-center">
+                <p className="sports-font text-[10px] text-red-400 tracking-widest uppercase">Everyone busted — least over wins</p>
+              </div>
+            )}
 
             <div className="space-y-4">
               {sortedLineups.map((item, idx) => (

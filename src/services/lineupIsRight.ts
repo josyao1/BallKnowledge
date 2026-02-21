@@ -38,13 +38,21 @@ function nflTeamMatches(dataTeam: string, targetTeam: string): boolean {
 }
 
 const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min'];
-const NFL_STAT_CATEGORIES: StatCategory[] = [
-  'passing_yards',
-  'passing_tds',
-  'rushing_yards',
-  'rushing_tds',
-  'receiving_yards',
-  'receiving_tds',
+
+// ── Test flag — set to a StatCategory to force that category every round ──────
+// Set to null in production.
+const FORCE_NFL_STAT: StatCategory | null = null;
+
+// Weighted NFL stat pool: rushing/receiving appear 2× as often as QB passing stats
+// total_gp gets 2× weight as well (broad player pool, fun variation)
+const NFL_STAT_WEIGHTS: Array<{ category: StatCategory; weight: number }> = [
+  { category: 'passing_yards',   weight: 1 },
+  { category: 'passing_tds',     weight: 1 },
+  { category: 'rushing_yards',   weight: 2 },
+  { category: 'rushing_tds',     weight: 2 },
+  { category: 'receiving_yards', weight: 2 },
+  { category: 'receiving_tds',   weight: 2 },
+  { category: 'total_gp',        weight: 2 },
 ];
 
 const STAT_LABELS: Record<StatCategory, string> = {
@@ -58,6 +66,7 @@ const STAT_LABELS: Record<StatCategory, string> = {
   rushing_tds: 'Rushing Touchdowns',
   receiving_yards: 'Receiving Yards',
   receiving_tds: 'Receiving Touchdowns',
+  total_gp: 'Total Games Played',
 };
 
 // ─── Target Cap Calculation ──────────────────────────────────────────────────
@@ -94,6 +103,9 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory): num
       case 'rushing_tds':   return r(35,   65);     // 3× 10   = 30;  5 elite = 75
       case 'receiving_yards': return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
       case 'receiving_tds':   return r(28,   50);   // 3× 9    = 27;  5 elite = 55
+      // total_gp: career GP with one team. Franchise guys hit 100-200, avg starter 30-80.
+      // 5 picks averaging ~50 GP each = 250. Range creates tension.
+      case 'total_gp':        return r(175, 325);
       default: return 500;
     }
   }
@@ -101,10 +113,21 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory): num
 
 /**
  * Select a random stat category for the given sport.
+ * For NFL, rushing and receiving stats are 2× more likely than passing.
+ * FORCE_NFL_STAT overrides selection for testing.
  */
 export function selectRandomStatCategory(sport: Sport): StatCategory {
-  const categories = sport === 'nba' ? NBA_STAT_CATEGORIES : NFL_STAT_CATEGORIES;
-  return categories[Math.floor(Math.random() * categories.length)];
+  if (sport === 'nba') {
+    return NBA_STAT_CATEGORIES[Math.floor(Math.random() * NBA_STAT_CATEGORIES.length)];
+  }
+  if (FORCE_NFL_STAT) return FORCE_NFL_STAT;
+  const total = NFL_STAT_WEIGHTS.reduce((s, w) => s + w.weight, 0);
+  let rand = Math.random() * total;
+  for (const { category, weight } of NFL_STAT_WEIGHTS) {
+    rand -= weight;
+    if (rand <= 0) return category;
+  }
+  return 'rushing_yards';
 }
 
 /**
@@ -158,9 +181,40 @@ export const NFL_TEAMS = [
 ];
 
 /**
- * Select a random team for the given sport.
+ * NFL divisions: maps division label → current team abbreviations.
+ * Franchise alias lookup handles relocated teams (OAK→LV, SD→LAC, STL→LA).
  */
-export function assignRandomTeam(sport: Sport): string {
+export const NFL_DIVISIONS: Record<string, string[]> = {
+  'AFC East':  ['BUF', 'MIA', 'NE',  'NYJ'],
+  'AFC North': ['BAL', 'PIT', 'CLE', 'CIN'],
+  'AFC South': ['HOU', 'IND', 'JAX', 'TEN'],
+  'AFC West':  ['KC',  'LV',  'LAC', 'DEN'],
+  'NFC East':  ['DAL', 'NYG', 'PHI', 'WAS'],
+  'NFC North': ['GB',  'MIN', 'DET', 'CHI'],
+  'NFC South': ['NO',  'CAR', 'TB',  'ATL'],
+  'NFC West':  ['ARI', 'LAR', 'SF',  'SEA'],
+};
+
+/** Returns true if the string is a division label rather than a team abbreviation. */
+export function isDivisionRound(teamOrDiv: string): boolean {
+  return teamOrDiv in NFL_DIVISIONS;
+}
+
+function teamInDivision(dataTeam: string, division: string): boolean {
+  const divTeams = NFL_DIVISIONS[division] ?? [];
+  return divTeams.some(t => nflTeamMatches(dataTeam, t));
+}
+
+/**
+ * Select a random team (or division) for the given sport.
+ * For NFL, ~25% of rounds use a whole division instead of a single team,
+ * unless the stat category is total_gp (career GP is team-specific only).
+ */
+export function assignRandomTeam(sport: Sport, statCategory?: StatCategory): string {
+  if (sport === 'nfl' && statCategory !== 'total_gp' && Math.random() < 0.15) {
+    const divs = Object.keys(NFL_DIVISIONS);
+    return divs[Math.floor(Math.random() * divs.length)];
+  }
   const teams = sport === 'nba' ? NBA_TEAMS : NFL_TEAMS;
   return teams[Math.floor(Math.random() * teams.length)];
 }
@@ -415,7 +469,11 @@ export async function getPlayerStatForYearAndTeam(
       if (!player) return 0;
       
       const season = player.seasons.find(
-        s => s.season === year && nflTeamMatches(s.team, team)
+        s => s.season === year && (
+          isDivisionRound(team)
+            ? teamInDivision(s.team, team)
+            : nflTeamMatches(s.team, team)
+        )
       );
       
       if (!season) return 0;
@@ -425,6 +483,35 @@ export async function getPlayerStatForYearAndTeam(
     }
   } catch (error) {
     console.error('Error getting player stat:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get a player's total career games played (GP) for a given NFL team.
+ * Sums GP across ALL seasons the player was on that team.
+ * Returns 0 if the player never played for that team.
+ */
+export async function getPlayerTotalGPForTeam(
+  playerName: string,
+  team: string
+): Promise<number> {
+  try {
+    const players = await loadNFLLineupPool();
+    const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
+    if (!player) return 0;
+
+    const total = player.seasons
+      .filter(s =>
+        isDivisionRound(team)
+          ? teamInDivision(s.team, team)
+          : nflTeamMatches(s.team, team)
+      )
+      .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+
+    return total;
+  } catch (error) {
+    console.error('Error getting player total GP:', error);
     return 0;
   }
 }
