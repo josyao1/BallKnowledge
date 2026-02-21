@@ -64,9 +64,12 @@ function levenshtein(a: string, b: string): number {
 function areSimilar(normA: string, normB: string): boolean {
   if (normA === normB) return true;
 
-  // Substring check (min 5 chars to avoid false positives)
-  if (normA.length >= 5 && normB.includes(normA)) return true;
-  if (normB.length >= 5 && normA.includes(normB)) return true;
+  // Substring check: only if the shorter name covers ≥80% of the longer one.
+  // Handles "Jr" suffix variants (e.g. "Michael Pittman" ≈ "Michael Pittman Jr")
+  // without accepting first-name-only guesses (e.g. "LeBron" vs "LeBron James").
+  const shorter = normA.length <= normB.length ? normA : normB;
+  const longer  = normA.length <= normB.length ? normB : normA;
+  if (shorter.length >= 5 && shorter.length / longer.length >= 0.8 && longer.includes(shorter)) return true;
 
   // Levenshtein: allow 1 edit per 5 chars
   const maxLen = Math.max(normA.length, normB.length);

@@ -272,8 +272,15 @@ export function SoloLineupIsRightPage() {
         />
 
         <header className="relative z-10 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
-          <div className="px-4 py-2 text-center border-b border-white/5">
+          <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
+            <button
+              onClick={() => navigate('/')}
+              className="sports-font text-[10px] text-white/40 hover:text-white/70 tracking-widest uppercase transition"
+            >
+              ← Home
+            </button>
             <h1 className="retro-title text-2xl text-[#d4af37]">Lineup Is Right</h1>
+            <div className="w-16" />
           </div>
           {/* Team Display */}
           <motion.div
