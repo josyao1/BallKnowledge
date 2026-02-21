@@ -41,6 +41,7 @@ export function HomePage() {
   const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showGameMenu, setShowGameMenu] = useState(false);
   const [showRoulette, setShowRoulette] = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
 
@@ -76,6 +77,19 @@ export function HomePage() {
       setRandomMaxYear(Math.min(randomMaxYear, 2025));
     }
   }, [sport]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!showGameMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const dropdown = document.querySelector('[data-game-menu]');
+      if (dropdown && !dropdown.contains(e.target as Node)) {
+        setShowGameMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showGameMenu]);
 
   const handleStartGame = async () => {
     setLoadingStatus('checking');
@@ -182,39 +196,54 @@ export function HomePage() {
     ))}
   </div>
 
-  {/* Right: Extra Modes + API Status & Settings */}
+  {/* Right: Game Selector Dropdown + API Status & Settings */}
   <div className="flex-1 flex justify-end items-center gap-1.5 md:gap-2">
-  {/* Roll Call button */}
-  <button
-    onClick={() => navigate('/roll-call/create')}
-    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#d4af37] border border-[#d4af37] rounded hover:bg-[#d4af37] hover:text-black transition-colors whitespace-nowrap"
-  >
-    Roll Call
-  </button>
-
-  {/* Career Mode button */}
-  <button
-    onClick={() => navigate('/career')}
-    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#22c55e] border border-[#22c55e] rounded hover:bg-[#22c55e] hover:text-black transition-colors whitespace-nowrap"
-  >
-    Career
-  </button>
-
-  {/* Name Scramble button */}
-  <button
-    onClick={() => navigate('/scramble')}
-    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#3b82f6] border border-[#3b82f6] rounded hover:bg-[#3b82f6] hover:text-white transition-colors whitespace-nowrap"
-  >
-    Scramble
-  </button>
-
-  {/* Lineup Is Right button */}
-  <button
-    onClick={() => navigate('/lineup-is-right')}
-    className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-[#ec4899] border border-[#ec4899] rounded hover:bg-[#ec4899] hover:text-white transition-colors whitespace-nowrap"
-  >
-    Lineup
-  </button>
+    {/* Game Mode Dropdown */}
+    <div className="relative" data-game-menu>
+      <button
+        onClick={() => setShowGameMenu(!showGameMenu)}
+        className="px-2.5 md:px-3 py-1 text-[10px] md:text-[13px] sports-font uppercase tracking-tighter text-white border border-[#d4af37] bg-[#1a1a1a] rounded hover:bg-[#2a2a2a] transition-colors whitespace-nowrap flex items-center gap-1"
+      >
+        <span>Select Game</span>
+        <svg className={`w-3 h-3 transition-transform ${showGameMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      </button>
+      
+      {showGameMenu && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="absolute top-full right-0 mt-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg shadow-xl z-50 min-w-max"
+        >
+          <button
+            onClick={() => { navigate('/roll-call/create'); setShowGameMenu(false); }}
+            className="w-full text-left px-4 py-2 text-[11px] md:text-sm sports-font uppercase tracking-tighter text-[#d4af37] hover:bg-[#2a2a2a] border-b border-[#3d3d3d] transition-colors first:rounded-t-md"
+          >
+            Roll Call
+          </button>
+          <button
+            onClick={() => { navigate('/career'); setShowGameMenu(false); }}
+            className="w-full text-left px-4 py-2 text-[11px] md:text-sm sports-font uppercase tracking-tighter text-[#22c55e] hover:bg-[#2a2a2a] border-b border-[#3d3d3d] transition-colors"
+          >
+            Career
+          </button>
+          <button
+            onClick={() => { navigate('/scramble'); setShowGameMenu(false); }}
+            className="w-full text-left px-4 py-2 text-[11px] md:text-sm sports-font uppercase tracking-tighter text-[#3b82f6] hover:bg-[#2a2a2a] border-b border-[#3d3d3d] transition-colors"
+          >
+            Scramble
+          </button>
+          <button
+            onClick={() => { navigate('/lineup-is-right'); setShowGameMenu(false); }}
+            className="w-full text-left px-4 py-2 text-[11px] md:text-sm sports-font uppercase tracking-tighter text-[#ec4899] hover:bg-[#2a2a2a] transition-colors last:rounded-b-md"
+          >
+            Lineup
+          </button>
+        </motion.div>
+      )}
+    </div>
 
   {/* API Status dot */}
   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/20 border border-white/5">

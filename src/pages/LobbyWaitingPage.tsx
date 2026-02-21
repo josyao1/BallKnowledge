@@ -1620,6 +1620,42 @@ export function LobbyWaitingPage() {
             </p>
           )}
 
+          {/* ── How to Play ── */}
+          <div className="mt-4 bg-black/40 border border-white/10 rounded-sm p-4">
+            <p className="sports-font text-[9px] text-[#d4af37] tracking-[0.3em] uppercase mb-3">How to Play</p>
+            {lobby.game_type === 'roster' ? (
+              <div className="space-y-2 text-white/50 sports-font text-xs leading-relaxed">
+                <p>A team and season are randomly selected. Players on that roster are shuffled into a deck of cards.</p>
+                <p>Each round a card is revealed — guess the player before the timer runs out to score a point.</p>
+                <p>Cards show hints like position, jersey number, and stats. The faster you buzz in, the better.</p>
+                <p className="text-[#d4af37]/60">🏆 Most correct guesses wins.</p>
+              </div>
+            ) : lobby.game_type === 'career' ? (
+              <div className="space-y-2 text-white/50 sports-font text-xs leading-relaxed">
+                <p>A mystery player is chosen. Their career stats are revealed year by year — team, stats, season.</p>
+                <p>Players race to identify the mystery player. Buzz in early for more points, but a wrong guess costs you.</p>
+                <p>The fewer clues revealed when you guess correctly, the higher your score.</p>
+                <p className="text-[#d4af37]/60">🏆 Most points across all rounds wins.</p>
+              </div>
+            ) : lobby.game_type === 'scramble' ? (
+              <div className="space-y-2 text-white/50 sports-font text-xs leading-relaxed">
+                <p>A player's name is scrambled on screen. Type the correct name to score a point.</p>
+                <p>Multiple rounds — first to unscramble each name scores. Speed matters.</p>
+                <p>You can pass on a name if you're stuck, but the point goes to whoever gets it first.</p>
+                <p className="text-[#d4af37]/60">🏆 Most unscrambled names wins.</p>
+              </div>
+            ) : lobby.game_type === 'lineup-is-right' ? (
+              <div className="space-y-2 text-white/50 sports-font text-xs leading-relaxed">
+                <p>Each round everyone sees the same random NFL team (or division) and a stat category.</p>
+                <p>Search for any player and pick a season — their stat for that year adds to your running total.</p>
+                <p>If the stat is <span className="text-white/70">Total GP</span>, the same team locks in for all 5 rounds. Pick players and their entire career GP with that team is added — no year needed.</p>
+                <p>Go over the target cap and you <span className="text-red-400">bust</span>. If everyone busts, the player who went over by the least wins.</p>
+                <p>You <span className="text-white/70">cannot repeat a player</span> across rounds.</p>
+                <p className="text-[#d4af37]/60">🏆 Closest to the target without busting wins.</p>
+              </div>
+            ) : null}
+          </div>
+
           {/* Tip for stuck screens */}
           <p className="text-center text-white/20 text-[10px] sports-font tracking-wider mt-4">
             Tip: If stuck on empty screen, refresh page to rejoin
