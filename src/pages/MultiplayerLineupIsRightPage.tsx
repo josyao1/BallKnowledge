@@ -472,7 +472,7 @@ export function MultiplayerLineupIsRightPage() {
                 {loadingYears ? (
                   <p className="text-white/60 text-sm">Loading years...</p>
                 ) : availableYears.length > 0 ? (
-                  <div className="space-y-1.5 overflow-y-auto flex-1">
+                  <div className="space-y-1.5 overflow-y-auto max-h-48 md:max-h-64">
                     {availableYears.map((year) => (
                       <button
                         key={year}
