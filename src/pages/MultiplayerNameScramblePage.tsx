@@ -475,153 +475,160 @@ export function MultiplayerNameScramblePage() {
   }
 
   // ── GAMEPLAY ──
+  // Layout: fixed-height container so the mobile keyboard doesn't scroll the
+  // scrambled name off screen. Name is pinned at top, input pinned at bottom,
+  // everything else scrolls in the middle.
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
-      {/* Header */}
-      <header className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#3b82f6] text-white">
-            SCRAMBLE
-          </span>
-          <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#1a1a1a] text-[#888]">
-            Round {careerState.round}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-2 text-center">
+    <div className="h-[100dvh] bg-[#111] text-white flex flex-col overflow-hidden">
+
+      {/* ── PINNED TOP: always visible even when keyboard is open ── */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 bg-[#111]">
+        {/* Round / done badge row */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#3b82f6] text-white">
+              SCRAMBLE
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#1a1a1a] text-[#888]">
+              Round {careerState.round}
+            </span>
+          </div>
+          <div className="bg-[#1a1a1a] border border-[#3d3d3d] rounded-lg px-3 py-1 text-center">
             <div className="sports-font text-[8px] text-[#888] tracking-widest">DONE</div>
-            <div className="retro-title text-2xl text-white">{doneCount}/{totalCount}</div>
+            <div className="retro-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
           </div>
         </div>
-      </header>
 
-      {/* Points progress bars */}
-      <div className="mb-4 space-y-2">
-        {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => {
-          const pts = player.wins || 0;
-          const pct = Math.min(100, (pts / winTarget) * 100);
-          const isMe = player.player_id === currentPlayerId;
-          return (
-            <div key={player.player_id} className="flex items-center gap-2">
-              <span className={`sports-font text-[10px] w-20 truncate ${isMe ? 'text-white' : 'text-white/50'}`}>
-                {player.player_name}
-              </span>
-              <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
-                <motion.div
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.4 }}
-                  className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
-                />
-              </div>
-              <span className="retro-title text-sm text-[#3b82f6] w-8 text-right">{pts}</span>
-            </div>
-          );
-        })}
-      </div>
+        {/* Scrambled name — the key thing that must stay visible */}
+        <motion.div
+          key={careerState.scrambledName}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-3"
+        >
+          <div className="sports-font text-[9px] text-[#888] tracking-[0.4em] uppercase mb-2">
+            Unscramble This Name
+          </div>
+          <div className="retro-title text-4xl md:text-5xl text-[#d4af37] tracking-wider leading-tight">
+            {careerState.scrambledName}
+          </div>
+          <div className="sports-font text-[9px] text-[#555] tracking-widest mt-2 uppercase">
+            {careerState.sport?.toUpperCase()} Player
+          </div>
+        </motion.div>
 
-      {/* Scrambled name — big display */}
-      <motion.div
-        key={careerState.scrambledName}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex-1 flex flex-col items-center justify-center mb-6 min-h-[120px]"
-      >
-        <div className="sports-font text-[10px] text-[#888] tracking-[0.4em] uppercase mb-3">
-          Unscramble This Name
-        </div>
-        <div className="retro-title text-4xl md:text-5xl text-[#d4af37] text-center tracking-wider leading-tight">
-          {careerState.scrambledName}
-        </div>
-        <div className="sports-font text-[10px] text-[#555] tracking-widest mt-3 uppercase">
-          {careerState.sport?.toUpperCase()} Player
-        </div>
-      </motion.div>
-
-      {/* Pressure timer banner */}
-      <AnimatePresence>
-        {pressureActive && pressureTimer > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className={`mb-4 p-3 rounded-lg text-center border-2 ${
-              pressureTimer <= 10
-                ? 'bg-red-900/30 border-red-500 text-red-400'
-                : pressureTimer <= 20
-                ? 'bg-yellow-900/20 border-yellow-600 text-yellow-400'
-                : 'bg-[#1a1a1a] border-[#3b82f6] text-[#3b82f6]'
-            }`}
-          >
-            <span className="retro-title text-2xl">{pressureTimer}s</span>
-            <span className="sports-font text-xs ml-2 opacity-70">remaining</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Live player status panel */}
-      <div className="mb-4 flex gap-2 flex-wrap">
-        {players.map(player => {
-          const isMe = player.player_id === currentPlayerId;
-          const finished = player.finished_at !== null;
-          const gotIt = finished && (player.score || 0) > 0;
-          return (
-            <div
-              key={player.player_id}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border sports-font text-xs ${
-                gotIt
-                  ? 'bg-green-900/20 border-green-700/40 text-green-300'
-                  : finished
-                  ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                  : 'bg-[#1a1a1a] border-[#333] text-white/60'
+        {/* Pressure timer — compact inline under the name */}
+        <AnimatePresence>
+          {pressureActive && pressureTimer > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className={`mt-2 px-3 py-1.5 rounded-lg text-center border ${
+                pressureTimer <= 10
+                  ? 'bg-red-900/30 border-red-500 text-red-400'
+                  : pressureTimer <= 20
+                  ? 'bg-yellow-900/20 border-yellow-600 text-yellow-400'
+                  : 'bg-[#1a1a1a] border-[#3b82f6] text-[#3b82f6]'
               }`}
             >
-              <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
-              {gotIt && <span className="text-green-400">✓</span>}
-              {finished && !gotIt && <span>✗</span>}
-              {!finished && (
-                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin opacity-70" />
-              )}
-            </div>
-          );
-        })}
+              <span className="retro-title text-xl">{pressureTimer}s</span>
+              <span className="sports-font text-xs ml-2 opacity-70">remaining</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Feedback message */}
-      <AnimatePresence>
-        {feedbackMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className={`mb-3 text-center sports-font text-sm ${
-              feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
-            }`}
-          >
-            {feedbackMsg}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── SCROLLABLE MIDDLE: progress bars + player status + feedback ── */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+        {/* Points progress bars */}
+        <div className="space-y-2">
+          {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => {
+            const pts = player.wins || 0;
+            const pct = Math.min(100, (pts / winTarget) * 100);
+            const isMe = player.player_id === currentPlayerId;
+            return (
+              <div key={player.player_id} className="flex items-center gap-2">
+                <span className={`sports-font text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
+                  {player.player_name}
+                </span>
+                <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
+                  <motion.div
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.4 }}
+                    className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
+                  />
+                </div>
+                <span className="retro-title text-sm text-[#3b82f6] w-8 text-right flex-shrink-0">{pts}</span>
+              </div>
+            );
+          })}
+        </div>
 
-      {/* Done message */}
-      <AnimatePresence>
-        {isDone && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-4 p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
-          >
-            <div className="sports-font text-sm text-[#888]">
-              {feedbackType === 'correct' || hasSubmittedRef.current
-                ? `Waiting for ${doneCount}/${totalCount} players...`
-                : 'No points this round — waiting for others...'}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Live player status */}
+        <div className="flex gap-2 flex-wrap">
+          {players.map(player => {
+            const isMe = player.player_id === currentPlayerId;
+            const finished = player.finished_at !== null;
+            const gotIt = finished && (player.score || 0) > 0;
+            return (
+              <div
+                key={player.player_id}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border sports-font text-xs ${
+                  gotIt
+                    ? 'bg-green-900/20 border-green-700/40 text-green-300'
+                    : finished
+                    ? 'bg-red-900/20 border-red-900/40 text-red-400'
+                    : 'bg-[#1a1a1a] border-[#333] text-white/60'
+                }`}
+              >
+                <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
+                {gotIt && <span className="text-green-400">✓</span>}
+                {finished && !gotIt && <span>✗</span>}
+                {!finished && (
+                  <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin opacity-70" />
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-      {/* Input controls */}
+        {/* Feedback / done messages */}
+        <AnimatePresence>
+          {feedbackMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className={`text-center sports-font text-sm ${
+                feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {feedbackMsg}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isDone && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
+            >
+              <div className="sports-font text-sm text-[#888]">
+                {feedbackType === 'correct' || hasSubmittedRef.current
+                  ? `Waiting for ${doneCount}/${totalCount} players...`
+                  : 'No points this round — waiting for others...'}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── PINNED BOTTOM: input always accessible above keyboard ── */}
       {!isDone && (
-        <div className="flex flex-col gap-3">
+        <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 bg-[#111] space-y-2">
           <div className="flex gap-2">
             <input
               type="text"
@@ -630,7 +637,6 @@ export function MultiplayerNameScramblePage() {
               onKeyDown={e => e.key === 'Enter' && handleGuess()}
               placeholder="Type the player's name..."
               className="flex-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none focus:border-[#3b82f6]"
-              autoFocus
             />
             <button
               onClick={handleGuess}
@@ -640,7 +646,6 @@ export function MultiplayerNameScramblePage() {
               Guess
             </button>
           </div>
-
           <button
             onClick={handleGiveUp}
             className="w-full py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all"
