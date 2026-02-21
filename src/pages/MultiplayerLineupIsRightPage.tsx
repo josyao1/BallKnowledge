@@ -379,25 +379,25 @@ export function MultiplayerLineupIsRightPage() {
           </motion.div>
         </header>
 
-        <main className="relative z-10 flex-1 w-full px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-4 overflow-hidden">
-          {/* Left Column - Target & Category */}
-          <div className="w-40 md:w-52 flex flex-col gap-3 md:gap-4">
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
-              <p className="retro-title text-3xl md:text-4xl text-white">{targetCap}</p>
+        <main className="relative z-10 flex-1 w-full px-2 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">
+          {/* Left Column - Stats */}
+          <div className="w-full sm:w-1/3 lg:w-40 lg:flex-shrink-0 flex flex-row lg:flex-col gap-2 md:gap-3">
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Target</div>
+              <p className="retro-title text-2xl md:text-4xl text-white">{targetCap}</p>
             </div>
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
-              <p className="retro-title text-xl md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Category</div>
+              <p className="retro-title text-lg md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
             </div>
           </div>
 
           {/* Middle Column - Pick UI or Waiting */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-black/60 border-2 border-white/10 rounded p-6 flex-1 flex flex-col"
+              className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex-1 flex flex-col min-h-0"
             >
               {myLineup?.isFinished ? (
                 /* Busted — sitting out remaining rounds */
@@ -409,7 +409,7 @@ export function MultiplayerLineupIsRightPage() {
                 /* Active pick UI */
                 <>
                   {!selectedPlayerName ? (
-                    <div>
+                    <div className="flex flex-col h-full">
                       <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-4 font-semibold">
                         Search for a player
                       </label>
@@ -418,18 +418,18 @@ export function MultiplayerLineupIsRightPage() {
                         value={searchQuery}
                         onChange={(e) => handleSearch(e.target.value)}
                         placeholder="Enter player name..."
-                        className="w-full px-3 md:px-4 py-2 md:py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-2 md:mb-4 text-sm md:text-base"
+                        className="w-full px-2 md:px-4 py-2 md:py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-2 md:mb-4 text-xs md:text-base"
                       />
 
-                      {loading && <p className="text-white/60 text-sm">Loading...</p>}
+                      {loading && <p className="text-white/60 text-xs md:text-sm">Loading...</p>}
 
                       {searchResults.length > 0 && (
-                        <div className="space-y-1 md:space-y-2 max-h-96 overflow-y-auto">
+                        <div className="space-y-1 md:space-y-2 overflow-y-auto flex-1 min-h-0">
                           {searchResults.map((result, idx) => (
                             <button
                               key={String(result.playerId) + idx}
                               onClick={() => handleSelectPlayer(result)}
-                              className="w-full text-left px-2 md:px-4 py-2 md:py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-sm md:text-base"
+                              className="w-full text-left px-2 md:px-4 py-1 md:py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-xs md:text-base"
                             >
                               {result.playerName}
                             </button>
@@ -438,30 +438,30 @@ export function MultiplayerLineupIsRightPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-2 md:space-y-4 flex flex-col overflow-hidden">
+                    <div className="space-y-2 md:space-y-4 flex flex-col flex-1 overflow-hidden">
                       <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
-                        <p className="font-semibold text-white text-sm md:text-lg truncate">{selectedPlayerName}</p>
-                        <p className="text-[11px] md:text-sm text-white/60">Select any year this player played</p>
+                        <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
+                        <p className="text-[10px] md:text-sm text-white/60">Select any year this player played</p>
                       </div>
 
                       <div className="flex-1 overflow-hidden">
                         <div className="flex items-baseline justify-between mb-2 md:mb-3">
-                          <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
+                          <label className="block sports-font text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
                             Select a year
                           </label>
                           {selectedSport === 'nfl' && (
-                            <span className="text-white/25 text-[8px] sports-font tracking-wide">through 2024</span>
+                            <span className="text-white/25 text-[7px] sports-font tracking-wide">through 2024</span>
                           )}
                         </div>
                         {loadingYears ? (
-                          <p className="text-white/60 text-sm">Loading years...</p>
+                          <p className="text-white/60 text-xs md:text-sm">Loading years...</p>
                         ) : availableYears.length > 0 ? (
                           <div className="space-y-1 md:space-y-2 overflow-y-auto max-h-40 md:max-h-56">
                             {availableYears.map((year) => (
                               <button
                                 key={year}
                                 onClick={() => setSelectedYear(year)}
-                                className={`w-full px-3 md:px-4 py-1 md:py-2 rounded border transition text-white font-semibold text-sm md:text-base ${
+                                className={`w-full px-2 md:px-4 py-1 md:py-2 rounded border transition text-white font-semibold text-xs md:text-base ${
                                   selectedYear === year
                                     ? 'bg-[#d4af37] text-black border-[#d4af37]'
                                     : 'bg-[#1a1a1a] border-white/10 hover:border-white/20'
@@ -472,25 +472,25 @@ export function MultiplayerLineupIsRightPage() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-red-400 text-sm">No playing years found for this player</p>
+                          <p className="text-red-400 text-xs md:text-sm">No playing years found for this player</p>
                         )}
                       </div>
 
-                      <div className="flex gap-1 md:gap-2 pt-1 md:pt-4 mt-auto">
+                      <div className="flex gap-1 md:gap-2 mt-2 md:mt-auto">
                         <button
                           onClick={() => {
                             setSelectedPlayerName(null);
                             setSelectedYear('');
                             setAvailableYears([]);
                           }}
-                          className="flex-1 px-3 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm md:text-base"
+                          className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-xs md:text-base"
                         >
                           Back
                         </button>
                         <button
                           onClick={handleConfirmYear}
                           disabled={!selectedYear || addingPlayer}
-                          className="flex-1 px-3 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm md:text-base retro-title"
+                          className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-xs md:text-base retro-title"
                         >
                           {addingPlayer ? 'Adding...' : 'Confirm'}
                         </button>
@@ -521,15 +521,15 @@ export function MultiplayerLineupIsRightPage() {
             </motion.div>
           </div>
 
-          {/* Sidebar - All Lineups with per-round status */}
-          <div className="w-80 md:w-96 flex flex-col">
+          {/* Sidebar - All Lineups */}
+          <div className="w-full sm:w-1/3 lg:w-80 lg:flex-shrink-0 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex-1 overflow-y-auto"
+              className="bg-black/60 border-2 border-white/10 rounded p-2 md:p-6 flex-1 overflow-y-auto"
             >
-              <h3 className="retro-title text-sm md:text-lg text-[#d4af37] mb-2 md:mb-4">Lineups</h3>
-              <div className="space-y-2 md:space-y-4">
+              <h3 className="retro-title text-xs md:text-lg text-[#d4af37] mb-2 md:mb-4">Lineups</h3>
+              <div className="space-y-1 md:space-y-4">
                 {players.map((player) => {
                   const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
                   const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
@@ -538,14 +538,14 @@ export function MultiplayerLineupIsRightPage() {
                   return (
                     <div
                       key={player.id}
-                      className={`p-2 md:p-4 rounded border-2 transition ${
+                      className={`p-1 md:p-4 rounded border text-[8px] md:text-sm transition ${
                         isMe
                           ? 'border-[#d4af37] bg-[#1a1a1a]'
                           : 'border-white/10 bg-black/40'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1 md:mb-2">
-                        <p className={`font-semibold text-sm md:text-base ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`font-semibold text-[8px] md:text-base ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
                           {player.player_name}
                         </p>
                         <div className="flex items-center gap-1.5">

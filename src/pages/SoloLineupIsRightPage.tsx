@@ -300,33 +300,33 @@ export function SoloLineupIsRightPage() {
           </motion.div>
         </header>
 
-        <main className="relative z-10 flex-1 w-full px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-4 overflow-hidden">
+        <main className="relative z-10 flex-1 w-full px-2 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">
           {/* Left Column - Stats */}
-          <div className="w-40 md:w-52 flex flex-col gap-3 md:gap-4">
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
-              <p className="retro-title text-3xl md:text-4xl text-white">{targetCap}</p>
+          <div className="w-full sm:w-1/3 lg:w-40 lg:flex-shrink-0 flex flex-row lg:flex-col gap-2 md:gap-3">
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Target</div>
+              <p className="retro-title text-2xl md:text-4xl text-white">{targetCap}</p>
             </div>
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
-              <p className="retro-title text-xl md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Category</div>
+              <p className="retro-title text-lg md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
             </div>
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Total</div>
-              <p className={`retro-title text-3xl md:text-4xl ${lineup.isBusted ? 'text-red-500' : 'text-white'}`}>{lineup.totalStat}</p>
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Total</div>
+              <p className={`retro-title text-2xl md:text-4xl ${lineup.isBusted ? 'text-red-500' : 'text-white'}`}>{lineup.totalStat}</p>
             </div>
           </div>
 
           {/* Middle Column - Player Selection */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-black/60 border-2 border-white/10 rounded p-6 flex-1 flex flex-col"
+                className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex-1 flex flex-col min-h-0"
               >
                 {!selectedPlayerName ? (
-                  <div>
-                    <label className="block sports-font text-[10px] tracking-[0.4em] text-white/60 uppercase mb-4 font-semibold">
+                  <div className="flex flex-col h-full">
+                    <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-4 font-semibold">
                       Search for a player
                     </label>
                     <input
@@ -334,18 +334,18 @@ export function SoloLineupIsRightPage() {
                       value={searchQuery}
                       onChange={(e) => handleSearch(e.target.value)}
                       placeholder="Enter player name..."
-                      className="w-full px-3 md:px-4 py-2 md:py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-2 md:mb-4 text-sm md:text-base"
+                      className="w-full px-2 md:px-4 py-2 md:py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-2 md:mb-4 text-xs md:text-base"
                     />
 
-                    {loading && <p className="text-white/60 text-sm">Loading...</p>}
+                    {loading && <p className="text-white/60 text-xs md:text-sm">Loading...</p>}
 
                     {searchResults.length > 0 && (
-                      <div className="space-y-1 md:space-y-2 overflow-y-auto flex-1">
+                      <div className="space-y-1 md:space-y-2 overflow-y-auto flex-1 min-h-0">
                         {searchResults.map((result, idx) => (
                           <button
                             key={String(result.playerId) + idx}
                             onClick={() => handleSelectPlayer(result)}
-                            className="w-full text-left px-2 md:px-4 py-2 md:py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-sm md:text-base"
+                            className="w-full text-left px-2 md:px-4 py-1 md:py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-xs md:text-base"
                           >
                             {result.playerName}
                           </button>
@@ -356,28 +356,28 @@ export function SoloLineupIsRightPage() {
                 ) : (
                   <div className="space-y-2 md:space-y-4 flex flex-col flex-1 overflow-hidden">
                     <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
-                      <p className="font-semibold text-white text-sm md:text-lg truncate">{selectedPlayerName}</p>
-                      <p className="text-[11px] md:text-sm text-white/60">Select any year this player played</p>
+                      <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
+                      <p className="text-[10px] md:text-sm text-white/60">Select any year this player played</p>
                     </div>
 
                     <div className="flex-1 overflow-hidden">
                       <div className="flex items-baseline justify-between mb-2 md:mb-3">
-                        <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
+                        <label className="block sports-font text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
                           Select a year
                         </label>
                         {selectedSport === 'nfl' && (
-                          <span className="text-white/25 text-[8px] sports-font tracking-wide">through 2024</span>
+                          <span className="text-white/25 text-[7px] sports-font tracking-wide">through 2024</span>
                         )}
                       </div>
                       {loadingYears ? (
-                        <p className="text-white/60 text-sm">Loading years...</p>
+                        <p className="text-white/60 text-xs md:text-sm">Loading years...</p>
                       ) : availableYears.length > 0 ? (
                         <div className="space-y-1 md:space-y-2 overflow-y-auto max-h-40 md:max-h-56">
                           {availableYears.map((year) => (
                             <button
                               key={year}
                               onClick={() => setSelectedYear(year)}
-                              className={`w-full px-3 md:px-4 py-1 md:py-2 rounded border transition text-white font-semibold text-sm md:text-base ${
+                              className={`w-full px-2 md:px-4 py-1 md:py-2 rounded border transition text-white font-semibold text-xs md:text-base ${
                                 selectedYear === year
                                   ? 'bg-[#d4af37] text-black border-[#d4af37]'
                                   : 'bg-[#1a1a1a] border-white/10 hover:border-white/20'
@@ -388,7 +388,7 @@ export function SoloLineupIsRightPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-red-400 text-sm">No playing years found for this player</p>
+                        <p className="text-red-400 text-xs md:text-sm">No playing years found for this player</p>
                       )}
                     </div>
 
@@ -399,14 +399,14 @@ export function SoloLineupIsRightPage() {
                           setSelectedYear('');
                           setAvailableYears([]);
                         }}
-                        className="flex-1 px-3 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded transition border border-white/10 text-sm md:text-base"
+                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-xs md:text-base"
                       >
                         Back
                       </button>
                       <button
                         onClick={handleConfirmYear}
                         disabled={!selectedYear || addingPlayer}
-                        className="flex-1 px-3 md:px-4 py-1 md:py-2 bg-[#d4af37] hover:bg-[#e5c158] disabled:opacity-50 text-black font-semibold rounded transition text-sm md:text-base"
+                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-xs md:text-base retro-title"
                       >
                         {addingPlayer ? 'Adding...' : 'Confirm'}
                       </button>
@@ -417,18 +417,18 @@ export function SoloLineupIsRightPage() {
           </div>
 
           {/* Sidebar - Lineup Preview */}
-          <div className="w-80 md:w-96 flex flex-col">
+          <div className="w-full sm:w-1/3 lg:w-80 lg:flex-shrink-0 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex flex-col flex-1 overflow-hidden"
             >
-                <h3 className="retro-title text-sm md:text-lg text-[#d4af37] mb-2 md:mb-4">Your Lineup</h3>
+                <h3 className="retro-title text-xs md:text-lg text-[#d4af37] mb-2 md:mb-4">Your Lineup</h3>
                 <div className="space-y-1 md:space-y-2 flex-1 overflow-y-auto">
                   {Array.from({ length: 5 }).map((_, idx) => (
                     <div
                       key={idx}
-                      className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[10px] md:text-xs leading-tight ${
+                      className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[9px] md:text-xs leading-tight ${
                         idx < lineup.selectedPlayers.length
                           ? lineup.selectedPlayers[idx].statValue === 0
                             ? 'bg-red-900/40 border-red-500/60'
@@ -438,19 +438,19 @@ export function SoloLineupIsRightPage() {
                     >
                       {idx < lineup.selectedPlayers.length ? (
                         <div className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-300' : 'text-white'}>
-                          <p className="font-semibold truncate text-[10px] md:text-xs">{idx + 1}. {lineup.selectedPlayers[idx].playerName}</p>
-                          <p className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.55rem'}}>{lineup.selectedPlayers[idx].team} • {lineup.selectedPlayers[idx].selectedYear}</p>
-                          <p className={`font-semibold text-[10px] md:text-xs ${lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{lineup.selectedPlayers[idx].statValue} {getCategoryAbbr(statCategory!)}</p>
+                          <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {lineup.selectedPlayers[idx].playerName}</p>
+                          <p className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{lineup.selectedPlayers[idx].team} • {lineup.selectedPlayers[idx].selectedYear}</p>
+                          <p className={`font-semibold text-[9px] md:text-xs ${lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{lineup.selectedPlayers[idx].statValue} {getCategoryAbbr(statCategory!)}</p>
                         </div>
                       ) : (
-                        <span className="text-white/40 text-[10px] md:text-xs">Slot {idx + 1}</span>
+                        <span className="text-white/40 text-[9px] md:text-xs">Slot {idx + 1}</span>
                       )}
                     </div>
                   ))}
                 </div>
 
                 {lineup.isBusted && (
-                  <div className="mt-4 p-3 bg-red-900/40 border border-red-500/60 rounded text-red-400 text-xs font-semibold text-center">
+                  <div className="mt-3 md:mt-4 p-2 md:p-3 bg-red-900/40 border border-red-500/60 rounded text-red-400 text-[8px] md:text-xs font-semibold text-center">
                     BUSTED! Exceeded {targetCap}
                   </div>
                 )}
