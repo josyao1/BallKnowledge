@@ -431,7 +431,7 @@ export function LobbyWaitingPage() {
         };
       });
 
-      const firstTeam = assignRandomTeam(sport);
+      const firstTeam = assignRandomTeam(sport, statCategory);
 
       const newCareerState = {
         sport,
@@ -1005,25 +1005,16 @@ export function LobbyWaitingPage() {
                 {/* Mode Toggle */}
                 <div>
                   <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Mode</div>
-                  <div className="flex gap-2 flex-wrap">
-                    {(['roster', 'career', 'scramble', 'lineup-is-right'] as const).map(m => (
-                      <button
-                        key={m}
-                        onClick={() => setEditGameType(m)}
-                        className={`flex-1 py-2 rounded-sm sports-font text-xs uppercase tracking-wider transition-all ${
-                          editGameType === m
-                            ? m === 'scramble'
-                              ? 'bg-[#3b82f6] text-white'
-                              : m === 'lineup-is-right'
-                              ? 'bg-[#ec4899] text-white'
-                              : 'bg-[#d4af37] text-black'
-                            : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                        }`}
-                      >
-                        {m === 'roster' ? 'Roster' : m === 'career' ? 'Career Arc' : m === 'scramble' ? 'Scramble' : 'Lineup'}
-                      </button>
-                    ))}
-                  </div>
+                  <select
+                    value={editGameType}
+                    onChange={e => setEditGameType(e.target.value as typeof editGameType)}
+                    className="w-full bg-black/50 text-white px-3 py-2.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                  >
+                    <option value="roster">Roster Challenge</option>
+                    <option value="career">Career Arc</option>
+                    <option value="scramble">Name Scramble</option>
+                    <option value="lineup-is-right">Lineup Is Right</option>
+                  </select>
                 </div>
 
                 {editGameType === 'scramble' ? (

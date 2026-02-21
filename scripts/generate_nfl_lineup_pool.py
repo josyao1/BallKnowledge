@@ -178,6 +178,7 @@ def main():
                     "passing_tds":   safe_int(row.get("passing_tds")),
                     "interceptions": safe_int(row.get("interceptions")),
                     "rushing_yards": safe_int(row.get("rushing_yards")),
+                    "rushing_tds":   safe_int(row.get("rushing_tds")),
                 })
             elif player_pos == "RB":
                 base.update({
