@@ -73,6 +73,7 @@ export interface ScrambleFilters {
 
 let _nbaPromise: Promise<NBACareerPlayer[]> | null = null;
 let _nflPromise: Promise<NFLCareerPlayer[]> | null = null;
+let _nflLineupPoolPromise: Promise<NFLCareerPlayer[]> | null = null;
 let _nflDefensiveNamesPromise: Promise<string[]> | null = null;
 
 function loadNFLDefensiveNames(): Promise<string[]> {
@@ -95,25 +96,54 @@ export function loadNBACareers(): Promise<NBACareerPlayer[]> {
 
 export function loadNFLCareers(): Promise<NFLCareerPlayer[]> {
   if (!_nflPromise) {
-    _nflPromise = Promise.all([
-      fetch('/data/nfl_careers.json').then(r => { if (!r.ok) throw new Error('Failed to load NFL careers'); return r.json(); }),
-      fetch('/data/nfl_careers 2.json').then(r => { if (!r.ok) throw new Error('Failed to load NFL careers 2'); return r.json(); })
-    ])
-    .then(([careers1, careers2]) => {
-      // Merge both arrays, deduplicating by player_id
-      const playerMap = new Map<string, NFLCareerPlayer>();
-      
-      // Add all players from first file
-      careers1.forEach((player: NFLCareerPlayer) => playerMap.set(player.player_id, player));
-      
-      // Add/overwrite with players from second file (prefer careers 2 data as it's more complete)
-      careers2.forEach((player: NFLCareerPlayer) => playerMap.set(player.player_id, player));
-      
-      return Array.from(playerMap.values());
-    })
-    .catch(err => { _nflPromise = null; throw err; });
+    _nflPromise = fetch('/data/nfl_careers.json')
+      .then(r => { if (!r.ok) throw new Error('Failed to load NFL careers'); return r.json(); })
+      .catch(err => { _nflPromise = null; throw err; });
   }
   return _nflPromise;
+}
+
+/** Merge seasons from two player records, union by season year (later file wins per year). */
+function mergeNFLPlayer(base: NFLCareerPlayer, incoming: NFLCareerPlayer): NFLCareerPlayer {
+  const seasonMap = new Map<string, NFLSeason>();
+  base.seasons.forEach(s => seasonMap.set(s.season, s));
+  incoming.seasons.forEach(s => seasonMap.set(s.season, s));  // incoming wins on same year
+  return {
+    ...incoming,  // use incoming bio/position (more recent)
+    seasons: Array.from(seasonMap.values()).sort((a, b) => a.season.localeCompare(b.season)),
+  };
+}
+
+/**
+ * Extended NFL player pool for Lineup Is Right.
+ * Merges nfl_careers.json with nfl_lineup_pool.json, which includes current
+ * players who don't yet meet the 5-season / career-yards thresholds
+ * (e.g. Bijan Robinson, Drake London). Seasons are unioned per player so no
+ * data is lost when the same player appears in both files.
+ * Falls back gracefully if nfl_lineup_pool.json hasn't been generated yet.
+ */
+export function loadNFLLineupPool(): Promise<NFLCareerPlayer[]> {
+  if (!_nflLineupPoolPromise) {
+    _nflLineupPoolPromise = Promise.all([
+      fetch('/data/nfl_careers.json')
+        .then(r => { if (!r.ok) throw new Error('Failed to load nfl_careers.json'); return r.json(); }),
+      fetch('/data/nfl_lineup_pool.json')
+        .then(r => r.ok ? r.json() : [] as NFLCareerPlayer[])
+        .catch(() => [] as NFLCareerPlayer[]),  // pool file optional — falls back to empty
+    ])
+    .then(([base, pool]: [NFLCareerPlayer[], NFLCareerPlayer[]]) => {
+      const map = new Map<string, NFLCareerPlayer>();
+      base.forEach(p => map.set(p.player_id, p));
+      pool.forEach(p => {
+        const existing = map.get(p.player_id);
+        // If player is in both files, union their seasons rather than clobbering
+        map.set(p.player_id, existing ? mergeNFLPlayer(existing, p) : p);
+      });
+      return Array.from(map.values());
+    })
+    .catch(err => { _nflLineupPoolPromise = null; throw err; });
+  }
+  return _nflLineupPoolPromise;
 }
 
 /** Call this early (e.g. on homepage load) to warm the cache before career mode is entered. */

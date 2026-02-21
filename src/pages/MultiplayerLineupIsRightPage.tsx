@@ -1,15 +1,15 @@
 /**
- * MultiplayerLineupIsRightPage.tsx — Multiplayer Lineup Is Right gameplay.
+ * MultiplayerLineupIsRightPage.tsx — Simultaneous Multiplayer Lineup Is Right.
  *
- * Turn-based multiplayer where each player:
- * 1. Gets assigned a random team
- * 2. Searches for and selects a player
- * 3. Selects a year the player was on that team
- * 4. Gets stat value (0 if not on team that year)
- * Goals: reach target cap without exceeding it
+ * All players pick simultaneously each round:
+ * 1. Same team shown to all players each round
+ * 2. Each player searches for a player + selects a year they were on that team
+ * 3. Once all players submit → host advances to next round (new team)
+ * 4. Busted players are auto-skipped in subsequent rounds
+ * 5. After 5 rounds → results screen (closest to cap without busting wins)
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
@@ -17,31 +17,21 @@ import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import {
   findLobbyByCode,
   getLobbyPlayers,
+  updateCareerState,
 } from '../services/lobby';
 import {
-  selectRandomStatCategory,
-  generateTargetCap,
   searchPlayersByNameOnly,
   getPlayerYearsOnTeam,
   getPlayerStatForYearAndTeam,
   addPlayerToLineup,
   calculateLineupStat,
-  createPlayerLineup,
   assignRandomTeam,
 } from '../services/lineupIsRight';
 import { getTeamByAbbreviation } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineupIsRight';
 
-type Phase = 'loading' | 'playing' | 'results';
-
-interface PlayerTurnState {
-  playerId: string;
-  playerName: string;
-  lineup: PlayerLineup;
-  isCurrentPlayer: boolean;
-  isFinished: boolean;
-}
+type Phase = 'loading' | 'picking' | 'results';
 
 function getCategoryAbbr(category: StatCategory): string {
   switch (category) {
@@ -64,7 +54,6 @@ function getTeamColor(sport: any, teamAbbr: string): string {
     const team = getTeamByAbbreviation(teamAbbr);
     return team?.colors.primary || '#666666';
   } else {
-    // NFL
     const nflTeam = nflTeams.find(t => t.abbreviation === teamAbbr);
     return nflTeam?.colors?.primary || '#003875';
   }
@@ -73,15 +62,16 @@ function getTeamColor(sport: any, teamAbbr: string): string {
 export function MultiplayerLineupIsRightPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, currentPlayerId, setLobby, setPlayers } = useLobbyStore();
+  const { lobby, players, currentPlayerId, isHost, setLobby, setPlayers } = useLobbyStore();
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [statCategory, setStatCategory] = useState<StatCategory | null>(null);
   const [targetCap, setTargetCap] = useState<number>(0);
   const [allLineups, setAllLineups] = useState<Record<string, PlayerLineup>>({});
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [currentRound, setCurrentRound] = useState(1);
+  const [totalRounds, setTotalRounds] = useState(5);
 
-  // Current player's turn state
+  // Ephemeral UI state — never synced to Supabase
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
   const [loading, setLoading] = useState(false);
@@ -92,56 +82,46 @@ export function MultiplayerLineupIsRightPage() {
   const [loadingYears, setLoadingYears] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
 
-  const selectedSport = lobby && (lobby as any).career_state ? ((lobby as any).career_state as any).sport : null;
+  // Prevent realtime sync from clobbering state mid-pick
+  const addingPlayerRef = useRef(false);
+  // Prevent host from double-advancing the same round
+  const lastAdvancedRoundRef = useRef(0);
+  // Detect round changes to reset ephemeral search UI
+  const prevRoundRef = useRef(0);
+
+  const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as import('../types').Sport | null;
+
+  // Derived: my lineup and whether I can pick this round
+  const myLineup = allLineups[currentPlayerId || ''] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
+  const canPickThisRound = !myLineup?.hasPickedThisRound && !myLineup?.isFinished;
 
   useLobbySubscription(lobby?.id || null);
 
-  // Initialize game
+  // ── Mount: load lobby and read full game state from career_state ──────────
   useEffect(() => {
-    if (!code) {
-      navigate('/');
-      return;
-    }
+    if (!code) { navigate('/'); return; }
 
     const initGame = async () => {
       try {
         const result = await findLobbyByCode(code);
-        if (!result.lobby) {
-          alert(result.error || 'Lobby not found');
-          navigate('/');
-          return;
-        }
+        if (!result.lobby) { navigate('/'); return; }
 
-        const foundLobby = result.lobby;
-        setLobby(foundLobby);
+        setLobby(result.lobby);
 
-        const playersResult = await getLobbyPlayers(foundLobby.id);
+        const playersResult = await getLobbyPlayers(result.lobby.id);
         const lobbyPlayers = Array.isArray(playersResult) ? playersResult : (playersResult?.players || []);
-        if (lobbyPlayers && lobbyPlayers.length > 0) {
-          setPlayers(lobbyPlayers);
+        if (lobbyPlayers.length > 0) setPlayers(lobbyPlayers);
 
-          // Initialize game if not already initialized
-          const careerState = (foundLobby as any).career_state as any;
-          if (!careerState.statCategory) {
-            setStatCategory(selectRandomStatCategory(careerState.sport));
-            setTargetCap(generateTargetCap(careerState.sport, 'pts'));
-          } else {
-            setStatCategory(careerState.statCategory as StatCategory);
-            setTargetCap(careerState.targetCap);
-          }
+        const cs = (result.lobby.career_state as any) || {};
+        setStatCategory((cs.statCategory as StatCategory) || null);
+        setTargetCap(cs.targetCap || 0);
+        setAllLineups((cs.allLineups as Record<string, PlayerLineup>) || {});
+        setCurrentRound(cs.currentRound ?? 1);
+        setTotalRounds(cs.totalRounds ?? 5);
+        setCurrentTeam(cs.currentTeam || '');
 
-          // Create lineups for all players
-          const initialLineups: Record<string, PlayerLineup> = {};
-          lobbyPlayers.forEach((p) => {
-            initialLineups[p.id] = createPlayerLineup(p.id, p.player_name);
-          });
-          setAllLineups(initialLineups);
-
-          // Assign team to first player
-          const firstTeam = assignRandomTeam(careerState.sport);
-          setCurrentTeam(firstTeam);
-          setPhase('playing');
-        }
+        if (cs.phase === 'results') setPhase('results');
+        else setPhase('picking');
       } catch (error) {
         console.error('Error initializing game:', error);
         navigate('/');
@@ -151,20 +131,88 @@ export function MultiplayerLineupIsRightPage() {
     initGame();
   }, [code, navigate, setLobby, setPlayers]);
 
-  const getCurrentPlayer = (): PlayerTurnState | null => {
-    if (!players || players.length === 0) return null;
+  // ── Realtime sync: when lobby.career_state changes, update local state ────
+  useEffect(() => {
+    if (addingPlayerRef.current) return; // don't clobber mid-pick
+    const cs = (lobby?.career_state as any);
+    if (!cs?.statCategory || !cs?.allLineups) return;
 
-    const player = players[currentPlayerIndex];
-    if (!player) return null;
+    const newRound = cs.currentRound ?? 1;
 
-    return {
-      playerId: player.id,
-      playerName: player.player_name,
-      lineup: allLineups[player.id] || createPlayerLineup(player.id, player.player_name),
-      isCurrentPlayer: player.id === currentPlayerId,
-      isFinished: (allLineups[player.id]?.isFinished) || false,
+    // Reset ephemeral search UI when the round advances
+    if (newRound !== prevRoundRef.current && prevRoundRef.current !== 0) {
+      setSearchQuery('');
+      setSearchResults([]);
+      setSelectedPlayerName(null);
+      setSelectedYear('');
+      setAvailableYears([]);
+    }
+    prevRoundRef.current = newRound;
+
+    setStatCategory(cs.statCategory as StatCategory);
+    setTargetCap(cs.targetCap);
+    setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
+    setCurrentRound(newRound);
+    setTotalRounds(cs.totalRounds ?? 5);
+    setCurrentTeam(cs.currentTeam || '');
+
+    if (cs.phase === 'results') setPhase('results');
+    else if (phase === 'loading') setPhase('picking');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobby?.career_state]);
+
+  // ── Host-only: advance round when all players have picked ─────────────────
+  useEffect(() => {
+    if (!isHost || !lobby?.career_state || !lobby?.id) return;
+
+    const cs = lobby.career_state as any;
+    if (cs.phase !== 'picking') return;
+
+    const lineups = cs.allLineups || {};
+    const playerIds = Object.keys(lineups);
+    if (playerIds.length === 0) return;
+
+    const allPicked = playerIds.every(pid =>
+      (lineups[pid] as any)?.hasPickedThisRound || (lineups[pid] as any)?.isFinished
+    );
+    if (!allPicked) return;
+
+    const round = cs.currentRound || 1;
+    if (lastAdvancedRoundRef.current >= round) return; // guard against double-advance
+    lastAdvancedRoundRef.current = round;
+
+    const lobbyId = lobby.id;
+    const totalRds = cs.totalRounds || 5;
+    const nextRound = round + 1;
+    const allBusted = playerIds.every(pid => (lineups[pid] as any)?.isBusted);
+
+    const advanceRound = async () => {
+      if (nextRound > totalRds || allBusted) {
+        // Game over → go to results
+        await updateCareerState(lobbyId, { ...cs, phase: 'results' });
+      } else {
+        // Next round: new team, reset hasPickedThisRound for active players
+        const newTeam = assignRandomTeam(cs.sport || 'nba');
+        const resetLineups: Record<string, any> = {};
+        playerIds.forEach(pid => {
+          resetLineups[pid] = {
+            ...lineups[pid],
+            // Finished/busted players keep hasPickedThisRound true so they're auto-skipped
+            hasPickedThisRound: (lineups[pid] as any).isFinished ? true : false,
+          };
+        });
+
+        await updateCareerState(lobbyId, {
+          ...cs,
+          allLineups: resetLineups,
+          currentRound: nextRound,
+          currentTeam: newTeam,
+        });
+      }
     };
-  };
+
+    advanceRound();
+  }, [lobby?.career_state, isHost, lobby?.id]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
@@ -177,8 +225,7 @@ export function MultiplayerLineupIsRightPage() {
     try {
       const results = await searchPlayersByNameOnly(selectedSport, query);
       setSearchResults(results);
-    } catch (error) {
-      console.error('Search error:', error);
+    } catch {
       setSearchResults([]);
     } finally {
       setLoading(false);
@@ -192,14 +239,9 @@ export function MultiplayerLineupIsRightPage() {
 
     setLoadingYears(true);
     try {
-      const years = await getPlayerYearsOnTeam(
-        selectedSport!,
-        player.playerName,
-        currentTeam
-      );
+      const years = await getPlayerYearsOnTeam(selectedSport!, player.playerName, currentTeam);
       setAvailableYears(years);
-    } catch (error) {
-      console.error('Error getting years:', error);
+    } catch {
       setAvailableYears([]);
     } finally {
       setLoadingYears(false);
@@ -207,96 +249,81 @@ export function MultiplayerLineupIsRightPage() {
   };
 
   const handleConfirmYear = async () => {
-    if (
-      !selectedPlayerName ||
-      !selectedYear ||
-      !selectedSport ||
-      !statCategory ||
-      currentPlayerIndex >= players.length
-    ) {
-      return;
-    }
+    if (!selectedPlayerName || !selectedYear || !selectedSport || !statCategory || !lobby || !currentPlayerId) return;
 
+    addingPlayerRef.current = true;
     setAddingPlayer(true);
     try {
       const statValue = await getPlayerStatForYearAndTeam(
-        selectedSport,
-        selectedPlayerName!,
+        selectedSport as any,
+        selectedPlayerName,
         currentTeam,
         selectedYear,
         statCategory
       );
 
+      // Read latest career_state from store (synced via realtime) to minimize race window
+      const latestCS = (lobby.career_state as any) || {};
+      const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
+        playerId: currentPlayerId,
+        playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
+        selectedPlayers: [],
+        totalStat: 0,
+        isBusted: false,
+        isFinished: false,
+        hasPickedThisRound: false,
+      };
+
       const newSelectedPlayer: SelectedPlayer = {
-        playerName: selectedPlayerName!,
+        playerName: selectedPlayerName,
         team: currentTeam,
         selectedYear,
         playerSeason: null,
         statValue,
       };
 
-      const currentPlayer = getCurrentPlayer();
-      if (!currentPlayer) return;
-
-      const updated = { ...allLineups[currentPlayer.playerId] };
-      const withNewPlayer = addPlayerToLineup(updated, newSelectedPlayer);
-      const { total, isBusted } = calculateLineupStat(
-        withNewPlayer,
-        statCategory,
-        targetCap
-      );
+      const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
+      const { total, isBusted } = calculateLineupStat(withNewPlayer, statCategory, targetCap);
       withNewPlayer.totalStat = total;
       withNewPlayer.isBusted = isBusted;
+      (withNewPlayer as any).hasPickedThisRound = true;
+      if (isBusted) withNewPlayer.isFinished = true;
 
-      const newAllLineups = { ...allLineups };
-      newAllLineups[currentPlayer.playerId] = withNewPlayer;
-      setAllLineups(newAllLineups);
+      // Write merged update: spread latest state, override only my lineup entry
+      const updatedCS = {
+        ...latestCS,
+        allLineups: {
+          ...latestCS.allLineups,
+          [currentPlayerId]: withNewPlayer,
+        },
+      };
 
-      // Check if player's lineup is complete (5 players or busted)
-      if (withNewPlayer.selectedPlayers.length === 5 || isBusted) {
-        withNewPlayer.isFinished = true;
+      await updateCareerState(lobby.id, updatedCS);
 
-        // Check if all players are finished
-        const allFinished = Object.values(newAllLineups).every(l => l.isFinished);
-        if (allFinished) {
-          setPhase('results');
-        } else {
-          // Move to next player
-          const nextIndex = currentPlayerIndex + 1;
-          if (nextIndex < players.length) {
-            setCurrentPlayerIndex(nextIndex);
-            const nextTeam = assignRandomTeam(selectedSport);
-            setCurrentTeam(nextTeam);
-          }
-        }
-      } else {
-        // Same player continues, switch team
-        const nextTeam = assignRandomTeam(selectedSport);
-        setCurrentTeam(nextTeam);
-      }
+      // Apply locally so UI reflects immediately
+      setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
-      // Clear search
+      // Clear search UI
       setSearchQuery('');
       setSearchResults([]);
       setSelectedPlayerName(null);
       setSelectedYear('');
       setAvailableYears([]);
     } catch (error) {
-      console.error('Error adding player:', error);
+      console.error('Error confirming pick:', error);
     } finally {
+      addingPlayerRef.current = false;
       setAddingPlayer(false);
     }
   };
 
+  // ── Loading screen ─────────────────────────────────────────────────────────
   if (phase === 'loading') {
     return (
       <div className="min-h-screen bg-[#0d2a0b] text-white flex items-center justify-center relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{
-            backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-            background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
-          }}
+          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
         />
         <div className="relative z-10 text-center">
           <p className="text-xl text-white/80">Loading game...</p>
@@ -305,39 +332,41 @@ export function MultiplayerLineupIsRightPage() {
     );
   }
 
-  const currentPlayer = getCurrentPlayer();
-
-  if (phase === 'playing' && currentPlayer && statCategory) {
-    const isYourTurn = currentPlayer.isCurrentPlayer;
+  // ── Picking screen ─────────────────────────────────────────────────────────
+  if (phase === 'picking' && statCategory) {
+    // Players who haven't submitted yet this round (and aren't busted/finished)
+    const waitingFor = players.filter(p => {
+      const l = allLineups[p.player_id] as any;
+      return !l?.hasPickedThisRound && !l?.isFinished;
+    });
 
     return (
       <div className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
-        {/* GREEN FELT BACKGROUND */}
+        {/* Green felt background */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{
-            backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-            background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
-          }}
+          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
         />
 
         <header className="relative z-10 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
-          <div className="px-4 py-2 text-center border-b border-white/5">
+          <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
             <h1 className="retro-title text-2xl text-[#d4af37]">Lineup Is Right</h1>
+            <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
+              <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
+            </div>
           </div>
-          {/* Team Display */}
+          {/* Team Display — same for all players */}
           <motion.div
-            key={currentTeam}
+            key={currentTeam + currentRound}
             initial={{ opacity: 0, rotateY: -90, x: -100 }}
             animate={{ opacity: 1, rotateY: 0, x: 0 }}
             exit={{ opacity: 0, rotateY: 90, x: 100 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="flex items-center justify-center py-3 px-4"
           >
-            <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black"
-              style={{
-                borderColor: getTeamColor(selectedSport, currentTeam),
-              }}
+            <div
+              className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black"
+              style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
             >
               <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Current Team</p>
               <p
@@ -351,7 +380,7 @@ export function MultiplayerLineupIsRightPage() {
         </header>
 
         <main className="relative z-10 flex-1 w-full px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-4 overflow-hidden">
-          {/* Left Column - Stats */}
+          {/* Left Column - Target & Category */}
           <div className="w-40 md:w-52 flex flex-col gap-3 md:gap-4">
             <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
               <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
@@ -361,20 +390,23 @@ export function MultiplayerLineupIsRightPage() {
               <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
               <p className="retro-title text-xl md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
             </div>
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Player</div>
-              <p className="retro-title text-lg md:text-xl text-[#d4af37] truncate">{currentPlayer.playerName}</p>
-            </div>
           </div>
 
-          {/* Middle Column - Player Selection */}
-            <div className="flex-1 flex flex-col">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-black/60 border-2 border-white/10 rounded p-6 flex-1 flex flex-col"
-              >
-              {isYourTurn ? (
+          {/* Middle Column - Pick UI or Waiting */}
+          <div className="flex-1 flex flex-col">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-black/60 border-2 border-white/10 rounded p-6 flex-1 flex flex-col"
+            >
+              {myLineup?.isFinished ? (
+                /* Busted — sitting out remaining rounds */
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
+                  <p className="text-2xl text-red-400 retro-title">BUSTED</p>
+                  <p className="text-white/50 sports-font text-sm">You exceeded the cap. Sit tight while others finish the round.</p>
+                </div>
+              ) : canPickThisRound ? (
+                /* Active pick UI */
                 <>
                   {!selectedPlayerName ? (
                     <div>
@@ -413,9 +445,14 @@ export function MultiplayerLineupIsRightPage() {
                       </div>
 
                       <div className="flex-1 overflow-hidden">
-                        <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-3 font-semibold">
-                          Select a year
-                        </label>
+                        <div className="flex items-baseline justify-between mb-2 md:mb-3">
+                          <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
+                            Select a year
+                          </label>
+                          {selectedSport === 'nfl' && (
+                            <span className="text-white/25 text-[8px] sports-font tracking-wide">through 2024</span>
+                          )}
+                        </div>
                         {loadingYears ? (
                           <p className="text-white/60 text-sm">Loading years...</p>
                         ) : availableYears.length > 0 ? (
@@ -462,109 +499,122 @@ export function MultiplayerLineupIsRightPage() {
                   )}
                 </>
               ) : (
-                <div className="p-6 text-center">
-                  <p className="text-lg text-white font-semibold">
-                    Waiting for {currentPlayer.playerName} to complete their turn...
-                  </p>
+                /* Pick submitted — waiting for others */
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
+                  <div>
+                    <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
+                    <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
+                  </div>
+                  {waitingFor.length > 0 && (
+                    <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
+                      <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
+                      {waitingFor.map(p => (
+                        <div key={p.player_id} className="flex items-center gap-2 py-1">
+                          <span className="text-yellow-400 text-xs">⏳</span>
+                          <span className="text-white/70 text-sm">{p.player_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
           </div>
 
-            {/* Sidebar - All Lineups */}
-            <div className="w-80 md:w-96 flex flex-col">
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex-1 overflow-y-auto"
-              >
-                <h3 className="retro-title text-sm md:text-lg text-[#d4af37] mb-2 md:mb-4">Lineups</h3>
-                <div className="space-y-2 md:space-y-4">
-                  {players.map((player) => {
-                    const lineup = allLineups[player.id];
-                    const isActive = player.id === currentPlayer.playerId;
+          {/* Sidebar - All Lineups with per-round status */}
+          <div className="w-80 md:w-96 flex flex-col">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex-1 overflow-y-auto"
+            >
+              <h3 className="retro-title text-sm md:text-lg text-[#d4af37] mb-2 md:mb-4">Lineups</h3>
+              <div className="space-y-2 md:space-y-4">
+                {players.map((player) => {
+                  const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
+                  const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
+                  const isMe = player.player_id === currentPlayerId;
 
-                    return (
-                      <div
-                        key={player.id}
-                        className={`p-2 md:p-4 rounded border-2 transition ${
-                          isActive
-                            ? 'border-[#d4af37] bg-[#1a1a1a]'
-                            : 'border-white/10 bg-black/40'
-                        }`}
-                      >
-                        <p
-                          className={`font-semibold mb-1 md:mb-2 text-sm md:text-base ${
-                            isActive ? 'text-[#d4af37]' : 'text-white/60'
-                          }`}
-                        >
+                  return (
+                    <div
+                      key={player.id}
+                      className={`p-2 md:p-4 rounded border-2 transition ${
+                        isMe
+                          ? 'border-[#d4af37] bg-[#1a1a1a]'
+                          : 'border-white/10 bg-black/40'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <p className={`font-semibold text-sm md:text-base ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
                           {player.player_name}
                         </p>
-                        <div className="space-y-1 mb-2 md:mb-3 text-[10px] md:text-xs">
-                          {lineup &&
-                            lineup.selectedPlayers.map((selected, idx) => (
-                              <div key={idx} className={`flex justify-between ${selected.statValue === 0 ? 'text-red-300' : 'text-white/70'}`}>
-                                <div className="flex-1 min-w-0">
-                                  <span className={`truncate text-[10px] md:text-xs ${selected.statValue === 0 ? 'text-red-400' : ''}`}>{selected.playerName}</span>
-                                  <span className={`ml-1 block text-[9px] md:text-[10px] ${selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
-                                </div>
-                                <span className={`font-semibold ml-1 flex-shrink-0 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                                  {selected.statValue}
-                                </span>
-                              </div>
-                            ))}
-                        </div>
-                        <div className="flex justify-between text-[10px] md:text-xs border-t border-white/10 pt-1 md:pt-2">
-                          <span className="text-white/40">
-                            {lineup?.selectedPlayers.length || 0}/5
-                          </span>
-                          <span
-                            className={`font-semibold ${
-                              lineup?.isBusted ? 'text-red-500' : 'text-white'
-                            }`}
-                          >
-                            {lineup?.totalStat || 0}
-                          </span>
+                        <div className="flex items-center gap-1.5">
+                          {lineup?.isBusted ? (
+                            <span className="text-[9px] text-red-400 sports-font uppercase tracking-wider px-1.5 py-0.5 bg-red-900/30 border border-red-500/30 rounded">BUSTED</span>
+                          ) : hasPicked ? (
+                            <span className="text-emerald-400 text-sm" title="Picked">✓</span>
+                          ) : (
+                            <span className="text-yellow-400 text-sm" title="Still picking">⏳</span>
+                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            </div>
+                      <div className="space-y-1 mb-2 md:mb-3 text-[10px] md:text-xs">
+                        {lineup &&
+                          lineup.selectedPlayers.map((selected, idx) => (
+                            <div key={idx} className={`flex justify-between ${selected.statValue === 0 ? 'text-red-300' : 'text-white/70'}`}>
+                              <div className="flex-1 min-w-0">
+                                <span className={`truncate text-[10px] md:text-xs ${selected.statValue === 0 ? 'text-red-400' : ''}`}>{selected.playerName}</span>
+                                <span className={`ml-1 block text-[9px] md:text-[10px] ${selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                              </div>
+                              <span className={`font-semibold ml-1 flex-shrink-0 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                                {selected.statValue}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                      <div className="flex justify-between text-[10px] md:text-xs border-t border-white/10 pt-1 md:pt-2">
+                        <span className="text-white/40">
+                          {lineup?.selectedPlayers.length || 0}/{totalRounds}
+                        </span>
+                        <span className={`font-semibold ${lineup?.isBusted ? 'text-red-500' : 'text-white'}`}>
+                          {lineup?.totalStat || 0}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
         </main>
       </div>
     );
   }
 
+  // ── Results screen ─────────────────────────────────────────────────────────
   if (phase === 'results') {
     const sortedLineups = players
       .map((p) => ({
         ...p,
-        lineup: allLineups[p.id],
+        lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, isBusted: false, isFinished: false }) as PlayerLineup,
       }))
       .sort((a, b) => {
+        // Non-busted beat busted; among non-busted, highest total wins
         if (a.lineup.isBusted && !b.lineup.isBusted) return 1;
         if (!a.lineup.isBusted && b.lineup.isBusted) return -1;
-        return Math.abs(b.lineup.totalStat - targetCap) -
-          Math.abs(a.lineup.totalStat - targetCap);
+        return b.lineup.totalStat - a.lineup.totalStat;
       });
 
     return (
       <div className="min-h-screen bg-[#111] text-white flex flex-col relative overflow-hidden">
-        {/* GREEN FELT BACKGROUND */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{
-            backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-            background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
-          }}
+          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
         />
 
         <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="retro-title text-2xl text-[#d4af37]">Final Results</div>
-            <button onClick={() => navigate('/')} className="px-3 py-1 text-sm bg-[#333] hover:bg-[#444] text-white rounded transition">Home</button>
+          <div className="max-w-7xl mx-auto">
+            <h1 className="retro-title text-2xl text-[#d4af37]">Final Results</h1>
           </div>
         </header>
 
@@ -631,10 +681,10 @@ export function MultiplayerLineupIsRightPage() {
               ))}
             </div>
 
-            <div className="mt-8 flex gap-2">
+            <div className="mt-8">
               <button
                 onClick={() => navigate('/')}
-                className="flex-1 px-6 py-3 bg-[#333] hover:bg-[#444] text-white font-semibold rounded transition border border-white/10"
+                className="w-full py-4 rounded-sm retro-title text-lg tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 transition-all"
               >
                 Back to Home
               </button>

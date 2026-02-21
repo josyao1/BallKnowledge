@@ -177,8 +177,8 @@ export function SoloLineupIsRightPage() {
 
       setLineup(updated);
 
-      // Check if done
-      if (updated.selectedPlayers.length === 5) {
+      // Check if done (5 picks filled or busted)
+      if (updated.selectedPlayers.length === 5 || isBusted) {
         updated.isFinished = true;
         setPhase('results');
       } else {
@@ -226,12 +226,15 @@ export function SoloLineupIsRightPage() {
               >
                 NBA
               </button>
-              <button
-                onClick={() => handleStartGame('nfl')}
-                className="px-8 py-6 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] hover:from-[#fef3e0] hover:to-[#e5d4b0] text-black font-bold rounded-sm transition shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none text-2xl retro-title"
-              >
-                NFL
-              </button>
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  onClick={() => handleStartGame('nfl')}
+                  className="w-full px-8 py-6 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] hover:from-[#fef3e0] hover:to-[#e5d4b0] text-black font-bold rounded-sm transition shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none text-2xl retro-title"
+                >
+                  NFL
+                </button>
+                <p className="text-white/30 text-[10px] sports-font tracking-widest">DATA THROUGH 2024 SEASON · NO 2025</p>
+              </div>
             </div>
           </motion.div>
 
@@ -243,12 +246,12 @@ export function SoloLineupIsRightPage() {
             className="bg-[#111] border border-white/10 rounded-sm p-6 max-w-lg shadow-xl"
           >
             <h3 className="retro-title text-lg text-[#d4af37] mb-3">How to Play</h3>
-            <ul className="text-sm text-white/80 space-y-2 text-left">
-              <li>🎯 Reach the target score without exceeding it</li>
-              <li>🏀 Each round, select a random player from the assigned team</li>
-              <li>📅 Pick any year the player was active (even if not on that team)</li>
-              <li>⭐ Get 0 points if player wasn't on the team that year</li>
-              <li>💥 Bust if your total exceeds the target - game over!</li>
+            <ul className="text-sm text-white/80 space-y-2.5 text-left">
+              <li><span className="text-[#d4af37] font-bold">Goal:</span> Build a lineup whose combined stat reaches — but doesn't exceed — the target cap</li>
+              <li><span className="text-[#d4af37] font-bold">Each pick:</span> A random team is shown. Search <em>any</em> player by name and choose a year they were active</li>
+              <li><span className="text-emerald-400 font-bold">Hit:</span> Player was on that team that year → their stat adds to your total</li>
+              <li><span className="text-red-400 font-bold">Miss:</span> Player wasn't on that team that year → you get 0 for that pick</li>
+              <li><span className="text-white font-bold">5 picks max.</span> Go over the cap at any point and you bust — game over!</li>
             </ul>
           </motion.div>
         </main>
@@ -358,9 +361,14 @@ export function SoloLineupIsRightPage() {
                     </div>
 
                     <div className="flex-1 overflow-hidden">
-                      <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-3 font-semibold">
-                        Select a year
-                      </label>
+                      <div className="flex items-baseline justify-between mb-2 md:mb-3">
+                        <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
+                          Select a year
+                        </label>
+                        {selectedSport === 'nfl' && (
+                          <span className="text-white/25 text-[8px] sports-font tracking-wide">through 2024</span>
+                        )}
+                      </div>
                       {loadingYears ? (
                         <p className="text-white/60 text-sm">Loading years...</p>
                       ) : availableYears.length > 0 ? (

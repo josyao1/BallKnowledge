@@ -5,7 +5,7 @@
  * eligible player lookup, stat aggregation, and bust detection.
  */
 
-import { loadNBACareers, loadNFLCareers } from './careerData';
+import { loadNBACareers, loadNFLLineupPool } from './careerData';
 import type {
   StatCategory,
   LineupIsRightGameState,
@@ -48,23 +48,34 @@ const STAT_LABELS: Record<StatCategory, string> = {
  * Generate a reasonable target cap based on the stat category and sport.
  */
 export function generateTargetCap(sport: Sport, statCategory: StatCategory): number {
+  const r = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+
   if (sport === 'nba') {
+    // NBA stats are per-game averages (e.g. LeBron: 22 pts, 7 ast, 6 reb, 33 min).
+    // With 5 player-season picks, the following ranges create meaningful tension:
+    //   3 good picks (avg starter) puts you near the middle of the range,
+    //   5 elite picks risks a bust.
     switch (statCategory) {
-      case 'pts': return 50 + Math.floor(Math.random() * 51); // 50-100
-      case 'ast': return 30 + Math.floor(Math.random() * 21); // 30-50
-      case 'reb': return 30 + Math.floor(Math.random() * 21); // 30-50
-      case 'min': return 800 + Math.floor(Math.random() * 401); // 800-1200
-      default: return 500;
+      case 'pts': return r(75, 120);  // 5× avg starter ~20 PPG = 100
+      case 'ast': return r(22, 40);   // 5× avg starter ~6 APG = 30
+      case 'reb': return r(30, 50);   // 5× avg starter ~8 RPG = 40
+      case 'min': return r(130, 175); // 5× avg starter ~34 MPG = 170
+      default: return 100;
     }
   } else {
-    // NFL - keep existing ranges
+    // NFL stats are season totals.
+    // With 5 player-season picks, a "good" pick is a quality starter season:
+    //   QB:   ~4000 pass yds / ~30 pass TDs
+    //   RB:   ~1200 rush yds / ~10 rush TDs
+    //   WR/TE:~1100 rec yds  / ~9 rec TDs
+    // Ranges are tuned so 3 good picks land mid-range, 5 elite picks risk a bust.
     switch (statCategory) {
-      case 'passing_yards': return 1200;
-      case 'passing_tds': return 9;
-      case 'rushing_yards': return 300;
-      case 'rushing_tds': return 3;
-      case 'receiving_yards': return 320;
-      case 'receiving_tds': return 4;
+      case 'passing_yards': return r(12000, 20000); // 3× 4000 = 12000; 5 elite = 20000+
+      case 'passing_tds':   return r(80,   140);    // 3× 30   = 90;  5 elite = 180
+      case 'rushing_yards': return r(4000, 7000);   // 3× 1200 = 3600; 5 elite = 8000
+      case 'rushing_tds':   return r(35,   65);     // 3× 10   = 30;  5 elite = 75
+      case 'receiving_yards': return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
+      case 'receiving_tds':   return r(28,   50);   // 3× 9    = 27;  5 elite = 55
       default: return 500;
     }
   }
@@ -111,8 +122,8 @@ export function createPlayerLineup(
  */
 export const NBA_TEAMS = [
   'ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW',
-  'HOU', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC',
-  'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS',
+  'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK',
+  'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS',
 ];
 
 /**
@@ -123,7 +134,7 @@ export const NFL_TEAMS = [
   'BAL', 'PIT', 'CLE', 'CIN',
   'PHI', 'DAL', 'NYG', 'WAS',
   'GB', 'MIN', 'DET', 'CHI',
-  'KC', 'LAR', 'SF', 'SEA',
+  'ARI', 'LAR', 'SF', 'SEA',
   'NO', 'CAR', 'TB', 'ATL',
   'TEN', 'IND', 'HOU', 'JAX',
 ];
@@ -174,7 +185,7 @@ export async function searchPlayersByNameAndYear(
       return results;
     } else {
       // NFL
-      const players = await loadNFLCareers();
+      const players = await loadNFLLineupPool();
       const seasonStr = `${year}`;
       
       const results = players
@@ -241,7 +252,7 @@ export async function searchPlayersByName(
       return results;
     } else {
       // NFL
-      const players = await loadNFLCareers();
+      const players = await loadNFLLineupPool();
       
       const results = players
         .filter(p => p.player_name.toLowerCase().includes(searchLower))
@@ -291,7 +302,7 @@ export async function searchPlayersByNameOnly(
       results.forEach(r => map.set(r.playerId, r.playerName));
       return Array.from(map.entries()).map(([playerId, playerName]) => ({ playerId, playerName }));
     } else {
-      const players = await loadNFLCareers();
+      const players = await loadNFLLineupPool();
       const results = players
         .filter(p => p.player_name.toLowerCase().includes(searchLower))
         .map(p => ({ playerId: p.player_id, playerName: p.player_name }));
@@ -332,7 +343,7 @@ export async function getPlayerYearsOnTeam(
       return [...new Set(years)].sort();
     } else {
       // NFL
-      const players = await loadNFLCareers();
+      const players = await loadNFLLineupPool();
       const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
       
       if (!player) return [];
@@ -380,7 +391,7 @@ export async function getPlayerStatForYearAndTeam(
       return (season[statKey] as number) ?? 0;
     } else {
       // NFL
-      const players = await loadNFLCareers();
+      const players = await loadNFLLineupPool();
       const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
       
       if (!player) return 0;

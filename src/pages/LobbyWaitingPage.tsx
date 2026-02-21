@@ -19,6 +19,7 @@ import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerScoreMultiplier, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
+import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/lineupIsRight';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
 import { scrambleName } from '../utils/scramble';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
@@ -410,10 +411,38 @@ export function LobbyWaitingPage() {
       const sport = lobby.sport as Sport;
       const winTarget = careerState.win_target || 3;
 
+      // Generate stat category and cap once for all players
+      const statCategory = selectRandomStatCategory(sport);
+      const targetCap = generateTargetCap(sport, statCategory);
+
+      // Fetch current player list to initialize empty lineups keyed by player_id
+      const playersResult = await getLobbyPlayers(lobby.id);
+      const lobbyPlayers = playersResult.players || [];
+      const initialLineups: Record<string, object> = {};
+      lobbyPlayers.forEach(p => {
+        initialLineups[p.player_id] = {
+          playerId: p.player_id,
+          playerName: p.player_name,
+          selectedPlayers: [],
+          totalStat: 0,
+          isBusted: false,
+          isFinished: false,
+          hasPickedThisRound: false,
+        };
+      });
+
+      const firstTeam = assignRandomTeam(sport);
+
       const newCareerState = {
         sport,
-        round: 1,
         win_target: winTarget,
+        statCategory,
+        targetCap,
+        allLineups: initialLineups,
+        currentRound: 1,
+        totalRounds: 5,
+        currentTeam: firstTeam,
+        phase: 'picking',
       };
 
       await startCareerRound(lobby.id, newCareerState);
@@ -818,11 +847,12 @@ export function LobbyWaitingPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleLeave}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors border border-white/10 hover:border-white/30"
             >
-              <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
+              <span className="sports-font text-[11px] text-white/50 tracking-widest uppercase">Leave</span>
             </button>
             <div>
               <h1 className="retro-title text-2xl text-[#d4af37]">Private Table</h1>
