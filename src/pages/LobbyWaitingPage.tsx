@@ -19,6 +19,7 @@ import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerScoreMultiplier, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
+import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/lineupIsRight';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
 import { scrambleName } from '../utils/scramble';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
@@ -67,7 +68,7 @@ export function LobbyWaitingPage() {
 
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
-  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble'>('roster');
+  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble' | 'lineup-is-right'>('roster');
   const [editSport, setEditSport] = useState<Sport>('nba');
   const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
@@ -111,7 +112,7 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     if (lobby && !showSettings) {
       const lobbySport = lobby.sport as Sport;
-      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble') || 'roster');
+      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble' | 'lineup-is-right') || 'roster');
       setEditSport(lobbySport);
       setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
@@ -266,6 +267,12 @@ export function LobbyWaitingPage() {
           hasStartedGame.current = true;
           navigate(`/lobby/${code}/career`);
         }
+      } else if (lobby.game_type === 'lineup-is-right') {
+        // Lineup Is Right mode: navigate directly to gameplay
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/lineup-is-right`);
+        }
       } else {
         // Roster mode: show dealing animation
         if (!hasStartedGame.current) {
@@ -280,6 +287,8 @@ export function LobbyWaitingPage() {
         navigate(`/lobby/${code}/career/results`);
       } else if (lobby.game_type === 'scramble') {
         navigate(`/lobby/${code}/scramble/results`);
+      } else if (lobby.game_type === 'lineup-is-right') {
+        navigate(`/lobby/${code}/lineup-is-right/results`);
       } else {
         navigate(`/lobby/${code}/results`);
       }
@@ -392,6 +401,58 @@ export function LobbyWaitingPage() {
     }
   };
 
+  const handleLineupIsRightStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+
+    try {
+      const careerState = (lobby.career_state as any) || {};
+      const sport = lobby.sport as Sport;
+      const winTarget = careerState.win_target || 3;
+
+      // Generate stat category and cap once for all players
+      const statCategory = selectRandomStatCategory(sport);
+      const targetCap = generateTargetCap(sport, statCategory);
+
+      // Fetch current player list to initialize empty lineups keyed by player_id
+      const playersResult = await getLobbyPlayers(lobby.id);
+      const lobbyPlayers = playersResult.players || [];
+      const initialLineups: Record<string, object> = {};
+      lobbyPlayers.forEach(p => {
+        initialLineups[p.player_id] = {
+          playerId: p.player_id,
+          playerName: p.player_name,
+          selectedPlayers: [],
+          totalStat: 0,
+          isBusted: false,
+          isFinished: false,
+          hasPickedThisRound: false,
+        };
+      });
+
+      const firstTeam = assignRandomTeam(sport);
+
+      const newCareerState = {
+        sport,
+        win_target: winTarget,
+        statCategory,
+        targetCap,
+        allLineups: initialLineups,
+        currentRound: 1,
+        totalRounds: 5,
+        currentTeam: firstTeam,
+        phase: 'picking',
+      };
+
+      await startCareerRound(lobby.id, newCareerState);
+      setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
+      navigate(`/lobby/${code}/lineup-is-right`);
+    } catch {
+      setIsLoadingRoster(false);
+    }
+  };
+
   const handleReroll = useCallback(async () => {
     if (!isHost || !lobby) return;
 
@@ -470,6 +531,17 @@ export function LobbyWaitingPage() {
       // Update local store immediately — don't wait for Supabase realtime to avoid
       // a race condition where handleCareerStart reads stale career_state
       setLobby({ ...lobby, career_state: newCareerState });
+    } else if (editGameType === 'lineup-is-right') {
+      // Lineup Is Right mode: update sport and win target
+      const existingState = (lobby.career_state as any) || {};
+      const newCareerState = {
+        ...existingState,
+        sport: editSport,
+        win_target: editWinTarget,
+      };
+      await updateCareerState(newCareerState);
+      await updateSettings({ sport: editSport });
+      setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else {
       // Roster mode: apply normal roster settings
 
@@ -775,11 +847,12 @@ export function LobbyWaitingPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleLeave}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors border border-white/10 hover:border-white/30"
             >
-              <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
+              <span className="sports-font text-[11px] text-white/50 tracking-widest uppercase">Leave</span>
             </button>
             <div>
               <h1 className="retro-title text-2xl text-[#d4af37]">Private Table</h1>
@@ -833,6 +906,16 @@ export function LobbyWaitingPage() {
                     First to {(lobby.career_state as any)?.win_target ?? '?'} wins
                   </div>
                 </>
+              ) : lobby.game_type === 'lineup-is-right' ? (
+                <>
+                  <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                    {lobby.sport.toUpperCase()} Lineup Builder
+                  </div>
+                  <div className="retro-title text-xl text-[#ec4899]">Lineup Is Right</div>
+                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                    First to {(lobby.career_state as any)?.win_target ?? '?'} wins
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
@@ -855,7 +938,7 @@ export function LobbyWaitingPage() {
               )}
             </div>
             <div className="flex items-center gap-4">
-              {lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
+              {lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'lineup-is-right' && (
                 <div className="text-right">
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
                   <div className="retro-title text-2xl text-white">
@@ -923,7 +1006,7 @@ export function LobbyWaitingPage() {
                 <div>
                   <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Mode</div>
                   <div className="flex gap-2 flex-wrap">
-                    {(['roster', 'career', 'scramble'] as const).map(m => (
+                    {(['roster', 'career', 'scramble', 'lineup-is-right'] as const).map(m => (
                       <button
                         key={m}
                         onClick={() => setEditGameType(m)}
@@ -931,11 +1014,13 @@ export function LobbyWaitingPage() {
                           editGameType === m
                             ? m === 'scramble'
                               ? 'bg-[#3b82f6] text-white'
+                              : m === 'lineup-is-right'
+                              ? 'bg-[#ec4899] text-white'
                               : 'bg-[#d4af37] text-black'
                             : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
                         }`}
                       >
-                        {m === 'roster' ? 'Roster' : m === 'career' ? 'Career Arc' : 'Scramble'}
+                        {m === 'roster' ? 'Roster' : m === 'career' ? 'Career Arc' : m === 'scramble' ? 'Scramble' : 'Lineup'}
                       </button>
                     ))}
                   </div>
@@ -1029,6 +1114,45 @@ export function LobbyWaitingPage() {
                             ))}
                           </select>
                         </div>
+                      </div>
+                    </div>
+                  </>
+                ) : editGameType === 'lineup-is-right' ? (
+                  <>
+                    {/* Sport Toggle */}
+                    <div className="flex justify-center gap-2">
+                      {(['nba', 'nfl'] as const).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setEditSport(s)}
+                          className={`flex-1 py-2 rounded-sm sports-font text-xs uppercase tracking-wider transition-all ${
+                            editSport === s
+                              ? s === 'nba' ? 'bg-orange-500 text-white' : 'bg-[#013369] text-white'
+                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          {s.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Win Target */}
+                    <div>
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">First To</div>
+                      <div className="flex gap-2">
+                        {[2, 3, 4, 5, 7].map(n => (
+                          <button
+                            key={n}
+                            onClick={() => setEditWinTarget(n)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editWinTarget === n
+                                ? 'bg-[#ec4899] text-white'
+                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </>
@@ -1375,7 +1499,7 @@ export function LobbyWaitingPage() {
                         </span>
                       )}
                       {/* Score multiplier cycle - host only, for non-host players, roster mode only */}
-                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
+                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'lineup-is-right' && (
                         <button
                           onClick={() => {
                             const MULTIPLIERS = [1, 1.5, 2, 3, 4];
@@ -1456,6 +1580,19 @@ export function LobbyWaitingPage() {
                   className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1 disabled:opacity-50"
                 >
                   {isLoadingRoster ? 'Loading Player...' : 'Start Career Mode'}
+                </button>
+              )}
+            </>
+          ) : lobby.game_type === 'lineup-is-right' ? (
+            <>
+              {/* Lineup Is Right mode: start button */}
+              {isHost && players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleLineupIsRightStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#ec4899] to-[#be185d] text-white shadow-[0_4px_0_#831843] active:shadow-none active:translate-y-1 disabled:opacity-50"
+                >
+                  {isLoadingRoster ? 'Loading Game...' : 'Start Lineup Is Right'}
                 </button>
               )}
             </>
