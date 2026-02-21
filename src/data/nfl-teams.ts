@@ -137,7 +137,7 @@ export const nflTeams: NFLTeam[] = [
     abbreviation: 'LV',
     name: 'Las Vegas Raiders',
     city: 'Las Vegas',
-    colors: { primary: '#000000', secondary: '#A5ACAF' },
+    colors: { primary: '#A5ACAF', secondary: '#000000' },
     conference: 'AFC',
     division: 'West',
   },

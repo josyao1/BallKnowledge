@@ -18,6 +18,7 @@ import {
   findLobbyByCode,
   getLobbyPlayers,
   updateCareerState,
+  updateLobbyStatus,
 } from '../services/lobby';
 import {
   searchPlayersByNameOnly,
@@ -68,6 +69,7 @@ export function MultiplayerLineupIsRightPage() {
   const [statCategory, setStatCategory] = useState<StatCategory | null>(null);
   const [targetCap, setTargetCap] = useState<number>(0);
   const [allLineups, setAllLineups] = useState<Record<string, PlayerLineup>>({});
+  const [mobileTab, setMobileTab] = useState<'pick' | 'scores'>('pick');
   const [currentRound, setCurrentRound] = useState(1);
   const [totalRounds, setTotalRounds] = useState(5);
 
@@ -214,6 +216,18 @@ export function MultiplayerLineupIsRightPage() {
     advanceRound();
   }, [lobby?.career_state, isHost, lobby?.id]);
 
+  // ── All clients: navigate back to lobby when host resets to waiting ────────
+  useEffect(() => {
+    if (lobby?.status === 'waiting' && phase === 'results') {
+      navigate(`/lobby/${code}`);
+    }
+  }, [lobby?.status, phase, navigate, code]);
+
+  const handlePlayAgain = async () => {
+    if (!isHost || !lobby) return;
+    await updateLobbyStatus(lobby.id, 'waiting');
+  };
+
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (!selectedSport || query.trim().length < 2) {
@@ -340,251 +354,294 @@ export function MultiplayerLineupIsRightPage() {
       return !l?.hasPickedThisRound && !l?.isFinished;
     });
 
+    // Reusable pick panel content (used in both mobile and desktop)
+    const pickPanel = (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-black/60 border-2 border-white/10 rounded p-4 flex-1 flex flex-col"
+      >
+        {myLineup?.isFinished ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
+            <p className="text-2xl text-red-400 retro-title">BUSTED</p>
+            <p className="text-white/50 sports-font text-sm">You exceeded the cap. Sit tight while others finish the round.</p>
+          </div>
+        ) : canPickThisRound ? (
+          <>
+            {!selectedPlayerName ? (
+              <div>
+                <label className="block sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase mb-3 font-semibold">
+                  Search for a player
+                </label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="Enter player name..."
+                  className="w-full px-4 py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-3 text-base"
+                />
+                {loading && <p className="text-white/60 text-sm">Loading...</p>}
+                {searchResults.length > 0 && (
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {searchResults.map((result, idx) => (
+                      <button
+                        key={String(result.playerId) + idx}
+                        onClick={() => handleSelectPlayer(result)}
+                        className="w-full text-left px-4 py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-sm"
+                      >
+                        {result.playerName}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 h-full">
+                <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
+                  <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
+                  <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <label className="sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase font-semibold">Select a year</label>
+                  {selectedSport === 'nfl' && <span className="text-white/25 text-[8px] sports-font">through 2024</span>}
+                </div>
+                {loadingYears ? (
+                  <p className="text-white/60 text-sm">Loading years...</p>
+                ) : availableYears.length > 0 ? (
+                  <div className="space-y-1.5 overflow-y-auto flex-1">
+                    {availableYears.map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => setSelectedYear(year)}
+                        className={`w-full px-4 py-2.5 rounded border transition text-white font-semibold text-sm ${
+                          selectedYear === year
+                            ? 'bg-[#d4af37] text-black border-[#d4af37]'
+                            : 'bg-[#1a1a1a] border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-red-400 text-sm">No playing years found for this player</p>
+                )}
+                <div className="flex gap-2 mt-auto pt-2">
+                  <button
+                    onClick={() => { setSelectedPlayerName(null); setSelectedYear(''); setAvailableYears([]); }}
+                    className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleConfirmYear}
+                    disabled={!selectedYear || addingPlayer}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm retro-title"
+                  >
+                    {addingPlayer ? 'Adding...' : 'Confirm'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
+            <div>
+              <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
+              <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
+            </div>
+            {waitingFor.length > 0 && (
+              <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
+                <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
+                {waitingFor.map(p => (
+                  <div key={p.player_id} className="flex items-center gap-2 py-1">
+                    <span className="text-yellow-400 text-xs">⏳</span>
+                    <span className="text-white/70 text-sm">{p.player_name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    );
+
+    // Reusable scores panel content
+    const scoresPanel = (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="bg-black/60 border-2 border-white/10 rounded p-4 flex-1 overflow-y-auto"
+      >
+        <h3 className="retro-title text-base text-[#d4af37] mb-3">Lineups</h3>
+        <div className="space-y-3">
+          {players.map((player) => {
+            const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
+            const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
+            const isMe = player.player_id === currentPlayerId;
+            const maskCurrentRound = canPickThisRound && !isMe;
+            const visiblePicks = maskCurrentRound
+              ? (lineup?.selectedPlayers.slice(0, currentRound - 1) ?? [])
+              : (lineup?.selectedPlayers ?? []);
+            const showBusted = lineup?.isBusted &&
+              (!maskCurrentRound || (lineup.selectedPlayers.length < currentRound));
+
+            return (
+              <div
+                key={player.id}
+                className={`p-3 rounded border-2 transition ${
+                  isMe ? 'border-[#d4af37] bg-[#1a1a1a]' : 'border-white/10 bg-black/40'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className={`font-semibold text-sm ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                    {player.player_name}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    {showBusted ? (
+                      <span className="text-[9px] text-red-400 sports-font uppercase tracking-wider px-1.5 py-0.5 bg-red-900/30 border border-red-500/30 rounded">BUSTED</span>
+                    ) : hasPicked ? (
+                      <span className="text-emerald-400 text-sm">✓</span>
+                    ) : (
+                      <span className="text-yellow-400 text-sm">⏳</span>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1 mb-2 text-xs">
+                  {visiblePicks.map((selected, idx) => (
+                    <div key={idx} className={`flex justify-between ${isMe && selected.statValue === 0 ? 'text-red-300' : 'text-white/70'}`}>
+                      <div className="flex-1 min-w-0">
+                        <span className={`truncate text-xs ${isMe && selected.statValue === 0 ? 'text-red-400' : ''}`}>{selected.playerName}</span>
+                        <span className={`ml-1 text-[10px] ${isMe && selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                      </div>
+                      {isMe && (
+                        <span className={`font-semibold ml-1 flex-shrink-0 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                          {selected.statValue}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {maskCurrentRound && hasPicked && (
+                    <div className="text-white/20 italic text-[10px]">Pick hidden until you submit</div>
+                  )}
+                </div>
+                <div className="flex justify-between text-xs border-t border-white/10 pt-1.5">
+                  <span className="text-white/40">{visiblePicks.length}/{totalRounds}</span>
+                  {isMe ? (
+                    <span className={`font-semibold ${showBusted ? 'text-red-500' : 'text-white'}`}>
+                      {lineup?.totalStat ?? 0}
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-white/20">—</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+    );
+
     return (
-      <div className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
+      <div className="h-[100dvh] bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
         {/* Green felt background */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
           style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
         />
 
-        <header className="relative z-10 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
+        {/* ── Header ── */}
+        <header className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
           <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
-            <h1 className="retro-title text-2xl text-[#d4af37]">Lineup Is Right</h1>
+            <h1 className="retro-title text-xl text-[#d4af37]">Lineup Is Right</h1>
             <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
               <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
             </div>
           </div>
-          {/* Team Display — same for all players */}
-          <motion.div
-            key={currentTeam + currentRound}
-            initial={{ opacity: 0, rotateY: -90, x: -100 }}
-            animate={{ opacity: 1, rotateY: 0, x: 0 }}
-            exit={{ opacity: 0, rotateY: 90, x: 100 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="flex items-center justify-center py-3 px-4"
-          >
-            <div
-              className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black"
-              style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
-            >
-              <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Current Team</p>
-              <p
-                className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
-                style={{ color: getTeamColor(selectedSport, currentTeam) }}
-              >
-                {currentTeam}
-              </p>
-            </div>
-          </motion.div>
-        </header>
-
-        <main className="relative z-10 flex-1 w-full px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-4 overflow-hidden">
-          {/* Left Column - Target & Category */}
-          <div className="w-40 md:w-52 flex flex-col gap-3 md:gap-4">
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
-              <p className="retro-title text-3xl md:text-4xl text-white">{targetCap}</p>
-            </div>
-            <div className="bg-[#111] border border-white/5 px-4 md:px-6 py-4 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
-              <p className="retro-title text-xl md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
-            </div>
-          </div>
-
-          {/* Middle Column - Pick UI or Waiting */}
-          <div className="flex-1 flex flex-col">
+          {/* Team + compact stats row */}
+          <div className="flex items-center gap-3 px-4 py-2">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-black/60 border-2 border-white/10 rounded p-6 flex-1 flex flex-col"
-            >
-              {myLineup?.isFinished ? (
-                /* Busted — sitting out remaining rounds */
-                <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
-                  <p className="text-2xl text-red-400 retro-title">BUSTED</p>
-                  <p className="text-white/50 sports-font text-sm">You exceeded the cap. Sit tight while others finish the round.</p>
-                </div>
-              ) : canPickThisRound ? (
-                /* Active pick UI */
-                <>
-                  {!selectedPlayerName ? (
-                    <div>
-                      <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-4 font-semibold">
-                        Search for a player
-                      </label>
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        placeholder="Enter player name..."
-                        className="w-full px-3 md:px-4 py-2 md:py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-2 md:mb-4 text-sm md:text-base"
-                      />
-
-                      {loading && <p className="text-white/60 text-sm">Loading...</p>}
-
-                      {searchResults.length > 0 && (
-                        <div className="space-y-1 md:space-y-2 max-h-96 overflow-y-auto">
-                          {searchResults.map((result, idx) => (
-                            <button
-                              key={String(result.playerId) + idx}
-                              onClick={() => handleSelectPlayer(result)}
-                              className="w-full text-left px-2 md:px-4 py-2 md:py-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded border border-white/10 transition text-white font-semibold text-sm md:text-base"
-                            >
-                              {result.playerName}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2 md:space-y-4 flex flex-col overflow-hidden">
-                      <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
-                        <p className="font-semibold text-white text-sm md:text-lg truncate">{selectedPlayerName}</p>
-                        <p className="text-[11px] md:text-sm text-white/60">Select any year this player played</p>
-                      </div>
-
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex items-baseline justify-between mb-2 md:mb-3">
-                          <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
-                            Select a year
-                          </label>
-                          {selectedSport === 'nfl' && (
-                            <span className="text-white/25 text-[8px] sports-font tracking-wide">through 2024</span>
-                          )}
-                        </div>
-                        {loadingYears ? (
-                          <p className="text-white/60 text-sm">Loading years...</p>
-                        ) : availableYears.length > 0 ? (
-                          <div className="space-y-1 md:space-y-2 overflow-y-auto max-h-40 md:max-h-56">
-                            {availableYears.map((year) => (
-                              <button
-                                key={year}
-                                onClick={() => setSelectedYear(year)}
-                                className={`w-full px-3 md:px-4 py-1 md:py-2 rounded border transition text-white font-semibold text-sm md:text-base ${
-                                  selectedYear === year
-                                    ? 'bg-[#d4af37] text-black border-[#d4af37]'
-                                    : 'bg-[#1a1a1a] border-white/10 hover:border-white/20'
-                                }`}
-                              >
-                                {year}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-red-400 text-sm">No playing years found for this player</p>
-                        )}
-                      </div>
-
-                      <div className="flex gap-1 md:gap-2 pt-1 md:pt-4 mt-auto">
-                        <button
-                          onClick={() => {
-                            setSelectedPlayerName(null);
-                            setSelectedYear('');
-                            setAvailableYears([]);
-                          }}
-                          className="flex-1 px-3 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm md:text-base"
-                        >
-                          Back
-                        </button>
-                        <button
-                          onClick={handleConfirmYear}
-                          disabled={!selectedYear || addingPlayer}
-                          className="flex-1 px-3 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm md:text-base retro-title"
-                        >
-                          {addingPlayer ? 'Adding...' : 'Confirm'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                /* Pick submitted — waiting for others */
-                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-                  <div>
-                    <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
-                    <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
-                  </div>
-                  {waitingFor.length > 0 && (
-                    <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
-                      <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
-                      {waitingFor.map(p => (
-                        <div key={p.player_id} className="flex items-center gap-2 py-1">
-                          <span className="text-yellow-400 text-xs">⏳</span>
-                          <span className="text-white/70 text-sm">{p.player_name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Sidebar - All Lineups with per-round status */}
-          <div className="w-80 md:w-96 flex flex-col">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              key={currentTeam + currentRound}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-black/60 border-2 border-white/10 rounded p-3 md:p-6 flex-1 overflow-y-auto"
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="flex items-center gap-2"
             >
-              <h3 className="retro-title text-sm md:text-lg text-[#d4af37] mb-2 md:mb-4">Lineups</h3>
-              <div className="space-y-2 md:space-y-4">
-                {players.map((player) => {
-                  const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
-                  const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
-                  const isMe = player.player_id === currentPlayerId;
-
-                  return (
-                    <div
-                      key={player.id}
-                      className={`p-2 md:p-4 rounded border-2 transition ${
-                        isMe
-                          ? 'border-[#d4af37] bg-[#1a1a1a]'
-                          : 'border-white/10 bg-black/40'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1 md:mb-2">
-                        <p className={`font-semibold text-sm md:text-base ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
-                          {player.player_name}
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          {lineup?.isBusted ? (
-                            <span className="text-[9px] text-red-400 sports-font uppercase tracking-wider px-1.5 py-0.5 bg-red-900/30 border border-red-500/30 rounded">BUSTED</span>
-                          ) : hasPicked ? (
-                            <span className="text-emerald-400 text-sm" title="Picked">✓</span>
-                          ) : (
-                            <span className="text-yellow-400 text-sm" title="Still picking">⏳</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-1 mb-2 md:mb-3 text-[10px] md:text-xs">
-                        {lineup &&
-                          lineup.selectedPlayers.map((selected, idx) => (
-                            <div key={idx} className={`flex justify-between ${selected.statValue === 0 ? 'text-red-300' : 'text-white/70'}`}>
-                              <div className="flex-1 min-w-0">
-                                <span className={`truncate text-[10px] md:text-xs ${selected.statValue === 0 ? 'text-red-400' : ''}`}>{selected.playerName}</span>
-                                <span className={`ml-1 block text-[9px] md:text-[10px] ${selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
-                              </div>
-                              <span className={`font-semibold ml-1 flex-shrink-0 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                                {selected.statValue}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                      <div className="flex justify-between text-[10px] md:text-xs border-t border-white/10 pt-1 md:pt-2">
-                        <span className="text-white/40">
-                          {lineup?.selectedPlayers.length || 0}/{totalRounds}
-                        </span>
-                        <span className={`font-semibold ${lineup?.isBusted ? 'text-red-500' : 'text-white'}`}>
-                          {lineup?.totalStat || 0}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div
+                className="px-4 py-1.5 rounded border-2 bg-black"
+                style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
+              >
+                <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Team</p>
+                <p className="retro-title text-xl font-bold" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
+                  {currentTeam}
+                </p>
               </div>
             </motion.div>
+            <div className="flex gap-2 ml-auto">
+              <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Target</div>
+                <p className="retro-title text-lg text-white leading-none">{targetCap}</p>
+              </div>
+              <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Stat</div>
+                <p className="retro-title text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
+              </div>
+              {/* My running total — mobile only, always visible across both tabs */}
+              <div className={`md:hidden border px-3 py-1.5 rounded-sm text-center ${
+                myLineup?.isBusted
+                  ? 'bg-red-900/20 border-red-500/50'
+                  : 'bg-[#d4af37]/10 border-[#d4af37]/40'
+              }`}>
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
+                <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                  {myLineup?.totalStat ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* ── Mobile tab bar (hidden on md+) ── */}
+        <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/40">
+          {(['pick', 'scores'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setMobileTab(tab)}
+              className={`flex-1 py-2.5 sports-font text-[11px] uppercase tracking-widest transition-all ${
+                mobileTab === tab
+                  ? 'text-[#d4af37] border-b-2 border-[#d4af37]'
+                  : 'text-white/40'
+              }`}
+            >
+              {tab === 'pick' ? (canPickThisRound ? '🟡 Pick' : '✓ Pick') : `Scores`}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Main content ── */}
+        <main className="relative z-10 flex-1 min-h-0 w-full overflow-hidden">
+          {/* Mobile: single tab panel */}
+          <div className="md:hidden h-full p-3 flex flex-col">
+            {mobileTab === 'pick' ? pickPanel : scoresPanel}
+          </div>
+
+          {/* Desktop: 3-column layout */}
+          <div className="hidden md:flex h-full px-6 py-4 gap-4">
+            {/* Left Column */}
+            <div className="w-52 flex flex-col gap-4">
+              <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
+                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
+                <p className="retro-title text-4xl text-white">{targetCap}</p>
+              </div>
+              <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
+                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
+                <p className="retro-title text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
+              </div>
+            </div>
+            {/* Middle Column */}
+            <div className="flex-1 flex flex-col">{pickPanel}</div>
+            {/* Right Column */}
+            <div className="w-96 flex flex-col">{scoresPanel}</div>
           </div>
         </main>
       </div>
@@ -681,10 +738,22 @@ export function MultiplayerLineupIsRightPage() {
               ))}
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 flex flex-col gap-3">
+              {isHost ? (
+                <button
+                  onClick={handlePlayAgain}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 transition-all"
+                >
+                  Play Again
+                </button>
+              ) : (
+                <div className="w-full py-4 rounded-sm text-center sports-font text-sm text-white/40 border border-white/10">
+                  Waiting for host to start next game...
+                </div>
+              )}
               <button
                 onClick={() => navigate('/')}
-                className="w-full py-4 rounded-sm retro-title text-lg tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 transition-all"
+                className="w-full py-3 rounded-sm sports-font text-sm tracking-widest uppercase text-white/40 border border-white/10 hover:border-white/30 hover:text-white/60 transition-all"
               >
                 Back to Home
               </button>

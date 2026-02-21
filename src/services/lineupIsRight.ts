@@ -19,6 +19,24 @@ import type { Sport } from '../types';
 
 // No longer used - players are selected freely without position restrictions
 
+// ─── NFL franchise alias map ─────────────────────────────────────────────────
+// Teams that relocated get a new abbreviation but share the same franchise history.
+// Maps every known abbreviation → the full set of abbreviations for that franchise
+// so historical data (OAK) matches current team picks (LV), etc.
+const NFL_FRANCHISE_ALIASES: Record<string, string[]> = {
+  LV:  ['LV',  'OAK'],   // Raiders  (moved to Las Vegas 2020)
+  OAK: ['LV',  'OAK'],
+  LAC: ['LAC', 'SD'],    // Chargers (moved to Los Angeles 2017)
+  SD:  ['LAC', 'SD'],
+  LA:  ['LA',  'STL'],   // Rams     (moved to Los Angeles 2016)
+  STL: ['LA',  'STL'],
+};
+
+function nflTeamMatches(dataTeam: string, targetTeam: string): boolean {
+  const aliases = NFL_FRANCHISE_ALIASES[targetTeam];
+  return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;
+}
+
 const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min'];
 const NFL_STAT_CATEGORIES: StatCategory[] = [
   'passing_yards',
@@ -397,7 +415,7 @@ export async function getPlayerStatForYearAndTeam(
       if (!player) return 0;
       
       const season = player.seasons.find(
-        s => s.season === year && s.team === team
+        s => s.season === year && nflTeamMatches(s.team, team)
       );
       
       if (!season) return 0;
