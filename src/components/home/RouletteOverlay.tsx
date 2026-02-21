@@ -278,9 +278,9 @@ function CardFace({ side, image, label, value }: any) {
       }}
     >
       {!isBack && (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-5 overflow-hidden relative">
-          <span className="sports-font text-[8px] md:text-[10px] text-amber-600 tracking-[0.3em] uppercase font-semibold text-center">{label}</span>
-          <span className="retro-title text-base md:text-2xl text-slate-800 leading-tight uppercase font-bold text-center break-words w-full px-2 mt-1">{value}</span>
+        <div className="w-full h-full flex flex-col items-center justify-center p-3 md:p-4 overflow-hidden relative">
+          <span className="sports-font text-[8px] md:text-[10px] text-amber-600 tracking-[0.3em] uppercase font-semibold text-center flex-shrink-0">{label}</span>
+          <span className="retro-title text-xs sm:text-sm md:text-xl md:leading-tight text-slate-800 uppercase font-bold text-center leading-snug w-full px-1 md:px-2 mt-1 flex-shrink-0 line-clamp-3 overflow-hidden break-words hyphens-auto">{value}</span>
         </div>
       )}
     </div>
