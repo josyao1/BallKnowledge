@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCareerStore } from '../stores/careerStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -83,8 +83,15 @@ function formatStat(key: string, value: any): string {
 
 export function CareerGamePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { sport } = useSettingsStore();
   const store = useCareerStore();
+
+  // Preserve filters passed from home setup panel
+  const careerFilters = useMemo(() => {
+    const state = location.state as { careerTo?: number } | null;
+    return state?.careerTo ? { careerTo: state.careerTo } : undefined;
+  }, []);
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [guessInput, setGuessInput] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -117,7 +124,7 @@ export function CareerGamePage() {
     store.resetGame();
 
     try {
-      const game = await getNextGame(selectedSport);
+      const game = await getNextGame(selectedSport, careerFilters);
       if (!game) { setLoadingState('error'); return; }
 
       store.initGame(game.data, game.sport);
@@ -157,7 +164,7 @@ export function CareerGamePage() {
   // Game over — navigate to results
   useEffect(() => {
     if (store.status === 'won' || store.status === 'lost') {
-      const timer = setTimeout(() => navigate('/career/results'), 2000);
+      const timer = setTimeout(() => navigate('/career/results', { state: location.state }), 2000);
       return () => clearTimeout(timer);
     }
   }, [store.status, navigate]);
