@@ -33,7 +33,7 @@ except ImportError:
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
-YEARS = list(range(2010, 2025))   # 2010–2024; add 2025 once data is available
+YEARS = list(range(1999, 2025))   # 1999–2024; covers full career histories including LT, Rice, etc.
 CAREER_POSITIONS = {"QB", "RB", "WR", "TE"}
 
 # Minimum production in at LEAST ONE season (not career totals).
@@ -194,6 +194,8 @@ def main():
                     "receptions":      safe_int(row.get("receptions")),
                     "receiving_yards": safe_int(row.get("receiving_yards")),
                     "receiving_tds":   safe_int(row.get("receiving_tds")),
+                    "rushing_yards":   safe_int(row.get("rushing_yards")),
+                    "rushing_tds":     safe_int(row.get("rushing_tds")),
                 })
 
             seasons.append(base)

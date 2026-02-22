@@ -80,6 +80,7 @@ export function HomePage() {
   const [isDealt, setIsDealt] = useState(false);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [tappedCard, setTappedCard] = useState<string | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
   const [skipAnimation, setSkipAnimation] = useState(false);
@@ -489,24 +490,32 @@ export function HomePage() {
                 className="flex flex-col items-center gap-6 z-10 w-full"
               >
                 {/* Fan container — cards are absolutely positioned relative to this */}
-                <div className="relative flex justify-center items-end w-full" style={{ height: 360, overflow: 'visible' }}>
+                <div
+                  className="relative flex justify-center items-end w-full"
+                  style={{ height: 360, overflow: 'visible' }}
+                  onClick={() => setTappedCard(null)}
+                >
                   {GAMES.map((game, i) => {
                     const fp = FAN_POSITIONS[i];
-                    const isHov = hoveredCard === game.id;
+                    const isActive = hoveredCard === game.id || tappedCard === game.id;
 
                     return (
                       <motion.div
                         key={game.id}
                         // Initial deal: cards fly in from above with stagger
                         initial={{ x: fp.x, y: -380, rotate: (i - 2) * 14, opacity: 0 }}
-                        animate={{ x: fp.x, y: fp.y, rotate: fp.rotate, opacity: 1 }}
+                        animate={{ x: fp.x, y: isActive ? fp.y - 100 : fp.y, rotate: isActive ? 0 : fp.rotate, scale: isActive ? 1.08 : 1, opacity: 1 }}
                         // Hover: pop up, straighten, slight scale
                         whileHover={{ y: fp.y - 100, rotate: 0, scale: 1.08, transition: { type: 'spring', stiffness: 380, damping: 28 } }}
                         transition={{ delay: i * 0.09, type: 'spring', stiffness: 220, damping: 26 }}
                         onHoverStart={() => setHoveredCardDebounced(game.id)}
                         onHoverEnd={() => setHoveredCardDebounced(null)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTappedCard(prev => prev === game.id ? null : game.id);
+                        }}
                         className="absolute bottom-0 cursor-pointer"
-                        style={{ width: 165, height: 235, zIndex: isHov ? 20 : i + 1 }}
+                        style={{ width: 165, height: 235, zIndex: isActive ? 20 : i + 1 }}
                       >
                         {/* Card face — sport art full bleed with game color border */}
                         <div className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
@@ -527,9 +536,9 @@ export function HomePage() {
                             {game.abbr}
                           </div>
 
-                          {/* Hover info panel — slides up from bottom */}
+                          {/* Hover / tap info panel — slides up from bottom */}
                           <AnimatePresence>
-                            {isHov && (
+                            {isActive && (
                               <motion.div
                                 initial={{ y: '100%' }}
                                 animate={{ y: 0 }}
@@ -544,12 +553,13 @@ export function HomePage() {
                                 <p className="sports-font text-[9px] text-[#888] mt-1 leading-snug">
                                   {game.tagline}
                                 </p>
-                                <div className="flex gap-2 mt-3">
+                                <div className="flex gap-2 mt-3" onClick={e => e.stopPropagation()}>
                                   {game.hasSolo && (
                                     <button
                                       onClick={() => {
                                         if (game.id === 'roster' || game.id === 'career') {
                                           setSelectedCard(game.id);
+                                          setTappedCard(null);
                                         } else if (game.soloPath) {
                                           navigate(game.soloPath);
                                         }

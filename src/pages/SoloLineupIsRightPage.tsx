@@ -29,6 +29,12 @@ import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineup
 
 type Phase = 'sport-select' | 'playing' | 'results';
 
+/** Format a stat value: whole numbers show no decimal, others show 1 decimal place. */
+function fmt(val: number): string {
+  const r = parseFloat(val.toFixed(1));
+  return r % 1 === 0 ? r.toFixed(0) : r.toFixed(1);
+}
+
 function getCategoryAbbr(category: StatCategory): string {
   switch (category) {
     case 'pts': return 'PTS';
@@ -320,7 +326,12 @@ export function SoloLineupIsRightPage() {
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Total</div>
-              <p className={`retro-title text-2xl md:text-4xl ${lineup.isBusted ? 'text-red-500' : 'text-white'}`}>{lineup.totalStat}</p>
+              <p className={`retro-title text-2xl md:text-4xl ${lineup.isBusted ? 'text-red-500' : 'text-white'}`}>{fmt(lineup.totalStat)}</p>
+              {!lineup.isBusted && (
+                <p className="sports-font text-[6px] md:text-[7px] text-[#d4af37]/60 tracking-wide mt-0.5 leading-tight">
+                  {fmt(targetCap - lineup.totalStat)} more to cap
+                </p>
+              )}
             </div>
           </div>
 
@@ -447,7 +458,7 @@ export function SoloLineupIsRightPage() {
                         <div className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-300' : 'text-white'}>
                           <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {lineup.selectedPlayers[idx].playerName}</p>
                           <p className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{lineup.selectedPlayers[idx].team} • {lineup.selectedPlayers[idx].selectedYear}</p>
-                          <p className={`font-semibold text-[9px] md:text-xs ${lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{lineup.selectedPlayers[idx].statValue} {getCategoryAbbr(statCategory!)}</p>
+                          <p className={`font-semibold text-[9px] md:text-xs ${lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{fmt(lineup.selectedPlayers[idx].statValue)} {getCategoryAbbr(statCategory!)}</p>
                         </div>
                       ) : (
                         <span className="text-white/40 text-[9px] md:text-xs">Slot {idx + 1}</span>
@@ -507,7 +518,7 @@ export function SoloLineupIsRightPage() {
               {/* STATS GRID - 2x2 */}
               <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {[
-                  { label: 'YOUR SCORE', value: lineup.totalStat },
+                  { label: 'YOUR SCORE', value: fmt(lineup.totalStat) },
                   { label: 'TARGET CAP', value: targetCap },
                   { label: 'STATUS', value: lineup.isBusted ? 'BUSTED' : 'SUCCESS' },
                   { label: 'PLAYERS', value: `${lineup.selectedPlayers.length}/5` }
@@ -596,7 +607,7 @@ export function SoloLineupIsRightPage() {
                         <div className="text-right flex-shrink-0">
                           <p className={`retro-title text-lg md:text-xl ${
                             isInvalid ? 'text-red-400' : 'text-[#d4af37]'
-                          }`}>{player.statValue}</p>
+                          }`}>{fmt(player.statValue)}</p>
                           {isInvalid && (
                             <div className="bg-red-600 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">INVALID</div>
                           )}
