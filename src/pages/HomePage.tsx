@@ -511,21 +511,21 @@ export function HomePage() {
                 {/* Fan container — cards are absolutely positioned relative to this */}
                 <div
                   className="relative flex justify-center items-end w-full"
-                  style={{ height: 360, overflow: 'visible' }}
+                  style={{ height: containerH, overflow: 'visible' }}
                   onClick={() => setTappedCard(null)}
                 >
                   {GAMES.map((game, i) => {
-                    const fp = FAN_POSITIONS[i];
+                    const fp = scaledPositions[i];
                     const isActive = hoveredCard === game.id || tappedCard === game.id;
 
                     return (
                       <motion.div
                         key={game.id}
                         // Initial deal: cards fly in from above with stagger
-                        initial={{ x: fp.x, y: -380, rotate: (i - 2) * 14, opacity: 0 }}
-                        animate={{ x: fp.x, y: isActive ? fp.y - 100 : fp.y, rotate: isActive ? 0 : fp.rotate, scale: isActive ? 1.08 : 1, opacity: 1 }}
+                        initial={{ x: fp.x, y: -(containerH + 20), rotate: (i - 2) * 14, opacity: 0 }}
+                        animate={{ x: fp.x, y: isActive ? fp.y - popDist : fp.y, rotate: isActive ? 0 : fp.rotate, scale: isActive ? 1.08 : 1, opacity: 1 }}
                         // Hover: pop up, straighten, slight scale
-                        whileHover={{ y: fp.y - 100, rotate: 0, scale: 1.08, transition: { type: 'spring', stiffness: 380, damping: 28 } }}
+                        whileHover={{ y: fp.y - popDist, rotate: 0, scale: 1.08, transition: { type: 'spring', stiffness: 380, damping: 28 } }}
                         transition={{ delay: i * 0.09, type: 'spring', stiffness: 220, damping: 26 }}
                         onHoverStart={() => setHoveredCardDebounced(game.id)}
                         onHoverEnd={() => setHoveredCardDebounced(null)}
@@ -534,7 +534,7 @@ export function HomePage() {
                           setTappedCard(prev => prev === game.id ? null : game.id);
                         }}
                         className="absolute bottom-0 cursor-pointer"
-                        style={{ width: 165, height: 235, zIndex: isActive ? 20 : i + 1 }}
+                        style={{ width: cardW, height: cardH, zIndex: isActive ? 20 : i + 1 }}
                       >
                         {/* Card face — sport art full bleed with game color border */}
                         <div className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
@@ -548,10 +548,10 @@ export function HomePage() {
                           {/* Subtle dark overlay so corners are readable */}
                           <div className="absolute inset-0 bg-black/20" />
                           {/* Corner abbr */}
-                          <div className="absolute top-2 left-2.5 sports-font text-[11px] font-bold leading-none z-10" style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                          <div className="absolute top-1.5 left-2 sports-font font-bold leading-none z-10" style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(11 * fanScale)) }}>
                             {game.abbr}
                           </div>
-                          <div className="absolute bottom-2 right-2.5 rotate-180 sports-font text-[11px] font-bold leading-none z-10" style={{ color: `${game.color}80`, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                          <div className="absolute bottom-1.5 right-2 rotate-180 sports-font font-bold leading-none z-10" style={{ color: `${game.color}80`, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(11 * fanScale)) }}>
                             {game.abbr}
                           </div>
 
@@ -563,16 +563,16 @@ export function HomePage() {
                                 animate={{ y: 0 }}
                                 exit={{ y: '100%' }}
                                 transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                                className="absolute inset-0 flex flex-col justify-end p-2.5"
-                                style={{ background: 'linear-gradient(to top, rgba(14,14,14,0.97) 60%, rgba(14,14,14,0.7) 100%)' }}
+                                className="absolute inset-0 flex flex-col justify-end"
+                                style={{ background: 'linear-gradient(to top, rgba(14,14,14,0.97) 60%, rgba(14,14,14,0.7) 100%)', padding: Math.max(6, Math.round(10 * fanScale)) }}
                               >
-                                <h3 className="retro-title text-base leading-tight" style={{ color: game.color }}>
+                                <h3 className="retro-title leading-tight" style={{ color: game.color, fontSize: Math.max(10, Math.round(16 * fanScale)) }}>
                                   {game.name}
                                 </h3>
-                                <p className="sports-font text-[9px] text-[#888] mt-1 leading-snug">
+                                <p className="sports-font text-[#888] mt-1 leading-snug" style={{ fontSize: Math.max(6, Math.round(9 * fanScale)) }}>
                                   {game.tagline}
                                 </p>
-                                <div className="flex gap-2 mt-3" onClick={e => e.stopPropagation()}>
+                                <div className="flex gap-1.5 mt-2" onClick={e => e.stopPropagation()}>
                                   {game.hasSolo && (
                                     <button
                                       onClick={() => {
