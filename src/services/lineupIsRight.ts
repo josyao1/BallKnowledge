@@ -21,15 +21,42 @@ import type { Sport } from '../types';
 
 // ─── NFL franchise alias map ─────────────────────────────────────────────────
 // Teams that relocated get a new abbreviation but share the same franchise history.
-// Maps every known abbreviation → the full set of abbreviations for that franchise
-// so historical data (OAK) matches current team picks (LV), etc.
+// Maps every known abbreviation → the full set of abbreviations for that franchise.
+//
+// The raw career data uses ESPN abbreviations which differ from standard NFL ones:
+//   LA  (not LAR) for current LA Rams
+//   SL  (not STL) for old St. Louis Rams
+//   ARZ (not ARI) for Arizona Cardinals
+//   BLT (not BAL) for Baltimore Ravens
+//   CLV (not CLE) for Cleveland Browns
+//   HST (not HOU) for Houston Texans
+//
+// NFL_TEAMS and NFL_DIVISIONS use the standard NFL abbreviations (LAR, ARI, BAL,
+// CLE, HOU). Both sides are included so nflTeamMatches works in either direction.
 const NFL_FRANCHISE_ALIASES: Record<string, string[]> = {
-  LV:  ['LV',  'OAK'],   // Raiders  (moved to Las Vegas 2020)
+  // Raiders (OAK → LV 2020)
+  LV:  ['LV',  'OAK'],
   OAK: ['LV',  'OAK'],
-  LAC: ['LAC', 'SD'],    // Chargers (moved to Los Angeles 2017)
+
+  // Chargers (SD → LAC 2017)
+  LAC: ['LAC', 'SD'],
   SD:  ['LAC', 'SD'],
-  LA:  ['LA',  'STL'],   // Rams     (moved to Los Angeles 2016)
-  STL: ['LA',  'STL'],
+
+  // Rams (STL/SL → LA/LAR 2016; data=LA+SL, standard=LAR+STL)
+  LAR: ['LA',  'LAR', 'STL', 'SL'],
+  LA:  ['LA',  'LAR', 'STL', 'SL'],
+  STL: ['LA',  'LAR', 'STL', 'SL'],
+  SL:  ['LA',  'LAR', 'STL', 'SL'],
+
+  // ESPN alternate abbreviations present in raw career data
+  ARI: ['ARI', 'ARZ'],
+  ARZ: ['ARI', 'ARZ'],
+  BAL: ['BAL', 'BLT'],
+  BLT: ['BAL', 'BLT'],
+  CLE: ['CLE', 'CLV'],
+  CLV: ['CLE', 'CLV'],
+  HOU: ['HOU', 'HST'],
+  HST: ['HOU', 'HST'],
 };
 
 function nflTeamMatches(dataTeam: string, targetTeam: string): boolean {
@@ -42,6 +69,10 @@ const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min'];
 // ── Test flag — set to a StatCategory to force that category every round ──────
 // Set to null in production.
 const FORCE_NFL_STAT: StatCategory | null = null;
+
+// ── Test flag — restrict team pool to these abbreviations for targeted testing ─
+// Example: ['LAR', 'LV'] to test franchise alias fixes. Set to null in production.
+const TEST_NFL_TEAMS: string[] | null = null;
 
 // Weighted NFL stat pool: rushing/receiving appear 2× as often as QB passing stats
 // total_gp gets 2× weight as well (broad player pool, fun variation)
@@ -215,7 +246,9 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory): str
     const divs = Object.keys(NFL_DIVISIONS);
     return divs[Math.floor(Math.random() * divs.length)];
   }
-  const teams = sport === 'nba' ? NBA_TEAMS : NFL_TEAMS;
+  const teams = sport === 'nba'
+    ? NBA_TEAMS
+    : (TEST_NFL_TEAMS ?? NFL_TEAMS);
   return teams[Math.floor(Math.random() * teams.length)];
 }
 
@@ -553,8 +586,8 @@ export function calculateLineupStat(
     return acc + player.statValue;
   }, 0);
 
-  // Round to nearest tenths place (0.1)
-  const total = Math.round(sum * 10) / 10;
+  // Round to 1 decimal place cleanly (parseFloat avoids floating-point noise)
+  const total = parseFloat(sum.toFixed(1));
 
   return {
     total,

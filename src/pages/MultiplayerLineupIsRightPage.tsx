@@ -37,6 +37,12 @@ import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineup
 
 type Phase = 'loading' | 'picking' | 'results';
 
+/** Format a stat value: whole numbers show no decimal, others show 1 decimal place. */
+function fmt(val: number): string {
+  const r = parseFloat(val.toFixed(1));
+  return r % 1 === 0 ? r.toFixed(0) : r.toFixed(1);
+}
+
 function getCategoryAbbr(category: StatCategory): string {
   switch (category) {
     case 'pts': return 'PTS';
@@ -580,7 +586,7 @@ export function MultiplayerLineupIsRightPage() {
                       </div>
                       {isMe && (
                         <span className={`font-semibold ml-1 flex-shrink-0 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                          {selected.statValue}
+                          {fmt(selected.statValue)}
                         </span>
                       )}
                     </div>
@@ -593,7 +599,7 @@ export function MultiplayerLineupIsRightPage() {
                   <span className="text-white/40">{visiblePicks.length}/{totalRounds}</span>
                   {isMe ? (
                     <span className={`font-semibold ${showBusted ? 'text-red-500' : 'text-white'}`}>
-                      {lineup?.totalStat ?? 0}
+                      {fmt(lineup?.totalStat ?? 0)}
                     </span>
                   ) : (
                     <span className="font-semibold text-white/20">—</span>
@@ -670,7 +676,7 @@ export function MultiplayerLineupIsRightPage() {
               }`}>
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
                 <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                  {myLineup?.totalStat ?? 0}
+                  {fmt(myLineup?.totalStat ?? 0)}
                 </p>
               </div>
               {/* Remaining to cap */}
@@ -681,7 +687,7 @@ export function MultiplayerLineupIsRightPage() {
               }`}>
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
                 <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-white'}`}>
-                  {myLineup?.isBusted ? '—' : targetCap - (myLineup?.totalStat ?? 0)}
+                  {myLineup?.isBusted ? '—' : fmt(targetCap - (myLineup?.totalStat ?? 0))}
                 </p>
               </div>
             </div>
@@ -805,11 +811,11 @@ export function MultiplayerLineupIsRightPage() {
                           item.lineup.isBusted ? 'text-red-500' : 'text-[#d4af37]'
                         }`}
                       >
-                        {item.lineup.totalStat}
+                        {fmt(item.lineup.totalStat)}
                       </p>
                       {!item.lineup.isBusted && (
                         <p className="text-xs text-white/40">
-                          {Math.abs(item.lineup.totalStat - targetCap)} away
+                          {fmt(Math.abs(item.lineup.totalStat - targetCap))} away
                         </p>
                       )}
                     </div>
@@ -822,7 +828,7 @@ export function MultiplayerLineupIsRightPage() {
                           <span className={`truncate ${selected.statValue === 0 ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
                           <span className={`ml-2 block text-[11px] ${selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
                         </div>
-                        <span className={`font-semibold ml-2 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{selected.statValue}</span>
+                        <span className={`font-semibold ml-2 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{fmt(selected.statValue)}</span>
                       </div>
                     ))}
                   </div>

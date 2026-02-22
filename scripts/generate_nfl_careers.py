@@ -23,7 +23,7 @@ except ImportError:
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
-YEARS = list(range(2010, 2025))
+YEARS = list(range(1999, 2025))
 CAREER_POSITIONS = {"QB", "RB", "WR", "TE"}
 
 # Minimum career production thresholds (same as the old dynamic server)
@@ -178,6 +178,8 @@ def main():
                     "receptions":      safe_int(row.get("receptions")),
                     "receiving_yards": safe_int(row.get("receiving_yards")),
                     "receiving_tds":   safe_int(row.get("receiving_tds")),
+                    "rushing_yards":   safe_int(row.get("rushing_yards")),
+                    "rushing_tds":     safe_int(row.get("rushing_tds")),
                 })
 
             seasons.append(base)

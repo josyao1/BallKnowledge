@@ -5,8 +5,8 @@
  * final score, game stats, and play again / home buttons.
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCareerStore } from '../stores/careerStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -78,9 +78,15 @@ function formatStat(key: string, value: any): string {
 
 export function CareerResultsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const store = useCareerStore();
   const { sport } = useSettingsStore();
   const [isLoadingNew, setIsLoadingNew] = useState(false);
+
+  const careerFilters = useMemo(() => {
+    const state = location.state as { careerTo?: number } | null;
+    return state?.careerTo ? { careerTo: state.careerTo } : undefined;
+  }, []);
 
   const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
 
@@ -98,11 +104,11 @@ export function CareerResultsPage() {
     setIsLoadingNew(true);
 
     try {
-      const game = await getNextGame(sport);
+      const game = await getNextGame(sport, careerFilters);
       if (!game) { setIsLoadingNew(false); return; }
 
       store.initGame(game.data, game.sport);
-      navigate('/career');
+      navigate('/career', { state: location.state });
     } catch {
       setIsLoadingNew(false);
     }
