@@ -278,13 +278,18 @@ export function HomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
-                className="flex flex-col items-center gap-8 z-10"
+                className="flex flex-col items-center z-10"
+                style={{ gap: Math.round(32 * fanScale) }}
               >
                 <div className="text-center">
-                  <h2 className="retro-title text-4xl sm:text-5xl text-[var(--vintage-cream)] uppercase tracking-tight">
+                  <h2
+                    className="retro-title text-[var(--vintage-cream)] uppercase tracking-tight"
+                    style={{ fontSize: Math.max(22, Math.round(40 * fanScale)) }}
+                  >
                     Pick a Card
                   </h2>
-                  <p className="sports-font text-xs text-[#555] tracking-[0.25em] mt-2 uppercase">
+                  <p className="sports-font text-[#555] tracking-[0.25em] mt-1.5 uppercase"
+                    style={{ fontSize: Math.max(9, Math.round(12 * fanScale)) }}>
                     {sport === 'nba' ? 'NBA' : 'NFL'} · Click to deal
                   </p>
                 </div>
@@ -295,13 +300,13 @@ export function HomePage() {
                   whileHover={{ y: -8 }}
                   whileTap={{ scale: 0.95 }}
                   className="relative focus:outline-none cursor-pointer"
-                  style={{ width: 200, height: 280 }}
+                  style={{ width: Math.round(200 * fanScale), height: Math.round(280 * fanScale) }}
                 >
                   {/* Offset shadow cards */}
                   <div className="absolute inset-0 rounded-2xl border-2 border-[#d4af37]/25 bg-[#161616]"
-                    style={{ transform: 'rotate(8deg) translate(10px, 10px)' }} />
+                    style={{ transform: `rotate(8deg) translate(${Math.round(10 * fanScale)}px, ${Math.round(10 * fanScale)}px)` }} />
                   <div className="absolute inset-0 rounded-2xl border-2 border-[#d4af37]/45 bg-[#181818]"
-                    style={{ transform: 'rotate(4deg) translate(5px, 5px)' }} />
+                    style={{ transform: `rotate(4deg) translate(${Math.round(5 * fanScale)}px, ${Math.round(5 * fanScale)}px)` }} />
                   {/* Top card — SVG fills the full face */}
                   <div className="absolute inset-0 rounded-2xl border-2 border-[#d4af37] overflow-hidden shadow-2xl">
                     <img
@@ -313,8 +318,10 @@ export function HomePage() {
                     {/* Subtle gold tint overlay */}
                     <div className="absolute inset-0 bg-[#d4af37]/10" />
                     {/* Corner marks */}
-                    <div className="absolute top-2.5 left-3 sports-font text-[10px] font-bold text-[#d4af37]/80 z-10 leading-none">BK</div>
-                    <div className="absolute bottom-2.5 right-3 sports-font text-[10px] font-bold text-[#d4af37]/80 z-10 rotate-180 leading-none">BK</div>
+                    <div className="absolute top-2 left-2.5 sports-font font-bold text-[#d4af37]/80 z-10 leading-none"
+                      style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div>
+                    <div className="absolute bottom-2 right-2.5 sports-font font-bold text-[#d4af37]/80 z-10 rotate-180 leading-none"
+                      style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div>
                   </div>
                 </motion.button>
               </motion.div>
