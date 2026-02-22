@@ -88,6 +88,25 @@ export function HomePage() {
   const [showWarmup] = useState(false);
   const [warmupComplete, setWarmupComplete] = useState(true);
 
+  // Responsive fan scale — track viewport width and scale card dimensions down on mobile
+  const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+  useEffect(() => {
+    const update = () => setVw(window.innerWidth);
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  // Scale thresholds: <400 → 0.52, <500 → 0.63, <640 → 0.77, else full size
+  const fanScale = vw < 400 ? 0.52 : vw < 500 ? 0.63 : vw < 640 ? 0.77 : 1;
+  const cardW = Math.round(165 * fanScale);
+  const cardH = Math.round(235 * fanScale);
+  const containerH = Math.round(360 * fanScale);
+  const popDist = Math.round(100 * fanScale);
+  const scaledPositions = FAN_POSITIONS.map(fp => ({
+    x: Math.round(fp.x * fanScale),
+    y: Math.round(fp.y * fanScale),
+    rotate: fp.rotate,
+  }));
+
   // Debounce hover to prevent bounce when mouse passes between overlapping cards
   const hoverClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setHoveredCardDebounced = (id: string | null) => {
