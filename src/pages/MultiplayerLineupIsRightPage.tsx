@@ -30,7 +30,9 @@ import {
   assignRandomTeam,
   isDivisionRound,
   NFL_DIVISIONS,
+  findOptimalLastPick,
 } from '../services/lineupIsRight';
+import type { OptimalPick } from '../services/lineupIsRight';
 import { getTeamByAbbreviation } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineupIsRight';
@@ -82,6 +84,7 @@ export function MultiplayerLineupIsRightPage() {
   const [mobileTab, setMobileTab] = useState<'pick' | 'scores'>('pick');
   const [currentRound, setCurrentRound] = useState(1);
   const [totalRounds, setTotalRounds] = useState(5);
+  const [optimalPicks, setOptimalPicks] = useState<Map<string, OptimalPick | null>>(new Map());
 
   // Ephemeral UI state — never synced to Supabase
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +104,8 @@ export function MultiplayerLineupIsRightPage() {
   const lastAdvancedRoundRef = useRef(0);
   // Detect round changes to reset ephemeral search UI
   const prevRoundRef = useRef(0);
+  // Saved pick for race-condition recovery: if a concurrent write overwrites our pick, re-send it
+  const mySubmittedLineupRef = useRef<any>(null);
 
   const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as import('../types').Sport | null;
 
@@ -149,14 +154,25 @@ export function MultiplayerLineupIsRightPage() {
 
   // ── Realtime sync: when lobby.career_state changes, update local state ────
   useEffect(() => {
-    if (addingPlayerRef.current) return; // don't clobber mid-pick
     const cs = (lobby?.career_state as any);
     if (!cs?.statCategory || !cs?.allLineups) return;
+
+    // Always process transition to results — even if a pick is in flight.
+    // (The addingPlayerRef guard must not block the final phase change or the
+    //  player gets stuck on the green picking screen after the last round.)
+    if (cs.phase === 'results') {
+      setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
+      setPhase('results');
+      return;
+    }
+
+    if (addingPlayerRef.current) return; // don't clobber mid-pick for round changes
 
     const newRound = cs.currentRound ?? 1;
 
     // Reset ephemeral search UI when the round advances
     if (newRound !== prevRoundRef.current && prevRoundRef.current !== 0) {
+      mySubmittedLineupRef.current = null; // clear saved pick on new round
       setSearchQuery('');
       setSearchResults([]);
       setSelectedPlayerName(null);
@@ -172,8 +188,22 @@ export function MultiplayerLineupIsRightPage() {
     setTotalRounds(cs.totalRounds ?? 5);
     setCurrentTeam(cs.currentTeam || '');
 
-    if (cs.phase === 'results') setPhase('results');
-    else if (phase === 'loading') setPhase('picking');
+    if (phase === 'loading') setPhase('picking');
+
+    // Race-condition recovery: if our submitted pick was overwritten by a
+    // concurrent write (both players confirming within ~100ms), re-write it.
+    if (
+      mySubmittedLineupRef.current?.hasPickedThisRound === true &&
+      currentPlayerId &&
+      lobby?.id &&
+      !cs.allLineups[currentPlayerId]?.hasPickedThisRound &&
+      !cs.allLineups[currentPlayerId]?.isFinished
+    ) {
+      updateCareerState(lobby.id, {
+        ...cs,
+        allLineups: { ...cs.allLineups, [currentPlayerId]: mySubmittedLineupRef.current },
+      }).catch(console.error);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobby?.career_state]);
 
@@ -239,6 +269,29 @@ export function MultiplayerLineupIsRightPage() {
     }
   }, [lobby?.status, phase, navigate, code]);
 
+  // ── Optimal last pick — compute once when results screen loads ─────────────
+  // NOTE: must live here (before any early returns) to satisfy Rules of Hooks.
+  useEffect(() => {
+    if (phase !== 'results' || !statCategory || !selectedSport) return;
+    const computeAll = async () => {
+      const results = new Map<string, OptimalPick | null>();
+      await Promise.all(
+        players.map(async (p) => {
+          const lineup = allLineups[p.player_id] as PlayerLineup | undefined;
+          if (!lineup || lineup.selectedPlayers.length === 0) { results.set(p.player_id, null); return; }
+          const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
+          const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
+          const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
+          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.statValue);
+          results.set(p.player_id, opt);
+        })
+      );
+      setOptimalPicks(results);
+    };
+    computeAll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   const handlePlayAgain = async () => {
     if (!isHost || !lobby) return;
     await updateLobbyStatus(lobby.id, 'waiting');
@@ -297,7 +350,7 @@ export function MultiplayerLineupIsRightPage() {
     setAddingPlayer(true);
     try {
       const statValue = isTotalGP
-        ? await getPlayerTotalGPForTeam(selectedPlayerName, currentTeam)
+        ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam)
         : await getPlayerStatForYearAndTeam(
             selectedSport as any,
             selectedPlayerName,
@@ -343,6 +396,9 @@ export function MultiplayerLineupIsRightPage() {
       };
 
       await updateCareerState(lobby.id, updatedCS);
+
+      // Save for race-condition recovery in the realtime sync effect
+      mySubmittedLineupRef.current = withNewPlayer;
 
       // Apply locally so UI reflects immediately
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
@@ -838,6 +894,30 @@ export function MultiplayerLineupIsRightPage() {
                       BUSTED - Exceeded {targetCap}
                     </div>
                   )}
+
+                  {/* Optimal last pick hint */}
+                  {(() => {
+                    const opt = optimalPicks.get(item.player_id);
+                    if (!opt || item.lineup.selectedPlayers.length === 0) return null;
+                    const lastPick = item.lineup.selectedPlayers[item.lineup.selectedPlayers.length - 1];
+                    return (
+                      <div className="mt-2 bg-black/40 border border-[#d4af37]/25 rounded px-3 py-2">
+                        <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-1">Optimal Last Pick</div>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-xs text-white/80 font-medium">{opt.playerName}</span>
+                            <span className="text-[10px] text-white/35 ml-2">
+                              {opt.year === 'career' ? 'Career GP' : opt.year} · {opt.team}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm text-[#d4af37] font-semibold">{fmt(opt.statValue)}</span>
+                            <span className="text-[10px] text-emerald-400/70 ml-1">+{fmt(opt.statValue - lastPick.statValue)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               ))}
             </div>

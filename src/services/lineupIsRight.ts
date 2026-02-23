@@ -5,7 +5,7 @@
  * eligible player lookup, stat aggregation, and bust detection.
  */
 
-import { loadNBACareers, loadNFLLineupPool } from './careerData';
+import { loadNBALineupPool, loadNFLLineupPool } from './careerData';
 import type {
   StatCategory,
   LineupIsRightGameState,
@@ -14,6 +14,11 @@ import type {
   SelectedPlayer,
 } from '../types/lineupIsRight';
 import type { Sport } from '../types';
+
+/** Strip diacritics and lowercase so accented names match plain-text queries (e.g. "doncic" → Dončić). */
+function normalizeStr(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 
 // ─── Position Templates ──────────────────────────────────────────────────────
 
@@ -64,7 +69,7 @@ function nflTeamMatches(dataTeam: string, targetTeam: string): boolean {
   return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;
 }
 
-const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min'];
+const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'];
 
 // ── Test flag — set to a StatCategory to force that category every round ──────
 // Set to null in production.
@@ -91,6 +96,7 @@ const STAT_LABELS: Record<StatCategory, string> = {
   ast: 'Assists',
   reb: 'Rebounds',
   min: 'Minutes Played',
+  pra: 'Points + Rebounds + Assists',
   passing_yards: 'Passing Yards',
   passing_tds: 'Passing Touchdowns',
   rushing_yards: 'Rushing Yards',
@@ -114,10 +120,12 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory): num
     //   3 good picks (avg starter) puts you near the middle of the range,
     //   5 elite picks risks a bust.
     switch (statCategory) {
-      case 'pts': return r(75, 120);  // 5× avg starter ~20 PPG = 100
-      case 'ast': return r(22, 40);   // 5× avg starter ~6 APG = 30
-      case 'reb': return r(30, 50);   // 5× avg starter ~8 RPG = 40
-      case 'min': return r(130, 175); // 5× avg starter ~34 MPG = 170
+      case 'pts': return r(75, 120);   // 5× avg starter ~20 PPG = 100
+      case 'ast': return r(22, 40);    // 5× avg starter ~6 APG = 30
+      case 'reb': return r(30, 50);    // 5× avg starter ~8 RPG = 40
+      case 'min': return r(130, 175);  // 5× avg starter ~34 MPG = 170
+      case 'pra': return r(120, 225);  // 5× avg starter ~22+7+5=34 PRA; elite ~45+ PRA
+      case 'total_gp': return r(700, 2000); // 5 picks of career GP with one team; franchise guy ~300-500+ GP
       default: return 100;
     }
   } else {
@@ -261,14 +269,14 @@ export async function searchPlayersByNameAndYear(
   year: number
 ): Promise<PlayerSeason[]> {
   try {
-    const searchLower = playerName.toLowerCase();
+    const searchLower = normalizeStr(playerName);
     
     if (sport === 'nba') {
-      const players = await loadNBACareers();
+      const players = await loadNBALineupPool();
       const seasonStr = `${year}-${String(year + 1).slice(-2)}`;
       
       const results = players
-        .filter(p => p.player_name.toLowerCase().includes(searchLower))
+        .filter(p => normalizeStr(p.player_name).includes(searchLower))
         .flatMap(p =>
           p.seasons
             .filter(s => s.season === seasonStr)
@@ -294,7 +302,7 @@ export async function searchPlayersByNameAndYear(
       const seasonStr = `${year}`;
       
       const results = players
-        .filter(p => p.player_name.toLowerCase().includes(searchLower))
+        .filter(p => normalizeStr(p.player_name).includes(searchLower))
         .flatMap(p =>
           p.seasons
             .filter(s => s.season === seasonStr)
@@ -331,13 +339,13 @@ export async function searchPlayersByName(
   playerName: string
 ): Promise<PlayerSeason[]> {
   try {
-    const searchLower = playerName.toLowerCase();
+    const searchLower = normalizeStr(playerName);
     
     if (sport === 'nba') {
-      const players = await loadNBACareers();
+      const players = await loadNBALineupPool();
       
       const results = players
-        .filter(p => p.player_name.toLowerCase().includes(searchLower))
+        .filter(p => normalizeStr(p.player_name).includes(searchLower))
         .flatMap(p =>
           p.seasons.map(s => ({
             playerId: p.player_id,
@@ -360,7 +368,7 @@ export async function searchPlayersByName(
       const players = await loadNFLLineupPool();
       
       const results = players
-        .filter(p => p.player_name.toLowerCase().includes(searchLower))
+        .filter(p => normalizeStr(p.player_name).includes(searchLower))
         .flatMap(p =>
           p.seasons.map(s => ({
             playerId: p.player_id,
@@ -396,11 +404,11 @@ export async function searchPlayersByNameOnly(
   playerName: string
 ): Promise<Array<{ playerId: string | number; playerName: string }>> {
   try {
-    const searchLower = playerName.toLowerCase();
+    const searchLower = normalizeStr(playerName);
     if (sport === 'nba') {
-      const players = await loadNBACareers();
+      const players = await loadNBALineupPool();
       const results = players
-        .filter(p => p.player_name.toLowerCase().includes(searchLower))
+        .filter(p => normalizeStr(p.player_name).includes(searchLower))
         .map(p => ({ playerId: p.player_id, playerName: p.player_name }));
       // Deduplicate by playerId
       const map = new Map<number | string, string>();
@@ -409,7 +417,7 @@ export async function searchPlayersByNameOnly(
     } else {
       const players = await loadNFLLineupPool();
       const results = players
-        .filter(p => p.player_name.toLowerCase().includes(searchLower))
+        .filter(p => normalizeStr(p.player_name).includes(searchLower))
         .map(p => ({ playerId: p.player_id, playerName: p.player_name }));
       const map = new Map<number | string, string>();
       results.forEach(r => map.set(r.playerId, r.playerName));
@@ -433,8 +441,8 @@ export async function getPlayerYearsOnTeam(
 ): Promise<string[]> {
   try {
     if (sport === 'nba') {
-      const players = await loadNBACareers();
-      const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
+      const players = await loadNBALineupPool();
+      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
       
       if (!player) return [];
       
@@ -449,7 +457,7 @@ export async function getPlayerYearsOnTeam(
     } else {
       // NFL
       const players = await loadNFLLineupPool();
-      const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
+      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
       
       if (!player) return [];
       
@@ -477,8 +485,8 @@ export async function getPlayerStatForYearAndTeam(
 ): Promise<number> {
   try {
     if (sport === 'nba') {
-      const players = await loadNBACareers();
-      const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
+      const players = await loadNBALineupPool();
+      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
       
       if (!player) return 0;
       
@@ -491,13 +499,18 @@ export async function getPlayerStatForYearAndTeam(
       );
       
       if (!season) return 0;
-      
+
+      // PRA is a computed stat: pts + reb + ast for that season
+      if (statCategory === 'pra') {
+        return (season.pts ?? 0) + (season.reb ?? 0) + (season.ast ?? 0);
+      }
+
       const statKey = statCategory as keyof typeof season;
       return (season[statKey] as number) ?? 0;
     } else {
       // NFL
       const players = await loadNFLLineupPool();
-      const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
+      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
       
       if (!player) return 0;
       
@@ -521,28 +534,36 @@ export async function getPlayerStatForYearAndTeam(
 }
 
 /**
- * Get a player's total career games played (GP) for a given NFL team.
+ * Get a player's total career games played (GP) for a given team.
  * Sums GP across ALL seasons the player was on that team.
  * Returns 0 if the player never played for that team.
+ * Works for both NBA and NFL — no year selection needed.
  */
 export async function getPlayerTotalGPForTeam(
+  sport: Sport,
   playerName: string,
   team: string
 ): Promise<number> {
   try {
-    const players = await loadNFLLineupPool();
-    const player = players.find(p => p.player_name.toLowerCase() === playerName.toLowerCase());
-    if (!player) return 0;
-
-    const total = player.seasons
-      .filter(s =>
-        isDivisionRound(team)
-          ? teamInDivision(s.team, team)
-          : nflTeamMatches(s.team, team)
-      )
-      .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
-
-    return total;
+    if (sport === 'nba') {
+      const players = await loadNBALineupPool();
+      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
+      if (!player) return 0;
+      return player.seasons
+        .filter(s => s.team === team)
+        .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+    } else {
+      const players = await loadNFLLineupPool();
+      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
+      if (!player) return 0;
+      return player.seasons
+        .filter(s =>
+          isDivisionRound(team)
+            ? teamInDivision(s.team, team)
+            : nflTeamMatches(s.team, team)
+        )
+        .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+    }
   } catch (error) {
     console.error('Error getting player total GP:', error);
     return 0;
@@ -633,4 +654,102 @@ export function calculateWinners(
 
   // Among non-busted, highest total <= targetCap wins
   return [...nonBusted, ...busted];
+}
+
+export interface OptimalPick {
+  playerName: string;
+  year: string;   // season string or 'career' for total_gp
+  team: string;   // actual team the player was on
+  statValue: number;
+}
+
+/**
+ * Find the optimal player the user could have picked for their last slot.
+ *
+ * Scans every player-season for the given team and finds the one with the
+ * highest stat value that fits within the remaining budget (targetCap minus
+ * total before the last pick) and beats what the user actually got.
+ *
+ * Returns null if no better option exists (user hit the cap exactly, busted
+ * with nothing better fitting, or their pick was already optimal).
+ */
+export async function findOptimalLastPick(
+  sport: Sport,
+  team: string,
+  statCategory: StatCategory,
+  remainingBudget: number,
+  actualStatValue: number,
+): Promise<OptimalPick | null> {
+  // No headroom left, or they already hit exactly on the dot
+  if (remainingBudget <= 0 || remainingBudget === actualStatValue) return null;
+
+  try {
+    let best: OptimalPick | null = null;
+
+    if (sport === 'nba') {
+      const players = await loadNBALineupPool();
+
+      if (statCategory === 'total_gp') {
+        for (const p of players) {
+          const totalGP = p.seasons
+            .filter(s => s.team === team)
+            .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+          if (totalGP > actualStatValue && totalGP <= remainingBudget) {
+            if (!best || totalGP > best.statValue) {
+              best = { playerName: p.player_name, year: 'career', team, statValue: totalGP };
+            }
+          }
+        }
+      } else {
+        for (const p of players) {
+          for (const s of p.seasons) {
+            if (s.team !== team) continue;
+            const val = statCategory === 'pra'
+              ? ((s.pts ?? 0) + (s.reb ?? 0) + (s.ast ?? 0))
+              : ((s as any)[statCategory] ?? 0);
+            if (val > actualStatValue && val <= remainingBudget) {
+              if (!best || val > best.statValue) {
+                best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val };
+              }
+            }
+          }
+        }
+      }
+    } else {
+      const players = await loadNFLLineupPool();
+
+      if (statCategory === 'total_gp') {
+        for (const p of players) {
+          const totalGP = p.seasons
+            .filter(s => isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team))
+            .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+          if (totalGP > actualStatValue && totalGP <= remainingBudget) {
+            if (!best || totalGP > best.statValue) {
+              best = { playerName: p.player_name, year: 'career', team, statValue: totalGP };
+            }
+          }
+        }
+      } else {
+        for (const p of players) {
+          for (const s of p.seasons) {
+            const teamMatch = isDivisionRound(team)
+              ? teamInDivision(s.team, team)
+              : nflTeamMatches(s.team, team);
+            if (!teamMatch) continue;
+            const val = (s as any)[statCategory] ?? 0;
+            if (val > actualStatValue && val <= remainingBudget) {
+              if (!best || val > best.statValue) {
+                best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val };
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return best;
+  } catch (err) {
+    console.error('Error finding optimal last pick:', err);
+    return null;
+  }
 }

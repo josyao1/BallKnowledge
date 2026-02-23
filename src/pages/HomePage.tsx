@@ -90,7 +90,12 @@ export function HomePage() {
 
   // Responsive fan scale — track viewport width and scale card dimensions down on mobile
   const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
+  // Detect touch-primary devices (no fine hover pointer). On these devices we skip
+  // whileHover / onHoverStart / onHoverEnd entirely and rely only on tappedCard.
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   useEffect(() => {
+    const mq = window.matchMedia('(hover: none) and (pointer: coarse)');
+    setIsTouchDevice(mq.matches);
     const update = () => setVw(window.innerWidth);
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
@@ -523,7 +528,19 @@ export function HomePage() {
                 >
                   {GAMES.map((game, i) => {
                     const fp = scaledPositions[i];
-                    const isActive = hoveredCard === game.id || tappedCard === game.id;
+                    // On touch: only tappedCard drives active state (hover is unreliable on touch)
+                    // On desktop: either hover or tap activates the card
+                    const isActive = isTouchDevice
+                      ? tappedCard === game.id
+                      : hoveredCard === game.id || tappedCard === game.id;
+
+                    // Desktop-only hover props — omitted entirely on touch to prevent
+                    // stuck cards, oscillation, and pointer-event misfires
+                    const hoverProps = isTouchDevice ? {} : {
+                      whileHover: { y: fp.y - popDist, rotate: 0, scale: 1.08, transition: { type: 'spring' as const, stiffness: 380, damping: 28 } },
+                      onHoverStart: () => setHoveredCardDebounced(game.id),
+                      onHoverEnd:   () => setHoveredCardDebounced(null),
+                    };
 
                     return (
                       <motion.div
@@ -531,11 +548,8 @@ export function HomePage() {
                         // Initial deal: cards fly in from above with stagger
                         initial={{ x: fp.x, y: -(containerH + 20), rotate: (i - 2) * 14, opacity: 0 }}
                         animate={{ x: fp.x, y: isActive ? fp.y - popDist : fp.y, rotate: isActive ? 0 : fp.rotate, scale: isActive ? 1.08 : 1, opacity: 1 }}
-                        // Hover: pop up, straighten, slight scale
-                        whileHover={{ y: fp.y - popDist, rotate: 0, scale: 1.08, transition: { type: 'spring', stiffness: 380, damping: 28 } }}
                         transition={{ delay: i * 0.09, type: 'spring', stiffness: 220, damping: 26 }}
-                        onHoverStart={() => setHoveredCardDebounced(game.id)}
-                        onHoverEnd={() => setHoveredCardDebounced(null)}
+                        {...hoverProps}
                         onClick={(e) => {
                           e.stopPropagation();
                           setTappedCard(prev => prev === game.id ? null : game.id);

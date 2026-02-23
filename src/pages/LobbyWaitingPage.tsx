@@ -28,6 +28,15 @@ import { YearSelector } from '../components/home/YearSelector';
 import { TEAM_COLORS } from '../utils/teamUtils';
 import type { Sport } from '../types';
 
+const LINEUP_STAT_ABBR: Record<string, string> = {
+  random: 'RANDOM',
+  pts: 'PTS', ast: 'AST', reb: 'REB', min: 'MIN', pra: 'PRA',
+  passing_yards: 'PASS YD', passing_tds: 'PASS TD',
+  rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD',
+  receiving_yards: 'REC YD', receiving_tds: 'REC TD',
+  total_gp: 'TOT GP',
+};
+
 type GenericTeam = {
   id: number;
   abbreviation: string;
@@ -82,6 +91,7 @@ export function LobbyWaitingPage() {
   const [editWinTarget, setEditWinTarget] = useState(3);
   const [editCareerFrom, setEditCareerFrom] = useState(0);
   const [editCareerTo, setEditCareerTo] = useState(0);
+  const [editLineupStat, setEditLineupStat] = useState<string>('random');
 
   // Join prompt for new players arriving via direct link
   const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
@@ -127,6 +137,7 @@ export function LobbyWaitingPage() {
       setEditWinTarget(cs.win_target || 3);
       setEditCareerFrom(cs.career_from || 0);
       setEditCareerTo(cs.career_to || 0);
+      setEditLineupStat((cs.forcedStatCategory as string | null) || 'random');
 
       // Find team from the current lobby
       const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -412,7 +423,8 @@ export function LobbyWaitingPage() {
       const winTarget = careerState.win_target || 3;
 
       // Generate stat category and cap once for all players
-      const statCategory = selectRandomStatCategory(sport);
+      const forcedStat = careerState.forcedStatCategory as string | null | undefined;
+      const statCategory = (forcedStat && forcedStat !== 'random') ? forcedStat as any : selectRandomStatCategory(sport);
       const targetCap = generateTargetCap(sport, statCategory);
 
       // Fetch current player list to initialize empty lineups keyed by player_id
@@ -532,12 +544,12 @@ export function LobbyWaitingPage() {
       // a race condition where handleCareerStart reads stale career_state
       setLobby({ ...lobby, career_state: newCareerState });
     } else if (editGameType === 'lineup-is-right') {
-      // Lineup Is Right mode: update sport and win target
+      // Lineup Is Right mode: update sport and forced stat category
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
         sport: editSport,
-        win_target: editWinTarget,
+        forcedStatCategory: editLineupStat === 'random' ? null : editLineupStat,
       };
       await updateCareerState(newCareerState);
       await updateSettings({ sport: editSport });
@@ -1115,7 +1127,7 @@ export function LobbyWaitingPage() {
                       {(['nba', 'nfl'] as const).map((s) => (
                         <button
                           key={s}
-                          onClick={() => setEditSport(s)}
+                          onClick={() => { setEditSport(s); setEditLineupStat('random'); }}
                           className={`flex-1 py-2 rounded-sm sports-font text-xs uppercase tracking-wider transition-all ${
                             editSport === s
                               ? s === 'nba' ? 'bg-orange-500 text-white' : 'bg-[#013369] text-white'
@@ -1127,21 +1139,24 @@ export function LobbyWaitingPage() {
                       ))}
                     </div>
 
-                    {/* Win Target */}
+                    {/* Stat Category */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">First To</div>
-                      <div className="flex gap-2">
-                        {[2, 3, 4, 5, 7].map(n => (
+                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Stat Category</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(['random', ...(editSport === 'nba'
+                          ? ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp']
+                          : ['passing_yards', 'passing_tds', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'total_gp']
+                        )] as string[]).map((cat) => (
                           <button
-                            key={n}
-                            onClick={() => setEditWinTarget(n)}
-                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                              editWinTarget === n
-                                ? 'bg-[#ec4899] text-white'
+                            key={cat}
+                            onClick={() => setEditLineupStat(cat)}
+                            className={`px-3 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+                              editLineupStat === cat
+                                ? cat === 'random' ? 'bg-[#d4af37] text-black font-bold' : 'bg-[#ec4899] text-white'
                                 : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
                             }`}
                           >
-                            {n}
+                            {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
                           </button>
                         ))}
                       </div>

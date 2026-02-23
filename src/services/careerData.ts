@@ -72,6 +72,7 @@ export interface ScrambleFilters {
 // ─── Lazy loaders (promise shared across all callers) ─────────────────────────
 
 let _nbaPromise: Promise<NBACareerPlayer[]> | null = null;
+let _nbaLineupPoolPromise: Promise<NBACareerPlayer[]> | null = null;
 let _nflPromise: Promise<NFLCareerPlayer[]> | null = null;
 let _nflLineupPoolPromise: Promise<NFLCareerPlayer[]> | null = null;
 let _nflDefensiveNamesPromise: Promise<string[]> | null = null;
@@ -94,6 +95,36 @@ export function loadNBACareers(): Promise<NBACareerPlayer[]> {
   return _nbaPromise;
 }
 
+/**
+ * Extended NBA player pool for Lineup Is Right and Scramble.
+ * Merges nba_careers.json with nba_lineup_pool.json, which includes recent
+ * players who don't yet meet the 5-season / 10 PPG thresholds
+ * (e.g. Chet Holmgren, Victor Wembanyama, Brandin Podziemski).
+ * Falls back gracefully if nba_lineup_pool.json hasn't been generated yet.
+ */
+export function loadNBALineupPool(): Promise<NBACareerPlayer[]> {
+  if (!_nbaLineupPoolPromise) {
+    _nbaLineupPoolPromise = Promise.all([
+      fetch('/data/nba_careers.json')
+        .then(r => { if (!r.ok) throw new Error('Failed to load nba_careers.json'); return r.json(); }),
+      fetch('/data/nba_lineup_pool.json')
+        .then(r => r.ok ? r.json() : [] as NBACareerPlayer[])
+        .catch(() => [] as NBACareerPlayer[]), // pool file optional — falls back to empty
+    ])
+    .then(([base, pool]: [NBACareerPlayer[], NBACareerPlayer[]]) => {
+      const map = new Map<number, NBACareerPlayer>();
+      base.forEach(p => map.set(p.player_id, p));
+      pool.forEach(p => {
+        const existing = map.get(p.player_id);
+        map.set(p.player_id, existing ? mergeNBAPlayer(existing, p) : p);
+      });
+      return Array.from(map.values());
+    })
+    .catch(err => { _nbaLineupPoolPromise = null; throw err; });
+  }
+  return _nbaLineupPoolPromise;
+}
+
 export function loadNFLCareers(): Promise<NFLCareerPlayer[]> {
   if (!_nflPromise) {
     _nflPromise = fetch('/data/nfl_careers.json')
@@ -103,7 +134,18 @@ export function loadNFLCareers(): Promise<NFLCareerPlayer[]> {
   return _nflPromise;
 }
 
-/** Merge seasons from two player records, union by season year (later file wins per year). */
+/** Merge seasons from two NBA player records, union by season string (later file wins). */
+function mergeNBAPlayer(base: NBACareerPlayer, incoming: NBACareerPlayer): NBACareerPlayer {
+  const seasonMap = new Map<string, NBASeason>();
+  base.seasons.forEach(s => seasonMap.set(s.season, s));
+  incoming.seasons.forEach(s => seasonMap.set(s.season, s)); // incoming wins on same season
+  return {
+    ...incoming, // use incoming bio (more recent data)
+    seasons: Array.from(seasonMap.values()).sort((a, b) => a.season.localeCompare(b.season)),
+  };
+}
+
+/** Merge seasons from two NFL player records, union by season year (later file wins per year). */
 function mergeNFLPlayer(base: NFLCareerPlayer, incoming: NFLCareerPlayer): NFLCareerPlayer {
   const seasonMap = new Map<string, NFLSeason>();
   base.seasons.forEach(s => seasonMap.set(s.season, s));
@@ -229,7 +271,7 @@ function isNFLScrambleEligible(p: NFLCareerPlayer, mostRecentYear: number): bool
 export async function getRandomNBAScramblePlayer(
   filters?: ScrambleFilters
 ): Promise<NBACareerPlayer | null> {
-  const all = await loadNBACareers();
+  const all = await loadNBALineupPool();
   const mostRecentYear = getMostRecentNBAYear(all);
   let pool = all.filter(p => isNBAScrambleEligible(p, mostRecentYear));
   if (filters?.careerTo) pool = pool.filter(p => nbaEndYear(p) >= filters.careerTo!);
