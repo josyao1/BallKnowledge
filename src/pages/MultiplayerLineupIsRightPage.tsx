@@ -680,7 +680,7 @@ export function MultiplayerLineupIsRightPage() {
         {/* ── Header ── */}
         <header className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
           <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
-            <h1 className="retro-title text-xl text-[#d4af37]">Lineup Is Right</h1>
+            <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
             <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
               <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
             </div>

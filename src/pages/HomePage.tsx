@@ -39,14 +39,15 @@ type GameCard = {
   hasSolo: boolean;
   soloPath?: string;
   multiPath?: string;
+  image: string;
 };
 
 const GAMES: GameCard[] = [
-  { id: 'roster',   abbr: 'RR', name: 'Roster Royale',    tagline: 'Name every player from a mystery team & season',      color: '#d4af37', hasSolo: true  },
-  { id: 'career',   abbr: 'CA', name: 'Career Arc',        tagline: "Trace a player's career — team by team",              color: '#22c55e', hasSolo: true,  soloPath: '/career'          },
-  { id: 'scramble', abbr: 'NS', name: 'Name Scramble',     tagline: 'Unscramble athlete names before time runs out',        color: '#3b82f6', hasSolo: true,  soloPath: '/scramble'        },
-  { id: 'lineup',   abbr: 'LR', name: 'Lineup Is Right',   tagline: "Chase the stat cap with a lineup — don't bust",       color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right' },
-  { id: 'rollcall', abbr: 'RC', name: 'Roll Call',         tagline: 'Everyone shouts out players from the same team',      color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create' },
+  { id: 'roster',   abbr: 'RR', name: 'Roster Royale',    tagline: 'Name every player from a mystery team & season',      color: '#d4af37', hasSolo: true,  soloPath: '/roster-royale', image: '/images/roster-royale.svg' },
+  { id: 'career',   abbr: 'CA', name: 'Career Arc',        tagline: "Trace a player's career — team by team",              color: '#22c55e', hasSolo: true,  soloPath: '/career', image: '/images/career-arc.svg' },
+  { id: 'scramble', abbr: 'NS', name: 'Name Scramble',     tagline: 'Unscramble athlete names before time runs out',        color: '#3b82f6', hasSolo: true,  soloPath: '/scramble' , image: '/images/name-scramble.svg' },
+  { id: 'lineup',   abbr: 'CC', name: 'Cap Crunch',        tagline: "Chase the stat cap with a lineup — don't bust",       color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right', image: '/images/cap-crunch.svg' },
+  { id: 'rollcall', abbr: 'RC', name: 'Roll Call',         tagline: 'Work together to name as many athletes as you can',      color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
 ];
 
 // Fan arc positions: x/y offsets from card center origin, rotation degrees
@@ -106,6 +107,8 @@ export function HomePage() {
   const cardH = Math.round(235 * fanScale);
   const containerH = Math.round(360 * fanScale);
   const popDist = Math.round(100 * fanScale);
+  const fanToJoinGap = Math.round(42 * fanScale);
+  const deckYOffset = Math.round(50 * fanScale);
   const scaledPositions = FAN_POSITIONS.map(fp => ({
     x: Math.round(fp.x * fanScale),
     y: Math.round(fp.y * fanScale),
@@ -199,7 +202,7 @@ export function HomePage() {
 
   const sportArtA = sport === 'nba' ? '/images/Group 27.svg' : '/images/group23.svg';
   const sportArtB = sport === 'nba' ? '/images/Group 28.svg' : '/images/g28.svg';
-  const deckArt   = sport === 'nba' ? '/images/Group 29.svg' : '/images/g29.svg';
+  const deckArt   = sport === 'nba' ? '/images/Group 29 (2).svg' : '/images/Group 29 (1).svg';
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-[#111]">
@@ -284,7 +287,7 @@ export function HomePage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
                 className="flex flex-col items-center z-10"
-                style={{ gap: Math.round(32 * fanScale) }}
+                style={{ gap: Math.round(32 * fanScale), transform: `translateY(-${deckYOffset}px)` }}
               >
                 <div className="text-center">
                   <h2
@@ -308,25 +311,25 @@ export function HomePage() {
                   style={{ width: Math.round(200 * fanScale), height: Math.round(280 * fanScale) }}
                 >
                   {/* Offset shadow cards */}
-                  <div className="absolute inset-0 rounded-2xl border-2 border-[#d4af37]/25 bg-[#161616]"
+                  <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff]/25 bg-[#161616]"
                     style={{ transform: `rotate(8deg) translate(${Math.round(10 * fanScale)}px, ${Math.round(10 * fanScale)}px)` }} />
-                  <div className="absolute inset-0 rounded-2xl border-2 border-[#d4af37]/45 bg-[#181818]"
+                  <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff]/45 bg-[#181818]"
                     style={{ transform: `rotate(4deg) translate(${Math.round(5 * fanScale)}px, ${Math.round(5 * fanScale)}px)` }} />
                   {/* Top card — SVG fills the full face */}
-                  <div className="absolute inset-0 rounded-2xl border-2 border-[#d4af37] overflow-hidden shadow-2xl">
+                  <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff] overflow-hidden shadow-2xl">
                     <img
                       src={deckArt}
                       alt=""
                       className="absolute inset-0 w-full h-full"
                       style={{ objectFit: 'cover', objectPosition: 'center' }}
                     />
-                    {/* Subtle gold tint overlay */}
-                    <div className="absolute inset-0 bg-[#d4af37]/10" />
+                    {/* Subtle gold tint overlay
+                    <div className="absolute inset-0 bg-[#d4af37]/10" /> */}
                     {/* Corner marks */}
-                    <div className="absolute top-2 left-2.5 sports-font font-bold text-[#d4af37]/80 z-10 leading-none"
+                    {/* <div className="absolute top-2 left-2.5 sports-font font-bold text-[#d4af37]/80 z-10 leading-none"
                       style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div>
                     <div className="absolute bottom-2 right-2.5 sports-font font-bold text-[#d4af37]/80 z-10 rotate-180 leading-none"
-                      style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div>
+                      style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div> */}
                   </div>
                 </motion.button>
               </motion.div>
@@ -452,7 +455,7 @@ export function HomePage() {
                   <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
                     style={{ backgroundImage: 'repeating-linear-gradient(45deg, #22c55e 0, #22c55e 1px, transparent 0, transparent 50%)', backgroundSize: '14px 14px' }} />
                   <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
-                    <img src={sportArtB} alt="" className="w-full h-full" style={{ objectFit: 'cover' }} />
+                    {/* <img src={sportArtB} alt="" className="w-full h-full" style={{ objectFit: 'cover' }} /> */}
                   </div>
 
                   <div className="relative z-10 p-5 flex flex-col gap-4">
@@ -518,7 +521,8 @@ export function HomePage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex flex-col items-center gap-6 z-10 w-full"
+                className="flex flex-col items-center z-10 w-full"
+                style={{ transform: `translateY(-${deckYOffset}px)`, rowGap: fanToJoinGap }}
               >
                 {/* Fan container — cards are absolutely positioned relative to this */}
                 <div
@@ -561,7 +565,7 @@ export function HomePage() {
                         <div className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
                           style={{ borderColor: game.color }}>
                           <img
-                            src={deckArt}
+                            src={game.image}
                             alt=""
                             className="absolute inset-0 w-full h-full"
                             style={{ objectFit: 'cover', objectPosition: 'center', opacity: 0.8 }}
@@ -569,7 +573,7 @@ export function HomePage() {
                           {/* Subtle dark overlay so corners are readable */}
                           <div className="absolute inset-0 bg-black/20" />
                           {/* Corner abbr */}
-                          <div className="absolute top-1.5 left-2 sports-font font-bold leading-none z-10" style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(11 * fanScale)) }}>
+                          <div className="absolute top-1.5 left-2 sports-font font-bold leading-none z-10" style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(10 * fanScale)) }}>
                             {game.abbr}
                           </div>
                           <div className="absolute bottom-1.5 right-2 rotate-180 sports-font font-bold leading-none z-10" style={{ color: `${game.color}80`, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(11 * fanScale)) }}>
@@ -628,9 +632,9 @@ export function HomePage() {
 
                 <button
                   onClick={() => navigate('/lobby/join')}
-                  className="sports-font text-[10px] text-[#444] hover:text-[#777] tracking-widest uppercase transition z-10"
+                  className="z-10 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sports-font text-[10px] sm:text-xs tracking-[0.2em] uppercase transition-all bg-[#1a1a1a] border border-[#d4af37]/50 text-[var(--vintage-cream)] hover:border-[#d4af37] hover:bg-[#202020] shadow-[0_0_0_1px_rgba(212,175,55,0.2)]"
                 >
-                  Join existing lobby →
+                  Join Existing Lobby →
                 </button>
               </motion.div>
             )}

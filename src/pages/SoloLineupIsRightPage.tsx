@@ -243,7 +243,7 @@ export function SoloLineupIsRightPage() {
         
         <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="retro-title text-2xl text-[#d4af37]">Lineup Is Right</div>
+            <div className="retro-title text-2xl text-[#d4af37]">Cap Crunch</div>
             <button onClick={() => navigate('/')} className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white/70 font-semibold rounded transition border border-white/20 hover:border-white/40">Back</button>
           </div>
         </header>
@@ -350,7 +350,7 @@ export function SoloLineupIsRightPage() {
             >
               ← Home
             </button>
-            <h1 className="retro-title text-2xl text-[#d4af37]">Lineup Is Right</h1>
+            <h1 className="retro-title text-2xl text-[#d4af37]">Cap Crunch</h1>
             <div className="w-16" />
           </div>
           {/* Team / Division Display */}
