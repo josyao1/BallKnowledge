@@ -708,7 +708,7 @@ export async function findOptimalLastPick(
               ? ((s.pts ?? 0) + (s.reb ?? 0) + (s.ast ?? 0))
               : ((s as any)[statCategory] ?? 0);
             if (val > actualStatValue && val <= remainingBudget) {
-              if (!best || val > best.statValue) {
+              if (!best || val >= best.statValue) {
                 best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val };
               }
             }
@@ -738,7 +738,7 @@ export async function findOptimalLastPick(
             if (!teamMatch) continue;
             const val = (s as any)[statCategory] ?? 0;
             if (val > actualStatValue && val <= remainingBudget) {
-              if (!best || val > best.statValue) {
+              if (!best || val >= best.statValue) {
                 best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val };
               }
             }

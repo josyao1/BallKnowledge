@@ -58,6 +58,7 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'receiving_yards': return 'REC YD';
     case 'receiving_tds': return 'REC TD';
     case 'total_gp': return 'TOT GP';
+    case 'pra': return 'PRA';
     default: return 'STAT';
   }
 }
