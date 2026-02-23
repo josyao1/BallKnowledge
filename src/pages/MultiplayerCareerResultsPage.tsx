@@ -64,6 +64,9 @@ export function MultiplayerCareerResultsPage() {
     setIsResetting(true);
     const cs = (lobby.career_state as any) || {};
     await resetMatchForPlayAgain(lobby.id, cs.win_target || 3, cs.career_from || 0, cs.career_to || 0);
+    // Update local store to 'waiting' before navigating so LobbyWaitingPage's
+    // status watcher doesn't see 'finished' and redirect back to results.
+    setLobby({ ...lobby, status: 'waiting' });
     navigate(`/lobby/${code}`);
   };
 

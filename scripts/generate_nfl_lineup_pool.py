@@ -187,6 +187,9 @@ def main():
                     "rushing_tds":     safe_int(row.get("rushing_tds")),
                     "receptions":      safe_int(row.get("receptions")),
                     "receiving_yards": safe_int(row.get("receiving_yards")),
+                    "receiving_tds":   safe_int(row.get("receiving_tds")),
+                    "passing_yards":   safe_int(row.get("passing_yards")),
+                    "passing_tds":     safe_int(row.get("passing_tds")),
                 })
             else:  # WR / TE
                 base.update({
@@ -196,6 +199,8 @@ def main():
                     "receiving_tds":   safe_int(row.get("receiving_tds")),
                     "rushing_yards":   safe_int(row.get("rushing_yards")),
                     "rushing_tds":     safe_int(row.get("rushing_tds")),
+                    "passing_yards":   safe_int(row.get("passing_yards")),
+                    "passing_tds":     safe_int(row.get("passing_tds")),
                 })
 
             seasons.append(base)

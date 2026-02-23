@@ -82,7 +82,7 @@ export function MultiplayerNameScramblePage() {
   // ── Load lobby on mount ──
   useEffect(() => {
     if (!code) { navigate('/'); return; }
-    if (lobby) return;
+    if (lobby?.career_state) return;
 
     findLobbyByCode(code).then(result => {
       if (!result.lobby) { navigate('/'); return; }
@@ -479,7 +479,7 @@ export function MultiplayerNameScramblePage() {
   // scrambled name off screen. Name is pinned at top, input pinned at bottom,
   // everything else scrolls in the middle.
   return (
-    <div className="h-[100dvh] bg-[#111] text-white flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-[#111] text-white flex flex-col overflow-hidden">
 
       {/* ── PINNED TOP: always visible even when keyboard is open ── */}
       <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 bg-[#111]">

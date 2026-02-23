@@ -68,6 +68,7 @@ export function MultiplayerNameScrambleResultsPage() {
     setIsResetting(true);
     const cs = (lobby.career_state as any) || {};
     await resetMatchForPlayAgain(lobby.id, cs.win_target || 20, 0, cs.career_to || 0);
+    setLobby({ ...lobby, status: 'waiting' });
     navigate(`/lobby/${code}`);
   };
 
