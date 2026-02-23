@@ -40,17 +40,18 @@ export interface PlayerLineup {
 }
 
 export type StatCategory =
-  | 'pts'    // NBA: points
-  | 'ast'    // NBA: assists
-  | 'reb'    // NBA: rebounds
-  | 'min'    // NBA: minutes
+  | 'pts'    // NBA: points per game
+  | 'ast'    // NBA: assists per game
+  | 'reb'    // NBA: rebounds per game
+  | 'min'    // NBA: minutes per game
+  | 'pra'    // NBA: points + rebounds + assists per game
   | 'passing_yards'  // NFL: passing yards
   | 'passing_tds'    // NFL: passing touchdowns
   | 'rushing_yards'  // NFL: rushing yards
   | 'rushing_tds'    // NFL: rushing touchdowns
   | 'receiving_yards'  // NFL: receiving yards
   | 'receiving_tds'    // NFL: receiving touchdowns
-  | 'total_gp';        // NFL: total games played for a team (career, no year selection)
+  | 'total_gp';        // NBA/NFL: total career games played for a team (no year selection)
 
 export interface LineupIsRightGameState {
   sport: Sport;

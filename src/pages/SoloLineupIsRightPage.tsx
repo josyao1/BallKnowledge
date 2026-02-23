@@ -9,7 +9,7 @@
  * 5. Goal: reach a target cap without exceeding it
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -18,10 +18,15 @@ import {
   searchPlayersByNameOnly,
   getPlayerYearsOnTeam,
   getPlayerStatForYearAndTeam,
+  getPlayerTotalGPForTeam,
   addPlayerToLineup,
   calculateLineupStat,
   assignRandomTeam,
+  isDivisionRound,
+  NFL_DIVISIONS,
+  findOptimalLastPick,
 } from '../services/lineupIsRight';
+import type { OptimalPick } from '../services/lineupIsRight';
 import { getTeamByAbbreviation } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import type { Sport } from '../types';
@@ -41,12 +46,14 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'ast': return 'AST';
     case 'reb': return 'REB';
     case 'min': return 'MIN';
+    case 'pra': return 'PRA';
     case 'passing_yards': return 'PASS YD';
     case 'passing_tds': return 'PASS TD';
     case 'rushing_yards': return 'RUSH YD';
     case 'rushing_tds': return 'RUSH TD';
     case 'receiving_yards': return 'REC YD';
     case 'receiving_tds': return 'REC TD';
+    case 'total_gp': return 'TOT GP';
     default: return 'STAT';
   }
 }
@@ -75,6 +82,9 @@ export function SoloLineupIsRightPage() {
   const [lineup, setLineup] = useState<PlayerLineup | null>(null);
   const [currentTeam, setCurrentTeam] = useState<string>('');
 
+  // Results hint
+  const [optimalPick, setOptimalPick] = useState<OptimalPick | null | undefined>(undefined);
+
   // Playing phase state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
@@ -86,9 +96,9 @@ export function SoloLineupIsRightPage() {
   const [addingPlayer, setAddingPlayer] = useState(false);
 
   // Initialize game
-  const handleStartGame = async (sport: Sport) => {
+  const handleStartGame = async (sport: Sport, forcedCategory?: StatCategory | null) => {
     setSelectedSport(sport);
-    const category = selectRandomStatCategory(sport);
+    const category = forcedCategory ?? selectRandomStatCategory(sport);
     const cap = generateTargetCap(sport, category);
     const team = assignRandomTeam(sport);
 
@@ -126,11 +136,16 @@ export function SoloLineupIsRightPage() {
     }
   };
 
+  const isTotalGP = statCategory === 'total_gp';
+
   // Select a player from search results
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
     setSelectedPlayerName(player.playerName);
     setSelectedYear('');
     setAvailableYears([]);
+
+    // total_gp mode: no year needed — go straight to confirm
+    if (isTotalGP) return;
 
     // Get years this player was on the current team
     setLoadingYears(true);
@@ -149,28 +164,29 @@ export function SoloLineupIsRightPage() {
     }
   };
 
-  // Confirm year selection and add player to lineup
+  // Confirm year selection (or career GP) and add player to lineup
   const handleConfirmYear = async () => {
-    if (!selectedPlayerName || !selectedYear || !lineup || !selectedSport || !statCategory) {
-      return;
-    }
+    if (!selectedPlayerName || !lineup || !selectedSport || !statCategory) return;
+    if (!isTotalGP && !selectedYear) return;
 
     setAddingPlayer(true);
     try {
-      // Get the stat value for this player in this year on this team
-      const statValue = await getPlayerStatForYearAndTeam(
-        selectedSport,
-        selectedPlayerName!,
-        currentTeam,
-        selectedYear,
-        statCategory
-      );
+      // Get the stat value — total_gp sums all career GP with the team; others are per-season
+      const statValue = isTotalGP
+        ? await getPlayerTotalGPForTeam(selectedSport, selectedPlayerName, currentTeam)
+        : await getPlayerStatForYearAndTeam(
+            selectedSport,
+            selectedPlayerName,
+            currentTeam,
+            selectedYear,
+            statCategory
+          );
 
       // Create selected player object
       const newSelectedPlayer: SelectedPlayer = {
-        playerName: selectedPlayerName!,
+        playerName: selectedPlayerName,
         team: currentTeam,
-        selectedYear,
+        selectedYear: isTotalGP ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
       };
@@ -206,6 +222,20 @@ export function SoloLineupIsRightPage() {
     }
   };
 
+  // Compute optimal last pick hint when results phase is reached
+  useEffect(() => {
+    if (phase !== 'results' || !lineup || !statCategory || !selectedSport) return;
+    const picks = lineup.selectedPlayers;
+    if (picks.length === 0) return;
+    const lastPick = picks[picks.length - 1];
+    const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
+    const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
+    setOptimalPick(undefined); // reset to loading
+    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.statValue)
+      .then(result => setOptimalPick(result ?? null));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   if (phase === 'sport-select') {
     return (
       <div className="min-h-screen bg-[#0d2a0b] text-white flex flex-col overflow-hidden relative">
@@ -224,24 +254,59 @@ export function SoloLineupIsRightPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <h2 className="retro-title text-5xl md:text-6xl mb-12 text-white uppercase">Select Sport</h2>
-            <div className="flex flex-col gap-4 w-96">
-              <button
-                onClick={() => handleStartGame('nba')}
-                className="px-8 py-6 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] hover:from-[#fef3e0] hover:to-[#e5d4b0] text-black font-bold rounded-sm transition shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none text-2xl retro-title"
-              >
-                NBA
-              </button>
-              <div className="flex flex-col items-center gap-1">
+            {!selectedSport ? (
+              <>
+                <h2 className="retro-title text-5xl md:text-6xl mb-12 text-white uppercase">Select Sport</h2>
+                <div className="flex flex-col gap-4 w-96">
+                  <button
+                    onClick={() => setSelectedSport('nba')}
+                    className="px-8 py-6 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] hover:from-[#fef3e0] hover:to-[#e5d4b0] text-black font-bold rounded-sm transition shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none text-2xl retro-title"
+                  >
+                    NBA
+                  </button>
+                  <div className="flex flex-col items-center gap-1">
+                    <button
+                      onClick={() => setSelectedSport('nfl')}
+                      className="w-full px-8 py-6 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] hover:from-[#fef3e0] hover:to-[#e5d4b0] text-black font-bold rounded-sm transition shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none text-2xl retro-title"
+                    >
+                      NFL
+                    </button>
+                    <p className="text-white/30 text-[10px] sports-font tracking-widest">DATA THROUGH 2024 SEASON · NO 2025</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="retro-title text-5xl md:text-6xl mb-3 text-white uppercase">{selectedSport.toUpperCase()}</h2>
+                <p className="sports-font text-[10px] text-white/50 tracking-widest mb-8">CHOOSE STAT CATEGORY</p>
+                <div className="flex flex-wrap gap-2 justify-center max-w-sm mb-8">
+                  <button
+                    onClick={() => handleStartGame(selectedSport)}
+                    className="px-4 py-2 rounded-sm sports-font text-xs bg-[#d4af37] text-black font-bold tracking-wider hover:bg-[#e5c04a] transition"
+                  >
+                    RANDOM
+                  </button>
+                  {(selectedSport === 'nba'
+                    ? (['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'] as const)
+                    : (['passing_yards', 'passing_tds', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'total_gp'] as const)
+                  ).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => handleStartGame(selectedSport, cat)}
+                      className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                    >
+                      {getCategoryAbbr(cat)}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  onClick={() => handleStartGame('nfl')}
-                  className="w-full px-8 py-6 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] hover:from-[#fef3e0] hover:to-[#e5d4b0] text-black font-bold rounded-sm transition shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none text-2xl retro-title"
+                  onClick={() => setSelectedSport(null)}
+                  className="sports-font text-[10px] text-white/40 hover:text-white/70 transition tracking-widest"
                 >
-                  NFL
+                  ← BACK TO SPORTS
                 </button>
-                <p className="text-white/30 text-[10px] sports-font tracking-widest">DATA THROUGH 2024 SEASON · NO 2025</p>
-              </div>
-            </div>
+              </>
+            )}
           </motion.div>
 
           {/* Rules Box */}
@@ -288,7 +353,7 @@ export function SoloLineupIsRightPage() {
             <h1 className="retro-title text-2xl text-[#d4af37]">Lineup Is Right</h1>
             <div className="w-16" />
           </div>
-          {/* Team Display */}
+          {/* Team / Division Display */}
           <motion.div
             key={currentTeam}
             initial={{ opacity: 0, rotateY: -90, x: -100 }}
@@ -297,19 +362,29 @@ export function SoloLineupIsRightPage() {
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="flex items-center justify-center py-3 px-4"
           >
-            <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black"
-              style={{
-                borderColor: getTeamColor(selectedSport, currentTeam),
-              }}
-            >
-              <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Current Team</p>
-              <p
-                className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
-                style={{ color: getTeamColor(selectedSport, currentTeam) }}
+            {isDivisionRound(currentTeam) ? (
+              <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#d4af37]/60">
+                <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Division</p>
+                <p className="retro-title text-2xl md:text-4xl font-bold tracking-tight text-[#d4af37]">
+                  {currentTeam}
+                </p>
+                <p className="sports-font text-[9px] text-white/35 mt-1">
+                  {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black"
+                style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
               >
-                {currentTeam}
-              </p>
-            </div>
+                <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Current Team</p>
+                <p
+                  className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
+                  style={{ color: getTeamColor(selectedSport, currentTeam) }}
+                >
+                  {currentTeam}
+                </p>
+              </div>
+            )}
           </motion.div>
         </header>
 
@@ -371,7 +446,36 @@ export function SoloLineupIsRightPage() {
                       </div>
                     )}
                   </div>
+                ) : isTotalGP ? (
+                  // ── Total GP mode: no year needed ──
+                  <div className="space-y-2 md:space-y-4 flex flex-col flex-1">
+                    <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
+                      <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
+                      <p className="text-[10px] md:text-sm text-white/60">Will count all career GP with {currentTeam}</p>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center text-center">
+                      <p className="text-white/30 sports-font text-xs leading-relaxed">
+                        Games played across every season<br />this player was on the team
+                      </p>
+                    </div>
+                    <div className="flex gap-1 md:gap-2 mt-auto">
+                      <button
+                        onClick={() => { setSelectedPlayerName(null); setSelectedYear(''); setAvailableYears([]); }}
+                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-xs md:text-base"
+                      >
+                        Back
+                      </button>
+                      <button
+                        onClick={handleConfirmYear}
+                        disabled={addingPlayer}
+                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-xs md:text-base retro-title"
+                      >
+                        {addingPlayer ? 'Adding...' : 'Confirm'}
+                      </button>
+                    </div>
+                  </div>
                 ) : (
+                  // ── Normal mode: pick a year ──
                   <div className="space-y-2 md:space-y-4 flex flex-col flex-1 overflow-hidden">
                     <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
                       <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
@@ -533,6 +637,31 @@ export function SoloLineupIsRightPage() {
                   </div>
                 ))}
               </div>
+
+              {/* OPTIMAL LAST PICK HINT */}
+              {optimalPick && lineup && lineup.selectedPlayers.length > 0 && (() => {
+                const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
+                return (
+                  <div className="bg-black/60 border border-[#d4af37]/30 rounded-sm p-3 md:p-4">
+                    <div className="sports-font text-[8px] text-[#d4af37]/60 tracking-widest uppercase mb-2">Optimal Last Pick</div>
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="overflow-hidden">
+                        <div className="retro-title text-sm text-white truncate">{optimalPick.playerName}</div>
+                        <div className="sports-font text-[9px] text-white/40 mt-0.5">
+                          {optimalPick.year === 'career' ? 'Career GP' : optimalPick.year} · {optimalPick.team}
+                        </div>
+                        <div className="sports-font text-[9px] text-white/30 mt-0.5">
+                          vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="retro-title text-xl text-[#d4af37]">{fmt(optimalPick.statValue)}</div>
+                        <div className="sports-font text-[8px] text-emerald-400/70">+{fmt(optimalPick.statValue - lastPick.statValue)}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* ACTION BUTTONS */}
               <div className="flex flex-col gap-2 md:gap-3">
