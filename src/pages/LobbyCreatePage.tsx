@@ -232,7 +232,7 @@ export function LobbyCreatePage() {
                   : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
             >
-              Lineup
+              Cap Crunch
             </button>
           </div>
         </motion.div>

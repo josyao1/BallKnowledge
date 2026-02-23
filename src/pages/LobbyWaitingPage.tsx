@@ -909,9 +909,9 @@ export function LobbyWaitingPage() {
               ) : lobby.game_type === 'lineup-is-right' ? (
                 <>
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
-                    {lobby.sport.toUpperCase()} Lineup Builder
+                    {lobby.sport.toUpperCase()} Cap Crunch
                   </div>
-                  <div className="retro-title text-xl text-[#ec4899]">Lineup Is Right</div>
+                  <div className="retro-title text-xl text-[#ec4899]">Cap Crunch</div>
                   <div className="sports-font text-[9px] text-white/40 tracking-widest">
                     First to {(lobby.career_state as any)?.win_target ?? '?'} wins
                   </div>
@@ -1013,7 +1013,7 @@ export function LobbyWaitingPage() {
                     <option value="roster">Roster Challenge</option>
                     <option value="career">Career Arc</option>
                     <option value="scramble">Name Scramble</option>
-                    <option value="lineup-is-right">Lineup Is Right</option>
+                    <option value="lineup-is-right">Cap Crunch</option>
                   </select>
                 </div>
 
@@ -1583,7 +1583,7 @@ export function LobbyWaitingPage() {
                   disabled={isLoadingRoster}
                   className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#ec4899] to-[#be185d] text-white shadow-[0_4px_0_#831843] active:shadow-none active:translate-y-1 disabled:opacity-50"
                 >
-                  {isLoadingRoster ? 'Loading Game...' : 'Start Lineup Is Right'}
+                  {isLoadingRoster ? 'Loading Game...' : 'Start Cap Crunch'}
                 </button>
               )}
             </>
