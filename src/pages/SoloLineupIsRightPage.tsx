@@ -9,7 +9,7 @@
  * 5. Goal: reach a target cap without exceeding it
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -85,6 +85,9 @@ export function SoloLineupIsRightPage() {
   // Results hint
   const [optimalPick, setOptimalPick] = useState<OptimalPick | null | undefined>(undefined);
 
+  // Track teams used this game to avoid repeats
+  const usedTeamsRef = useRef<string[]>([]);
+
   // Playing phase state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
@@ -100,7 +103,8 @@ export function SoloLineupIsRightPage() {
     setSelectedSport(sport);
     const category = forcedCategory ?? selectRandomStatCategory(sport);
     const cap = generateTargetCap(sport, category);
-    const team = assignRandomTeam(sport);
+    const team = assignRandomTeam(sport, category);
+    usedTeamsRef.current = [team];
 
     setStatCategory(category);
     setTargetCap(cap);
@@ -204,8 +208,11 @@ export function SoloLineupIsRightPage() {
         updated.isFinished = true;
         setPhase('results');
       } else {
-        // Switch team for next turn
-        const nextTeam = assignRandomTeam(selectedSport);
+        // Switch team for next turn (same team for total_gp; no repeats otherwise)
+        const nextTeam = statCategory === 'total_gp'
+          ? currentTeam
+          : assignRandomTeam(selectedSport, statCategory, usedTeamsRef.current);
+        if (statCategory !== 'total_gp') usedTeamsRef.current = [...usedTeamsRef.current, nextTeam];
         setCurrentTeam(nextTeam);
 
         // Clear search
@@ -231,7 +238,7 @@ export function SoloLineupIsRightPage() {
     const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
     const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
     setOptimalPick(undefined); // reset to loading
-    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.statValue)
+    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lineup.isBusted ? 0 : lastPick.statValue)
       .then(result => setOptimalPick(result ?? null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -656,7 +663,9 @@ export function SoloLineupIsRightPage() {
                       </div>
                       <div className="text-right shrink-0">
                         <div className="retro-title text-xl text-[#d4af37]">{fmt(optimalPick.statValue)}</div>
-                        <div className="sports-font text-[8px] text-emerald-400/70">+{fmt(optimalPick.statValue - lastPick.statValue)}</div>
+                        {optimalPick.statValue > lastPick.statValue && (
+                          <div className="sports-font text-[8px] text-emerald-400/70">+{fmt(optimalPick.statValue - lastPick.statValue)}</div>
+                        )}
                       </div>
                     </div>
                   </div>

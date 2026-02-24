@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -24,12 +24,19 @@ type GenericTeam = {
   colors: { primary: string; secondary: string };
 };
 
+const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right'] as const;
+type LobbyMode = typeof VALID_LOBBY_MODES[number];
+
 export function LobbyCreatePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { createLobby, isLoading, error } = useLobbyStore();
   const { sport, setSport } = useSettingsStore();
 
-  const [lobbyMode, setLobbyMode] = useState<'roster' | 'career' | 'scramble' | 'lineup-is-right'>('roster');
+  const [lobbyMode, setLobbyMode] = useState<LobbyMode>(() => {
+    const passed = (location.state as any)?.gameType;
+    return VALID_LOBBY_MODES.includes(passed) ? passed : 'roster';
+  });
   const [winTarget, setWinTarget] = useState<3 | 5 | 7>(3);
   const [scrambleWinTarget, setScrambleWinTarget] = useState<10 | 20 | 30 | 40 | 50>(20);
   const [scrambleCareerTo, setScrambleCareerTo] = useState(0);

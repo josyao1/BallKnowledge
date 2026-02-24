@@ -419,7 +419,7 @@ export function HomePage() {
                             className="retro-btn retro-btn-gold px-8 py-2.5 text-base disabled:opacity-50">
                             Start Solo
                           </button>
-                          <button onClick={() => navigate('/lobby/create')}
+                          <button onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
                             className={`px-4 py-2.5 rounded-lg sports-font border text-xs transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#4a7fb5] text-[#4a7fb5] hover:bg-[#013369] hover:text-white'}`}>
                             Create Lobby
                           </button>
@@ -503,7 +503,7 @@ export function HomePage() {
                         className="px-8 py-2.5 rounded-lg sports-font text-xs tracking-wider uppercase border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-[#111] transition-all">
                         Start Solo
                       </button>
-                      <button onClick={() => navigate('/lobby/create')}
+                      <button onClick={() => navigate('/lobby/create', { state: { gameType: 'career' } })}
                         className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
                         Lobby
                       </button>
@@ -615,7 +615,14 @@ export function HomePage() {
                                     </button>
                                   )}
                                   <button
-                                    onClick={() => navigate(game.multiPath ?? '/lobby/create')}
+                                    onClick={() => {
+                                      if (game.multiPath) {
+                                        navigate(game.multiPath);
+                                      } else {
+                                        const modeMap: Record<string, string> = { roster: 'roster', career: 'career', scramble: 'scramble', lineup: 'lineup-is-right' };
+                                        navigate('/lobby/create', { state: { gameType: modeMap[game.id] ?? 'roster' } });
+                                      }
+                                    }}
                                     className="flex-1 py-1.5 rounded sports-font text-[9px] tracking-wider uppercase border border-[#444] text-[#999] hover:border-[#666] hover:text-[#ccc] transition-colors"
                                   >
                                     {game.hasSolo ? 'Lobby' : 'Play'}
