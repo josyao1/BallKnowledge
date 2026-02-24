@@ -248,16 +248,20 @@ function teamInDivision(dataTeam: string, division: string): boolean {
  * Select a random team (or division) for the given sport.
  * For NFL, ~25% of rounds use a whole division instead of a single team,
  * unless the stat category is total_gp (career GP is team-specific only).
+ * Pass excludeTeams to avoid repeating teams across rounds (falls back to full
+ * pool if all teams have been used).
  */
-export function assignRandomTeam(sport: Sport, statCategory?: StatCategory): string {
+export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
   if (sport === 'nfl' && statCategory !== 'total_gp' && Math.random() < 0.15) {
     const divs = Object.keys(NFL_DIVISIONS);
-    return divs[Math.floor(Math.random() * divs.length)];
+    const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
+    const pool = available.length > 0 ? available : divs;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
-  const teams = sport === 'nba'
-    ? NBA_TEAMS
-    : (TEST_NFL_TEAMS ?? NFL_TEAMS);
-  return teams[Math.floor(Math.random() * teams.length)];
+  const allTeams = sport === 'nba' ? NBA_TEAMS : (TEST_NFL_TEAMS ?? NFL_TEAMS);
+  const available = excludeTeams ? allTeams.filter(t => !excludeTeams.includes(t)) : allTeams;
+  const pool = available.length > 0 ? available : allTeams;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 /**
@@ -642,17 +646,31 @@ export function isGameFinished(state: LineupIsRightGameState): boolean {
 
 /**
  * Determine winners and return sorted players by score and bust status.
+ * Tiebreaker: lower average pick year wins (older lineup beat a tied newer one).
+ * 'career' picks (total_gp) count as year 2025 for averaging.
  */
 export function calculateWinners(
   lineups: PlayerLineup[]
 ): PlayerLineup[] {
-  // Filter non-busted lineups, sort by total descending
   const nonBusted = lineups.filter(l => !l.isBusted);
   const busted = lineups.filter(l => l.isBusted);
 
-  nonBusted.sort((a, b) => b.totalStat - a.totalStat);
+  const avgPickYear = (lineup: PlayerLineup): number => {
+    const picks = lineup.selectedPlayers;
+    if (picks.length === 0) return 2025;
+    const sum = picks.reduce((acc, p) => {
+      const yr = p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025);
+      return acc + yr;
+    }, 0);
+    return sum / picks.length;
+  };
 
-  // Among non-busted, highest total <= targetCap wins
+  nonBusted.sort((a, b) => {
+    if (b.totalStat !== a.totalStat) return b.totalStat - a.totalStat;
+    // Tiebreaker: lower average pick year wins (older lineup)
+    return avgPickYear(a) - avgPickYear(b);
+  });
+
   return [...nonBusted, ...busted];
 }
 
@@ -679,9 +697,14 @@ export async function findOptimalLastPick(
   statCategory: StatCategory,
   remainingBudget: number,
   actualStatValue: number,
+  excludePlayerNames?: string[],
 ): Promise<OptimalPick | null> {
   // No headroom left, or they already hit exactly on the dot
   if (remainingBudget <= 0 || remainingBudget === actualStatValue) return null;
+
+  const excluded = excludePlayerNames && excludePlayerNames.length > 0
+    ? new Set(excludePlayerNames)
+    : null;
 
   try {
     let best: OptimalPick | null = null;
@@ -691,6 +714,7 @@ export async function findOptimalLastPick(
 
       if (statCategory === 'total_gp') {
         for (const p of players) {
+          if (excluded?.has(p.player_name)) continue;
           const totalGP = p.seasons
             .filter(s => s.team === team)
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
@@ -702,6 +726,7 @@ export async function findOptimalLastPick(
         }
       } else {
         for (const p of players) {
+          if (excluded?.has(p.player_name)) continue;
           for (const s of p.seasons) {
             if (s.team !== team) continue;
             const val = statCategory === 'pra'
@@ -720,6 +745,7 @@ export async function findOptimalLastPick(
 
       if (statCategory === 'total_gp') {
         for (const p of players) {
+          if (excluded?.has(p.player_name)) continue;
           const totalGP = p.seasons
             .filter(s => isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team))
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
@@ -731,6 +757,7 @@ export async function findOptimalLastPick(
         }
       } else {
         for (const p of players) {
+          if (excluded?.has(p.player_name)) continue;
           for (const s of p.seasons) {
             const teamMatch = isDivisionRound(team)
               ? teamInDivision(s.team, team)

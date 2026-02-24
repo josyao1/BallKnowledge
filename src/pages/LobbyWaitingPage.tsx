@@ -92,6 +92,7 @@ export function LobbyWaitingPage() {
   const [editCareerFrom, setEditCareerFrom] = useState(0);
   const [editCareerTo, setEditCareerTo] = useState(0);
   const [editLineupStat, setEditLineupStat] = useState<string>('random');
+  const [editHardMode, setEditHardMode] = useState(false);
 
   // Join prompt for new players arriving via direct link
   const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
@@ -138,6 +139,7 @@ export function LobbyWaitingPage() {
       setEditCareerFrom(cs.career_from || 0);
       setEditCareerTo(cs.career_to || 0);
       setEditLineupStat((cs.forcedStatCategory as string | null) || 'random');
+      setEditHardMode((cs.hardMode as boolean) || false);
 
       // Find team from the current lobby
       const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -444,6 +446,9 @@ export function LobbyWaitingPage() {
       });
 
       const firstTeam = assignRandomTeam(sport, statCategory);
+      const hardMode = careerState.hardMode || false;
+      // Hard mode: first picker is the first player in the list
+      const firstPickerId = hardMode && lobbyPlayers.length > 0 ? lobbyPlayers[0].player_id : null;
 
       const newCareerState = {
         sport,
@@ -454,7 +459,12 @@ export function LobbyWaitingPage() {
         currentRound: 1,
         totalRounds: 5,
         currentTeam: firstTeam,
+        usedTeams: [firstTeam],
         phase: 'picking',
+        hardMode,
+        currentPickerId: firstPickerId,
+        roundStartPickerIndex: 0,
+        pickedPlayerSeasons: [],
       };
 
       await startCareerRound(lobby.id, newCareerState);
@@ -544,12 +554,13 @@ export function LobbyWaitingPage() {
       // a race condition where handleCareerStart reads stale career_state
       setLobby({ ...lobby, career_state: newCareerState });
     } else if (editGameType === 'lineup-is-right') {
-      // Lineup Is Right mode: update sport and forced stat category
+      // Lineup Is Right mode: update sport, forced stat category, and hard mode toggle
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
         sport: editSport,
         forcedStatCategory: editLineupStat === 'random' ? null : editLineupStat,
+        hardMode: editHardMode,
       };
       await updateCareerState(newCareerState);
       await updateSettings({ sport: editSport });
@@ -924,8 +935,8 @@ export function LobbyWaitingPage() {
                     {lobby.sport.toUpperCase()} Cap Crunch
                   </div>
                   <div className="retro-title text-xl text-[#ec4899]">Cap Crunch</div>
-                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
-                    First to {(lobby.career_state as any)?.win_target ?? '?'} wins
+                  <div className={`sports-font text-[9px] tracking-widest ${(lobby.career_state as any)?.hardMode ? 'text-red-400' : 'text-white/40'}`}>
+                    {(lobby.career_state as any)?.hardMode ? 'Hard Mode' : 'Normal Mode'}
                   </div>
                 </>
               ) : (
@@ -1160,6 +1171,24 @@ export function LobbyWaitingPage() {
                           </button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Hard Mode Toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Hard Mode</div>
+                        <div className="sports-font text-[9px] text-[#555] mt-0.5">Players pick one at a time; player-seasons lock globally</div>
+                      </div>
+                      <button
+                        onClick={() => setEditHardMode(prev => !prev)}
+                        className={`px-4 py-1.5 rounded-sm sports-font text-xs tracking-wider transition-all ${
+                          editHardMode
+                            ? 'bg-red-600 text-white border border-red-500'
+                            : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                        }`}
+                      >
+                        {editHardMode ? 'ON' : 'OFF'}
+                      </button>
                     </div>
                   </>
                 ) : (
@@ -1575,6 +1604,15 @@ export function LobbyWaitingPage() {
                   {isLoadingRoster ? 'Loading Player...' : 'Start Name Scramble'}
                 </button>
               )}
+              {isHost && players.length >= 2 && !players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleScrambleStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+                >
+                  Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
+                </button>
+              )}
             </>
           ) : lobby.game_type === 'career' ? (
             <>
@@ -1588,6 +1626,15 @@ export function LobbyWaitingPage() {
                   {isLoadingRoster ? 'Loading Player...' : 'Start Career Mode'}
                 </button>
               )}
+              {isHost && players.length >= 2 && !players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleCareerStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+                >
+                  Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
+                </button>
+              )}
             </>
           ) : lobby.game_type === 'lineup-is-right' ? (
             <>
@@ -1599,6 +1646,15 @@ export function LobbyWaitingPage() {
                   className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#ec4899] to-[#be185d] text-white shadow-[0_4px_0_#831843] active:shadow-none active:translate-y-1 disabled:opacity-50"
                 >
                   {isLoadingRoster ? 'Loading Game...' : 'Start Cap Crunch'}
+                </button>
+              )}
+              {isHost && players.length >= 2 && !players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleLineupIsRightStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+                >
+                  Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
                 </button>
               )}
             </>

@@ -87,6 +87,11 @@ export function MultiplayerLineupIsRightPage() {
   const [totalRounds, setTotalRounds] = useState(5);
   const [optimalPicks, setOptimalPicks] = useState<Map<string, OptimalPick | null>>(new Map());
 
+  // Hard mode state
+  const [hardMode, setHardMode] = useState(false);
+  const [currentPickerId, setCurrentPickerId] = useState<string | null>(null);
+  const [pickedPlayerSeasons, setPickedPlayerSeasons] = useState<string[]>([]);
+
   // Ephemeral UI state — never synced to Supabase
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
@@ -112,10 +117,17 @@ export function MultiplayerLineupIsRightPage() {
 
   // Derived: my lineup and whether I can pick this round
   const myLineup = allLineups[currentPlayerId || ''] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
-  const canPickThisRound = !myLineup?.hasPickedThisRound && !myLineup?.isFinished;
+  const canPickThisRound = hardMode
+    ? (currentPickerId === currentPlayerId && !myLineup?.isFinished)
+    : (!myLineup?.hasPickedThisRound && !myLineup?.isFinished);
 
   // Players I've already used this game (no repeats allowed)
   const usedPlayerNames = new Set(myLineup?.selectedPlayers.map(p => p.playerName) ?? []);
+
+  // Hard mode: players picked by anyone — entire player is locked globally
+  const lockedPlayerNames = hardMode
+    ? new Set(pickedPlayerSeasons.map(k => k.split('|')[0]))
+    : new Set<string>();
 
   useLobbySubscription(lobby?.id || null);
 
@@ -141,6 +153,9 @@ export function MultiplayerLineupIsRightPage() {
         setCurrentRound(cs.currentRound ?? 1);
         setTotalRounds(cs.totalRounds ?? 5);
         setCurrentTeam(cs.currentTeam || '');
+        setHardMode(cs.hardMode || false);
+        setCurrentPickerId(cs.currentPickerId || null);
+        setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
 
         if (cs.phase === 'results') setPhase('results');
         else setPhase('picking');
@@ -188,6 +203,9 @@ export function MultiplayerLineupIsRightPage() {
     setCurrentRound(newRound);
     setTotalRounds(cs.totalRounds ?? 5);
     setCurrentTeam(cs.currentTeam || '');
+    setHardMode(cs.hardMode || false);
+    setCurrentPickerId(cs.currentPickerId || null);
+    setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
 
     if (phase === 'loading') setPhase('picking');
 
@@ -241,7 +259,7 @@ export function MultiplayerLineupIsRightPage() {
         // Next round: new team, reset hasPickedThisRound for active players
         const newTeam = cs.statCategory === 'total_gp'
           ? cs.currentTeam  // same team all 5 rounds in GP mode
-          : assignRandomTeam(cs.sport || 'nba', cs.statCategory);
+          : assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
         const resetLineups: Record<string, any> = {};
         playerIds.forEach(pid => {
           resetLineups[pid] = {
@@ -251,11 +269,29 @@ export function MultiplayerLineupIsRightPage() {
           };
         });
 
+        // Hard mode: determine first picker for next round (rotates by 1 each round)
+        let hardModeUpdates: Record<string, any> = {};
+        if (cs.hardMode) {
+          const newRoundStartIndex = ((cs.roundStartPickerIndex ?? 0) + 1) % playerIds.length;
+          let firstPicker: string | null = null;
+          for (let i = 0; i < playerIds.length; i++) {
+            const idx = (newRoundStartIndex + i) % playerIds.length;
+            const pid = playerIds[idx];
+            if (!resetLineups[pid]?.isFinished) {
+              firstPicker = pid;
+              break;
+            }
+          }
+          hardModeUpdates = { currentPickerId: firstPicker, roundStartPickerIndex: newRoundStartIndex };
+        }
+
         await updateCareerState(lobbyId, {
           ...cs,
           allLineups: resetLineups,
           currentRound: nextRound,
           currentTeam: newTeam,
+          usedTeams: cs.statCategory === 'total_gp' ? (cs.usedTeams || []) : [...(cs.usedTeams || []), newTeam],
+          ...hardModeUpdates,
         });
       }
     };
@@ -283,7 +319,11 @@ export function MultiplayerLineupIsRightPage() {
           const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
           const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
           const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
-          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.statValue);
+          // In hard mode, exclude all globally locked players except the one being replaced
+          const excludeNames = hardMode
+            ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
+            : undefined;
+          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lineup.isBusted ? 0 : lastPick.statValue, excludeNames);
           results.set(p.player_id, opt);
         })
       );
@@ -320,6 +360,10 @@ export function MultiplayerLineupIsRightPage() {
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
     if (usedPlayerNames.has(player.playerName)) {
       setDuplicateError(`You already used ${player.playerName} this game.`);
+      return;
+    }
+    if (lockedPlayerNames.has(player.playerName)) {
+      setDuplicateError(`${player.playerName} has already been picked this game.`);
       return;
     }
     setDuplicateError(null);
@@ -387,6 +431,26 @@ export function MultiplayerLineupIsRightPage() {
       (withNewPlayer as any).hasPickedThisRound = true;
       if (isBusted) withNewPlayer.isFinished = true;
 
+      // Hard mode: compute next picker and record locked player-season
+      let hardModeUpdates: Record<string, any> = {};
+      if (latestCS.hardMode && currentPlayerId) {
+        const allLineupsAfterPick = { ...latestCS.allLineups, [currentPlayerId]: withNewPlayer };
+        // Find next player (in players array order) who hasn't picked this round and isn't finished
+        const pendingPickers = players
+          .map(p => p.player_id)
+          .filter(pid =>
+            pid !== currentPlayerId &&
+            !((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) &&
+            !((allLineupsAfterPick[pid] as any)?.isFinished)
+          );
+        const nextPickerId = pendingPickers.length > 0 ? pendingPickers[0] : null;
+        const pickKey = `${selectedPlayerName}|${isTotalGP ? 'career' : selectedYear}|${currentTeam}`;
+        hardModeUpdates = {
+          currentPickerId: nextPickerId,
+          pickedPlayerSeasons: [...(latestCS.pickedPlayerSeasons || []), pickKey],
+        };
+      }
+
       // Write merged update: spread latest state, override only my lineup entry
       const updatedCS = {
         ...latestCS,
@@ -394,6 +458,7 @@ export function MultiplayerLineupIsRightPage() {
           ...latestCS.allLineups,
           [currentPlayerId]: withNewPlayer,
         },
+        ...hardModeUpdates,
       };
 
       await updateCareerState(lobby.id, updatedCS);
@@ -475,18 +540,21 @@ export function MultiplayerLineupIsRightPage() {
                   <div className="space-y-1.5 max-h-64 overflow-y-auto">
                     {searchResults.map((result, idx) => {
                       const alreadyUsed = usedPlayerNames.has(result.playerName);
+                      const taken = lockedPlayerNames.has(result.playerName);
+                      const disabled = alreadyUsed || taken;
                       return (
                         <button
                           key={String(result.playerId) + idx}
                           onClick={() => handleSelectPlayer(result)}
                           className={`w-full text-left px-4 py-3 rounded border transition text-sm font-semibold ${
-                            alreadyUsed
+                            disabled
                               ? 'bg-[#111] border-white/5 text-white/25 cursor-not-allowed line-through'
                               : 'bg-[#1a1a1a] hover:bg-[#2a2a2a] border-white/10 text-white'
                           }`}
                         >
                           {result.playerName}
                           {alreadyUsed && <span className="ml-2 text-[10px] text-white/20 no-underline not-italic font-normal">(already used)</span>}
+                          {taken && <span className="ml-2 text-[10px] text-red-400/40 no-underline not-italic font-normal">(taken)</span>}
                         </button>
                       );
                     })}
@@ -573,11 +641,21 @@ export function MultiplayerLineupIsRightPage() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-            <div>
-              <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
-              <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
-            </div>
-            {waitingFor.length > 0 && (
+            {hardMode && !myLineup?.hasPickedThisRound ? (
+              // Hard mode: waiting for your turn
+              <div>
+                <p className="text-lg text-yellow-400 font-semibold mb-1">Waiting for your turn</p>
+                <p className="text-white/50 sports-font text-sm">
+                  {players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'} is picking
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
+                <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
+              </div>
+            )}
+            {!hardMode && waitingFor.length > 0 && (
               <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
                 <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
                 {waitingFor.map(p => (
@@ -681,8 +759,25 @@ export function MultiplayerLineupIsRightPage() {
         <header className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
           <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
             <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
-            <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
-              <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
+            <div className="flex items-center gap-2">
+              {hardMode && (
+                <div className={`px-3 py-1 rounded-sm border ${
+                  currentPickerId === currentPlayerId
+                    ? 'bg-yellow-400/20 border-yellow-400/60'
+                    : 'bg-black/40 border-white/20'
+                }`}>
+                  <span className={`retro-title text-xs ${
+                    currentPickerId === currentPlayerId ? 'text-yellow-400' : 'text-white/50'
+                  }`}>
+                    {currentPickerId === currentPlayerId
+                      ? 'Your Turn'
+                      : `${players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'}'s Turn`}
+                  </span>
+                </div>
+              )}
+              <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
+                <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
+              </div>
             </div>
           </div>
           {/* Team + compact stats row */}
@@ -802,6 +897,12 @@ export function MultiplayerLineupIsRightPage() {
   if (phase === 'results') {
     const everyoneBusted = players.length > 0 && players.every(p => (allLineups[p.player_id] as any)?.isBusted);
 
+    const avgPickYear = (lineup: PlayerLineup): number => {
+      const picks = lineup.selectedPlayers;
+      if (picks.length === 0) return 2025;
+      return picks.reduce((sum, p) => sum + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
+    };
+
     const sortedLineups = players
       .map((p) => ({
         ...p,
@@ -815,8 +916,18 @@ export function MultiplayerLineupIsRightPage() {
         // Normal: non-busted beat busted; among non-busted, highest total wins
         if (a.lineup.isBusted && !b.lineup.isBusted) return 1;
         if (!a.lineup.isBusted && b.lineup.isBusted) return -1;
-        return b.lineup.totalStat - a.lineup.totalStat;
+        if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
+        // Tiebreaker: lower average pick year wins (older lineup)
+        return avgPickYear(a.lineup) - avgPickYear(b.lineup);
       });
+
+    // Detect whether 1st and 2nd place had the same score (tiebreaker decided it)
+    const tiebreakerUsed =
+      sortedLineups.length >= 2 &&
+      !everyoneBusted &&
+      !sortedLineups[0].lineup.isBusted &&
+      !sortedLineups[1].lineup.isBusted &&
+      sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat;
 
     return (
       <div className="min-h-screen bg-[#111] text-white flex flex-col relative overflow-hidden">
@@ -846,6 +957,11 @@ export function MultiplayerLineupIsRightPage() {
                 <p className="sports-font text-[10px] text-red-400 tracking-widest uppercase">Everyone busted — least over wins</p>
               </div>
             )}
+            {tiebreakerUsed && (
+              <div className="mb-4 p-3 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded text-center">
+                <p className="sports-font text-[10px] text-[#d4af37] tracking-widest uppercase">Tied score — older avg lineup year wins</p>
+              </div>
+            )}
 
             <div className="space-y-4">
               {sortedLineups.map((item, idx) => (
@@ -861,6 +977,12 @@ export function MultiplayerLineupIsRightPage() {
                       <p className="font-semibold text-white text-lg">
                         {idx + 1}. {item.player_name}
                       </p>
+                      {tiebreakerUsed && idx === 0 && (
+                        <span className="text-[9px] sports-font text-[#d4af37]/70 tracking-wider">tiebreaker · avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
+                      )}
+                      {tiebreakerUsed && idx === 1 && (
+                        <span className="text-[9px] sports-font text-white/30 tracking-wider">avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
+                      )}
                     </div>
                     <div className="text-right">
                       <p
@@ -913,7 +1035,9 @@ export function MultiplayerLineupIsRightPage() {
                           </div>
                           <div className="text-right">
                             <span className="text-sm text-[#d4af37] font-semibold">{fmt(opt.statValue)}</span>
-                            <span className="text-[10px] text-emerald-400/70 ml-1">+{fmt(opt.statValue - lastPick.statValue)}</span>
+                            {opt.statValue > lastPick.statValue && (
+                              <span className="text-[10px] text-emerald-400/70 ml-1">+{fmt(opt.statValue - lastPick.statValue)}</span>
+                            )}
                           </div>
                         </div>
                       </div>
