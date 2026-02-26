@@ -14,6 +14,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
+import { TeamLogo } from '../TeamLogo';
 
 interface RouletteOverlayProps {
   winningTeam: string;
@@ -27,7 +28,7 @@ interface RouletteOverlayProps {
   onReroll?: () => void; // Called when host clicks Reroll (multiplayer only)
 }
 
-export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM', onComplete, sport, skipAnimation, canSkip = true, onReroll }: RouletteOverlayProps) {
+export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM', onComplete, sport, winningTeamData, skipAnimation, canSkip = true, onReroll }: RouletteOverlayProps) {
   const [phase, setPhase] = useState<'shuffling' | 'settling' | 'dealing-1' | 'dealing-2' | 'paused' | 'countdown'>('shuffling');
   const [count, setCount] = useState(5);
   const [isMobile, setIsMobile] = useState(false);
@@ -161,6 +162,8 @@ export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM
                     cardBack={cardBackImage}
                     isActive={phase === 'dealing-2' || phase === 'paused'}
                     isMobile={isMobile}
+                    teamAbbr={winningTeamData?.abbreviation}
+                    sport={sport}
                    />
                  </>
                )}
@@ -234,17 +237,16 @@ export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM
   );
 }
 
-function RevealCard({ value, side, label, cardBack, isActive, isMobile }: any) {
+function RevealCard({ value, side, label, cardBack, isActive, isMobile, teamAbbr, sport }: any) {
   return (
     <AnimatePresence>
       {isActive && (
         <motion.div
           initial={{ x: 0, y: 0, opacity: 0, zIndex: 50 }}
-          animate={{ 
-            // Mobile: Side offset is much smaller to stay within 100vw
-            x: side === 'left' ? (isMobile ? -80 : -200) : (isMobile ? 80 : 200), 
-            y: isMobile ? 180 : 240, 
-            opacity: 1 
+          animate={{
+            x: side === 'left' ? (isMobile ? -80 : -200) : (isMobile ? 80 : 200),
+            y: isMobile ? 180 : 240,
+            opacity: 1
           }}
           transition={{ type: 'spring', damping: 25, stiffness: 60 }}
           className="absolute inset-0"
@@ -256,7 +258,7 @@ function RevealCard({ value, side, label, cardBack, isActive, isMobile }: any) {
             className="w-full h-full [transform-style:preserve-3d] relative"
           >
             <CardFace side="back" image={cardBack} />
-            <CardFace side="front" label={label} value={value} />
+            <CardFace side="front" label={label} value={value} teamAbbr={teamAbbr} sport={sport} />
           </motion.div>
         </motion.div>
       )}
@@ -264,12 +266,13 @@ function RevealCard({ value, side, label, cardBack, isActive, isMobile }: any) {
   );
 }
 
-function CardFace({ side, image, label, value }: any) {
+function CardFace({ side, image, label, value, teamAbbr, sport }: any) {
   const isBack = side === 'back';
+  const showLogo = !isBack && teamAbbr && sport;
   return (
-    <div 
+    <div
       className={`absolute inset-0 rounded-xl overflow-hidden ${isBack ? '' : 'bg-white'}`}
-      style={{ 
+      style={{
         backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
         transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
         backgroundImage: isBack ? `url("${image}")` : 'none',
@@ -278,9 +281,12 @@ function CardFace({ side, image, label, value }: any) {
       }}
     >
       {!isBack && (
-        <div className="w-full h-full flex flex-col items-center justify-center p-3 md:p-4 overflow-hidden relative">
+        <div className="w-full h-full flex flex-col items-center justify-center p-3 md:p-4 overflow-hidden relative gap-1">
           <span className="sports-font text-[8px] md:text-[10px] text-amber-600 tracking-[0.3em] uppercase font-semibold text-center flex-shrink-0">{label}</span>
-          <span className="retro-title text-xs sm:text-sm md:text-xl md:leading-tight text-slate-800 uppercase font-bold text-center leading-snug w-full px-1 md:px-2 mt-1 flex-shrink-0 line-clamp-3 overflow-hidden break-words hyphens-auto">{value}</span>
+          {showLogo ? (
+            <TeamLogo sport={sport} abbr={teamAbbr} size={64} className="flex-shrink-0" />
+          ) : null}
+          <span className="retro-title text-xs sm:text-sm md:text-xl md:leading-tight text-slate-800 uppercase font-bold text-center leading-snug w-full px-1 md:px-2 flex-shrink-0 line-clamp-3 overflow-hidden break-words hyphens-auto">{value}</span>
         </div>
       )}
     </div>

@@ -85,7 +85,7 @@ export function HomePage() {
   const [showRoulette, setShowRoulette] = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
   const [skipAnimation, setSkipAnimation] = useState(false);
-  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [, setApiOnline] = useState<boolean | null>(null);
   const [showWarmup] = useState(false);
   const [warmupComplete, setWarmupComplete] = useState(true);
 
@@ -222,40 +222,51 @@ export function HomePage() {
             style={{ filter: 'url(#whiteOutline)' }}
             className={`retro-title text-xl sm:text-2xl md:text-3xl truncate ${sport === 'nba' ? 'text-[var(--nba-orange)]' : 'text-[#013369]'}`}
           >
-            {sport === 'nba' ? <>Ball <span className="xs:inline">Knowledge</span></> : <>Pigskin <span className="xs:inline">Knowledge</span></>}
+            <>Ball <span className="xs:inline">Knowledge</span></>
           </motion.h1>
         </div>
 
-        <div className="flex shrink-0 gap-1 sm:gap-2 bg-[#1a1a1a] p-1 rounded-xl border border-[#3d3d3d]">
-          {(['nba', 'nfl'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setSport(s)}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sports-font tracking-wider text-[10px] sm:text-xs transition-all ${
-                sport === s
-                  ? (s === 'nba' ? 'bg-[var(--nba-orange)]' : 'bg-[#013369]') + ' text-white shadow-lg'
-                  : 'text-[#666] hover:text-[#888]'
-              }`}
-            >
-              {s.toUpperCase()}
-            </button>
-          ))}
+        <div className="flex shrink-0 border-2 border-[#2a2a2a] overflow-hidden rounded-sm">
+          {(['nba', 'nfl'] as const).map((s, i) => {
+            const isActive = sport === s;
+            const activeBg = s === 'nba' ? '#f15a29' : '#013369';
+            return (
+              <motion.button
+                key={s}
+                onClick={() => setSport(s)}
+                className={`relative px-4 sm:px-5 py-1.5 sm:py-2 retro-title text-lg sm:text-xl tracking-wider cursor-pointer overflow-hidden ${
+                  i === 0 ? 'border-r-2 border-[#2a2a2a]' : ''
+                }`}
+                animate={{
+                  backgroundColor: isActive ? activeBg : '#0a0a0a',
+                  color: isActive ? '#ffffff' : '#2e2e2e',
+                }}
+                transition={{ duration: 0.08 }}
+                whileTap={{ scale: 0.92, transition: { duration: 0.08 } }}
+              >
+                <motion.span
+                  key={`${s}-${isActive}`}
+                  initial={{ rotateX: -90, opacity: 0 }}
+                  animate={{ rotateX: 0, opacity: 1 }}
+                  transition={{ duration: 0.28, ease: [0.2, 0.9, 0.25, 1.05] }}
+                  style={{ display: 'block', transformPerspective: 320 }}
+                >
+                  {s.toUpperCase()}
+                </motion.span>
+              </motion.button>
+            );
+          })}
         </div>
 
-        <div className="flex-1 flex justify-end items-center gap-1.5 md:gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/20 border border-white/5">
-            <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${apiOnline ? 'bg-[#22c55e] shadow-[0_0_8px_#22c55e]' : 'bg-[#888]'}`} />
-            <span className="hidden xs:block text-[9px] md:text-[10px] text-[#666] sports-font uppercase tracking-tighter whitespace-nowrap">
-              {apiOnline ? 'Live' : 'Offline'}
-            </span>
-          </div>
+        <div className="flex-1 flex justify-end items-center">
           <button
             onClick={() => setShowSettings(true)}
-            className="p-1.5 md:p-2 border-2 border-[#3d3d3d] rounded-lg hover:bg-[#1a1a1a] transition-colors shrink-0"
+            className="p-1.5 md:p-2 text-[#444] hover:text-[#888] transition-colors shrink-0"
+            title="Settings"
           >
-            <svg className="w-4 h-4 md:w-5 md:h-5 text-[var(--vintage-cream)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
         </div>

@@ -36,6 +36,7 @@ import type { OptimalPick } from '../services/lineupIsRight';
 import { getTeamByAbbreviation } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineupIsRight';
+import { TeamLogo } from '../components/TeamLogo';
 
 type Phase = 'loading' | 'picking' | 'results';
 
@@ -51,14 +52,16 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'ast': return 'AST';
     case 'reb': return 'REB';
     case 'min': return 'MIN';
+    case 'pra': return 'PRA';
     case 'passing_yards': return 'PASS YD';
     case 'passing_tds': return 'PASS TD';
+    case 'interceptions': return 'INT';
     case 'rushing_yards': return 'RUSH YD';
     case 'rushing_tds': return 'RUSH TD';
     case 'receiving_yards': return 'REC YD';
     case 'receiving_tds': return 'REC TD';
+    case 'receptions': return 'REC';
     case 'total_gp': return 'TOT GP';
-    case 'pra': return 'PRA';
     default: return 'STAT';
   }
 }
@@ -97,6 +100,7 @@ export function MultiplayerLineupIsRightPage() {
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | number | null>(null);
   const [currentTeam, setCurrentTeam] = useState('');
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState('');
@@ -368,6 +372,7 @@ export function MultiplayerLineupIsRightPage() {
     }
     setDuplicateError(null);
     setSelectedPlayerName(player.playerName);
+    setSelectedPlayerId(player.playerId);
     setSelectedYear('');
     setAvailableYears([]);
 
@@ -376,7 +381,7 @@ export function MultiplayerLineupIsRightPage() {
 
     setLoadingYears(true);
     try {
-      const years = await getPlayerYearsOnTeam(selectedSport!, player.playerName, currentTeam);
+      const years = await getPlayerYearsOnTeam(selectedSport!, player.playerName, currentTeam, player.playerId);
       setAvailableYears(years);
     } catch {
       setAvailableYears([]);
@@ -395,13 +400,14 @@ export function MultiplayerLineupIsRightPage() {
     setAddingPlayer(true);
     try {
       const statValue = isTotalGP
-        ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam)
+        ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
         : await getPlayerStatForYearAndTeam(
             selectedSport as any,
             selectedPlayerName,
             currentTeam,
             selectedYear,
-            statCategory
+            statCategory,
+            selectedPlayerId ?? undefined
           );
 
       // Read latest career_state from store (synced via realtime) to minimize race window
@@ -473,6 +479,7 @@ export function MultiplayerLineupIsRightPage() {
       setSearchQuery('');
       setSearchResults([]);
       setSelectedPlayerName(null);
+      setSelectedPlayerId(null);
       setSelectedYear('');
       setAvailableYears([]);
     } catch (error) {
@@ -575,7 +582,7 @@ export function MultiplayerLineupIsRightPage() {
                 </div>
                 <div className="flex gap-2 mt-auto pt-2">
                   <button
-                    onClick={() => { setSelectedPlayerName(null); setSelectedYear(''); setAvailableYears([]); }}
+                    onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
                     className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
                   >
                     Back
@@ -623,7 +630,7 @@ export function MultiplayerLineupIsRightPage() {
                 )}
                 <div className="flex gap-2 mt-auto pt-2">
                   <button
-                    onClick={() => { setSelectedPlayerName(null); setSelectedYear(''); setAvailableYears([]); }}
+                    onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
                     className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
                   >
                     Back
@@ -784,28 +791,28 @@ export function MultiplayerLineupIsRightPage() {
           <div className="flex items-center gap-3 px-4 py-2">
             <motion.div
               key={currentTeam + currentRound}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
               className="flex items-center gap-2"
             >
               {isDivisionRound(currentTeam) ? (
-                <div className="px-4 py-1.5 rounded border-2 bg-black border-[#d4af37]/60">
+                <div className="px-5 py-2 rounded border-2 bg-black border-[#d4af37]/80 shadow-[0_0_12px_rgba(212,175,55,0.25)]">
                   <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
-                  <p className="retro-title text-base font-bold text-[#d4af37] leading-tight">
+                  <p className="retro-title text-2xl md:text-3xl font-bold text-[#d4af37] leading-tight">
                     {currentTeam}
                   </p>
-                  <p className="sports-font text-[8px] text-white/35 leading-none mt-0.5">
+                  <p className="sports-font text-[8px] text-white/40 leading-none mt-0.5">
                     {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                   </p>
                 </div>
               ) : (
                 <div
-                  className="px-4 py-1.5 rounded border-2 bg-black"
-                  style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
+                  className="flex items-center gap-3 px-5 py-2 rounded border-2 bg-black"
+                  style={{ borderColor: getTeamColor(selectedSport, currentTeam), boxShadow: `0 0 14px ${getTeamColor(selectedSport, currentTeam)}44` }}
                 >
-                  <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Team</p>
-                  <p className="retro-title text-xl font-bold" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
+                  <TeamLogo sport={selectedSport as 'nba' | 'nfl'} abbr={currentTeam} size={44} />
+                  <p className="retro-title text-2xl md:text-3xl font-bold leading-tight" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
                     {currentTeam}
                   </p>
                 </div>
@@ -1023,6 +1030,8 @@ export function MultiplayerLineupIsRightPage() {
                     const opt = optimalPicks.get(item.player_id);
                     if (!opt || item.lineup.selectedPlayers.length === 0) return null;
                     const lastPick = item.lineup.selectedPlayers[item.lineup.selectedPlayers.length - 1];
+                    const totalBeforeLast = parseFloat((item.lineup.totalStat - lastPick.statValue).toFixed(1));
+                    const wouldFinishAt = parseFloat((totalBeforeLast + opt.statValue).toFixed(1));
                     return (
                       <div className="mt-2 bg-black/40 border border-[#d4af37]/25 rounded px-3 py-2">
                         <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-1">Optimal Last Pick</div>
@@ -1032,6 +1041,11 @@ export function MultiplayerLineupIsRightPage() {
                             <span className="text-[10px] text-white/35 ml-2">
                               {opt.year === 'career' ? 'Career GP' : opt.year} · {opt.team}
                             </span>
+                            {item.lineup.isBusted && (
+                              <span className="block text-[10px] text-emerald-400/70 mt-0.5">
+                                Would finish: {fmt(wouldFinishAt)} / {targetCap}
+                              </span>
+                            )}
                           </div>
                           <div className="text-right">
                             <span className="text-sm text-[#d4af37] font-semibold">{fmt(opt.statValue)}</span>

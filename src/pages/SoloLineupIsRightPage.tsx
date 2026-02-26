@@ -28,6 +28,7 @@ import {
 } from '../services/lineupIsRight';
 import type { OptimalPick } from '../services/lineupIsRight';
 import { getTeamByAbbreviation } from '../data/teams';
+import { TeamLogo } from '../components/TeamLogo';
 import { nflTeams } from '../data/nfl-teams';
 import type { Sport } from '../types';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineupIsRight';
@@ -49,10 +50,12 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'pra': return 'PRA';
     case 'passing_yards': return 'PASS YD';
     case 'passing_tds': return 'PASS TD';
+    case 'interceptions': return 'INT';
     case 'rushing_yards': return 'RUSH YD';
     case 'rushing_tds': return 'RUSH TD';
     case 'receiving_yards': return 'REC YD';
     case 'receiving_tds': return 'REC TD';
+    case 'receptions': return 'REC';
     case 'total_gp': return 'TOT GP';
     default: return 'STAT';
   }
@@ -93,6 +96,7 @@ export function SoloLineupIsRightPage() {
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | number | null>(null);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [loadingYears, setLoadingYears] = useState(false);
@@ -145,6 +149,7 @@ export function SoloLineupIsRightPage() {
   // Select a player from search results
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
     setSelectedPlayerName(player.playerName);
+    setSelectedPlayerId(player.playerId);
     setSelectedYear('');
     setAvailableYears([]);
 
@@ -157,7 +162,8 @@ export function SoloLineupIsRightPage() {
       const years = await getPlayerYearsOnTeam(
         selectedSport!,
         player.playerName,
-        currentTeam
+        currentTeam,
+        player.playerId
       );
       setAvailableYears(years);
     } catch (error) {
@@ -177,13 +183,14 @@ export function SoloLineupIsRightPage() {
     try {
       // Get the stat value — total_gp sums all career GP with the team; others are per-season
       const statValue = isTotalGP
-        ? await getPlayerTotalGPForTeam(selectedSport, selectedPlayerName, currentTeam)
+        ? await getPlayerTotalGPForTeam(selectedSport, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
         : await getPlayerStatForYearAndTeam(
             selectedSport,
             selectedPlayerName,
             currentTeam,
             selectedYear,
-            statCategory
+            statCategory,
+            selectedPlayerId ?? undefined
           );
 
       // Create selected player object
@@ -219,6 +226,7 @@ export function SoloLineupIsRightPage() {
         setSearchQuery('');
         setSearchResults([]);
         setSelectedPlayerName(null);
+        setSelectedPlayerId(null);
         setSelectedYear('');
         setAvailableYears([]);
       }
@@ -295,7 +303,7 @@ export function SoloLineupIsRightPage() {
                   </button>
                   {(selectedSport === 'nba'
                     ? (['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'] as const)
-                    : (['passing_yards', 'passing_tds', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'total_gp'] as const)
+                    : (['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp'] as const)
                   ).map((cat) => (
                     <button
                       key={cat}
@@ -380,10 +388,10 @@ export function SoloLineupIsRightPage() {
                 </p>
               </div>
             ) : (
-              <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black"
+              <div className="flex items-center gap-3 px-6 md:px-10 py-2 md:py-3 rounded-lg border-2 bg-black"
                 style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
               >
-                <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Current Team</p>
+                <TeamLogo sport={selectedSport!} abbr={currentTeam} size={52} />
                 <p
                   className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
                   style={{ color: getTeamColor(selectedSport, currentTeam) }}
@@ -407,12 +415,15 @@ export function SoloLineupIsRightPage() {
               <p className="retro-title text-lg md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Total</div>
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
               <p className={`retro-title text-2xl md:text-4xl ${lineup.isBusted ? 'text-red-500' : 'text-white'}`}>{fmt(lineup.totalStat)}</p>
-              {!lineup.isBusted && (
-                <p className="sports-font text-[6px] md:text-[7px] text-[#d4af37]/60 tracking-wide mt-0.5 leading-tight">
-                  {fmt(targetCap - lineup.totalStat)} more to cap
-                </p>
+              {lineup.isBusted ? (
+                <p className="sports-font text-[7px] md:text-[9px] text-red-400/70 tracking-wide mt-1 uppercase">Busted!</p>
+              ) : (
+                <div className="mt-2 md:mt-3 border-t border-white/10 pt-2 md:pt-3">
+                  <div className="sports-font text-[6px] md:text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
+                  <p className="retro-title text-xl md:text-3xl text-[#d4af37]">{fmt(targetCap - lineup.totalStat)}</p>
+                </div>
               )}
             </div>
           </div>
@@ -467,7 +478,7 @@ export function SoloLineupIsRightPage() {
                     </div>
                     <div className="flex gap-1 md:gap-2 mt-auto">
                       <button
-                        onClick={() => { setSelectedPlayerName(null); setSelectedYear(''); setAvailableYears([]); }}
+                        onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
                         className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-xs md:text-base"
                       >
                         Back
@@ -525,6 +536,7 @@ export function SoloLineupIsRightPage() {
                       <button
                         onClick={() => {
                           setSelectedPlayerName(null);
+                          setSelectedPlayerId(null);
                           setSelectedYear('');
                           setAvailableYears([]);
                         }}
@@ -648,6 +660,8 @@ export function SoloLineupIsRightPage() {
               {/* OPTIMAL LAST PICK HINT */}
               {optimalPick && lineup && lineup.selectedPlayers.length > 0 && (() => {
                 const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
+                const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
+                const wouldFinishAt = parseFloat((totalBeforeLast + optimalPick.statValue).toFixed(1));
                 return (
                   <div className="bg-black/60 border border-[#d4af37]/30 rounded-sm p-3 md:p-4">
                     <div className="sports-font text-[8px] text-[#d4af37]/60 tracking-widest uppercase mb-2">Optimal Last Pick</div>
@@ -660,6 +674,11 @@ export function SoloLineupIsRightPage() {
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
                         </div>
+                        {lineup.isBusted && (
+                          <div className="sports-font text-[9px] text-emerald-400/70 mt-1">
+                            Would finish: {fmt(wouldFinishAt)} / {targetCap}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right shrink-0">
                         <div className="retro-title text-xl text-[#d4af37]">{fmt(optimalPick.statValue)}</div>
@@ -682,6 +701,7 @@ export function SoloLineupIsRightPage() {
                     setSearchQuery('');
                     setSearchResults([]);
                     setSelectedPlayerName(null);
+                    setSelectedPlayerId(null);
                     setSelectedYear('');
                     setAvailableYears([]);
                   }}
@@ -729,7 +749,7 @@ export function SoloLineupIsRightPage() {
                           <div className={`sports-font text-[7px] md:text-[8px] ${
                             isInvalid ? 'text-red-400/50' : 'text-white/50'
                           }`}>
-                            {selectedSport?.toUpperCase()} • {statCategory}
+                            {selectedSport?.toUpperCase()} • {getCategoryAbbr(statCategory!)}
                           </div>
                           <div className={`retro-title text-sm md:text-base truncate ${
                             isInvalid ? 'text-red-400' : 'text-white'

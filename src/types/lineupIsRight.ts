@@ -47,10 +47,12 @@ export type StatCategory =
   | 'pra'    // NBA: points + rebounds + assists per game
   | 'passing_yards'  // NFL: passing yards
   | 'passing_tds'    // NFL: passing touchdowns
+  | 'interceptions'  // NFL: interceptions thrown (QB)
   | 'rushing_yards'  // NFL: rushing yards
   | 'rushing_tds'    // NFL: rushing touchdowns
   | 'receiving_yards'  // NFL: receiving yards
   | 'receiving_tds'    // NFL: receiving touchdowns
+  | 'receptions'       // NFL: receptions (RB/WR/TE)
   | 'total_gp';        // NBA/NFL: total career games played for a team (no year selection)
 
 export interface LineupIsRightGameState {
@@ -106,10 +108,12 @@ export interface NFLSeason {
   gp?: number;
   passing_yards?: number;
   passing_tds?: number;
+  interceptions?: number;
   rushing_yards?: number;
   rushing_tds?: number;
   receiving_yards?: number;
   receiving_tds?: number;
+  receptions?: number;
   [key: string]: any;
 }
 
