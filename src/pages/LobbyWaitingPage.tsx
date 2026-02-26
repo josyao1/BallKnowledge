@@ -31,9 +31,9 @@ import type { Sport } from '../types';
 const LINEUP_STAT_ABBR: Record<string, string> = {
   random: 'RANDOM',
   pts: 'PTS', ast: 'AST', reb: 'REB', min: 'MIN', pra: 'PRA',
-  passing_yards: 'PASS YD', passing_tds: 'PASS TD',
+  passing_yards: 'PASS YD', passing_tds: 'PASS TD', interceptions: 'INT',
   rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD',
-  receiving_yards: 'REC YD', receiving_tds: 'REC TD',
+  receiving_yards: 'REC YD', receiving_tds: 'REC TD', receptions: 'REC',
   total_gp: 'TOT GP',
 };
 
@@ -1020,18 +1020,20 @@ export function LobbyWaitingPage() {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="bg-black/50 border border-[#d4af37]/30 rounded-sm p-4 space-y-4">
-                <div className="sports-font text-[10px] text-[#d4af37] tracking-[0.3em] uppercase text-center">
-                  Host Settings
+              <div className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-sm p-4 space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-[#1f1f1f]" />
+                  <span className="sports-font text-[9px] text-[#555] tracking-[0.35em] uppercase">Host Settings</span>
+                  <div className="h-px flex-1 bg-[#1f1f1f]" />
                 </div>
 
                 {/* Mode Toggle */}
                 <div>
-                  <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Mode</div>
+                  <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Mode</div>
                   <select
                     value={editGameType}
                     onChange={e => setEditGameType(e.target.value as typeof editGameType)}
-                    className="w-full bg-black/50 text-white px-3 py-2.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                    className="w-full bg-[#111] text-[#ccc] px-3 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                   >
                     <option value="roster">Roster Challenge</option>
                     <option value="career">Career Arc</option>
@@ -1044,8 +1046,8 @@ export function LobbyWaitingPage() {
                   <>
                     {/* Scramble Win Target */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Points Target</div>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Points Target</div>
+                      <div className="flex gap-1.5">
                         {[10, 20, 30, 40, 50].map(n => (
                           <button
                             key={n}
@@ -1053,7 +1055,7 @@ export function LobbyWaitingPage() {
                             className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
                               editWinTarget === n
                                 ? 'bg-[#3b82f6] text-white'
-                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
                             }`}
                           >
                             {n}
@@ -1063,11 +1065,11 @@ export function LobbyWaitingPage() {
                     </div>
                     {/* Era Filter */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Career Era</div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Career Era</div>
                       <select
                         value={editCareerTo}
                         onChange={(e) => setEditCareerTo(parseInt(e.target.value))}
-                        className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#3b82f6]"
+                        className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                       >
                         <option value={0}>Any Era</option>
                         {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map(y => (
@@ -1080,8 +1082,8 @@ export function LobbyWaitingPage() {
                   <>
                     {/* Win Target */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">First To</div>
-                      <div className="flex gap-2">
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">First To</div>
+                      <div className="flex gap-1.5">
                         {[2, 3, 4, 5, 7].map(n => (
                           <button
                             key={n}
@@ -1089,7 +1091,7 @@ export function LobbyWaitingPage() {
                             className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
                               editWinTarget === n
                                 ? 'bg-[#d4af37] text-black'
-                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
                             }`}
                           >
                             {n}
@@ -1100,14 +1102,14 @@ export function LobbyWaitingPage() {
 
                     {/* Era Filters */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Era Filter</div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Era Filter</div>
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="sports-font text-[9px] text-[#666] block mb-1">Career started from</label>
+                          <label className="sports-font text-[9px] text-[#444] block mb-1">Started from</label>
                           <select
                             value={editCareerFrom}
                             onChange={(e) => setEditCareerFrom(parseInt(e.target.value))}
-                            className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                            className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                           >
                             <option value={0}>Any</option>
                             {Array.from({ length: 2015 - 1980 + 1 }, (_, i) => 1980 + i).map(y => (
@@ -1116,11 +1118,11 @@ export function LobbyWaitingPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="sports-font text-[9px] text-[#666] block mb-1">Active into</label>
+                          <label className="sports-font text-[9px] text-[#444] block mb-1">Active into</label>
                           <select
                             value={editCareerTo}
                             onChange={(e) => setEditCareerTo(parseInt(e.target.value))}
-                            className="w-full bg-black/50 text-white px-2 py-1.5 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                            className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                           >
                             <option value={0}>Any</option>
                             {Array.from({ length: 2026 - 1990 + 1 }, (_, i) => 1990 + i).map(y => (
@@ -1134,37 +1136,40 @@ export function LobbyWaitingPage() {
                 ) : editGameType === 'lineup-is-right' ? (
                   <>
                     {/* Sport Toggle */}
-                    <div className="flex justify-center gap-2">
-                      {(['nba', 'nfl'] as const).map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => { setEditSport(s); setEditLineupStat('random'); }}
-                          className={`flex-1 py-2 rounded-sm sports-font text-xs uppercase tracking-wider transition-all ${
-                            editSport === s
-                              ? s === 'nba' ? 'bg-orange-500 text-white' : 'bg-[#013369] text-white'
-                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                          }`}
-                        >
-                          {s.toUpperCase()}
-                        </button>
-                      ))}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nba', 'nfl'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => { setEditSport(s); setEditLineupStat('random'); }}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editSport === s
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Stat Category */}
                     <div>
-                      <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-2">Stat Category</div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Stat Category</div>
                       <div className="flex flex-wrap gap-1.5">
                         {(['random', ...(editSport === 'nba'
                           ? ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp']
-                          : ['passing_yards', 'passing_tds', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'total_gp']
+                          : ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp']
                         )] as string[]).map((cat) => (
                           <button
                             key={cat}
                             onClick={() => setEditLineupStat(cat)}
-                            className={`px-3 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+                            className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
                               editLineupStat === cat
-                                ? cat === 'random' ? 'bg-[#d4af37] text-black font-bold' : 'bg-[#ec4899] text-white'
-                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                                ? cat === 'random' ? 'bg-[#d4af37] text-black' : 'bg-[#ec4899] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
                             }`}
                           >
                             {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
@@ -1174,17 +1179,17 @@ export function LobbyWaitingPage() {
                     </div>
 
                     {/* Hard Mode Toggle */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between border-t border-[#1a1a1a] pt-4">
                       <div>
-                        <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Hard Mode</div>
-                        <div className="sports-font text-[9px] text-[#555] mt-0.5">Players pick one at a time; player-seasons lock globally</div>
+                        <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Hard Mode</div>
+                        <div className="sports-font text-[9px] text-[#444] mt-0.5">Pick one at a time; locks globally</div>
                       </div>
                       <button
                         onClick={() => setEditHardMode(prev => !prev)}
-                        className={`px-4 py-1.5 rounded-sm sports-font text-xs tracking-wider transition-all ${
+                        className={`px-4 py-1.5 rounded-sm retro-title text-sm tracking-wider transition-all ${
                           editHardMode
-                            ? 'bg-red-600 text-white border border-red-500'
-                            : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                            ? 'bg-[#c8102e] text-white'
+                            : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a]'
                         }`}
                       >
                         {editHardMode ? 'ON' : 'OFF'}
@@ -1194,77 +1199,74 @@ export function LobbyWaitingPage() {
                 ) : (
                   <>
                     {/* Sport Toggle */}
-                    <div className="flex justify-center gap-2">
-                      {(['nba', 'nfl', 'random'] as const).map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => handleEditSportChange(s)}
-                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                            (s === 'random' && editRandomSport) || (s !== 'random' && !editRandomSport && editSport === s)
-                              ? (s === 'nba' ? 'bg-orange-500' : s === 'nfl' ? 'bg-[#013369]' : 'bg-[#d4af37]') + ' text-white'
-                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                          }`}
-                        >
-                          {s === 'random' ? '?' : s.toUpperCase()}
-                        </button>
-                      ))}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nba', 'nfl', 'random'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => handleEditSportChange(s)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              (s === 'random' && editRandomSport) || (s !== 'random' && !editRandomSport && editSport === s)
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white'
+                                  : s === 'nfl' ? 'bg-[#013369] text-white'
+                                  : 'bg-[#d4af37] text-black'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s === 'random' ? '?' : s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Game Mode Toggle - hidden when random sport selected */}
+                    {/* Game Mode Toggle */}
                     {!editRandomSport && (
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => setEditGameMode('random')}
-                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                            editGameMode === 'random'
-                              ? 'bg-[#d4af37] text-black'
-                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                          }`}
-                        >
-                          Random
-                        </button>
-                        <button
-                          onClick={() => setEditGameMode('manual')}
-                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                            editGameMode === 'manual'
-                              ? 'bg-[#d4af37] text-black'
-                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                          }`}
-                        >
-                          Manual
-                        </button>
+                      <div>
+                        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Selection</div>
+                        <div className="flex gap-1.5">
+                          {(['random', 'manual'] as const).map((m) => (
+                            <button
+                              key={m}
+                              onClick={() => setEditGameMode(m)}
+                              className={`flex-1 py-2 rounded-sm sports-font text-xs tracking-wider uppercase transition-all ${
+                                editGameMode === m
+                                  ? 'bg-[#d4af37] text-black'
+                                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                              }`}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    {/* Scope Toggle - visible when random mode and not random sport */}
+                    {/* Scope Toggle */}
                     {!editRandomSport && editGameMode === 'random' && (
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => setEditSelectionScope('team')}
-                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                            editSelectionScope === 'team'
-                              ? 'bg-[#d4af37] text-black'
-                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                          }`}
-                        >
-                          Team
-                        </button>
-                        <button
-                          onClick={() => setEditSelectionScope('division')}
-                          className={`px-4 py-2 rounded-lg sports-font text-xs tracking-wider transition-all ${
-                            editSelectionScope === 'division'
-                              ? 'bg-[#d4af37] text-black'
-                              : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
-                          }`}
-                        >
-                          Division
-                        </button>
+                      <div>
+                        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Scope</div>
+                        <div className="flex gap-1.5">
+                          {(['team', 'division'] as const).map((sc) => (
+                            <button
+                              key={sc}
+                              onClick={() => setEditSelectionScope(sc)}
+                              className={`flex-1 py-2 rounded-sm sports-font text-xs tracking-wider uppercase transition-all ${
+                                editSelectionScope === sc
+                                  ? 'bg-[#d4af37] text-black'
+                                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                              }`}
+                            >
+                              {sc}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     {/* Random sport info */}
                     {editRandomSport && (
-                      <div className="text-center text-white/40 text-xs sports-font tracking-wider">
+                      <div className="text-center sports-font text-[10px] text-[#444] tracking-wider">
                         Sport and team will be randomly selected
                       </div>
                     )}
@@ -1287,35 +1289,27 @@ export function LobbyWaitingPage() {
                       </div>
                     )}
 
-                    {/* Random Mode: Year Range */}
+                    {/* Year Range */}
                     {(editRandomSport || editGameMode === 'random') && (
-                      <div className="bg-black/30 border border-white/10 rounded-sm p-3">
-                        <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
-                          Year Range
-                        </div>
-                        <div className="flex items-center justify-center gap-3">
+                      <div>
+                        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Year Range</div>
+                        <div className="flex items-center gap-2">
                           <select
                             value={editMinYear}
                             onChange={(e) => setEditMinYear(parseInt(e.target.value))}
-                            className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
+                            className="flex-1 bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                           >
-                            {Array.from(
-                              { length: 2025 - 2000 + 1 },
-                              (_, i) => 2000 + i
-                            ).map((y) => (
+                            {Array.from({ length: 2025 - 2000 + 1 }, (_, i) => 2000 + i).map((y) => (
                               <option key={y} value={y}>{y}</option>
                             ))}
                           </select>
-                          <span className="text-white/40 sports-font">to</span>
+                          <span className="text-[#444] sports-font text-xs">to</span>
                           <select
                             value={editMaxYear}
                             onChange={(e) => setEditMaxYear(parseInt(e.target.value))}
-                            className="bg-black/50 text-white px-3 py-1.5 rounded-lg border border-white/20 sports-font text-sm"
+                            className="flex-1 bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                           >
-                            {Array.from(
-                              { length: 2025 - 2000 + 1 },
-                              (_, i) => 2000 + i
-                            ).map((y) => (
+                            {Array.from({ length: 2025 - 2000 + 1 }, (_, i) => 2000 + i).map((y) => (
                               <option key={y} value={y}>{y}</option>
                             ))}
                           </select>
@@ -1323,31 +1317,26 @@ export function LobbyWaitingPage() {
                       </div>
                     )}
 
-                    {/* Timer Selection */}
-                    <div className="bg-black/30 border border-white/10 rounded-sm p-3">
-                      <div className="sports-font text-[10px] text-white/40 mb-2 tracking-widest text-center uppercase">
-                        Timer Duration
-                      </div>
-                      <div className="flex flex-wrap justify-center gap-2 mb-2">
+                    {/* Timer */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Timer</div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
                         {[60, 90, 120, 180, 300].map((seconds) => (
                           <button
                             key={seconds}
-                            onClick={() => {
-                              setEditTimer(seconds);
-                              setEditCustomTimer('');
-                            }}
-                            className={`px-3 py-1.5 rounded-lg sports-font text-sm transition-all ${
+                            onClick={() => { setEditTimer(seconds); setEditCustomTimer(''); }}
+                            className={`flex-1 py-2 rounded-sm sports-font text-xs transition-all ${
                               editTimer === seconds && !editCustomTimer
                                 ? 'bg-[#d4af37] text-black'
-                                : 'bg-black/50 text-white/40 border border-white/10 hover:border-white/30'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
                             }`}
                           >
                             {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
                           </button>
                         ))}
                       </div>
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#444] text-[10px] sports-font tracking-wider">Custom:</span>
                         <input
                           type="number"
                           value={editCustomTimer}
@@ -1361,10 +1350,10 @@ export function LobbyWaitingPage() {
                           placeholder="sec"
                           min={10}
                           max={600}
-                          className="w-20 px-2 py-1 bg-black/50 rounded-lg border border-white/20 text-white text-center sports-font text-sm focus:outline-none focus:border-[#d4af37]"
+                          className="w-20 px-2 py-1.5 bg-[#111] rounded-sm border border-[#2a2a2a] text-[#ccc] text-center sports-font text-sm focus:outline-none focus:border-[#444]"
                         />
                         {editCustomTimer && (
-                          <span className="text-white/50 sports-font text-sm">
+                          <span className="text-[#666] sports-font text-sm">
                             = {Math.floor(editTimer / 60)}:{String(editTimer % 60).padStart(2, '0')}
                           </span>
                         )}
@@ -1377,9 +1366,9 @@ export function LobbyWaitingPage() {
                 <button
                   onClick={handleApplySettings}
                   disabled={editGameType === 'roster' && editGameMode === 'manual' && (!editTeam || !editYear) || false}
-                  className="w-full py-3 rounded-sm retro-title tracking-wider transition-all disabled:opacity-50 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
+                  className="w-full py-2.5 rounded-sm retro-title text-base tracking-wider transition-all disabled:opacity-40 bg-[#d4af37] text-black hover:bg-[#e0be4a] active:scale-[0.98]"
                 >
-                  Apply Changes
+                  Apply
                 </button>
               </div>
             </motion.div>

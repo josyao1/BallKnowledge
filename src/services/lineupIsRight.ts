@@ -84,10 +84,12 @@ const TEST_NFL_TEAMS: string[] | null = null;
 const NFL_STAT_WEIGHTS: Array<{ category: StatCategory; weight: number }> = [
   { category: 'passing_yards',   weight: 1 },
   { category: 'passing_tds',     weight: 1 },
+  { category: 'interceptions',   weight: 1 },
   { category: 'rushing_yards',   weight: 2 },
   { category: 'rushing_tds',     weight: 2 },
   { category: 'receiving_yards', weight: 2 },
   { category: 'receiving_tds',   weight: 2 },
+  { category: 'receptions',      weight: 2 },
   { category: 'total_gp',        weight: 2 },
 ];
 
@@ -99,10 +101,12 @@ const STAT_LABELS: Record<StatCategory, string> = {
   pra: 'Points + Rebounds + Assists',
   passing_yards: 'Passing Yards',
   passing_tds: 'Passing Touchdowns',
+  interceptions: 'Interceptions Thrown',
   rushing_yards: 'Rushing Yards',
   rushing_tds: 'Rushing Touchdowns',
   receiving_yards: 'Receiving Yards',
   receiving_tds: 'Receiving Touchdowns',
+  receptions: 'Receptions',
   total_gp: 'Total Games Played',
 };
 
@@ -138,10 +142,14 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory): num
     switch (statCategory) {
       case 'passing_yards': return r(12000, 20000); // 3× 4000 = 12000; 5 elite = 20000+
       case 'passing_tds':   return r(80,   140);    // 3× 30   = 90;  5 elite = 180
+      // interceptions: avg ~9/yr, bad QBs 20+. 3 avg = 27; 5 bad = 75+
+      case 'interceptions': return r(25,   55);
       case 'rushing_yards': return r(4000, 7000);   // 3× 1200 = 3600; 5 elite = 8000
       case 'rushing_tds':   return r(35,   65);     // 3× 10   = 30;  5 elite = 75
       case 'receiving_yards': return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
       case 'receiving_tds':   return r(28,   50);   // 3× 9    = 27;  5 elite = 55
+      // receptions: avg ~35/yr, elite 100+. 3 avg = 105; 5 elite = 500+
+      case 'receptions':      return r(150, 300);
       // total_gp: career GP with one team. Franchise guys hit 100-200, avg starter 30-80.
       // 5 picks averaging ~50 GP each = 250. Range creates tension.
       case 'total_gp':        return r(175, 325);
@@ -402,6 +410,8 @@ export async function searchPlayersByName(
 /**
  * Search for players by name only (unique players, no seasons returned).
  * Returns minimal objects containing playerId and playerName.
+ * When two players share the same name, their position is appended:
+ *   "Michael Pittman (RB)" / "Michael Pittman (WR)"
  */
 export async function searchPlayersByNameOnly(
   sport: Sport,
@@ -409,28 +419,59 @@ export async function searchPlayersByNameOnly(
 ): Promise<Array<{ playerId: string | number; playerName: string }>> {
   try {
     const searchLower = normalizeStr(playerName);
-    if (sport === 'nba') {
-      const players = await loadNBALineupPool();
-      const results = players
-        .filter(p => normalizeStr(p.player_name).includes(searchLower))
-        .map(p => ({ playerId: p.player_id, playerName: p.player_name }));
-      // Deduplicate by playerId
-      const map = new Map<number | string, string>();
-      results.forEach(r => map.set(r.playerId, r.playerName));
-      return Array.from(map.entries()).map(([playerId, playerName]) => ({ playerId, playerName }));
-    } else {
-      const players = await loadNFLLineupPool();
-      const results = players
-        .filter(p => normalizeStr(p.player_name).includes(searchLower))
-        .map(p => ({ playerId: p.player_id, playerName: p.player_name }));
-      const map = new Map<number | string, string>();
-      results.forEach(r => map.set(r.playerId, r.playerName));
-      return Array.from(map.entries()).map(([playerId, playerName]) => ({ playerId, playerName }));
+    const pool = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+
+    // Deduplicate by player_id first
+    const seen = new Map<string | number, { playerId: string | number; playerName: string; position?: string }>();
+    for (const p of pool) {
+      if (!normalizeStr(p.player_name).includes(searchLower)) continue;
+      if (!seen.has(p.player_id)) {
+        seen.set(p.player_id, {
+          playerId: p.player_id,
+          playerName: p.player_name,
+          position: (p as any).position as string | undefined,
+        });
+      }
     }
+
+    const dedupedResults = Array.from(seen.values());
+
+    // Find names that appear more than once (different player_ids, same display name)
+    const nameCounts = new Map<string, number>();
+    for (const r of dedupedResults) {
+      const key = normalizeStr(r.playerName);
+      nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
+    }
+
+    // For duplicate names, append position to disambiguate
+    return dedupedResults.map(r => {
+      if ((nameCounts.get(normalizeStr(r.playerName)) ?? 0) > 1 && r.position) {
+        return { playerId: r.playerId, playerName: `${r.playerName} (${r.position})` };
+      }
+      return { playerId: r.playerId, playerName: r.playerName };
+    });
   } catch (error) {
     console.error('Error searching players by name only:', error);
     return [];
   }
+}
+
+/** Strip ` (POS)` disambiguation suffix if present, e.g. "Michael Pittman (WR)" → "Michael Pittman". */
+function stripPositionSuffix(name: string): string {
+  return name.replace(/\s*\([A-Z]+\)$/, '');
+}
+
+/** Find a player in the pool, using player_id when available (exact), falling back to name. */
+function findPlayer<T extends { player_id: string | number; player_name: string }>(
+  pool: T[],
+  playerName: string,
+  playerId?: string | number
+): T | undefined {
+  if (playerId != null) {
+    return pool.find(p => String(p.player_id) === String(playerId));
+  }
+  const cleanName = normalizeStr(stripPositionSuffix(playerName));
+  return pool.find(p => normalizeStr(p.player_name) === cleanName);
 }
 
 /**
@@ -441,33 +482,34 @@ export async function searchPlayersByNameOnly(
 export async function getPlayerYearsOnTeam(
   sport: Sport,
   playerName: string,
-  _team: string
+  _team: string,
+  playerId?: string | number
 ): Promise<string[]> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
-      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
-      
+      const player = findPlayer(players, playerName, playerId);
+
       if (!player) return [];
-      
+
       const years = player.seasons
         .map(s => {
           // Convert season format "2023-24" to year "2023"
           const parts = s.season.split('-');
           return parts[0];
         });
-      
+
       return [...new Set(years)].sort();
     } else {
       // NFL
       const players = await loadNFLLineupPool();
-      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
-      
+      const player = findPlayer(players, playerName, playerId);
+
       if (!player) return [];
-      
+
       const years = player.seasons
         .map(s => s.season);
-      
+
       return [...new Set(years)].sort();
     }
   } catch (error) {
@@ -485,12 +527,13 @@ export async function getPlayerStatForYearAndTeam(
   playerName: string,
   team: string,
   year: string,
-  statCategory: string
+  statCategory: string,
+  playerId?: string | number
 ): Promise<number> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
-      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
+      const player = findPlayer(players, playerName, playerId);
       
       if (!player) return 0;
       
@@ -514,10 +557,10 @@ export async function getPlayerStatForYearAndTeam(
     } else {
       // NFL
       const players = await loadNFLLineupPool();
-      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
-      
+      const player = findPlayer(players, playerName, playerId);
+
       if (!player) return 0;
-      
+
       const season = player.seasons.find(
         s => s.season === year && (
           isDivisionRound(team)
@@ -525,9 +568,9 @@ export async function getPlayerStatForYearAndTeam(
             : nflTeamMatches(s.team, team)
         )
       );
-      
+
       if (!season) return 0;
-      
+
       const statKey = statCategory as keyof typeof season;
       return (season[statKey] as number) ?? 0;
     }
@@ -546,19 +589,20 @@ export async function getPlayerStatForYearAndTeam(
 export async function getPlayerTotalGPForTeam(
   sport: Sport,
   playerName: string,
-  team: string
+  team: string,
+  playerId?: string | number
 ): Promise<number> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
-      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
+      const player = findPlayer(players, playerName, playerId);
       if (!player) return 0;
       return player.seasons
         .filter(s => s.team === team)
         .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
     } else {
       const players = await loadNFLLineupPool();
-      const player = players.find(p => normalizeStr(p.player_name) === normalizeStr(playerName));
+      const player = findPlayer(players, playerName, playerId);
       if (!player) return 0;
       return player.seasons
         .filter(s =>

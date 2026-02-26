@@ -46,6 +46,7 @@ export function GamePage() {
     score,
     hideResultsDuringGame,
     divisionTeams,
+    sport,
     startGame,
     endGame,
     processGuesses,
@@ -199,7 +200,7 @@ export function GamePage() {
                 </div>
               </div>
             ) : (
-              <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} />
+              <TeamDisplay team={selectedTeam} season={selectedSeason} record={showSeasonHints ? teamRecord : null} sport={sport} />
             )}
             <div className="h-10 w-[1px] bg-white/20 hidden md:block" />
 
