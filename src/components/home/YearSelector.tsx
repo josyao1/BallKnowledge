@@ -26,18 +26,18 @@ export function YearSelector({ selectedYear, onSelect, minYear, maxYear, sport =
 
   return (
     <div className="relative">
-      <label className="block text-sm text-gray-400 mb-1">Select Season</label>
+      <label className="block sports-font text-[9px] text-[#888] mb-2 tracking-widest uppercase">Select Season</label>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-3 bg-gray-800 rounded-lg text-left flex items-center justify-between border border-gray-700 hover:border-gray-600 transition-colors"
+        className="w-full px-3 py-2.5 bg-[#1a1a1a]/60 rounded-lg text-left flex items-center justify-between border border-[#2a2a2a] hover:border-[#444] transition-colors"
       >
         {selectedYear ? (
-          <span>{formatSeason(selectedYear)}</span>
+          <span className="text-sm text-[var(--vintage-cream)]">{formatSeason(selectedYear)}</span>
         ) : (
-          <span className="text-gray-500">Choose a season...</span>
+          <span className="text-[#666] text-sm">Choose a season...</span>
         )}
         <svg
-          className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-[#777] transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -47,7 +47,7 @@ export function YearSelector({ selectedYear, onSelect, minYear, maxYear, sport =
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-50 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#141414] rounded-lg border border-[#2a2a2a] shadow-xl z-50 max-h-60 overflow-y-auto">
           {years.map((year) => (
             <button
               key={year}
@@ -55,8 +55,10 @@ export function YearSelector({ selectedYear, onSelect, minYear, maxYear, sport =
                 onSelect(year);
                 setIsOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors ${
-                selectedYear === year ? 'bg-indigo-600/20 text-indigo-400' : ''
+              className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+                selectedYear === year
+                  ? 'bg-[#d4af37]/15 text-[#f2d88a]'
+                  : 'text-[var(--vintage-cream)] hover:bg-[#1f1f1f]'
               }`}
             >
               {formatSeason(year)}
