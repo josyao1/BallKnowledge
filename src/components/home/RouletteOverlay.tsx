@@ -284,9 +284,10 @@ function CardFace({ side, image, label, value, teamAbbr, sport }: any) {
         <div className="w-full h-full flex flex-col items-center justify-center p-3 md:p-4 overflow-hidden relative gap-1">
           <span className="sports-font text-[8px] md:text-[10px] text-amber-600 tracking-[0.3em] uppercase font-semibold text-center flex-shrink-0">{label}</span>
           {showLogo ? (
-            <TeamLogo sport={sport} abbr={teamAbbr} size={64} className="flex-shrink-0" />
-          ) : null}
-          <span className="retro-title text-xs sm:text-sm md:text-xl md:leading-tight text-slate-800 uppercase font-bold text-center leading-snug w-full px-1 md:px-2 flex-shrink-0 line-clamp-3 overflow-hidden break-words hyphens-auto">{value}</span>
+            <TeamLogo sport={sport} abbr={teamAbbr} size={80} className="flex-shrink-0" />
+          ) : (
+            <span className="retro-title text-xs sm:text-sm md:text-xl md:leading-tight text-slate-800 uppercase font-bold text-center leading-snug w-full px-1 md:px-2 flex-shrink-0 line-clamp-3 overflow-hidden break-words hyphens-auto">{value}</span>
+          )}
         </div>
       )}
     </div>

@@ -66,10 +66,23 @@ function getTeamColor(sport: Sport, teamAbbr: string): string {
     const team = getTeamByAbbreviation(teamAbbr);
     return team?.colors.primary || '#666666';
   } else {
-    // NFL - return a default color for now (can be enhanced with NFL team colors)
     const nflTeam = nflTeams.find(t => t.abbreviation === teamAbbr);
     return nflTeam?.colors?.primary || '#003875';
   }
+}
+
+/** Returns the team color if it has enough contrast on a black background, otherwise white. */
+function getReadableTeamColor(sport: Sport, teamAbbr: string): string {
+  const color = getTeamColor(sport, teamAbbr);
+  const hex = color.replace('#', '');
+  if (hex.length === 6) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (luminance < 0.25) return '#FFFFFF';
+  }
+  return color;
 }
 
 export function SoloLineupIsRightPage() {
@@ -297,7 +310,7 @@ export function SoloLineupIsRightPage() {
                 <div className="flex flex-wrap gap-2 justify-center max-w-sm mb-8">
                   <button
                     onClick={() => handleStartGame(selectedSport)}
-                    className="px-4 py-2 rounded-sm sports-font text-xs bg-[#d4af37] text-black font-bold tracking-wider hover:bg-[#e5c04a] transition"
+                    className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                   >
                     RANDOM
                   </button>
@@ -388,13 +401,13 @@ export function SoloLineupIsRightPage() {
                 </p>
               </div>
             ) : (
-              <div className="flex items-center gap-3 px-6 md:px-10 py-2 md:py-3 rounded-lg border-2 bg-black"
+              <div className="flex items-center gap-3 px-3 py-2 md:py-3 rounded-lg border-2 bg-black"
                 style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
               >
                 <TeamLogo sport={selectedSport!} abbr={currentTeam} size={52} />
                 <p
                   className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
-                  style={{ color: getTeamColor(selectedSport, currentTeam) }}
+                  style={{ color: getReadableTeamColor(selectedSport, currentTeam) }}
                 >
                   {currentTeam}
                 </p>
