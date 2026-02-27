@@ -6,8 +6,8 @@
  * Press "Next Player" to keep playing.
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettingsStore } from '../stores/settingsStore';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
@@ -19,7 +19,13 @@ type GameStatus = 'loading' | 'playing' | 'correct' | 'gave-up';
 
 export function SoloScramblePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { sport, setSport } = useSettingsStore();
+
+  const scrambleFilters = useMemo(() => {
+    const state = location.state as { careerTo?: number } | null;
+    return state?.careerTo ? { careerTo: state.careerTo } : undefined;
+  }, []);
 
   const [scrambled, setScrambled] = useState('');
   const [answer, setAnswer] = useState('');
@@ -37,8 +43,8 @@ export function SoloScramblePage() {
     setWrongGuesses([]);
 
     const player = currentSport === 'nba'
-      ? await getRandomNBAScramblePlayer()
-      : await getRandomNFLScramblePlayer();
+      ? await getRandomNBAScramblePlayer(scrambleFilters)
+      : await getRandomNFLScramblePlayer(scrambleFilters);
 
     if (!player) {
       setStatus('loading');
@@ -82,6 +88,22 @@ export function SoloScramblePage() {
     loadPlayer(sport);
   }
 
+  // Press Enter to advance to the next player after the result is visible.
+  // Delayed 400ms so the same Enter press that submitted the guess (or key-repeat)
+  // cannot accidentally skip the result screen.
+  useEffect(() => {
+    if (status !== 'correct' && status !== 'gave-up') return;
+    let handler: ((e: KeyboardEvent) => void) | null = null;
+    const t = setTimeout(() => {
+      handler = (e: KeyboardEvent) => { if (e.key === 'Enter') handleNext(); };
+      window.addEventListener('keydown', handler);
+    }, 400);
+    return () => {
+      clearTimeout(t);
+      if (handler) window.removeEventListener('keydown', handler);
+    };
+  }, [status, sport]);
+
   function handleSportSwitch(newSport: Sport) {
     setSport(newSport);
     loadPlayer(newSport);
@@ -102,11 +124,15 @@ export function SoloScramblePage() {
 
         <div className="text-center">
           <h1 className="retro-title text-2xl text-[#3b82f6]">Name Scramble</h1>
-          {streak > 0 && (
+          {streak > 0 ? (
             <div className="sports-font text-[10px] text-[#d4af37] tracking-widest">
               🔥 {streak} in a row
             </div>
-          )}
+          ) : scrambleFilters?.careerTo ? (
+            <div className="sports-font text-[10px] text-[#3b82f6]/60 tracking-widest">
+              {scrambleFilters.careerTo}+ ERA
+            </div>
+          ) : null}
         </div>
 
         {/* Sport toggle */}
