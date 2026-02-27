@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
+import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
 import {
   findLobbyByCode,
   getLobbyPlayers,
@@ -478,8 +479,11 @@ export function MultiplayerNameScramblePage() {
   // Layout: fixed-height container so the mobile keyboard doesn't scroll the
   // scrambled name off screen. Name is pinned at top, input pinned at bottom,
   // everything else scrolls in the middle.
+  const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+
   return (
     <div className="fixed inset-0 bg-[#111] text-white flex flex-col overflow-hidden">
+      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
 
       {/* ── PINNED TOP: always visible even when keyboard is open ── */}
       <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 bg-[#111]">

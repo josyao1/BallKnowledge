@@ -11,6 +11,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
+import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
 import {
   findLobbyByCode,
   getLobbyPlayers,
@@ -559,8 +560,11 @@ export function MultiplayerCareerPage() {
   const doneCount = players.filter(p => p.finished_at !== null).length;
   const totalCount = players.length;
 
+  const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+
   return (
     <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
       {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <div>

@@ -14,6 +14,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
+import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
 import {
   findLobbyByCode,
   getLobbyPlayers,
@@ -754,8 +755,11 @@ export function MultiplayerLineupIsRightPage() {
       </motion.div>
     );
 
+    const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+
     return (
       <div className="h-[100dvh] bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
+        <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
         {/* Green felt background */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
