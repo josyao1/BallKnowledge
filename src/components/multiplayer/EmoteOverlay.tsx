@@ -27,12 +27,12 @@ const DISPLAY_MS  = 2_500;
  * enter/exit from (initX/initY pixel offset).
  */
 const ZONES = [
-  { left: '6%',  top: '8%',  initX: -180, initY: 0    }, // TL  — from left
-  { left: '40%', top: '4%',  initX: 0,    initY: -180 }, // TC  — from top
-  { left: '76%', top: '8%',  initX: 180,  initY: 0    }, // TR  — from right
-  { left: '4%',  top: '40%', initX: -180, initY: 0    }, // ML  — from left
-  { left: '78%', top: '40%', initX: 180,  initY: 0    }, // MR  — from right
-  { left: '38%', top: '24%', initX: 0,    initY: -180 }, // UC  — from top
+  { left: '5%',  top: '8%',  initX: -180, initY: 0    }, // TL  — from left
+  { left: '38%', top: '4%',  initX: 0,    initY: -180 }, // TC  — from top
+  { left: '68%', top: '8%',  initX: 180,  initY: 0    }, // TR  — from right (pulled in so emoji fits narrow screens)
+  { left: '4%',  top: '33%', initX: -180, initY: 0    }, // ML  — from left (nudged up from 40%)
+  { left: '70%', top: '33%', initX: 180,  initY: 0    }, // MR  — from right (nudged up + pulled in)
+  { left: '36%', top: '20%', initX: 0,    initY: -180 }, // UC  — from top
 ] as const;
 
 interface ActiveEmote {
@@ -116,10 +116,10 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               className="fixed pointer-events-none z-50 flex flex-col items-center"
               style={{ left: zone.left, top: zone.top }}
             >
-              <span style={{ fontSize: 72, lineHeight: 1, display: 'block' }}>
+              <span style={{ fontSize: 'clamp(48px, 14vw, 72px)', lineHeight: 1, display: 'block' }}>
                 {emote.emoji}
               </span>
-              <span className="sports-font text-white text-[11px] mt-1.5 bg-black/75 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+              <span className="sports-font text-white text-[11px] mt-1.5 bg-black/75 px-2.5 py-0.5 rounded-full whitespace-nowrap max-w-[100px] truncate block text-center">
                 {emote.senderName}
               </span>
             </motion.div>
@@ -128,7 +128,10 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
       </AnimatePresence>
 
       {/* ── Send buttons — fixed bottom-right, collapsible ── */}
-      <div className="fixed bottom-4 right-4 z-40 flex items-center gap-1 bg-black/70 border border-white/10 rounded-xl p-1.5 backdrop-blur-sm">
+      <div
+        className="fixed right-4 z-40 flex items-center gap-1 bg-black/70 border border-white/10 rounded-xl p-1.5 backdrop-blur-sm"
+        style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         <AnimatePresence initial={false}>
           {expanded && (
             <motion.div
@@ -141,10 +144,9 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               {EMOTES.map(emoji => (
                 <button
                   key={emoji}
-                  onClick={() => sendEmote(emoji)}
+                  onClick={() => { sendEmote(emoji); setExpanded(false); }}
                   disabled={onCooldown}
-                  title={onCooldown ? 'Cooling down…' : `Send ${emoji}`}
-                  className="w-9 h-9 text-xl flex items-center justify-center rounded-lg transition-all active:scale-90 hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed"
+                  className="w-11 h-11 text-xl flex items-center justify-center rounded-lg transition-all active:scale-90 active:bg-white/10 hover:bg-white/10 disabled:opacity-25"
                 >
                   {emoji}
                 </button>
@@ -152,11 +154,10 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
             </motion.div>
           )}
         </AnimatePresence>
-        {/* Toggle button — always visible */}
+        {/* Toggle — always visible, 44px touch target */}
         <button
           onClick={() => setExpanded(v => !v)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all text-white/50 hover:text-white"
-          title={expanded ? 'Hide emotes' : 'Emotes'}
+          className="w-11 h-11 flex items-center justify-center rounded-lg transition-all active:bg-white/10 hover:bg-white/10 text-white/50 active:text-white hover:text-white"
         >
           {expanded ? '✕' : '💬'}
         </button>
