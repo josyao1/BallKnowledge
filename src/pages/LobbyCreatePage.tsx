@@ -24,7 +24,7 @@ type GenericTeam = {
   colors: { primary: string; secondary: string };
 };
 
-const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right'] as const;
+const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right', 'box-score'] as const;
 type LobbyMode = typeof VALID_LOBBY_MODES[number];
 
 export function LobbyCreatePage() {
@@ -61,6 +61,7 @@ export function LobbyCreatePage() {
     lobbyMode === 'career' ||
     lobbyMode === 'scramble' ||
     lobbyMode === 'lineup-is-right' ||
+    lobbyMode === 'box-score' ||
     gameMode === 'random' ||
     (selectedTeam && selectedYear)
   );
@@ -98,6 +99,19 @@ export function LobbyCreatePage() {
           round: 0,
           career_to: scrambleCareerTo,
         });
+        navigate(`/lobby/${lobby.join_code}`);
+      }
+      return;
+    }
+
+    // Box Score mode
+    if (lobbyMode === 'box-score') {
+      const lobby = await createLobby(
+        hostName.trim(), 'nfl', 'KC', '2024',
+        120, 'random', 2015, 2024, 'box-score', 'team', null, null
+      );
+      if (lobby) {
+        await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2024, team: null });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
@@ -239,6 +253,16 @@ export function LobbyCreatePage() {
               }`}
             >
               Cap Crunch
+            </button>
+            <button
+              onClick={() => setLobbyMode('box-score')}
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                lobbyMode === 'box-score'
+                  ? 'bg-[#f59e0b] text-black shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+              }`}
+            >
+              Box Score
             </button>
           </div>
         </motion.div>

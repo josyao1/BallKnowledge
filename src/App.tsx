@@ -26,6 +26,10 @@ import { SoloScramblePage } from './pages/SoloScramblePage';
 import { SoloLineupIsRightPage } from './pages/SoloLineupIsRightPage';
 import { MultiplayerLineupIsRightPage } from './pages/MultiplayerLineupIsRightPage';
 import { MultiplayerLineupIsRightResultsPage } from './pages/MultiplayerLineupIsRightResultsPage';
+import { BoxScoreGamePage } from './pages/BoxScoreGamePage';
+import { BoxScoreResultsPage } from './pages/BoxScoreResultsPage';
+import { MultiplayerBoxScorePage } from './pages/MultiplayerBoxScorePage';
+import { MultiplayerBoxScoreResultsPage } from './pages/MultiplayerBoxScoreResultsPage';
 
 function App() {
   return (
@@ -62,6 +66,11 @@ function App() {
         {/* Lineup Is Right routes */}
         <Route path="/lobby/:code/lineup-is-right" element={<MultiplayerLineupIsRightPage />} />
         <Route path="/lobby/:code/lineup-is-right/results" element={<MultiplayerLineupIsRightResultsPage />} />
+        {/* Box Score routes */}
+        <Route path="/box-score" element={<BoxScoreGamePage />} />
+        <Route path="/box-score/results" element={<BoxScoreResultsPage />} />
+        <Route path="/lobby/:code/box-score" element={<MultiplayerBoxScorePage />} />
+        <Route path="/lobby/:code/box-score/results" element={<MultiplayerBoxScoreResultsPage />} />
       </Routes>
     </BrowserRouter>
   );
