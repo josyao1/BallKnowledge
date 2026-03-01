@@ -43,20 +43,20 @@ type GameCard = {
 };
 
 const GAMES: GameCard[] = [
-  { id: 'roster',   abbr: 'RR', name: 'Roster Royale',    tagline: 'Name every player from a mystery team & season',      color: '#d4af37', hasSolo: true,  soloPath: '/roster-royale', image: '/images/roster-royale.svg' },
-  { id: 'career',   abbr: 'CA', name: 'Career Arc',        tagline: "Trace a player's career — team by team",              color: '#22c55e', hasSolo: true,  soloPath: '/career', image: '/images/career-arc.svg' },
-  { id: 'scramble', abbr: 'NS', name: 'Name Scramble',     tagline: 'Unscramble athlete names before time runs out',        color: '#3b82f6', hasSolo: true,  soloPath: '/scramble' , image: '/images/name-scramble.svg' },
-  { id: 'lineup',   abbr: 'CC', name: 'Cap Crunch',        tagline: "Chase the stat cap with a lineup — don't bust",       color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right', image: '/images/cap-crunch.svg' },
-  { id: 'rollcall', abbr: 'RC', name: 'Roll Call',         tagline: 'Work together to name as many athletes as you can',      color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
+  { id: 'roster',   abbr: 'RR', name: 'Roster Royale', tagline: 'Name every player from a mystery team & season',    color: '#d4af37', hasSolo: true,  soloPath: '/roster-royale', image: '/images/roster-royale.svg' },
+  { id: 'career',   abbr: 'CA', name: 'Career Arc',   tagline: "Trace a player's career — team by team",            color: '#22c55e', hasSolo: true,  soloPath: '/career', image: '/images/career-arc.svg' },
+  { id: 'scramble', abbr: 'NS', name: 'Name Scramble',tagline: 'Unscramble athlete names before time runs out',      color: '#3b82f6', hasSolo: true,  soloPath: '/scramble', image: '/images/name-scramble.svg' },
+  { id: 'lineup',   abbr: 'CC', name: 'Cap Crunch',   tagline: "Chase the stat cap with a lineup — don't bust",     color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right', image: '/images/cap-crunch.svg' },
+  { id: 'rollcall', abbr: 'RC', name: 'Roll Call',    tagline: 'Work together to name as many athletes as you can', color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
 ];
 
 // Fan arc positions: x/y offsets from card center origin, rotation degrees
 const FAN_POSITIONS = [
-  { x: -224, y: 47, rotate: -24 },
-  { x: -114, y: 12, rotate: -12 },
-  { x:    0, y:  0, rotate:   0 },
-  { x:  114, y: 12, rotate:  12 },
-  { x:  224, y: 47, rotate:  24 },
+  { x: -216, y: 55, rotate: -22 },
+  { x: -108, y: 20, rotate: -11 },
+  { x:    0, y:  4, rotate:   0 },
+  { x:  108, y: 20, rotate:  11 },
+  { x:  216, y: 55, rotate:  22 },
 ];
 
 export function HomePage() {
@@ -69,6 +69,14 @@ export function HomePage() {
 
   // Name Scramble filter
   const [scrambleActiveYear, setScrambleActiveYear] = useState<number | null>(null);
+
+  // Box Score filters
+  const [boxScoreMinYear, setBoxScoreMinYear] = useState<number>(2015);
+  const [boxScoreMaxYear, setBoxScoreMaxYear] = useState<number>(2024);
+  const [boxScoreTeam,    setBoxScoreTeam]    = useState<string | null>(null);
+
+  // Roster Royale sub-mode (NFL-only: 'roster' | 'box-score')
+  const [rosterSubMode, setRosterSubMode] = useState<'roster' | 'box-score'>('roster');
 
   // Roster Royale setup
   const [gameMode, setGameMode] = useState<GameMode>('random');
@@ -143,6 +151,7 @@ export function HomePage() {
   useEffect(() => {
     setSelectedTeam(null);
     setSelectedYear(null);
+    if (sport === 'nba') setRosterSubMode('roster');
     if (sport === 'nfl') {
       setRandomMinYear(Math.max(randomMinYear, 2000));
       setRandomMaxYear(Math.min(randomMaxYear, 2025));
@@ -383,65 +392,133 @@ export function HomePage() {
 
                     {loadingStatus === 'idle' ? (
                       <>
-                        <div className="flex gap-2 justify-center">
-                          {(['random', 'manual'] as const).map(m => (
-                            <button key={m} onClick={() => setGameMode(m)}
-                              className={`px-5 py-1.5 rounded-lg sports-font text-xs transition-all ${gameMode === m ? 'bg-[#d4af37] text-[#111]' : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'}`}>
-                              {m.charAt(0).toUpperCase() + m.slice(1)}
-                            </button>
-                          ))}
-                        </div>
-
-                        {gameMode === 'manual' ? (
-                          <div className="flex flex-col gap-3">
-                            <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-                            <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={2025} sport={sport} />
-                          </div>
-                        ) : (
-                          <div className="bg-[#1a1a1a]/60 rounded-lg p-3 text-center border border-[#2a2a2a]">
-                            <div className="sports-font text-[9px] text-[#888] mb-2 tracking-widest">Year Range</div>
-                            <div className="flex items-center justify-center gap-2">
-                              <select value={randomMinYear} onChange={e => setRandomMinYear(+e.target.value)} className="bg-[#111] text-[var(--vintage-cream)] px-2 py-1 rounded border border-[#3d3d3d] sports-font text-xs">
-                                {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
-                              </select>
-                              <span className="text-[#666] sports-font text-xs">to</span>
-                              <select value={randomMaxYear} onChange={e => setRandomMaxYear(+e.target.value)} className="bg-[#111] text-[var(--vintage-cream)] px-2 py-1 rounded border border-[#3d3d3d] sports-font text-xs">
-                                {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
-                              </select>
-                            </div>
+                        {/* Sub-mode toggle: Roster Royale vs Box Score (NFL only) */}
+                        {sport === 'nfl' && (
+                          <div className="flex gap-2 justify-center">
+                            {(['roster', 'box-score'] as const).map(m => (
+                              <button key={m} onClick={() => setRosterSubMode(m)}
+                                className={`px-4 py-1.5 rounded-lg sports-font text-xs transition-all ${rosterSubMode === m ? 'bg-[#d4af37] text-[#111]' : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'}`}>
+                                {m === 'roster' ? 'Roster Royale' : 'Box Score'}
+                              </button>
+                            ))}
                           </div>
                         )}
 
-                        <button onClick={() => setShowSettings(true)}
-                          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a]/60 border border-[#2a2a2a] rounded-lg hover:border-[#444] transition-colors group w-full">
-                          <svg className="w-3.5 h-3.5 text-[#888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="sports-font text-sm text-[var(--vintage-cream)]">
-                            {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
-                          </span>
-                          <span className="text-[9px] text-[#555] sports-font tracking-wider">TIMER</span>
-                          <svg className="w-3 h-3 text-[#555]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
+                        {rosterSubMode === 'box-score' && sport === 'nfl' ? (
+                          <>
+                            {/* Year range */}
+                            <div className="flex flex-col gap-2">
+                              <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Year Range</div>
+                              <div className="grid grid-cols-3 gap-2">
+                                {([
+                                  { label: 'Any', min: 2015, max: 2024 },
+                                  { label: '2018+', min: 2018, max: 2024 },
+                                  { label: '2021+', min: 2021, max: 2024 },
+                                ] as { label: string; min: number; max: number }[]).map(opt => (
+                                  <button key={opt.label}
+                                    onClick={() => { setBoxScoreMinYear(opt.min); setBoxScoreMaxYear(opt.max); }}
+                                    className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
+                                      boxScoreMinYear === opt.min && boxScoreMaxYear === opt.max
+                                        ? 'bg-[#f59e0b] text-[#111] border-[#f59e0b]'
+                                        : 'border-[#2a2a2a] text-[#666] hover:border-[#f59e0b]/40 hover:text-[#888]'
+                                    }`}>
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
 
-                        <div className="border-t border-[#d4af37]/20" />
-                        <div className="flex flex-wrap gap-2 justify-center">
-                          <button onClick={handleStartGame}
-                            disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)}
-                            className="retro-btn retro-btn-gold px-8 py-2.5 text-base disabled:opacity-50">
-                            Start Solo
-                          </button>
-                          <button onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
-                            className={`px-4 py-2.5 rounded-lg sports-font border text-xs transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#4a7fb5] text-[#4a7fb5] hover:bg-[#013369] hover:text-white'}`}>
-                            Create Lobby
-                          </button>
-                          <button onClick={() => navigate('/lobby/join')}
-                            className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
-                            Join Lobby
-                          </button>
-                        </div>
+                            {/* Team filter */}
+                            <div className="flex flex-col gap-2">
+                              <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Team Filter</div>
+                              <select
+                                value={boxScoreTeam ?? ''}
+                                onChange={e => setBoxScoreTeam(e.target.value || null)}
+                                className="bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50"
+                              >
+                                <option value="">Any Team</option>
+                                {nflTeams.map(t => (
+                                  <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="border-t border-[#d4af37]/20" />
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => navigate('/box-score', { state: { minYear: boxScoreMinYear, maxYear: boxScoreMaxYear, team: boxScoreTeam } })}
+                                className="retro-btn retro-btn-gold px-8 py-2.5 text-base">
+                                Start Solo
+                              </button>
+                              <button onClick={() => navigate('/lobby/create', { state: { gameType: 'box-score' } })}
+                                className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
+                                Lobby
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex gap-2 justify-center">
+                              {(['random', 'manual'] as const).map(m => (
+                                <button key={m} onClick={() => setGameMode(m)}
+                                  className={`px-5 py-1.5 rounded-lg sports-font text-xs transition-all ${gameMode === m ? 'bg-[#d4af37] text-[#111]' : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'}`}>
+                                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                                </button>
+                              ))}
+                            </div>
+
+                            {gameMode === 'manual' ? (
+                              <div className="flex flex-col gap-3">
+                                <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
+                                <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={2025} sport={sport} />
+                              </div>
+                            ) : (
+                              <div className="bg-[#1a1a1a]/60 rounded-lg p-3 text-center border border-[#2a2a2a]">
+                                <div className="sports-font text-[9px] text-[#888] mb-2 tracking-widest">Year Range</div>
+                                <div className="flex items-center justify-center gap-2">
+                                  <select value={randomMinYear} onChange={e => setRandomMinYear(+e.target.value)} className="bg-[#111] text-[var(--vintage-cream)] px-2 py-1 rounded border border-[#3d3d3d] sports-font text-xs">
+                                    {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                                  </select>
+                                  <span className="text-[#666] sports-font text-xs">to</span>
+                                  <select value={randomMaxYear} onChange={e => setRandomMaxYear(+e.target.value)} className="bg-[#111] text-[var(--vintage-cream)] px-2 py-1 rounded border border-[#3d3d3d] sports-font text-xs">
+                                    {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            )}
+
+                            <button onClick={() => setShowSettings(true)}
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a]/60 border border-[#2a2a2a] rounded-lg hover:border-[#444] transition-colors group w-full">
+                              <svg className="w-3.5 h-3.5 text-[#888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="sports-font text-sm text-[var(--vintage-cream)]">
+                                {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
+                              </span>
+                              <span className="text-[9px] text-[#555] sports-font tracking-wider">TIMER</span>
+                              <svg className="w-3 h-3 text-[#555]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
+
+                            <div className="border-t border-[#d4af37]/20" />
+                            <div className="flex flex-wrap gap-2 justify-center">
+                              <button onClick={handleStartGame}
+                                disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)}
+                                className="retro-btn retro-btn-gold px-8 py-2.5 text-base disabled:opacity-50">
+                                Start Solo
+                              </button>
+                              <button onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
+                                className={`px-4 py-2.5 rounded-lg sports-font border text-xs transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#4a7fb5] text-[#4a7fb5] hover:bg-[#013369] hover:text-white'}`}>
+                                Create Lobby
+                              </button>
+                              <button onClick={() => navigate('/lobby/join')}
+                                className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
+                                Join Lobby
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </>
                     ) : (
                       <div className="flex flex-col items-center gap-4 py-6">

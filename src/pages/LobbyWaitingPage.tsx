@@ -21,6 +21,7 @@ import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerScoreMult
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
 import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/lineupIsRight';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
+import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../services/boxScoreData';
 import { scrambleName } from '../utils/scramble';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
@@ -77,7 +78,7 @@ export function LobbyWaitingPage() {
 
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
-  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble' | 'lineup-is-right'>('roster');
+  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score'>('roster');
   const [editSport, setEditSport] = useState<Sport>('nba');
   const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
@@ -93,6 +94,9 @@ export function LobbyWaitingPage() {
   const [editCareerTo, setEditCareerTo] = useState(0);
   const [editLineupStat, setEditLineupStat] = useState<string>('random');
   const [editHardMode, setEditHardMode] = useState(false);
+  const [editBoxMinYear, setEditBoxMinYear] = useState(2015);
+  const [editBoxMaxYear, setEditBoxMaxYear] = useState(2024);
+  const [editBoxTeam, setEditBoxTeam] = useState<string | null>(null);
 
   // Join prompt for new players arriving via direct link
   const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
@@ -123,7 +127,7 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     if (lobby && !showSettings) {
       const lobbySport = lobby.sport as Sport;
-      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble' | 'lineup-is-right') || 'roster');
+      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score') || 'roster');
       setEditSport(lobbySport);
       setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
@@ -140,6 +144,11 @@ export function LobbyWaitingPage() {
       setEditCareerTo(cs.career_to || 0);
       setEditLineupStat((cs.forcedStatCategory as string | null) || 'random');
       setEditHardMode((cs.hardMode as boolean) || false);
+
+      // Box Score state
+      setEditBoxMinYear(cs.min_year || 2015);
+      setEditBoxMaxYear(cs.max_year || 2024);
+      setEditBoxTeam(cs.team || null);
 
       // Find team from the current lobby
       const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -286,6 +295,12 @@ export function LobbyWaitingPage() {
           hasStartedGame.current = true;
           navigate(`/lobby/${code}/lineup-is-right`);
         }
+      } else if (lobby.game_type === 'box-score') {
+        // Box Score mode: navigate directly to gameplay
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/box-score`);
+        }
       } else {
         // Roster mode: show dealing animation
         if (!hasStartedGame.current) {
@@ -302,6 +317,8 @@ export function LobbyWaitingPage() {
         navigate(`/lobby/${code}/scramble/results`);
       } else if (lobby.game_type === 'lineup-is-right') {
         navigate(`/lobby/${code}/lineup-is-right/results`);
+      } else if (lobby.game_type === 'box-score') {
+        navigate(`/lobby/${code}/box-score/results`);
       } else {
         navigate(`/lobby/${code}/results`);
       }
@@ -475,6 +492,37 @@ export function LobbyWaitingPage() {
     }
   };
 
+  const handleBoxScoreStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+
+    try {
+      const careerState = (lobby.career_state as any) || {};
+      const minYear = careerState.min_year || 2015;
+      const maxYear = careerState.max_year || 2024;
+      const team = careerState.team || null;
+
+      const years = ALL_BOX_SCORE_YEARS.filter(y => y >= minYear && y <= maxYear);
+      const game = await getRandomBoxScoreGame({ years: years.length > 0 ? years : undefined, team });
+
+      const newCareerState = {
+        type: 'box_score',
+        game_id: game.game_id,
+        season: game.season,
+        min_year: minYear,
+        max_year: maxYear,
+        team,
+      };
+
+      await startCareerRound(lobby.id, newCareerState);
+      setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
+      navigate(`/lobby/${code}/box-score`);
+    } catch {
+      setIsLoadingRoster(false);
+    }
+  };
+
   const handleReroll = useCallback(async () => {
     if (!isHost || !lobby) return;
 
@@ -565,6 +613,19 @@ export function LobbyWaitingPage() {
       await updateCareerState(newCareerState);
       await updateSettings({ sport: editSport });
       setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
+    } else if (editGameType === 'box-score') {
+      // Box Score: update career_state with year range, team filter, and timer
+      const existingState = (lobby.career_state as any) || {};
+      const newCareerState = {
+        ...existingState,
+        type: 'box_score',
+        min_year: editBoxMinYear,
+        max_year: editBoxMaxYear,
+        team: editBoxTeam,
+      };
+      await updateCareerState(newCareerState);
+      await updateSettings({ timerDuration: editTimer });
+      setLobby({ ...lobby, career_state: newCareerState });
     } else {
       // Roster mode: apply normal roster settings
 
@@ -939,6 +1000,15 @@ export function LobbyWaitingPage() {
                     {(lobby.career_state as any)?.hardMode ? 'Hard Mode' : 'Normal Mode'}
                   </div>
                 </>
+              ) : lobby.game_type === 'box-score' ? (
+                <>
+                  <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">NFL Box Score</div>
+                  <div className="retro-title text-xl text-[#f59e0b]">Box Score</div>
+                  <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                    {(lobby.career_state as any)?.min_year || 2015}–{(lobby.career_state as any)?.max_year || 2024}
+                    {(lobby.career_state as any)?.team ? ` · ${(lobby.career_state as any).team}` : ''}
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
@@ -1039,6 +1109,7 @@ export function LobbyWaitingPage() {
                     <option value="career">Career Arc</option>
                     <option value="scramble">Name Scramble</option>
                     <option value="lineup-is-right">Cap Crunch</option>
+                    <option value="box-score">Box Score</option>
                   </select>
                 </div>
 
@@ -1194,6 +1265,71 @@ export function LobbyWaitingPage() {
                       >
                         {editHardMode ? 'ON' : 'OFF'}
                       </button>
+                    </div>
+                  </>
+                ) : editGameType === 'box-score' ? (
+                  <>
+                    {/* Year Range */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Year Range</div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={editBoxMinYear}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value);
+                            setEditBoxMinYear(v);
+                            if (v > editBoxMaxYear) setEditBoxMaxYear(v);
+                          }}
+                          className="flex-1 bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
+                        >
+                          {ALL_BOX_SCORE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                        <span className="text-[#444] sports-font text-xs">to</span>
+                        <select
+                          value={editBoxMaxYear}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value);
+                            setEditBoxMaxYear(v);
+                            if (v < editBoxMinYear) setEditBoxMinYear(v);
+                          }}
+                          className="flex-1 bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
+                        >
+                          {ALL_BOX_SCORE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Team Filter */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Team Filter</div>
+                      <select
+                        value={editBoxTeam || ''}
+                        onChange={(e) => setEditBoxTeam(e.target.value || null)}
+                        className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
+                      >
+                        <option value="">Any Team</option>
+                        {nflTeams.map(t => <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Timer */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Timer</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[90, 120, 150, 180, 240].map((seconds) => (
+                          <button
+                            key={seconds}
+                            onClick={() => { setEditTimer(seconds); setEditCustomTimer(''); }}
+                            className={`flex-1 py-2 rounded-sm sports-font text-xs transition-all ${
+                              editTimer === seconds && !editCustomTimer
+                                ? 'bg-[#f59e0b] text-black'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -1491,7 +1627,7 @@ export function LobbyWaitingPage() {
                         </button>
                       )}
                       {/* Team assignment button - host only, waiting state, roster mode only */}
-                      {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
+                      {isHost && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'box-score' && (
                         <button
                           onClick={() => handleCycleTeam(player.player_id, player.team_number)}
                           className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
@@ -1510,7 +1646,7 @@ export function LobbyWaitingPage() {
                         </button>
                       )}
                       {/* Show team label for non-host when teams are assigned, roster mode only */}
-                      {!isHost && player.team_number && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && (
+                      {!isHost && player.team_number && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'box-score' && (
                         <span
                           className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider border"
                           style={{
@@ -1523,7 +1659,7 @@ export function LobbyWaitingPage() {
                         </span>
                       )}
                       {/* Score multiplier cycle - host only, for non-host players, roster mode only */}
-                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'lineup-is-right' && (
+                      {isHost && !player.is_host && lobby.status === 'waiting' && lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'lineup-is-right' && lobby.game_type !== 'box-score' && (
                         <button
                           onClick={() => {
                             const MULTIPLIERS = [1, 1.5, 2, 3, 4];
@@ -1647,6 +1783,28 @@ export function LobbyWaitingPage() {
                 </button>
               )}
             </>
+          ) : lobby.game_type === 'box-score' ? (
+            <>
+              {/* Box Score mode: start button */}
+              {isHost && players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleBoxScoreStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e] active:shadow-none active:translate-y-1 disabled:opacity-50"
+                >
+                  {isLoadingRoster ? 'Loading Game...' : 'Start Box Score'}
+                </button>
+              )}
+              {isHost && players.length >= 2 && !players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleBoxScoreStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+                >
+                  Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
+                </button>
+              )}
+            </>
           ) : (
             <>
               {/* Roster mode: host start button - shows when all ready */}
@@ -1703,6 +1861,14 @@ export function LobbyWaitingPage() {
                 <p>Multiple rounds — first to unscramble each name scores. Speed matters.</p>
                 <p>You can pass on a name if you're stuck, but the point goes to whoever gets it first.</p>
                 <p className="text-[#d4af37]/60">🏆 Most unscrambled names wins.</p>
+              </div>
+            ) : lobby.game_type === 'box-score' ? (
+              <div className="space-y-2 text-white/50 sports-font text-xs leading-relaxed">
+                <p>A real NFL game's box score is shown with all player names blacked out.</p>
+                <p>Fill in the names from memory — QBs, rushers, and receivers for both teams — within the time limit.</p>
+                <p>Use the search bar to find players and confirm matches. Correct guesses light up green.</p>
+                <p>You can also guess the Vegas spread for a bonus point.</p>
+                <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
               </div>
             ) : lobby.game_type === 'lineup-is-right' ? (
               <div className="space-y-2 text-white/50 sports-font text-xs leading-relaxed">
