@@ -17,6 +17,7 @@ import { PlayerInput } from '../components/game/PlayerInput';
 import { GuessedPlayersList } from '../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../components/game/TeamDisplay';
 import { LiveScoreboard } from '../components/multiplayer/LiveScoreboard';
+import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
 import { getTeammateGuessedPlayers, TEAM_COLORS } from '../utils/teamUtils';
 
 export function GamePage() {
@@ -302,6 +303,14 @@ export function GamePage() {
             </div>
           )}
         </div>
+
+        {isMultiplayer && (
+          <EmoteOverlay
+            lobbyId={lobbyId}
+            currentPlayerId={currentPlayerId}
+            currentPlayerName={currentPlayerData?.player_name}
+          />
+        )}
 
         {isMultiplayer && players.length > 0 && (
           <aside className="w-full md:w-72 flex-shrink-0">
