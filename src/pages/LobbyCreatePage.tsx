@@ -5,7 +5,7 @@
  * and open a new lobby. On success, navigates to the waiting room.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
@@ -52,6 +52,11 @@ export function LobbyCreatePage() {
 
   const [randomMinYear, setRandomMinYear] = useState(2015);
   const [randomMaxYear, setRandomMaxYear] = useState(2025);
+
+  // Box Score is NFL-only — auto-select NFL when this mode is chosen
+  useEffect(() => {
+    if (lobbyMode === 'box-score') setSport('nfl');
+  }, [lobbyMode]);
 
   const timerDuration = customTimerInput
     ? Math.max(10, Math.min(600, parseInt(customTimerInput) || 90))
@@ -278,11 +283,14 @@ export function LobbyCreatePage() {
           </div>
           <div className="flex gap-2 justify-center">
             <button
-              onClick={() => setSport('nba')}
+              onClick={() => { if (lobbyMode !== 'box-score') setSport('nba'); }}
+              disabled={lobbyMode === 'box-score'}
               className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                sport === 'nba'
-                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                lobbyMode === 'box-score'
+                  ? 'bg-black/20 text-white/20 border border-white/10 cursor-not-allowed'
+                  : sport === 'nba'
+                    ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+                    : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
             >
               NBA
