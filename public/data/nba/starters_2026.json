@@ -1,0 +1,1622 @@
+{
+  "ATL": {
+    "starters": [
+      {
+        "id": "1630700",
+        "name": "Dyson Daniels",
+        "number": "5",
+        "college": "NBA G League Ignite",
+        "college_espn_id": null,
+        "draft_pick": 8,
+        "ppg": 11.4,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1629638",
+        "name": "Nickeil Alexander-Walker",
+        "number": "7",
+        "college": "Virginia Tech",
+        "college_espn_id": 259,
+        "draft_pick": 17,
+        "ppg": 19.8,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "203468",
+        "name": "CJ McCollum",
+        "number": "3",
+        "college": "Lehigh",
+        "college_espn_id": null,
+        "draft_pick": 10,
+        "ppg": 18.7,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630552",
+        "name": "Jalen Johnson",
+        "number": "1",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 20,
+        "ppg": 22.7,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1630168",
+        "name": "Onyeka Okongwu",
+        "number": "17",
+        "college": "Southern California",
+        "college_espn_id": null,
+        "draft_pick": 6,
+        "ppg": 16.1,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "BKN": {
+    "starters": [
+      {
+        "id": "1642856",
+        "name": "Egor D\u00ebmin",
+        "number": "8",
+        "college": "Brigham Young",
+        "college_espn_id": null,
+        "draft_pick": 8,
+        "ppg": 10.3,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1629611",
+        "name": "Terance Mann",
+        "number": "14",
+        "college": "Florida State",
+        "college_espn_id": 52,
+        "draft_pick": 48,
+        "ppg": 7.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629008",
+        "name": "Michael Porter Jr.",
+        "number": "17",
+        "college": "Missouri",
+        "college_espn_id": 142,
+        "draft_pick": 14,
+        "ppg": 24.5,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1641730",
+        "name": "Noah Clowney",
+        "number": "21",
+        "college": "Alabama",
+        "college_espn_id": 333,
+        "draft_pick": 21,
+        "ppg": 12.7,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1629651",
+        "name": "Nic Claxton",
+        "number": "33",
+        "college": "Georgia",
+        "college_espn_id": 61,
+        "draft_pick": 31,
+        "ppg": 12.6,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "BOS": {
+    "starters": [
+      {
+        "id": "1628401",
+        "name": "Derrick White",
+        "number": "9",
+        "college": "Colorado",
+        "college_espn_id": 38,
+        "draft_pick": 29,
+        "ppg": 17.1,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1630202",
+        "name": "Payton Pritchard",
+        "number": "11",
+        "college": "Oregon",
+        "college_espn_id": 2483,
+        "draft_pick": 26,
+        "ppg": 17.0,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1627759",
+        "name": "Jaylen Brown",
+        "number": "7",
+        "college": "California",
+        "college_espn_id": 25,
+        "draft_pick": 3,
+        "ppg": 29.0,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "202696",
+        "name": "Nikola Vu\u010devi\u0107",
+        "number": "4",
+        "college": "Southern California",
+        "college_espn_id": null,
+        "draft_pick": 16,
+        "ppg": 16.1,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1629674",
+        "name": "Neemias Queta",
+        "number": "88",
+        "college": "Utah State",
+        "college_espn_id": null,
+        "draft_pick": 39,
+        "ppg": 10.1,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "CHA": {
+    "starters": [
+      {
+        "id": "1629632",
+        "name": "Coby White",
+        "number": "3",
+        "college": "North Carolina",
+        "college_espn_id": 153,
+        "draft_pick": 7,
+        "ppg": 18.0,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1630163",
+        "name": "LaMelo Ball",
+        "number": "1",
+        "college": "Illawarra",
+        "college_espn_id": null,
+        "draft_pick": 3,
+        "ppg": 19.3,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1642851",
+        "name": "Kon Knueppel",
+        "number": "7",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 4,
+        "ppg": 19.3,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1628970",
+        "name": "Miles Bridges",
+        "number": "0",
+        "college": "Michigan State",
+        "college_espn_id": 127,
+        "draft_pick": 12,
+        "ppg": 17.9,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1641706",
+        "name": "Brandon Miller",
+        "number": "24",
+        "college": "Alabama",
+        "college_espn_id": 333,
+        "draft_pick": 2,
+        "ppg": 21.0,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "CHI": {
+    "starters": [
+      {
+        "id": "1630581",
+        "name": "Josh Giddey",
+        "number": "3",
+        "college": "NBA Global Academy",
+        "college_espn_id": null,
+        "draft_pick": 6,
+        "ppg": 17.8,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1630200",
+        "name": "Tre Jones",
+        "number": "30",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 41,
+        "ppg": 12.1,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629014",
+        "name": "Anfernee Simons",
+        "number": "22",
+        "college": "Edgewater HS (FL)",
+        "college_espn_id": null,
+        "draft_pick": 24,
+        "ppg": 14.3,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630171",
+        "name": "Isaac Okoro",
+        "number": "35",
+        "college": "Auburn",
+        "college_espn_id": 2,
+        "draft_pick": 5,
+        "ppg": 9.2,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1641824",
+        "name": "Matas Buzelis",
+        "number": "14",
+        "college": "NBA G League Ignite",
+        "college_espn_id": null,
+        "draft_pick": 11,
+        "ppg": 15.4,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "CLE": {
+    "starters": [
+      {
+        "id": "201935",
+        "name": "James Harden",
+        "number": "1",
+        "college": "Arizona State",
+        "college_espn_id": 9,
+        "draft_pick": 3,
+        "ppg": 24.5,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1628378",
+        "name": "Donovan Mitchell",
+        "number": "45",
+        "college": "Louisville",
+        "college_espn_id": 97,
+        "draft_pick": 13,
+        "ppg": 28.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1642281",
+        "name": "Jaylon Tyson",
+        "number": "20",
+        "college": "California",
+        "college_espn_id": 25,
+        "draft_pick": 20,
+        "ppg": 13.4,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630596",
+        "name": "Evan Mobley",
+        "number": "4",
+        "college": "Southern California",
+        "college_espn_id": null,
+        "draft_pick": 3,
+        "ppg": 17.6,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1628386",
+        "name": "Jarrett Allen",
+        "number": "31",
+        "college": "Texas",
+        "college_espn_id": 251,
+        "draft_pick": 22,
+        "ppg": 15.4,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "DAL": {
+    "starters": [
+      {
+        "id": "1631108",
+        "name": "Max Christie",
+        "number": "00",
+        "college": "Michigan State",
+        "college_espn_id": 127,
+        "draft_pick": 35,
+        "ppg": 13.2,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1642843",
+        "name": "Cooper Flagg",
+        "number": "32",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 1,
+        "ppg": 20.4,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629023",
+        "name": "P.J. Washington",
+        "number": "25",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 12,
+        "ppg": 14.3,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630230",
+        "name": "Naji Marshall",
+        "number": "13",
+        "college": "Xavier",
+        "college_espn_id": 2752,
+        "draft_pick": null,
+        "ppg": 15.4,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203114",
+        "name": "Khris Middleton",
+        "number": "20",
+        "college": "Texas A&M",
+        "college_espn_id": 245,
+        "draft_pick": 39,
+        "ppg": 10.8,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "DEN": {
+    "starters": [
+      {
+        "id": "1627750",
+        "name": "Jamal Murray",
+        "number": "27",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 7,
+        "ppg": 25.3,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1631128",
+        "name": "Christian Braun",
+        "number": "0",
+        "college": "Kansas",
+        "college_espn_id": 2305,
+        "draft_pick": 21,
+        "ppg": 10.8,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1631212",
+        "name": "Peyton Watson",
+        "number": "8",
+        "college": "UCLA",
+        "college_espn_id": 26,
+        "draft_pick": 30,
+        "ppg": 14.9,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1629661",
+        "name": "Cameron Johnson",
+        "number": "23",
+        "college": "North Carolina",
+        "college_espn_id": 153,
+        "draft_pick": 11,
+        "ppg": 11.2,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203999",
+        "name": "Nikola Joki\u0107",
+        "number": "15",
+        "college": "Mega Basket",
+        "college_espn_id": null,
+        "draft_pick": 41,
+        "ppg": 28.8,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "DET": {
+    "starters": [
+      {
+        "id": "1630595",
+        "name": "Cade Cunningham",
+        "number": "2",
+        "college": "Oklahoma State",
+        "college_espn_id": 197,
+        "draft_pick": 1,
+        "ppg": 25.5,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1641709",
+        "name": "Ausar Thompson",
+        "number": "9",
+        "college": "Overtime Elite",
+        "college_espn_id": null,
+        "draft_pick": 5,
+        "ppg": 10.3,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "202699",
+        "name": "Tobias Harris",
+        "number": "12",
+        "college": "Tennessee",
+        "college_espn_id": 2633,
+        "draft_pick": 19,
+        "ppg": 13.2,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1629130",
+        "name": "Duncan Robinson",
+        "number": "55",
+        "college": "Michigan",
+        "college_espn_id": 130,
+        "draft_pick": null,
+        "ppg": 12.1,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1631105",
+        "name": "Jalen Duren",
+        "number": "0",
+        "college": "Memphis",
+        "college_espn_id": 235,
+        "draft_pick": 13,
+        "ppg": 18.5,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "GSW": {
+    "starters": [
+      {
+        "id": "201939",
+        "name": "Stephen Curry",
+        "number": "30",
+        "college": "Davidson",
+        "college_espn_id": null,
+        "draft_pick": 7,
+        "ppg": 27.2,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1641764",
+        "name": "Brandin Podziemski",
+        "number": "2",
+        "college": "Santa Clara",
+        "college_espn_id": null,
+        "draft_pick": 19,
+        "ppg": 12.2,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1630541",
+        "name": "Moses Moody",
+        "number": "4",
+        "college": "Arkansas",
+        "college_espn_id": 8,
+        "draft_pick": 14,
+        "ppg": 12.0,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "202710",
+        "name": "Jimmy Butler III",
+        "number": "10",
+        "college": "Marquette",
+        "college_espn_id": 269,
+        "draft_pick": 30,
+        "ppg": 20.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203110",
+        "name": "Draymond Green",
+        "number": "23",
+        "college": "Michigan State",
+        "college_espn_id": 127,
+        "draft_pick": 35,
+        "ppg": 8.5,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "HOU": {
+    "starters": [
+      {
+        "id": "1641708",
+        "name": "Amen Thompson",
+        "number": "1",
+        "college": "Overtime Elite",
+        "college_espn_id": null,
+        "draft_pick": 4,
+        "ppg": 17.3,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "201142",
+        "name": "Kevin Durant",
+        "number": "7",
+        "college": "Texas",
+        "college_espn_id": 251,
+        "draft_pick": 2,
+        "ppg": 26.2,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1631095",
+        "name": "Jabari Smith Jr.",
+        "number": "10",
+        "college": "Auburn",
+        "college_espn_id": 2,
+        "draft_pick": 3,
+        "ppg": 15.5,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1631106",
+        "name": "Tari Eason",
+        "number": "17",
+        "college": "Louisiana State",
+        "college_espn_id": null,
+        "draft_pick": 17,
+        "ppg": 11.5,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1630578",
+        "name": "Alperen Sengun",
+        "number": "28",
+        "college": "Besiktas",
+        "college_espn_id": null,
+        "draft_pick": 16,
+        "ppg": 20.2,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "IND": {
+    "starters": [
+      {
+        "id": "1629614",
+        "name": "Andrew Nembhard",
+        "number": "2",
+        "college": "Gonzaga",
+        "college_espn_id": 2250,
+        "draft_pick": 31,
+        "ppg": 17.4,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1630174",
+        "name": "Aaron Nesmith",
+        "number": "23",
+        "college": "Vanderbilt",
+        "college_espn_id": 238,
+        "draft_pick": 14,
+        "ppg": 13.2,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1627783",
+        "name": "Pascal Siakam",
+        "number": "43",
+        "college": "New Mexico State",
+        "college_espn_id": null,
+        "draft_pick": 27,
+        "ppg": 23.9,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1641716",
+        "name": "Jarace Walker",
+        "number": "5",
+        "college": "Houston",
+        "college_espn_id": 248,
+        "draft_pick": 8,
+        "ppg": 11.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1627826",
+        "name": "Ivica Zubac",
+        "number": "40",
+        "college": "Mega Basket",
+        "college_espn_id": null,
+        "draft_pick": 32,
+        "ppg": 14.4,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "LAC": {
+    "starters": [
+      {
+        "id": "1629636",
+        "name": "Darius Garland",
+        "number": "10",
+        "college": "Vanderbilt",
+        "college_espn_id": 238,
+        "draft_pick": 5,
+        "ppg": 18.0,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1627739",
+        "name": "Kris Dunn",
+        "number": "8",
+        "college": "Providence",
+        "college_espn_id": 2507,
+        "draft_pick": 5,
+        "ppg": 7.9,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1631097",
+        "name": "Bennedict Mathurin",
+        "number": "9",
+        "college": "Arizona",
+        "college_espn_id": 12,
+        "draft_pick": 6,
+        "ppg": 18.0,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "202695",
+        "name": "Kawhi Leonard",
+        "number": "2",
+        "college": "San Diego State",
+        "college_espn_id": null,
+        "draft_pick": 15,
+        "ppg": 27.9,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1628381",
+        "name": "John Collins",
+        "number": "20",
+        "college": "Wake Forest",
+        "college_espn_id": 154,
+        "draft_pick": 19,
+        "ppg": 13.8,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "LAL": {
+    "starters": [
+      {
+        "id": "1630559",
+        "name": "Austin Reaves",
+        "number": "15",
+        "college": "Oklahoma",
+        "college_espn_id": 201,
+        "draft_pick": null,
+        "ppg": 24.1,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "203935",
+        "name": "Marcus Smart",
+        "number": "36",
+        "college": "Oklahoma State",
+        "college_espn_id": 197,
+        "draft_pick": 6,
+        "ppg": 9.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629029",
+        "name": "Luka Don\u010di\u0107",
+        "number": "77",
+        "college": "Real Madrid",
+        "college_espn_id": null,
+        "draft_pick": 3,
+        "ppg": 32.5,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "2544",
+        "name": "LeBron James",
+        "number": "23",
+        "college": "St. Vincent-St. Mary HS (OH)",
+        "college_espn_id": null,
+        "draft_pick": 1,
+        "ppg": 21.6,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1629060",
+        "name": "Rui Hachimura",
+        "number": "28",
+        "college": "Gonzaga",
+        "college_espn_id": 2250,
+        "draft_pick": 9,
+        "ppg": 11.7,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "MEM": {
+    "starters": [
+      {
+        "id": "1629630",
+        "name": "Ja Morant",
+        "number": "12",
+        "college": "Murray State",
+        "college_espn_id": null,
+        "draft_pick": 2,
+        "ppg": 19.5,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1642907",
+        "name": "Cedric Coward",
+        "number": "23",
+        "college": "Washington State",
+        "college_espn_id": 265,
+        "draft_pick": 11,
+        "ppg": 13.3,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1642377",
+        "name": "Jaylen Wells",
+        "number": "0",
+        "college": "Washington State",
+        "college_espn_id": 265,
+        "draft_pick": 39,
+        "ppg": 12.4,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630583",
+        "name": "Santi Aldama",
+        "number": "7",
+        "college": "Loyola College, MD",
+        "college_espn_id": null,
+        "draft_pick": 30,
+        "ppg": 14.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1641744",
+        "name": "Zach Edey",
+        "number": "14",
+        "college": "Purdue",
+        "college_espn_id": 2509,
+        "draft_pick": 9,
+        "ppg": 13.6,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "MIA": {
+    "starters": [
+      {
+        "id": "1629639",
+        "name": "Tyler Herro",
+        "number": "14",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 13,
+        "ppg": 21.0,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1626181",
+        "name": "Norman Powell",
+        "number": "24",
+        "college": "UCLA",
+        "college_espn_id": 26,
+        "draft_pick": 46,
+        "ppg": 22.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1630558",
+        "name": "Davion Mitchell",
+        "number": "45",
+        "college": "Baylor",
+        "college_espn_id": 239,
+        "draft_pick": 9,
+        "ppg": 8.9,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "203952",
+        "name": "Andrew Wiggins",
+        "number": "22",
+        "college": "Kansas",
+        "college_espn_id": 2305,
+        "draft_pick": 1,
+        "ppg": 16.1,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1628389",
+        "name": "Bam Adebayo",
+        "number": "13",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 14,
+        "ppg": 18.6,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "MIL": {
+    "starters": [
+      {
+        "id": "1631157",
+        "name": "Ryan Rollins",
+        "number": "13",
+        "college": "Toledo",
+        "college_espn_id": null,
+        "draft_pick": 44,
+        "ppg": 17.0,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1631260",
+        "name": "AJ Green",
+        "number": "20",
+        "college": "Northern Iowa",
+        "college_espn_id": null,
+        "draft_pick": null,
+        "ppg": 10.3,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629645",
+        "name": "Kevin Porter Jr.",
+        "number": "7",
+        "college": "Southern California",
+        "college_espn_id": null,
+        "draft_pick": 30,
+        "ppg": 17.8,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "203507",
+        "name": "Giannis Antetokounmpo",
+        "number": "34",
+        "college": "Filathlitikos",
+        "college_espn_id": null,
+        "draft_pick": 15,
+        "ppg": 28.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1626167",
+        "name": "Myles Turner",
+        "number": "3",
+        "college": "Texas",
+        "college_espn_id": 251,
+        "draft_pick": 11,
+        "ppg": 12.6,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "MIN": {
+    "starters": [
+      {
+        "id": "1630162",
+        "name": "Anthony Edwards",
+        "number": "5",
+        "college": "Georgia",
+        "college_espn_id": 61,
+        "draft_pick": 1,
+        "ppg": 29.5,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1628978",
+        "name": "Donte DiVincenzo",
+        "number": "0",
+        "college": "Villanova",
+        "college_espn_id": 222,
+        "draft_pick": 17,
+        "ppg": 13.0,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1630183",
+        "name": "Jaden McDaniels",
+        "number": "3",
+        "college": "Washington",
+        "college_espn_id": 264,
+        "draft_pick": 28,
+        "ppg": 15.2,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "203944",
+        "name": "Julius Randle",
+        "number": "30",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 7,
+        "ppg": 21.5,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203497",
+        "name": "Rudy Gobert",
+        "number": "27",
+        "college": "Cholet",
+        "college_espn_id": null,
+        "draft_pick": 27,
+        "ppg": 10.9,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "NOP": {
+    "starters": [
+      {
+        "id": "1630180",
+        "name": "Saddiq Bey",
+        "number": "41",
+        "college": "Villanova",
+        "college_espn_id": 222,
+        "draft_pick": 19,
+        "ppg": 17.3,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1630530",
+        "name": "Trey Murphy III",
+        "number": "25",
+        "college": "Virginia",
+        "college_espn_id": 258,
+        "draft_pick": 17,
+        "ppg": 22.0,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629627",
+        "name": "Zion Williamson",
+        "number": "1",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 1,
+        "ppg": 21.5,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630529",
+        "name": "Herbert Jones",
+        "number": "2",
+        "college": "Alabama",
+        "college_espn_id": 333,
+        "draft_pick": 35,
+        "ppg": 8.9,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1642852",
+        "name": "Derik Queen",
+        "number": "22",
+        "college": "Maryland",
+        "college_espn_id": 120,
+        "draft_pick": 13,
+        "ppg": 12.1,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "NYK": {
+    "starters": [
+      {
+        "id": "1628973",
+        "name": "Jalen Brunson",
+        "number": "11",
+        "college": "Villanova",
+        "college_espn_id": 222,
+        "draft_pick": 33,
+        "ppg": 26.7,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1628404",
+        "name": "Josh Hart",
+        "number": "3",
+        "college": "Villanova",
+        "college_espn_id": 222,
+        "draft_pick": 30,
+        "ppg": 11.8,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1628969",
+        "name": "Mikal Bridges",
+        "number": "25",
+        "college": "Villanova",
+        "college_espn_id": 222,
+        "draft_pick": 10,
+        "ppg": 15.7,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1628384",
+        "name": "OG Anunoby",
+        "number": "8",
+        "college": "Indiana",
+        "college_espn_id": 84,
+        "draft_pick": 23,
+        "ppg": 16.1,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1626157",
+        "name": "Karl-Anthony Towns",
+        "number": "32",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 1,
+        "ppg": 19.8,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "OKC": {
+    "starters": [
+      {
+        "id": "1628983",
+        "name": "Shai Gilgeous-Alexander",
+        "number": "2",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 11,
+        "ppg": 31.8,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1629652",
+        "name": "Luguentz Dort",
+        "number": "5",
+        "college": "Arizona State",
+        "college_espn_id": 9,
+        "draft_pick": null,
+        "ppg": 8.7,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1641717",
+        "name": "Cason Wallace",
+        "number": "22",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 10,
+        "ppg": 8.8,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1631114",
+        "name": "Jalen Williams",
+        "number": "8",
+        "college": "Santa Clara",
+        "college_espn_id": null,
+        "draft_pick": 12,
+        "ppg": 17.5,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1631096",
+        "name": "Chet Holmgren",
+        "number": "7",
+        "college": "Gonzaga",
+        "college_espn_id": 2250,
+        "draft_pick": 2,
+        "ppg": 17.2,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "ORL": {
+    "starters": [
+      {
+        "id": "1630217",
+        "name": "Desmond Bane",
+        "number": "3",
+        "college": "TCU",
+        "college_espn_id": 2628,
+        "draft_pick": 30,
+        "ppg": 20.3,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1641710",
+        "name": "Anthony Black",
+        "number": "0",
+        "college": "Arkansas",
+        "college_espn_id": 8,
+        "draft_pick": 6,
+        "ppg": 15.7,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1631094",
+        "name": "Paolo Banchero",
+        "number": "5",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 1,
+        "ppg": 21.8,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630532",
+        "name": "Franz Wagner",
+        "number": "22",
+        "college": "Michigan",
+        "college_espn_id": 130,
+        "draft_pick": 8,
+        "ppg": 21.3,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1628976",
+        "name": "Wendell Carter Jr.",
+        "number": "34",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 7,
+        "ppg": 11.5,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "PHI": {
+    "starters": [
+      {
+        "id": "1630178",
+        "name": "Tyrese Maxey",
+        "number": "0",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 21,
+        "ppg": 29.1,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1642845",
+        "name": "VJ Edgecombe",
+        "number": "77",
+        "college": "Baylor",
+        "college_espn_id": 239,
+        "draft_pick": 3,
+        "ppg": 15.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1626162",
+        "name": "Kelly Oubre Jr.",
+        "number": "9",
+        "college": "Kansas",
+        "college_espn_id": 2305,
+        "draft_pick": 15,
+        "ppg": 14.3,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "202331",
+        "name": "Paul George",
+        "number": "8",
+        "college": "Fresno State",
+        "college_espn_id": null,
+        "draft_pick": 10,
+        "ppg": 16.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203954",
+        "name": "Joel Embiid",
+        "number": "21",
+        "college": "Kansas",
+        "college_espn_id": 2305,
+        "draft_pick": 3,
+        "ppg": 26.6,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "PHX": {
+    "starters": [
+      {
+        "id": "1626164",
+        "name": "Devin Booker",
+        "number": "1",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 13,
+        "ppg": 24.7,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1628960",
+        "name": "Grayson Allen",
+        "number": "8",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 21,
+        "ppg": 17.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1631221",
+        "name": "Collin Gillespie",
+        "number": "12",
+        "college": "Villanova",
+        "college_espn_id": 222,
+        "draft_pick": null,
+        "ppg": 13.5,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1628415",
+        "name": "Dillon Brooks",
+        "number": "3",
+        "college": "Oregon",
+        "college_espn_id": 2483,
+        "draft_pick": 45,
+        "ppg": 20.9,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1626220",
+        "name": "Royce O'Neale",
+        "number": "00",
+        "college": "Baylor",
+        "college_espn_id": 239,
+        "draft_pick": null,
+        "ppg": 10.1,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "POR": {
+    "starters": [
+      {
+        "id": "1631101",
+        "name": "Shaedon Sharpe",
+        "number": "17",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 7,
+        "ppg": 21.4,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "201950",
+        "name": "Jrue Holiday",
+        "number": "5",
+        "college": "UCLA",
+        "college_espn_id": 26,
+        "draft_pick": 17,
+        "ppg": 16.0,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1630166",
+        "name": "Deni Avdija",
+        "number": "8",
+        "college": "Maccabi Tel Aviv",
+        "college_espn_id": null,
+        "draft_pick": 9,
+        "ppg": 24.4,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1641739",
+        "name": "Toumani Camara",
+        "number": "33",
+        "college": "Dayton",
+        "college_espn_id": null,
+        "draft_pick": 52,
+        "ppg": 13.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203924",
+        "name": "Jerami Grant",
+        "number": "9",
+        "college": "Syracuse",
+        "college_espn_id": 183,
+        "draft_pick": 39,
+        "ppg": 18.5,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "SAC": {
+    "starters": [
+      {
+        "id": "203897",
+        "name": "Zach LaVine",
+        "number": "8",
+        "college": "UCLA",
+        "college_espn_id": 26,
+        "draft_pick": 13,
+        "ppg": 19.2,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "201566",
+        "name": "Russell Westbrook",
+        "number": "18",
+        "college": "UCLA",
+        "college_espn_id": 26,
+        "draft_pick": 4,
+        "ppg": 15.2,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "201942",
+        "name": "DeMar DeRozan",
+        "number": "10",
+        "college": "Southern California",
+        "college_espn_id": null,
+        "draft_pick": 9,
+        "ppg": 18.2,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1631099",
+        "name": "Keegan Murray",
+        "number": "13",
+        "college": "Iowa",
+        "college_espn_id": 2294,
+        "draft_pick": 4,
+        "ppg": 14.0,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1627734",
+        "name": "Domantas Sabonis",
+        "number": "11",
+        "college": "Gonzaga",
+        "college_espn_id": 2250,
+        "draft_pick": 11,
+        "ppg": 15.8,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "SAS": {
+    "starters": [
+      {
+        "id": "1628368",
+        "name": "De'Aaron Fox",
+        "number": "4",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 5,
+        "ppg": 18.8,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1642264",
+        "name": "Stephon Castle",
+        "number": "5",
+        "college": "Connecticut",
+        "college_espn_id": 41,
+        "draft_pick": 4,
+        "ppg": 16.5,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1630170",
+        "name": "Devin Vassell",
+        "number": "24",
+        "college": "Florida State",
+        "college_espn_id": 52,
+        "draft_pick": 11,
+        "ppg": 14.4,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1630577",
+        "name": "Julian Champagnie",
+        "number": "30",
+        "college": "St. John's",
+        "college_espn_id": 2599,
+        "draft_pick": null,
+        "ppg": 11.2,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1641705",
+        "name": "Victor Wembanyama",
+        "number": "1",
+        "college": "Metropolitans 92",
+        "college_espn_id": null,
+        "draft_pick": 1,
+        "ppg": 23.7,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "TOR": {
+    "starters": [
+      {
+        "id": "1630193",
+        "name": "Immanuel Quickley",
+        "number": "5",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 25,
+        "ppg": 17.5,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1630567",
+        "name": "Scottie Barnes",
+        "number": "4",
+        "college": "Florida State",
+        "college_espn_id": 52,
+        "draft_pick": 4,
+        "ppg": 19.1,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1629628",
+        "name": "RJ Barrett",
+        "number": "9",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 3,
+        "ppg": 18.0,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1627742",
+        "name": "Brandon Ingram",
+        "number": "3",
+        "college": "Duke",
+        "college_espn_id": 150,
+        "draft_pick": 2,
+        "ppg": 21.9,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1627751",
+        "name": "Jakob Poeltl",
+        "number": "19",
+        "college": "Utah",
+        "college_espn_id": 254,
+        "draft_pick": 9,
+        "ppg": 9.8,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "UTA": {
+    "starters": [
+      {
+        "id": "1641718",
+        "name": "Keyonte George",
+        "number": "3",
+        "college": "Baylor",
+        "college_espn_id": 239,
+        "draft_pick": 16,
+        "ppg": 23.6,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1642846",
+        "name": "Ace Bailey",
+        "number": "19",
+        "college": "Rutgers",
+        "college_espn_id": 164,
+        "draft_pick": 5,
+        "ppg": 11.9,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1628374",
+        "name": "Lauri Markkanen",
+        "number": "23",
+        "college": "Arizona",
+        "college_espn_id": 12,
+        "draft_pick": 7,
+        "ppg": 26.7,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "1628991",
+        "name": "Jaren Jackson Jr.",
+        "number": "20",
+        "college": "Michigan State",
+        "college_espn_id": 127,
+        "draft_pick": 4,
+        "ppg": 19.4,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "203994",
+        "name": "Jusuf Nurki\u0107",
+        "number": "30",
+        "college": "Cedevita",
+        "college_espn_id": null,
+        "draft_pick": 16,
+        "ppg": 10.9,
+        "pos_abb": "C"
+      }
+    ]
+  },
+  "WAS": {
+    "starters": [
+      {
+        "id": "1629027",
+        "name": "Trae Young",
+        "number": "3",
+        "college": "Oklahoma",
+        "college_espn_id": 201,
+        "draft_pick": 5,
+        "ppg": 19.3,
+        "pos_abb": "PG"
+      },
+      {
+        "id": "1642267",
+        "name": "Bub Carrington",
+        "number": "7",
+        "college": "Pittsburgh",
+        "college_espn_id": 221,
+        "draft_pick": 14,
+        "ppg": 9.8,
+        "pos_abb": "SG"
+      },
+      {
+        "id": "1642273",
+        "name": "Kyshawn George",
+        "number": "18",
+        "college": "Miami",
+        "college_espn_id": 2390,
+        "draft_pick": 24,
+        "ppg": 14.8,
+        "pos_abb": "SF"
+      },
+      {
+        "id": "203076",
+        "name": "Anthony Davis",
+        "number": "23",
+        "college": "Kentucky",
+        "college_espn_id": 96,
+        "draft_pick": 1,
+        "ppg": 20.4,
+        "pos_abb": "PF"
+      },
+      {
+        "id": "1642259",
+        "name": "Alex Sarr",
+        "number": "20",
+        "college": "Washington Wizards",
+        "college_espn_id": null,
+        "draft_pick": 2,
+        "ppg": 17.2,
+        "pos_abb": "C"
+      }
+    ]
+  }
+}

@@ -40,23 +40,27 @@ type GameCard = {
   soloPath?: string;
   multiPath?: string;
   image: string;
+  imageBySport?: Partial<Record<'nba' | 'nfl', string>>;
+  taglineBySport?: Partial<Record<'nba' | 'nfl', string>>;
 };
 
 const GAMES: GameCard[] = [
-  { id: 'roster',   abbr: 'RR', name: 'Roster Royale', tagline: 'Name every player from a mystery team & season',    color: '#d4af37', hasSolo: true,  soloPath: '/roster-royale', image: '/images/roster-royale.svg' },
-  { id: 'career',   abbr: 'CA', name: 'Career Arc',   tagline: "Trace a player's career — team by team",            color: '#22c55e', hasSolo: true,  soloPath: '/career', image: '/images/career-arc.svg' },
-  { id: 'scramble', abbr: 'NS', name: 'Name Scramble',tagline: 'Unscramble athlete names before time runs out',      color: '#3b82f6', hasSolo: true,  soloPath: '/scramble', image: '/images/name-scramble.svg' },
-  { id: 'lineup',   abbr: 'CC', name: 'Cap Crunch',   tagline: "Chase the stat cap with a lineup — don't bust",     color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right', image: '/images/cap-crunch.svg' },
-  { id: 'rollcall', abbr: 'RC', name: 'Roll Call',    tagline: 'Work together to name as many athletes as you can', color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
+  { id: 'roster',          abbr: 'RR', name: 'Roster Royale',    tagline: 'Name every player from a mystery team & season',    color: '#d4af37', hasSolo: true,  soloPath: '/roster-royale',   image: '/images/roster-royale.svg' },
+  { id: 'career',          abbr: 'CA', name: 'Career Arc',       tagline: "Trace a player's career — team by team",            color: '#22c55e', hasSolo: true,  soloPath: '/career',           image: '/images/career-arc.svg' },
+  { id: 'scramble',        abbr: 'NS', name: 'Name Scramble',    tagline: 'Unscramble athlete names before time runs out',      color: '#3b82f6', hasSolo: true,  soloPath: '/scramble',         image: '/images/name-scramble.svg' },
+  { id: 'lineup',          abbr: 'CC', name: 'Cap Crunch',       tagline: "Chase the stat cap with a lineup — don't bust",     color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right',  image: '/images/cap-crunch.svg' },
+  { id: 'starting-lineup', abbr: 'SL', name: 'Starting Lineup',  tagline: 'Guess the team from their starters',                color: '#ea580c', hasSolo: true,  soloPath: '/starting-lineup',  image: '/images/starting-lineup-placeholder.svg', imageBySport: { nfl: '/images/starting-lineup-placeholder.svg', nba: '/images/starting-lineup-nba-placeholder.svg' }, taglineBySport: { nfl: 'Guess the NFL team from their starters', nba: 'Guess the NBA team from their starters' } },
+  { id: 'rollcall',        abbr: 'RC', name: 'Roll Call',        tagline: 'Work together to name as many athletes as you can', color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
 ];
 
-// Fan arc positions: x/y offsets from card center origin, rotation degrees
+// Fan arc positions: x/y offsets from card center origin, rotation degrees (6 cards)
 const FAN_POSITIONS = [
-  { x: -216, y: 55, rotate: -22 },
-  { x: -108, y: 20, rotate: -11 },
-  { x:    0, y:  4, rotate:   0 },
-  { x:  108, y: 20, rotate:  11 },
-  { x:  216, y: 55, rotate:  22 },
+  { x: -270, y: 72, rotate: -27 },
+  { x: -162, y: 36, rotate: -16 },
+  { x:  -54, y: 10, rotate:  -5 },
+  { x:   54, y: 10, rotate:   5 },
+  { x:  162, y: 36, rotate:  16 },
+  { x:  270, y: 72, rotate:  27 },
 ];
 
 export function HomePage() {
@@ -725,7 +729,7 @@ export function HomePage() {
                         <div className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
                           style={{ borderColor: game.color }}>
                           <img
-                            src={game.image}
+                            src={game.imageBySport?.[sport] ?? game.image}
                             alt=""
                             className="absolute inset-0 w-full h-full"
                             style={{ objectFit: 'cover', objectPosition: 'center', opacity: 0.8 }}
@@ -755,7 +759,7 @@ export function HomePage() {
                                   {game.name}
                                 </h3>
                                 <p className="sports-font text-[#888] mt-1 leading-snug" style={{ fontSize: Math.max(6, Math.round(9 * fanScale)) }}>
-                                  {game.tagline}
+                                  {game.taglineBySport?.[sport] ?? game.tagline}
                                 </p>
                                 <div className="flex gap-1.5 mt-2" onClick={e => e.stopPropagation()}>
                                   {game.hasSolo && (
@@ -767,6 +771,7 @@ export function HomePage() {
                                         } else if (game.soloPath) {
                                           navigate(game.soloPath);
                                         }
+                                        // starting-lineup navigates via soloPath above
                                       }}
                                       className="flex-1 py-1.5 rounded sports-font text-[9px] tracking-wider uppercase border hover:opacity-70 transition-opacity"
                                       style={{ borderColor: game.color, color: game.color }}
@@ -779,7 +784,7 @@ export function HomePage() {
                                       if (game.multiPath) {
                                         navigate(game.multiPath);
                                       } else {
-                                        const modeMap: Record<string, string> = { roster: 'roster', career: 'career', scramble: 'scramble', lineup: 'lineup-is-right' };
+                                        const modeMap: Record<string, string> = { roster: 'roster', career: 'career', scramble: 'scramble', lineup: 'lineup-is-right', 'starting-lineup': 'starting-lineup' };
                                         navigate('/lobby/create', { state: { gameType: modeMap[game.id] ?? 'roster' } });
                                       }
                                     }}

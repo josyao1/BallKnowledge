@@ -1,0 +1,45 @@
+<svg width="318" height="433" viewBox="0 0 318 433" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Card background -->
+  <rect width="318" height="433" rx="10" fill="#0e0e0e"/>
+  <!-- Inner border frame -->
+  <rect x="33.5" y="35.5" width="252" height="362" rx="9.5" fill="#0a0a0a" stroke="#ea580c"/>
+
+  <!-- Subtle court tint inside frame -->
+  <rect x="34" y="36" width="251" height="361" rx="9" fill="#0d0800" opacity="0.7"/>
+
+  <!-- Half-court line -->
+  <line x1="34" y1="218" x2="285" y2="218" stroke="#ea580c" stroke-width="0.8" stroke-opacity="0.25"/>
+
+  <!-- Three-point arc (bottom half court — offense) -->
+  <path d="M 72 370 A 90 90 0 0 1 246 370" stroke="white" stroke-width="0.7" stroke-opacity="0.10" fill="none"/>
+
+  <!-- Lane / key -->
+  <rect x="119" y="280" width="80" height="90" stroke="white" stroke-width="0.6" stroke-opacity="0.08" fill="none"/>
+
+  <!-- Free throw circle -->
+  <circle cx="159" cy="280" r="28" stroke="white" stroke-width="0.6" stroke-opacity="0.07" fill="none"/>
+
+  <!-- Basket -->
+  <circle cx="159" cy="368" r="7" stroke="#ea580c" stroke-width="1" stroke-opacity="0.35" fill="none"/>
+  <line x1="152" y1="375" x2="166" y2="375" stroke="#ea580c" stroke-width="0.8" stroke-opacity="0.25"/>
+
+  <!-- Center circle (half-court) -->
+  <circle cx="159" cy="218" r="22" stroke="white" stroke-width="0.6" stroke-opacity="0.06" fill="none"/>
+
+  <!-- ── OFFENSE (5 starters) ── -->
+
+  <!-- PG — top of key -->
+  <circle cx="159" cy="192" r="13" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+
+  <!-- SG — right wing -->
+  <circle cx="226" cy="232" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+
+  <!-- SF — left wing -->
+  <circle cx="92"  cy="232" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+
+  <!-- PF — right block -->
+  <circle cx="210" cy="310" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+
+  <!-- C — post / center — gold accent -->
+  <circle cx="159" cy="320" r="13" fill="#1a0e00" stroke="#fdb927" stroke-width="2.2"/>
+</svg>
