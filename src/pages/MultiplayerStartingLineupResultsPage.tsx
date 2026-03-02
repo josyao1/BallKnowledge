@@ -42,7 +42,7 @@ export function MultiplayerStartingLineupResultsPage() {
   const sorted = [...players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
   const winner = sorted[0];
   const careerState = (lobby?.career_state as any) || {};
-  const winTarget = careerState.win_target || 5;
+  const winTarget = careerState.win_target || 10;
 
   async function handlePlayAgain() {
     if (!isHost || !lobby) return;

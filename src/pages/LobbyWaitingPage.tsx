@@ -538,7 +538,7 @@ export function LobbyWaitingPage() {
 
     try {
       const careerState = (lobby.career_state as any) || {};
-      const winTarget = careerState.win_target || 5;
+      const winTarget = careerState.win_target || 10;
 
       const startersData = await loadNFLStarters();
       const pick = getRandomNFLTeamAndSide(startersData);

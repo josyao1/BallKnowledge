@@ -7,8 +7,7 @@
  * Lock-out mechanic: wrong guess → player is locked until host increments
  * unlock_epoch (happens when ALL players are locked simultaneously).
  *
- * Scoring: rank by (incorrect_guesses.length ASC, finished_at ASC)
- *   1st correct: 3 pts, 2nd correct: 1 pt
+ * Scoring: 1st correct: 3 pts, all others correct within 30s: 1 pt
  *
  * career_state shape:
  *   { team, side, encoding, round, win_target, unlock_epoch }
@@ -99,6 +98,7 @@ export function MultiplayerStartingLineupPage() {
   const [isAdvancing, setIsAdvancing] = useState(false);
 
   const [pressureTimeLeft, setPressureTimeLeft] = useState<number | null>(null);
+  const [wasFirstCorrect, setWasFirstCorrect] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const hasSubmittedRef = useRef(false);
@@ -146,6 +146,7 @@ export function MultiplayerStartingLineupPage() {
       setIsCorrect(false);
       setHasGivenUp(false);
       setFeedbackMsg('');
+      setWasFirstCorrect(false);
       setPressureTimeLeft(null);
       hasSubmittedRef.current = false;
       hasAdvancedRef.current = false;
@@ -250,7 +251,7 @@ export function MultiplayerStartingLineupPage() {
   async function advanceRound() {
     if (!lobby || !careerState || !startersData) return;
     setIsAdvancing(true);
-
+    try {
     // Exclude players who gave up from scoring
     const gaveUpIds = new Set(careerState.giveUps || []);
     const connectedPlayers = players.filter(p => p.is_connected !== false);
@@ -274,9 +275,9 @@ export function MultiplayerStartingLineupPage() {
         return (a.finished_at || '').localeCompare(b.finished_at || '');
       });
 
-    // Award 1 pt to every player who answered correctly
-    for (const player of finished) {
-      await addCareerPoints(lobby.id, player.player_id, 1);
+    // First correct: 3 pts. Everyone else who answered within the window: 1 pt.
+    for (let i = 0; i < finished.length; i++) {
+      await addCareerPoints(lobby.id, finished[i].player_id, i === 0 ? 3 : 1);
     }
 
     // Check if anyone won
@@ -311,6 +312,10 @@ export function MultiplayerStartingLineupPage() {
     await startCareerRound(lobby.id, newState as unknown as Record<string, unknown>);
     setLobby({ ...lobby, career_state: newState, status: 'playing' });
     setIsAdvancing(false);
+    } catch {
+      setIsAdvancing(false);
+      hasAdvancedRef.current = false;
+    }
   }
 
   // ── Guess handling ──
@@ -348,6 +353,8 @@ export function MultiplayerStartingLineupPage() {
       hasSubmittedRef.current = true;
       setIsCorrect(true);
       setFeedbackMsg('');
+      // First correct gets 2 pts (no firstCorrectAt yet), subsequent get 1 pt
+      setWasFirstCorrect(!careerState.firstCorrectAt);
       await updatePlayerScore(lobby.id, 0, 1, [], localIncorrect, true);
     } else {
       const newIncorrect = [...localIncorrect, inputVal];
@@ -459,7 +466,7 @@ export function MultiplayerStartingLineupPage() {
                 <div className="text-[9px] text-green-400/60 sports-font uppercase tracking-widest">Correct!</div>
                 <div className="retro-title text-xl text-[#fdb927]">{correctTeamObj.name}</div>
               </div>
-              <div className="text-xs text-green-400/60 sports-font">+1 pt</div>
+              <div className="text-xs text-green-400/60 sports-font">{wasFirstCorrect ? '+3 pts' : '+1 pt'}</div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -472,7 +479,7 @@ export function MultiplayerStartingLineupPage() {
             className="px-4 py-3 bg-red-900/20 border border-red-800/40 rounded-lg text-center"
           >
             <div className="sports-font text-sm text-red-400">Locked out — waiting for others...</div>
-            <div className="text-[10px] text-red-400/50 mt-1 sports-font">Host will unlock when all players are locked</div>
+            <div className="text-[10px] text-red-400/50 mt-1 sports-font">Will unlock when all players make wrong guess</div>
           </motion.div>
         )}
 
