@@ -1,16 +1,15 @@
 /**
- * SoloStartingLineupPage.tsx — Solo "Starting Lineup" game mode.
+ * SoloStartingLineupPage.tsx — Solo "Starting Lineup" game mode (NFL + NBA).
  *
  * Phase machine: loading → guessing → bonus → results
  *
- * Guessing phase: see the field of encoded blobs, type the team name.
+ * Guessing phase: see the field/court of encoded blobs, type the team name.
  *   - 1st correct guess: 10 pts
  *   - 2nd+ correct guess: 5 pts
  *   - Give Up: skip to results with 0 pts
- *   - Wrong guess: shake animation, continue guessing
  *
- * Bonus phase (optional): same field, blobs become "?" tap to guess player name.
- *   - 60-second timer, +1 pt per correct player (max 11)
+ * Bonus phase (optional): blobs become "?" — tap to name each player.
+ *   - 60-second timer, +1 pt per correct player (max 11 NFL / 5 NBA)
  *
  * Results: score breakdown + Play Again / Home buttons.
  */
@@ -20,32 +19,40 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   loadNFLStarters,
-  getRandomTeamAndSide,
+  loadNBAStarters,
+  getRandomNFLTeamAndSide,
+  getRandomNBATeam,
   getRandomEncoding,
   pickBestEncoding,
   type NFLStartersData,
+  type NBAStartersData,
   type StarterPlayer,
   type StarterEncoding,
 } from '../services/startingLineupData';
 import { NFLFieldLayout } from '../components/startingLineup/NFLFieldLayout';
+import { NBACourtLayout } from '../components/startingLineup/NBACourtLayout';
 import { nflTeams } from '../data/nfl-teams';
+import { teams as nbaTeams } from '../data/teams';
+import { useSettingsStore } from '../stores/settingsStore';
 import { areSimilarNames } from '../utils/fuzzyDedup';
 
 type Phase = 'loading' | 'guessing' | 'bonus' | 'results';
+
+type AnyTeam = { name: string; city?: string; abbreviation: string; colors: { primary: string } };
 
 function normalizeTeamInput(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
 }
 
-function teamMatchesInput(input: string, team: { name: string; city: string; abbreviation: string }): boolean {
+function teamMatchesInput(input: string, team: AnyTeam): boolean {
   const norm = normalizeTeamInput(input);
   if (!norm) return false;
   const name = normalizeTeamInput(team.name);
-  const city = normalizeTeamInput(team.city);
+  const city = team.city ? normalizeTeamInput(team.city) : '';
   const abbr = team.abbreviation.toLowerCase();
   return (
     name.includes(norm) ||
-    city.includes(norm) ||
+    (city && city.includes(norm)) ||
     abbr === norm ||
     norm.includes(abbr) ||
     name.split(' ').some(w => w.startsWith(norm) && norm.length >= 3)
@@ -54,19 +61,23 @@ function teamMatchesInput(input: string, team: { name: string; city: string; abb
 
 export function SoloStartingLineupPage() {
   const navigate = useNavigate();
+  const { sport } = useSettingsStore();
+  const isNBA = sport === 'nba';
+
   const [phase, setPhase] = useState<Phase>('loading');
-  const [startersData, setStartersData] = useState<NFLStartersData | null>(null);
+  const [nflData, setNflData] = useState<NFLStartersData | null>(null);
+  const [nbaData, setNbaData] = useState<NBAStartersData | null>(null);
 
   // Current round state
   const [team, setTeam] = useState('');
-  const [side, setSide] = useState<'offense' | 'defense'>('offense');
+  const [side, setSide] = useState<'offense' | 'defense' | null>(null);
   const [players, setPlayers] = useState<StarterPlayer[]>([]);
   const [encoding, setEncoding] = useState<StarterEncoding>('college');
   const [gaveUp, setGaveUp] = useState(false);
 
   // Guessing phase
   const [guessInput, setGuessInput] = useState('');
-  const [suggestions, setSuggestions] = useState<typeof nflTeams>([]);
+  const [suggestions, setSuggestions] = useState<AnyTeam[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
   const [shake, setShake] = useState(false);
@@ -74,33 +85,61 @@ export function SoloStartingLineupPage() {
   const [teamGuessScore, setTeamGuessScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Hint mode (NBA only)
+  const [hintEnabled, setHintEnabled] = useState(false);
+
   // Bonus phase
   const [bonusTimeLeft, setBonusTimeLeft] = useState(60);
   const [bonusCorrect, setBonusCorrect] = useState<Set<string>>(new Set());
   const bonusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const teamList: AnyTeam[] = isNBA
+    ? nbaTeams.map(t => ({ name: t.name, city: t.city, abbreviation: t.abbreviation, colors: t.colors }))
+    : nflTeams.map(t => ({ name: t.name, city: t.city, abbreviation: t.abbreviation, colors: t.colors }));
+
   // Load starters on mount
   useEffect(() => {
-    loadNFLStarters().then(data => {
-      setStartersData(data);
-      startRound(data);
-    }).catch(err => {
-      console.error('Failed to load starters:', err);
-    });
-  }, []);
+    if (isNBA) {
+      loadNBAStarters().then(data => {
+        setNbaData(data);
+        startRound(null, data);
+      }).catch(err => console.error('Failed to load starters:', err));
+    } else {
+      loadNFLStarters().then(data => {
+        setNflData(data);
+        startRound(data, null);
+      }).catch(err => console.error('Failed to load starters:', err));
+    }
+  }, [isNBA]);
 
-  function startRound(data: NFLStartersData, excludeTeam?: string) {
-    const pick = getRandomTeamAndSide(data, excludeTeam);
+  function startRound(nfl: NFLStartersData | null, nba: NBAStartersData | null, excludeTeam?: string) {
+    let pickedPlayers: StarterPlayer[];
+    let pickedTeam: string;
+    let pickedSide: 'offense' | 'defense' | null = null;
+
+    if (isNBA && nba) {
+      const pick = getRandomNBATeam(nba, excludeTeam);
+      pickedTeam = pick.team;
+      pickedPlayers = pick.players;
+    } else if (!isNBA && nfl) {
+      const pick = getRandomNFLTeamAndSide(nfl, excludeTeam);
+      pickedTeam = pick.team;
+      pickedSide = pick.side;
+      pickedPlayers = pick.players;
+    } else {
+      return;
+    }
+
     let enc = getRandomEncoding();
-    const pickedPlayers = pick.players;
     const dataScore = {
       college: pickedPlayers.filter(p => p.college_espn_id != null).length,
-      number: pickedPlayers.filter(p => p.number != null).length,
-      draft: pickedPlayers.filter(p => p.draft_pick != null).length,
+      number:  pickedPlayers.filter(p => p.number != null).length,
+      draft:   pickedPlayers.filter(p => p.draft_pick != null).length,
     };
-    if (dataScore[enc] < 5) enc = pickBestEncoding(pickedPlayers);
-    setTeam(pick.team);
-    setSide(pick.side);
+    if (dataScore[enc] < (isNBA ? 3 : 5)) enc = pickBestEncoding(pickedPlayers);
+
+    setTeam(pickedTeam);
+    setSide(pickedSide);
     setPlayers(pickedPlayers);
     setEncoding(enc);
     setGuessInput('');
@@ -109,6 +148,7 @@ export function SoloStartingLineupPage() {
     setWrongGuesses([]);
     setShake(false);
     setGaveUp(false);
+    setHintEnabled(false);
     setTeamGuessScore(0);
     setBonusCorrect(new Set());
     setBonusTimeLeft(60);
@@ -123,26 +163,26 @@ export function SoloStartingLineupPage() {
       setShowSuggestions(false);
       return;
     }
-    const matches = nflTeams.filter(t => teamMatchesInput(value, t)).slice(0, 5);
+    const matches = teamList.filter(t => teamMatchesInput(value, t)).slice(0, 5);
     setSuggestions(matches);
     setShowSuggestions(matches.length > 0);
   }
 
   function submitGuess(guessedAbbr?: string) {
     const inputVal = guessedAbbr
-      ? nflTeams.find(t => t.abbreviation === guessedAbbr)?.name || guessInput
+      ? teamList.find(t => t.abbreviation === guessedAbbr)?.name || guessInput
       : guessInput;
 
     setShowSuggestions(false);
     setGuessInput('');
 
-    const correctTeam = nflTeams.find(t => t.abbreviation === team);
+    const correctTeam = teamList.find(t => t.abbreviation === team);
     if (!correctTeam) return;
 
     const isCorrect = guessedAbbr === team ||
       (!guessedAbbr && teamMatchesInput(inputVal, correctTeam) &&
-        nflTeams.filter(t => teamMatchesInput(inputVal, t)).length === 1 &&
-        nflTeams.filter(t => teamMatchesInput(inputVal, t))[0].abbreviation === team);
+        teamList.filter(t => teamMatchesInput(inputVal, t)).length === 1 &&
+        teamList.filter(t => teamMatchesInput(inputVal, t))[0].abbreviation === team);
 
     if (isCorrect) {
       const pts = wrongGuesses.length === 0 ? 10 : 5;
@@ -182,13 +222,13 @@ export function SoloStartingLineupPage() {
     }, 1000);
   }
 
-  function handleBonusGuess(gsisId: string, name: string) {
-    const player = players.find(p => p.gsis_id === gsisId);
-    if (!player || bonusCorrect.has(gsisId)) return;
+  function handleBonusGuess(playerId: string, name: string) {
+    const player = players.find(p => p.id === playerId);
+    if (!player || bonusCorrect.has(playerId)) return;
     if (areSimilarNames(name, player.name)) {
       setBonusCorrect(prev => {
         const next = new Set(prev);
-        next.add(gsisId);
+        next.add(playerId);
         return next;
       });
       setScore(s => s + 1);
@@ -216,16 +256,45 @@ export function SoloStartingLineupPage() {
   }, []);
 
   function playAgain() {
-    if (!startersData) return;
-    startRound(startersData, team);
+    startRound(nflData, nbaData, team);
   }
 
-  const correctTeamObj = nflTeams.find(t => t.abbreviation === team);
+  const correctTeamObj = teamList.find(t => t.abbreviation === team);
   const encodingLabel = { college: 'college logos', number: 'jersey numbers', draft: 'draft picks' }[encoding];
+  const maxBonus = isNBA ? 5 : 11;
+  const sportLabel = isNBA ? 'NBA' : 'NFL';
+  const contextLine = isNBA
+    ? `${correctTeamObj?.name || team} · ${encodingLabel}`
+    : `${correctTeamObj?.name || team} · ${side} · ${encodingLabel}`;
+
+  function renderLayout(blobState: 'hidden' | 'revealed' | 'bonus-guess') {
+    if (isNBA) {
+      return (
+        <NBACourtLayout
+          players={players}
+          encoding={encoding}
+          blobState={blobState}
+          bonusCorrect={bonusCorrect}
+          onBonusGuess={blobState === 'bonus-guess' ? handleBonusGuess : undefined}
+          showHint={blobState === 'hidden' && hintEnabled}
+        />
+      );
+    }
+    return (
+      <NFLFieldLayout
+        players={players}
+        side={side ?? 'offense'}
+        encoding={encoding}
+        blobState={blobState}
+        bonusCorrect={bonusCorrect}
+        onBonusGuess={blobState === 'bonus-guess' ? handleBonusGuess : undefined}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#111] text-white flex flex-col">
-      {/* Header — matches other solo pages */}
+      {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-[#222]">
         <button
           onClick={() => navigate('/')}
@@ -239,7 +308,7 @@ export function SoloStartingLineupPage() {
         <div className="text-center">
           <h1 className="retro-title text-2xl text-[#ea580c]">Starting Lineup</h1>
           {phase !== 'loading' && phase !== 'results' && (
-            <div className="sports-font text-[10px] text-[#ea580c]/50 tracking-widest">NFL</div>
+            <div className="sports-font text-[10px] text-[#ea580c]/50 tracking-widest">{sportLabel}</div>
           )}
         </div>
 
@@ -263,19 +332,28 @@ export function SoloStartingLineupPage() {
       {/* Guessing phase */}
       {phase === 'guessing' && (
         <div className="flex-1 flex flex-col px-3 py-3 gap-3 max-w-2xl mx-auto w-full">
-          <NFLFieldLayout
-            players={players}
-            side={side}
-            encoding={encoding}
-            blobState="hidden"
-          />
+          {renderLayout('hidden')}
 
-          {/* Instructions */}
-          <p className="text-center text-[11px] text-white/40 sports-font tracking-wider">
-            Which NFL team's {side} is this? · {encodingLabel}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-white/40 sports-font tracking-wider">
+              {isNBA
+                ? `Which ${sportLabel} team's starting 5 is this? · ${encodingLabel}`
+                : `Which ${sportLabel} team's ${side} is this? · ${encodingLabel}`}
+            </p>
+            {isNBA && (
+              <button
+                onClick={() => setHintEnabled(h => !h)}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sports-font border transition-all ${
+                  hintEnabled
+                    ? 'border-[#fdb927]/50 text-[#fdb927] bg-[#fdb927]/10'
+                    : 'border-white/10 text-white/30 hover:border-white/20 hover:text-white/50'
+                }`}
+              >
+                PPG {hintEnabled ? 'ON' : 'OFF'}
+              </button>
+            )}
+          </div>
 
-          {/* Wrong guesses */}
           {wrongGuesses.length > 0 && (
             <div className="flex flex-wrap gap-1.5 justify-center">
               {wrongGuesses.map((g, i) => (
@@ -286,7 +364,6 @@ export function SoloStartingLineupPage() {
             </div>
           )}
 
-          {/* Input + Give Up */}
           <div className="flex flex-col gap-2">
             <motion.div
               animate={shake ? { x: [-8, 8, -6, 6, 0] } : { x: 0 }}
@@ -317,7 +394,6 @@ export function SoloStartingLineupPage() {
                 </button>
               </div>
 
-              {/* Suggestions dropdown */}
               <AnimatePresence>
                 {showSuggestions && suggestions.length > 0 && (
                   <motion.div
@@ -359,7 +435,6 @@ export function SoloStartingLineupPage() {
       {/* Bonus phase */}
       {phase === 'bonus' && (
         <div className="flex-1 flex flex-col px-3 py-3 gap-3 max-w-2xl mx-auto w-full">
-          {/* Correct team banner */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -375,7 +450,6 @@ export function SoloStartingLineupPage() {
             </div>
           </motion.div>
 
-          {/* Timer row */}
           <div className="flex items-center justify-between px-1">
             <p className="text-[11px] text-white/40 sports-font tracking-wider">
               Tap blobs to name players — +1 pt each
@@ -385,18 +459,11 @@ export function SoloStartingLineupPage() {
             </div>
           </div>
 
-          <NFLFieldLayout
-            players={players}
-            side={side}
-            encoding={encoding}
-            blobState="bonus-guess"
-            bonusCorrect={bonusCorrect}
-            onBonusGuess={handleBonusGuess}
-          />
+          {renderLayout('bonus-guess')}
 
           <div className="flex items-center justify-between px-1">
             <div className="text-[11px] text-white/40 sports-font">
-              {bonusCorrect.size}/{players.slice(0, 11).length} players named
+              {bonusCorrect.size}/{Math.min(players.length, maxBonus)} players named
             </div>
             <button
               onClick={skipBonus}
@@ -416,7 +483,6 @@ export function SoloStartingLineupPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-4"
           >
-            {/* Score header */}
             <div className="text-center">
               <div className="sports-font text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">
                 {gaveUp ? 'Better luck next time' : 'Round Complete'}
@@ -427,7 +493,6 @@ export function SoloStartingLineupPage() {
               <div className="sports-font text-sm text-white/40 mt-1">points this round</div>
             </div>
 
-            {/* Answer reveal on give-up */}
             {gaveUp && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -439,7 +504,6 @@ export function SoloStartingLineupPage() {
               </motion.div>
             )}
 
-            {/* Breakdown */}
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden">
               <div className="px-4 py-3 border-b border-[#2a2a2a] flex justify-between items-center">
                 <span className="sports-font text-sm text-white/60">Team guess</span>
@@ -456,26 +520,15 @@ export function SoloStartingLineupPage() {
               </div>
             </div>
 
-            {/* Context */}
-            <p className="text-center text-[11px] text-white/30 sports-font">
-              {correctTeamObj?.name || team} · {side} · {encodingLabel}
-            </p>
+            <p className="text-center text-[11px] text-white/30 sports-font">{contextLine}</p>
 
-            {/* Field reveal */}
-            <NFLFieldLayout
-              players={players}
-              side={side}
-              encoding={encoding}
-              blobState="revealed"
-            />
+            {renderLayout('revealed')}
 
-            {/* Running total */}
             <div className="text-center">
               <div className="text-[10px] text-white/30 sports-font tracking-widest uppercase">Total Score</div>
               <div className="retro-title text-3xl text-[#fdb927]">{score}</div>
             </div>
 
-            {/* Actions */}
             <div className="flex gap-3">
               <button
                 onClick={playAgain}

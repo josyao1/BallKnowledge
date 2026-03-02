@@ -40,6 +40,8 @@ type GameCard = {
   soloPath?: string;
   multiPath?: string;
   image: string;
+  imageBySport?: Partial<Record<'nba' | 'nfl', string>>;
+  taglineBySport?: Partial<Record<'nba' | 'nfl', string>>;
 };
 
 const GAMES: GameCard[] = [
@@ -47,7 +49,7 @@ const GAMES: GameCard[] = [
   { id: 'career',          abbr: 'CA', name: 'Career Arc',       tagline: "Trace a player's career — team by team",            color: '#22c55e', hasSolo: true,  soloPath: '/career',           image: '/images/career-arc.svg' },
   { id: 'scramble',        abbr: 'NS', name: 'Name Scramble',    tagline: 'Unscramble athlete names before time runs out',      color: '#3b82f6', hasSolo: true,  soloPath: '/scramble',         image: '/images/name-scramble.svg' },
   { id: 'lineup',          abbr: 'CC', name: 'Cap Crunch',       tagline: "Chase the stat cap with a lineup — don't bust",     color: '#ec4899', hasSolo: true,  soloPath: '/lineup-is-right',  image: '/images/cap-crunch.svg' },
-  { id: 'starting-lineup', abbr: 'SL', name: 'Starting Lineup',  tagline: 'Guess the NFL team from their starters',            color: '#ea580c', hasSolo: true,  soloPath: '/starting-lineup',  image: '/images/starting-lineup-placeholder.svg' },
+  { id: 'starting-lineup', abbr: 'SL', name: 'Starting Lineup',  tagline: 'Guess the team from their starters',                color: '#ea580c', hasSolo: true,  soloPath: '/starting-lineup',  image: '/images/starting-lineup-placeholder.svg', imageBySport: { nfl: '/images/starting-lineup-placeholder.svg', nba: '/images/starting-lineup-nba-placeholder.svg' }, taglineBySport: { nfl: 'Guess the NFL team from their starters', nba: 'Guess the NBA team from their starters' } },
   { id: 'rollcall',        abbr: 'RC', name: 'Roll Call',        tagline: 'Work together to name as many athletes as you can', color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
 ];
 
@@ -727,7 +729,7 @@ export function HomePage() {
                         <div className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
                           style={{ borderColor: game.color }}>
                           <img
-                            src={game.image}
+                            src={game.imageBySport?.[sport] ?? game.image}
                             alt=""
                             className="absolute inset-0 w-full h-full"
                             style={{ objectFit: 'cover', objectPosition: 'center', opacity: 0.8 }}
@@ -757,7 +759,7 @@ export function HomePage() {
                                   {game.name}
                                 </h3>
                                 <p className="sports-font text-[#888] mt-1 leading-snug" style={{ fontSize: Math.max(6, Math.round(9 * fanScale)) }}>
-                                  {game.tagline}
+                                  {game.taglineBySport?.[sport] ?? game.tagline}
                                 </p>
                                 <div className="flex gap-1.5 mt-2" onClick={e => e.stopPropagation()}>
                                   {game.hasSolo && (

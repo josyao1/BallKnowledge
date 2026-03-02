@@ -30,7 +30,7 @@ import {
 } from '../services/lobby';
 import {
   loadNFLStarters,
-  getRandomTeamAndSide,
+  getRandomNFLTeamAndSide,
   getRandomEncoding,
   pickBestEncoding,
   type NFLStartersData,
@@ -49,6 +49,9 @@ interface StartingLineupState {
   round: number;
   win_target: number;
   unlock_epoch: number;
+  giveUps?: string[];
+  allGaveUp?: boolean;
+  firstCorrectAt?: string;
 }
 
 function normalizeInput(s: string): string {
@@ -91,13 +94,18 @@ export function MultiplayerStartingLineupPage() {
   const [localIncorrect, setLocalIncorrect] = useState<string[]>([]);
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
+  const [hasGivenUp, setHasGivenUp] = useState(false);
   const [shake, setShake] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
+
+  const [pressureTimeLeft, setPressureTimeLeft] = useState<number | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const hasSubmittedRef = useRef(false);
   const hasAdvancedRef = useRef(false);
   const prevRoundRef = useRef(-1);
+  const pressureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Load lobby on mount ──
   useEffect(() => {
@@ -136,9 +144,13 @@ export function MultiplayerStartingLineupPage() {
       setSuggestions([]);
       setShowSuggestions(false);
       setIsCorrect(false);
+      setHasGivenUp(false);
       setFeedbackMsg('');
+      setPressureTimeLeft(null);
       hasSubmittedRef.current = false;
       hasAdvancedRef.current = false;
+      if (pressureTimerRef.current) { clearTimeout(pressureTimerRef.current); pressureTimerRef.current = null; }
+      if (pressureIntervalRef.current) { clearInterval(pressureIntervalRef.current); pressureIntervalRef.current = null; }
       setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [careerState?.round]);
@@ -174,28 +186,87 @@ export function MultiplayerStartingLineupPage() {
     }
   }, [players, careerState?.unlock_epoch]);
 
-  // ── Host: award points and advance round when all finished ──
+  // ── Host: detect first correct answer or all-gave-up ──
   useEffect(() => {
-    if (!isHost || !lobby || !careerState) return;
-    if (hasAdvancedRef.current) return;
+    if (!isHost || !lobby || !careerState || hasAdvancedRef.current || careerState.firstCorrectAt) return;
+    const gaveUpIds = new Set(careerState.giveUps || []);
+    const connected = players.filter(p => p.is_connected !== false);
+    if (connected.length === 0) return;
 
-    const connectedPlayers = players.filter(p => p.is_connected !== false);
-    if (connectedPlayers.length === 0) return;
+    const allGaveUp = connected.every(p => gaveUpIds.has(p.player_id));
+    if (allGaveUp) {
+      hasAdvancedRef.current = true;
+      advanceRound();
+      return;
+    }
 
-    const allFinished = connectedPlayers.every(p => p.finished_at !== null);
-    if (!allFinished) return;
+    const firstCorrect = players.find(p => p.finished_at && !gaveUpIds.has(p.player_id));
+    if (firstCorrect) {
+      const newState = { ...careerState, firstCorrectAt: new Date().toISOString() };
+      updateCareerState(lobby.id, newState);
+      setLobby({ ...lobby, career_state: newState });
+    }
+  }, [players.map(p => p.finished_at).join(','), JSON.stringify(careerState?.giveUps)]);
 
-    hasAdvancedRef.current = true;
-    advanceRound();
-  }, [players.map(p => p.finished_at).join(',')]);
+  // ── Host: 30-second pressure timer after first correct answer ──
+  useEffect(() => {
+    if (!isHost || !lobby || !careerState?.firstCorrectAt || hasAdvancedRef.current) return;
+
+    const gaveUpIds = new Set(careerState.giveUps || []);
+    const connected = players.filter(p => p.is_connected !== false);
+    const allDone = connected.every(p => p.finished_at || gaveUpIds.has(p.player_id));
+
+    if (allDone) {
+      if (!hasAdvancedRef.current) {
+        if (pressureTimerRef.current) { clearTimeout(pressureTimerRef.current); pressureTimerRef.current = null; }
+        hasAdvancedRef.current = true;
+        advanceRound();
+      }
+      return;
+    }
+
+    if (pressureTimerRef.current) return;
+    pressureTimerRef.current = setTimeout(() => {
+      if (!hasAdvancedRef.current) {
+        hasAdvancedRef.current = true;
+        advanceRound();
+      }
+    }, 30000);
+  }, [careerState?.firstCorrectAt, players.map(p => p.finished_at).join(',')]);
+
+  // ── All clients: countdown display from firstCorrectAt ──
+  useEffect(() => {
+    if (!careerState?.firstCorrectAt) {
+      setPressureTimeLeft(null);
+      return;
+    }
+    const start = new Date(careerState.firstCorrectAt).getTime();
+    const tick = () => setPressureTimeLeft(Math.max(0, Math.ceil((30000 - (Date.now() - start)) / 1000)));
+    tick();
+    pressureIntervalRef.current = setInterval(tick, 500);
+    return () => { if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current); };
+  }, [careerState?.firstCorrectAt]);
 
   async function advanceRound() {
     if (!lobby || !careerState || !startersData) return;
     setIsAdvancing(true);
 
-    // Rank players: fewest wrong first, then earliest finished_at
+    // Exclude players who gave up from scoring
+    const gaveUpIds = new Set(careerState.giveUps || []);
+    const connectedPlayers = players.filter(p => p.is_connected !== false);
+    const everyoneGaveUp = connectedPlayers.length > 0 && connectedPlayers.every(p => gaveUpIds.has(p.player_id));
+
+    if (everyoneGaveUp) {
+      // Reveal the answer to all clients before advancing
+      const revealState = { ...careerState, allGaveUp: true };
+      await updateCareerState(lobby.id, revealState);
+      setLobby({ ...lobby, career_state: revealState });
+      await new Promise(resolve => setTimeout(resolve, 4000));
+    }
+
+    // Rank players who answered correctly: fewest wrong first, then earliest finished_at
     const finished = players
-      .filter(p => p.finished_at)
+      .filter(p => p.finished_at && !gaveUpIds.has(p.player_id))
       .sort((a, b) => {
         const wrongA = a.incorrect_guesses?.length ?? 0;
         const wrongB = b.incorrect_guesses?.length ?? 0;
@@ -203,10 +274,9 @@ export function MultiplayerStartingLineupPage() {
         return (a.finished_at || '').localeCompare(b.finished_at || '');
       });
 
-    // Award pts: 1st→3, 2nd→1
-    const pts = [3, 1];
-    for (let i = 0; i < Math.min(finished.length, pts.length); i++) {
-      await addCareerPoints(lobby.id, finished[i].player_id, pts[i]);
+    // Award 1 pt to every player who answered correctly
+    for (const player of finished) {
+      await addCareerPoints(lobby.id, player.player_id, 1);
     }
 
     // Check if anyone won
@@ -221,9 +291,9 @@ export function MultiplayerStartingLineupPage() {
 
     // Start next round
     const nextRound = careerState.round + 1;
-    const pick = getRandomTeamAndSide(startersData, careerState.team);
+    const pick = getRandomNFLTeamAndSide(startersData, careerState.team);
     let enc = getRandomEncoding();
-    if (pick.players.filter(p => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null).length < 5) {
+    if (pick.players.filter((p: StarterPlayer) => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null).length < 5) {
       enc = pickBestEncoding(pick.players);
     }
 
@@ -234,6 +304,8 @@ export function MultiplayerStartingLineupPage() {
       round: nextRound,
       win_target: winTarget,
       unlock_epoch: 0,
+      giveUps: [],
+      firstCorrectAt: undefined,
     };
 
     await startCareerRound(lobby.id, newState as unknown as Record<string, unknown>);
@@ -289,6 +361,23 @@ export function MultiplayerStartingLineupPage() {
     }
   }
 
+  async function handleGiveUp() {
+    if (!careerState || !lobby || !currentPlayerId || isCorrect || hasGivenUp || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    setHasGivenUp(true);
+    setShowSuggestions(false);
+    setGuessInput('');
+
+    // Append this player to giveUps in career_state
+    const newGiveUps = [...(careerState.giveUps || []), currentPlayerId];
+    const newState = { ...careerState, giveUps: newGiveUps };
+    await updateCareerState(lobby.id, newState);
+    setLobby({ ...lobby, career_state: newState });
+
+    // Mark as finished so host can detect everyone is done
+    await updatePlayerScore(lobby.id, 0, 0, [], localIncorrect, true);
+  }
+
   // ── Render ──
   if (!careerState || !startersData) {
     return (
@@ -298,6 +387,7 @@ export function MultiplayerStartingLineupPage() {
     );
   }
 
+  const allGaveUp = !!careerState.allGaveUp;
   const correctTeamObj = nflTeams.find(t => t.abbreviation === careerState.team);
   const encodingLabel = { college: 'college logos', number: 'jersey #s', draft: 'draft picks' }[careerState.encoding];
   const connectedCount = players.filter(p => p.is_connected !== false).length;
@@ -312,7 +402,13 @@ export function MultiplayerStartingLineupPage() {
           <div className="text-[9px] text-white/30 sports-font">Round {careerState.round} · Race to {careerState.win_target} pts</div>
         </div>
         <div className="text-center">
-          <div className="text-[9px] text-white/30 sports-font">{finishedCount}/{connectedCount} done</div>
+          {pressureTimeLeft !== null ? (
+            <div className={`retro-title text-xl ${pressureTimeLeft <= 10 ? 'text-red-400' : 'text-[#fdb927]'}`}>
+              {pressureTimeLeft}s
+            </div>
+          ) : (
+            <div className="text-[9px] text-white/30 sports-font">{finishedCount}/{connectedCount} done</div>
+          )}
         </div>
         {/* Scores */}
         <div className="flex gap-2">
@@ -331,8 +427,25 @@ export function MultiplayerStartingLineupPage() {
           players={currentPlayers}
           side={careerState.side}
           encoding={careerState.encoding}
-          blobState={isCorrect ? 'revealed' : 'hidden'}
+          blobState={isCorrect || allGaveUp ? 'revealed' : 'hidden'}
         />
+
+        {/* All gave up — answer reveal */}
+        <AnimatePresence>
+          {allGaveUp && correctTeamObj && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="px-4 py-3 bg-[#1a1a1a] border border-white/20 rounded-lg flex items-center justify-between"
+            >
+              <div>
+                <div className="text-[9px] text-white/30 sports-font uppercase tracking-widest">Nobody got it — the answer was</div>
+                <div className="retro-title text-xl text-white/80">{correctTeamObj.name}</div>
+              </div>
+              <div className="text-xs text-white/20 sports-font">Next round soon...</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Correct answer reveal */}
         <AnimatePresence>
@@ -346,9 +459,7 @@ export function MultiplayerStartingLineupPage() {
                 <div className="text-[9px] text-green-400/60 sports-font uppercase tracking-widest">Correct!</div>
                 <div className="retro-title text-xl text-[#fdb927]">{correctTeamObj.name}</div>
               </div>
-              <div className="text-xs text-green-400/60 sports-font">
-                {localIncorrect.length === 0 ? 'Perfect! +3' : `+1`}
-              </div>
+              <div className="text-xs text-green-400/60 sports-font">+1 pt</div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -365,8 +476,19 @@ export function MultiplayerStartingLineupPage() {
           </motion.div>
         )}
 
+        {/* Gave up indicator */}
+        {hasGivenUp && !isCorrect && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="px-4 py-3 bg-[#1a1a1a] border border-white/10 rounded-lg text-center"
+          >
+            <div className="sports-font text-sm text-white/40">You gave up — waiting for others...</div>
+          </motion.div>
+        )}
+
         {/* Instructions */}
-        {!isCorrect && !isLocked && (
+        {!isCorrect && !isLocked && !hasGivenUp && (
           <p className="text-center text-[11px] text-white/40 sports-font tracking-wider">
             Guess the NFL team · {careerState.side} · {encodingLabel}
           </p>
@@ -382,7 +504,7 @@ export function MultiplayerStartingLineupPage() {
         )}
 
         {/* Input */}
-        {!isCorrect && !isLocked && (
+        {!isCorrect && !isLocked && !hasGivenUp && (
           <motion.div
             animate={shake ? { x: [-6, 6, -4, 4, 0] } : { x: 0 }}
             transition={{ duration: 0.25 }}
@@ -436,6 +558,16 @@ export function MultiplayerStartingLineupPage() {
               )}
             </AnimatePresence>
           </motion.div>
+        )}
+
+        {/* Give Up button */}
+        {!isCorrect && !hasGivenUp && (
+          <button
+            onClick={handleGiveUp}
+            className="w-full py-2 rounded-lg sports-font text-xs bg-transparent border border-white/10 text-white/25 hover:border-red-900/50 hover:text-red-400/60 transition-all"
+          >
+            Give Up
+          </button>
         )}
 
         {/* Feedback */}

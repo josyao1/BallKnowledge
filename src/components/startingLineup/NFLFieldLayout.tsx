@@ -19,7 +19,8 @@ type Props = {
   encoding: StarterEncoding;
   blobState: BlobState;
   bonusCorrect?: Set<string>;
-  onBonusGuess?: (gsis_id: string, name: string) => void;
+  onBonusGuess?: (id: string, name: string) => void;
+  showHint?: boolean;
 };
 
 // Canonical formation positions: left%, top% within the 16:9 container
@@ -84,7 +85,7 @@ function getEncodingLabel(encoding: StarterEncoding): string {
   }
 }
 
-export function NFLFieldLayout({ players, side, encoding, blobState, bonusCorrect, onBonusGuess }: Props) {
+export function NFLFieldLayout({ players, side, encoding, blobState, bonusCorrect, onBonusGuess, showHint }: Props) {
   // Track WR index for multiple WRs
   let wrIndex = 0;
 
@@ -141,7 +142,7 @@ export function NFLFieldLayout({ players, side, encoding, blobState, bonusCorrec
         {/* Player blobs */}
         {positioned.map(({ player, left, top }) => (
           <div
-            key={player.gsis_id}
+            key={player.id}
             className="absolute transform -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${left}%`, top: `${top}%` }}
           >
@@ -149,8 +150,9 @@ export function NFLFieldLayout({ players, side, encoding, blobState, bonusCorrec
               player={player}
               encoding={encoding}
               state={blobState}
-              bonusCorrect={bonusCorrect?.has(player.gsis_id)}
-              onBonusGuess={onBonusGuess ? (name) => onBonusGuess(player.gsis_id, name) : undefined}
+              bonusCorrect={bonusCorrect?.has(player.id)}
+              onBonusGuess={onBonusGuess ? (name) => onBonusGuess(player.id, name) : undefined}
+              showHint={showHint}
             />
           </div>
         ))}

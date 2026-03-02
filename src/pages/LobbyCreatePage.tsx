@@ -37,7 +37,7 @@ export function LobbyCreatePage() {
     const passed = (location.state as any)?.gameType;
     return VALID_LOBBY_MODES.includes(passed) ? passed : 'roster';
   });
-  const [winTarget, setWinTarget] = useState<3 | 5 | 7>(3);
+  const [winTarget, setWinTarget] = useState<3 | 5 | 7 | 10 | 20 | 30>(10);
   const [scrambleWinTarget, setScrambleWinTarget] = useState<10 | 20 | 30 | 40 | 50>(20);
   const [scrambleCareerTo, setScrambleCareerTo] = useState(0);
   const [hostName, setHostName] = useState(getStoredPlayerName() || '');
@@ -118,6 +118,21 @@ export function LobbyCreatePage() {
       );
       if (lobby) {
         await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2024, team: null });
+        navigate(`/lobby/${lobby.join_code}`);
+      }
+      return;
+    }
+
+    // Starting Lineup (Starters) mode
+    if (lobbyMode === 'starting-lineup') {
+      const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'KC';
+      const dummySeason = sport === 'nba' ? '2024-25' : '2024';
+      const lobby = await createLobby(
+        hostName.trim(), sport, dummyTeamAbbr, dummySeason,
+        90, 'random', 2000, 2025, 'starting-lineup', 'team', null, null
+      );
+      if (lobby) {
+        await updateCareerState(lobby.id, { win_target: winTarget, round: 0 });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
@@ -270,6 +285,16 @@ export function LobbyCreatePage() {
             >
               Box Score
             </button>
+            <button
+              onClick={() => setLobbyMode('starting-lineup')}
+              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                lobbyMode === 'starting-lineup'
+                  ? 'bg-[#16a34a] text-white shadow-lg font-bold'
+                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+              }`}
+            >
+              Starters
+            </button>
           </div>
         </motion.div>
 
@@ -408,6 +433,40 @@ export function LobbyCreatePage() {
                     <option key={y} value={y}>Active into {y}+</option>
                   ))}
                 </select>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Starting Lineup settings */}
+        <AnimatePresence>
+          {lobbyMode === 'starting-lineup' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-black/50 border border-[#16a34a]/30 rounded-sm p-4"
+            >
+              <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+                Win Target
+              </div>
+              <div className="flex gap-2 justify-center">
+                {([10, 20, 30] as const).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setWinTarget(n)}
+                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                      winTarget === n
+                        ? 'bg-[#16a34a] text-white shadow-lg font-bold'
+                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    {n} pts
+                  </button>
+                ))}
+              </div>
+              <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
+                First player to {winTarget} pts takes the match
               </div>
             </motion.div>
           )}

@@ -2,7 +2,7 @@
   "ARI": {
     "offense": [
       {
-        "gsis_id": "00-0038540",
+        "id": "00-0038540",
         "name": "Paris Johnson Jr.",
         "pos_abb": "LT",
         "number": "70",
@@ -11,7 +11,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0034495",
+        "id": "00-0034495",
         "name": "Evan Brown",
         "pos_abb": "LG",
         "number": "63",
@@ -20,7 +20,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0035258",
+        "id": "00-0035258",
         "name": "Hjalte Froholdt",
         "pos_abb": "C",
         "number": "72",
@@ -29,7 +29,7 @@
         "draft_pick": 118
       },
       {
-        "gsis_id": "00-0034346",
+        "id": "00-0034346",
         "name": "Will Hernandez",
         "pos_abb": "RG",
         "number": "76",
@@ -38,7 +38,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0035629",
+        "id": "00-0035629",
         "name": "Jonah Williams",
         "pos_abb": "RT",
         "number": "73",
@@ -47,7 +47,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0037744",
+        "id": "00-0037744",
         "name": "Trey McBride",
         "pos_abb": "TE",
         "number": "85",
@@ -56,7 +56,7 @@
         "draft_pick": 55
       },
       {
-        "gsis_id": "00-0035500",
+        "id": "00-0035500",
         "name": "Greg Dortch",
         "pos_abb": "WR",
         "number": "4",
@@ -65,7 +65,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038559",
+        "id": "00-0038559",
         "name": "Michael Wilson",
         "pos_abb": "WR",
         "number": "14",
@@ -74,7 +74,7 @@
         "draft_pick": 94
       },
       {
-        "gsis_id": "00-0039849",
+        "id": "00-0039849",
         "name": "Marvin Harrison Jr.",
         "pos_abb": "WR",
         "number": "18",
@@ -83,7 +83,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0033119",
+        "id": "00-0033119",
         "name": "Jacoby Brissett",
         "pos_abb": "QB",
         "number": "7",
@@ -92,7 +92,7 @@
         "draft_pick": 91
       },
       {
-        "gsis_id": "00-0033553",
+        "id": "00-0033553",
         "name": "James Conner",
         "pos_abb": "RB",
         "number": "6",
@@ -103,7 +103,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0034381",
+        "id": "00-0034381",
         "name": "Josh Sweat",
         "pos_abb": "LDE",
         "number": "10",
@@ -112,7 +112,7 @@
         "draft_pick": 130
       },
       {
-        "gsis_id": "00-0026190",
+        "id": "00-0026190",
         "name": "Calais Campbell",
         "pos_abb": "LDT",
         "number": "93",
@@ -121,7 +121,7 @@
         "draft_pick": 50
       },
       {
-        "gsis_id": "00-0033546",
+        "id": "00-0033546",
         "name": "Dalvin Tomlinson",
         "pos_abb": "RDT",
         "number": "94",
@@ -130,7 +130,7 @@
         "draft_pick": 55
       },
       {
-        "gsis_id": "00-0039854",
+        "id": "00-0039854",
         "name": "Darius Robinson",
         "pos_abb": "RDE",
         "number": "56",
@@ -139,7 +139,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0036298",
+        "id": "00-0036298",
         "name": "Akeem Davis-Gaither",
         "pos_abb": "WLB",
         "number": "27",
@@ -148,7 +148,7 @@
         "draft_pick": 107
       },
       {
-        "gsis_id": "00-0035144",
+        "id": "00-0035144",
         "name": "Mack Wilson Sr.",
         "pos_abb": "MLB",
         "number": "2",
@@ -157,7 +157,7 @@
         "draft_pick": 155
       },
       {
-        "gsis_id": "00-0036933",
+        "id": "00-0036933",
         "name": "Zaven Collins",
         "pos_abb": "SLB",
         "number": "25",
@@ -166,7 +166,7 @@
         "draft_pick": 16
       },
       {
-        "gsis_id": "00-0040751",
+        "id": "00-0040751",
         "name": "Will Johnson",
         "pos_abb": "LCB",
         "number": "0",
@@ -175,7 +175,7 @@
         "draft_pick": 47
       },
       {
-        "gsis_id": "00-0040195",
+        "id": "00-0040195",
         "name": "Denzel Burke",
         "pos_abb": "RCB",
         "number": "29",
@@ -184,7 +184,7 @@
         "draft_pick": 174
       },
       {
-        "gsis_id": "00-0035705",
+        "id": "00-0035705",
         "name": "Jalen Thompson",
         "pos_abb": "SS",
         "number": "34",
@@ -193,7 +193,7 @@
         "draft_pick": 132
       },
       {
-        "gsis_id": "00-0033890",
+        "id": "00-0033890",
         "name": "Budda Baker",
         "pos_abb": "FS",
         "number": "3",
@@ -206,7 +206,7 @@
   "ATL": {
     "offense": [
       {
-        "gsis_id": "00-0031279",
+        "id": "00-0031279",
         "name": "Jake Matthews",
         "pos_abb": "LT",
         "number": "70",
@@ -215,7 +215,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0039048",
+        "id": "00-0039048",
         "name": "Matthew Bergeron",
         "pos_abb": "LG",
         "number": "65",
@@ -224,7 +224,7 @@
         "draft_pick": 38
       },
       {
-        "gsis_id": "00-0036833",
+        "id": "00-0036833",
         "name": "Ryan Neuzil",
         "pos_abb": "C",
         "number": "64",
@@ -233,7 +233,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0035630",
+        "id": "00-0035630",
         "name": "Chris Lindstrom",
         "pos_abb": "RG",
         "number": "63",
@@ -242,7 +242,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0035235",
+        "id": "00-0035235",
         "name": "Kaleb McGary",
         "pos_abb": "RT",
         "number": "76",
@@ -251,7 +251,7 @@
         "draft_pick": 31
       },
       {
-        "gsis_id": "00-0036970",
+        "id": "00-0036970",
         "name": "Kyle Pitts Sr.",
         "pos_abb": "TE",
         "number": "8",
@@ -260,7 +260,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0035359",
+        "id": "00-0035359",
         "name": "David Sills V",
         "pos_abb": "WR",
         "number": "87",
@@ -269,7 +269,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036309",
+        "id": "00-0036309",
         "name": "Darnell Mooney",
         "pos_abb": "WR",
         "number": "1",
@@ -278,7 +278,7 @@
         "draft_pick": 173
       },
       {
-        "gsis_id": "00-0037238",
+        "id": "00-0037238",
         "name": "Drake London",
         "pos_abb": "WR",
         "number": "5",
@@ -287,7 +287,7 @@
         "draft_pick": 8
       },
       {
-        "gsis_id": "00-0039917",
+        "id": "00-0039917",
         "name": "Michael Penix Jr.",
         "pos_abb": "QB",
         "number": "9",
@@ -296,7 +296,7 @@
         "draft_pick": 8
       },
       {
-        "gsis_id": "00-0038542",
+        "id": "00-0038542",
         "name": "Bijan Robinson",
         "pos_abb": "RB",
         "number": "7",
@@ -307,7 +307,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0038980",
+        "id": "00-0038980",
         "name": "Zach Harrison",
         "pos_abb": "LDE",
         "number": "96",
@@ -316,7 +316,7 @@
         "draft_pick": 75
       },
       {
-        "gsis_id": "00-0039733",
+        "id": "00-0039733",
         "name": "Ruke Orhorhoro",
         "pos_abb": "NT",
         "number": "98",
@@ -325,7 +325,7 @@
         "draft_pick": 35
       },
       {
-        "gsis_id": "00-0033051",
+        "id": "00-0033051",
         "name": "David Onyemata",
         "pos_abb": "RDE",
         "number": "90",
@@ -334,7 +334,7 @@
         "draft_pick": 120
       },
       {
-        "gsis_id": "00-0036990",
+        "id": "00-0036990",
         "name": "Divine Deablo",
         "pos_abb": "LILB",
         "number": "0",
@@ -343,7 +343,7 @@
         "draft_pick": 80
       },
       {
-        "gsis_id": "00-0035316",
+        "id": "00-0035316",
         "name": "Kaden Elliss",
         "pos_abb": "RILB",
         "number": "55",
@@ -352,7 +352,7 @@
         "draft_pick": 244
       },
       {
-        "gsis_id": "00-0036285",
+        "id": "00-0036285",
         "name": "A.J. Terrell Jr.",
         "pos_abb": "LCB",
         "number": "24",
@@ -361,7 +361,7 @@
         "draft_pick": 16
       },
       {
-        "gsis_id": "00-0034843",
+        "id": "00-0034843",
         "name": "Mike Hughes",
         "pos_abb": "RCB",
         "number": "21",
@@ -370,7 +370,7 @@
         "draft_pick": 30
       },
       {
-        "gsis_id": "00-0034675",
+        "id": "00-0034675",
         "name": "Jessie Bates III",
         "pos_abb": "SS",
         "number": "3",
@@ -379,7 +379,7 @@
         "draft_pick": 54
       },
       {
-        "gsis_id": "00-0040148",
+        "id": "00-0040148",
         "name": "Xavier Watts",
         "pos_abb": "FS",
         "number": "31",
@@ -392,7 +392,7 @@
   "BAL": {
     "offense": [
       {
-        "gsis_id": "00-0032965",
+        "id": "00-0032965",
         "name": "Ronnie Stanley",
         "pos_abb": "LT",
         "number": "79",
@@ -401,7 +401,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0038383",
+        "id": "00-0038383",
         "name": "Andrew Vorhees",
         "pos_abb": "LG",
         "number": "72",
@@ -410,7 +410,7 @@
         "draft_pick": 229
       },
       {
-        "gsis_id": "00-0037825",
+        "id": "00-0037825",
         "name": "Tyler Linderbaum",
         "pos_abb": "C",
         "number": "64",
@@ -419,7 +419,7 @@
         "draft_pick": 25
       },
       {
-        "gsis_id": "00-0038118",
+        "id": "00-0038118",
         "name": "Daniel Faalele",
         "pos_abb": "RG",
         "number": "77",
@@ -428,7 +428,7 @@
         "draft_pick": 110
       },
       {
-        "gsis_id": "00-0039233",
+        "id": "00-0039233",
         "name": "Roger Rosengarten",
         "pos_abb": "RT",
         "number": "70",
@@ -437,7 +437,7 @@
         "draft_pick": 62
       },
       {
-        "gsis_id": "00-0034753",
+        "id": "00-0034753",
         "name": "Mark Andrews",
         "pos_abb": "TE",
         "number": "89",
@@ -446,7 +446,7 @@
         "draft_pick": 86
       },
       {
-        "gsis_id": "00-0030564",
+        "id": "00-0030564",
         "name": "DeAndre Hopkins",
         "pos_abb": "WR",
         "number": "10",
@@ -455,7 +455,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0036550",
+        "id": "00-0036550",
         "name": "Rashod Bateman",
         "pos_abb": "WR",
         "number": "7",
@@ -464,7 +464,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0039064",
+        "id": "00-0039064",
         "name": "Zay Flowers",
         "pos_abb": "WR",
         "number": "4",
@@ -473,7 +473,7 @@
         "draft_pick": 22
       },
       {
-        "gsis_id": "00-0034796",
+        "id": "00-0034796",
         "name": "Lamar Jackson",
         "pos_abb": "QB",
         "number": "8",
@@ -482,7 +482,7 @@
         "draft_pick": 32
       },
       {
-        "gsis_id": "00-0032764",
+        "id": "00-0032764",
         "name": "Derrick Henry",
         "pos_abb": "RB",
         "number": "22",
@@ -493,7 +493,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0037756",
+        "id": "00-0037756",
         "name": "Travis Jones",
         "pos_abb": "LDE",
         "number": "98",
@@ -502,7 +502,7 @@
         "draft_pick": 76
       },
       {
-        "gsis_id": "00-0030070",
+        "id": "00-0030070",
         "name": "John Jenkins",
         "pos_abb": "NT",
         "number": "94",
@@ -511,7 +511,7 @@
         "draft_pick": 82
       },
       {
-        "gsis_id": "00-0036130",
+        "id": "00-0036130",
         "name": "Nnamdi Madubuike",
         "pos_abb": "RDE",
         "number": "92",
@@ -520,7 +520,7 @@
         "draft_pick": 71
       },
       {
-        "gsis_id": "00-0031360",
+        "id": "00-0031360",
         "name": "Kyle Van Noy",
         "pos_abb": "WLB",
         "number": "53",
@@ -529,7 +529,7 @@
         "draft_pick": 40
       },
       {
-        "gsis_id": "00-0035678",
+        "id": "00-0035678",
         "name": "Dre'Mont Jones",
         "pos_abb": "SLB",
         "number": "41",
@@ -538,7 +538,7 @@
         "draft_pick": 71
       },
       {
-        "gsis_id": "00-0039232",
+        "id": "00-0039232",
         "name": "Nate Wiggins",
         "pos_abb": "LCB",
         "number": "2",
@@ -547,7 +547,7 @@
         "draft_pick": 30
       },
       {
-        "gsis_id": "00-0033548",
+        "id": "00-0033548",
         "name": "Chidobe Awuzie",
         "pos_abb": "RCB",
         "number": "3",
@@ -556,7 +556,7 @@
         "draft_pick": 60
       },
       {
-        "gsis_id": "00-0038038",
+        "id": "00-0038038",
         "name": "Kyle Hamilton",
         "pos_abb": "SS",
         "number": "14",
@@ -565,7 +565,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0036380",
+        "id": "00-0036380",
         "name": "Alohi Gilman",
         "pos_abb": "FS",
         "number": "12",
@@ -578,7 +578,7 @@
   "BUF": {
     "offense": [
       {
-        "gsis_id": "00-0033904",
+        "id": "00-0033904",
         "name": "Dion Dawkins",
         "pos_abb": "LT",
         "number": "73",
@@ -587,7 +587,7 @@
         "draft_pick": 63
       },
       {
-        "gsis_id": "00-0035668",
+        "id": "00-0035668",
         "name": "David Edwards",
         "pos_abb": "LG",
         "number": "76",
@@ -596,7 +596,7 @@
         "draft_pick": 169
       },
       {
-        "gsis_id": "00-0035679",
+        "id": "00-0035679",
         "name": "Connor McGovern",
         "pos_abb": "C",
         "number": "66",
@@ -605,7 +605,7 @@
         "draft_pick": 90
       },
       {
-        "gsis_id": "00-0038548",
+        "id": "00-0038548",
         "name": "O'Cyrus Torrence",
         "pos_abb": "RG",
         "number": "64",
@@ -614,7 +614,7 @@
         "draft_pick": 59
       },
       {
-        "gsis_id": "00-0036976",
+        "id": "00-0036976",
         "name": "Spencer Brown",
         "pos_abb": "RT",
         "number": "79",
@@ -623,7 +623,7 @@
         "draft_pick": 93
       },
       {
-        "gsis_id": "00-0038933",
+        "id": "00-0038933",
         "name": "Dalton Kincaid",
         "pos_abb": "TE",
         "number": "86",
@@ -632,7 +632,7 @@
         "draft_pick": 25
       },
       {
-        "gsis_id": "00-0036988",
+        "id": "00-0036988",
         "name": "Joshua Palmer",
         "pos_abb": "WR",
         "number": "5",
@@ -641,7 +641,7 @@
         "draft_pick": 77
       },
       {
-        "gsis_id": "00-0037261",
+        "id": "00-0037261",
         "name": "Khalil Shakir",
         "pos_abb": "WR",
         "number": "10",
@@ -650,7 +650,7 @@
         "draft_pick": 148
       },
       {
-        "gsis_id": "00-0039901",
+        "id": "00-0039901",
         "name": "Keon Coleman",
         "pos_abb": "WR",
         "number": "0",
@@ -659,7 +659,7 @@
         "draft_pick": 33
       },
       {
-        "gsis_id": "00-0034857",
+        "id": "00-0034857",
         "name": "Josh Allen",
         "pos_abb": "QB",
         "number": "17",
@@ -668,7 +668,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0037248",
+        "id": "00-0037248",
         "name": "James Cook III",
         "pos_abb": "RB",
         "number": "4",
@@ -679,7 +679,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0036914",
+        "id": "00-0036914",
         "name": "Greg Rousseau",
         "pos_abb": "LDE",
         "number": "50",
@@ -688,7 +688,7 @@
         "draft_pick": 30
       },
       {
-        "gsis_id": "00-0035230",
+        "id": "00-0035230",
         "name": "Ed Oliver",
         "pos_abb": "LDT",
         "number": "91",
@@ -697,7 +697,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0031054",
+        "id": "00-0031054",
         "name": "DaQuan Jones",
         "pos_abb": "RDT",
         "number": "92",
@@ -706,7 +706,7 @@
         "draft_pick": 112
       },
       {
-        "gsis_id": "00-0033156",
+        "id": "00-0033156",
         "name": "Joey Bosa",
         "pos_abb": "RDE",
         "number": "97",
@@ -715,7 +715,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0033571",
+        "id": "00-0033571",
         "name": "Matt Milano",
         "pos_abb": "WLB",
         "number": "58",
@@ -724,7 +724,7 @@
         "draft_pick": 163
       },
       {
-        "gsis_id": "00-0037254",
+        "id": "00-0037254",
         "name": "Terrel Bernard",
         "pos_abb": "MLB",
         "number": "8",
@@ -733,7 +733,7 @@
         "draft_pick": 89
       },
       {
-        "gsis_id": "00-0031550",
+        "id": "00-0031550",
         "name": "Shaq Thompson",
         "pos_abb": "SLB",
         "number": "45",
@@ -742,7 +742,7 @@
         "draft_pick": 25
       },
       {
-        "gsis_id": "00-0033884",
+        "id": "00-0033884",
         "name": "Tre'Davious White",
         "pos_abb": "LCB",
         "number": "27",
@@ -751,7 +751,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0037288",
+        "id": "00-0037288",
         "name": "Christian Benford",
         "pos_abb": "RCB",
         "number": "47",
@@ -760,7 +760,7 @@
         "draft_pick": 185
       },
       {
-        "gsis_id": "00-0035663",
+        "id": "00-0035663",
         "name": "Taylor Rapp",
         "pos_abb": "SS",
         "number": "9",
@@ -769,7 +769,7 @@
         "draft_pick": 61
       },
       {
-        "gsis_id": "00-0039872",
+        "id": "00-0039872",
         "name": "Cole Bishop",
         "pos_abb": "FS",
         "number": "24",
@@ -782,7 +782,7 @@
   "CAR": {
     "offense": [
       {
-        "gsis_id": "00-0037229",
+        "id": "00-0037229",
         "name": "Ikem Ekwonu",
         "pos_abb": "LT",
         "number": "79",
@@ -791,7 +791,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0036417",
+        "id": "00-0036417",
         "name": "Damien Lewis",
         "pos_abb": "LG",
         "number": "68",
@@ -800,7 +800,7 @@
         "draft_pick": 69
       },
       {
-        "gsis_id": "00-0037297",
+        "id": "00-0037297",
         "name": "Cade Mays",
         "pos_abb": "C",
         "number": "64",
@@ -809,7 +809,7 @@
         "draft_pick": 199
       },
       {
-        "gsis_id": "00-0036325",
+        "id": "00-0036325",
         "name": "Robert Hunt",
         "pos_abb": "RG",
         "number": "50",
@@ -818,7 +818,7 @@
         "draft_pick": 39
       },
       {
-        "gsis_id": "00-0033284",
+        "id": "00-0033284",
         "name": "Taylor Moton",
         "pos_abb": "RT",
         "number": "72",
@@ -827,7 +827,7 @@
         "draft_pick": 64
       },
       {
-        "gsis_id": "00-0039356",
+        "id": "00-0039356",
         "name": "Ja'Tavion Sanders",
         "pos_abb": "TE",
         "number": "0",
@@ -836,7 +836,7 @@
         "draft_pick": 101
       },
       {
-        "gsis_id": "00-0039342",
+        "id": "00-0039342",
         "name": "Xavier Legette",
         "pos_abb": "WR",
         "number": "17",
@@ -845,7 +845,7 @@
         "draft_pick": 32
       },
       {
-        "gsis_id": "00-0039491",
+        "id": "00-0039491",
         "name": "Jalen Coker",
         "pos_abb": "WR",
         "number": "18",
@@ -854,7 +854,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0040124",
+        "id": "00-0040124",
         "name": "Tetairoa McMillan",
         "pos_abb": "WR",
         "number": "4",
@@ -863,7 +863,7 @@
         "draft_pick": 8
       },
       {
-        "gsis_id": "00-0039150",
+        "id": "00-0039150",
         "name": "Bryce Young",
         "pos_abb": "QB",
         "number": "9",
@@ -872,7 +872,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0036555",
+        "id": "00-0036555",
         "name": "Chuba Hubbard",
         "pos_abb": "RB",
         "number": "30",
@@ -883,7 +883,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0035890",
+        "id": "00-0035890",
         "name": "Tershawn Wharton",
         "pos_abb": "LDE",
         "number": "99",
@@ -892,7 +892,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0032889",
+        "id": "00-0032889",
         "name": "A'Shawn Robinson",
         "pos_abb": "NT",
         "number": "94",
@@ -901,7 +901,7 @@
         "draft_pick": 46
       },
       {
-        "gsis_id": "00-0036903",
+        "id": "00-0036903",
         "name": "Bobby Brown III",
         "pos_abb": "NT",
         "number": "97",
@@ -910,7 +910,7 @@
         "draft_pick": 117
       },
       {
-        "gsis_id": "00-0036220",
+        "id": "00-0036220",
         "name": "Derrick Brown",
         "pos_abb": "RDE",
         "number": "95",
@@ -919,7 +919,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0035942",
+        "id": "00-0035942",
         "name": "Christian Rozeboom",
         "pos_abb": "LILB",
         "number": "56",
@@ -928,7 +928,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036335",
+        "id": "00-0036335",
         "name": "D.J. Wonnum",
         "pos_abb": "SLB",
         "number": "98",
@@ -937,7 +937,7 @@
         "draft_pick": 117
       },
       {
-        "gsis_id": "00-0035277",
+        "id": "00-0035277",
         "name": "Mike Jackson",
         "pos_abb": "LCB",
         "number": "2",
@@ -946,7 +946,7 @@
         "draft_pick": 158
       },
       {
-        "gsis_id": "00-0036944",
+        "id": "00-0036944",
         "name": "Jaycee Horn",
         "pos_abb": "RCB",
         "number": "8",
@@ -955,7 +955,7 @@
         "draft_pick": 8
       },
       {
-        "gsis_id": "00-0036962",
+        "id": "00-0036962",
         "name": "Tre'von Moehrig",
         "pos_abb": "SS",
         "number": "7",
@@ -964,7 +964,7 @@
         "draft_pick": 43
       },
       {
-        "gsis_id": "00-0035669",
+        "id": "00-0035669",
         "name": "Nick Scott",
         "pos_abb": "FS",
         "number": "21",
@@ -977,7 +977,7 @@
   "CHI": {
     "offense": [
       {
-        "gsis_id": "00-0037081",
+        "id": "00-0037081",
         "name": "Braxton Jones",
         "pos_abb": "LT",
         "number": "70",
@@ -986,7 +986,7 @@
         "draft_pick": 168
       },
       {
-        "gsis_id": "00-0032391",
+        "id": "00-0032391",
         "name": "Joe Thuney",
         "pos_abb": "LG",
         "number": "62",
@@ -995,7 +995,7 @@
         "draft_pick": 78
       },
       {
-        "gsis_id": "00-0036957",
+        "id": "00-0036957",
         "name": "Drew Dalman",
         "pos_abb": "C",
         "number": "52",
@@ -1004,7 +1004,7 @@
         "draft_pick": 114
       },
       {
-        "gsis_id": "00-0036258",
+        "id": "00-0036258",
         "name": "Jonah Jackson",
         "pos_abb": "RG",
         "number": "73",
@@ -1013,7 +1013,7 @@
         "draft_pick": 75
       },
       {
-        "gsis_id": "00-0038932",
+        "id": "00-0038932",
         "name": "Darnell Wright",
         "pos_abb": "RT",
         "number": "58",
@@ -1022,7 +1022,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0040126",
+        "id": "00-0040126",
         "name": "Colston Loveland",
         "pos_abb": "TE",
         "number": "84",
@@ -1031,7 +1031,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0034827",
+        "id": "00-0034827",
         "name": "DJ Moore",
         "pos_abb": "WR",
         "number": "2",
@@ -1040,7 +1040,7 @@
         "draft_pick": 24
       },
       {
-        "gsis_id": "00-0039919",
+        "id": "00-0039919",
         "name": "Rome Odunze",
         "pos_abb": "WR",
         "number": "15",
@@ -1049,7 +1049,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0040735",
+        "id": "00-0040735",
         "name": "Luther Burden III",
         "pos_abb": "WR",
         "number": "10",
@@ -1058,7 +1058,7 @@
         "draft_pick": 39
       },
       {
-        "gsis_id": "00-0039918",
+        "id": "00-0039918",
         "name": "Caleb Williams",
         "pos_abb": "QB",
         "number": "18",
@@ -1067,7 +1067,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0036275",
+        "id": "00-0036275",
         "name": "D'Andre Swift",
         "pos_abb": "RB",
         "number": "4",
@@ -1078,7 +1078,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0035647",
+        "id": "00-0035647",
         "name": "Montez Sweat",
         "pos_abb": "LDE",
         "number": "98",
@@ -1087,7 +1087,7 @@
         "draft_pick": 26
       },
       {
-        "gsis_id": "00-0031583",
+        "id": "00-0031583",
         "name": "Grady Jarrett",
         "pos_abb": "LDT",
         "number": "50",
@@ -1096,7 +1096,7 @@
         "draft_pick": 137
       },
       {
-        "gsis_id": "00-0039070",
+        "id": "00-0039070",
         "name": "Gervon Dexter Sr.",
         "pos_abb": "RDT",
         "number": "99",
@@ -1105,7 +1105,7 @@
         "draft_pick": 53
       },
       {
-        "gsis_id": "00-0036480",
+        "id": "00-0036480",
         "name": "Dayo Odeyingbo",
         "pos_abb": "RDE",
         "number": "55",
@@ -1114,7 +1114,7 @@
         "draft_pick": 54
       },
       {
-        "gsis_id": "00-0034673",
+        "id": "00-0034673",
         "name": "Tremaine Edmunds",
         "pos_abb": "WLB",
         "number": "49",
@@ -1123,7 +1123,7 @@
         "draft_pick": 16
       },
       {
-        "gsis_id": "00-0035386",
+        "id": "00-0035386",
         "name": "T.J. Edwards",
         "pos_abb": "MLB",
         "number": "53",
@@ -1132,7 +1132,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038390",
+        "id": "00-0038390",
         "name": "Noah Sewell",
         "pos_abb": "SLB",
         "number": "44",
@@ -1141,7 +1141,7 @@
         "draft_pick": 148
       },
       {
-        "gsis_id": "00-0036292",
+        "id": "00-0036292",
         "name": "Jaylon Johnson",
         "pos_abb": "LCB",
         "number": "1",
@@ -1150,7 +1150,7 @@
         "draft_pick": 50
       },
       {
-        "gsis_id": "00-0038111",
+        "id": "00-0038111",
         "name": "Kyler Gordon",
         "pos_abb": "RCB",
         "number": "6",
@@ -1159,7 +1159,7 @@
         "draft_pick": 39
       },
       {
-        "gsis_id": "00-0038135",
+        "id": "00-0038135",
         "name": "Jaquan Brisker",
         "pos_abb": "SS",
         "number": "9",
@@ -1168,7 +1168,7 @@
         "draft_pick": 48
       },
       {
-        "gsis_id": "00-0033132",
+        "id": "00-0033132",
         "name": "Kevin Byard III",
         "pos_abb": "FS",
         "number": "31",
@@ -1181,7 +1181,7 @@
   "CIN": {
     "offense": [
       {
-        "gsis_id": "00-0034752",
+        "id": "00-0034752",
         "name": "Orlando Brown Jr.",
         "pos_abb": "LT",
         "number": "75",
@@ -1190,7 +1190,7 @@
         "draft_pick": 83
       },
       {
-        "gsis_id": "00-0038095",
+        "id": "00-0038095",
         "name": "Cordell Volson",
         "pos_abb": "LG",
         "number": "67",
@@ -1199,7 +1199,7 @@
         "draft_pick": 136
       },
       {
-        "gsis_id": "00-0032445",
+        "id": "00-0032445",
         "name": "Ted Karras",
         "pos_abb": "C",
         "number": "64",
@@ -1208,7 +1208,7 @@
         "draft_pick": 221
       },
       {
-        "gsis_id": "00-0035702",
+        "id": "00-0035702",
         "name": "Dalton Risner",
         "pos_abb": "RG",
         "number": "66",
@@ -1217,7 +1217,7 @@
         "draft_pick": 41
       },
       {
-        "gsis_id": "00-0039925",
+        "id": "00-0039925",
         "name": "Amarius Mims",
         "pos_abb": "RT",
         "number": "71",
@@ -1226,7 +1226,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0034829",
+        "id": "00-0034829",
         "name": "Mike Gesicki",
         "pos_abb": "TE",
         "number": "88",
@@ -1235,7 +1235,7 @@
         "draft_pick": 42
       },
       {
-        "gsis_id": "00-0036410",
+        "id": "00-0036410",
         "name": "Tee Higgins",
         "pos_abb": "WR",
         "number": "5",
@@ -1244,7 +1244,7 @@
         "draft_pick": 33
       },
       {
-        "gsis_id": "00-0036900",
+        "id": "00-0036900",
         "name": "Ja'Marr Chase",
         "pos_abb": "WR",
         "number": "1",
@@ -1253,7 +1253,7 @@
         "draft_pick": 5
       },
       {
-        "gsis_id": "00-0038619",
+        "id": "00-0038619",
         "name": "Andrei Iosivas",
         "pos_abb": "WR",
         "number": "80",
@@ -1262,7 +1262,7 @@
         "draft_pick": 206
       },
       {
-        "gsis_id": "00-0036442",
+        "id": "00-0036442",
         "name": "Joe Burrow",
         "pos_abb": "QB",
         "number": "9",
@@ -1271,7 +1271,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0038597",
+        "id": "00-0038597",
         "name": "Chase Brown",
         "pos_abb": "RB",
         "number": "30",
@@ -1282,7 +1282,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0036902",
+        "id": "00-0036902",
         "name": "Joseph Ossai",
         "pos_abb": "LDE",
         "number": "58",
@@ -1291,7 +1291,7 @@
         "draft_pick": 69
       },
       {
-        "gsis_id": "00-0036642",
+        "id": "00-0036642",
         "name": "T.J. Slaton Jr.",
         "pos_abb": "LDT",
         "number": "98",
@@ -1300,7 +1300,7 @@
         "draft_pick": 173
       },
       {
-        "gsis_id": "00-0034800",
+        "id": "00-0034800",
         "name": "B.J. Hill",
         "pos_abb": "RDT",
         "number": "92",
@@ -1309,7 +1309,7 @@
         "draft_pick": 69
       },
       {
-        "gsis_id": "00-0033935",
+        "id": "00-0033935",
         "name": "Trey Hendrickson",
         "pos_abb": "RDE",
         "number": "91",
@@ -1318,7 +1318,7 @@
         "draft_pick": 103
       },
       {
-        "gsis_id": "00-0040738",
+        "id": "00-0040738",
         "name": "Demetrius Knight Jr.",
         "pos_abb": "WLB",
         "number": "44",
@@ -1327,7 +1327,7 @@
         "draft_pick": 49
       },
       {
-        "gsis_id": "00-0040157",
+        "id": "00-0040157",
         "name": "Barrett Carter",
         "pos_abb": "MLB",
         "number": "49",
@@ -1336,7 +1336,7 @@
         "draft_pick": 119
       },
       {
-        "gsis_id": "00-0034754",
+        "id": "00-0034754",
         "name": "Oren Burks",
         "pos_abb": "SLB",
         "number": "42",
@@ -1345,7 +1345,7 @@
         "draft_pick": 88
       },
       {
-        "gsis_id": "00-0037743",
+        "id": "00-0037743",
         "name": "Dax Hill",
         "pos_abb": "LCB",
         "number": "23",
@@ -1354,7 +1354,7 @@
         "draft_pick": 31
       },
       {
-        "gsis_id": "00-0038549",
+        "id": "00-0038549",
         "name": "DJ Turner II",
         "pos_abb": "RCB",
         "number": "20",
@@ -1363,7 +1363,7 @@
         "draft_pick": 60
       },
       {
-        "gsis_id": "00-0038560",
+        "id": "00-0038560",
         "name": "Jordan Battle",
         "pos_abb": "SS",
         "number": "27",
@@ -1372,7 +1372,7 @@
         "draft_pick": 95
       },
       {
-        "gsis_id": "00-0036199",
+        "id": "00-0036199",
         "name": "Geno Stone",
         "pos_abb": "FS",
         "number": "22",
@@ -1385,7 +1385,7 @@
   "CLE": {
     "offense": [
       {
-        "gsis_id": "00-0033889",
+        "id": "00-0033889",
         "name": "Cam Robinson",
         "pos_abb": "LT",
         "number": "68",
@@ -1394,7 +1394,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0031426",
+        "id": "00-0031426",
         "name": "Joel Bitonio",
         "pos_abb": "LG",
         "number": "75",
@@ -1403,7 +1403,7 @@
         "draft_pick": 35
       },
       {
-        "gsis_id": "00-0033901",
+        "id": "00-0033901",
         "name": "Ethan Pocic",
         "pos_abb": "C",
         "number": "55",
@@ -1412,7 +1412,7 @@
         "draft_pick": 58
       },
       {
-        "gsis_id": "00-0034399",
+        "id": "00-0034399",
         "name": "Wyatt Teller",
         "pos_abb": "RG",
         "number": "77",
@@ -1421,7 +1421,7 @@
         "draft_pick": 166
       },
       {
-        "gsis_id": "00-0033057",
+        "id": "00-0033057",
         "name": "Jack Conklin",
         "pos_abb": "RT",
         "number": "78",
@@ -1430,7 +1430,7 @@
         "draft_pick": 8
       },
       {
-        "gsis_id": "00-0040663",
+        "id": "00-0040663",
         "name": "Harold Fannin Jr.",
         "pos_abb": "TE",
         "number": "44",
@@ -1439,7 +1439,7 @@
         "draft_pick": 67
       },
       {
-        "gsis_id": "00-0036407",
+        "id": "00-0036407",
         "name": "Jerry Jeudy",
         "pos_abb": "WR",
         "number": "3",
@@ -1448,7 +1448,7 @@
         "draft_pick": 15
       },
       {
-        "gsis_id": "00-0038979",
+        "id": "00-0038979",
         "name": "Cedric Tillman",
         "pos_abb": "WR",
         "number": "19",
@@ -1457,7 +1457,7 @@
         "draft_pick": 74
       },
       {
-        "gsis_id": "00-0040782",
+        "id": "00-0040782",
         "name": "Isaiah Bond",
         "pos_abb": "WR",
         "number": "16",
@@ -1466,7 +1466,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0040668",
+        "id": "00-0040668",
         "name": "Shedeur Sanders",
         "pos_abb": "QB",
         "number": "12",
@@ -1475,7 +1475,7 @@
         "draft_pick": 144
       },
       {
-        "gsis_id": "00-0040784",
+        "id": "00-0040784",
         "name": "Quinshon Judkins",
         "pos_abb": "RB",
         "number": "10",
@@ -1486,7 +1486,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0037251",
+        "id": "00-0037251",
         "name": "Alex Wright",
         "pos_abb": "LDE",
         "number": "91",
@@ -1495,7 +1495,7 @@
         "draft_pick": 78
       },
       {
-        "gsis_id": "00-0033131",
+        "id": "00-0033131",
         "name": "Maliek Collins",
         "pos_abb": "LDT",
         "number": "96",
@@ -1504,7 +1504,7 @@
         "draft_pick": 67
       },
       {
-        "gsis_id": "00-0040685",
+        "id": "00-0040685",
         "name": "Mason Graham",
         "pos_abb": "RDT",
         "number": "94",
@@ -1513,7 +1513,7 @@
         "draft_pick": 5
       },
       {
-        "gsis_id": "00-0033868",
+        "id": "00-0033868",
         "name": "Myles Garrett",
         "pos_abb": "RDE",
         "number": "95",
@@ -1522,7 +1522,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0036915",
+        "id": "00-0036915",
         "name": "Jeremiah Owusu-Koramoah",
         "pos_abb": "WLB",
         "number": "6",
@@ -1531,7 +1531,7 @@
         "draft_pick": 52
       },
       {
-        "gsis_id": "00-0040579",
+        "id": "00-0040579",
         "name": "Carson Schwesinger",
         "pos_abb": "MLB",
         "number": "49",
@@ -1540,7 +1540,7 @@
         "draft_pick": 33
       },
       {
-        "gsis_id": "00-0035525",
+        "id": "00-0035525",
         "name": "Devin Bush",
         "pos_abb": "SLB",
         "number": "30",
@@ -1549,7 +1549,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0034856",
+        "id": "00-0034856",
         "name": "Denzel Ward",
         "pos_abb": "LCB",
         "number": "21",
@@ -1558,7 +1558,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0036974",
+        "id": "00-0036974",
         "name": "Tyson Campbell",
         "pos_abb": "RCB",
         "number": "7",
@@ -1567,7 +1567,7 @@
         "draft_pick": 33
       },
       {
-        "gsis_id": "00-0036282",
+        "id": "00-0036282",
         "name": "Grant Delpit",
         "pos_abb": "SS",
         "number": "9",
@@ -1576,7 +1576,7 @@
         "draft_pick": 44
       },
       {
-        "gsis_id": "00-0038715",
+        "id": "00-0038715",
         "name": "Ronnie Hickman",
         "pos_abb": "FS",
         "number": "33",
@@ -1589,7 +1589,7 @@
   "DAL": {
     "offense": [
       {
-        "gsis_id": "00-0037243",
+        "id": "00-0037243",
         "name": "Tyler Smith",
         "pos_abb": "LT",
         "number": "73",
@@ -1598,7 +1598,7 @@
         "draft_pick": 24
       },
       {
-        "gsis_id": "00-0038731",
+        "id": "00-0038731",
         "name": "T.J. Bass",
         "pos_abb": "LG",
         "number": "66",
@@ -1607,7 +1607,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039348",
+        "id": "00-0039348",
         "name": "Cooper Beebe",
         "pos_abb": "C",
         "number": "56",
@@ -1616,7 +1616,7 @@
         "draft_pick": 73
       },
       {
-        "gsis_id": "00-0040007",
+        "id": "00-0040007",
         "name": "Tyler Booker",
         "pos_abb": "RG",
         "number": "52",
@@ -1625,7 +1625,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0036036",
+        "id": "00-0036036",
         "name": "Terence Steele",
         "pos_abb": "RT",
         "number": "78",
@@ -1634,7 +1634,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038041",
+        "id": "00-0038041",
         "name": "Jake Ferguson",
         "pos_abb": "TE",
         "number": "87",
@@ -1643,7 +1643,7 @@
         "draft_pick": 129
       },
       {
-        "gsis_id": "00-0036358",
+        "id": "00-0036358",
         "name": "CeeDee Lamb",
         "pos_abb": "WR",
         "number": "88",
@@ -1652,7 +1652,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0037247",
+        "id": "00-0037247",
         "name": "George Pickens",
         "pos_abb": "WR",
         "number": "3",
@@ -1661,7 +1661,7 @@
         "draft_pick": 52
       },
       {
-        "gsis_id": "00-0039410",
+        "id": "00-0039410",
         "name": "Ryan Flournoy",
         "pos_abb": "WR",
         "number": "19",
@@ -1670,7 +1670,7 @@
         "draft_pick": 216
       },
       {
-        "gsis_id": "00-0033077",
+        "id": "00-0033077",
         "name": "Dak Prescott",
         "pos_abb": "QB",
         "number": "4",
@@ -1679,7 +1679,7 @@
         "draft_pick": 135
       },
       {
-        "gsis_id": "00-0036997",
+        "id": "00-0036997",
         "name": "Javonte Williams",
         "pos_abb": "RB",
         "number": "33",
@@ -1690,7 +1690,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0040725",
+        "id": "00-0040725",
         "name": "Donovan Ezeiruaku",
         "pos_abb": "LDE",
         "number": "41",
@@ -1699,7 +1699,7 @@
         "draft_pick": 44
       },
       {
-        "gsis_id": "00-0036942",
+        "id": "00-0036942",
         "name": "Osa Odighizuwa",
         "pos_abb": "LDT",
         "number": "97",
@@ -1708,7 +1708,7 @@
         "draft_pick": 75
       },
       {
-        "gsis_id": "00-0035718",
+        "id": "00-0035718",
         "name": "Quinnen Williams",
         "pos_abb": "RDT",
         "number": "92",
@@ -1717,7 +1717,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0032052",
+        "id": "00-0032052",
         "name": "Dante Fowler Jr.",
         "pos_abb": "RDE",
         "number": "13",
@@ -1726,7 +1726,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0038556",
+        "id": "00-0038556",
         "name": "DeMarvion Overshown",
         "pos_abb": "WLB",
         "number": "0",
@@ -1735,7 +1735,7 @@
         "draft_pick": 90
       },
       {
-        "gsis_id": "00-0040011",
+        "id": "00-0040011",
         "name": "Shemar James",
         "pos_abb": "MLB",
         "number": "50",
@@ -1744,7 +1744,7 @@
         "draft_pick": 152
       },
       {
-        "gsis_id": "00-0036441",
+        "id": "00-0036441",
         "name": "Kenneth Murray Jr.",
         "pos_abb": "SLB",
         "number": "59",
@@ -1753,7 +1753,7 @@
         "draft_pick": 23
       },
       {
-        "gsis_id": "00-0040008",
+        "id": "00-0040008",
         "name": "Shavon Revel Jr.",
         "pos_abb": "LCB",
         "number": "34",
@@ -1762,7 +1762,7 @@
         "draft_pick": 76
       },
       {
-        "gsis_id": "00-0037275",
+        "id": "00-0037275",
         "name": "DaRon Bland",
         "pos_abb": "RCB",
         "number": "26",
@@ -1771,7 +1771,7 @@
         "draft_pick": 167
       },
       {
-        "gsis_id": "00-0035301",
+        "id": "00-0035301",
         "name": "Donovan Wilson",
         "pos_abb": "SS",
         "number": "6",
@@ -1780,7 +1780,7 @@
         "draft_pick": 213
       },
       {
-        "gsis_id": "00-0033877",
+        "id": "00-0033877",
         "name": "Malik Hooker",
         "pos_abb": "FS",
         "number": "28",
@@ -1793,7 +1793,7 @@
   "DEN": {
     "offense": [
       {
-        "gsis_id": "00-0033538",
+        "id": "00-0033538",
         "name": "Garett Bolles",
         "pos_abb": "LT",
         "number": "72",
@@ -1802,7 +1802,7 @@
         "draft_pick": 20
       },
       {
-        "gsis_id": "00-0034978",
+        "id": "00-0034978",
         "name": "Ben Powers",
         "pos_abb": "LG",
         "number": "74",
@@ -1811,7 +1811,7 @@
         "draft_pick": 123
       },
       {
-        "gsis_id": "00-0037278",
+        "id": "00-0037278",
         "name": "Luke Wattenberg",
         "pos_abb": "C",
         "number": "60",
@@ -1820,7 +1820,7 @@
         "draft_pick": 171
       },
       {
-        "gsis_id": "00-0037001",
+        "id": "00-0037001",
         "name": "Quinn Meinerz",
         "pos_abb": "RG",
         "number": "77",
@@ -1829,7 +1829,7 @@
         "draft_pick": 98
       },
       {
-        "gsis_id": "00-0034847",
+        "id": "00-0034847",
         "name": "Mike McGlinchey",
         "pos_abb": "RT",
         "number": "69",
@@ -1838,7 +1838,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0033881",
+        "id": "00-0033881",
         "name": "Evan Engram",
         "pos_abb": "TE",
         "number": "1",
@@ -1847,7 +1847,7 @@
         "draft_pick": 23
       },
       {
-        "gsis_id": "00-0034348",
+        "id": "00-0034348",
         "name": "Courtland Sutton",
         "pos_abb": "WR",
         "number": "14",
@@ -1856,7 +1856,7 @@
         "draft_pick": 40
       },
       {
-        "gsis_id": "00-0039868",
+        "id": "00-0039868",
         "name": "Troy Franklin",
         "pos_abb": "WR",
         "number": "11",
@@ -1865,7 +1865,7 @@
         "draft_pick": 102
       },
       {
-        "gsis_id": "00-0040134",
+        "id": "00-0040134",
         "name": "Pat Bryant",
         "pos_abb": "WR",
         "number": "13",
@@ -1874,7 +1874,7 @@
         "draft_pick": 74
       },
       {
-        "gsis_id": "00-0039732",
+        "id": "00-0039732",
         "name": "Bo Nix",
         "pos_abb": "QB",
         "number": "10",
@@ -1883,7 +1883,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0036158",
+        "id": "00-0036158",
         "name": "J.K. Dobbins",
         "pos_abb": "RB",
         "number": "27",
@@ -1894,7 +1894,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0035248",
+        "id": "00-0035248",
         "name": "Zach Allen",
         "pos_abb": "LDE",
         "number": "99",
@@ -1903,7 +1903,7 @@
         "draft_pick": 65
       },
       {
-        "gsis_id": "00-0033297",
+        "id": "00-0033297",
         "name": "D.J. Jones",
         "pos_abb": "NT",
         "number": "93",
@@ -1912,7 +1912,7 @@
         "draft_pick": 198
       },
       {
-        "gsis_id": "00-0034805",
+        "id": "00-0034805",
         "name": "John Franklin-Myers",
         "pos_abb": "RDE",
         "number": "98",
@@ -1921,7 +1921,7 @@
         "draft_pick": 135
       },
       {
-        "gsis_id": "00-0031898",
+        "id": "00-0031898",
         "name": "Alex Singleton",
         "pos_abb": "LILB",
         "number": "49",
@@ -1930,7 +1930,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0034982",
+        "id": "00-0034982",
         "name": "Dre Greenlaw",
         "pos_abb": "RILB",
         "number": "57",
@@ -1939,7 +1939,7 @@
         "draft_pick": 148
       },
       {
-        "gsis_id": "00-0036874",
+        "id": "00-0036874",
         "name": "Pat Surtain II",
         "pos_abb": "LCB",
         "number": "2",
@@ -1948,7 +1948,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0038552",
+        "id": "00-0038552",
         "name": "Riley Moss",
         "pos_abb": "RCB",
         "number": "21",
@@ -1957,7 +1957,7 @@
         "draft_pick": 83
       },
       {
-        "gsis_id": "00-0036564",
+        "id": "00-0036564",
         "name": "Talanoa Hufanga",
         "pos_abb": "SS",
         "number": "9",
@@ -1966,7 +1966,7 @@
         "draft_pick": 180
       },
       {
-        "gsis_id": "00-0036221",
+        "id": "00-0036221",
         "name": "Brandon Jones",
         "pos_abb": "FS",
         "number": "22",
@@ -1979,7 +1979,7 @@
   "DET": {
     "offense": [
       {
-        "gsis_id": "00-0032381",
+        "id": "00-0032381",
         "name": "Taylor Decker",
         "pos_abb": "LT",
         "number": "68",
@@ -1988,7 +1988,7 @@
         "draft_pick": 16
       },
       {
-        "gsis_id": "00-0039408",
+        "id": "00-0039408",
         "name": "Christian Mahogany",
         "pos_abb": "LG",
         "number": "73",
@@ -1997,7 +1997,7 @@
         "draft_pick": 210
       },
       {
-        "gsis_id": "00-0032395",
+        "id": "00-0032395",
         "name": "Graham Glasgow",
         "pos_abb": "C",
         "number": "60",
@@ -2006,7 +2006,7 @@
         "draft_pick": 95
       },
       {
-        "gsis_id": "00-0040728",
+        "id": "00-0040728",
         "name": "Tate Ratledge",
         "pos_abb": "RG",
         "number": "69",
@@ -2015,7 +2015,7 @@
         "draft_pick": 57
       },
       {
-        "gsis_id": "00-0036880",
+        "id": "00-0036880",
         "name": "Penei Sewell",
         "pos_abb": "RT",
         "number": "58",
@@ -2024,7 +2024,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0036534",
+        "id": "00-0036534",
         "name": "Shane Zylstra",
         "pos_abb": "TE",
         "number": "84",
@@ -2033,7 +2033,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036963",
+        "id": "00-0036963",
         "name": "Amon-Ra St. Brown",
         "pos_abb": "WR",
         "number": "14",
@@ -2042,7 +2042,7 @@
         "draft_pick": 112
       },
       {
-        "gsis_id": "00-0037240",
+        "id": "00-0037240",
         "name": "Jameson Williams",
         "pos_abb": "WR",
         "number": "1",
@@ -2051,7 +2051,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0040669",
+        "id": "00-0040669",
         "name": "Isaac TeSlaa",
         "pos_abb": "WR",
         "number": "18",
@@ -2060,7 +2060,7 @@
         "draft_pick": 70
       },
       {
-        "gsis_id": "00-0033106",
+        "id": "00-0033106",
         "name": "Jared Goff",
         "pos_abb": "QB",
         "number": "16",
@@ -2069,7 +2069,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0039139",
+        "id": "00-0039139",
         "name": "Jahmyr Gibbs",
         "pos_abb": "RB",
         "number": "0",
@@ -2080,7 +2080,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0037236",
+        "id": "00-0037236",
         "name": "Aidan Hutchinson",
         "pos_abb": "LDE",
         "number": "97",
@@ -2089,7 +2089,7 @@
         "draft_pick": 2
       },
       {
-        "gsis_id": "00-0036624",
+        "id": "00-0036624",
         "name": "Alim McNeill",
         "pos_abb": "LDT",
         "number": "54",
@@ -2098,7 +2098,7 @@
         "draft_pick": 72
       },
       {
-        "gsis_id": "00-0032424",
+        "id": "00-0032424",
         "name": "DJ Reader",
         "pos_abb": "RDT",
         "number": "98",
@@ -2107,7 +2107,7 @@
         "draft_pick": 166
       },
       {
-        "gsis_id": "00-0033964",
+        "id": "00-0033964",
         "name": "Al-Quadin Muhammad",
         "pos_abb": "RDE",
         "number": "96",
@@ -2116,7 +2116,7 @@
         "draft_pick": 196
       },
       {
-        "gsis_id": "00-0033914",
+        "id": "00-0033914",
         "name": "Alex Anzalone",
         "pos_abb": "WLB",
         "number": "34",
@@ -2125,7 +2125,7 @@
         "draft_pick": 76
       },
       {
-        "gsis_id": "00-0039018",
+        "id": "00-0039018",
         "name": "Jack Campbell",
         "pos_abb": "MLB",
         "number": "46",
@@ -2134,7 +2134,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0036964",
+        "id": "00-0036964",
         "name": "Derrick Barnes",
         "pos_abb": "SLB",
         "number": "55",
@@ -2143,7 +2143,7 @@
         "draft_pick": 113
       },
       {
-        "gsis_id": "00-0035637",
+        "id": "00-0035637",
         "name": "Rock Ya-Sin",
         "pos_abb": "LCB",
         "number": "23",
@@ -2152,7 +2152,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0034384",
+        "id": "00-0034384",
         "name": "D.J. Reed",
         "pos_abb": "RCB",
         "number": "4",
@@ -2161,7 +2161,7 @@
         "draft_pick": 142
       },
       {
-        "gsis_id": "00-0034377",
+        "id": "00-0034377",
         "name": "Avonte Maddox",
         "pos_abb": "SS",
         "number": "29",
@@ -2170,7 +2170,7 @@
         "draft_pick": 125
       },
       {
-        "gsis_id": "00-0039660",
+        "id": "00-0039660",
         "name": "Thomas Harper",
         "pos_abb": "FS",
         "number": "12",
@@ -2183,7 +2183,7 @@
   "GB": {
     "offense": [
       {
-        "gsis_id": "00-0037196",
+        "id": "00-0037196",
         "name": "Rasheed Walker",
         "pos_abb": "LT",
         "number": "63",
@@ -2192,7 +2192,7 @@
         "draft_pick": 249
       },
       {
-        "gsis_id": "00-0036551",
+        "id": "00-0036551",
         "name": "Aaron Banks",
         "pos_abb": "LG",
         "number": "65",
@@ -2201,7 +2201,7 @@
         "draft_pick": 48
       },
       {
-        "gsis_id": "00-0035526",
+        "id": "00-0035526",
         "name": "Elgton Jenkins",
         "pos_abb": "C",
         "number": "74",
@@ -2210,7 +2210,7 @@
         "draft_pick": 44
       },
       {
-        "gsis_id": "00-0040726",
+        "id": "00-0040726",
         "name": "Anthony Belton",
         "pos_abb": "RG",
         "number": "71",
@@ -2219,7 +2219,7 @@
         "draft_pick": 54
       },
       {
-        "gsis_id": "00-0037817",
+        "id": "00-0037817",
         "name": "Zach Tom",
         "pos_abb": "RT",
         "number": "50",
@@ -2228,7 +2228,7 @@
         "draft_pick": 140
       },
       {
-        "gsis_id": "00-0038996",
+        "id": "00-0038996",
         "name": "Tucker Kraft",
         "pos_abb": "TE",
         "number": "85",
@@ -2237,7 +2237,7 @@
         "draft_pick": 78
       },
       {
-        "gsis_id": "00-0037816",
+        "id": "00-0037816",
         "name": "Romeo Doubs",
         "pos_abb": "WR",
         "number": "87",
@@ -2246,7 +2246,7 @@
         "draft_pick": 132
       },
       {
-        "gsis_id": "00-0038124",
+        "id": "00-0038124",
         "name": "Christian Watson",
         "pos_abb": "WR",
         "number": "9",
@@ -2255,7 +2255,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0039146",
+        "id": "00-0039146",
         "name": "Jayden Reed",
         "pos_abb": "WR",
         "number": "11",
@@ -2264,7 +2264,7 @@
         "draft_pick": 50
       },
       {
-        "gsis_id": "00-0036264",
+        "id": "00-0036264",
         "name": "Jordan Love",
         "pos_abb": "QB",
         "number": "10",
@@ -2273,7 +2273,7 @@
         "draft_pick": 26
       },
       {
-        "gsis_id": "00-0035700",
+        "id": "00-0035700",
         "name": "Josh Jacobs",
         "pos_abb": "RB",
         "number": "8",
@@ -2284,7 +2284,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0034967",
+        "id": "00-0034967",
         "name": "Rashan Gary",
         "pos_abb": "LDE",
         "number": "52",
@@ -2293,7 +2293,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0038387",
+        "id": "00-0038387",
         "name": "Colby Wooden",
         "pos_abb": "LDT",
         "number": "96",
@@ -2302,7 +2302,7 @@
         "draft_pick": 116
       },
       {
-        "gsis_id": "00-0037075",
+        "id": "00-0037075",
         "name": "Devonte Wyatt",
         "pos_abb": "RDT",
         "number": "95",
@@ -2311,7 +2311,7 @@
         "draft_pick": 28
       },
       {
-        "gsis_id": "00-0036932",
+        "id": "00-0036932",
         "name": "Micah Parsons",
         "pos_abb": "RDE",
         "number": "1",
@@ -2320,7 +2320,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0039850",
+        "id": "00-0039850",
         "name": "Edgerrin Cooper",
         "pos_abb": "WLB",
         "number": "56",
@@ -2329,7 +2329,7 @@
         "draft_pick": 45
       },
       {
-        "gsis_id": "00-0037074",
+        "id": "00-0037074",
         "name": "Quay Walker",
         "pos_abb": "MLB",
         "number": "7",
@@ -2338,7 +2338,7 @@
         "draft_pick": 22
       },
       {
-        "gsis_id": "00-0036658",
+        "id": "00-0036658",
         "name": "Isaiah McDuffie",
         "pos_abb": "SLB",
         "number": "58",
@@ -2347,7 +2347,7 @@
         "draft_pick": 220
       },
       {
-        "gsis_id": "00-0035133",
+        "id": "00-0035133",
         "name": "Keisean Nixon",
         "pos_abb": "LCB",
         "number": "25",
@@ -2356,7 +2356,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038408",
+        "id": "00-0038408",
         "name": "Carrington Valentine",
         "pos_abb": "RCB",
         "number": "24",
@@ -2365,7 +2365,7 @@
         "draft_pick": 232
       },
       {
-        "gsis_id": "00-0039813",
+        "id": "00-0039813",
         "name": "Evan Williams",
         "pos_abb": "SS",
         "number": "33",
@@ -2374,7 +2374,7 @@
         "draft_pick": 111
       },
       {
-        "gsis_id": "00-0036388",
+        "id": "00-0036388",
         "name": "Xavier McKinney",
         "pos_abb": "FS",
         "number": "29",
@@ -2387,7 +2387,7 @@
   "HOU": {
     "offense": [
       {
-        "gsis_id": "00-0040745",
+        "id": "00-0040745",
         "name": "Aireontae Ersery",
         "pos_abb": "LT",
         "number": "79",
@@ -2396,7 +2396,7 @@
         "draft_pick": 48
       },
       {
-        "gsis_id": "00-0038615",
+        "id": "00-0038615",
         "name": "Jarrett Patterson",
         "pos_abb": "LG",
         "number": "54",
@@ -2405,7 +2405,7 @@
         "draft_pick": 201
       },
       {
-        "gsis_id": "00-0039030",
+        "id": "00-0039030",
         "name": "Jake Andrews",
         "pos_abb": "C",
         "number": "60",
@@ -2414,7 +2414,7 @@
         "draft_pick": 107
       },
       {
-        "gsis_id": "00-0038131",
+        "id": "00-0038131",
         "name": "Ed Ingram",
         "pos_abb": "RG",
         "number": "69",
@@ -2423,7 +2423,7 @@
         "draft_pick": 59
       },
       {
-        "gsis_id": "00-0032071",
+        "id": "00-0032071",
         "name": "Trent Brown",
         "pos_abb": "RT",
         "number": "77",
@@ -2432,7 +2432,7 @@
         "draft_pick": 244
       },
       {
-        "gsis_id": "00-0034383",
+        "id": "00-0034383",
         "name": "Dalton Schultz",
         "pos_abb": "TE",
         "number": "86",
@@ -2441,7 +2441,7 @@
         "draft_pick": 137
       },
       {
-        "gsis_id": "00-0034775",
+        "id": "00-0034775",
         "name": "Christian Kirk",
         "pos_abb": "WR",
         "number": "13",
@@ -2450,7 +2450,7 @@
         "draft_pick": 47
       },
       {
-        "gsis_id": "00-0036554",
+        "id": "00-0036554",
         "name": "Nico Collins",
         "pos_abb": "WR",
         "number": "12",
@@ -2459,7 +2459,7 @@
         "draft_pick": 89
       },
       {
-        "gsis_id": "00-0040130",
+        "id": "00-0040130",
         "name": "Jayden Higgins",
         "pos_abb": "WR",
         "number": "81",
@@ -2468,7 +2468,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0039163",
+        "id": "00-0039163",
         "name": "C.J. Stroud",
         "pos_abb": "QB",
         "number": "7",
@@ -2477,7 +2477,7 @@
         "draft_pick": 2
       },
       {
-        "gsis_id": "00-0040583",
+        "id": "00-0040583",
         "name": "Woody Marks",
         "pos_abb": "RB",
         "number": "27",
@@ -2488,7 +2488,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0031565",
+        "id": "00-0031565",
         "name": "Danielle Hunter",
         "pos_abb": "LDE",
         "number": "55",
@@ -2497,7 +2497,7 @@
         "draft_pick": 88
       },
       {
-        "gsis_id": "00-0036883",
+        "id": "00-0036883",
         "name": "Tommy Togiai",
         "pos_abb": "LDT",
         "number": "72",
@@ -2506,7 +2506,7 @@
         "draft_pick": 132
       },
       {
-        "gsis_id": "00-0032759",
+        "id": "00-0032759",
         "name": "Sheldon Rankins",
         "pos_abb": "RDT",
         "number": "90",
@@ -2515,7 +2515,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0039108",
+        "id": "00-0039108",
         "name": "Will Anderson Jr.",
         "pos_abb": "RDE",
         "number": "51",
@@ -2524,7 +2524,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0038599",
+        "id": "00-0038599",
         "name": "Henry To'oTo'o",
         "pos_abb": "WLB",
         "number": "39",
@@ -2533,7 +2533,7 @@
         "draft_pick": 167
       },
       {
-        "gsis_id": "00-0035166",
+        "id": "00-0035166",
         "name": "Azeez Al-Shaair",
         "pos_abb": "MLB",
         "number": "0",
@@ -2542,7 +2542,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0034987",
+        "id": "00-0034987",
         "name": "E.J. Speed",
         "pos_abb": "SLB",
         "number": "45",
@@ -2551,7 +2551,7 @@
         "draft_pick": 164
       },
       {
-        "gsis_id": "00-0037237",
+        "id": "00-0037237",
         "name": "Derek Stingley Jr.",
         "pos_abb": "LCB",
         "number": "24",
@@ -2560,7 +2560,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0039343",
+        "id": "00-0039343",
         "name": "Kamari Lassiter",
         "pos_abb": "RCB",
         "number": "4",
@@ -2569,7 +2569,7 @@
         "draft_pick": 42
       },
       {
-        "gsis_id": "00-0039838",
+        "id": "00-0039838",
         "name": "Calen Bullock",
         "pos_abb": "SS",
         "number": "2",
@@ -2578,7 +2578,7 @@
         "draft_pick": 78
       },
       {
-        "gsis_id": "00-0040204",
+        "id": "00-0040204",
         "name": "Jaylen Reed",
         "pos_abb": "FS",
         "number": "23",
@@ -2591,7 +2591,7 @@
   "IND": {
     "offense": [
       {
-        "gsis_id": "00-0037757",
+        "id": "00-0037757",
         "name": "Bernhard Raimann",
         "pos_abb": "LT",
         "number": "79",
@@ -2600,7 +2600,7 @@
         "draft_pick": 77
       },
       {
-        "gsis_id": "00-0034342",
+        "id": "00-0034342",
         "name": "Quenton Nelson",
         "pos_abb": "LG",
         "number": "56",
@@ -2609,7 +2609,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0039744",
+        "id": "00-0039744",
         "name": "Tanor Bortolini",
         "pos_abb": "C",
         "number": "60",
@@ -2618,7 +2618,7 @@
         "draft_pick": 117
       },
       {
-        "gsis_id": "00-0039736",
+        "id": "00-0039736",
         "name": "Matt Goncalves",
         "pos_abb": "RG",
         "number": "71",
@@ -2627,7 +2627,7 @@
         "draft_pick": 79
       },
       {
-        "gsis_id": "00-0034836",
+        "id": "00-0034836",
         "name": "Braden Smith",
         "pos_abb": "RT",
         "number": "72",
@@ -2636,7 +2636,7 @@
         "draft_pick": 37
       },
       {
-        "gsis_id": "00-0040128",
+        "id": "00-0040128",
         "name": "Tyler Warren",
         "pos_abb": "TE",
         "number": "84",
@@ -2645,7 +2645,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0036252",
+        "id": "00-0036252",
         "name": "Michael Pittman Jr.",
         "pos_abb": "WR",
         "number": "11",
@@ -2654,7 +2654,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0037664",
+        "id": "00-0037664",
         "name": "Alec Pierce",
         "pos_abb": "WR",
         "number": "14",
@@ -2663,7 +2663,7 @@
         "draft_pick": 53
       },
       {
-        "gsis_id": "00-0038997",
+        "id": "00-0038997",
         "name": "Josh Downs",
         "pos_abb": "WR",
         "number": "2",
@@ -2672,7 +2672,7 @@
         "draft_pick": 79
       },
       {
-        "gsis_id": "00-0035710",
+        "id": "00-0035710",
         "name": "Daniel Jones",
         "pos_abb": "QB",
         "number": "17",
@@ -2681,7 +2681,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0036223",
+        "id": "00-0036223",
         "name": "Jonathan Taylor",
         "pos_abb": "RB",
         "number": "28",
@@ -2692,7 +2692,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0036479",
+        "id": "00-0036479",
         "name": "Kwity Paye",
         "pos_abb": "LDE",
         "number": "51",
@@ -2701,7 +2701,7 @@
         "draft_pick": 21
       },
       {
-        "gsis_id": "00-0033952",
+        "id": "00-0033952",
         "name": "Grover Stewart",
         "pos_abb": "LDT",
         "number": "90",
@@ -2710,7 +2710,7 @@
         "draft_pick": 144
       },
       {
-        "gsis_id": "00-0032378",
+        "id": "00-0032378",
         "name": "DeForest Buckner",
         "pos_abb": "RDT",
         "number": "99",
@@ -2719,7 +2719,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0039340",
+        "id": "00-0039340",
         "name": "Laiatu Latu",
         "pos_abb": "RDE",
         "number": "97",
@@ -2728,7 +2728,7 @@
         "draft_pick": 15
       },
       {
-        "gsis_id": "00-0035697",
+        "id": "00-0035697",
         "name": "Germaine Pratt",
         "pos_abb": "WLB",
         "number": "53",
@@ -2737,7 +2737,7 @@
         "draft_pick": 72
       },
       {
-        "gsis_id": "00-0034431",
+        "id": "00-0034431",
         "name": "Zaire Franklin",
         "pos_abb": "MLB",
         "number": "44",
@@ -2746,7 +2746,7 @@
         "draft_pick": 235
       },
       {
-        "gsis_id": "00-0039178",
+        "id": "00-0039178",
         "name": "Austin Ajiake",
         "pos_abb": "SLB",
         "number": "58",
@@ -2755,7 +2755,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0037190",
+        "id": "00-0037190",
         "name": "Sauce Gardner",
         "pos_abb": "LCB",
         "number": "1",
@@ -2764,7 +2764,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0034573",
+        "id": "00-0034573",
         "name": "Charvarius Ward",
         "pos_abb": "RCB",
         "number": "7",
@@ -2773,7 +2773,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0037616",
+        "id": "00-0037616",
         "name": "Nick Cross",
         "pos_abb": "SS",
         "number": "20",
@@ -2782,7 +2782,7 @@
         "draft_pick": 96
       },
       {
-        "gsis_id": "00-0036629",
+        "id": "00-0036629",
         "name": "Cam Bynum",
         "pos_abb": "FS",
         "number": "0",
@@ -2795,7 +2795,7 @@
   "JAX": {
     "offense": [
       {
-        "gsis_id": "00-0036655",
+        "id": "00-0036655",
         "name": "Cole Van Lanen",
         "pos_abb": "LT",
         "number": "70",
@@ -2804,7 +2804,7 @@
         "draft_pick": 214
       },
       {
-        "gsis_id": "00-0036327",
+        "id": "00-0036327",
         "name": "Ezra Cleveland",
         "pos_abb": "LG",
         "number": "76",
@@ -2813,7 +2813,7 @@
         "draft_pick": 58
       },
       {
-        "gsis_id": "00-0036985",
+        "id": "00-0036985",
         "name": "Robert Hainsey",
         "pos_abb": "C",
         "number": "73",
@@ -2822,7 +2822,7 @@
         "draft_pick": 95
       },
       {
-        "gsis_id": "00-0035112",
+        "id": "00-0035112",
         "name": "Patrick Mekari",
         "pos_abb": "RG",
         "number": "65",
@@ -2831,7 +2831,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038934",
+        "id": "00-0038934",
         "name": "Anton Harrison",
         "pos_abb": "RT",
         "number": "77",
@@ -2840,7 +2840,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0038935",
+        "id": "00-0038935",
         "name": "Brenton Strange",
         "pos_abb": "TE",
         "number": "85",
@@ -2849,7 +2849,7 @@
         "draft_pick": 61
       },
       {
-        "gsis_id": "00-0034960",
+        "id": "00-0034960",
         "name": "Jakobi Meyers",
         "pos_abb": "WR",
         "number": "3",
@@ -2858,7 +2858,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038606",
+        "id": "00-0038606",
         "name": "Parker Washington",
         "pos_abb": "WR",
         "number": "11",
@@ -2867,7 +2867,7 @@
         "draft_pick": 185
       },
       {
-        "gsis_id": "00-0039893",
+        "id": "00-0039893",
         "name": "Brian Thomas Jr.",
         "pos_abb": "WR",
         "number": "7",
@@ -2876,7 +2876,7 @@
         "draft_pick": 23
       },
       {
-        "gsis_id": "00-0036971",
+        "id": "00-0036971",
         "name": "Trevor Lawrence",
         "pos_abb": "QB",
         "number": "16",
@@ -2885,7 +2885,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0036973",
+        "id": "00-0036973",
         "name": "Travis Etienne Jr.",
         "pos_abb": "RB",
         "number": "1",
@@ -2896,7 +2896,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0035642",
+        "id": "00-0035642",
         "name": "Josh Hines-Allen",
         "pos_abb": "LDE",
         "number": "41",
@@ -2905,7 +2905,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0036262",
+        "id": "00-0036262",
         "name": "DaVon Hamilton",
         "pos_abb": "LDT",
         "number": "52",
@@ -2914,7 +2914,7 @@
         "draft_pick": 73
       },
       {
-        "gsis_id": "00-0032164",
+        "id": "00-0032164",
         "name": "Arik Armstead",
         "pos_abb": "RDT",
         "number": "91",
@@ -2923,7 +2923,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0037235",
+        "id": "00-0037235",
         "name": "Travon Walker",
         "pos_abb": "RDE",
         "number": "44",
@@ -2932,7 +2932,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0034413",
+        "id": "00-0034413",
         "name": "Foyesade Oluokun",
         "pos_abb": "WLB",
         "number": "23",
@@ -2941,7 +2941,7 @@
         "draft_pick": 200
       },
       {
-        "gsis_id": "00-0037244",
+        "id": "00-0037244",
         "name": "Devin Lloyd",
         "pos_abb": "MLB",
         "number": "0",
@@ -2950,7 +2950,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0034473",
+        "id": "00-0034473",
         "name": "Dennis Gardeck",
         "pos_abb": "SLB",
         "number": "47",
@@ -2959,7 +2959,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039353",
+        "id": "00-0039353",
         "name": "Jarrian Jones",
         "pos_abb": "LCB",
         "number": "22",
@@ -2968,7 +2968,7 @@
         "draft_pick": 96
       },
       {
-        "gsis_id": "00-0036996",
+        "id": "00-0036996",
         "name": "Greg Newsome II",
         "pos_abb": "RCB",
         "number": "6",
@@ -2977,7 +2977,7 @@
         "draft_pick": 26
       },
       {
-        "gsis_id": "00-0033038",
+        "id": "00-0033038",
         "name": "Eric Murray",
         "pos_abb": "SS",
         "number": "29",
@@ -2986,7 +2986,7 @@
         "draft_pick": 106
       },
       {
-        "gsis_id": "00-0035378",
+        "id": "00-0035378",
         "name": "Andrew Wingard",
         "pos_abb": "FS",
         "number": "42",
@@ -2999,7 +2999,7 @@
   "KC": {
     "offense": [
       {
-        "gsis_id": "00-0040116",
+        "id": "00-0040116",
         "name": "Josh Simmons",
         "pos_abb": "LT",
         "number": "71",
@@ -3008,7 +3008,7 @@
         "draft_pick": 32
       },
       {
-        "gsis_id": "00-0039844",
+        "id": "00-0039844",
         "name": "Kingsley Suamataia",
         "pos_abb": "LG",
         "number": "76",
@@ -3017,7 +3017,7 @@
         "draft_pick": 63
       },
       {
-        "gsis_id": "00-0036623",
+        "id": "00-0036623",
         "name": "Creed Humphrey",
         "pos_abb": "C",
         "number": "52",
@@ -3026,7 +3026,7 @@
         "draft_pick": 63
       },
       {
-        "gsis_id": "00-0036660",
+        "id": "00-0036660",
         "name": "Trey Smith",
         "pos_abb": "RG",
         "number": "65",
@@ -3035,7 +3035,7 @@
         "draft_pick": 226
       },
       {
-        "gsis_id": "00-0035237",
+        "id": "00-0035237",
         "name": "Jawaan Taylor",
         "pos_abb": "RT",
         "number": "74",
@@ -3044,7 +3044,7 @@
         "draft_pick": 35
       },
       {
-        "gsis_id": "00-0030506",
+        "id": "00-0030506",
         "name": "Travis Kelce",
         "pos_abb": "TE",
         "number": "87",
@@ -3053,7 +3053,7 @@
         "draft_pick": 63
       },
       {
-        "gsis_id": "00-0035662",
+        "id": "00-0035662",
         "name": "Hollywood Brown",
         "pos_abb": "WR",
         "number": "5",
@@ -3062,7 +3062,7 @@
         "draft_pick": 25
       },
       {
-        "gsis_id": "00-0039067",
+        "id": "00-0039067",
         "name": "Rashee Rice",
         "pos_abb": "WR",
         "number": "4",
@@ -3071,7 +3071,7 @@
         "draft_pick": 55
       },
       {
-        "gsis_id": "00-0039894",
+        "id": "00-0039894",
         "name": "Xavier Worthy",
         "pos_abb": "WR",
         "number": "1",
@@ -3080,7 +3080,7 @@
         "draft_pick": 28
       },
       {
-        "gsis_id": "00-0033873",
+        "id": "00-0033873",
         "name": "Patrick Mahomes",
         "pos_abb": "QB",
         "number": "15",
@@ -3089,7 +3089,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0037197",
+        "id": "00-0037197",
         "name": "Isiah Pacheco",
         "pos_abb": "RB",
         "number": "10",
@@ -3100,7 +3100,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0037192",
+        "id": "00-0037192",
         "name": "George Karlaftis",
         "pos_abb": "LDE",
         "number": "56",
@@ -3109,7 +3109,7 @@
         "draft_pick": 30
       },
       {
-        "gsis_id": "00-0032762",
+        "id": "00-0032762",
         "name": "Chris Jones",
         "pos_abb": "LDT",
         "number": "95",
@@ -3118,7 +3118,7 @@
         "draft_pick": 37
       },
       {
-        "gsis_id": "00-0034818",
+        "id": "00-0034818",
         "name": "Derrick Nnadi",
         "pos_abb": "RDT",
         "number": "92",
@@ -3127,7 +3127,7 @@
         "draft_pick": 75
       },
       {
-        "gsis_id": "00-0039006",
+        "id": "00-0039006",
         "name": "Felix Anudike-Uzomah",
         "pos_abb": "RDE",
         "number": "91",
@@ -3136,7 +3136,7 @@
         "draft_pick": 31
       },
       {
-        "gsis_id": "00-0035262",
+        "id": "00-0035262",
         "name": "Drue Tranquill",
         "pos_abb": "WLB",
         "number": "23",
@@ -3145,7 +3145,7 @@
         "draft_pick": 130
       },
       {
-        "gsis_id": "00-0036621",
+        "id": "00-0036621",
         "name": "Nick Bolton",
         "pos_abb": "MLB",
         "number": "32",
@@ -3154,7 +3154,7 @@
         "draft_pick": 58
       },
       {
-        "gsis_id": "00-0037819",
+        "id": "00-0037819",
         "name": "Leo Chenal",
         "pos_abb": "SLB",
         "number": "54",
@@ -3163,7 +3163,7 @@
         "draft_pick": 103
       },
       {
-        "gsis_id": "00-0037191",
+        "id": "00-0037191",
         "name": "Trent McDuffie",
         "pos_abb": "LCB",
         "number": "22",
@@ -3172,7 +3172,7 @@
         "draft_pick": 21
       },
       {
-        "gsis_id": "00-0037195",
+        "id": "00-0037195",
         "name": "Jaylen Watson",
         "pos_abb": "RCB",
         "number": "35",
@@ -3181,7 +3181,7 @@
         "draft_pick": 243
       },
       {
-        "gsis_id": "00-0038982",
+        "id": "00-0038982",
         "name": "Chamarri Conner",
         "pos_abb": "SS",
         "number": "27",
@@ -3190,7 +3190,7 @@
         "draft_pick": 119
       },
       {
-        "gsis_id": "00-0037193",
+        "id": "00-0037193",
         "name": "Bryan Cook",
         "pos_abb": "FS",
         "number": "6",
@@ -3203,7 +3203,7 @@
   "LAR": {
     "offense": [
       {
-        "gsis_id": "00-0036603",
+        "id": "00-0036603",
         "name": "Alaric Jackson",
         "pos_abb": "LT",
         "number": "77",
@@ -3212,7 +3212,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039058",
+        "id": "00-0039058",
         "name": "Steve Avila",
         "pos_abb": "LG",
         "number": "73",
@@ -3221,7 +3221,7 @@
         "draft_pick": 36
       },
       {
-        "gsis_id": "00-0034114",
+        "id": "00-0034114",
         "name": "Coleman Shelton",
         "pos_abb": "C",
         "number": "65",
@@ -3230,7 +3230,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036339",
+        "id": "00-0036339",
         "name": "Kevin Dotson",
         "pos_abb": "RG",
         "number": "69",
@@ -3239,7 +3239,7 @@
         "draft_pick": 135
       },
       {
-        "gsis_id": "00-0039077",
+        "id": "00-0039077",
         "name": "Warren McClendon Jr.",
         "pos_abb": "RT",
         "number": "71",
@@ -3248,7 +3248,7 @@
         "draft_pick": 174
       },
       {
-        "gsis_id": "00-0036244",
+        "id": "00-0036244",
         "name": "Colby Parkinson",
         "pos_abb": "TE",
         "number": "84",
@@ -3257,7 +3257,7 @@
         "draft_pick": 133
       },
       {
-        "gsis_id": "00-0031381",
+        "id": "00-0031381",
         "name": "Davante Adams",
         "pos_abb": "WR",
         "number": "17",
@@ -3266,7 +3266,7 @@
         "draft_pick": 53
       },
       {
-        "gsis_id": "00-0039075",
+        "id": "00-0039075",
         "name": "Puka Nacua",
         "pos_abb": "WR",
         "number": "12",
@@ -3275,7 +3275,7 @@
         "draft_pick": 177
       },
       {
-        "gsis_id": "00-0040590",
+        "id": "00-0040590",
         "name": "Konata Mumpfield",
         "pos_abb": "WR",
         "number": "15",
@@ -3284,7 +3284,7 @@
         "draft_pick": 242
       },
       {
-        "gsis_id": "00-0026498",
+        "id": "00-0026498",
         "name": "Matthew Stafford",
         "pos_abb": "QB",
         "number": "9",
@@ -3293,7 +3293,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0037840",
+        "id": "00-0037840",
         "name": "Kyren Williams",
         "pos_abb": "RB",
         "number": "23",
@@ -3304,7 +3304,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0039734",
+        "id": "00-0039734",
         "name": "Braden Fiske",
         "pos_abb": "LDE",
         "number": "55",
@@ -3313,7 +3313,7 @@
         "draft_pick": 39
       },
       {
-        "gsis_id": "00-0034234",
+        "id": "00-0034234",
         "name": "Poona Ford",
         "pos_abb": "NT",
         "number": "95",
@@ -3322,7 +3322,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039138",
+        "id": "00-0039138",
         "name": "Kobie Turner",
         "pos_abb": "RDE",
         "number": "91",
@@ -3331,7 +3331,7 @@
         "draft_pick": 89
       },
       {
-        "gsis_id": "00-0037587",
+        "id": "00-0037587",
         "name": "Nate Landman",
         "pos_abb": "LILB",
         "number": "53",
@@ -3340,7 +3340,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039774",
+        "id": "00-0039774",
         "name": "Omar Speights",
         "pos_abb": "RILB",
         "number": "48",
@@ -3349,7 +3349,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0037839",
+        "id": "00-0037839",
         "name": "Cobie Durant",
         "pos_abb": "LCB",
         "number": "14",
@@ -3358,7 +3358,7 @@
         "draft_pick": 142
       },
       {
-        "gsis_id": "00-0034203",
+        "id": "00-0034203",
         "name": "Darious Williams",
         "pos_abb": "RCB",
         "number": "31",
@@ -3367,7 +3367,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036349",
+        "id": "00-0036349",
         "name": "Kam Curl",
         "pos_abb": "SS",
         "number": "3",
@@ -3376,7 +3376,7 @@
         "draft_pick": 216
       },
       {
-        "gsis_id": "00-0039834",
+        "id": "00-0039834",
         "name": "Kamren Kinchens",
         "pos_abb": "FS",
         "number": "26",
@@ -3389,7 +3389,7 @@
   "LAC": {
     "offense": [
       {
-        "gsis_id": "00-0037009",
+        "id": "00-0037009",
         "name": "Rashawn Slater",
         "pos_abb": "LT",
         "number": "70",
@@ -3398,7 +3398,7 @@
         "draft_pick": 13
       },
       {
-        "gsis_id": "00-0037818",
+        "id": "00-0037818",
         "name": "Zion Johnson",
         "pos_abb": "LG",
         "number": "77",
@@ -3407,7 +3407,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0035127",
+        "id": "00-0035127",
         "name": "Andre James",
         "pos_abb": "C",
         "number": "78",
@@ -3416,7 +3416,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036284",
+        "id": "00-0036284",
         "name": "Mekhi Becton",
         "pos_abb": "RG",
         "number": "73",
@@ -3425,7 +3425,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0039897",
+        "id": "00-0039897",
         "name": "Joe Alt",
         "pos_abb": "RT",
         "number": "76",
@@ -3434,7 +3434,7 @@
         "draft_pick": 5
       },
       {
-        "gsis_id": "00-0040189",
+        "id": "00-0040189",
         "name": "Oronde Gadsden",
         "pos_abb": "TE",
         "number": "86",
@@ -3443,7 +3443,7 @@
         "draft_pick": 165
       },
       {
-        "gsis_id": "00-0030279",
+        "id": "00-0030279",
         "name": "Keenan Allen",
         "pos_abb": "WR",
         "number": "13",
@@ -3452,7 +3452,7 @@
         "draft_pick": 76
       },
       {
-        "gsis_id": "00-0038544",
+        "id": "00-0038544",
         "name": "Quentin Johnston",
         "pos_abb": "WR",
         "number": "1",
@@ -3461,7 +3461,7 @@
         "draft_pick": 21
       },
       {
-        "gsis_id": "00-0039915",
+        "id": "00-0039915",
         "name": "Ladd McConkey",
         "pos_abb": "WR",
         "number": "15",
@@ -3470,7 +3470,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0036355",
+        "id": "00-0036355",
         "name": "Justin Herbert",
         "pos_abb": "QB",
         "number": "10",
@@ -3479,7 +3479,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0040666",
+        "id": "00-0040666",
         "name": "Omarion Hampton",
         "pos_abb": "RB",
         "number": "8",
@@ -3490,7 +3490,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0034371",
+        "id": "00-0034371",
         "name": "Da'Shawn Hand",
         "pos_abb": "LDE",
         "number": "91",
@@ -3499,7 +3499,7 @@
         "draft_pick": 114
       },
       {
-        "gsis_id": "00-0036181",
+        "id": "00-0036181",
         "name": "Teair Tart",
         "pos_abb": "NT",
         "number": "90",
@@ -3508,7 +3508,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039835",
+        "id": "00-0039835",
         "name": "Justin Eboigbe",
         "pos_abb": "RDE",
         "number": "92",
@@ -3517,7 +3517,7 @@
         "draft_pick": 105
       },
       {
-        "gsis_id": "00-0038553",
+        "id": "00-0038553",
         "name": "Daiyan Henley",
         "pos_abb": "LILB",
         "number": "0",
@@ -3526,7 +3526,7 @@
         "draft_pick": 85
       },
       {
-        "gsis_id": "00-0031040",
+        "id": "00-0031040",
         "name": "Khalil Mack",
         "pos_abb": "SLB",
         "number": "52",
@@ -3535,7 +3535,7 @@
         "draft_pick": 5
       },
       {
-        "gsis_id": "00-0034356",
+        "id": "00-0034356",
         "name": "Donte Jackson",
         "pos_abb": "LCB",
         "number": "26",
@@ -3544,7 +3544,7 @@
         "draft_pick": 55
       },
       {
-        "gsis_id": "00-0039369",
+        "id": "00-0039369",
         "name": "Cam Hart",
         "pos_abb": "RCB",
         "number": "20",
@@ -3553,7 +3553,7 @@
         "draft_pick": 140
       },
       {
-        "gsis_id": "00-0034790",
+        "id": "00-0034790",
         "name": "Derwin James Jr.",
         "pos_abb": "SS",
         "number": "3",
@@ -3562,7 +3562,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0036992",
+        "id": "00-0036992",
         "name": "Elijah Molden",
         "pos_abb": "FS",
         "number": "2",
@@ -3575,7 +3575,7 @@
   "LV": {
     "offense": [
       {
-        "gsis_id": "00-0034759",
+        "id": "00-0034759",
         "name": "Kolton Miller",
         "pos_abb": "LT",
         "number": "74",
@@ -3584,7 +3584,7 @@
         "draft_pick": 15
       },
       {
-        "gsis_id": "00-0037255",
+        "id": "00-0037255",
         "name": "Dylan Parham",
         "pos_abb": "LG",
         "number": "66",
@@ -3593,7 +3593,7 @@
         "draft_pick": 90
       },
       {
-        "gsis_id": "00-0034678",
+        "id": "00-0034678",
         "name": "Alex Cappa",
         "pos_abb": "C",
         "number": "65",
@@ -3602,7 +3602,7 @@
         "draft_pick": 94
       },
       {
-        "gsis_id": "00-0039735",
+        "id": "00-0039735",
         "name": "Jackson Powers-Johnson",
         "pos_abb": "RG",
         "number": "58",
@@ -3611,7 +3611,7 @@
         "draft_pick": 44
       },
       {
-        "gsis_id": "00-0039349",
+        "id": "00-0039349",
         "name": "DJ Glaze",
         "pos_abb": "RT",
         "number": "71",
@@ -3620,7 +3620,7 @@
         "draft_pick": 77
       },
       {
-        "gsis_id": "00-0039338",
+        "id": "00-0039338",
         "name": "Brock Bowers",
         "pos_abb": "TE",
         "number": "89",
@@ -3629,7 +3629,7 @@
         "draft_pick": 13
       },
       {
-        "gsis_id": "00-0038563",
+        "id": "00-0038563",
         "name": "Tre Tucker",
         "pos_abb": "WR",
         "number": "1",
@@ -3638,7 +3638,7 @@
         "draft_pick": 100
       },
       {
-        "gsis_id": "00-0040581",
+        "id": "00-0040581",
         "name": "Dont'e Thornton Jr.",
         "pos_abb": "WR",
         "number": "10",
@@ -3647,7 +3647,7 @@
         "draft_pick": 108
       },
       {
-        "gsis_id": "00-0040729",
+        "id": "00-0040729",
         "name": "Jack Bech",
         "pos_abb": "WR",
         "number": "18",
@@ -3656,7 +3656,7 @@
         "draft_pick": 58
       },
       {
-        "gsis_id": "00-0030565",
+        "id": "00-0030565",
         "name": "Geno Smith",
         "pos_abb": "QB",
         "number": "7",
@@ -3665,7 +3665,7 @@
         "draft_pick": 39
       },
       {
-        "gsis_id": "00-0040122",
+        "id": "00-0040122",
         "name": "Ashton Jeanty",
         "pos_abb": "RB",
         "number": "2",
@@ -3676,7 +3676,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0034973",
+        "id": "00-0034973",
         "name": "Maxx Crosby",
         "pos_abb": "LDE",
         "number": "98",
@@ -3685,7 +3685,7 @@
         "draft_pick": 106
       },
       {
-        "gsis_id": "00-0039423",
+        "id": "00-0039423",
         "name": "Jonah Laulu",
         "pos_abb": "LDT",
         "number": "96",
@@ -3694,7 +3694,7 @@
         "draft_pick": 234
       },
       {
-        "gsis_id": "00-0033381",
+        "id": "00-0033381",
         "name": "Adam Butler",
         "pos_abb": "RDT",
         "number": "69",
@@ -3703,7 +3703,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036989",
+        "id": "00-0036989",
         "name": "Malcolm Koonce",
         "pos_abb": "RDE",
         "number": "51",
@@ -3712,7 +3712,7 @@
         "draft_pick": 79
       },
       {
-        "gsis_id": "00-0033872",
+        "id": "00-0033872",
         "name": "Jamal Adams",
         "pos_abb": "WLB",
         "number": "33",
@@ -3721,7 +3721,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0032442",
+        "id": "00-0032442",
         "name": "Elandon Roberts",
         "pos_abb": "MLB",
         "number": "52",
@@ -3730,7 +3730,7 @@
         "draft_pick": 214
       },
       {
-        "gsis_id": "00-0035707",
+        "id": "00-0035707",
         "name": "Devin White",
         "pos_abb": "SLB",
         "number": "45",
@@ -3739,7 +3739,7 @@
         "draft_pick": 5
       },
       {
-        "gsis_id": "00-0040641",
+        "id": "00-0040641",
         "name": "Darien Porter",
         "pos_abb": "LCB",
         "number": "26",
@@ -3748,7 +3748,7 @@
         "draft_pick": 68
       },
       {
-        "gsis_id": "00-0036901",
+        "id": "00-0036901",
         "name": "Eric Stokes",
         "pos_abb": "RCB",
         "number": "22",
@@ -3757,7 +3757,7 @@
         "draft_pick": 29
       },
       {
-        "gsis_id": "00-0036293",
+        "id": "00-0036293",
         "name": "Jeremy Chinn",
         "pos_abb": "SS",
         "number": "11",
@@ -3766,7 +3766,7 @@
         "draft_pick": 64
       },
       {
-        "gsis_id": "00-0037512",
+        "id": "00-0037512",
         "name": "Isaiah Pola-Mao",
         "pos_abb": "FS",
         "number": "20",
@@ -3779,7 +3779,7 @@
   "MIA": {
     "offense": [
       {
-        "gsis_id": "00-0039899",
+        "id": "00-0039899",
         "name": "Patrick Paul",
         "pos_abb": "LT",
         "number": "52",
@@ -3788,7 +3788,7 @@
         "draft_pick": 55
       },
       {
-        "gsis_id": "00-0040742",
+        "id": "00-0040742",
         "name": "Jonah Savaiinaea",
         "pos_abb": "LG",
         "number": "72",
@@ -3797,7 +3797,7 @@
         "draft_pick": 37
       },
       {
-        "gsis_id": "00-0036171",
+        "id": "00-0036171",
         "name": "Aaron Brewer",
         "pos_abb": "C",
         "number": "55",
@@ -3806,7 +3806,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038103",
+        "id": "00-0038103",
         "name": "Cole Strange",
         "pos_abb": "RG",
         "number": "69",
@@ -3815,7 +3815,7 @@
         "draft_pick": 29
       },
       {
-        "gsis_id": "00-0036248",
+        "id": "00-0036248",
         "name": "Austin Jackson",
         "pos_abb": "RT",
         "number": "73",
@@ -3824,7 +3824,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0031610",
+        "id": "00-0031610",
         "name": "Darren Waller",
         "pos_abb": "TE",
         "number": "83",
@@ -3833,7 +3833,7 @@
         "draft_pick": 204
       },
       {
-        "gsis_id": "00-0034418",
+        "id": "00-0034418",
         "name": "Cedrick Wilson Jr.",
         "pos_abb": "WR",
         "number": "19",
@@ -3842,7 +3842,7 @@
         "draft_pick": 208
       },
       {
-        "gsis_id": "00-0036613",
+        "id": "00-0036613",
         "name": "Jaylen Waddle",
         "pos_abb": "WR",
         "number": "17",
@@ -3851,7 +3851,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0039880",
+        "id": "00-0039880",
         "name": "Malik Washington",
         "pos_abb": "WR",
         "number": "6",
@@ -3860,7 +3860,7 @@
         "draft_pick": 184
       },
       {
-        "gsis_id": "00-0040234",
+        "id": "00-0040234",
         "name": "Quinn Ewers",
         "pos_abb": "QB",
         "number": "14",
@@ -3869,7 +3869,7 @@
         "draft_pick": 231
       },
       {
-        "gsis_id": "00-0039040",
+        "id": "00-0039040",
         "name": "De'Von Achane",
         "pos_abb": "RB",
         "number": "28",
@@ -3880,7 +3880,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0039911",
+        "id": "00-0039911",
         "name": "Chop Robinson",
         "pos_abb": "LDE",
         "number": "44",
@@ -3889,7 +3889,7 @@
         "draft_pick": 21
       },
       {
-        "gsis_id": "00-0034285",
+        "id": "00-0034285",
         "name": "Zach Sieler",
         "pos_abb": "LDT",
         "number": "92",
@@ -3898,7 +3898,7 @@
         "draft_pick": 238
       },
       {
-        "gsis_id": "00-0031557",
+        "id": "00-0031557",
         "name": "Jordan Phillips",
         "pos_abb": "RDT",
         "number": "52",
@@ -3907,7 +3907,7 @@
         "draft_pick": 52
       },
       {
-        "gsis_id": "00-0040054",
+        "id": "00-0040054",
         "name": "Seth Coleman",
         "pos_abb": "RDE",
         "number": "96",
@@ -3916,7 +3916,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036409",
+        "id": "00-0036409",
         "name": "Jordyn Brooks",
         "pos_abb": "WLB",
         "number": "20",
@@ -3925,7 +3925,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0035352",
+        "id": "00-0035352",
         "name": "Tyrel Dodson",
         "pos_abb": "MLB",
         "number": "25",
@@ -3934,7 +3934,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0037315",
+        "id": "00-0037315",
         "name": "Cameron Goode",
         "pos_abb": "SLB",
         "number": "53",
@@ -3943,7 +3943,7 @@
         "draft_pick": 224
       },
       {
-        "gsis_id": "00-0038039",
+        "id": "00-0038039",
         "name": "Jack Jones",
         "pos_abb": "LCB",
         "number": "23",
@@ -3952,7 +3952,7 @@
         "draft_pick": 121
       },
       {
-        "gsis_id": "00-0040178",
+        "id": "00-0040178",
         "name": "Jason Marshall Jr.",
         "pos_abb": "RCB",
         "number": "33",
@@ -3961,7 +3961,7 @@
         "draft_pick": 150
       },
       {
-        "gsis_id": "00-0036329",
+        "id": "00-0036329",
         "name": "Ashtyn Davis",
         "pos_abb": "SS",
         "number": "21",
@@ -3970,7 +3970,7 @@
         "draft_pick": 68
       },
       {
-        "gsis_id": "00-0034789",
+        "id": "00-0034789",
         "name": "Minkah Fitzpatrick",
         "pos_abb": "FS",
         "number": "29",
@@ -3983,7 +3983,7 @@
   "MIN": {
     "offense": [
       {
-        "gsis_id": "00-0036616",
+        "id": "00-0036616",
         "name": "Christian Darrisaw",
         "pos_abb": "LT",
         "number": "71",
@@ -3992,7 +3992,7 @@
         "draft_pick": 23
       },
       {
-        "gsis_id": "00-0040661",
+        "id": "00-0040661",
         "name": "Donovan Jackson",
         "pos_abb": "LG",
         "number": "74",
@@ -4001,7 +4001,7 @@
         "draft_pick": 24
       },
       {
-        "gsis_id": "00-0032383",
+        "id": "00-0032383",
         "name": "Ryan Kelly",
         "pos_abb": "C",
         "number": "78",
@@ -4010,7 +4010,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0036483",
+        "id": "00-0036483",
         "name": "Will Fries",
         "pos_abb": "RG",
         "number": "76",
@@ -4019,7 +4019,7 @@
         "draft_pick": 248
       },
       {
-        "gsis_id": "00-0034158",
+        "id": "00-0034158",
         "name": "Brian O'Neill",
         "pos_abb": "RT",
         "number": "75",
@@ -4028,7 +4028,7 @@
         "draft_pick": 62
       },
       {
-        "gsis_id": "00-0035229",
+        "id": "00-0035229",
         "name": "T.J. Hockenson",
         "pos_abb": "TE",
         "number": "87",
@@ -4037,7 +4037,7 @@
         "draft_pick": 8
       },
       {
-        "gsis_id": "00-0036322",
+        "id": "00-0036322",
         "name": "Justin Jefferson",
         "pos_abb": "WR",
         "number": "18",
@@ -4046,7 +4046,7 @@
         "draft_pick": 22
       },
       {
-        "gsis_id": "00-0037291",
+        "id": "00-0037291",
         "name": "Jalen Nailor",
         "pos_abb": "WR",
         "number": "1",
@@ -4055,7 +4055,7 @@
         "draft_pick": 191
       },
       {
-        "gsis_id": "00-0038994",
+        "id": "00-0038994",
         "name": "Jordan Addison",
         "pos_abb": "WR",
         "number": "3",
@@ -4064,7 +4064,7 @@
         "draft_pick": 23
       },
       {
-        "gsis_id": "00-0039923",
+        "id": "00-0039923",
         "name": "J.J. McCarthy",
         "pos_abb": "QB",
         "number": "9",
@@ -4073,7 +4073,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0033293",
+        "id": "00-0033293",
         "name": "Aaron Jones Sr.",
         "pos_abb": "RB",
         "number": "33",
@@ -4084,7 +4084,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0033523",
+        "id": "00-0033523",
         "name": "Jonathan Allen",
         "pos_abb": "LDE",
         "number": "93",
@@ -4093,7 +4093,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0038778",
+        "id": "00-0038778",
         "name": "Jalen Redmond",
         "pos_abb": "NT",
         "number": "61",
@@ -4102,7 +4102,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0034782",
+        "id": "00-0034782",
         "name": "Harrison Phillips",
         "pos_abb": "NT",
         "number": "97",
@@ -4111,7 +4111,7 @@
         "draft_pick": 96
       },
       {
-        "gsis_id": "00-0033109",
+        "id": "00-0033109",
         "name": "Javon Hargrave",
         "pos_abb": "RDE",
         "number": "97",
@@ -4120,7 +4120,7 @@
         "draft_pick": 89
       },
       {
-        "gsis_id": "00-0035276",
+        "id": "00-0035276",
         "name": "Blake Cashman",
         "pos_abb": "LILB",
         "number": "51",
@@ -4129,7 +4129,7 @@
         "draft_pick": 157
       },
       {
-        "gsis_id": "00-0033336",
+        "id": "00-0033336",
         "name": "Eric Wilson",
         "pos_abb": "RILB",
         "number": "55",
@@ -4138,7 +4138,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036222",
+        "id": "00-0036222",
         "name": "Isaiah Rodgers",
         "pos_abb": "LCB",
         "number": "2",
@@ -4147,7 +4147,7 @@
         "draft_pick": 211
       },
       {
-        "gsis_id": "00-0035236",
+        "id": "00-0035236",
         "name": "Byron Murphy Jr.",
         "pos_abb": "RCB",
         "number": "7",
@@ -4156,7 +4156,7 @@
         "draft_pick": 33
       },
       {
-        "gsis_id": "00-0036348",
+        "id": "00-0036348",
         "name": "Joshua Metellus",
         "pos_abb": "SS",
         "number": "44",
@@ -4165,7 +4165,7 @@
         "draft_pick": 205
       },
       {
-        "gsis_id": "00-0029606",
+        "id": "00-0029606",
         "name": "Harrison Smith",
         "pos_abb": "FS",
         "number": "22",
@@ -4178,7 +4178,7 @@
   "NE": {
     "offense": [
       {
-        "gsis_id": "00-0040699",
+        "id": "00-0040699",
         "name": "Will Campbell",
         "pos_abb": "LT",
         "number": "66",
@@ -4187,7 +4187,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0040147",
+        "id": "00-0040147",
         "name": "Jared Wilson",
         "pos_abb": "LG",
         "number": "58",
@@ -4196,7 +4196,7 @@
         "draft_pick": 95
       },
       {
-        "gsis_id": "00-0035588",
+        "id": "00-0035588",
         "name": "Garrett Bradbury",
         "pos_abb": "C",
         "number": "65",
@@ -4205,7 +4205,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0036198",
+        "id": "00-0036198",
         "name": "Mike Onwenu",
         "pos_abb": "RG",
         "number": "71",
@@ -4214,7 +4214,7 @@
         "draft_pick": 182
       },
       {
-        "gsis_id": "00-0031330",
+        "id": "00-0031330",
         "name": "Morgan Moses",
         "pos_abb": "RT",
         "number": "76",
@@ -4223,7 +4223,7 @@
         "draft_pick": 66
       },
       {
-        "gsis_id": "00-0033090",
+        "id": "00-0033090",
         "name": "Hunter Henry",
         "pos_abb": "TE",
         "number": "85",
@@ -4232,7 +4232,7 @@
         "draft_pick": 35
       },
       {
-        "gsis_id": "00-0031588",
+        "id": "00-0031588",
         "name": "Stefon Diggs",
         "pos_abb": "WR",
         "number": "8",
@@ -4241,7 +4241,7 @@
         "draft_pick": 146
       },
       {
-        "gsis_id": "00-0033555",
+        "id": "00-0033555",
         "name": "Mack Hollins",
         "pos_abb": "WR",
         "number": "13",
@@ -4250,7 +4250,7 @@
         "draft_pick": 118
       },
       {
-        "gsis_id": "00-0038608",
+        "id": "00-0038608",
         "name": "Kayshon Boutte",
         "pos_abb": "WR",
         "number": "9",
@@ -4259,7 +4259,7 @@
         "draft_pick": 187
       },
       {
-        "gsis_id": "00-0039851",
+        "id": "00-0039851",
         "name": "Drake Maye",
         "pos_abb": "QB",
         "number": "10",
@@ -4268,7 +4268,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0036875",
+        "id": "00-0036875",
         "name": "Rhamondre Stevenson",
         "pos_abb": "RB",
         "number": "38",
@@ -4279,7 +4279,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0036981",
+        "id": "00-0036981",
         "name": "Christian Barmore",
         "pos_abb": "LDE",
         "number": "90",
@@ -4288,7 +4288,7 @@
         "draft_pick": 38
       },
       {
-        "gsis_id": "00-0036909",
+        "id": "00-0036909",
         "name": "Khyiris Tonga",
         "pos_abb": "NT",
         "number": "95",
@@ -4297,7 +4297,7 @@
         "draft_pick": 250
       },
       {
-        "gsis_id": "00-0036916",
+        "id": "00-0036916",
         "name": "Milton Williams",
         "pos_abb": "RDE",
         "number": "97",
@@ -4306,7 +4306,7 @@
         "draft_pick": 73
       },
       {
-        "gsis_id": "00-0034720",
+        "id": "00-0034720",
         "name": "Robert Spillane",
         "pos_abb": "LILB",
         "number": "14",
@@ -4315,7 +4315,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036286",
+        "id": "00-0036286",
         "name": "K'Lavon Chaisson",
         "pos_abb": "SLB",
         "number": "44",
@@ -4324,7 +4324,7 @@
         "draft_pick": 20
       },
       {
-        "gsis_id": "00-0034778",
+        "id": "00-0034778",
         "name": "Carlton Davis III",
         "pos_abb": "LCB",
         "number": "7",
@@ -4333,7 +4333,7 @@
         "draft_pick": 63
       },
       {
-        "gsis_id": "00-0039147",
+        "id": "00-0039147",
         "name": "Christian Gonzalez",
         "pos_abb": "RCB",
         "number": "0",
@@ -4342,7 +4342,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0036302",
+        "id": "00-0036302",
         "name": "Jaylinn Hawkins",
         "pos_abb": "SS",
         "number": "21",
@@ -4351,7 +4351,7 @@
         "draft_pick": 134
       },
       {
-        "gsis_id": "00-0040716",
+        "id": "00-0040716",
         "name": "Craig Woodson",
         "pos_abb": "FS",
         "number": "31",
@@ -4364,7 +4364,7 @@
   "NO": {
     "offense": [
       {
-        "gsis_id": "00-0040125",
+        "id": "00-0040125",
         "name": "Kelvin Banks Jr.",
         "pos_abb": "LT",
         "number": "71",
@@ -4373,7 +4373,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0036619",
+        "id": "00-0036619",
         "name": "Dillon Radunz",
         "pos_abb": "LG",
         "number": "77",
@@ -4382,7 +4382,7 @@
         "draft_pick": 53
       },
       {
-        "gsis_id": "00-0035242",
+        "id": "00-0035242",
         "name": "Erik McCoy",
         "pos_abb": "C",
         "number": "78",
@@ -4391,7 +4391,7 @@
         "draft_pick": 48
       },
       {
-        "gsis_id": "00-0036408",
+        "id": "00-0036408",
         "name": "Cesar Ruiz",
         "pos_abb": "RG",
         "number": "51",
@@ -4400,7 +4400,7 @@
         "draft_pick": 24
       },
       {
-        "gsis_id": "00-0039339",
+        "id": "00-0039339",
         "name": "Taliese Fuaga",
         "pos_abb": "RT",
         "number": "75",
@@ -4409,7 +4409,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0036040",
+        "id": "00-0036040",
         "name": "Juwan Johnson",
         "pos_abb": "TE",
         "number": "83",
@@ -4418,7 +4418,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0037239",
+        "id": "00-0037239",
         "name": "Chris Olave",
         "pos_abb": "WR",
         "number": "12",
@@ -4427,7 +4427,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0039424",
+        "id": "00-0039424",
         "name": "Devaughn Vele",
         "pos_abb": "WR",
         "number": "14",
@@ -4436,7 +4436,7 @@
         "draft_pick": 235
       },
       {
-        "gsis_id": "00-0039623",
+        "id": "00-0039623",
         "name": "Mason Tipton",
         "pos_abb": "WR",
         "number": "15",
@@ -4445,7 +4445,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0040743",
+        "id": "00-0040743",
         "name": "Tyler Shough",
         "pos_abb": "QB",
         "number": "6",
@@ -4454,7 +4454,7 @@
         "draft_pick": 40
       },
       {
-        "gsis_id": "00-0033906",
+        "id": "00-0033906",
         "name": "Alvin Kamara",
         "pos_abb": "RB",
         "number": "41",
@@ -4465,7 +4465,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0027962",
+        "id": "00-0027962",
         "name": "Cameron Jordan",
         "pos_abb": "LDE",
         "number": "94",
@@ -4474,7 +4474,7 @@
         "draft_pick": 24
       },
       {
-        "gsis_id": "00-0033860",
+        "id": "00-0033860",
         "name": "Davon Godchaux",
         "pos_abb": "NT",
         "number": "92",
@@ -4483,7 +4483,7 @@
         "draft_pick": 178
       },
       {
-        "gsis_id": "00-0038995",
+        "id": "00-0038995",
         "name": "Bryan Bresee",
         "pos_abb": "RDE",
         "number": "90",
@@ -4492,7 +4492,7 @@
         "draft_pick": 29
       },
       {
-        "gsis_id": "00-0029607",
+        "id": "00-0029607",
         "name": "Demario Davis",
         "pos_abb": "LILB",
         "number": "56",
@@ -4501,7 +4501,7 @@
         "draft_pick": 77
       },
       {
-        "gsis_id": "00-0036321",
+        "id": "00-0036321",
         "name": "Chase Young",
         "pos_abb": "SLB",
         "number": "99",
@@ -4510,7 +4510,7 @@
         "draft_pick": 2
       },
       {
-        "gsis_id": "00-0039860",
+        "id": "00-0039860",
         "name": "Kool-Aid McKinstry",
         "pos_abb": "LCB",
         "number": "4",
@@ -4519,7 +4519,7 @@
         "draft_pick": 41
       },
       {
-        "gsis_id": "00-0038121",
+        "id": "00-0038121",
         "name": "Alontae Taylor",
         "pos_abb": "RCB",
         "number": "1",
@@ -4528,7 +4528,7 @@
         "draft_pick": 49
       },
       {
-        "gsis_id": "00-0034361",
+        "id": "00-0034361",
         "name": "Justin Reid",
         "pos_abb": "SS",
         "number": "21",
@@ -4537,7 +4537,7 @@
         "draft_pick": 68
       },
       {
-        "gsis_id": "00-0036253",
+        "id": "00-0036253",
         "name": "Julian Blackmon",
         "pos_abb": "FS",
         "number": "23",
@@ -4550,7 +4550,7 @@
   "NYG": {
     "offense": [
       {
-        "gsis_id": "00-0036386",
+        "id": "00-0036386",
         "name": "Andrew Thomas",
         "pos_abb": "LT",
         "number": "78",
@@ -4559,7 +4559,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0036246",
+        "id": "00-0036246",
         "name": "Jon Runyan",
         "pos_abb": "LG",
         "number": "76",
@@ -4568,7 +4568,7 @@
         "draft_pick": 192
       },
       {
-        "gsis_id": "00-0039019",
+        "id": "00-0039019",
         "name": "John Michael Schmitz Jr.",
         "pos_abb": "C",
         "number": "61",
@@ -4577,7 +4577,7 @@
         "draft_pick": 57
       },
       {
-        "gsis_id": "00-0029685",
+        "id": "00-0029685",
         "name": "Greg Van Roten",
         "pos_abb": "RG",
         "number": "74",
@@ -4586,7 +4586,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0033290",
+        "id": "00-0033290",
         "name": "Jermaine Eluemunor",
         "pos_abb": "RT",
         "number": "72",
@@ -4595,7 +4595,7 @@
         "draft_pick": 159
       },
       {
-        "gsis_id": "00-0039847",
+        "id": "00-0039847",
         "name": "Theo Johnson",
         "pos_abb": "TE",
         "number": "84",
@@ -4604,7 +4604,7 @@
         "draft_pick": 107
       },
       {
-        "gsis_id": "00-0035535",
+        "id": "00-0035535",
         "name": "Darius Slayton",
         "pos_abb": "WR",
         "number": "18",
@@ -4613,7 +4613,7 @@
         "draft_pick": 171
       },
       {
-        "gsis_id": "00-0038117",
+        "id": "00-0038117",
         "name": "Wan'Dale Robinson",
         "pos_abb": "WR",
         "number": "17",
@@ -4622,7 +4622,7 @@
         "draft_pick": 43
       },
       {
-        "gsis_id": "00-0039337",
+        "id": "00-0039337",
         "name": "Malik Nabers",
         "pos_abb": "WR",
         "number": "1",
@@ -4631,7 +4631,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0040691",
+        "id": "00-0040691",
         "name": "Jaxson Dart",
         "pos_abb": "QB",
         "number": "6",
@@ -4640,7 +4640,7 @@
         "draft_pick": 25
       },
       {
-        "gsis_id": "00-0040715",
+        "id": "00-0040715",
         "name": "Cam Skattebo",
         "pos_abb": "RB",
         "number": "44",
@@ -4651,7 +4651,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0031957",
+        "id": "00-0031957",
         "name": "Rakeem Nunez-Roches",
         "pos_abb": "LDE",
         "number": "93",
@@ -4660,7 +4660,7 @@
         "draft_pick": 217
       },
       {
-        "gsis_id": "00-0035683",
+        "id": "00-0035683",
         "name": "Dexter Lawrence II",
         "pos_abb": "NT",
         "number": "97",
@@ -4669,7 +4669,7 @@
         "draft_pick": 17
       },
       {
-        "gsis_id": "00-0032667",
+        "id": "00-0032667",
         "name": "Roy Robertson-Harris",
         "pos_abb": "RDE",
         "number": "95",
@@ -4678,7 +4678,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0035687",
+        "id": "00-0035687",
         "name": "Bobby Okereke",
         "pos_abb": "LILB",
         "number": "58",
@@ -4687,7 +4687,7 @@
         "draft_pick": 89
       },
       {
-        "gsis_id": "00-0037259",
+        "id": "00-0037259",
         "name": "Micah McFadden",
         "pos_abb": "RILB",
         "number": "41",
@@ -4696,7 +4696,7 @@
         "draft_pick": 146
       },
       {
-        "gsis_id": "00-0036937",
+        "id": "00-0036937",
         "name": "Paulson Adebo",
         "pos_abb": "LCB",
         "number": "21",
@@ -4705,7 +4705,7 @@
         "draft_pick": 76
       },
       {
-        "gsis_id": "00-0037758",
+        "id": "00-0037758",
         "name": "Cor'Dale Flott",
         "pos_abb": "RCB",
         "number": "28",
@@ -4714,7 +4714,7 @@
         "draft_pick": 81
       },
       {
-        "gsis_id": "00-0039861",
+        "id": "00-0039861",
         "name": "Tyler Nubin",
         "pos_abb": "SS",
         "number": "27",
@@ -4723,7 +4723,7 @@
         "draft_pick": 47
       },
       {
-        "gsis_id": "00-0036998",
+        "id": "00-0036998",
         "name": "Jevon Holland",
         "pos_abb": "FS",
         "number": "8",
@@ -4736,7 +4736,7 @@
   "NYJ": {
     "offense": [
       {
-        "gsis_id": "00-0039790",
+        "id": "00-0039790",
         "name": "Olu Fashanu",
         "pos_abb": "LT",
         "number": "74",
@@ -4745,7 +4745,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0036369",
+        "id": "00-0036369",
         "name": "John Simpson",
         "pos_abb": "LG",
         "number": "76",
@@ -4754,7 +4754,7 @@
         "draft_pick": 109
       },
       {
-        "gsis_id": "00-0036622",
+        "id": "00-0036622",
         "name": "Josh Myers",
         "pos_abb": "C",
         "number": "71",
@@ -4763,7 +4763,7 @@
         "draft_pick": 62
       },
       {
-        "gsis_id": "00-0036979",
+        "id": "00-0036979",
         "name": "Alijah Vera-Tucker",
         "pos_abb": "RG",
         "number": "75",
@@ -4772,7 +4772,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0040123",
+        "id": "00-0040123",
         "name": "Armand Membou",
         "pos_abb": "RT",
         "number": "70",
@@ -4781,7 +4781,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0040736",
+        "id": "00-0040736",
         "name": "Mason Taylor",
         "pos_abb": "TE",
         "number": "85",
@@ -4790,7 +4790,7 @@
         "draft_pick": 42
       },
       {
-        "gsis_id": "00-0033943",
+        "id": "00-0033943",
         "name": "Josh Reynolds",
         "pos_abb": "WR",
         "number": "83",
@@ -4799,7 +4799,7 @@
         "draft_pick": 117
       },
       {
-        "gsis_id": "00-0037614",
+        "id": "00-0037614",
         "name": "John Metchie III",
         "pos_abb": "WR",
         "number": "3",
@@ -4808,7 +4808,7 @@
         "draft_pick": 44
       },
       {
-        "gsis_id": "00-0037740",
+        "id": "00-0037740",
         "name": "Garrett Wilson",
         "pos_abb": "WR",
         "number": "5",
@@ -4817,7 +4817,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0036945",
+        "id": "00-0036945",
         "name": "Justin Fields",
         "pos_abb": "QB",
         "number": "7",
@@ -4826,7 +4826,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0038120",
+        "id": "00-0038120",
         "name": "Breece Hall",
         "pos_abb": "RB",
         "number": "20",
@@ -4837,7 +4837,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0039142",
+        "id": "00-0039142",
         "name": "Will McDonald IV",
         "pos_abb": "LDE",
         "number": "9",
@@ -4846,7 +4846,7 @@
         "draft_pick": 15
       },
       {
-        "gsis_id": "00-0034782",
+        "id": "00-0034782",
         "name": "Harrison Phillips",
         "pos_abb": "LDT",
         "number": "97",
@@ -4855,7 +4855,7 @@
         "draft_pick": 96
       },
       {
-        "gsis_id": "00-0036881",
+        "id": "00-0036881",
         "name": "Jay Tufele",
         "pos_abb": "RDT",
         "number": "78",
@@ -4864,7 +4864,7 @@
         "draft_pick": 106
       },
       {
-        "gsis_id": "00-0038107",
+        "id": "00-0038107",
         "name": "Micheal Clemons",
         "pos_abb": "RDE",
         "number": "72",
@@ -4873,7 +4873,7 @@
         "draft_pick": 117
       },
       {
-        "gsis_id": "00-0040186",
+        "id": "00-0040186",
         "name": "Kiko Mauigoa",
         "pos_abb": "WLB",
         "number": "51",
@@ -4882,7 +4882,7 @@
         "draft_pick": 162
       },
       {
-        "gsis_id": "00-0036500",
+        "id": "00-0036500",
         "name": "Jamien Sherwood",
         "pos_abb": "MLB",
         "number": "44",
@@ -4891,7 +4891,7 @@
         "draft_pick": 146
       },
       {
-        "gsis_id": "00-0035680",
+        "id": "00-0035680",
         "name": "Quincy Williams",
         "pos_abb": "SLB",
         "number": "56",
@@ -4900,7 +4900,7 @@
         "draft_pick": 98
       },
       {
-        "gsis_id": "00-0040133",
+        "id": "00-0040133",
         "name": "Azareye'h Thomas",
         "pos_abb": "LCB",
         "number": "23",
@@ -4909,7 +4909,7 @@
         "draft_pick": 73
       },
       {
-        "gsis_id": "00-0036987",
+        "id": "00-0036987",
         "name": "Brandon Stephens",
         "pos_abb": "RCB",
         "number": "21",
@@ -4918,7 +4918,7 @@
         "draft_pick": 104
       },
       {
-        "gsis_id": "00-0040165",
+        "id": "00-0040165",
         "name": "Malachi Moore",
         "pos_abb": "SS",
         "number": "27",
@@ -4927,7 +4927,7 @@
         "draft_pick": 130
       },
       {
-        "gsis_id": "00-0036941",
+        "id": "00-0036941",
         "name": "Andre Cisco",
         "pos_abb": "FS",
         "number": "8",
@@ -4940,7 +4940,7 @@
   "PHI": {
     "offense": [
       {
-        "gsis_id": "00-0034429",
+        "id": "00-0034429",
         "name": "Jordan Mailata",
         "pos_abb": "LT",
         "number": "68",
@@ -4949,7 +4949,7 @@
         "draft_pick": 233
       },
       {
-        "gsis_id": "00-0037002",
+        "id": "00-0037002",
         "name": "Landon Dickerson",
         "pos_abb": "LG",
         "number": "69",
@@ -4958,7 +4958,7 @@
         "draft_pick": 37
       },
       {
-        "gsis_id": "00-0038112",
+        "id": "00-0038112",
         "name": "Cam Jurgens",
         "pos_abb": "C",
         "number": "51",
@@ -4967,7 +4967,7 @@
         "draft_pick": 51
       },
       {
-        "gsis_id": "00-0039001",
+        "id": "00-0039001",
         "name": "Tyler Steen",
         "pos_abb": "RG",
         "number": "56",
@@ -4976,7 +4976,7 @@
         "draft_pick": 65
       },
       {
-        "gsis_id": "00-0030561",
+        "id": "00-0030561",
         "name": "Lane Johnson",
         "pos_abb": "RT",
         "number": "65",
@@ -4985,7 +4985,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0034351",
+        "id": "00-0034351",
         "name": "Dallas Goedert",
         "pos_abb": "TE",
         "number": "88",
@@ -4994,7 +4994,7 @@
         "draft_pick": 49
       },
       {
-        "gsis_id": "00-0035676",
+        "id": "00-0035676",
         "name": "A.J. Brown",
         "pos_abb": "WR",
         "number": "11",
@@ -5003,7 +5003,7 @@
         "draft_pick": 51
       },
       {
-        "gsis_id": "00-0036912",
+        "id": "00-0036912",
         "name": "DeVonta Smith",
         "pos_abb": "WR",
         "number": "6",
@@ -5012,7 +5012,7 @@
         "draft_pick": 10
       },
       {
-        "gsis_id": "00-0037741",
+        "id": "00-0037741",
         "name": "Jahan Dotson",
         "pos_abb": "WR",
         "number": "2",
@@ -5021,7 +5021,7 @@
         "draft_pick": 16
       },
       {
-        "gsis_id": "00-0036389",
+        "id": "00-0036389",
         "name": "Jalen Hurts",
         "pos_abb": "QB",
         "number": "1",
@@ -5030,7 +5030,7 @@
         "draft_pick": 53
       },
       {
-        "gsis_id": "00-0034844",
+        "id": "00-0034844",
         "name": "Saquon Barkley",
         "pos_abb": "RB",
         "number": "26",
@@ -5041,7 +5041,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0038412",
+        "id": "00-0038412",
         "name": "Moro Ojomo",
         "pos_abb": "LDE",
         "number": "97",
@@ -5050,7 +5050,7 @@
         "draft_pick": 249
       },
       {
-        "gsis_id": "00-0038386",
+        "id": "00-0038386",
         "name": "Jalen Carter",
         "pos_abb": "RDE",
         "number": "98",
@@ -5059,7 +5059,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0036418",
+        "id": "00-0036418",
         "name": "Zack Baun",
         "pos_abb": "LILB",
         "number": "53",
@@ -5068,7 +5068,7 @@
         "draft_pick": 74
       },
       {
-        "gsis_id": "00-0037615",
+        "id": "00-0037615",
         "name": "Nakobe Dean",
         "pos_abb": "RILB",
         "number": "17",
@@ -5077,7 +5077,7 @@
         "draft_pick": 83
       },
       {
-        "gsis_id": "00-0033878",
+        "id": "00-0033878",
         "name": "Adoree' Jackson",
         "pos_abb": "LCB",
         "number": "8",
@@ -5086,7 +5086,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0039888",
+        "id": "00-0039888",
         "name": "Quinyon Mitchell",
         "pos_abb": "RCB",
         "number": "27",
@@ -5095,7 +5095,7 @@
         "draft_pick": 22
       },
       {
-        "gsis_id": "00-0037130",
+        "id": "00-0037130",
         "name": "Reed Blankenship",
         "pos_abb": "SS",
         "number": "32",
@@ -5104,7 +5104,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0040749",
+        "id": "00-0040749",
         "name": "Andrew Mukuba",
         "pos_abb": "FS",
         "number": "24",
@@ -5117,7 +5117,7 @@
   "PIT": {
     "offense": [
       {
-        "gsis_id": "00-0039109",
+        "id": "00-0039109",
         "name": "Broderick Jones",
         "pos_abb": "LT",
         "number": "77",
@@ -5126,7 +5126,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0032954",
+        "id": "00-0032954",
         "name": "Isaac Seumalo",
         "pos_abb": "LG",
         "number": "73",
@@ -5135,7 +5135,7 @@
         "draft_pick": 79
       },
       {
-        "gsis_id": "00-0039896",
+        "id": "00-0039896",
         "name": "Zach Frazier",
         "pos_abb": "C",
         "number": "54",
@@ -5144,7 +5144,7 @@
         "draft_pick": 51
       },
       {
-        "gsis_id": "00-0039358",
+        "id": "00-0039358",
         "name": "Mason McCormick",
         "pos_abb": "RG",
         "number": "66",
@@ -5153,7 +5153,7 @@
         "draft_pick": 119
       },
       {
-        "gsis_id": "00-0039871",
+        "id": "00-0039871",
         "name": "Troy Fautanu",
         "pos_abb": "RT",
         "number": "76",
@@ -5162,7 +5162,7 @@
         "draft_pick": 20
       },
       {
-        "gsis_id": "00-0036894",
+        "id": "00-0036894",
         "name": "Pat Freiermuth",
         "pos_abb": "TE",
         "number": "88",
@@ -5171,7 +5171,7 @@
         "draft_pick": 55
       },
       {
-        "gsis_id": "00-0034272",
+        "id": "00-0034272",
         "name": "Marquez Valdes-Scantling",
         "pos_abb": "WR",
         "number": "11",
@@ -5180,7 +5180,7 @@
         "draft_pick": 174
       },
       {
-        "gsis_id": "00-0035640",
+        "id": "00-0035640",
         "name": "DK Metcalf",
         "pos_abb": "WR",
         "number": "4",
@@ -5189,7 +5189,7 @@
         "draft_pick": 64
       },
       {
-        "gsis_id": "00-0037837",
+        "id": "00-0037837",
         "name": "Calvin Austin III",
         "pos_abb": "WR",
         "number": "19",
@@ -5198,7 +5198,7 @@
         "draft_pick": 138
       },
       {
-        "gsis_id": "00-0023459",
+        "id": "00-0023459",
         "name": "Aaron Rodgers",
         "pos_abb": "QB",
         "number": "8",
@@ -5207,7 +5207,7 @@
         "draft_pick": 24
       },
       {
-        "gsis_id": "00-0037228",
+        "id": "00-0037228",
         "name": "Jaylen Warren",
         "pos_abb": "RB",
         "number": "30",
@@ -5218,7 +5218,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0027969",
+        "id": "00-0027969",
         "name": "Cameron Heyward",
         "pos_abb": "LDE",
         "number": "97",
@@ -5227,7 +5227,7 @@
         "draft_pick": 31
       },
       {
-        "gsis_id": "00-0039110",
+        "id": "00-0039110",
         "name": "Keeanu Benton",
         "pos_abb": "NT",
         "number": "95",
@@ -5236,7 +5236,7 @@
         "draft_pick": 49
       },
       {
-        "gsis_id": "00-0040678",
+        "id": "00-0040678",
         "name": "Derrick Harmon",
         "pos_abb": "RDE",
         "number": "99",
@@ -5245,7 +5245,7 @@
         "draft_pick": 21
       },
       {
-        "gsis_id": "00-0033886",
+        "id": "00-0033886",
         "name": "T.J. Watt",
         "pos_abb": "WLB",
         "number": "90",
@@ -5254,7 +5254,7 @@
         "draft_pick": 30
       },
       {
-        "gsis_id": "00-0036280",
+        "id": "00-0036280",
         "name": "Malik Harrison",
         "pos_abb": "RILB",
         "number": "50",
@@ -5263,7 +5263,7 @@
         "draft_pick": 98
       },
       {
-        "gsis_id": "00-0035795",
+        "id": "00-0035795",
         "name": "James Pierre",
         "pos_abb": "LCB",
         "number": "42",
@@ -5272,7 +5272,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039167",
+        "id": "00-0039167",
         "name": "Joey Porter Jr.",
         "pos_abb": "RCB",
         "number": "24",
@@ -5281,7 +5281,7 @@
         "draft_pick": 32
       },
       {
-        "gsis_id": "00-0036231",
+        "id": "00-0036231",
         "name": "Kyle Dugger",
         "pos_abb": "SS",
         "number": "29",
@@ -5290,7 +5290,7 @@
         "draft_pick": 37
       },
       {
-        "gsis_id": "00-0033294",
+        "id": "00-0033294",
         "name": "Chuck Clark",
         "pos_abb": "FS",
         "number": "21",
@@ -5303,7 +5303,7 @@
   "SEA": {
     "offense": [
       {
-        "gsis_id": "00-0037821",
+        "id": "00-0037821",
         "name": "Charles Cross",
         "pos_abb": "LT",
         "number": "67",
@@ -5312,7 +5312,7 @@
         "draft_pick": 9
       },
       {
-        "gsis_id": "00-0040639",
+        "id": "00-0040639",
         "name": "Grey Zabel",
         "pos_abb": "LG",
         "number": "76",
@@ -5321,7 +5321,7 @@
         "draft_pick": 18
       },
       {
-        "gsis_id": "00-0039926",
+        "id": "00-0039926",
         "name": "Jalen Sundell",
         "pos_abb": "C",
         "number": "61",
@@ -5330,7 +5330,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039020",
+        "id": "00-0039020",
         "name": "Anthony Bradford",
         "pos_abb": "RG",
         "number": "75",
@@ -5339,7 +5339,7 @@
         "draft_pick": 108
       },
       {
-        "gsis_id": "00-0037812",
+        "id": "00-0037812",
         "name": "Abraham Lucas",
         "pos_abb": "RT",
         "number": "72",
@@ -5348,7 +5348,7 @@
         "draft_pick": 72
       },
       {
-        "gsis_id": "00-0039793",
+        "id": "00-0039793",
         "name": "AJ Barner",
         "pos_abb": "TE",
         "number": "88",
@@ -5357,7 +5357,7 @@
         "draft_pick": 121
       },
       {
-        "gsis_id": "00-0033908",
+        "id": "00-0033908",
         "name": "Cooper Kupp",
         "pos_abb": "WR",
         "number": "10",
@@ -5366,7 +5366,7 @@
         "draft_pick": 69
       },
       {
-        "gsis_id": "00-0037545",
+        "id": "00-0037545",
         "name": "Rashid Shaheed",
         "pos_abb": "WR",
         "number": "22",
@@ -5375,7 +5375,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038543",
+        "id": "00-0038543",
         "name": "Jaxon Smith-Njigba",
         "pos_abb": "WR",
         "number": "11",
@@ -5384,7 +5384,7 @@
         "draft_pick": 20
       },
       {
-        "gsis_id": "00-0034869",
+        "id": "00-0034869",
         "name": "Sam Darnold",
         "pos_abb": "QB",
         "number": "14",
@@ -5393,7 +5393,7 @@
         "draft_pick": 3
       },
       {
-        "gsis_id": "00-0038134",
+        "id": "00-0038134",
         "name": "Kenneth Walker III",
         "pos_abb": "RB",
         "number": "9",
@@ -5404,7 +5404,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0031411",
+        "id": "00-0031411",
         "name": "DeMarcus Lawrence",
         "pos_abb": "LDE",
         "number": "0",
@@ -5413,7 +5413,7 @@
         "draft_pick": 34
       },
       {
-        "gsis_id": "00-0039309",
+        "id": "00-0039309",
         "name": "Byron Murphy II",
         "pos_abb": "LDT",
         "number": "91",
@@ -5422,7 +5422,7 @@
         "draft_pick": 16
       },
       {
-        "gsis_id": "00-0031933",
+        "id": "00-0031933",
         "name": "Leonard Williams",
         "pos_abb": "RDT",
         "number": "99",
@@ -5431,7 +5431,7 @@
         "draft_pick": 6
       },
       {
-        "gsis_id": "00-0039047",
+        "id": "00-0039047",
         "name": "Derick Hall",
         "pos_abb": "RDE",
         "number": "58",
@@ -5440,7 +5440,7 @@
         "draft_pick": 37
       },
       {
-        "gsis_id": "00-0034350",
+        "id": "00-0034350",
         "name": "Uchenna Nwosu",
         "pos_abb": "WLB",
         "number": "7",
@@ -5449,7 +5449,7 @@
         "draft_pick": 48
       },
       {
-        "gsis_id": "00-0036994",
+        "id": "00-0036994",
         "name": "Ernest Jones IV",
         "pos_abb": "MLB",
         "number": "13",
@@ -5458,7 +5458,7 @@
         "draft_pick": 103
       },
       {
-        "gsis_id": "00-0038922",
+        "id": "00-0038922",
         "name": "Drake Thomas",
         "pos_abb": "SLB",
         "number": "42",
@@ -5467,7 +5467,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039169",
+        "id": "00-0039169",
         "name": "Devon Witherspoon",
         "pos_abb": "LCB",
         "number": "21",
@@ -5476,7 +5476,7 @@
         "draft_pick": 5
       },
       {
-        "gsis_id": "00-0037137",
+        "id": "00-0037137",
         "name": "Josh Jobe",
         "pos_abb": "RCB",
         "number": "29",
@@ -5485,7 +5485,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0038136",
+        "id": "00-0038136",
         "name": "Coby Bryant",
         "pos_abb": "SS",
         "number": "8",
@@ -5494,7 +5494,7 @@
         "draft_pick": 109
       },
       {
-        "gsis_id": "00-0034974",
+        "id": "00-0034974",
         "name": "Julian Love",
         "pos_abb": "FS",
         "number": "20",
@@ -5507,7 +5507,7 @@
   "SF": {
     "offense": [
       {
-        "gsis_id": "00-0027857",
+        "id": "00-0027857",
         "name": "Trent Williams",
         "pos_abb": "LT",
         "number": "71",
@@ -5516,7 +5516,7 @@
         "draft_pick": 4
       },
       {
-        "gsis_id": "00-0037829",
+        "id": "00-0037829",
         "name": "Spencer Burford",
         "pos_abb": "LG",
         "number": "74",
@@ -5525,7 +5525,7 @@
         "draft_pick": 134
       },
       {
-        "gsis_id": "00-0032701",
+        "id": "00-0032701",
         "name": "Jake Brendel",
         "pos_abb": "C",
         "number": "64",
@@ -5534,7 +5534,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039351",
+        "id": "00-0039351",
         "name": "Dominick Puni",
         "pos_abb": "RG",
         "number": "77",
@@ -5543,7 +5543,7 @@
         "draft_pick": 86
       },
       {
-        "gsis_id": "00-0036256",
+        "id": "00-0036256",
         "name": "Colton McKivitz",
         "pos_abb": "RT",
         "number": "68",
@@ -5552,7 +5552,7 @@
         "draft_pick": 153
       },
       {
-        "gsis_id": "00-0033288",
+        "id": "00-0033288",
         "name": "George Kittle",
         "pos_abb": "TE",
         "number": "85",
@@ -5561,7 +5561,7 @@
         "draft_pick": 146
       },
       {
-        "gsis_id": "00-0032775",
+        "id": "00-0032775",
         "name": "Demarcus Robinson",
         "pos_abb": "WR",
         "number": "5",
@@ -5570,7 +5570,7 @@
         "draft_pick": 126
       },
       {
-        "gsis_id": "00-0036259",
+        "id": "00-0036259",
         "name": "Jauan Jennings",
         "pos_abb": "WR",
         "number": "15",
@@ -5579,7 +5579,7 @@
         "draft_pick": 217
       },
       {
-        "gsis_id": "00-0039916",
+        "id": "00-0039916",
         "name": "Ricky Pearsall",
         "pos_abb": "WR",
         "number": "1",
@@ -5588,7 +5588,7 @@
         "draft_pick": 31
       },
       {
-        "gsis_id": "00-0037834",
+        "id": "00-0037834",
         "name": "Brock Purdy",
         "pos_abb": "QB",
         "number": "13",
@@ -5597,7 +5597,7 @@
         "draft_pick": 262
       },
       {
-        "gsis_id": "00-0033280",
+        "id": "00-0033280",
         "name": "Christian McCaffrey",
         "pos_abb": "RB",
         "number": "23",
@@ -5608,7 +5608,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0035717",
+        "id": "00-0035717",
         "name": "Nick Bosa",
         "pos_abb": "LDE",
         "number": "97",
@@ -5617,7 +5617,7 @@
         "draft_pick": 2
       },
       {
-        "gsis_id": "00-0037832",
+        "id": "00-0037832",
         "name": "Kalia Davis",
         "pos_abb": "LDT",
         "number": "93",
@@ -5626,7 +5626,7 @@
         "draft_pick": 220
       },
       {
-        "gsis_id": "00-0040721",
+        "id": "00-0040721",
         "name": "Alfred Collins",
         "pos_abb": "RDT",
         "number": "95",
@@ -5635,7 +5635,7 @@
         "draft_pick": 43
       },
       {
-        "gsis_id": "00-0040660",
+        "id": "00-0040660",
         "name": "Mykel Williams",
         "pos_abb": "RDE",
         "number": "98",
@@ -5644,7 +5644,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0038625",
+        "id": "00-0038625",
         "name": "Dee Winters",
         "pos_abb": "WLB",
         "number": "53",
@@ -5653,7 +5653,7 @@
         "draft_pick": 216
       },
       {
-        "gsis_id": "00-0034815",
+        "id": "00-0034815",
         "name": "Fred Warner",
         "pos_abb": "MLB",
         "number": "54",
@@ -5662,7 +5662,7 @@
         "draft_pick": 70
       },
       {
-        "gsis_id": "00-0035413",
+        "id": "00-0035413",
         "name": "Luke Gifford",
         "pos_abb": "SLB",
         "number": "57",
@@ -5671,7 +5671,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039345",
+        "id": "00-0039345",
         "name": "Renardo Green",
         "pos_abb": "LCB",
         "number": "0",
@@ -5680,7 +5680,7 @@
         "draft_pick": 64
       },
       {
-        "gsis_id": "00-0036563",
+        "id": "00-0036563",
         "name": "Deommodore Lenoir",
         "pos_abb": "RCB",
         "number": "2",
@@ -5689,7 +5689,7 @@
         "draft_pick": 172
       },
       {
-        "gsis_id": "00-0038554",
+        "id": "00-0038554",
         "name": "Ji'Ayir Brown",
         "pos_abb": "SS",
         "number": "27",
@@ -5698,7 +5698,7 @@
         "draft_pick": 87
       },
       {
-        "gsis_id": "00-0039360",
+        "id": "00-0039360",
         "name": "Malik Mustapha",
         "pos_abb": "FS",
         "number": "6",
@@ -5711,7 +5711,7 @@
   "TB": {
     "offense": [
       {
-        "gsis_id": "00-0036406",
+        "id": "00-0036406",
         "name": "Tristan Wirfs",
         "pos_abb": "LT",
         "number": "78",
@@ -5720,7 +5720,7 @@
         "draft_pick": 13
       },
       {
-        "gsis_id": "00-0036132",
+        "id": "00-0036132",
         "name": "Ben Bredeson",
         "pos_abb": "LG",
         "number": "68",
@@ -5729,7 +5729,7 @@
         "draft_pick": 143
       },
       {
-        "gsis_id": "00-0039905",
+        "id": "00-0039905",
         "name": "Graham Barton",
         "pos_abb": "C",
         "number": "62",
@@ -5738,7 +5738,7 @@
         "draft_pick": 26
       },
       {
-        "gsis_id": "00-0039157",
+        "id": "00-0039157",
         "name": "Cody Mauch",
         "pos_abb": "RG",
         "number": "69",
@@ -5747,7 +5747,7 @@
         "draft_pick": 48
       },
       {
-        "gsis_id": "00-0037835",
+        "id": "00-0037835",
         "name": "Luke Goedeke",
         "pos_abb": "RT",
         "number": "67",
@@ -5756,7 +5756,7 @@
         "draft_pick": 57
       },
       {
-        "gsis_id": "00-0038129",
+        "id": "00-0038129",
         "name": "Cade Otton",
         "pos_abb": "TE",
         "number": "88",
@@ -5765,7 +5765,7 @@
         "draft_pick": 106
       },
       {
-        "gsis_id": "00-0031408",
+        "id": "00-0031408",
         "name": "Mike Evans",
         "pos_abb": "WR",
         "number": "13",
@@ -5774,7 +5774,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0033921",
+        "id": "00-0033921",
         "name": "Chris Godwin Jr.",
         "pos_abb": "WR",
         "number": "14",
@@ -5783,7 +5783,7 @@
         "draft_pick": 84
       },
       {
-        "gsis_id": "00-0040129",
+        "id": "00-0040129",
         "name": "Emeka Egbuka",
         "pos_abb": "WR",
         "number": "2",
@@ -5792,7 +5792,7 @@
         "draft_pick": 19
       },
       {
-        "gsis_id": "00-0034855",
+        "id": "00-0034855",
         "name": "Baker Mayfield",
         "pos_abb": "QB",
         "number": "6",
@@ -5801,7 +5801,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0039361",
+        "id": "00-0039361",
         "name": "Bucky Irving",
         "pos_abb": "RB",
         "number": "7",
@@ -5812,7 +5812,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0040183",
+        "id": "00-0040183",
         "name": "Elijah Roberts",
         "pos_abb": "LDE",
         "number": "95",
@@ -5821,7 +5821,7 @@
         "draft_pick": 157
       },
       {
-        "gsis_id": "00-0034773",
+        "id": "00-0034773",
         "name": "Vita Vea",
         "pos_abb": "NT",
         "number": "50",
@@ -5830,7 +5830,7 @@
         "draft_pick": 12
       },
       {
-        "gsis_id": "00-0038127",
+        "id": "00-0038127",
         "name": "Logan Hall",
         "pos_abb": "RDE",
         "number": "90",
@@ -5839,7 +5839,7 @@
         "draft_pick": 33
       },
       {
-        "gsis_id": "00-0039049",
+        "id": "00-0039049",
         "name": "SirVocea Dennis",
         "pos_abb": "LILB",
         "number": "8",
@@ -5848,7 +5848,7 @@
         "draft_pick": 153
       },
       {
-        "gsis_id": "00-0029562",
+        "id": "00-0029562",
         "name": "Lavonte David",
         "pos_abb": "RILB",
         "number": "54",
@@ -5857,7 +5857,7 @@
         "draft_pick": 58
       },
       {
-        "gsis_id": "00-0035699",
+        "id": "00-0035699",
         "name": "Jamel Dean",
         "pos_abb": "LCB",
         "number": "35",
@@ -5866,7 +5866,7 @@
         "draft_pick": 94
       },
       {
-        "gsis_id": "00-0037268",
+        "id": "00-0037268",
         "name": "Zyon McCollum",
         "pos_abb": "RCB",
         "number": "27",
@@ -5875,7 +5875,7 @@
         "draft_pick": 157
       },
       {
-        "gsis_id": "00-0036411",
+        "id": "00-0036411",
         "name": "Antoine Winfield Jr.",
         "pos_abb": "SS",
         "number": "31",
@@ -5884,7 +5884,7 @@
         "draft_pick": 45
       },
       {
-        "gsis_id": "00-0039846",
+        "id": "00-0039846",
         "name": "Tykee Smith",
         "pos_abb": "FS",
         "number": "23",
@@ -5897,7 +5897,7 @@
   "TEN": {
     "offense": [
       {
-        "gsis_id": "00-0036869",
+        "id": "00-0036869",
         "name": "Dan Moore Jr.",
         "pos_abb": "LT",
         "number": "75",
@@ -5906,7 +5906,7 @@
         "draft_pick": 128
       },
       {
-        "gsis_id": "00-0039034",
+        "id": "00-0039034",
         "name": "Peter Skoronski",
         "pos_abb": "LG",
         "number": "77",
@@ -5915,7 +5915,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0033793",
+        "id": "00-0033793",
         "name": "Corey Levin",
         "pos_abb": "C",
         "number": "62",
@@ -5924,7 +5924,7 @@
         "draft_pick": 217
       },
       {
-        "gsis_id": "00-0029592",
+        "id": "00-0029592",
         "name": "Kevin Zeitler",
         "pos_abb": "RG",
         "number": "70",
@@ -5933,7 +5933,7 @@
         "draft_pick": 27
       },
       {
-        "gsis_id": "00-0039731",
+        "id": "00-0039731",
         "name": "JC Latham",
         "pos_abb": "RT",
         "number": "55",
@@ -5942,7 +5942,7 @@
         "draft_pick": 7
       },
       {
-        "gsis_id": "00-0037809",
+        "id": "00-0037809",
         "name": "Chig Okonkwo",
         "pos_abb": "TE",
         "number": "85",
@@ -5951,7 +5951,7 @@
         "draft_pick": 143
       },
       {
-        "gsis_id": "00-0034837",
+        "id": "00-0034837",
         "name": "Calvin Ridley",
         "pos_abb": "WR",
         "number": "0",
@@ -5960,7 +5960,7 @@
         "draft_pick": 26
       },
       {
-        "gsis_id": "00-0040170",
+        "id": "00-0040170",
         "name": "Elic Ayomanor",
         "pos_abb": "WR",
         "number": "5",
@@ -5969,7 +5969,7 @@
         "draft_pick": 136
       },
       {
-        "gsis_id": "00-0040705",
+        "id": "00-0040705",
         "name": "Chimere Dike",
         "pos_abb": "WR",
         "number": "17",
@@ -5978,7 +5978,7 @@
         "draft_pick": 103
       },
       {
-        "gsis_id": "00-0040676",
+        "id": "00-0040676",
         "name": "Cam Ward",
         "pos_abb": "QB",
         "number": "1",
@@ -5987,7 +5987,7 @@
         "draft_pick": 1
       },
       {
-        "gsis_id": "00-0035261",
+        "id": "00-0035261",
         "name": "Tony Pollard",
         "pos_abb": "RB",
         "number": "20",
@@ -5998,7 +5998,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0034810",
+        "id": "00-0034810",
         "name": "Sebastian Joseph-Day",
         "pos_abb": "LDE",
         "number": "69",
@@ -6007,7 +6007,7 @@
         "draft_pick": 195
       },
       {
-        "gsis_id": "00-0040517",
+        "id": "00-0040517",
         "name": "Cam Horsley",
         "pos_abb": "NT",
         "number": "68",
@@ -6016,7 +6016,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0039886",
+        "id": "00-0039886",
         "name": "T'Vondre Sweat",
         "pos_abb": "NT",
         "number": "93",
@@ -6025,7 +6025,7 @@
         "draft_pick": 38
       },
       {
-        "gsis_id": "00-0035643",
+        "id": "00-0035643",
         "name": "Jeffery Simmons",
         "pos_abb": "RDE",
         "number": "98",
@@ -6034,7 +6034,7 @@
         "draft_pick": 19
       },
       {
-        "gsis_id": "00-0033046",
+        "id": "00-0033046",
         "name": "Jihad Ward",
         "pos_abb": "WLB",
         "number": "53",
@@ -6043,7 +6043,7 @@
         "draft_pick": 44
       },
       {
-        "gsis_id": "00-0034825",
+        "id": "00-0034825",
         "name": "Arden Key",
         "pos_abb": "SLB",
         "number": "49",
@@ -6052,7 +6052,7 @@
         "draft_pick": 87
       },
       {
-        "gsis_id": "00-0037549",
+        "id": "00-0037549",
         "name": "Darrell Baker Jr.",
         "pos_abb": "LCB",
         "number": "39",
@@ -6061,7 +6061,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0036374",
+        "id": "00-0036374",
         "name": "L'Jarius Sneed",
         "pos_abb": "RCB",
         "number": "38",
@@ -6070,7 +6070,7 @@
         "draft_pick": 138
       },
       {
-        "gsis_id": "00-0035632",
+        "id": "00-0035632",
         "name": "Amani Hooker",
         "pos_abb": "SS",
         "number": "37",
@@ -6079,7 +6079,7 @@
         "draft_pick": 116
       },
       {
-        "gsis_id": "00-0038703",
+        "id": "00-0038703",
         "name": "Kendell Brooks",
         "pos_abb": "FS",
         "number": "30",
@@ -6092,7 +6092,7 @@
   "WAS": {
     "offense": [
       {
-        "gsis_id": "00-0032380",
+        "id": "00-0032380",
         "name": "Laremy Tunsil",
         "pos_abb": "LT",
         "number": "78",
@@ -6101,7 +6101,7 @@
         "draft_pick": 13
       },
       {
-        "gsis_id": "00-0037092",
+        "id": "00-0037092",
         "name": "Chris Paul",
         "pos_abb": "LG",
         "number": "75",
@@ -6110,7 +6110,7 @@
         "draft_pick": 230
       },
       {
-        "gsis_id": "00-0036376",
+        "id": "00-0036376",
         "name": "Tyler Biadasz",
         "pos_abb": "C",
         "number": "63",
@@ -6119,7 +6119,7 @@
         "draft_pick": 146
       },
       {
-        "gsis_id": "00-0036618",
+        "id": "00-0036618",
         "name": "Sam Cosmi",
         "pos_abb": "RG",
         "number": "76",
@@ -6128,7 +6128,7 @@
         "draft_pick": 51
       },
       {
-        "gsis_id": "00-0040686",
+        "id": "00-0040686",
         "name": "Josh Conerly Jr.",
         "pos_abb": "RT",
         "number": "72",
@@ -6137,7 +6137,7 @@
         "draft_pick": 29
       },
       {
-        "gsis_id": "00-0030061",
+        "id": "00-0030061",
         "name": "Zach Ertz",
         "pos_abb": "TE",
         "number": "86",
@@ -6146,7 +6146,7 @@
         "draft_pick": 35
       },
       {
-        "gsis_id": "00-0035659",
+        "id": "00-0035659",
         "name": "Terry McLaurin",
         "pos_abb": "WR",
         "number": "17",
@@ -6155,7 +6155,7 @@
         "draft_pick": 76
       },
       {
-        "gsis_id": "00-0035719",
+        "id": "00-0035719",
         "name": "Deebo Samuel",
         "pos_abb": "WR",
         "number": "1",
@@ -6164,7 +6164,7 @@
         "draft_pick": 36
       },
       {
-        "gsis_id": "00-0039355",
+        "id": "00-0039355",
         "name": "Luke McCaffrey",
         "pos_abb": "WR",
         "number": "11",
@@ -6173,7 +6173,7 @@
         "draft_pick": 100
       },
       {
-        "gsis_id": "00-0039910",
+        "id": "00-0039910",
         "name": "Jayden Daniels",
         "pos_abb": "QB",
         "number": "5",
@@ -6182,7 +6182,7 @@
         "draft_pick": 2
       },
       {
-        "gsis_id": "00-0038611",
+        "id": "00-0038611",
         "name": "Chris Rodriguez Jr.",
         "pos_abb": "RB",
         "number": "36",
@@ -6193,7 +6193,7 @@
     ],
     "defense": [
       {
-        "gsis_id": "00-0034373",
+        "id": "00-0034373",
         "name": "Dorance Armstrong",
         "pos_abb": "LDE",
         "number": "92",
@@ -6202,7 +6202,7 @@
         "draft_pick": 116
       },
       {
-        "gsis_id": "00-0034333",
+        "id": "00-0034333",
         "name": "Daron Payne",
         "pos_abb": "LDT",
         "number": "94",
@@ -6211,7 +6211,7 @@
         "draft_pick": 13
       },
       {
-        "gsis_id": "00-0036260",
+        "id": "00-0036260",
         "name": "Javon Kinlaw",
         "pos_abb": "RDT",
         "number": "99",
@@ -6220,7 +6220,7 @@
         "draft_pick": 14
       },
       {
-        "gsis_id": "00-0033947",
+        "id": "00-0033947",
         "name": "Deatrich Wise Jr.",
         "pos_abb": "RDE",
         "number": "91",
@@ -6229,7 +6229,7 @@
         "draft_pick": 131
       },
       {
-        "gsis_id": "00-0034302",
+        "id": "00-0034302",
         "name": "Frankie Luvu",
         "pos_abb": "WLB",
         "number": "4",
@@ -6238,7 +6238,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0029255",
+        "id": "00-0029255",
         "name": "Bobby Wagner",
         "pos_abb": "MLB",
         "number": "54",
@@ -6247,7 +6247,7 @@
         "draft_pick": 47
       },
       {
-        "gsis_id": "00-0027940",
+        "id": "00-0027940",
         "name": "Von Miller",
         "pos_abb": "SLB",
         "number": "24",
@@ -6256,7 +6256,7 @@
         "draft_pick": 2
       },
       {
-        "gsis_id": "00-0040731",
+        "id": "00-0040731",
         "name": "Trey Amos",
         "pos_abb": "LCB",
         "number": "23",
@@ -6265,7 +6265,7 @@
         "draft_pick": 61
       },
       {
-        "gsis_id": "00-0033874",
+        "id": "00-0033874",
         "name": "Marshon Lattimore",
         "pos_abb": "RCB",
         "number": "2",
@@ -6274,7 +6274,7 @@
         "draft_pick": 11
       },
       {
-        "gsis_id": "00-0034465",
+        "id": "00-0034465",
         "name": "Jeremy Reaves",
         "pos_abb": "SS",
         "number": "39",
@@ -6283,7 +6283,7 @@
         "draft_pick": null
       },
       {
-        "gsis_id": "00-0035655",
+        "id": "00-0035655",
         "name": "Will Harris",
         "pos_abb": "FS",
         "number": "3",

@@ -23,6 +23,7 @@ type Props = {
   state: BlobState;
   onBonusGuess?: (name: string) => void;
   bonusCorrect?: boolean;
+  showHint?: boolean;
 };
 
 function collegeAbbr(college: string | null): string {
@@ -32,7 +33,7 @@ function collegeAbbr(college: string | null): string {
   return words.map(w => w[0]).join('').toUpperCase().slice(0, 3);
 }
 
-export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect }: Props) {
+export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect, showHint }: Props) {
   const [guessInput, setGuessInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -200,6 +201,11 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
         )}
       </div>
       <div className="text-[7px] md:text-[8px] text-white/30 sports-font">{player.pos_abb}</div>
+      {showHint && player.ppg != null && (
+        <div className="text-[7px] text-[#fdb927]/70 sports-font leading-none">
+          {player.ppg.toFixed(1)} PPG
+        </div>
+      )}
     </div>
   );
 }

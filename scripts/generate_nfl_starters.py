@@ -301,7 +301,7 @@ def main() -> None:
                 gsis_id = str(row['gsis_id'])
                 roster_info = roster_lookup.get(gsis_id, {})
                 players_out.append({
-                    'gsis_id': gsis_id,
+                    'id': gsis_id,
                     'name': str(row['player_name']),
                     'pos_abb': str(row['pos_abb']),
                     'number': roster_info.get('number'),
