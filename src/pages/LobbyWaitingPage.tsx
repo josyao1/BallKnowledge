@@ -22,6 +22,7 @@ import { getNextGame, startPrefetch } from '../services/careerPrefetch';
 import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/lineupIsRight';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../services/boxScoreData';
+import { loadNFLStarters, getRandomTeamAndSide, getRandomEncoding, pickBestEncoding } from '../services/startingLineupData';
 import { scrambleName } from '../utils/scramble';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
@@ -78,7 +79,7 @@ export function LobbyWaitingPage() {
 
   // Host settings state
   const [showSettings, setShowSettings] = useState(false);
-  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score'>('roster');
+  const [editGameType, setEditGameType] = useState<'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup'>('roster');
   const [editSport, setEditSport] = useState<Sport>('nba');
   const [editRandomSport, setEditRandomSport] = useState(false);
   const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
@@ -127,7 +128,7 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     if (lobby && !showSettings) {
       const lobbySport = lobby.sport as Sport;
-      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score') || 'roster');
+      setEditGameType((lobby.game_type as 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup') || 'roster');
       setEditSport(lobbySport);
       setEditRandomSport(false); // Random sport doesn't persist between rounds
       setEditGameMode(lobby.game_mode as 'random' | 'manual');
@@ -274,7 +275,7 @@ export function LobbyWaitingPage() {
       hasStartedGame.current = false;
       hasAutoStarted.current = false;
     } else if (lobby.status === 'countdown') {
-      if (lobby.game_type !== 'career' && lobby.game_type !== 'scramble') {
+      if (lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'starting-lineup') {
         setShowDealingAnimation(true);
       }
     } else if (lobby.status === 'playing') {
@@ -301,6 +302,11 @@ export function LobbyWaitingPage() {
           hasStartedGame.current = true;
           navigate(`/lobby/${code}/box-score`);
         }
+      } else if (lobby.game_type === 'starting-lineup') {
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/starting-lineup`);
+        }
       } else {
         // Roster mode: show dealing animation
         if (!hasStartedGame.current) {
@@ -319,6 +325,8 @@ export function LobbyWaitingPage() {
         navigate(`/lobby/${code}/lineup-is-right/results`);
       } else if (lobby.game_type === 'box-score') {
         navigate(`/lobby/${code}/box-score/results`);
+      } else if (lobby.game_type === 'starting-lineup') {
+        navigate(`/lobby/${code}/starting-lineup/results`);
       } else {
         navigate(`/lobby/${code}/results`);
       }
@@ -518,6 +526,39 @@ export function LobbyWaitingPage() {
       await startCareerRound(lobby.id, newCareerState);
       setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
       navigate(`/lobby/${code}/box-score`);
+    } catch {
+      setIsLoadingRoster(false);
+    }
+  };
+
+  const handleStartingLineupStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+
+    try {
+      const careerState = (lobby.career_state as any) || {};
+      const winTarget = careerState.win_target || 5;
+
+      const startersData = await loadNFLStarters();
+      const pick = getRandomTeamAndSide(startersData);
+      let enc = getRandomEncoding();
+      if (pick.players.filter((p: any) => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null).length < 5) {
+        enc = pickBestEncoding(pick.players);
+      }
+
+      const newCareerState = {
+        team: pick.team,
+        side: pick.side,
+        encoding: enc,
+        round: 1,
+        win_target: winTarget,
+        unlock_epoch: 0,
+      };
+
+      await startCareerRound(lobby.id, newCareerState);
+      setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
+      navigate(`/lobby/${code}/starting-lineup`);
     } catch {
       setIsLoadingRoster(false);
     }
@@ -1800,6 +1841,27 @@ export function LobbyWaitingPage() {
                   onClick={handleBoxScoreStart}
                   disabled={isLoadingRoster}
                   className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+                >
+                  Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
+                </button>
+              )}
+            </>
+          ) : lobby.game_type === 'starting-lineup' ? (
+            <>
+              {isHost && players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleStartingLineupStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-[#ea580c] to-[#c2410c] text-white shadow-[0_4px_0_#9a3412] active:shadow-none active:translate-y-1 disabled:opacity-50"
+                >
+                  {isLoadingRoster ? 'Loading...' : 'Start Starting Lineup'}
+                </button>
+              )}
+              {isHost && players.length >= 2 && !players.every(p => p.is_ready) && lobby.status === 'waiting' && (
+                <button
+                  onClick={handleStartingLineupStart}
+                  disabled={isLoadingRoster}
+                  className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-[#ea580c] hover:text-orange-400"
                 >
                   Force Start ({players.filter(p => p.is_ready).length}/{players.length} ready)
                 </button>

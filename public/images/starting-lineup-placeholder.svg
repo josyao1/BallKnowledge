@@ -1,0 +1,73 @@
+<svg width="318" height="433" viewBox="0 0 318 433" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Card background -->
+  <rect width="318" height="433" rx="10" fill="#0e0e0e"/>
+  <!-- Inner border frame — matches other card SVGs -->
+  <rect x="33.5" y="35.5" width="252" height="362" rx="9.5" fill="#0a0a0a" stroke="#ea580c"/>
+
+  <!-- Subtle field tint inside frame -->
+  <rect x="34" y="36" width="251" height="361" rx="9" fill="#1a0900" opacity="0.6"/>
+
+  <!-- Line of scrimmage -->
+  <line x1="34" y1="210" x2="285" y2="210" stroke="#ea580c" stroke-width="1" stroke-opacity="0.35"/>
+
+  <!-- Hash marks -->
+  <line x1="130" y1="200" x2="130" y2="220" stroke="white" stroke-width="0.6" stroke-opacity="0.12"/>
+  <line x1="159" y1="200" x2="159" y2="220" stroke="white" stroke-width="0.6" stroke-opacity="0.12"/>
+  <line x1="188" y1="200" x2="188" y2="220" stroke="white" stroke-width="0.6" stroke-opacity="0.12"/>
+
+  <!-- Yard lines -->
+  <line x1="34" y1="170" x2="285" y2="170" stroke="white" stroke-width="0.5" stroke-opacity="0.07"/>
+  <line x1="34" y1="260" x2="285" y2="260" stroke="white" stroke-width="0.5" stroke-opacity="0.07"/>
+
+  <!-- ── OFFENSE ── -->
+  <!-- WR far left -->
+  <circle cx="52"  cy="196" r="11" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- WR slot left -->
+  <circle cx="82"  cy="189" r="11" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- LT -->
+  <circle cx="116" cy="204" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- LG -->
+  <circle cx="140" cy="204" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- C -->
+  <circle cx="159" cy="204" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- RG -->
+  <circle cx="178" cy="204" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- RT -->
+  <circle cx="202" cy="204" r="12" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- TE -->
+  <circle cx="232" cy="197" r="11" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- WR far right -->
+  <circle cx="265" cy="189" r="11" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+  <!-- QB — gold accent -->
+  <circle cx="159" cy="230" r="13" fill="#1a0e00" stroke="#fdb927" stroke-width="2.2"/>
+  <!-- RB -->
+  <circle cx="172" cy="255" r="11" fill="#1a0800" stroke="#ea580c" stroke-width="1.8"/>
+
+  <!-- Ball at center -->
+  <ellipse cx="159" cy="214" rx="6" ry="4" fill="#7c3a1a" opacity="0.8"/>
+  <line x1="153" y1="214" x2="165" y2="214" stroke="#f97316" stroke-width="0.8" stroke-opacity="0.6"/>
+
+  <!-- ── DEFENSE (above LOS, smaller / dimmer) ── -->
+  <!-- DE left -->
+  <circle cx="108" cy="175" r="9" fill="#0e0800" stroke="#ea580c" stroke-width="1.2" stroke-opacity="0.5"/>
+  <!-- DT left -->
+  <circle cx="136" cy="172" r="9" fill="#0e0800" stroke="#ea580c" stroke-width="1.2" stroke-opacity="0.5"/>
+  <!-- DT right -->
+  <circle cx="182" cy="172" r="9" fill="#0e0800" stroke="#ea580c" stroke-width="1.2" stroke-opacity="0.5"/>
+  <!-- DE right -->
+  <circle cx="210" cy="175" r="9" fill="#0e0800" stroke="#ea580c" stroke-width="1.2" stroke-opacity="0.5"/>
+  <!-- LB left -->
+  <circle cx="120" cy="156" r="8" fill="#0e0800" stroke="#ea580c" stroke-width="1" stroke-opacity="0.4"/>
+  <!-- MLB -->
+  <circle cx="159" cy="152" r="8" fill="#0e0800" stroke="#ea580c" stroke-width="1" stroke-opacity="0.4"/>
+  <!-- LB right -->
+  <circle cx="198" cy="156" r="8" fill="#0e0800" stroke="#ea580c" stroke-width="1" stroke-opacity="0.4"/>
+  <!-- CB left -->
+  <circle cx="58"  cy="160" r="7" fill="#0e0800" stroke="#ea580c" stroke-width="0.9" stroke-opacity="0.35"/>
+  <!-- CB right -->
+  <circle cx="260" cy="160" r="7" fill="#0e0800" stroke="#ea580c" stroke-width="0.9" stroke-opacity="0.35"/>
+  <!-- S left -->
+  <circle cx="116" cy="136" r="7" fill="#0e0800" stroke="#ea580c" stroke-width="0.9" stroke-opacity="0.3"/>
+  <!-- S right -->
+  <circle cx="202" cy="136" r="7" fill="#0e0800" stroke="#ea580c" stroke-width="0.9" stroke-opacity="0.3"/>
+</svg>

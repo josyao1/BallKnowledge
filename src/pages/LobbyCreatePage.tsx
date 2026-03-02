@@ -24,7 +24,7 @@ type GenericTeam = {
   colors: { primary: string; secondary: string };
 };
 
-const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right', 'box-score'] as const;
+const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup'] as const;
 type LobbyMode = typeof VALID_LOBBY_MODES[number];
 
 export function LobbyCreatePage() {
@@ -67,6 +67,7 @@ export function LobbyCreatePage() {
     lobbyMode === 'scramble' ||
     lobbyMode === 'lineup-is-right' ||
     lobbyMode === 'box-score' ||
+    lobbyMode === 'starting-lineup' ||
     gameMode === 'random' ||
     (selectedTeam && selectedYear)
   );
