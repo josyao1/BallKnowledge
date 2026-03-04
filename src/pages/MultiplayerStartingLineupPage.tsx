@@ -122,8 +122,10 @@ export function MultiplayerStartingLineupPage() {
 
     function loadStarters(cs: StartingLineupState | null) {
       const sport = cs?.sport || 'nfl';
-      if (sport === 'nba') loadNBAStarters().then(setStartersData);
-      else loadNFLStarters().then(setStartersData);
+      const loader = sport === 'nba' ? loadNBAStarters() : loadNFLStarters();
+      loader
+        .then(setStartersData)
+        .catch(err => console.error('[StartingLineup] Failed to load starters data:', err));
     }
 
     if (lobby?.career_state) {
@@ -218,7 +220,7 @@ export function MultiplayerStartingLineupPage() {
         setLobby({ ...lobby, career_state: newState });
       }
     }
-  }, [players, careerState?.unlock_epoch, JSON.stringify(careerState?.giveUps)]);
+  }, [players, careerState?.unlock_epoch, careerState?.giveUps?.join(',')]);
 
   // ── Host: detect first correct answer or all-gave-up ──
   useEffect(() => {
@@ -248,7 +250,7 @@ export function MultiplayerStartingLineupPage() {
       updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });
     }
-  }, [players.map(p => p.finished_at).join(','), JSON.stringify(careerState?.giveUps)]);
+  }, [players.map(p => p.finished_at).join(','), careerState?.giveUps?.join(',')]);
 
   // ── Host: 30-second pressure timer after first correct answer ──
   useEffect(() => {
@@ -331,7 +333,8 @@ export function MultiplayerStartingLineupPage() {
       await updateCareerState(lobby.id, resultsState);
       setLobby({ ...lobby, career_state: resultsState });
       setIsAdvancing(false);
-    } catch {
+    } catch (err) {
+      console.error('[StartingLineup] advanceRound failed:', err);
       setIsAdvancing(false);
       hasAdvancedRef.current = false;
     }
@@ -349,7 +352,6 @@ export function MultiplayerStartingLineupPage() {
 
       if (sport === 'nba') {
         pick = getRandomNBATeam(startersData as NBAStartersData, careerState.team);
-        side = undefined;
       } else {
         const nflPick = getRandomNFLTeamAndSide(startersData as NFLStartersData, careerState.team);
         pick = nflPick;
@@ -357,7 +359,12 @@ export function MultiplayerStartingLineupPage() {
       }
 
       let enc = getRandomEncoding();
-      if (pick.players.filter((p: StarterPlayer) => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null).length < 5) {
+      const hasEncodingData = (p: StarterPlayer): boolean => {
+        if (enc === 'college') return p.college_espn_id != null;
+        if (enc === 'number') return p.number != null;
+        return p.draft_pick != null;
+      };
+      if (pick.players.filter(hasEncodingData).length < 5) {
         enc = pickBestEncoding(pick.players);
       }
       const newState: StartingLineupState = {
@@ -376,7 +383,8 @@ export function MultiplayerStartingLineupPage() {
       await startCareerRound(lobby.id, newState as unknown as Record<string, unknown>);
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
       setIsAdvancing(false);
-    } catch {
+    } catch (err) {
+      console.error('[StartingLineup] handleNextRound failed:', err);
       setIsAdvancing(false);
     }
   }

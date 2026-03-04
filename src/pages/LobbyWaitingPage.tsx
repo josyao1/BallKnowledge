@@ -542,7 +542,6 @@ export function LobbyWaitingPage() {
   const handleStartingLineupStart = async () => {
     if (!isHost || !lobby) return;
     setIsLoadingRoster(true);
-    hasStartedGame.current = true;
 
     try {
       const careerState = (lobby.career_state as any) || {};
@@ -555,7 +554,6 @@ export function LobbyWaitingPage() {
       if (sport === 'nba') {
         const startersData = await loadNBAStarters();
         pick = getRandomNBATeam(startersData);
-        side = undefined;
       } else {
         const startersData = await loadNFLStarters();
         const nflPick = getRandomNFLTeamAndSide(startersData);
@@ -564,7 +562,12 @@ export function LobbyWaitingPage() {
       }
 
       let enc = getRandomEncoding();
-      if (pick.players.filter((p: any) => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null).length < 5) {
+      const hasEncodingData = (p: any): boolean => {
+        if (enc === 'college') return p.college_espn_id != null;
+        if (enc === 'number') return p.number != null;
+        return p.draft_pick != null;
+      };
+      if (pick.players.filter(hasEncodingData).length < 5) {
         enc = pickBestEncoding(pick.players);
       }
 
@@ -579,9 +582,11 @@ export function LobbyWaitingPage() {
       if (side !== undefined) newCareerState.side = side;
 
       await startCareerRound(lobby.id, newCareerState);
+      hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
       navigate(`/lobby/${code}/starting-lineup`);
-    } catch {
+    } catch (err) {
+      console.error('[StartingLineup] Failed to start game:', err);
       setIsLoadingRoster(false);
     }
   };

@@ -445,12 +445,13 @@ export function MultiplayerBoxScoreResultsPage() {
             <div className="space-y-1.5">
               {sortedPlayers.map(p => {
                 const val = playerSpreadGuesses[p.player_id];
-                const guessNum = val !== null && val !== '' ? parseFloat(val) : null;
+                const hasGuess = val !== null && val !== '';
+                const guessNum = hasGuess ? parseFloat(val) : null;
                 const correct = guessNum !== null && Math.abs(guessNum - game!.spread_line!) <= 0.5;
                 return (
                   <div key={p.player_id} className="flex items-center justify-between">
                     <span className="sports-font text-xs text-white/50">{p.player_name}</span>
-                    {val !== null && val !== '' ? (
+                    {hasGuess ? (
                       <span className={`sports-font text-xs font-semibold ${correct ? 'text-green-400' : 'text-red-400'}`}>
                         {guessNum !== null && guessNum > 0 ? '+' : ''}{val}
                         {correct && <span className="ml-1 text-[10px]">✓</span>}
