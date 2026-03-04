@@ -288,6 +288,7 @@ export function SoloStartingLineupPage() {
         blobState={blobState}
         bonusCorrect={bonusCorrect}
         onBonusGuess={blobState === 'bonus-guess' ? handleBonusGuess : undefined}
+        showHint={blobState === 'hidden' && hintEnabled}
       />
     );
   }
@@ -340,18 +341,16 @@ export function SoloStartingLineupPage() {
                 ? `Which ${sportLabel} team's starting 5 is this? · ${encodingLabel}`
                 : `Which ${sportLabel} team's ${side} is this? · ${encodingLabel}`}
             </p>
-            {isNBA && (
-              <button
-                onClick={() => setHintEnabled(h => !h)}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sports-font border transition-all ${
-                  hintEnabled
-                    ? 'border-[#fdb927]/50 text-[#fdb927] bg-[#fdb927]/10'
-                    : 'border-white/10 text-white/30 hover:border-white/20 hover:text-white/50'
-                }`}
-              >
-                PPG {hintEnabled ? 'ON' : 'OFF'}
-              </button>
-            )}
+            <button
+              onClick={() => setHintEnabled(h => !h)}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sports-font border transition-all ${
+                hintEnabled
+                  ? 'border-[#fdb927]/50 text-[#fdb927] bg-[#fdb927]/10'
+                  : 'border-white/10 text-white/30 hover:border-white/20 hover:text-white/50'
+              }`}
+            >
+              {isNBA ? 'PPG' : 'INITIALS'} {hintEnabled ? 'ON' : 'OFF'}
+            </button>
           </div>
 
           {wrongGuesses.length > 0 && (

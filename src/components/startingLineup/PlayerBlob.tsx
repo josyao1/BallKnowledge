@@ -206,6 +206,11 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           {player.ppg.toFixed(1)} PPG
         </div>
       )}
+      {showHint && player.ppg == null && (
+        <div className="text-[7px] text-[#fdb927]/70 sports-font leading-none tracking-wider">
+          {player.name.split(' ').map(w => w[0]?.toUpperCase() ?? '').join('.')}
+        </div>
+      )}
     </div>
   );
 }
