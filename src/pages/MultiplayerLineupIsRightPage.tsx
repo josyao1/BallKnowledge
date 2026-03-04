@@ -20,6 +20,7 @@ import {
   getLobbyPlayers,
   updateCareerState,
   updateLobbyStatus,
+  incrementPlayerWins,
 } from '../services/lobby';
 import {
   searchPlayersByNameOnly,
@@ -239,7 +240,9 @@ export function MultiplayerLineupIsRightPage() {
     if (cs.phase !== 'picking') return;
 
     const lineups = cs.allLineups || {};
-    const playerIds = Object.keys(lineups);
+    // Use stored playerOrder (stable, unaffected by JSONB key sorting in Postgres).
+    // Fall back to Object.keys for old lobbies that predate this field.
+    const playerIds: string[] = cs.playerOrder || Object.keys(lineups);
     if (playerIds.length === 0) return;
 
     const allPicked = playerIds.every(pid =>
@@ -258,6 +261,32 @@ export function MultiplayerLineupIsRightPage() {
 
     const advanceRound = async () => {
       if (nextRound > totalRds || allBusted) {
+        // Determine winner(s) using the same sort as the results screen
+        const avgPickYear = (pid: string): number => {
+          const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
+          if (picks.length === 0) return 2025;
+          return picks.reduce((s: number, p: any) => s + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
+        };
+        const sorted = [...playerIds].sort((a, b) => {
+          const la = lineups[a] as any, lb = lineups[b] as any;
+          if (allBusted) return la.totalStat - lb.totalStat;
+          if (la.isBusted && !lb.isBusted) return 1;
+          if (!la.isBusted && lb.isBusted) return -1;
+          if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
+          return avgPickYear(a) - avgPickYear(b);
+        });
+        if (sorted.length > 0) {
+          const topLineup = lineups[sorted[0]] as any;
+          const topStat = topLineup?.totalStat ?? 0;
+          const topBusted = topLineup?.isBusted ?? false;
+          for (const pid of sorted) {
+            const l = lineups[pid] as any;
+            const isWinner = allBusted
+              ? l.totalStat === topStat
+              : !l.isBusted && !topBusted && l.totalStat === topStat;
+            if (isWinner) await incrementPlayerWins(lobbyId, pid);
+          }
+        }
         // Game over → go to results
         await updateCareerState(lobbyId, { ...cs, phase: 'results' });
       } else {

@@ -260,8 +260,9 @@ export function MultiplayerBoxScorePage() {
     const boxCount = entries.length;
     const spreadOk = g?.spread_line != null && sg !== ''
       && Math.abs(parseFloat(sg) - (g?.spread_line ?? 0)) <= 0.5;
-    const score = boxCount + (spreadOk ? 1 : 0);
-    const guessedArr = myHintRequestedRef.current ? [...entries, 'HINT_REQUEST'] : entries;
+    const score = boxCount + (spreadOk ? 3 : 0);
+    const guessedArr: string[] = myHintRequestedRef.current ? [...entries, 'HINT_REQUEST'] : [...entries];
+    if (sg !== '') guessedArr.push(`SPREAD:${sg}`);
 
     updatePlayerScore(lobby.id, score, boxCount, guessedArr, [], true);
   }, [lobby]);
@@ -319,7 +320,7 @@ export function MultiplayerBoxScorePage() {
     const sg = spreadGuessRef.current;
     const spreadOk = gameRef.current?.spread_line != null && sg !== ''
       && Math.abs(parseFloat(sg) - (gameRef.current?.spread_line ?? 0)) <= 0.5;
-    const score = boxCount + (spreadOk ? 1 : 0);
+    const score = boxCount + (spreadOk ? 3 : 0);
     const guessedArr = myHintRequestedRef.current ? [...entries, 'HINT_REQUEST'] : entries;
     updatePlayerScore(lobby.id, score, boxCount, guessedArr, [], false);
   }
@@ -348,7 +349,7 @@ export function MultiplayerBoxScorePage() {
     const sg = spreadGuessRef.current;
     const spreadOk = gameRef.current?.spread_line != null && sg !== ''
       && Math.abs(parseFloat(sg) - (gameRef.current?.spread_line ?? 0)) <= 0.5;
-    const score = boxCount + (spreadOk ? 1 : 0);
+    const score = boxCount + (spreadOk ? 3 : 0);
     updatePlayerScore(lobby.id, score, boxCount, [...entries, 'HINT_REQUEST'], [], false);
   }
 
@@ -419,7 +420,7 @@ export function MultiplayerBoxScorePage() {
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/10 shrink-0">
             <span className="retro-title text-xl tabular-nums" style={{ color: '#f59e0b' }}>{correctCount}</span>
             <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
-            {spreadOk && <span className="sports-font text-[10px] text-green-400 ml-0.5">+S</span>}
+            {finished && spreadOk && <span className="sports-font text-[10px] text-green-400 ml-0.5">+S</span>}
           </div>
         </div>
 
@@ -456,6 +457,67 @@ export function MultiplayerBoxScorePage() {
             {doneCount}/{players.length} done
           </div>
         </div>
+
+        {/* Row 3: Search bar */}
+        {!finished && (
+          <div className="border-t border-white/4 px-3 py-2 relative">
+            <div
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2"
+              style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)' }}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#f59e0b" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref={searchRef}
+                type="text"
+                value={globalInput}
+                onChange={e => { setGlobalInput(e.target.value); setShowDropdown(true); }}
+                onKeyDown={handleSearchKeyDown}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
+                placeholder="Type a player name..."
+                className="flex-1 min-w-0 bg-transparent sports-font text-sm text-white placeholder-[#3a3a3a] focus:outline-none"
+              />
+              {globalInput && (
+                <button
+                  onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }}
+                  className="text-[#555] hover:text-white transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <AnimatePresence>
+              {showDropdown && candidates.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                  transition={{ duration: 0.14 }}
+                  className="absolute left-3 right-3 top-full mt-0.5 rounded-xl overflow-hidden shadow-2xl z-50"
+                  style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  {candidates.map((c, i) => (
+                    <button
+                      key={c.name + i}
+                      onMouseDown={() => confirmCandidate(c.name)}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/5 ${i > 0 ? 'border-t border-white/5' : ''}`}
+                    >
+                      <span className="sports-font text-sm text-white font-semibold flex-1 min-w-0 truncate">{c.name}</span>
+                      <svg className="w-3.5 h-3.5 text-[#444] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </header>
 
       <div className="max-w-5xl mx-auto px-3 py-4 space-y-4">
@@ -497,70 +559,6 @@ export function MultiplayerBoxScorePage() {
           </div>
         </div>
 
-        {/* ── Global search ── */}
-        {!finished && (
-          <div className="relative z-20">
-            <div
-              className="flex items-center gap-3 rounded-2xl px-4 py-3.5"
-              style={{
-                background: 'linear-gradient(135deg, #1a1a1a, #141414)',
-                border: '1px solid rgba(245,158,11,0.3)',
-                boxShadow: '0 0 0 1px rgba(245,158,11,0.08), 0 8px 32px rgba(0,0,0,0.4)',
-              }}
-            >
-              <svg className="w-5 h-5 shrink-0" fill="none" stroke="#f59e0b" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                ref={searchRef}
-                type="text"
-                value={globalInput}
-                onChange={e => { setGlobalInput(e.target.value); setShowDropdown(true); }}
-                onKeyDown={handleSearchKeyDown}
-                onFocus={() => setShowDropdown(true)}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
-                placeholder="Type a player name..."
-                className="flex-1 min-w-0 bg-transparent sports-font text-base text-white placeholder-[#3a3a3a] focus:outline-none"
-              />
-              {globalInput && (
-                <button
-                  onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }}
-                  className="text-[#555] hover:text-white transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            <AnimatePresence>
-              {showDropdown && candidates.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                  transition={{ duration: 0.14 }}
-                  className="absolute top-full left-0 right-0 mt-2 rounded-2xl overflow-hidden shadow-2xl z-30"
-                  style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}
-                >
-                  {candidates.map((c, i) => (
-                    <button
-                      key={c.name + i}
-                      onMouseDown={() => confirmCandidate(c.name)}
-                      className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-white/5 ${i > 0 ? 'border-t border-white/5' : ''}`}
-                    >
-                      <span className="sports-font text-sm text-white font-semibold flex-1 min-w-0 truncate">{c.name}</span>
-                      <svg className="w-4 h-4 text-[#444] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
 
         {/* Not-in-game toast */}
         <AnimatePresence>
@@ -614,7 +612,7 @@ export function MultiplayerBoxScorePage() {
             className="flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-700/40 bg-amber-900/15"
           >
             <span className="sports-font text-sm text-amber-400 font-semibold">
-              ⏱ Time's up! Score: {correctCount + (spreadOk ? 1 : 0)} — waiting for others...
+              ⏱ Time's up! Score: {correctCount + (spreadOk ? 3 : 0)} — waiting for others...
             </span>
           </motion.div>
         )}
@@ -787,7 +785,7 @@ export function MultiplayerBoxScorePage() {
                   const boxCount = entries.length;
                   const sok = gameRef.current?.spread_line != null && sg !== ''
                     && Math.abs(parseFloat(sg) - (gameRef.current?.spread_line ?? 0)) <= 0.5;
-                  const score = boxCount + (sok ? 1 : 0);
+                  const score = boxCount + (sok ? 3 : 0);
                   const guessedArr = myHintRequestedRef.current ? [...entries, 'HINT_REQUEST'] : entries;
                   updatePlayerScore(lobby.id, score, boxCount, guessedArr, [], false);
                 }}
@@ -796,7 +794,7 @@ export function MultiplayerBoxScorePage() {
                 className="w-32 bg-[#0d0d0d] border border-white/10 rounded-xl px-3 py-2 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#f59e0b]/40 disabled:opacity-40 transition-colors"
               />
               <span className="sports-font text-xs text-[#555]">+ = home favored</span>
-              {spreadOk && <span className="sports-font text-xs text-green-400 font-semibold">✓ correct!</span>}
+              {finished && spreadOk && <span className="sports-font text-xs text-green-400 font-semibold">✓ correct!</span>}
             </div>
           </div>
         )}

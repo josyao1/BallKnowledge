@@ -5,7 +5,7 @@ import type { Team } from '../types';
 export const teams: Team[] = [
   // Eastern Conference - Atlantic
   { id: 1610612738, abbreviation: 'BOS', name: 'Boston Celtics', city: 'Boston', colors: { primary: '#007A33', secondary: '#BA9653' }, conference: 'Eastern', division: 'Atlantic' },
-  { id: 1610612751, abbreviation: 'BKN', name: 'Brooklyn Nets', city: 'Brooklyn', colors: { primary: '#000000', secondary: '#FFFFFF' }, conference: 'Eastern', division: 'Atlantic' },
+  { id: 1610612751, abbreviation: 'BKN', name: 'Brooklyn Nets', city: 'Brooklyn', colors: { primary: '#CCCCCC', secondary: '#FFFFFF' }, conference: 'Eastern', division: 'Atlantic' },
   { id: 1610612752, abbreviation: 'NYK', name: 'New York Knicks', city: 'New York', colors: { primary: '#006BB6', secondary: '#F58426' }, conference: 'Eastern', division: 'Atlantic' },
   { id: 1610612755, abbreviation: 'PHI', name: 'Philadelphia 76ers', city: 'Philadelphia', colors: { primary: '#006BB6', secondary: '#ED174C' }, conference: 'Eastern', division: 'Atlantic' },
   { id: 1610612761, abbreviation: 'TOR', name: 'Toronto Raptors', city: 'Toronto', colors: { primary: '#CE1141', secondary: '#000000' }, conference: 'Eastern', division: 'Atlantic' },

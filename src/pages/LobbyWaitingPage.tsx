@@ -22,7 +22,7 @@ import { getNextGame, startPrefetch } from '../services/careerPrefetch';
 import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/lineupIsRight';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../services/boxScoreData';
-import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding } from '../services/startingLineupData';
+import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../services/startingLineupData';
 import { scrambleName } from '../utils/scramble';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { TeamSelector } from '../components/home/TeamSelector';
@@ -98,6 +98,7 @@ export function LobbyWaitingPage() {
   const [editBoxMinYear, setEditBoxMinYear] = useState(2015);
   const [editBoxMaxYear, setEditBoxMaxYear] = useState(2024);
   const [editBoxTeam, setEditBoxTeam] = useState<string | null>(null);
+  const [editStartingSport, setEditStartingSport] = useState<'nba' | 'nfl'>('nfl');
 
   // Join prompt for new players arriving via direct link
   const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
@@ -150,6 +151,9 @@ export function LobbyWaitingPage() {
       setEditBoxMinYear(cs.min_year || 2015);
       setEditBoxMaxYear(cs.max_year || 2024);
       setEditBoxTeam(cs.team || null);
+
+      // Starting Lineup state
+      setEditStartingSport((cs.sport as 'nba' | 'nfl') || 'nfl');
 
       // Find team from the current lobby
       const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -472,8 +476,9 @@ export function LobbyWaitingPage() {
 
       const firstTeam = assignRandomTeam(sport, statCategory);
       const hardMode = careerState.hardMode || false;
-      // Hard mode: first picker is the first player in the list
-      const firstPickerId = hardMode && lobbyPlayers.length > 0 ? lobbyPlayers[0].player_id : null;
+      // Hard mode: stable player order (avoids JSONB key-sort issues in Postgres)
+      const playerOrder = lobbyPlayers.map(p => p.player_id);
+      const firstPickerId = hardMode && playerOrder.length > 0 ? playerOrder[0] : null;
 
       const newCareerState = {
         sport,
@@ -489,6 +494,7 @@ export function LobbyWaitingPage() {
         hardMode,
         currentPickerId: firstPickerId,
         roundStartPickerIndex: 0,
+        playerOrder,
         pickedPlayerSeasons: [],
       };
 
@@ -524,7 +530,9 @@ export function LobbyWaitingPage() {
       };
 
       await startCareerRound(lobby.id, newCareerState);
-      setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
+      // Reset local player store immediately so host doesn't see stale scores briefly
+      setPlayers(players.map(p => ({ ...p, finished_at: null, score: 0, guessed_count: 0, guessed_players: [], incorrect_guesses: [] })));
+      setLobby({ ...lobby, career_state: newCareerState, status: 'playing', started_at: new Date().toISOString() });
       navigate(`/lobby/${code}/box-score`);
     } catch {
       setIsLoadingRoster(false);
@@ -539,22 +547,36 @@ export function LobbyWaitingPage() {
     try {
       const careerState = (lobby.career_state as any) || {};
       const winTarget = careerState.win_target || 10;
+      const sport = (careerState.sport as 'nba' | 'nfl') || 'nfl';
 
-      const startersData = await loadNFLStarters();
-      const pick = getRandomNFLTeamAndSide(startersData);
+      let pick: { team: string; players: any[] };
+      let side: 'offense' | 'defense' | undefined;
+
+      if (sport === 'nba') {
+        const startersData = await loadNBAStarters();
+        pick = getRandomNBATeam(startersData);
+        side = undefined;
+      } else {
+        const startersData = await loadNFLStarters();
+        const nflPick = getRandomNFLTeamAndSide(startersData);
+        pick = nflPick;
+        side = nflPick.side;
+      }
+
       let enc = getRandomEncoding();
       if (pick.players.filter((p: any) => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null).length < 5) {
         enc = pickBestEncoding(pick.players);
       }
 
-      const newCareerState = {
+      const newCareerState: Record<string, unknown> = {
+        sport,
         team: pick.team,
-        side: pick.side,
         encoding: enc,
         round: 1,
         win_target: winTarget,
         unlock_epoch: 0,
       };
+      if (side !== undefined) newCareerState.side = side;
 
       await startCareerRound(lobby.id, newCareerState);
       setLobby({ ...lobby, career_state: newCareerState, status: 'playing' });
@@ -669,7 +691,7 @@ export function LobbyWaitingPage() {
       setLobby({ ...lobby, career_state: newCareerState });
     } else if (editGameType === 'starting-lineup') {
       const existingState = (lobby.career_state as any) || {};
-      const newCareerState = { ...existingState, win_target: editWinTarget };
+      const newCareerState = { ...existingState, win_target: editWinTarget, sport: editStartingSport };
       await updateCareerState(newCareerState);
       setLobby({ ...lobby, career_state: newCareerState });
     } else {
@@ -1058,7 +1080,7 @@ export function LobbyWaitingPage() {
               ) : lobby.game_type === 'starting-lineup' ? (
                 <>
                   <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
-                    {lobby.sport.toUpperCase()} Starting Lineup
+                    {((lobby.career_state as any)?.sport || 'nfl').toUpperCase()} Starting Lineup
                   </div>
                   <div className="retro-title text-xl text-[#ea580c]">Starters</div>
                   <div className="sports-font text-[9px] text-white/40 tracking-widest">
@@ -1391,6 +1413,26 @@ export function LobbyWaitingPage() {
                   </>
                 ) : editGameType === 'starting-lineup' ? (
                   <>
+                    {/* Sport Toggle */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nfl', 'nba'] as const).map(s => (
+                          <button
+                            key={s}
+                            onClick={() => setEditStartingSport(s)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editStartingSport === s
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Win Target */}
                     <div>
                       <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">First To</div>

@@ -6,12 +6,12 @@
  * highlighting. Host can navigate back to the waiting room for a new game.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus } from '../services/lobby';
+import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins } from '../services/lobby';
 import { areSimilarNames } from '../utils/fuzzyDedup';
 import { nflTeams } from '../data/nfl-teams';
 import type { BoxScoreGame, BoxScorePassingPlayer, BoxScoreRushingPlayer, BoxScoreReceivingPlayer } from '../services/boxScoreData';
@@ -55,54 +55,72 @@ function ResultName({ name, guessed, correct }: { name: string; guessed: string;
   );
 }
 
-function PassingRow({ player, guessed }: { player: BoxScorePassingPlayer; guessed: string }) {
+function GetterLine({ getters }: { getters?: string[] }) {
+  if (!getters || getters.length === 0) return null;
+  return (
+    <div className="pl-1 mt-0.5 sports-font text-[9px] text-green-600/70">
+      {getters.join(' · ')}
+    </div>
+  );
+}
+
+function PassingRow({ player, guessed, getters }: { player: BoxScorePassingPlayer; guessed: string; getters?: string[] }) {
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
-    <div className="flex items-center gap-1.5 py-0.5">
-      <span className="sports-font text-[10px] text-[#3a3a3a] w-6 text-right shrink-0 tabular-nums">
+    <div className="flex items-start gap-1.5 py-0.5">
+      <span className="sports-font text-[10px] text-[#3a3a3a] w-6 text-right shrink-0 tabular-nums mt-1">
         {player.number ? `#${player.number}` : '—'}
       </span>
-      <ResultName name={player.name} guessed={guessed} correct={correct} />
-      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 110 }}>
+      <div className="flex-1 min-w-0">
+        <ResultName name={player.name} guessed={guessed} correct={correct} />
+        <GetterLine getters={getters} />
+      </div>
+      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1" style={{ minWidth: 110 }}>
         {player.completions}/{player.attempts} · {player.yards}yd · {player.tds}TD{player.ints > 0 ? ` · ${player.ints}INT` : ''}
       </div>
-      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 60 }}>
+      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1" style={{ minWidth: 60 }}>
         {player.yards}yd {player.tds}TD
       </div>
     </div>
   );
 }
 
-function RushingRow({ player, guessed }: { player: BoxScoreRushingPlayer; guessed: string }) {
+function RushingRow({ player, guessed, getters }: { player: BoxScoreRushingPlayer; guessed: string; getters?: string[] }) {
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
-    <div className="flex items-center gap-1.5 py-0.5">
-      <span className="sports-font text-[10px] text-[#3a3a3a] w-6 text-right shrink-0 tabular-nums">
+    <div className="flex items-start gap-1.5 py-0.5">
+      <span className="sports-font text-[10px] text-[#3a3a3a] w-6 text-right shrink-0 tabular-nums mt-1">
         {player.number ? `#${player.number}` : '—'}
       </span>
-      <ResultName name={player.name} guessed={guessed} correct={correct} />
-      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 110 }}>
+      <div className="flex-1 min-w-0">
+        <ResultName name={player.name} guessed={guessed} correct={correct} />
+        <GetterLine getters={getters} />
+      </div>
+      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1" style={{ minWidth: 110 }}>
         {player.carries}car · {player.yards}yd · {player.tds}TD
       </div>
-      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 60 }}>
+      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1" style={{ minWidth: 60 }}>
         {player.yards}yd {player.tds}TD
       </div>
     </div>
   );
 }
 
-function ReceivingRow({ player, guessed }: { player: BoxScoreReceivingPlayer; guessed: string }) {
+function ReceivingRow({ player, guessed, getters }: { player: BoxScoreReceivingPlayer; guessed: string; getters?: string[] }) {
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
-    <div className="flex items-center gap-1.5 py-0.5">
-      <span className="sports-font text-[10px] text-[#3a3a3a] w-6 text-right shrink-0 tabular-nums">
+    <div className="flex items-start gap-1.5 py-0.5">
+      <span className="sports-font text-[10px] text-[#3a3a3a] w-6 text-right shrink-0 tabular-nums mt-1">
         {player.number ? `#${player.number}` : '—'}
       </span>
-      <ResultName name={player.name} guessed={guessed} correct={correct} />
-      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 110 }}>
+      <div className="flex-1 min-w-0">
+        <ResultName name={player.name} guessed={guessed} correct={correct} />
+        <GetterLine getters={getters} />
+      </div>
+      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1" style={{ minWidth: 110 }}>
         {player.receptions}/{player.targets} · {player.yards}yd · {player.tds}TD
       </div>
-      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 60 }}>
+      <div className="sports-font text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1" style={{ minWidth: 60 }}>
         {player.yards}yd {player.tds}TD
       </div>
     </div>
@@ -124,8 +142,21 @@ export function MultiplayerBoxScoreResultsPage() {
   const state = (location.state as ResultsState | null);
 
   const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } = useLobbyStore();
+  const hasIncrementedWins = useRef(false);
 
   useLobbySubscription(lobby?.id || null);
+
+  // Host: increment session wins for the player(s) with the highest score once
+  useEffect(() => {
+    if (!isHost || !lobby || players.length === 0 || hasIncrementedWins.current) return;
+    const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
+    const topScore = sorted[0].score || 0;
+    if (topScore === 0) return; // nobody scored — don't award a win for a blank game
+    hasIncrementedWins.current = true;
+    sorted
+      .filter(p => (p.score || 0) === topScore)
+      .forEach(p => incrementPlayerWins(lobby.id, p.player_id));
+  }, [isHost, lobby?.id, players]);
 
   // Load lobby on refresh
   useEffect(() => {
@@ -196,11 +227,37 @@ export function MultiplayerBoxScoreResultsPage() {
       game.spread_line != null &&
       mySpreadGuess !== '' &&
       Math.abs(parseFloat(mySpreadGuess) - game.spread_line) <= 0.5;
-    if (spreadCorrect) myCorrect++;
-    if (game.spread_line != null) myTotal++;
+    if (spreadCorrect) myCorrect += 3;
+    if (game.spread_line != null) myTotal += 3;
   }
 
   const gameLabel = game ? (GAME_TYPE_LABELS[game.game_type] ?? game.game_type) : '';
+
+  // Build who-got-what map: slot key → list of player names who identified it
+  const whoGot: Record<string, string[]> = {};
+  if (game) {
+    players.forEach(p => {
+      (p.guessed_players || []).forEach((entry: string) => {
+        if (!entry.startsWith('BOX:')) return;
+        const parts = entry.split(':');
+        if (parts.length < 2) return;
+        const key = parts[1];
+        if (!whoGot[key]) whoGot[key] = [];
+        whoGot[key].push(p.player_name);
+      });
+    });
+  }
+
+  // Per-player spread guesses from guessed_players (SPREAD:{value} entries)
+  const playerSpreadGuesses: Record<string, string | null> = {};
+  players.forEach(p => {
+    const entry = (p.guessed_players || []).find((e: string) => e.startsWith('SPREAD:'));
+    playerSpreadGuesses[p.player_id] = entry ? entry.slice('SPREAD:'.length) : null;
+  });
+  // Fallback: use mySpreadGuess from navigation state for the current player
+  if (currentPlayerId && playerSpreadGuesses[currentPlayerId] === null && mySpreadGuess !== '') {
+    playerSpreadGuesses[currentPlayerId] = mySpreadGuess;
+  }
 
   return (
     <div className="min-h-screen bg-[#111] text-white">
@@ -267,9 +324,14 @@ export function MultiplayerBoxScoreResultsPage() {
                       {isMe && <span className="text-white/40 ml-1 text-[10px]">(you)</span>}
                     </span>
                   </div>
-                  <span className={`retro-title text-xl tabular-nums ${
-                    rank === 0 ? 'text-[#f59e0b]' : 'text-[#888]'
-                  }`}>{score}</span>
+                  <div className="flex items-center gap-2">
+                    {game?.spread_line != null && (player.score || 0) - (player.guessed_count || 0) >= 1 && (
+                      <span className="sports-font text-[10px] text-green-400 bg-green-900/20 border border-green-700/30 px-1.5 py-0.5 rounded">+S</span>
+                    )}
+                    <span className={`retro-title text-xl tabular-nums ${
+                      rank === 0 ? 'text-[#f59e0b]' : 'text-[#888]'
+                    }`}>{score}</span>
+                  </div>
                 </motion.div>
               );
             })}
@@ -299,9 +361,12 @@ export function MultiplayerBoxScoreResultsPage() {
                 {game.overtime && (
                   <span className="px-2 py-0.5 bg-amber-900/30 border border-amber-700/40 rounded sports-font text-[9px] text-amber-500">OT</span>
                 )}
-                <div className="sports-font text-[10px] text-[#333] tracking-[0.3em]">FINAL</div>
-                <div className="sports-font text-[9px] text-[#444] text-center leading-snug">
-                  {gameLabel}<br />Wk {game.week}
+                <div className="sports-font text-[10px] text-[#555] tracking-[0.3em]">FINAL</div>
+                <div className="sports-font text-xs text-white/70 text-center leading-snug font-semibold">
+                  {gameLabel}
+                </div>
+                <div className="sports-font text-[10px] text-[#666] text-center">
+                  {game.season} · Wk {game.week}
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1">
@@ -338,7 +403,7 @@ export function MultiplayerBoxScoreResultsPage() {
                       <section>
                         <div className="sports-font text-[9px] text-[#333] tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-[#181818]">Passing</div>
                         {data.passing.map((p, i) => (
-                          <PassingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'passing', i)] ?? ''} />
+                          <PassingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'passing', i)] ?? ''} getters={players.length > 1 ? whoGot[bk(side, 'passing', i)] : undefined} />
                         ))}
                       </section>
                     )}
@@ -346,7 +411,7 @@ export function MultiplayerBoxScoreResultsPage() {
                       <section>
                         <div className="sports-font text-[9px] text-[#333] tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-[#181818]">Rushing</div>
                         {data.rushing.map((p, i) => (
-                          <RushingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'rushing', i)] ?? ''} />
+                          <RushingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'rushing', i)] ?? ''} getters={players.length > 1 ? whoGot[bk(side, 'rushing', i)] : undefined} />
                         ))}
                       </section>
                     )}
@@ -354,7 +419,7 @@ export function MultiplayerBoxScoreResultsPage() {
                       <section>
                         <div className="sports-font text-[9px] text-[#333] tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-[#181818]">Receiving</div>
                         {data.receiving.map((p, i) => (
-                          <ReceivingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'receiving', i)] ?? ''} />
+                          <ReceivingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'receiving', i)] ?? ''} getters={players.length > 1 ? whoGot[bk(side, 'receiving', i)] : undefined} />
                         ))}
                       </section>
                     )}
@@ -362,6 +427,41 @@ export function MultiplayerBoxScoreResultsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── Spread result ── */}
+        {game?.spread_line != null && (
+          <div className="bg-[#141414] border border-[#1e1e1e] rounded-xl p-4">
+            <div className="sports-font text-[9px] text-[#555] tracking-[0.35em] uppercase mb-3">Vegas Spread</div>
+            <div className="mb-3">
+              <span className="sports-font text-sm text-white/80">
+                Actual: <span className="text-[#f59e0b] font-semibold">
+                  {game.spread_line > 0 ? '+' : ''}{game.spread_line}
+                </span>
+              </span>
+              <span className="sports-font text-[10px] text-[#444] ml-2">+ = {game.home_team} favored</span>
+            </div>
+            <div className="space-y-1.5">
+              {sortedPlayers.map(p => {
+                const val = playerSpreadGuesses[p.player_id];
+                const guessNum = val !== null && val !== '' ? parseFloat(val) : null;
+                const correct = guessNum !== null && Math.abs(guessNum - game!.spread_line!) <= 0.5;
+                return (
+                  <div key={p.player_id} className="flex items-center justify-between">
+                    <span className="sports-font text-xs text-white/50">{p.player_name}</span>
+                    {val !== null && val !== '' ? (
+                      <span className={`sports-font text-xs font-semibold ${correct ? 'text-green-400' : 'text-red-400'}`}>
+                        {guessNum !== null && guessNum > 0 ? '+' : ''}{val}
+                        {correct && <span className="ml-1 text-[10px]">✓</span>}
+                      </span>
+                    ) : (
+                      <span className="sports-font text-xs text-[#333]">—</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
