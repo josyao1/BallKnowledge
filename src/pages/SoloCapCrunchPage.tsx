@@ -693,7 +693,10 @@ export function SoloCapCrunchPage() {
               {/* OPTIMAL LAST PICK HINT */}
               {optimalPick && lineup && lineup.selectedPlayers.length > 0 && (() => {
                 const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
-                const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
+                // For bust picks the total was already reverted, so don't subtract statValue again
+                const totalBeforeLast = lastPick.isBust
+                  ? lineup.totalStat
+                  : parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
                 const wouldFinishAt = parseFloat((totalBeforeLast + optimalPick.statValue).toFixed(1));
                 return (
                   <div className="bg-black/60 border border-[#d4af37]/30 rounded-sm p-3 md:p-4">

@@ -650,8 +650,10 @@ export function calculateLineupStat(
   lineup: PlayerLineup,
   _statCategory: StatCategory,
   _targetCap: number
-): { total: number; isBusted: boolean } {
-  // Bust picks count as 0 — only non-bust picks contribute to the total
+): { total: number } {
+  // Bust picks (isBust: true) count as 0 — only valid picks contribute to the total.
+  // Bust detection is done inline at pick time (statValue > remainingBudget);
+  // this function purely recalculates the running total from stored picks.
   const sum = lineup.selectedPlayers.reduce((acc, player) => {
     return acc + (player.isBust ? 0 : player.statValue);
   }, 0);
@@ -659,7 +661,7 @@ export function calculateLineupStat(
   // Round to 1 decimal place cleanly (parseFloat avoids floating-point noise)
   const total = parseFloat(sum.toFixed(1));
 
-  return { total, isBusted: false };
+  return { total };
 }
 
 /**

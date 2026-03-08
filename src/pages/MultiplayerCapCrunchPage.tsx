@@ -1,12 +1,12 @@
 /**
- * MultiplayerLineupIsRightPage.tsx — Simultaneous Multiplayer Lineup Is Right.
+ * MultiplayerCapCrunchPage.tsx — Simultaneous Multiplayer Cap Crunch.
  *
  * All players pick simultaneously each round:
  * 1. Same team shown to all players each round
  * 2. Each player searches for a player + selects a year they were on that team
  * 3. Once all players submit → host advances to next round (new team)
- * 4. Busted players are auto-skipped in subsequent rounds
- * 5. After 5 rounds → results screen (closest to cap without busting wins)
+ * 4. If a pick exceeds the cap it busts — counts as 0, game always continues all 5 rounds
+ * 5. After 5 rounds → results screen (highest score wins; tiebreak: fewest busts, then oldest avg year)
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -275,12 +275,19 @@ export function MultiplayerCapCrunchPage() {
           return avgPickYear(a) - avgPickYear(b);
         });
         if (sorted.length > 0) {
-          const topLineup = lineups[sorted[0]] as any;
+          const topPid = sorted[0];
+          const topLineup = lineups[topPid] as any;
           const topStat = topLineup?.totalStat ?? 0;
           const topBusts = topLineup?.bustCount ?? 0;
+          const topAvgYear = avgPickYear(topPid);
           for (const pid of sorted) {
             const l = lineups[pid] as any;
-            if (l.totalStat === topStat && (l.bustCount ?? 0) === topBusts) {
+            // Award wins to all players fully tied across all three tiebreakers
+            if (
+              l.totalStat === topStat &&
+              (l.bustCount ?? 0) === topBusts &&
+              avgPickYear(pid) === topAvgYear
+            ) {
               await incrementPlayerWins(lobbyId, pid);
             } else {
               break;
@@ -450,7 +457,7 @@ export function MultiplayerCapCrunchPage() {
         playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
         selectedPlayers: [],
         totalStat: 0,
-        isBusted: false,
+        bustCount: 0,
         isFinished: false,
         hasPickedThisRound: false,
       };
