@@ -118,10 +118,19 @@ def build_season_row(row: dict, position: str) -> dict:
     return base
 
 
-def meets_pool_threshold(row: dict, position: str) -> bool:
-    """Return True if this player hit the single-season bar for the pool."""
+def meets_pool_threshold(row: dict, position: str, season_year: int) -> bool:
+    """Return True if this player hit the single-season bar for the pool.
+    Recent seasons use lower thresholds:
+      RB 2023–2025: 200 rush yds (down from 400)
+      WR/TE 2024–2025: 250 rec yds (down from 400/300)
+    """
     for col, min_val in MIN_SINGLE_SEASON.get(position, {}).items():
-        if safe_int(row.get(col)) >= min_val:
+        effective_min = min_val
+        if position == "RB" and col == "rushing_yards" and season_year in (2023, 2024, 2025):
+            effective_min = 200
+        elif position in ("WR", "TE") and col == "receiving_yards" and season_year in (2024, 2025):
+            effective_min = 250
+        if safe_int(row.get(col)) >= effective_min:
             return True
     return False
 
@@ -206,10 +215,12 @@ def main():
         if pid in team_by_pid:
             row["recent_team"] = team_by_pid[pid]
 
-        season_row = build_season_row(row, position)
-
         # Update nfl_careers.json — existing players only
+        # Use the stored career position so utility players like Taysom Hill
+        # (listed as TE/WR in stats) get the right stat fields for their actual role.
         if pid in careers_by_id:
+            career_position = careers_by_id[pid]["position"]
+            season_row = build_season_row(row, career_position)
             existing = {s["season"] for s in careers_by_id[pid]["seasons"]}
             if year_str not in existing:
                 careers_by_id[pid]["seasons"].append(season_row)
@@ -219,13 +230,17 @@ def main():
                 careers_already += 1
 
         # Update nfl_lineup_pool.json — existing players + new players who hit threshold
+        # Use stored pool position for existing players, stats position for new ones.
         if pid in pool_by_id:
+            pool_position = pool_by_id[pid]["position"]
+            season_row = build_season_row(row, pool_position)
             existing = {s["season"] for s in pool_by_id[pid]["seasons"]}
             if year_str not in existing:
                 pool_by_id[pid]["seasons"].append(season_row)
                 pool_by_id[pid]["seasons"].sort(key=lambda s: s["season"])
                 pool_updated += 1
-        elif pid not in careers_by_id and meets_pool_threshold(row, position):
+        elif pid not in careers_by_id and meets_pool_threshold(row, position, year):
+            season_row = build_season_row(row, position)
             # New player not in either file — add to pool
             pool_by_id[pid] = {
                 "player_id":   pid,

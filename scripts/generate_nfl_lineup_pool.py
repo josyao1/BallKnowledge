@@ -135,7 +135,10 @@ def load_seasonal_stats(years):
 
 def meets_single_season_threshold(player_stats, position):
     """Return True if the player hit the per-season minimum in any one season.
-    RBs in 2023/2024 get a lower threshold (200 rush yds) to capture depth backs."""
+    Recent seasons get lower thresholds to capture emerging players:
+      RB 2023–2025: 200 rush yds (down from 400)
+      WR/TE 2024–2025: 250 rec yds (down from 400/300)
+    """
     thresholds = MIN_SINGLE_SEASON.get(position, {})
     if not thresholds:
         return False
@@ -144,10 +147,11 @@ def meets_single_season_threshold(player_stats, position):
         season_year = safe_int(row.get("season", 0))
         for col, min_val in thresholds.items():
             if col in player_stats.columns:
-                # Lower RB rush yard bar for 2023/2024 only
                 effective_min = min_val
-                if position == "RB" and col == "rushing_yards" and season_year in (2023, 2024):
+                if position == "RB" and col == "rushing_yards" and season_year in (2023, 2024, 2025):
                     effective_min = 200
+                elif position in ("WR", "TE") and col == "receiving_yards" and season_year in (2024, 2025):
+                    effective_min = 250
                 val = safe_int(row.get(col, 0))
                 if val >= effective_min:
                     return True
