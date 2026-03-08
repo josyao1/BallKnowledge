@@ -20,18 +20,17 @@ import {
   getPlayerStatForYearAndTeam,
   getPlayerTotalGPForTeam,
   addPlayerToLineup,
-  calculateLineupStat,
   assignRandomTeam,
   isDivisionRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
-} from '../services/lineupIsRight';
-import type { OptimalPick } from '../services/lineupIsRight';
+} from '../services/capCrunch';
+import type { OptimalPick } from '../services/capCrunch';
 import { getTeamByAbbreviation } from '../data/teams';
 import { TeamLogo } from '../components/TeamLogo';
 import { nflTeams } from '../data/nfl-teams';
 import type { Sport } from '../types';
-import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineupIsRight';
+import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/capCrunch';
 
 type Phase = 'sport-select' | 'playing' | 'results';
 
@@ -85,7 +84,7 @@ function getReadableTeamColor(sport: Sport, teamAbbr: string): string {
   return color;
 }
 
-export function SoloLineupIsRightPage() {
+export function SoloCapCrunchPage() {
   const navigate = useNavigate();
 
   // Setup
@@ -131,7 +130,7 @@ export function SoloLineupIsRightPage() {
       playerName: 'You',
       selectedPlayers: [],
       totalStat: 0,
-      isBusted: false,
+      bustCount: 0,
       isFinished: false,
     });
     setPhase('playing');
@@ -206,25 +205,33 @@ export function SoloLineupIsRightPage() {
             selectedPlayerId ?? undefined
           );
 
-      // Create selected player object
+      // Check if this pick would push over the cap
+      const wouldBust = (lineup.totalStat + statValue) > targetCap;
+
+      // Create selected player object — bust picks are still shown but count as 0
       const newSelectedPlayer: SelectedPlayer = {
         playerName: selectedPlayerName,
         team: currentTeam,
         selectedYear: isTotalGP ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
+        isBust: wouldBust,
       };
 
-      // Add to lineup
+      // Add to lineup; bust picks revert the total (count as 0)
       const updated = addPlayerToLineup(lineup, newSelectedPlayer);
-      const { total, isBusted } = calculateLineupStat(updated, statCategory, targetCap);
-      updated.totalStat = total;
-      updated.isBusted = isBusted;
+      if (wouldBust) {
+        updated.totalStat = lineup.totalStat; // revert — bust pick doesn't count
+        updated.bustCount = (lineup.bustCount ?? 0) + 1;
+      } else {
+        updated.totalStat = parseFloat((lineup.totalStat + statValue).toFixed(1));
+        updated.bustCount = lineup.bustCount ?? 0;
+      }
 
       setLineup(updated);
 
-      // Check if done (5 picks filled or busted)
-      if (updated.selectedPlayers.length === 5 || isBusted) {
+      // Always play all 5 picks — no early game-over on bust
+      if (updated.selectedPlayers.length === 5) {
         updated.isFinished = true;
         setPhase('results');
       } else {
@@ -256,10 +263,13 @@ export function SoloLineupIsRightPage() {
     const picks = lineup.selectedPlayers;
     if (picks.length === 0) return;
     const lastPick = picks[picks.length - 1];
-    const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
+    // For bust picks, the total was reverted so totalBeforeLast == lineup.totalStat
+    const totalBeforeLast = lastPick.isBust
+      ? lineup.totalStat
+      : parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
     const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
     setOptimalPick(undefined); // reset to loading
-    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lineup.isBusted ? 0 : lastPick.statValue)
+    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue)
       .then(result => setOptimalPick(result ?? null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -350,7 +360,8 @@ export function SoloLineupIsRightPage() {
               <li><span className="text-[#d4af37] font-bold">Each pick:</span> A random team is shown. Search <em>any</em> player by name and choose a year they were active</li>
               <li><span className="text-emerald-400 font-bold">Hit:</span> Player was on that team that year → their stat adds to your total</li>
               <li><span className="text-red-400 font-bold">Miss:</span> Player wasn't on that team that year → you get 0 for that pick</li>
-              <li><span className="text-white font-bold">5 picks max.</span> Go over the cap at any point and you bust — game over!</li>
+              <li><span className="text-white font-bold">5 picks max.</span> If a pick pushes you over the cap it <span className="text-red-400 font-bold">busts</span> — that pick counts as 0 and your score reverts. You always play all 5 picks!</li>
+              <li><span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts wins; then oldest average pick year</li>
             </ul>
           </motion.div>
         </main>
@@ -429,14 +440,13 @@ export function SoloLineupIsRightPage() {
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
-              <p className={`retro-title text-2xl md:text-4xl ${lineup.isBusted ? 'text-red-500' : 'text-white'}`}>{fmt(lineup.totalStat)}</p>
-              {lineup.isBusted ? (
-                <p className="sports-font text-[7px] md:text-[9px] text-red-400/70 tracking-wide mt-1 uppercase">Busted!</p>
-              ) : (
-                <div className="mt-2 md:mt-3 border-t border-white/10 pt-2 md:pt-3">
-                  <div className="sports-font text-[6px] md:text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
-                  <p className="retro-title text-xl md:text-3xl text-[#d4af37]">{fmt(targetCap - lineup.totalStat)}</p>
-                </div>
+              <p className="retro-title text-2xl md:text-4xl text-white">{fmt(lineup.totalStat)}</p>
+              <div className="mt-2 md:mt-3 border-t border-white/10 pt-2 md:pt-3">
+                <div className="sports-font text-[6px] md:text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
+                <p className="retro-title text-xl md:text-3xl text-[#d4af37]">{fmt(targetCap - lineup.totalStat)}</p>
+              </div>
+              {(lineup.bustCount ?? 0) > 0 && (
+                <p className="sports-font text-[7px] text-red-400/70 tracking-wide mt-1 uppercase">{lineup.bustCount} Bust{lineup.bustCount !== 1 ? 's' : ''}</p>
               )}
             </div>
           </div>
@@ -462,6 +472,9 @@ export function SoloLineupIsRightPage() {
                     />
 
                     {loading && <p className="text-white/60 text-xs md:text-sm">Loading...</p>}
+                    {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
+                      <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling. 2025 NFL not yet available.</p>
+                    )}
 
                     {searchResults.length > 0 && (
                       <div className="space-y-1 md:space-y-2 overflow-y-auto flex-1 min-h-0">
@@ -541,7 +554,7 @@ export function SoloLineupIsRightPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-red-400 text-xs md:text-sm">No playing years found for this player</p>
+                        <p className="text-red-400 text-xs md:text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
                       )}
                     </div>
 
@@ -584,28 +597,39 @@ export function SoloLineupIsRightPage() {
                       key={idx}
                       className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[9px] md:text-xs leading-tight ${
                         idx < lineup.selectedPlayers.length
-                          ? lineup.selectedPlayers[idx].statValue === 0
+                          ? lineup.selectedPlayers[idx].isBust
                             ? 'bg-red-900/40 border-red-500/60'
-                            : 'bg-[#1a3a1a] border-[#4a7a4a]'
+                            : lineup.selectedPlayers[idx].statValue === 0
+                              ? 'bg-red-900/40 border-red-500/60'
+                              : 'bg-[#1a3a1a] border-[#4a7a4a]'
                           : 'bg-[#1a1a1a] border-dashed border-white/10'
                       }`}
                     >
-                      {idx < lineup.selectedPlayers.length ? (
-                        <div className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-300' : 'text-white'}>
-                          <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {lineup.selectedPlayers[idx].playerName}</p>
-                          <p className={lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{lineup.selectedPlayers[idx].team} • {lineup.selectedPlayers[idx].selectedYear}</p>
-                          <p className={`font-semibold text-[9px] md:text-xs ${lineup.selectedPlayers[idx].statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{fmt(lineup.selectedPlayers[idx].statValue)} {getCategoryAbbr(statCategory!)}</p>
-                        </div>
-                      ) : (
+                      {idx < lineup.selectedPlayers.length ? (() => {
+                        const pick = lineup.selectedPlayers[idx];
+                        const isBad = pick.isBust || pick.statValue === 0;
+                        return (
+                          <div className={isBad ? 'text-red-300' : 'text-white'}>
+                            <div className="flex items-center gap-1">
+                              <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {pick.playerName}</p>
+                              {pick.isBust && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">BUST</span>}
+                            </div>
+                            <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{pick.team} • {pick.selectedYear}</p>
+                            <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                              {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
+                            </p>
+                          </div>
+                        );
+                      })() : (
                         <span className="text-white/40 text-[9px] md:text-xs">Slot {idx + 1}</span>
                       )}
                     </div>
                   ))}
                 </div>
 
-                {lineup.isBusted && (
-                  <div className="mt-3 md:mt-4 p-2 md:p-3 bg-red-900/40 border border-red-500/60 rounded text-red-400 text-[8px] md:text-xs font-semibold text-center">
-                    BUSTED! Exceeded {targetCap}
+                {(lineup.bustCount ?? 0) > 0 && (
+                  <div className="mt-3 md:mt-4 p-2 md:p-3 bg-red-900/30 border border-red-500/40 rounded text-red-400 text-[8px] md:text-xs font-semibold text-center">
+                    {lineup.bustCount} BUST{lineup.bustCount !== 1 ? 'S' : ''} — each counted as 0
                   </div>
                 )}
             </motion.div>
@@ -654,18 +678,14 @@ export function SoloLineupIsRightPage() {
               {/* STATS GRID - 2x2 */}
               <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {[
-                  { label: 'YOUR SCORE', value: fmt(lineup.totalStat) },
-                  { label: 'TARGET CAP', value: targetCap },
-                  { label: 'STATUS', value: lineup.isBusted ? 'BUSTED' : 'SUCCESS' },
-                  { label: 'PLAYERS', value: `${lineup.selectedPlayers.length}/5` }
+                  { label: 'YOUR SCORE', value: fmt(lineup.totalStat), color: 'text-white' },
+                  { label: 'TARGET CAP', value: String(targetCap), color: 'text-white' },
+                  { label: 'AWAY', value: fmt(Math.abs(lineup.totalStat - targetCap)), color: lineup.totalStat === targetCap ? 'text-green-400' : 'text-white' },
+                  { label: 'BUSTS', value: String(lineup.bustCount ?? 0), color: (lineup.bustCount ?? 0) > 0 ? 'text-red-400' : 'text-white' },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-[#111] border border-white/5 p-3 md:p-4 rounded-sm shadow-xl relative overflow-hidden">
                     <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">{stat.label}</div>
-                    <div className={`retro-title text-xl md:text-2xl ${
-                      stat.label === 'STATUS' 
-                        ? (lineup.isBusted ? 'text-red-500' : 'text-green-400')
-                        : 'text-white'
-                    }`}>{stat.value}</div>
+                    <div className={`retro-title text-xl md:text-2xl ${stat.color}`}>{stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -687,7 +707,7 @@ export function SoloLineupIsRightPage() {
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
                         </div>
-                        {lineup.isBusted && (
+                        {lastPick.isBust && (
                           <div className="sports-font text-[9px] text-emerald-400/70 mt-1">
                             Would finish: {fmt(wouldFinishAt)} / {targetCap}
                           </div>
@@ -744,44 +764,42 @@ export function SoloLineupIsRightPage() {
               <div className="flex-1 overflow-y-auto p-4 md:p-6 max-h-96 lg:max-h-none">
                 <div className="space-y-2">
                 {lineup.selectedPlayers.map((player, idx) => {
-                  const isInvalid = player.statValue === 0;
+                  const isBust = player.isBust;
+                  const isMiss = !isBust && player.statValue === 0;
+                  const isInvalid = isBust || isMiss;
                   return (
                     <div
                       key={idx}
                       className={`relative p-3 md:p-4 border transition-all ${
-                        isInvalid ? 'border-red-500/30 opacity-60 grayscale-[0.3]' : 'border-white/20'
+                        isInvalid ? 'border-red-500/30' : 'border-white/20'
                       }`}
                       style={{
-                        background: isInvalid 
-                          ? 'transparent' 
+                        background: isInvalid
+                          ? 'transparent'
                           : 'linear-gradient(135deg, #d4af3733 0%, #d4af3720 100%)'
                       }}
                     >
                       <div className="flex justify-between items-center relative z-10">
                         <div className="overflow-hidden">
-                          <div className={`sports-font text-[7px] md:text-[8px] ${
-                            isInvalid ? 'text-red-400/50' : 'text-white/50'
-                          }`}>
+                          <div className={`sports-font text-[7px] md:text-[8px] ${isInvalid ? 'text-red-400/50' : 'text-white/50'}`}>
                             {selectedSport?.toUpperCase()} • {getCategoryAbbr(statCategory!)}
                           </div>
-                          <div className={`retro-title text-sm md:text-base truncate ${
-                            isInvalid ? 'text-red-400' : 'text-white'
-                          }`}>
+                          <div className={`retro-title text-sm md:text-base truncate ${isInvalid ? 'text-red-400' : 'text-white'}`}>
                             {player.playerName}
                           </div>
-                          <div className={`text-xs ${
-                            isInvalid ? 'text-red-400/60' : 'text-white/60'
-                          }`}>
+                          <div className={`text-xs ${isInvalid ? 'text-red-400/60' : 'text-white/60'}`}>
                             {player.team} • {player.selectedYear}
                           </div>
+                          {isBust && (
+                            <div className="text-[9px] text-red-400/70 mt-0.5">Exceeded cap — scored 0, total reverted</div>
+                          )}
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className={`retro-title text-lg md:text-xl ${
-                            isInvalid ? 'text-red-400' : 'text-[#d4af37]'
-                          }`}>{fmt(player.statValue)}</p>
-                          {isInvalid && (
-                            <div className="bg-red-600 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">INVALID</div>
-                          )}
+                          <p className={`retro-title text-lg md:text-xl ${isInvalid ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                            {isBust ? `${fmt(player.statValue)}→0` : fmt(player.statValue)}
+                          </p>
+                          {isBust && <div className="bg-red-600 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">BUST</div>}
+                          {isMiss && <div className="bg-orange-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">MISS</div>}
                         </div>
                       </div>
                     </div>
