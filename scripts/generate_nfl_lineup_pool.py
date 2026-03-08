@@ -34,6 +34,12 @@ except ImportError:
     print("ERROR: nfl_data_py not installed. Run: pip install nfl-data-py")
     sys.exit(1)
 
+try:
+    import pandas as pd
+except ImportError:
+    print("ERROR: pandas not installed. Run: pip install pandas pyarrow")
+    sys.exit(1)
+
 # ─── Config ──────────────────────────────────────────────────────────────────
 
 YEARS = list(range(1999, 2025))   # 1999–2024; covers full career histories including LT, Rice, etc.
@@ -86,6 +92,47 @@ def col_sum(df, col):
     return int(total) if total == total else 0
 
 
+# ─── Stats loader (handles 2025 via nflverse-data direct parquet) ─────────────
+
+NFLVERSE_STATS_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    "stats_player/stats_player_reg_{year}.parquet"
+)
+
+def load_seasonal_stats(years):
+    """Load seasonal stats for all years.
+    - Years ≤ 2024: via nfl_data_py
+    - Years ≥ 2025: direct parquet from nflverse-data releases
+    Normalises 'passing_interceptions' → 'interceptions' for consistency.
+    """
+    legacy_years = [y for y in years if y <= 2024]
+    new_years    = [y for y in years if y >= 2025]
+
+    frames = []
+
+    if legacy_years:
+        df = nfl.import_seasonal_data(legacy_years)
+        if df is not None and not df.empty:
+            frames.append(df)
+
+    for year in new_years:
+        url = NFLVERSE_STATS_URL.format(year=year)
+        print(f"  Fetching {year} stats from nflverse-data ({url})...")
+        try:
+            df = pd.read_parquet(url)
+            if "passing_interceptions" in df.columns and "interceptions" not in df.columns:
+                df = df.rename(columns={"passing_interceptions": "interceptions"})
+            frames.append(df)
+            print(f"    → {len(df)} rows loaded for {year}")
+        except Exception as e:
+            print(f"  WARNING: Could not fetch {year} stats: {e}")
+
+    if not frames:
+        return None
+
+    return pd.concat(frames, ignore_index=True)
+
+
 def meets_single_season_threshold(player_stats, position):
     """Return True if the player hit the per-season minimum in any one season.
     RBs in 2023/2024 get a lower threshold (200 rush yds) to capture depth backs."""
@@ -121,7 +168,7 @@ def main():
     print(f"  Roster rows: {len(roster_df)}")
 
     print(f"Loading seasonal stats ({YEARS[0]}–{YEARS[-1]})...")
-    stats_df = nfl.import_seasonal_data(YEARS)
+    stats_df = load_seasonal_stats(YEARS)
     if stats_df is None or stats_df.empty:
         print("ERROR: Failed to load stats data")
         sys.exit(1)

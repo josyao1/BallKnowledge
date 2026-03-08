@@ -15,9 +15,9 @@ import type {
 } from '../types/capCrunch';
 import type { Sport } from '../types';
 
-/** Strip diacritics and lowercase so accented names match plain-text queries (e.g. "doncic" → Dončić). */
+/** Strip diacritics, periods, and lowercase so names like "T.Y. Hilton" match query "ty hilton". */
 function normalizeStr(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\./g, '').toLowerCase();
 }
 
 // ─── Position Templates ──────────────────────────────────────────────────────
