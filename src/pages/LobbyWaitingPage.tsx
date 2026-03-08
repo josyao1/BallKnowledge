@@ -19,7 +19,7 @@ import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, setPlayerScoreMultiplier, kickPlayer, renamePlayer, getStoredPlayerName, startCareerRound } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
-import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/lineupIsRight';
+import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../services/capCrunch';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../services/careerData';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../services/boxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../services/startingLineupData';

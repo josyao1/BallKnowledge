@@ -1,12 +1,12 @@
 /**
- * MultiplayerLineupIsRightPage.tsx — Simultaneous Multiplayer Lineup Is Right.
+ * MultiplayerCapCrunchPage.tsx — Simultaneous Multiplayer Cap Crunch.
  *
  * All players pick simultaneously each round:
  * 1. Same team shown to all players each round
  * 2. Each player searches for a player + selects a year they were on that team
  * 3. Once all players submit → host advances to next round (new team)
- * 4. Busted players are auto-skipped in subsequent rounds
- * 5. After 5 rounds → results screen (closest to cap without busting wins)
+ * 4. If a pick exceeds the cap it busts — counts as 0, game always continues all 5 rounds
+ * 5. After 5 rounds → results screen (highest score wins; tiebreak: fewest busts, then oldest avg year)
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -28,16 +28,15 @@ import {
   getPlayerStatForYearAndTeam,
   getPlayerTotalGPForTeam,
   addPlayerToLineup,
-  calculateLineupStat,
   assignRandomTeam,
   isDivisionRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
-} from '../services/lineupIsRight';
-import type { OptimalPick } from '../services/lineupIsRight';
+} from '../services/capCrunch';
+import type { OptimalPick } from '../services/capCrunch';
 import { getTeamByAbbreviation } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/lineupIsRight';
+import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/capCrunch';
 import { TeamLogo } from '../components/TeamLogo';
 
 type Phase = 'loading' | 'picking' | 'results';
@@ -78,7 +77,7 @@ function getTeamColor(sport: any, teamAbbr: string): string {
   }
 }
 
-export function MultiplayerLineupIsRightPage() {
+export function MultiplayerCapCrunchPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const { lobby, players, currentPlayerId, isHost, setLobby, setPlayers } = useLobbyStore();
@@ -257,11 +256,10 @@ export function MultiplayerLineupIsRightPage() {
     const lobbyId = lobby.id;
     const totalRds = cs.totalRounds || 5;
     const nextRound = round + 1;
-    const allBusted = playerIds.every(pid => (lineups[pid] as any)?.isBusted);
 
     const advanceRound = async () => {
-      if (nextRound > totalRds || allBusted) {
-        // Determine winner(s) using the same sort as the results screen
+      if (nextRound > totalRds) {
+        // Determine winner(s) — highest score, then fewest busts, then oldest avg year
         const avgPickYear = (pid: string): number => {
           const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
           if (picks.length === 0) return 2025;
@@ -269,22 +267,31 @@ export function MultiplayerLineupIsRightPage() {
         };
         const sorted = [...playerIds].sort((a, b) => {
           const la = lineups[a] as any, lb = lineups[b] as any;
-          if (allBusted) return la.totalStat - lb.totalStat;
-          if (la.isBusted && !lb.isBusted) return 1;
-          if (!la.isBusted && lb.isBusted) return -1;
           if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
+          // Tiebreak 1: fewer busts
+          const aBusts = la.bustCount ?? 0, bBusts = lb.bustCount ?? 0;
+          if (aBusts !== bBusts) return aBusts - bBusts;
+          // Tiebreak 2: older avg pick year
           return avgPickYear(a) - avgPickYear(b);
         });
         if (sorted.length > 0) {
-          const topLineup = lineups[sorted[0]] as any;
+          const topPid = sorted[0];
+          const topLineup = lineups[topPid] as any;
           const topStat = topLineup?.totalStat ?? 0;
-          const topBusted = topLineup?.isBusted ?? false;
+          const topBusts = topLineup?.bustCount ?? 0;
+          const topAvgYear = avgPickYear(topPid);
           for (const pid of sorted) {
             const l = lineups[pid] as any;
-            const isWinner = allBusted
-              ? l.totalStat === topStat
-              : !l.isBusted && !topBusted && l.totalStat === topStat;
-            if (isWinner) await incrementPlayerWins(lobbyId, pid);
+            // Award wins to all players fully tied across all three tiebreakers
+            if (
+              l.totalStat === topStat &&
+              (l.bustCount ?? 0) === topBusts &&
+              avgPickYear(pid) === topAvgYear
+            ) {
+              await incrementPlayerWins(lobbyId, pid);
+            } else {
+              break;
+            }
           }
         }
         // Game over → go to results
@@ -298,7 +305,7 @@ export function MultiplayerLineupIsRightPage() {
         playerIds.forEach(pid => {
           resetLineups[pid] = {
             ...lineups[pid],
-            // Finished/busted players keep hasPickedThisRound true so they're auto-skipped
+            // Players who've used all 5 picks keep hasPickedThisRound true so they're auto-skipped
             hasPickedThisRound: (lineups[pid] as any).isFinished ? true : false,
           };
         });
@@ -351,13 +358,16 @@ export function MultiplayerLineupIsRightPage() {
           const lineup = allLineups[p.player_id] as PlayerLineup | undefined;
           if (!lineup || lineup.selectedPlayers.length === 0) { results.set(p.player_id, null); return; }
           const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
-          const totalBeforeLast = parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
+          // For bust picks the total was reverted, so totalBeforeLast == lineup.totalStat
+          const totalBeforeLast = lastPick.isBust
+            ? lineup.totalStat
+            : parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
           const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
           // In hard mode, exclude all globally locked players except the one being replaced
           const excludeNames = hardMode
             ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
             : undefined;
-          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lineup.isBusted ? 0 : lastPick.statValue, excludeNames);
+          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames);
           results.set(p.player_id, opt);
         })
       );
@@ -447,10 +457,13 @@ export function MultiplayerLineupIsRightPage() {
         playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
         selectedPlayers: [],
         totalStat: 0,
-        isBusted: false,
+        bustCount: 0,
         isFinished: false,
         hasPickedThisRound: false,
       };
+
+      // Check if this pick would push over the cap
+      const wouldBust = (myCurrentLineup.totalStat + statValue) > targetCap;
 
       const newSelectedPlayer: SelectedPlayer = {
         playerName: selectedPlayerName,
@@ -458,14 +471,21 @@ export function MultiplayerLineupIsRightPage() {
         selectedYear: isTotalGP ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
+        isBust: wouldBust,
       };
 
       const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
-      const { total, isBusted } = calculateLineupStat(withNewPlayer, statCategory, targetCap);
-      withNewPlayer.totalStat = total;
-      withNewPlayer.isBusted = isBusted;
+      // Bust picks revert the total (count as 0); game always continues all 5 picks
+      if (wouldBust) {
+        withNewPlayer.totalStat = myCurrentLineup.totalStat;
+        withNewPlayer.bustCount = (myCurrentLineup.bustCount ?? 0) + 1;
+      } else {
+        withNewPlayer.totalStat = parseFloat((myCurrentLineup.totalStat + statValue).toFixed(1));
+        withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
+      }
       (withNewPlayer as any).hasPickedThisRound = true;
-      if (isBusted) withNewPlayer.isFinished = true;
+      // Only finished when all 5 picks made
+      if (withNewPlayer.selectedPlayers.length >= 5) withNewPlayer.isFinished = true;
 
       // Hard mode: compute next picker and record locked player-season
       let hardModeUpdates: Record<string, any> = {};
@@ -552,8 +572,11 @@ export function MultiplayerLineupIsRightPage() {
       >
         {myLineup?.isFinished ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
-            <p className="text-2xl text-red-400 retro-title">BUSTED</p>
-            <p className="text-white/50 sports-font text-sm">You exceeded the cap. Sit tight while others finish the round.</p>
+            <p className="text-2xl text-emerald-400 retro-title">All Picks In!</p>
+            <p className="text-white/50 sports-font text-sm">You've made all 5 picks. Sit tight while others finish.</p>
+            {(myLineup.bustCount ?? 0) > 0 && (
+              <p className="text-red-400/70 sports-font text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
+            )}
           </div>
         ) : canPickThisRound ? (
           <>
@@ -570,6 +593,9 @@ export function MultiplayerLineupIsRightPage() {
                   className="w-full px-4 py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-3 text-base"
                 />
                 {loading && <p className="text-white/60 text-sm">Loading...</p>}
+                {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
+                  <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling. 2025 NFL not yet available.</p>
+                )}
                 {duplicateError && (
                   <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
                 )}
@@ -656,7 +682,7 @@ export function MultiplayerLineupIsRightPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-red-400 text-sm">No playing years found for this player</p>
+                  <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
                 )}
                 <div className="flex gap-2 mt-auto pt-2">
                   <button
@@ -725,8 +751,7 @@ export function MultiplayerLineupIsRightPage() {
             const visiblePicks = maskCurrentRound
               ? (lineup?.selectedPlayers.slice(0, currentRound - 1) ?? [])
               : (lineup?.selectedPlayers ?? []);
-            // Only reveal busted status on your own row — opponents just see ✓
-            const showBusted = isMe && !!lineup?.isBusted;
+            const myBustCount = isMe ? (lineup?.bustCount ?? 0) : 0;
 
             return (
               <div
@@ -736,13 +761,16 @@ export function MultiplayerLineupIsRightPage() {
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <p className={`font-semibold text-sm ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
-                    {player.player_name}
-                  </p>
+                  <div>
+                    <p className={`font-semibold text-sm ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                      {player.player_name}
+                    </p>
+                    {isMe && myBustCount > 0 && (
+                      <p className="text-[9px] text-red-400/70 sports-font">{myBustCount} bust{myBustCount !== 1 ? 's' : ''}</p>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1.5">
-                    {showBusted ? (
-                      <span className="text-[9px] text-red-400 sports-font uppercase tracking-wider px-1.5 py-0.5 bg-red-900/30 border border-red-500/30 rounded">BUSTED</span>
-                    ) : hasPicked ? (
+                    {hasPicked ? (
                       <span className="text-emerald-400 text-sm">✓</span>
                     ) : (
                       <span className="text-yellow-400 text-sm">⏳</span>
@@ -751,14 +779,15 @@ export function MultiplayerLineupIsRightPage() {
                 </div>
                 <div className="space-y-1 mb-2 text-xs">
                   {visiblePicks.map((selected, idx) => (
-                    <div key={idx} className={`flex justify-between ${isMe && selected.statValue === 0 ? 'text-red-300' : 'text-white/70'}`}>
-                      <div className="flex-1 min-w-0">
-                        <span className={`truncate text-xs ${isMe && selected.statValue === 0 ? 'text-red-400' : ''}`}>{selected.playerName}</span>
-                        <span className={`ml-1 text-[10px] ${isMe && selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                    <div key={idx} className={`flex justify-between ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-300' : 'text-white/70'}`}>
+                      <div className="flex-1 min-w-0 flex items-baseline gap-1">
+                        <span className={`truncate text-xs ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400' : ''}`}>{selected.playerName}</span>
+                        {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                        <span className={`ml-1 text-[10px] ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
                       </div>
                       {isMe && (
-                        <span className={`font-semibold ml-1 flex-shrink-0 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                          {fmt(selected.statValue)}
+                        <span className={`font-semibold ml-1 flex-shrink-0 ${(selected.isBust || selected.statValue === 0) ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                          {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
                         </span>
                       )}
                     </div>
@@ -770,7 +799,7 @@ export function MultiplayerLineupIsRightPage() {
                 <div className="flex justify-between text-xs border-t border-white/10 pt-1.5">
                   <span className="text-white/40">{visiblePicks.length}/{totalRounds}</span>
                   {isMe ? (
-                    <span className={`font-semibold ${showBusted ? 'text-red-500' : 'text-white'}`}>
+                    <span className="font-semibold text-white">
                       {fmt(lineup?.totalStat ?? 0)}
                     </span>
                   ) : (
@@ -861,25 +890,17 @@ export function MultiplayerLineupIsRightPage() {
                 <p className="retro-title text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
               </div>
               {/* My running total — always visible */}
-              <div className={`border px-3 py-1.5 rounded-sm text-center ${
-                myLineup?.isBusted
-                  ? 'bg-red-900/20 border-red-500/50'
-                  : 'bg-[#d4af37]/10 border-[#d4af37]/40'
-              }`}>
+              <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-3 py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
-                <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                <p className="retro-title text-lg leading-none text-[#d4af37]">
                   {fmt(myLineup?.totalStat ?? 0)}
                 </p>
               </div>
               {/* Remaining to cap */}
-              <div className={`border px-3 py-1.5 rounded-sm text-center ${
-                myLineup?.isBusted
-                  ? 'bg-red-900/20 border-red-500/50'
-                  : 'bg-[#111] border-white/10'
-              }`}>
+              <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
-                <p className={`retro-title text-lg leading-none ${myLineup?.isBusted ? 'text-red-400' : 'text-white'}`}>
-                  {myLineup?.isBusted ? '—' : fmt(targetCap - (myLineup?.totalStat ?? 0))}
+                <p className="retro-title text-lg leading-none text-white">
+                  {fmt(targetCap - (myLineup?.totalStat ?? 0))}
                 </p>
               </div>
             </div>
@@ -935,8 +956,6 @@ export function MultiplayerLineupIsRightPage() {
 
   // ── Results screen ─────────────────────────────────────────────────────────
   if (phase === 'results') {
-    const everyoneBusted = players.length > 0 && players.every(p => (allLineups[p.player_id] as any)?.isBusted);
-
     const avgPickYear = (lineup: PlayerLineup): number => {
       const picks = lineup.selectedPlayers;
       if (picks.length === 0) return 2025;
@@ -946,28 +965,24 @@ export function MultiplayerLineupIsRightPage() {
     const sortedLineups = players
       .map((p) => ({
         ...p,
-        lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, isBusted: false, isFinished: false }) as PlayerLineup,
+        lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false }) as PlayerLineup,
       }))
       .sort((a, b) => {
-        if (everyoneBusted) {
-          // All busted: least over the cap wins (lowest total stat)
-          return a.lineup.totalStat - b.lineup.totalStat;
-        }
-        // Normal: non-busted beat busted; among non-busted, highest total wins
-        if (a.lineup.isBusted && !b.lineup.isBusted) return 1;
-        if (!a.lineup.isBusted && b.lineup.isBusted) return -1;
+        // Primary: highest score
         if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
-        // Tiebreaker: lower average pick year wins (older lineup)
+        // Tiebreak 1: fewer busts
+        const aBusts = a.lineup.bustCount ?? 0, bBusts = b.lineup.bustCount ?? 0;
+        if (aBusts !== bBusts) return aBusts - bBusts;
+        // Tiebreak 2: older avg pick year
         return avgPickYear(a.lineup) - avgPickYear(b.lineup);
       });
 
-    // Detect whether 1st and 2nd place had the same score (tiebreaker decided it)
-    const tiebreakerUsed =
+    // Detect whether 1st and 2nd place are tied on score (tiebreaker decided it)
+    const tiedOnScore =
       sortedLineups.length >= 2 &&
-      !everyoneBusted &&
-      !sortedLineups[0].lineup.isBusted &&
-      !sortedLineups[1].lineup.isBusted &&
       sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat;
+    const tiedOnBusts = tiedOnScore && (sortedLineups[0].lineup.bustCount ?? 0) === (sortedLineups[1].lineup.bustCount ?? 0);
+    const tiebreakerUsed = tiedOnScore;
 
     return (
       <div className="min-h-screen bg-[#111] text-white flex flex-col relative overflow-hidden">
@@ -992,14 +1007,11 @@ export function MultiplayerLineupIsRightPage() {
               <p className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Target Cap</p>
               <p className="retro-title text-3xl text-[#d4af37]">{targetCap}</p>
             </div>
-            {everyoneBusted && (
-              <div className="mb-4 p-3 bg-red-900/20 border border-red-500/30 rounded text-center">
-                <p className="sports-font text-[10px] text-red-400 tracking-widest uppercase">Everyone busted — least over wins</p>
-              </div>
-            )}
             {tiebreakerUsed && (
               <div className="mb-4 p-3 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded text-center">
-                <p className="sports-font text-[10px] text-[#d4af37] tracking-widest uppercase">Tied score — older avg lineup year wins</p>
+                <p className="sports-font text-[10px] text-[#d4af37] tracking-widest uppercase">
+                  {tiedOnBusts ? 'Tied score & busts — older avg lineup year wins' : 'Tied score — fewest busts wins'}
+                </p>
               </div>
             )}
 
@@ -1017,53 +1029,54 @@ export function MultiplayerLineupIsRightPage() {
                       <p className="font-semibold text-white text-lg">
                         {idx + 1}. {item.player_name}
                       </p>
-                      {tiebreakerUsed && idx === 0 && (
-                        <span className="text-[9px] sports-font text-[#d4af37]/70 tracking-wider">tiebreaker · avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
+                      {(item.lineup.bustCount ?? 0) > 0 && (
+                        <span className="text-[9px] sports-font text-red-400/70">{item.lineup.bustCount} bust{item.lineup.bustCount !== 1 ? 's' : ''} (each counted as 0)</span>
                       )}
-                      {tiebreakerUsed && idx === 1 && (
-                        <span className="text-[9px] sports-font text-white/30 tracking-wider">avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
+                      {tiebreakerUsed && tiedOnBusts && idx <= 1 && (
+                        <span className="block text-[9px] sports-font text-[#d4af37]/60">avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
                       )}
                     </div>
                     <div className="text-right">
-                      <p
-                        className={`retro-title text-3xl ${
-                          item.lineup.isBusted ? 'text-red-500' : 'text-[#d4af37]'
-                        }`}
-                      >
+                      <p className="retro-title text-3xl text-[#d4af37]">
                         {fmt(item.lineup.totalStat)}
                       </p>
-                      {!item.lineup.isBusted && (
-                        <p className="text-xs text-white/40">
-                          {fmt(Math.abs(item.lineup.totalStat - targetCap))} away
-                        </p>
-                      )}
+                      <p className="text-xs text-white/40">
+                        {fmt(Math.abs(item.lineup.totalStat - targetCap))} away
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-2 text-xs mb-3 border-t border-white/10 pt-3">
-                    {item.lineup.selectedPlayers.map((selected, pidx) => (
-                      <div key={pidx} className={`flex justify-between ${selected.statValue === 0 ? 'text-red-300' : 'text-white/70'}`}>
-                        <div className="flex-1">
-                          <span className={`truncate ${selected.statValue === 0 ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
-                          <span className={`ml-2 block text-[11px] ${selected.statValue === 0 ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                    {item.lineup.selectedPlayers.map((selected, pidx) => {
+                      const isBust = selected.isBust;
+                      const isMiss = !isBust && selected.statValue === 0;
+                      const isBad = isBust || isMiss;
+                      return (
+                        <div key={pidx} className={`flex justify-between ${isBad ? 'text-red-300' : 'text-white/70'}`}>
+                          <div className="flex-1">
+                            <div className="flex items-baseline gap-1">
+                              <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
+                              {isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                            </div>
+                            <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                            {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
+                          </div>
+                          <span className={`font-semibold ml-2 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                            {isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
+                          </span>
                         </div>
-                        <span className={`font-semibold ml-2 ${selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>{fmt(selected.statValue)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-
-                  {item.lineup.isBusted && (
-                    <div className="text-red-400 text-xs font-semibold bg-red-900/20 px-3 py-2 rounded border border-red-500/30">
-                      BUSTED - Exceeded {targetCap}
-                    </div>
-                  )}
 
                   {/* Optimal last pick hint */}
                   {(() => {
                     const opt = optimalPicks.get(item.player_id);
                     if (!opt || item.lineup.selectedPlayers.length === 0) return null;
                     const lastPick = item.lineup.selectedPlayers[item.lineup.selectedPlayers.length - 1];
-                    const totalBeforeLast = parseFloat((item.lineup.totalStat - lastPick.statValue).toFixed(1));
+                    const totalBeforeLast = lastPick.isBust
+                      ? item.lineup.totalStat
+                      : parseFloat((item.lineup.totalStat - lastPick.statValue).toFixed(1));
                     const wouldFinishAt = parseFloat((totalBeforeLast + opt.statValue).toFixed(1));
                     return (
                       <div className="mt-2 bg-black/40 border border-[#d4af37]/25 rounded px-3 py-2">
@@ -1074,7 +1087,7 @@ export function MultiplayerLineupIsRightPage() {
                             <span className="text-[10px] text-white/35 ml-2">
                               {opt.year === 'career' ? 'Career GP' : opt.year} · {opt.team}
                             </span>
-                            {item.lineup.isBusted && (
+                            {lastPick.isBust && (
                               <span className="block text-[10px] text-emerald-400/70 mt-0.5">
                                 Would finish: {fmt(wouldFinishAt)} / {targetCap}
                               </span>

@@ -23,9 +23,9 @@ import { MultiplayerCareerResultsPage } from './pages/MultiplayerCareerResultsPa
 import { MultiplayerNameScramblePage } from './pages/MultiplayerNameScramblePage';
 import { MultiplayerNameScrambleResultsPage } from './pages/MultiplayerNameScrambleResultsPage';
 import { SoloScramblePage } from './pages/SoloScramblePage';
-import { SoloLineupIsRightPage } from './pages/SoloLineupIsRightPage';
-import { MultiplayerLineupIsRightPage } from './pages/MultiplayerLineupIsRightPage';
-import { MultiplayerLineupIsRightResultsPage } from './pages/MultiplayerLineupIsRightResultsPage';
+import { SoloCapCrunchPage } from './pages/SoloCapCrunchPage';
+import { MultiplayerCapCrunchPage } from './pages/MultiplayerCapCrunchPage';
+import { MultiplayerCapCrunchResultsPage } from './pages/MultiplayerCapCrunchResultsPage';
 import { BoxScoreGamePage } from './pages/BoxScoreGamePage';
 import { BoxScoreResultsPage } from './pages/BoxScoreResultsPage';
 import { MultiplayerBoxScorePage } from './pages/MultiplayerBoxScorePage';
@@ -62,13 +62,13 @@ function App() {
         {/* Solo Scramble */}
         <Route path="/scramble" element={<SoloScramblePage />} />
         {/* Solo Lineup Is Right */}
-        <Route path="/lineup-is-right" element={<SoloLineupIsRightPage />} />
+        <Route path="/lineup-is-right" element={<SoloCapCrunchPage />} />
         {/* Name Scramble routes */}
         <Route path="/lobby/:code/scramble" element={<MultiplayerNameScramblePage />} />
         <Route path="/lobby/:code/scramble/results" element={<MultiplayerNameScrambleResultsPage />} />
-        {/* Lineup Is Right routes */}
-        <Route path="/lobby/:code/lineup-is-right" element={<MultiplayerLineupIsRightPage />} />
-        <Route path="/lobby/:code/lineup-is-right/results" element={<MultiplayerLineupIsRightResultsPage />} />
+        {/* Cap Crunch routes */}
+        <Route path="/lobby/:code/lineup-is-right" element={<MultiplayerCapCrunchPage />} />
+        <Route path="/lobby/:code/lineup-is-right/results" element={<MultiplayerCapCrunchResultsPage />} />
         {/* Box Score routes */}
         <Route path="/box-score" element={<BoxScoreGamePage />} />
         <Route path="/box-score/results" element={<BoxScoreResultsPage />} />

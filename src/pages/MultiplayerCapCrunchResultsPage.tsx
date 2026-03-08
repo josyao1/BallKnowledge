@@ -15,7 +15,7 @@ import {
 } from '../services/lobby';
 import type { LobbyPlayer } from '../types/database';
 
-export function MultiplayerLineupIsRightResultsPage() {
+export function MultiplayerCapCrunchResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const { lobby, players, setLobby, setPlayers } = useLobbyStore();

@@ -6,7 +6,7 @@
  */
 
 import { create } from 'zustand';
-import type { LineupIsRightGameState, PlayerSeason } from '../types/lineupIsRight';
+import type { LineupIsRightGameState, PlayerSeason } from '../types/capCrunch';
 import type { Sport } from '../types';
 
 interface LineupIsRightStore {
@@ -23,7 +23,7 @@ interface LineupIsRightStore {
   resetGame: () => void;
 }
 
-export const useLineupIsRightStore = create<LineupIsRightStore>(() => ({
+export const useCapCrunchStore = create<LineupIsRightStore>(() => ({
   gameState: null,
   initializeGame: () => {
     // Simplified - state now handled locally in pages

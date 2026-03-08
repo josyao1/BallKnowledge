@@ -28,6 +28,7 @@ export interface SelectedPlayer {
   selectedYear: string;
   playerSeason?: PlayerSeason | null;
   statValue: number; // The actual stat value achieved (0 if not on team that year)
+  isBust?: boolean;  // true if this pick pushed over the cap — counts as 0, game continues
 }
 
 export interface PlayerLineup {
@@ -35,7 +36,8 @@ export interface PlayerLineup {
   playerName: string;
   selectedPlayers: SelectedPlayer[]; // Now includes year + stat for each selection
   totalStat: number;
-  isBusted: boolean;
+  bustCount: number;   // how many picks busted (exceeded cap) — each counts as 0
+  isBusted?: boolean;  // legacy / compat field — no longer used to end the game
   isFinished: boolean;
 }
 

@@ -12,7 +12,7 @@ import type {
   PlayerLineup,
   PlayerSeason,
   SelectedPlayer,
-} from '../types/lineupIsRight';
+} from '../types/capCrunch';
 import type { Sport } from '../types';
 
 /** Strip diacritics and lowercase so accented names match plain-text queries (e.g. "doncic" → Dončić). */
@@ -198,7 +198,7 @@ export function createPlayerLineup(
     playerName,
     selectedPlayers: [],
     totalStat: 0,
-    isBusted: false,
+    bustCount: 0,
     isFinished: false,
   };
 }
@@ -649,19 +649,19 @@ export function getStatValue(
 export function calculateLineupStat(
   lineup: PlayerLineup,
   _statCategory: StatCategory,
-  targetCap: number
-): { total: number; isBusted: boolean } {
+  _targetCap: number
+): { total: number } {
+  // Bust picks (isBust: true) count as 0 — only valid picks contribute to the total.
+  // Bust detection is done inline at pick time (statValue > remainingBudget);
+  // this function purely recalculates the running total from stored picks.
   const sum = lineup.selectedPlayers.reduce((acc, player) => {
-    return acc + player.statValue;
+    return acc + (player.isBust ? 0 : player.statValue);
   }, 0);
 
   // Round to 1 decimal place cleanly (parseFloat avoids floating-point noise)
   const total = parseFloat(sum.toFixed(1));
 
-  return {
-    total,
-    isBusted: total > targetCap,
-  };
+  return { total };
 }
 
 /**
@@ -682,9 +682,7 @@ export function addPlayerToLineup(
  */
 export function isGameFinished(state: LineupIsRightGameState): boolean {
   return state.lineups.every(
-    lineup =>
-      lineup.isBusted ||
-      (lineup.selectedPlayers.length === 5 && lineup.isFinished)
+    lineup => lineup.selectedPlayers.length === 5 && lineup.isFinished
   );
 }
 
@@ -696,9 +694,6 @@ export function isGameFinished(state: LineupIsRightGameState): boolean {
 export function calculateWinners(
   lineups: PlayerLineup[]
 ): PlayerLineup[] {
-  const nonBusted = lineups.filter(l => !l.isBusted);
-  const busted = lineups.filter(l => l.isBusted);
-
   const avgPickYear = (lineup: PlayerLineup): number => {
     const picks = lineup.selectedPlayers;
     if (picks.length === 0) return 2025;
@@ -709,13 +704,15 @@ export function calculateWinners(
     return sum / picks.length;
   };
 
-  nonBusted.sort((a, b) => {
+  return [...lineups].sort((a, b) => {
+    // Primary: highest score
     if (b.totalStat !== a.totalStat) return b.totalStat - a.totalStat;
-    // Tiebreaker: lower average pick year wins (older lineup)
+    // Tiebreak 1: fewer busts
+    const aBusts = a.bustCount ?? 0, bBusts = b.bustCount ?? 0;
+    if (aBusts !== bBusts) return aBusts - bBusts;
+    // Tiebreak 2: older avg pick year
     return avgPickYear(a) - avgPickYear(b);
   });
-
-  return [...nonBusted, ...busted];
 }
 
 export interface OptimalPick {
