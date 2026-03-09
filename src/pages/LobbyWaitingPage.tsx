@@ -162,8 +162,8 @@ export function LobbyWaitingPage() {
       const foundTeam = teamList.find(t => t.abbreviation === lobby.team_abbreviation);
       setEditTeam(foundTeam || null);
 
-      // Parse year from season
-      const yearMatch = lobby.season.match(/^(\d{4})/);
+      // Parse year from season (season may be null for non-roster game modes)
+      const yearMatch = lobby.season?.match(/^(\d{4})/);
       if (yearMatch) {
         setEditYear(parseInt(yearMatch[1]));
       }
@@ -658,7 +658,7 @@ export function LobbyWaitingPage() {
     }
 
     if (editGameType === 'scramble') {
-      // Scramble mode: update career_state with points target and era filter
+      // Scramble mode: update career_state with points target, era filter, and sport
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
@@ -666,9 +666,10 @@ export function LobbyWaitingPage() {
         career_to: editCareerTo,
       };
       await updateCareerState(newCareerState);
-      setLobby({ ...lobby, career_state: newCareerState });
+      await updateSettings({ sport: editSport });
+      setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else if (editGameType === 'career') {
-      // Career mode: update career_state with win target and era filters
+      // Career mode: update career_state with win target, era filters, and sport
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
@@ -677,9 +678,10 @@ export function LobbyWaitingPage() {
         career_to: editCareerTo,
       };
       await updateCareerState(newCareerState);
+      await updateSettings({ sport: editSport });
       // Update local store immediately — don't wait for Supabase realtime to avoid
       // a race condition where handleCareerStart reads stale career_state
-      setLobby({ ...lobby, career_state: newCareerState });
+      setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else if (editGameType === 'lineup-is-right') {
       // Lineup Is Right mode: update sport, forced stat category, and hard mode toggle
       const existingState = (lobby.career_state as any) || {};
@@ -1211,6 +1213,26 @@ export function LobbyWaitingPage() {
 
                 {editGameType === 'scramble' ? (
                   <>
+                    {/* Sport Toggle */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nba', 'nfl'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setEditSport(s)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editSport === s
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Scramble Win Target */}
                     <div>
                       <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Points Target</div>
@@ -1247,6 +1269,26 @@ export function LobbyWaitingPage() {
                   </>
                 ) : editGameType === 'career' ? (
                   <>
+                    {/* Sport Toggle */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nba', 'nfl'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setEditSport(s)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editSport === s
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Win Target */}
                     <div>
                       <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">First To</div>

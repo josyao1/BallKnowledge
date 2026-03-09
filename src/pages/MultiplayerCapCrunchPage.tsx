@@ -163,7 +163,9 @@ export function MultiplayerCapCrunchPage() {
         setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
 
         if (cs.phase === 'results') setPhase('results');
-        else setPhase('picking');
+        else if (cs.statCategory && cs.allLineups) setPhase('picking');
+        // else: career_state not ready yet — stay on 'loading' and let the
+        // realtime sync rescue us when the write completes (line 215).
       } catch (error) {
         console.error('Error initializing game:', error);
         navigate('/');
@@ -341,8 +343,10 @@ export function MultiplayerCapCrunchPage() {
   }, [lobby?.career_state, isHost, lobby?.id]);
 
   // ── All clients: navigate back to lobby when host resets to waiting ────────
+  // Check phase !== 'picking' to avoid navigating away mid-game if realtime delivers
+  // a stale 'waiting' status before the new game's 'playing' status arrives.
   useEffect(() => {
-    if (lobby?.status === 'waiting' && phase === 'results') {
+    if (lobby?.status === 'waiting' && phase !== 'picking') {
       navigate(`/lobby/${code}`);
     }
   }, [lobby?.status, phase, navigate, code]);

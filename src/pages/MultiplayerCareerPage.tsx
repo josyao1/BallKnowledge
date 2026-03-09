@@ -368,6 +368,24 @@ export function MultiplayerCareerPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
+  const sport = (careerState?.sport || 'nba') as Sport;
+  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
+  const columns = getColumns(sport, careerState?.position || '');
+  const winTarget = careerState?.win_target || 3;
+
+  // Career highs: max value per numeric column across all seasons.
+  // Must be called before any early return to satisfy Rules of Hooks.
+  const careerHighs = useMemo(() => {
+    const highs: Record<string, number> = {};
+    const allSeasons: any[] = careerState?.seasons || [];
+    for (const col of columns) {
+      if (col.key === 'season' || col.key === 'team') continue;
+      const max = Math.max(0, ...allSeasons.map((s: any) => Number(s[col.key]) || 0));
+      if (max > 0) highs[col.key] = max;
+    }
+    return highs;
+  }, [careerState?.seasons, columns]);
+
   if (!lobby || !careerState) {
     return (
       <div className="min-h-screen bg-[#111] flex items-center justify-center">
@@ -375,23 +393,6 @@ export function MultiplayerCareerPage() {
       </div>
     );
   }
-
-  const sport = (careerState.sport || 'nba') as Sport;
-  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
-  const columns = getColumns(sport, careerState.position || '');
-  const winTarget = careerState.win_target || 3;
-
-  // Career highs: max value per numeric column across all seasons.
-  const careerHighs = useMemo(() => {
-    const highs: Record<string, number> = {};
-    const allSeasons: any[] = careerState.seasons || [];
-    for (const col of columns) {
-      if (col.key === 'season' || col.key === 'team') continue;
-      const max = Math.max(0, ...allSeasons.map((s: any) => Number(s[col.key]) || 0));
-      if (max > 0) highs[col.key] = max;
-    }
-    return highs;
-  }, [careerState.seasons, columns]);
 
   // ── BETWEEN-ROUND INTERSTITIAL ──
   if (lobby.status === 'waiting') {
