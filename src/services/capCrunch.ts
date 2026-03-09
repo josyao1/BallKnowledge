@@ -121,10 +121,14 @@ const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
  *   - Old/alternate NBA abbreviations (UTH → UTA, GOS → GSW, etc.)
  *   - Traded players whose team is stored as "ORL/DEN" or "UTA/CLE/SAC"
  */
-function nbaTeamMatches(dataTeam: string, targetTeam: string): boolean {
+function nbaTeamMatches(dataTeam: string, targetTeam: string, depth = 0): boolean {
   // Traded players: team stored as "ORL/DEN" — match if any part matches
   if (dataTeam.includes('/')) {
-    return dataTeam.split('/').some(part => nbaTeamMatches(part.trim(), targetTeam));
+    if (depth > 5) {
+      console.error('[nbaTeamMatches] Unexpected depth; dataTeam:', dataTeam);
+      return false;
+    }
+    return dataTeam.split('/').some(part => nbaTeamMatches(part.trim(), targetTeam, depth + 1));
   }
   const aliases = NBA_FRANCHISE_ALIASES[targetTeam];
   return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;

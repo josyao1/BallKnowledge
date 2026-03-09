@@ -483,7 +483,11 @@ export function LobbyWaitingPage() {
       let playerOrder = lobbyPlayers.map(p => p.player_id);
       if (hardMode && careerState.firstPickerId) {
         const idx = playerOrder.indexOf(careerState.firstPickerId);
-        if (idx > 0) playerOrder = [...playerOrder.slice(idx), ...playerOrder.slice(0, idx)];
+        if (idx === -1) {
+          console.error('[LineupIsRight] firstPickerId not in lobby; defaulting to join order.', careerState.firstPickerId);
+        } else if (idx > 0) {
+          playerOrder = [...playerOrder.slice(idx), ...playerOrder.slice(0, idx)];
+        }
       }
       const firstPickerId = hardMode && playerOrder.length > 0 ? playerOrder[0] : null;
 

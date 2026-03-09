@@ -495,11 +495,21 @@ export function MultiplayerCapCrunchPage() {
         const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
         const currentIndexInOrder = order.indexOf(currentPlayerId);
         let nextPickerId: string | null = null;
-        for (let i = 1; i < order.length; i++) {
-          const pid = order[(currentIndexInOrder + i) % order.length];
-          if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
-            nextPickerId = pid;
-            break;
+        if (currentIndexInOrder === -1) {
+          // Player not found in order (e.g. joined after game started) — fall back to first unpicked
+          for (const pid of order) {
+            if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+              nextPickerId = pid;
+              break;
+            }
+          }
+        } else {
+          for (let i = 1; i < order.length; i++) {
+            const pid = order[(currentIndexInOrder + i) % order.length];
+            if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+              nextPickerId = pid;
+              break;
+            }
           }
         }
         const pickKey = `${selectedPlayerName}|${isTotalGP ? 'career' : selectedYear}|${currentTeam}`;
