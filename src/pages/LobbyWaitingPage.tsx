@@ -166,6 +166,8 @@ export function LobbyWaitingPage() {
       const yearMatch = lobby.season?.match(/^(\d{4})/);
       if (yearMatch) {
         setEditYear(parseInt(yearMatch[1]));
+      } else {
+        setEditYear(new Date().getFullYear());
       }
     }
   }, [lobby?.id, lobby?.sport, lobby?.game_mode, lobby?.timer_duration, lobby?.team_abbreviation, lobby?.season, lobby?.min_year, lobby?.max_year, lobby?.game_type, lobby?.career_state, showSettings]);

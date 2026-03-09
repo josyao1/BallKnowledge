@@ -343,10 +343,10 @@ export function MultiplayerCapCrunchPage() {
   }, [lobby?.career_state, isHost, lobby?.id]);
 
   // ── All clients: navigate back to lobby when host resets to waiting ────────
-  // Check phase !== 'picking' to avoid navigating away mid-game if realtime delivers
-  // a stale 'waiting' status before the new game's 'playing' status arrives.
+  // Exclude 'picking' (mid-game) and 'loading' (page refresh before realtime delivers
+  // the current playing state) to avoid navigating away incorrectly.
   useEffect(() => {
-    if (lobby?.status === 'waiting' && phase !== 'picking') {
+    if (lobby?.status === 'waiting' && phase !== 'picking' && phase !== 'loading') {
       navigate(`/lobby/${code}`);
     }
   }, [lobby?.status, phase, navigate, code]);
