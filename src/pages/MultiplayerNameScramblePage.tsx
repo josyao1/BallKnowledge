@@ -79,6 +79,9 @@ export function MultiplayerNameScramblePage() {
   const prevRoundRef = useRef(-1);
   const prevStatusRef = useRef<string | null>(null);
   const roundHistoryRef = useRef<RoundSummary[]>([]);
+  // Snapshot of round scores taken when allPlayersFinished (still in 'playing' phase).
+  // Prevents post-round realtime events from corrupting the interstitial ptsMap.
+  const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
 
   // ── Load lobby on mount ──
   useEffect(() => {
@@ -142,15 +145,26 @@ export function MultiplayerNameScramblePage() {
       const ptsMap: Record<string, number> = {};
       const finishedAt: Record<string, string | null> = {};
 
+      // Use the snapshot taken when allPlayersFinished (before post-round realtime events
+      // could corrupt scores). Fall back to live players state if no snapshot available.
+      const snapOrLive = (p: { player_id: string; score: number | null; finished_at: string | null }) => {
+        const snap = roundScoresSnapshotRef.current[p.player_id];
+        return snap ?? { score: p.score || 0, finishedAt: p.finished_at };
+      };
+
       // Compute positional pts: sort correct players by finished_at, assign 5/3/2/1
       const correctPlayers = [...players]
-        .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
-        .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
+        .filter(p => { const s = snapOrLive(p); return (s.score || 0) > 0 && s.finishedAt !== null; })
+        .sort((a, b) => {
+          const aT = new Date(snapOrLive(a).finishedAt!).getTime();
+          const bT = new Date(snapOrLive(b).finishedAt!).getTime();
+          return aT - bT;
+        });
 
       players.forEach(p => {
         const posIdx = correctPlayers.findIndex(cp => cp.player_id === p.player_id);
         ptsMap[p.player_id] = posIdx >= 0 ? (POSITION_PTS[posIdx] ?? 1) : 0;
-        finishedAt[p.player_id] = p.finished_at;
+        finishedAt[p.player_id] = snapOrLive(p).finishedAt;
       });
 
       const newSummary: RoundSummary = {
@@ -184,6 +198,7 @@ export function MultiplayerNameScramblePage() {
       hasSubmittedRef.current = false;
       atLeastOnePlayerWasActiveRef.current = false;
       firstCorrectTimerStartedRef.current = false;
+      roundScoresSnapshotRef.current = {};
       if (pressureIntervalRef.current) {
         clearInterval(pressureIntervalRef.current);
         pressureIntervalRef.current = null;
@@ -207,6 +222,17 @@ export function MultiplayerNameScramblePage() {
 
   // ── HOST: Advance round when all players finish ──
   const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
+
+  // Snapshot round scores the moment all players finish (still in 'playing' phase).
+  // Prevents addCareerPoints / next-round score reset realtime events from
+  // corrupting the interstitial's ptsMap computation.
+  useEffect(() => {
+    if (allPlayersFinished && lobby?.status === 'playing' && atLeastOnePlayerWasActiveRef.current) {
+      players.forEach(p => {
+        roundScoresSnapshotRef.current[p.player_id] = { score: p.score || 0, finishedAt: p.finished_at };
+      });
+    }
+  }, [allPlayersFinished, lobby?.status]);
 
   const advanceRound = useCallback(async () => {
     if (!lobby || !careerState) return;

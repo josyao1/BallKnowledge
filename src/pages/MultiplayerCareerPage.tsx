@@ -151,6 +151,10 @@ export function MultiplayerCareerPage() {
   // this round. Without this, stale finished_at values from the previous round can
   // trigger an immediate advance when status flips to 'playing'.
   const atLeastOnePlayerWasActiveRef = useRef(false);
+  // Snapshot of round scores taken when allPlayersFinished goes true (playing phase).
+  // Avoids race conditions where post-round DB writes (wins increment, next-round
+  // score reset) arrive via realtime before the summary capture effect fires.
+  const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
 
   // ── Load lobby on mount (handles page refresh) ──
   useEffect(() => {
@@ -177,9 +181,12 @@ export function MultiplayerCareerPage() {
     if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState) {
       const scores: Record<string, number> = {};
       const finishedAt: Record<string, string | null> = {};
+      // Prefer the snapshot (taken when allPlayersFinished during 'playing' phase)
+      // over live players state, which may have been mutated by post-round realtime events.
       players.forEach(p => {
-        scores[p.player_id] = p.score || 0;
-        finishedAt[p.player_id] = p.finished_at;
+        const snap = roundScoresSnapshotRef.current[p.player_id];
+        scores[p.player_id] = snap?.score ?? p.score ?? 0;
+        finishedAt[p.player_id] = snap?.finishedAt ?? p.finished_at;
       });
       const newSummary: RoundSummary = {
         answer: careerState.playerName || '',
@@ -213,6 +220,7 @@ export function MultiplayerCareerPage() {
       setFeedbackType('');
       hasSubmittedRef.current = false;
       atLeastOnePlayerWasActiveRef.current = false;
+      roundScoresSnapshotRef.current = {};
     }
   }, [currentRound]);
 
@@ -227,6 +235,17 @@ export function MultiplayerCareerPage() {
 
   // ── HOST: Advance round when all players genuinely finish ──
   const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
+
+  // Snapshot round scores the moment all players finish (still in 'playing' phase).
+  // This prevents post-round realtime events (wins increment, next-round score reset)
+  // from corrupting the interstitial's ROUND column.
+  useEffect(() => {
+    if (allPlayersFinished && lobby?.status === 'playing' && atLeastOnePlayerWasActiveRef.current) {
+      players.forEach(p => {
+        roundScoresSnapshotRef.current[p.player_id] = { score: p.score || 0, finishedAt: p.finished_at };
+      });
+    }
+  }, [allPlayersFinished, lobby?.status]);
 
   const advanceRound = useCallback(async () => {
     if (!lobby || !careerState) return;
