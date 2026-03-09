@@ -491,15 +491,17 @@ export function MultiplayerCapCrunchPage() {
       let hardModeUpdates: Record<string, any> = {};
       if (latestCS.hardMode && currentPlayerId) {
         const allLineupsAfterPick = { ...latestCS.allLineups, [currentPlayerId]: withNewPlayer };
-        // Find next player (in players array order) who hasn't picked this round and isn't finished
-        const pendingPickers = players
-          .map(p => p.player_id)
-          .filter(pid =>
-            pid !== currentPlayerId &&
-            !((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) &&
-            !((allLineupsAfterPick[pid] as any)?.isFinished)
-          );
-        const nextPickerId = pendingPickers.length > 0 ? pendingPickers[0] : null;
+        // Find next player by continuing the rotation from the current picker's position in playerOrder
+        const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+        const currentIndexInOrder = order.indexOf(currentPlayerId);
+        let nextPickerId: string | null = null;
+        for (let i = 1; i < order.length; i++) {
+          const pid = order[(currentIndexInOrder + i) % order.length];
+          if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+            nextPickerId = pid;
+            break;
+          }
+        }
         const pickKey = `${selectedPlayerName}|${isTotalGP ? 'career' : selectedYear}|${currentTeam}`;
         hardModeUpdates = {
           currentPickerId: nextPickerId,

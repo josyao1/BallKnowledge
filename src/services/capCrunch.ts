@@ -69,6 +69,67 @@ function nflTeamMatches(dataTeam: string, targetTeam: string): boolean {
   return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;
 }
 
+// ─── NBA franchise alias map ──────────────────────────────────────────────────
+// The raw career data contains old/alternate abbreviations from earlier eras.
+// Maps every known abbreviation → the full set of abbreviations for that franchise.
+const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
+  // Utah Jazz (UTH was used pre-~1994)
+  UTA: ['UTA', 'UTH'],
+  UTH: ['UTA', 'UTH'],
+
+  // Golden State Warriors (GOS was used in older data)
+  GSW: ['GSW', 'GOS'],
+  GOS: ['GSW', 'GOS'],
+
+  // Charlotte — original CHH (1988–2002) shares franchise history with current CHA
+  CHA: ['CHA', 'CHH'],
+  CHH: ['CHA', 'CHH'],
+
+  // Sacramento Kings (formerly Kansas City Kings, KCK)
+  SAC: ['SAC', 'KCK'],
+  KCK: ['SAC', 'KCK'],
+
+  // Philadelphia 76ers (PHL was an older abbreviation)
+  PHI: ['PHI', 'PHL'],
+  PHL: ['PHI', 'PHL'],
+
+  // San Antonio Spurs (SAN was an older abbreviation)
+  SAS: ['SAS', 'SAN'],
+  SAN: ['SAS', 'SAN'],
+
+  // New Orleans Pelicans (NOH = Hornets 2002–2013, NOK = Katrina relocation 2005–2007)
+  NOP: ['NOP', 'NOH', 'NOK'],
+  NOH: ['NOP', 'NOH', 'NOK'],
+  NOK: ['NOP', 'NOH', 'NOK'],
+
+  // Oklahoma City Thunder (formerly Seattle SuperSonics)
+  OKC: ['OKC', 'SEA'],
+  SEA: ['OKC', 'SEA'],
+
+  // Brooklyn Nets (formerly New Jersey Nets)
+  BKN: ['BKN', 'NJN'],
+  NJN: ['BKN', 'NJN'],
+
+  // Memphis Grizzlies (formerly Vancouver Grizzlies)
+  MEM: ['MEM', 'VAN'],
+  VAN: ['MEM', 'VAN'],
+};
+
+/**
+ * Returns true if a season's team value matches the target team abbreviation.
+ * Handles:
+ *   - Old/alternate NBA abbreviations (UTH → UTA, GOS → GSW, etc.)
+ *   - Traded players whose team is stored as "ORL/DEN" or "UTA/CLE/SAC"
+ */
+function nbaTeamMatches(dataTeam: string, targetTeam: string): boolean {
+  // Traded players: team stored as "ORL/DEN" — match if any part matches
+  if (dataTeam.includes('/')) {
+    return dataTeam.split('/').some(part => nbaTeamMatches(part.trim(), targetTeam));
+  }
+  const aliases = NBA_FRANCHISE_ALIASES[targetTeam];
+  return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;
+}
+
 const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'];
 
 // ── Test flag — set to a StatCategory to force that category every round ──────
@@ -78,6 +139,9 @@ const FORCE_NFL_STAT: StatCategory | null = null;
 // ── Test flag — restrict team pool to these abbreviations for targeted testing ─
 // Example: ['LAR', 'LV'] to test franchise alias fixes. Set to null in production.
 const TEST_NFL_TEAMS: string[] | null = null;
+
+// ── Test flag — restrict NBA team pool for targeted testing. Set to null in production. ─
+const TEST_NBA_TEAMS: string[] | null = null;
 
 // Weighted NFL stat pool: rushing/receiving appear 2× as often as QB passing stats
 // total_gp gets 2× weight as well (broad player pool, fun variation)
@@ -266,7 +330,7 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excl
     const pool = available.length > 0 ? available : divs;
     return pool[Math.floor(Math.random() * pool.length)];
   }
-  const allTeams = sport === 'nba' ? NBA_TEAMS : (TEST_NFL_TEAMS ?? NFL_TEAMS);
+  const allTeams = sport === 'nba' ? (TEST_NBA_TEAMS ?? NBA_TEAMS) : (TEST_NFL_TEAMS ?? NFL_TEAMS);
   const available = excludeTeams ? allTeams.filter(t => !excludeTeams.includes(t)) : allTeams;
   const pool = available.length > 0 ? available : allTeams;
   return pool[Math.floor(Math.random() * pool.length)];
@@ -542,9 +606,9 @@ export async function getPlayerStatForYearAndTeam(
       const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
       
       const season = player.seasons.find(
-        s => s.season === seasonStr && s.team === team
+        s => s.season === seasonStr && nbaTeamMatches(s.team, team)
       );
-      
+
       if (!season) return 0;
 
       // PRA is a computed stat: pts + reb + ast for that season
@@ -598,7 +662,7 @@ export async function getPlayerTotalGPForTeam(
       const player = findPlayer(players, playerName, playerId);
       if (!player) return 0;
       return player.seasons
-        .filter(s => s.team === team)
+        .filter(s => nbaTeamMatches(s.team, team))
         .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
     } else {
       const players = await loadNFLLineupPool();
@@ -757,7 +821,7 @@ export async function findOptimalLastPick(
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
           const totalGP = p.seasons
-            .filter(s => s.team === team)
+            .filter(s => nbaTeamMatches(s.team, team))
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
           if (totalGP > actualStatValue && totalGP <= remainingBudget) {
             if (!best || totalGP > best.statValue) {
@@ -769,7 +833,7 @@ export async function findOptimalLastPick(
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
           for (const s of p.seasons) {
-            if (s.team !== team) continue;
+            if (!nbaTeamMatches(s.team, team)) continue;
             const val = statCategory === 'pra'
               ? ((s.pts ?? 0) + (s.reb ?? 0) + (s.ast ?? 0))
               : ((s as any)[statCategory] ?? 0);
