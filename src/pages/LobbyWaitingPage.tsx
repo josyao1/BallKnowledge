@@ -94,6 +94,7 @@ export function LobbyWaitingPage() {
   const [editCareerFrom, setEditCareerFrom] = useState(0);
   const [editCareerTo, setEditCareerTo] = useState(0);
   const [editLineupStat, setEditLineupStat] = useState<string>('random');
+  const [editCustomCap, setEditCustomCap] = useState<number | null>(null);
   const [editHardMode, setEditHardMode] = useState(false);
   const [editFirstPickerId, setEditFirstPickerId] = useState<string | null>(null);
   const [editBoxMinYear, setEditBoxMinYear] = useState(2015);
@@ -146,6 +147,7 @@ export function LobbyWaitingPage() {
       setEditCareerFrom(cs.career_from || 0);
       setEditCareerTo(cs.career_to || 0);
       setEditLineupStat((cs.forcedStatCategory as string | null) || 'random');
+      setEditCustomCap((cs.forcedTargetCap as number | null) || null);
       setEditHardMode((cs.hardMode as boolean) || false);
       setEditFirstPickerId((cs.firstPickerId as string) || null);
 
@@ -460,7 +462,8 @@ export function LobbyWaitingPage() {
       // Generate stat category and cap once for all players
       const forcedStat = careerState.forcedStatCategory as string | null | undefined;
       const statCategory = (forcedStat && forcedStat !== 'random') ? forcedStat as any : selectRandomStatCategory(sport);
-      const targetCap = generateTargetCap(sport, statCategory);
+      const forcedCap = careerState.forcedTargetCap as number | null | undefined;
+      const targetCap = (forcedCap && forcedCap > 0) ? forcedCap : generateTargetCap(sport, statCategory);
 
       // Fetch current player list to initialize empty lineups keyed by player_id
       const playersResult = await getLobbyPlayers(lobby.id);
@@ -685,12 +688,13 @@ export function LobbyWaitingPage() {
       // a race condition where handleCareerStart reads stale career_state
       setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else if (editGameType === 'lineup-is-right') {
-      // Lineup Is Right mode: update sport, forced stat category, and hard mode toggle
+      // Lineup Is Right mode: update sport, forced stat category, hard mode toggle, and win target
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
         sport: editSport,
         forcedStatCategory: editLineupStat === 'random' ? null : editLineupStat,
+        forcedTargetCap: (editLineupStat !== 'random' && editCustomCap) ? editCustomCap : null,
         hardMode: editHardMode,
         firstPickerId: editHardMode ? editFirstPickerId : null,
       };
@@ -1141,13 +1145,14 @@ export function LobbyWaitingPage() {
               {isHost && lobby.status === 'waiting' && (
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className="p-2 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
-                  title="Change Settings"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
+                  title="Game Settings"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
+                  <span className="sports-font text-[10px] tracking-widest uppercase">Game Settings</span>
                 </button>
               )}
             </div>
@@ -1353,7 +1358,7 @@ export function LobbyWaitingPage() {
                         {(['nba', 'nfl'] as const).map((s) => (
                           <button
                             key={s}
-                            onClick={() => { setEditSport(s); setEditLineupStat('random'); }}
+                            onClick={() => { setEditSport(s); setEditLineupStat('random'); setEditCustomCap(null); }}
                             className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
                               editSport === s
                                 ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
@@ -1376,7 +1381,7 @@ export function LobbyWaitingPage() {
                         )] as string[]).map((cat) => (
                           <button
                             key={cat}
-                            onClick={() => setEditLineupStat(cat)}
+                            onClick={() => { setEditLineupStat(cat); if (cat === 'random') setEditCustomCap(null); }}
                             className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
                               editLineupStat === cat
                                 ? cat === 'random' ? 'bg-[#d4af37] text-black' : 'bg-[#ec4899] text-white'
@@ -1386,6 +1391,34 @@ export function LobbyWaitingPage() {
                             {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
                           </button>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* Custom Cap — only available when a specific stat is selected */}
+                    <div className="border-t border-[#1a1a1a] pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Target Cap</div>
+                          <div className="sports-font text-[9px] text-[#444] mt-0.5">
+                            {editLineupStat === 'random' ? 'Select a stat to set a cap' : 'Players must stay under this number'}
+                          </div>
+                        </div>
+                        <input
+                          type="number"
+                          min={1}
+                          disabled={editLineupStat === 'random'}
+                          value={editLineupStat === 'random' ? '' : (editCustomCap ?? '')}
+                          placeholder="AUTO"
+                          onChange={(e) => {
+                            const v = e.target.value === '' ? null : parseInt(e.target.value);
+                            setEditCustomCap(v && !isNaN(v) && v > 0 ? v : null);
+                          }}
+                          className={`w-24 text-center bg-[#111] border rounded-sm retro-title text-base py-1.5 focus:outline-none transition-all ${
+                            editLineupStat === 'random'
+                              ? 'border-[#1a1a1a] text-[#333] cursor-not-allowed placeholder-[#222]'
+                              : 'border-[#2a2a2a] text-[#d4af37] focus:border-[#d4af37] placeholder-[#444]'
+                          }`}
+                        />
                       </div>
                     </div>
 
