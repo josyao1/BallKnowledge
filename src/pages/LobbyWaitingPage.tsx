@@ -95,6 +95,7 @@ export function LobbyWaitingPage() {
   const [editCareerTo, setEditCareerTo] = useState(0);
   const [editLineupStat, setEditLineupStat] = useState<string>('random');
   const [editHardMode, setEditHardMode] = useState(false);
+  const [editFirstPickerId, setEditFirstPickerId] = useState<string | null>(null);
   const [editBoxMinYear, setEditBoxMinYear] = useState(2015);
   const [editBoxMaxYear, setEditBoxMaxYear] = useState(2024);
   const [editBoxTeam, setEditBoxTeam] = useState<string | null>(null);
@@ -146,6 +147,7 @@ export function LobbyWaitingPage() {
       setEditCareerTo(cs.career_to || 0);
       setEditLineupStat((cs.forcedStatCategory as string | null) || 'random');
       setEditHardMode((cs.hardMode as boolean) || false);
+      setEditFirstPickerId((cs.firstPickerId as string) || null);
 
       // Box Score state
       setEditBoxMinYear(cs.min_year || 2015);
@@ -160,10 +162,12 @@ export function LobbyWaitingPage() {
       const foundTeam = teamList.find(t => t.abbreviation === lobby.team_abbreviation);
       setEditTeam(foundTeam || null);
 
-      // Parse year from season
-      const yearMatch = lobby.season.match(/^(\d{4})/);
+      // Parse year from season (season may be null for non-roster game modes)
+      const yearMatch = lobby.season?.match(/^(\d{4})/);
       if (yearMatch) {
         setEditYear(parseInt(yearMatch[1]));
+      } else {
+        setEditYear(new Date().getFullYear());
       }
     }
   }, [lobby?.id, lobby?.sport, lobby?.game_mode, lobby?.timer_duration, lobby?.team_abbreviation, lobby?.season, lobby?.min_year, lobby?.max_year, lobby?.game_type, lobby?.career_state, showSettings]);
@@ -476,8 +480,17 @@ export function LobbyWaitingPage() {
 
       const firstTeam = assignRandomTeam(sport, statCategory);
       const hardMode = careerState.hardMode || false;
-      // Hard mode: stable player order (avoids JSONB key-sort issues in Postgres)
-      const playerOrder = lobbyPlayers.map(p => p.player_id);
+      // Hard mode: stable player order (avoids JSONB key-sort issues in Postgres).
+      // Rotate so the host-chosen first picker is at index 0.
+      let playerOrder = lobbyPlayers.map(p => p.player_id);
+      if (hardMode && careerState.firstPickerId) {
+        const idx = playerOrder.indexOf(careerState.firstPickerId);
+        if (idx === -1) {
+          console.error('[LineupIsRight] firstPickerId not in lobby; defaulting to join order.', careerState.firstPickerId);
+        } else if (idx > 0) {
+          playerOrder = [...playerOrder.slice(idx), ...playerOrder.slice(0, idx)];
+        }
+      }
       const firstPickerId = hardMode && playerOrder.length > 0 ? playerOrder[0] : null;
 
       const newCareerState = {
@@ -647,7 +660,7 @@ export function LobbyWaitingPage() {
     }
 
     if (editGameType === 'scramble') {
-      // Scramble mode: update career_state with points target and era filter
+      // Scramble mode: update career_state with points target, era filter, and sport
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
@@ -655,9 +668,10 @@ export function LobbyWaitingPage() {
         career_to: editCareerTo,
       };
       await updateCareerState(newCareerState);
-      setLobby({ ...lobby, career_state: newCareerState });
+      await updateSettings({ sport: editSport });
+      setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else if (editGameType === 'career') {
-      // Career mode: update career_state with win target and era filters
+      // Career mode: update career_state with win target, era filters, and sport
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
@@ -666,9 +680,10 @@ export function LobbyWaitingPage() {
         career_to: editCareerTo,
       };
       await updateCareerState(newCareerState);
+      await updateSettings({ sport: editSport });
       // Update local store immediately — don't wait for Supabase realtime to avoid
       // a race condition where handleCareerStart reads stale career_state
-      setLobby({ ...lobby, career_state: newCareerState });
+      setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else if (editGameType === 'lineup-is-right') {
       // Lineup Is Right mode: update sport, forced stat category, and hard mode toggle
       const existingState = (lobby.career_state as any) || {};
@@ -677,6 +692,7 @@ export function LobbyWaitingPage() {
         sport: editSport,
         forcedStatCategory: editLineupStat === 'random' ? null : editLineupStat,
         hardMode: editHardMode,
+        firstPickerId: editHardMode ? editFirstPickerId : null,
       };
       await updateCareerState(newCareerState);
       await updateSettings({ sport: editSport });
@@ -1199,6 +1215,26 @@ export function LobbyWaitingPage() {
 
                 {editGameType === 'scramble' ? (
                   <>
+                    {/* Sport Toggle */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nba', 'nfl'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setEditSport(s)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editSport === s
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Scramble Win Target */}
                     <div>
                       <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Points Target</div>
@@ -1235,6 +1271,26 @@ export function LobbyWaitingPage() {
                   </>
                 ) : editGameType === 'career' ? (
                   <>
+                    {/* Sport Toggle */}
+                    <div>
+                      <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
+                      <div className="flex gap-1.5">
+                        {(['nba', 'nfl'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setEditSport(s)}
+                            className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                              editSport === s
+                                ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {s.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Win Target */}
                     <div>
                       <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">First To</div>
@@ -1340,7 +1396,7 @@ export function LobbyWaitingPage() {
                         <div className="sports-font text-[9px] text-[#444] mt-0.5">Pick one at a time; locks globally</div>
                       </div>
                       <button
-                        onClick={() => setEditHardMode(prev => !prev)}
+                        onClick={() => { setEditHardMode(prev => !prev); setEditFirstPickerId(null); }}
                         className={`px-4 py-1.5 rounded-sm retro-title text-sm tracking-wider transition-all ${
                           editHardMode
                             ? 'bg-[#c8102e] text-white'
@@ -1350,6 +1406,38 @@ export function LobbyWaitingPage() {
                         {editHardMode ? 'ON' : 'OFF'}
                       </button>
                     </div>
+
+                    {/* First Pick selector — only visible when Hard Mode is ON */}
+                    {editHardMode && players.length > 1 && (
+                      <div className="border-t border-[#1a1a1a] pt-4">
+                        <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase mb-2">First Pick</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            onClick={() => setEditFirstPickerId(null)}
+                            className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+                              editFirstPickerId === null
+                                ? 'bg-[#d4af37] text-black'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            AUTO
+                          </button>
+                          {players.map(p => (
+                            <button
+                              key={p.player_id}
+                              onClick={() => setEditFirstPickerId(p.player_id)}
+                              className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+                                editFirstPickerId === p.player_id
+                                  ? 'bg-[#c8102e] text-white'
+                                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                              }`}
+                            >
+                              {p.player_name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : editGameType === 'box-score' ? (
                   <>

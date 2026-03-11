@@ -151,6 +151,10 @@ export function MultiplayerCareerPage() {
   // this round. Without this, stale finished_at values from the previous round can
   // trigger an immediate advance when status flips to 'playing'.
   const atLeastOnePlayerWasActiveRef = useRef(false);
+  // Snapshot of round scores taken when allPlayersFinished goes true (playing phase).
+  // Avoids race conditions where post-round DB writes (wins increment, next-round
+  // score reset) arrive via realtime before the summary capture effect fires.
+  const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
 
   // ── Load lobby on mount (handles page refresh) ──
   useEffect(() => {
@@ -177,9 +181,12 @@ export function MultiplayerCareerPage() {
     if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState) {
       const scores: Record<string, number> = {};
       const finishedAt: Record<string, string | null> = {};
+      // Prefer the snapshot (taken when allPlayersFinished during 'playing' phase)
+      // over live players state, which may have been mutated by post-round realtime events.
       players.forEach(p => {
-        scores[p.player_id] = p.score || 0;
-        finishedAt[p.player_id] = p.finished_at;
+        const snap = roundScoresSnapshotRef.current[p.player_id];
+        scores[p.player_id] = snap?.score ?? p.score ?? 0;
+        finishedAt[p.player_id] = snap?.finishedAt ?? p.finished_at;
       });
       const newSummary: RoundSummary = {
         answer: careerState.playerName || '',
@@ -213,6 +220,7 @@ export function MultiplayerCareerPage() {
       setFeedbackType('');
       hasSubmittedRef.current = false;
       atLeastOnePlayerWasActiveRef.current = false;
+      roundScoresSnapshotRef.current = {};
     }
   }, [currentRound]);
 
@@ -227,6 +235,17 @@ export function MultiplayerCareerPage() {
 
   // ── HOST: Advance round when all players genuinely finish ──
   const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
+
+  // Snapshot round scores the moment all players finish (still in 'playing' phase).
+  // This prevents post-round realtime events (wins increment, next-round score reset)
+  // from corrupting the interstitial's ROUND column.
+  useEffect(() => {
+    if (allPlayersFinished && lobby?.status === 'playing' && atLeastOnePlayerWasActiveRef.current) {
+      players.forEach(p => {
+        roundScoresSnapshotRef.current[p.player_id] = { score: p.score || 0, finishedAt: p.finished_at };
+      });
+    }
+  }, [allPlayersFinished, lobby?.status]);
 
   const advanceRound = useCallback(async () => {
     if (!lobby || !careerState) return;
@@ -368,6 +387,24 @@ export function MultiplayerCareerPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
+  const sport = (careerState?.sport || 'nba') as Sport;
+  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
+  const columns = getColumns(sport, careerState?.position || '');
+  const winTarget = careerState?.win_target || 3;
+
+  // Career highs: max value per numeric column across all seasons.
+  // Must be called before any early return to satisfy Rules of Hooks.
+  const careerHighs = useMemo(() => {
+    const highs: Record<string, number> = {};
+    const allSeasons: any[] = careerState?.seasons || [];
+    for (const col of columns) {
+      if (col.key === 'season' || col.key === 'team') continue;
+      const max = Math.max(0, ...allSeasons.map((s: any) => Number(s[col.key]) || 0));
+      if (max > 0) highs[col.key] = max;
+    }
+    return highs;
+  }, [careerState?.seasons, columns]);
+
   if (!lobby || !careerState) {
     return (
       <div className="min-h-screen bg-[#111] flex items-center justify-center">
@@ -375,23 +412,6 @@ export function MultiplayerCareerPage() {
       </div>
     );
   }
-
-  const sport = (careerState.sport || 'nba') as Sport;
-  const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
-  const columns = getColumns(sport, careerState.position || '');
-  const winTarget = careerState.win_target || 3;
-
-  // Career highs: max value per numeric column across all seasons.
-  const careerHighs = useMemo(() => {
-    const highs: Record<string, number> = {};
-    const allSeasons: any[] = careerState.seasons || [];
-    for (const col of columns) {
-      if (col.key === 'season' || col.key === 'team') continue;
-      const max = Math.max(0, ...allSeasons.map((s: any) => Number(s[col.key]) || 0));
-      if (max > 0) highs[col.key] = max;
-    }
-    return highs;
-  }, [careerState.seasons, columns]);
 
   // ── BETWEEN-ROUND INTERSTITIAL ──
   if (lobby.status === 'waiting') {

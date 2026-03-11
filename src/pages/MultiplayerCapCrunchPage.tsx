@@ -163,7 +163,9 @@ export function MultiplayerCapCrunchPage() {
         setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
 
         if (cs.phase === 'results') setPhase('results');
-        else setPhase('picking');
+        else if (cs.statCategory && cs.allLineups) setPhase('picking');
+        // else: career_state not ready yet — stay on 'loading' and let the
+        // realtime sync rescue us when the write completes (line 215).
       } catch (error) {
         console.error('Error initializing game:', error);
         navigate('/');
@@ -341,8 +343,10 @@ export function MultiplayerCapCrunchPage() {
   }, [lobby?.career_state, isHost, lobby?.id]);
 
   // ── All clients: navigate back to lobby when host resets to waiting ────────
+  // Exclude 'picking' (mid-game) and 'loading' (page refresh before realtime delivers
+  // the current playing state) to avoid navigating away incorrectly.
   useEffect(() => {
-    if (lobby?.status === 'waiting' && phase === 'results') {
+    if (lobby?.status === 'waiting' && phase !== 'picking' && phase !== 'loading') {
       navigate(`/lobby/${code}`);
     }
   }, [lobby?.status, phase, navigate, code]);
@@ -491,15 +495,27 @@ export function MultiplayerCapCrunchPage() {
       let hardModeUpdates: Record<string, any> = {};
       if (latestCS.hardMode && currentPlayerId) {
         const allLineupsAfterPick = { ...latestCS.allLineups, [currentPlayerId]: withNewPlayer };
-        // Find next player (in players array order) who hasn't picked this round and isn't finished
-        const pendingPickers = players
-          .map(p => p.player_id)
-          .filter(pid =>
-            pid !== currentPlayerId &&
-            !((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) &&
-            !((allLineupsAfterPick[pid] as any)?.isFinished)
-          );
-        const nextPickerId = pendingPickers.length > 0 ? pendingPickers[0] : null;
+        // Find next player by continuing the rotation from the current picker's position in playerOrder
+        const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+        const currentIndexInOrder = order.indexOf(currentPlayerId);
+        let nextPickerId: string | null = null;
+        if (currentIndexInOrder === -1) {
+          // Player not found in order (e.g. joined after game started) — fall back to first unpicked
+          for (const pid of order) {
+            if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+              nextPickerId = pid;
+              break;
+            }
+          }
+        } else {
+          for (let i = 1; i < order.length; i++) {
+            const pid = order[(currentIndexInOrder + i) % order.length];
+            if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+              nextPickerId = pid;
+              break;
+            }
+          }
+        }
         const pickKey = `${selectedPlayerName}|${isTotalGP ? 'career' : selectedYear}|${currentTeam}`;
         hardModeUpdates = {
           currentPickerId: nextPickerId,
