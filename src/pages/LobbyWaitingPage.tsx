@@ -1411,6 +1411,17 @@ export function LobbyWaitingPage() {
                             <div className="flex-1 h-px bg-[#1e1e1e]" />
                           </div>
                           <div className="flex flex-wrap gap-1.5">
+                            <button
+                              onClick={() => {
+                                const careerCats = ['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'];
+                                const pick = careerCats[Math.floor(Math.random() * careerCats.length)];
+                                setEditLineupStat(pick);
+                                setEditCustomCap(null);
+                              }}
+                              className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]`}
+                            >
+                              RANDOM
+                            </button>
                             {(['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as string[]).map((cat) => (
                               <button
                                 key={cat}

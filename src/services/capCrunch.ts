@@ -677,46 +677,46 @@ export async function getPlayerStatForYearAndTeam(
   year: string,
   statCategory: string,
   playerId?: string | number
-): Promise<number> {
+): Promise<{ value: number; neverOnTeam: boolean }> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
       const player = findPlayer(players, playerName, playerId);
-      
-      if (!player) return 0;
-      
+
+      if (!player) return { value: 0, neverOnTeam: true };
+
       // Convert year to season format (e.g., "2023" -> "2023-24")
       const numYear = parseInt(year);
       const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
-      
+
       const season = player.seasons.find(
         s => s.season === seasonStr && nbaTeamMatches(s.team, team)
       );
 
-      if (!season) return 0;
+      if (!season) return { value: 0, neverOnTeam: true };
 
       // PRA is a computed stat: pts + reb + ast for that season
       if (statCategory === 'pra') {
-        return (season.pts ?? 0) + (season.reb ?? 0) + (season.ast ?? 0);
+        return { value: (season.pts ?? 0) + (season.reb ?? 0) + (season.ast ?? 0), neverOnTeam: false };
       }
 
       const statKey = statCategory as keyof typeof season;
-      return (season[statKey] as number) ?? 0;
+      return { value: (season[statKey] as number) ?? 0, neverOnTeam: false };
     } else {
       // NFL
       const players = await loadNFLLineupPool();
       const player = findPlayer(players, playerName, playerId);
 
-      if (!player) return 0;
+      if (!player) return { value: 0, neverOnTeam: true };
 
       // Career stat: full career total, but only counts if player was on the assigned team at any point
       if (isCareerStat(statCategory as StatCategory)) {
         const wasOnTeam = player.seasons.some(s =>
           isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
         );
-        if (!wasOnTeam) return 0;
+        if (!wasOnTeam) return { value: 0, neverOnTeam: true };
         const field = careerStatField(statCategory as StatCategory);
-        return player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+        return { value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0), neverOnTeam: false };
       }
 
       const season = player.seasons.find(
@@ -727,14 +727,14 @@ export async function getPlayerStatForYearAndTeam(
         )
       );
 
-      if (!season) return 0;
+      if (!season) return { value: 0, neverOnTeam: true };
 
       const statKey = statCategory as keyof typeof season;
-      return (season[statKey] as number) ?? 0;
+      return { value: (season[statKey] as number) ?? 0, neverOnTeam: false };
     }
   } catch (error) {
     console.error('Error getting player stat:', error);
-    return 0;
+    return { value: 0, neverOnTeam: true };
   }
 }
 
@@ -788,30 +788,28 @@ export async function getPlayerTotalGPForTeam(
   playerName: string,
   team: string,
   playerId?: string | number
-): Promise<number> {
+): Promise<{ value: number; neverOnTeam: boolean }> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
       const player = findPlayer(players, playerName, playerId);
-      if (!player) return 0;
-      return player.seasons
-        .filter(s => nbaTeamMatches(s.team, team))
-        .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+      if (!player) return { value: 0, neverOnTeam: true };
+      const seasonsOnTeam = player.seasons.filter(s => nbaTeamMatches(s.team, team));
+      if (seasonsOnTeam.length === 0) return { value: 0, neverOnTeam: true };
+      return { value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
     } else {
       const players = await loadNFLLineupPool();
       const player = findPlayer(players, playerName, playerId);
-      if (!player) return 0;
-      return player.seasons
-        .filter(s =>
-          isDivisionRound(team)
-            ? teamInDivision(s.team, team)
-            : nflTeamMatches(s.team, team)
-        )
-        .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+      if (!player) return { value: 0, neverOnTeam: true };
+      const seasonsOnTeam = player.seasons.filter(s =>
+        isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
+      );
+      if (seasonsOnTeam.length === 0) return { value: 0, neverOnTeam: true };
+      return { value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
     }
   } catch (error) {
     console.error('Error getting player total GP:', error);
-    return 0;
+    return { value: 0, neverOnTeam: true };
   }
 }
 
