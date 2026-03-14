@@ -40,6 +40,54 @@ MIN_SEASONS   = 5
 
 OUT_PATH = os.path.join(os.path.dirname(__file__), "data", "nfl_careers.json")
 
+# ─── Known abbreviations (mirrors NFL_FRANCHISE_ALIASES + NFL_TEAMS in capCrunch.ts) ──
+# Any abbreviation found in the output that is NOT in this set will be flagged.
+KNOWN_NFL_ABBRS = {
+    # Current teams (NFL_TEAMS)
+    "KC", "LV", "LAC", "DEN", "BUF", "MIA", "NE", "NYJ",
+    "BAL", "PIT", "CLE", "CIN",
+    "PHI", "DAL", "NYG", "WAS",
+    "GB", "MIN", "DET", "CHI",
+    "ARI", "LAR", "SF", "SEA",
+    "NO", "CAR", "TB", "ATL",
+    "TEN", "IND", "HOU", "JAX",
+    # Historical / relocated / ESPN-variant aliases (NFL_FRANCHISE_ALIASES)
+    "OAK",        # Raiders pre-2020
+    "SD",         # Chargers pre-2017
+    "STL", "SL",  # Rams pre-2016 (STL = standard, SL = ESPN)
+    "LA",         # Rams post-2016 in ESPN data
+    "ARZ",        # Cardinals ESPN variant
+    "BLT",        # Ravens ESPN variant
+    "CLV",        # Browns ESPN variant
+    "HST",        # Texans ESPN variant
+}
+
+
+def validate_abbreviations(careers: list, label: str = "") -> None:
+    """Scan all season team fields and report any abbreviation not in KNOWN_NFL_ABBRS."""
+    unknown: dict[str, list[str]] = {}  # abbr → list of player names
+    for player in careers:
+        for s in player.get("seasons", []):
+            team = s.get("team", "")
+            # Skip placeholder and traded-player slash notation (handled by frontend split)
+            if not team or team == "???" or "/" in team:
+                continue
+            if team not in KNOWN_NFL_ABBRS:
+                unknown.setdefault(team, []).append(player["player_name"])
+
+    tag = f" [{label}]" if label else ""
+    if not unknown:
+        print(f"\n✓ Abbreviation check{tag}: all team codes are known.")
+        return
+
+    print(f"\n⚠ Abbreviation check{tag}: {len(unknown)} UNKNOWN team code(s) found.")
+    print("  These are not covered by NFL_FRANCHISE_ALIASES in src/services/capCrunch.ts.")
+    print("  Per-season stat lookups for these players may return 0 on the wrong team.")
+    print("  Add them to NFL_FRANCHISE_ALIASES if they represent a known franchise:\n")
+    for abbr, names in sorted(unknown.items()):
+        sample = ", ".join(names[:3]) + ("…" if len(names) > 3 else "")
+        print(f"    \"{abbr}\"  ({len(names)} player-seasons)  e.g. {sample}")
+
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def safe_int(val, default=0):
@@ -221,6 +269,9 @@ def main():
                     "rushing_tds":     safe_int(row.get("rushing_tds")),
                     "receptions":      safe_int(row.get("receptions")),
                     "receiving_yards": safe_int(row.get("receiving_yards")),
+                    "receiving_tds":   safe_int(row.get("receiving_tds")),
+                    "passing_yards":   safe_int(row.get("passing_yards")),
+                    "passing_tds":     safe_int(row.get("passing_tds")),
                 })
             else:  # WR / TE
                 base.update({
@@ -230,6 +281,8 @@ def main():
                     "receiving_tds":   safe_int(row.get("receiving_tds")),
                     "rushing_yards":   safe_int(row.get("rushing_yards")),
                     "rushing_tds":     safe_int(row.get("rushing_tds")),
+                    "passing_yards":   safe_int(row.get("passing_yards")),
+                    "passing_tds":     safe_int(row.get("passing_tds")),
                 })
 
             seasons.append(base)
@@ -268,6 +321,9 @@ def main():
     print(f"  Skipped (position):  {skipped_position}")
     print(f"  Skipped (production):{skipped_production}")
     print(f"  Skipped (no name):   {skipped_name}")
+
+    # ── Abbreviation validation ────────────────────────────────────────────────
+    validate_abbreviations(careers, "nfl_careers")
 
     # ── Write output ───────────────────────────────────────────────────────────
     with open(OUT_PATH, "w") as f:

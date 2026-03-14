@@ -48,6 +48,43 @@ NFLVERSE_STATS_URL = (
 
 CAREER_POSITIONS = {"QB", "RB", "WR", "TE"}
 
+# ─── Known abbreviations (mirrors NFL_FRANCHISE_ALIASES + NFL_TEAMS in capCrunch.ts) ──
+KNOWN_NFL_ABBRS = {
+    "KC", "LV", "LAC", "DEN", "BUF", "MIA", "NE", "NYJ",
+    "BAL", "PIT", "CLE", "CIN",
+    "PHI", "DAL", "NYG", "WAS",
+    "GB", "MIN", "DET", "CHI",
+    "ARI", "LAR", "SF", "SEA",
+    "NO", "CAR", "TB", "ATL",
+    "TEN", "IND", "HOU", "JAX",
+    "OAK", "SD", "STL", "SL", "LA", "ARZ", "BLT", "CLV", "HST",
+}
+
+
+def validate_abbreviations(players: list, label: str = "") -> None:
+    """Scan all season team fields and report any abbreviation not in KNOWN_NFL_ABBRS."""
+    unknown: dict = {}
+    for player in players:
+        for s in player.get("seasons", []):
+            team = s.get("team", "")
+            if not team or team == "???" or "/" in team:
+                continue
+            if team not in KNOWN_NFL_ABBRS:
+                unknown.setdefault(team, []).append(player["player_name"])
+
+    tag = f" [{label}]" if label else ""
+    if not unknown:
+        print(f"\n✓ Abbreviation check{tag}: all team codes are known.")
+        return
+
+    print(f"\n⚠ Abbreviation check{tag}: {len(unknown)} UNKNOWN team code(s) found.")
+    print("  These are not covered by NFL_FRANCHISE_ALIASES in src/services/capCrunch.ts.")
+    print("  Per-season stat lookups for these players may return 0 on the wrong team.")
+    print("  Add them to NFL_FRANCHISE_ALIASES if they represent a known franchise:\n")
+    for abbr, names in sorted(unknown.items()):
+        sample = ", ".join(names[:3]) + ("…" if len(names) > 3 else "")
+        print(f"    \"{abbr}\"  ({len(names)} player-seasons)  e.g. {sample}")
+
 # Minimum production in a single season to add a new player to the pool
 MIN_SINGLE_SEASON = {
     "QB": {"passing_yards": 1500},
@@ -104,6 +141,8 @@ def build_season_row(row: dict, position: str) -> dict:
             "receptions":      safe_int(row.get("receptions")),
             "receiving_yards": safe_int(row.get("receiving_yards")),
             "receiving_tds":   safe_int(row.get("receiving_tds")),
+            "passing_yards":   safe_int(row.get("passing_yards")),
+            "passing_tds":     safe_int(row.get("passing_tds")),
         })
     else:  # WR / TE
         base.update({
@@ -113,6 +152,8 @@ def build_season_row(row: dict, position: str) -> dict:
             "receiving_tds":   safe_int(row.get("receiving_tds")),
             "rushing_yards":   safe_int(row.get("rushing_yards")),
             "rushing_tds":     safe_int(row.get("rushing_tds")),
+            "passing_yards":   safe_int(row.get("passing_yards")),
+            "passing_tds":     safe_int(row.get("passing_tds")),
         })
 
     return base
@@ -253,6 +294,7 @@ def main():
 
     # ── Write updated files ────────────────────────────────────────────────────
     careers_out = list(careers_by_id.values())
+    validate_abbreviations(careers_out, "nfl_careers")
     with open(CAREERS_PATH, "w") as f:
         json.dump(careers_out, f, separators=(",", ":"))
     size_kb = os.path.getsize(CAREERS_PATH) / 1024
@@ -261,6 +303,7 @@ def main():
 
     if pool_exists or pool_added > 0:
         pool_out = list(pool_by_id.values())
+        validate_abbreviations(pool_out, "nfl_lineup_pool")
         with open(POOL_PATH, "w") as f:
             json.dump(pool_out, f, separators=(",", ":"))
         size_kb = os.path.getsize(POOL_PATH) / 1024

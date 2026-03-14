@@ -13,7 +13,6 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { TeamSelector } from '../components/home/TeamSelector';
 import { YearSelector } from '../components/home/YearSelector';
 import { SettingsModal } from '../components/home/SettingsModal';
-import { ServerWarmup } from '../components/home/ServerWarmup';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
@@ -100,9 +99,6 @@ export function HomePage() {
   const [showRoulette, setShowRoulette] = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
   const [skipAnimation, setSkipAnimation] = useState(false);
-  const [, setApiOnline] = useState<boolean | null>(null);
-  const [showWarmup] = useState(false);
-  const [warmupComplete, setWarmupComplete] = useState(true);
 
   // Responsive fan scale — track viewport width and scale card dimensions down on mobile
   const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
@@ -143,14 +139,9 @@ export function HomePage() {
     }
   };
 
-  const handleWarmupReady = () => { setApiOnline(true); setWarmupComplete(true); };
-  const handleWarmupSkip  = () => { setApiOnline(false); setWarmupComplete(true); };
-
   useEffect(() => {
-    if (!warmupComplete) return;
-    setApiOnline(true);
     warmCareerCache(sport);
-  }, [sport, warmupComplete]);
+  }, [sport]);
 
   useEffect(() => {
     setSelectedTeam(null);
@@ -833,7 +824,6 @@ export function HomePage() {
       </motion.div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-      {showWarmup && <ServerWarmup sport={sport} onReady={handleWarmupReady} onSkip={handleWarmupSkip} />}
     </div>
   );
 }
