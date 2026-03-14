@@ -748,7 +748,8 @@ export async function getPlayerMostPlayedTeam(
   playerId?: string | number
 ): Promise<string> {
   try {
-    const pool = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+    const pool: Array<{ player_id: string | number; player_name: string; seasons: any[] }> =
+      sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
     const player = findPlayer(pool, playerName, playerId);
     if (!player || !player.seasons.length) return '';
 
