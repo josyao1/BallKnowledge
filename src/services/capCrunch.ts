@@ -17,7 +17,7 @@ import type { Sport } from '../types';
 
 /** Strip diacritics, periods, and lowercase so names like "T.Y. Hilton" match query "ty hilton". */
 function normalizeStr(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\./g, '').toLowerCase();
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.'`']/g, '').toLowerCase();
 }
 
 // ─── Position Templates ──────────────────────────────────────────────────────
@@ -159,6 +159,12 @@ const NFL_STAT_WEIGHTS: Array<{ category: StatCategory; weight: number }> = [
   { category: 'receiving_tds',   weight: 2 },
   { category: 'receptions',      weight: 2 },
   { category: 'total_gp',        weight: 2 },
+  { category: 'career_passing_yards',   weight: 1 },
+  { category: 'career_passing_tds',     weight: 1 },
+  { category: 'career_rushing_yards',   weight: 2 },
+  { category: 'career_rushing_tds',     weight: 2 },
+  { category: 'career_receiving_yards', weight: 2 },
+  { category: 'career_receiving_tds',   weight: 2 },
 ];
 
 const STAT_LABELS: Record<StatCategory, string> = {
@@ -176,7 +182,33 @@ const STAT_LABELS: Record<StatCategory, string> = {
   receiving_tds: 'Receiving Touchdowns',
   receptions: 'Receptions',
   total_gp: 'Total Games Played',
+  career_passing_yards:   'Career Passing Yards',
+  career_passing_tds:     'Career Passing Touchdowns',
+  career_rushing_yards:   'Career Rushing Yards',
+  career_rushing_tds:     'Career Rushing Touchdowns',
+  career_receiving_yards: 'Career Receiving Yards',
+  career_receiving_tds:   'Career Receiving Touchdowns',
 };
+
+/** Career stat categories: sum all seasons across ALL teams — no team/year selection needed. */
+export function isCareerStat(cat: StatCategory): boolean {
+  return cat === 'career_passing_yards' || cat === 'career_passing_tds' ||
+         cat === 'career_rushing_yards'  || cat === 'career_rushing_tds'  ||
+         cat === 'career_receiving_yards'|| cat === 'career_receiving_tds';
+}
+
+/** The underlying per-season stat field for a career stat category. */
+function careerStatField(cat: StatCategory): string {
+  switch (cat) {
+    case 'career_passing_yards':   return 'passing_yards';
+    case 'career_passing_tds':     return 'passing_tds';
+    case 'career_rushing_yards':   return 'rushing_yards';
+    case 'career_rushing_tds':     return 'rushing_tds';
+    case 'career_receiving_yards': return 'receiving_yards';
+    case 'career_receiving_tds':   return 'receiving_tds';
+    default: throw new Error(`careerStatField: unrecognized career category "${cat}"`);
+  }
+}
 
 // ─── Target Cap Calculation ──────────────────────────────────────────────────
 
@@ -221,6 +253,12 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory): num
       // total_gp: career GP with one team. Franchise guys hit 100-200, avg starter 30-80.
       // 5 picks averaging ~50 GP each = 250. Range creates tension.
       case 'total_gp':        return r(175, 325);
+      case 'career_passing_yards':   return r(55000,  184000);
+      case 'career_passing_tds':     return r(150,    800);
+      case 'career_rushing_yards':   return r(18000,  51000);
+      case 'career_rushing_tds':     return r(80,     300);
+      case 'career_receiving_yards': return r(18000,  51000);
+      case 'career_receiving_tds':   return r(80,     300);
       default: return 500;
     }
   }
@@ -328,7 +366,8 @@ function teamInDivision(dataTeam: string, division: string): boolean {
  * pool if all teams have been used).
  */
 export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
-  if (sport === 'nfl' && statCategory !== 'total_gp' && Math.random() < 0.15) {
+  // Career stat categories use specific teams only (no divisions — player just needs to have been on that team)
+  if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!) && Math.random() < 0.15) {
     const divs = Object.keys(NFL_DIVISIONS);
     const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
     const pool = available.length > 0 ? available : divs;
@@ -481,18 +520,25 @@ export async function searchPlayersByName(
  * When two players share the same name, their position is appended:
  *   "Michael Pittman (RB)" / "Michael Pittman (WR)"
  */
+const NFL_SKILL_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
+
 export async function searchPlayersByNameOnly(
   sport: Sport,
-  playerName: string
+  playerName: string,
+  statCategory?: StatCategory
 ): Promise<Array<{ playerId: string | number; playerName: string }>> {
   try {
     const searchLower = normalizeStr(playerName);
     const pool = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
 
+    // For NFL non-total_gp categories, restrict to offensive skill positions
+    const filterToSkill = sport === 'nfl' && statCategory && statCategory !== 'total_gp';
+
     // Deduplicate by player_id first
     const seen = new Map<string | number, { playerId: string | number; playerName: string; position?: string }>();
     for (const p of pool) {
       if (!normalizeStr(p.player_name).includes(searchLower)) continue;
+      if (filterToSkill && !NFL_SKILL_POSITIONS.has((p as any).position ?? '')) continue;
       if (!seen.has(p.player_id)) {
         seen.set(p.player_id, {
           playerId: p.player_id,
@@ -511,9 +557,43 @@ export async function searchPlayersByNameOnly(
       nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
     }
 
-    // For duplicate names, append position to disambiguate
+    // For duplicate names, append position; if position also collides, append primary team too
+    // Build a position+name key to detect same-position dupes
+    const posNameCounts = new Map<string, number>();
+    for (const r of dedupedResults) {
+      const key = normalizeStr(r.playerName) + '|' + (r.position ?? '');
+      posNameCounts.set(key, (posNameCounts.get(key) ?? 0) + 1);
+    }
+
+    // For each player, find their most-played-for team from the pool seasons
+    const playerTeams = new Map<string | number, string>();
+    for (const p of pool) {
+      if (!playerTeams.has(p.player_id)) {
+        const gpByTeam = new Map<string, number>();
+        for (const s of p.seasons) {
+          const t = (s as any).team as string;
+          if (t && t !== '???') gpByTeam.set(t, (gpByTeam.get(t) ?? 0) + ((s as any).gp ?? 1));
+        }
+        const topTeam = [...gpByTeam.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+        playerTeams.set(p.player_id, topTeam);
+      }
+    }
+
     return dedupedResults.map(r => {
-      if ((nameCounts.get(normalizeStr(r.playerName)) ?? 0) > 1 && r.position) {
+      const nameCount = nameCounts.get(normalizeStr(r.playerName)) ?? 0;
+      if (nameCount <= 1) return { playerId: r.playerId, playerName: r.playerName };
+
+      const posNameKey = normalizeStr(r.playerName) + '|' + (r.position ?? '');
+      const posNameDupe = (posNameCounts.get(posNameKey) ?? 0) > 1;
+
+      if (posNameDupe) {
+        // Same name AND same position — append team to disambiguate
+        const team = playerTeams.get(r.playerId) ?? '';
+        const suffix = r.position ? `${r.position}, ${team}` : team;
+        return { playerId: r.playerId, playerName: `${r.playerName} (${suffix})` };
+      }
+
+      if (r.position) {
         return { playerId: r.playerId, playerName: `${r.playerName} (${r.position})` };
       }
       return { playerId: r.playerId, playerName: r.playerName };
@@ -629,6 +709,16 @@ export async function getPlayerStatForYearAndTeam(
 
       if (!player) return 0;
 
+      // Career stat: full career total, but only counts if player was on the assigned team at any point
+      if (isCareerStat(statCategory as StatCategory)) {
+        const wasOnTeam = player.seasons.some(s =>
+          isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
+        );
+        if (!wasOnTeam) return 0;
+        const field = careerStatField(statCategory as StatCategory);
+        return player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+      }
+
       const season = player.seasons.find(
         s => s.season === year && (
           isDivisionRound(team)
@@ -649,11 +739,50 @@ export async function getPlayerStatForYearAndTeam(
 }
 
 /**
+ * Returns the team abbreviation a player spent the most time with (by GP, falling back to season count).
+ * Used to display a meaningful team label on career-stat picks instead of the round's division.
+ */
+export async function getPlayerMostPlayedTeam(
+  sport: Sport,
+  playerName: string,
+  playerId?: string | number
+): Promise<string> {
+  try {
+    const pool: Array<{ player_id: string | number; player_name: string; seasons: any[] }> =
+      sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+    const player = findPlayer(pool, playerName, playerId);
+    if (!player || !player.seasons.length) return '';
+
+    // Accumulate GP (or season count as fallback) per team
+    const gpByTeam = new Map<string, number>();
+    for (const s of player.seasons) {
+      const team = s.team;
+      if (!team || team === '???') continue;
+      const gp = (s as any).gp ?? 1; // fall back to 1 per season if GP missing
+      gpByTeam.set(team, (gpByTeam.get(team) ?? 0) + gp);
+    }
+    if (!gpByTeam.size) return '';
+
+    let best = '';
+    let bestGP = -1;
+    for (const [team, gp] of gpByTeam) {
+      if (gp > bestGP) { bestGP = gp; best = team; }
+    }
+    return best;
+  } catch (error) {
+    console.error('[getPlayerMostPlayedTeam] Failed:', error);
+    return '';
+  }
+}
+
+/**
  * Get a player's total career games played (GP) for a given team.
  * Sums GP across ALL seasons the player was on that team.
  * Returns 0 if the player never played for that team.
  * Works for both NBA and NFL — no year selection needed.
  */
+
+
 export async function getPlayerTotalGPForTeam(
   sport: Sport,
   playerName: string,
@@ -861,6 +990,21 @@ export async function findOptimalLastPick(
           if (totalGP > actualStatValue && totalGP <= remainingBudget) {
             if (!best || totalGP > best.statValue) {
               best = { playerName: p.player_name, year: 'career', team, statValue: totalGP };
+            }
+          }
+        }
+      } else if (statCategory && isCareerStat(statCategory)) {
+        const field = careerStatField(statCategory);
+        for (const p of players) {
+          if (excluded?.has(p.player_name)) continue;
+          const wasOnTeam = p.seasons.some(s =>
+            isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
+          );
+          if (!wasOnTeam) continue;
+          const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+          if (val > actualStatValue && val <= remainingBudget) {
+            if (!best || val >= best.statValue) {
+              best = { playerName: p.player_name, year: 'career', team, statValue: val };
             }
           }
         }

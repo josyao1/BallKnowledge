@@ -24,6 +24,8 @@ import {
   isDivisionRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
+  isCareerStat,
+
 } from '../services/capCrunch';
 import type { OptimalPick } from '../services/capCrunch';
 import { getTeamByAbbreviation } from '../data/teams';
@@ -56,6 +58,12 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'receiving_tds': return 'REC TD';
     case 'receptions': return 'REC';
     case 'total_gp': return 'TOT GP';
+    case 'career_passing_yards':   return 'CAREER PASS YD';
+    case 'career_passing_tds':     return 'CAREER PASS TD';
+    case 'career_rushing_yards':   return 'CAREER RUSH YD';
+    case 'career_rushing_tds':     return 'CAREER RUSH TD';
+    case 'career_receiving_yards': return 'CAREER REC YD';
+    case 'career_receiving_tds':   return 'CAREER REC TD';
     default: return 'STAT';
   }
 }
@@ -90,6 +98,7 @@ export function SoloCapCrunchPage() {
   // Setup
   const [phase, setPhase] = useState<Phase>('sport-select');
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
+  const [totalRounds, setTotalRounds] = useState(5);
 
   // Game state
   const [statCategory, setStatCategory] = useState<StatCategory | null>(null);
@@ -113,10 +122,12 @@ export function SoloCapCrunchPage() {
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [loadingYears, setLoadingYears] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
+  const [pickError, setPickError] = useState<string | null>(null);
 
   // Initialize game
-  const handleStartGame = async (sport: Sport, forcedCategory?: StatCategory | null) => {
+  const handleStartGame = async (sport: Sport, forcedCategory?: StatCategory | null, rounds: number = totalRounds) => {
     setSelectedSport(sport);
+    setTotalRounds(rounds);
     const category = forcedCategory ?? selectRandomStatCategory(sport);
     const cap = generateTargetCap(sport, category);
     const team = assignRandomTeam(sport, category);
@@ -146,7 +157,7 @@ export function SoloCapCrunchPage() {
 
     setLoading(true);
     try {
-      const results = await searchPlayersByNameOnly(selectedSport, query);
+      const results = await searchPlayersByNameOnly(selectedSport, query, statCategory ?? undefined);
       setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
@@ -157,6 +168,8 @@ export function SoloCapCrunchPage() {
   };
 
   const isTotalGP = statCategory === 'total_gp';
+  const isCareerStatRound = statCategory ? isCareerStat(statCategory) : false;
+  const isNoYearSelect = isTotalGP || isCareerStatRound;
 
   // Select a player from search results
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
@@ -165,8 +178,9 @@ export function SoloCapCrunchPage() {
     setSelectedYear('');
     setAvailableYears([]);
 
-    // total_gp mode: no year needed — go straight to confirm
-    if (isTotalGP) return;
+
+    // total_gp and career stat modes: no year needed — go straight to confirm
+    if (isNoYearSelect) return;
 
     // Get years this player was on the current team
     setLoadingYears(true);
@@ -189,30 +203,34 @@ export function SoloCapCrunchPage() {
   // Confirm year selection (or career GP) and add player to lineup
   const handleConfirmYear = async () => {
     if (!selectedPlayerName || !lineup || !selectedSport || !statCategory) return;
-    if (!isTotalGP && !selectedYear) return;
+    if (!isNoYearSelect && !selectedYear) return;
 
     setAddingPlayer(true);
     try {
-      // Get the stat value — total_gp sums all career GP with the team; others are per-season
+      // Get the stat value — total_gp sums all career GP with the team; career stats sum all seasons
       const statValue = isTotalGP
         ? await getPlayerTotalGPForTeam(selectedSport, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
-        : await getPlayerStatForYearAndTeam(
-            selectedSport,
-            selectedPlayerName,
-            currentTeam,
-            selectedYear,
-            statCategory,
-            selectedPlayerId ?? undefined
-          );
+        : isCareerStatRound
+          ? await getPlayerStatForYearAndTeam(selectedSport, selectedPlayerName, currentTeam, 'career', statCategory, selectedPlayerId ?? undefined)
+          : await getPlayerStatForYearAndTeam(
+              selectedSport,
+              selectedPlayerName,
+              currentTeam,
+              selectedYear,
+              statCategory,
+              selectedPlayerId ?? undefined
+            );
 
       // Check if this pick would push over the cap
       const wouldBust = (lineup.totalStat + statValue) > targetCap;
 
+      const pickTeam = currentTeam;
+
       // Create selected player object — bust picks are still shown but count as 0
       const newSelectedPlayer: SelectedPlayer = {
         playerName: selectedPlayerName,
-        team: currentTeam,
-        selectedYear: isTotalGP ? 'career' : selectedYear,
+        team: pickTeam,
+        selectedYear: isNoYearSelect ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
         isBust: wouldBust,
@@ -230,16 +248,14 @@ export function SoloCapCrunchPage() {
 
       setLineup(updated);
 
-      // Always play all 5 picks — no early game-over on bust
-      if (updated.selectedPlayers.length === 5) {
+      // Always play all picks — no early game-over on bust
+      if (updated.selectedPlayers.length === totalRounds) {
         updated.isFinished = true;
         setPhase('results');
       } else {
-        // Switch team for next turn (same team for total_gp; no repeats otherwise)
-        const nextTeam = statCategory === 'total_gp'
-          ? currentTeam
-          : assignRandomTeam(selectedSport, statCategory, usedTeamsRef.current);
-        if (statCategory !== 'total_gp') usedTeamsRef.current = [...usedTeamsRef.current, nextTeam];
+        // Switch team for next turn — no repeats; total_gp rotates teams but never divisions
+        const nextTeam = assignRandomTeam(selectedSport, statCategory, usedTeamsRef.current);
+        usedTeamsRef.current = [...usedTeamsRef.current, nextTeam];
         setCurrentTeam(nextTeam);
 
         // Clear search
@@ -249,9 +265,11 @@ export function SoloCapCrunchPage() {
         setSelectedPlayerId(null);
         setSelectedYear('');
         setAvailableYears([]);
+    
       }
     } catch (error) {
       console.error('Error adding player:', error);
+      setPickError('Something went wrong adding that player. Please try again.');
     } finally {
       setAddingPlayer(false);
     }
@@ -270,7 +288,8 @@ export function SoloCapCrunchPage() {
     const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
     setOptimalPick(undefined); // reset to loading
     findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue)
-      .then(result => setOptimalPick(result ?? null));
+      .then(result => setOptimalPick(result ?? null))
+      .catch(() => setOptimalPick(null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
@@ -309,33 +328,76 @@ export function SoloCapCrunchPage() {
                     >
                       NFL
                     </button>
-                    <p className="text-white/30 text-[10px] sports-font tracking-widest">DATA THROUGH 2024 SEASON · NO 2025</p>
+                    <p className="text-white/30 text-[10px] sports-font tracking-widest">DATA THROUGH 2025 SEASON</p>
                   </div>
                 </div>
               </>
             ) : (
               <>
                 <h2 className="retro-title text-5xl md:text-6xl mb-3 text-white uppercase">{selectedSport.toUpperCase()}</h2>
-                <p className="sports-font text-[10px] text-white/50 tracking-widest mb-8">CHOOSE STAT CATEGORY</p>
-                <div className="flex flex-wrap gap-2 justify-center max-w-sm mb-8">
-                  <button
-                    onClick={() => handleStartGame(selectedSport)}
-                    className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
-                  >
-                    RANDOM
-                  </button>
-                  {(selectedSport === 'nba'
-                    ? (['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'] as const)
-                    : (['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp'] as const)
-                  ).map((cat) => (
+                <p className="sports-font text-[10px] text-white/50 tracking-widest mb-6">CHOOSE STAT CATEGORY</p>
+                <div className="flex flex-col items-center gap-4 w-full max-w-sm mb-4">
+                  {/* Random + regular stats */}
+                  <div className="flex flex-wrap gap-2 justify-center">
                     <button
-                      key={cat}
-                      onClick={() => handleStartGame(selectedSport, cat)}
+                      onClick={() => handleStartGame(selectedSport, null, totalRounds)}
                       className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                     >
-                      {getCategoryAbbr(cat)}
+                      RANDOM
                     </button>
-                  ))}
+                    {(selectedSport === 'nba'
+                      ? (['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'] as const)
+                      : (['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp'] as const)
+                    ).map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => handleStartGame(selectedSport, cat, totalRounds)}
+                        className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                      >
+                        {getCategoryAbbr(cat)}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Career Totals section (NFL only) */}
+                  {selectedSport === 'nfl' && (
+                    <div className="w-full">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex-1 h-px bg-white/10" />
+                        <span className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
+                        <div className="flex-1 h-px bg-white/10" />
+                      </div>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {(['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as const).map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => handleStartGame(selectedSport, cat, totalRounds)}
+                            className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                          >
+                            {getCategoryAbbr(cat)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Round count selector */}
+                <div className="flex items-center gap-3 justify-center mt-2 mb-6">
+                  <span className="sports-font text-[10px] text-white/50 tracking-widest">ROUNDS</span>
+                  <div className="flex gap-1">
+                    {[3,4,5,6,7,8,9,10].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setTotalRounds(n)}
+                        className={`w-7 h-7 rounded-sm sports-font text-xs transition ${
+                          totalRounds === n
+                            ? 'bg-[#d4af37] text-black font-bold'
+                            : 'bg-black/50 border border-white/20 text-white/50 hover:text-white hover:border-white/40'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <button
                   onClick={() => setSelectedSport(null)}
@@ -384,10 +446,23 @@ export function SoloCapCrunchPage() {
         <header className="relative z-10 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
           <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                if (addingPlayer) return;
+                setPhase('sport-select');
+                setLineup(null);
+                setStatCategory(null);
+                setSelectedPlayerName(null);
+                setSelectedPlayerId(null);
+                setSearchQuery('');
+                setSearchResults([]);
+                setSelectedYear('');
+                setAvailableYears([]);
+                setPickError(null);
+                usedTeamsRef.current = [];
+              }}
               className="sports-font text-[10px] text-white/40 hover:text-white/70 tracking-widest uppercase transition"
             >
-              ← Home
+              ← Back
             </button>
             <h1 className="retro-title text-2xl text-[#d4af37]">Cap Crunch</h1>
             <div className="w-16" />
@@ -435,7 +510,7 @@ export function SoloCapCrunchPage() {
               <p className="retro-title text-2xl md:text-4xl text-white">{targetCap}</p>
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
-              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Category</div>
+              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
               <p className="retro-title text-lg md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
@@ -473,7 +548,7 @@ export function SoloCapCrunchPage() {
 
                     {loading && <p className="text-white/60 text-xs md:text-sm">Loading...</p>}
                     {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                      <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling. 2025 NFL not yet available.</p>
+                      <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
                     )}
 
                     {searchResults.length > 0 && (
@@ -490,18 +565,21 @@ export function SoloCapCrunchPage() {
                       </div>
                     )}
                   </div>
-                ) : isTotalGP ? (
-                  // ── Total GP mode: no year needed ──
+                ) : isNoYearSelect ? (
+                  // ── Total GP / Career stat mode: no year needed ──
                   <div className="space-y-2 md:space-y-4 flex flex-col flex-1">
                     <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
                       <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
-                      <p className="text-[10px] md:text-sm text-white/60">Will count all career GP with {currentTeam}</p>
+                      <p className="text-[10px] md:text-sm text-white/60">
+                        {isCareerStatRound ? `Total career stats (all teams) — must have played for ${currentTeam} at some point` : `Will count all career GP with ${currentTeam}`}
+                      </p>
                     </div>
                     <div className="flex-1 flex items-center justify-center text-center">
                       <p className="text-white/30 sports-font text-xs leading-relaxed">
                         Games played across every season<br />this player was on the team
                       </p>
                     </div>
+                    {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
                     <div className="flex gap-1 md:gap-2 mt-auto">
                       <button
                         onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
@@ -531,8 +609,8 @@ export function SoloCapCrunchPage() {
                         <label className="block sports-font text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
                           Select a year
                         </label>
-                        {selectedSport === 'nfl' && (
-                          <span className="text-white/25 text-[7px] sports-font tracking-wide">through 2024</span>
+                        {selectedSport === 'nfl' && !isCareerStatRound && (
+                          <span className="text-white/25 text-[7px] sports-font tracking-wide">through 2025</span>
                         )}
                       </div>
                       {loadingYears ? (
@@ -558,6 +636,7 @@ export function SoloCapCrunchPage() {
                       )}
                     </div>
 
+                    {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
                     <div className="flex gap-1 md:gap-2 mt-2 md:mt-auto">
                       <button
                         onClick={() => {
@@ -592,7 +671,7 @@ export function SoloCapCrunchPage() {
             >
                 <h3 className="retro-title text-xs md:text-lg text-[#d4af37] mb-2 md:mb-4">Your Lineup</h3>
                 <div className="space-y-1 md:space-y-2 flex-1 overflow-y-auto">
-                  {Array.from({ length: 5 }).map((_, idx) => (
+                  {Array.from({ length: totalRounds }).map((_, idx) => (
                     <div
                       key={idx}
                       className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[9px] md:text-xs leading-tight ${
@@ -616,7 +695,7 @@ export function SoloCapCrunchPage() {
                             </div>
                             <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{pick.team} • {pick.selectedYear}</p>
                             <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                              {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
+                              {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {isCareerStatRound ? `CAREER ${getCategoryAbbr(statCategory!)}` : getCategoryAbbr(statCategory!)}
                             </p>
                           </div>
                         );
@@ -665,7 +744,7 @@ export function SoloCapCrunchPage() {
             <div className="flex flex-col items-start md:items-end w-full md:w-auto">
               <div className="bg-[#111] border border-white/20 px-4 py-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] w-full md:w-auto text-center">
                 <span className="retro-title text-xs md:text-sm tracking-widest text-white/80">
-                  {getCategoryAbbr(statCategory)}
+                  {isCareerStatRound ? `CAREER ${getCategoryAbbr(statCategory)}` : getCategoryAbbr(statCategory)}
                 </span>
               </div>
             </div>
@@ -705,7 +784,7 @@ export function SoloCapCrunchPage() {
                       <div className="overflow-hidden">
                         <div className="retro-title text-sm text-white truncate">{optimalPick.playerName}</div>
                         <div className="sports-font text-[9px] text-white/40 mt-0.5">
-                          {optimalPick.year === 'career' ? 'Career GP' : optimalPick.year} · {optimalPick.team}
+                          {optimalPick.year === 'career' ? (isCareerStatRound ? `Career ${getCategoryAbbr(statCategory!)}` : 'Career GP') : optimalPick.year} · {optimalPick.team}
                         </div>
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
@@ -761,7 +840,7 @@ export function SoloCapCrunchPage() {
             <div className="lg:w-2/3 bg-black/70 border border-white/10 rounded-sm flex flex-col shadow-2xl overflow-hidden">
               <div className="p-3 md:p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
                 <span className="sports-font text-[9px] tracking-widest text-white/40 uppercase">Your Lineup</span>
-                <span className="retro-title text-[9px] text-white/20 uppercase">5 Slots</span>
+                <span className="retro-title text-[9px] text-white/20 uppercase">{totalRounds} Slots</span>
               </div>
               
               <div className="flex-1 overflow-y-auto p-4 md:p-6 max-h-96 lg:max-h-none">
@@ -785,7 +864,7 @@ export function SoloCapCrunchPage() {
                       <div className="flex justify-between items-center relative z-10">
                         <div className="overflow-hidden">
                           <div className={`sports-font text-[7px] md:text-[8px] ${isInvalid ? 'text-red-400/50' : 'text-white/50'}`}>
-                            {selectedSport?.toUpperCase()} • {getCategoryAbbr(statCategory!)}
+                            {selectedSport?.toUpperCase()} • {isCareerStatRound ? `CAREER ${getCategoryAbbr(statCategory!)}` : getCategoryAbbr(statCategory!)}
                           </div>
                           <div className={`retro-title text-sm md:text-base truncate ${isInvalid ? 'text-red-400' : 'text-white'}`}>
                             {player.playerName}

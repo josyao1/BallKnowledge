@@ -37,6 +37,12 @@ const LINEUP_STAT_ABBR: Record<string, string> = {
   rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD',
   receiving_yards: 'REC YD', receiving_tds: 'REC TD', receptions: 'REC',
   total_gp: 'TOT GP',
+  career_passing_yards:   'CAREER PASS YD',
+  career_passing_tds:     'CAREER PASS TD',
+  career_rushing_yards:   'CAREER RUSH YD',
+  career_rushing_tds:     'CAREER RUSH TD',
+  career_receiving_yards: 'CAREER REC YD',
+  career_receiving_tds:   'CAREER REC TD',
 };
 
 type GenericTeam = {
@@ -94,6 +100,7 @@ export function LobbyWaitingPage() {
   const [editCareerFrom, setEditCareerFrom] = useState(0);
   const [editCareerTo, setEditCareerTo] = useState(0);
   const [editLineupStat, setEditLineupStat] = useState<string>('random');
+  const [editTotalRounds, setEditTotalRounds] = useState(5);
   const [editCustomCap, setEditCustomCap] = useState<number | null>(null);
   const [editHardMode, setEditHardMode] = useState(false);
   const [editFirstPickerId, setEditFirstPickerId] = useState<string | null>(null);
@@ -150,6 +157,7 @@ export function LobbyWaitingPage() {
       setEditCustomCap((cs.forcedTargetCap as number | null) || null);
       setEditHardMode((cs.hardMode as boolean) || false);
       setEditFirstPickerId((cs.firstPickerId as string) || null);
+      setEditTotalRounds((cs.totalRounds as number) || 5);
 
       // Box Score state
       setEditBoxMinYear(cs.min_year || 2015);
@@ -503,7 +511,7 @@ export function LobbyWaitingPage() {
         targetCap,
         allLineups: initialLineups,
         currentRound: 1,
-        totalRounds: 5,
+        totalRounds: careerState.totalRounds || 5,
         currentTeam: firstTeam,
         usedTeams: [firstTeam],
         phase: 'picking',
@@ -688,7 +696,7 @@ export function LobbyWaitingPage() {
       // a race condition where handleCareerStart reads stale career_state
       setLobby({ ...lobby, career_state: newCareerState, sport: editSport });
     } else if (editGameType === 'lineup-is-right') {
-      // Lineup Is Right mode: update sport, forced stat category, hard mode toggle, and win target
+      // Lineup Is Right mode: update sport, forced stat category, hard mode toggle, win target, and round count
       const existingState = (lobby.career_state as any) || {};
       const newCareerState = {
         ...existingState,
@@ -697,6 +705,7 @@ export function LobbyWaitingPage() {
         forcedTargetCap: (editLineupStat !== 'random' && editCustomCap) ? editCustomCap : null,
         hardMode: editHardMode,
         firstPickerId: editHardMode ? editFirstPickerId : null,
+        totalRounds: editTotalRounds,
       };
       await updateCareerState(newCareerState);
       await updateSettings({ sport: editSport });
@@ -1374,7 +1383,8 @@ export function LobbyWaitingPage() {
                     {/* Stat Category */}
                     <div>
                       <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Stat Category</div>
-                      <div className="flex flex-wrap gap-1.5">
+                      {/* Regular stats */}
+                      <div className="flex flex-wrap gap-1.5 mb-2">
                         {(['random', ...(editSport === 'nba'
                           ? ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp']
                           : ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp']
@@ -1392,6 +1402,31 @@ export function LobbyWaitingPage() {
                           </button>
                         ))}
                       </div>
+                      {/* Career Totals section (NFL only) */}
+                      {editSport === 'nfl' && (
+                        <div>
+                          <div className="flex items-center gap-2 my-2">
+                            <div className="flex-1 h-px bg-[#1e1e1e]" />
+                            <span className="sports-font text-[8px] text-[#444] tracking-[0.3em] uppercase">Career Totals</span>
+                            <div className="flex-1 h-px bg-[#1e1e1e]" />
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as string[]).map((cat) => (
+                              <button
+                                key={cat}
+                                onClick={() => { setEditLineupStat(cat); setEditCustomCap(null); }}
+                                className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+                                  editLineupStat === cat
+                                    ? 'bg-[#ec4899] text-white'
+                                    : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                                }`}
+                              >
+                                {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Custom Cap — only available when a specific stat is selected */}
@@ -1471,6 +1506,29 @@ export function LobbyWaitingPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Round Count */}
+                    <div className="flex items-center justify-between border-t border-[#1a1a1a] pt-4">
+                      <div>
+                        <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Rounds</div>
+                        <div className="sports-font text-[9px] text-[#444] mt-0.5">Picks per player</div>
+                      </div>
+                      <div className="flex gap-1">
+                        {[3,4,5,6,7,8,9,10].map(n => (
+                          <button
+                            key={n}
+                            onClick={() => setEditTotalRounds(n)}
+                            className={`w-6 h-6 rounded-sm sports-font text-[10px] transition ${
+                              editTotalRounds === n
+                                ? 'bg-[#d4af37] text-black font-bold'
+                                : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </>
                 ) : editGameType === 'box-score' ? (
                   <>

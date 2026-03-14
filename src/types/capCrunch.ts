@@ -55,7 +55,13 @@ export type StatCategory =
   | 'receiving_yards'  // NFL: receiving yards
   | 'receiving_tds'    // NFL: receiving touchdowns
   | 'receptions'       // NFL: receptions (RB/WR/TE)
-  | 'total_gp';        // NBA/NFL: total career games played for a team (no year selection)
+  | 'total_gp'         // NBA/NFL: total career games played for a team (no year selection)
+  | 'career_passing_yards'    // NFL: total career passing yards (all teams summed)
+  | 'career_passing_tds'      // NFL: total career passing TDs (all teams summed)
+  | 'career_rushing_yards'    // NFL: total career rushing yards (all teams summed)
+  | 'career_rushing_tds'      // NFL: total career rushing TDs (all teams summed)
+  | 'career_receiving_yards'  // NFL: total career receiving yards (all teams summed)
+  | 'career_receiving_tds';   // NFL: total career receiving TDs (all teams summed)
 
 export interface LineupIsRightGameState {
   sport: Sport;

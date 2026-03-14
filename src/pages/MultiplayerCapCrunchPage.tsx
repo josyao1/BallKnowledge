@@ -32,6 +32,8 @@ import {
   isDivisionRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
+  isCareerStat,
+
 } from '../services/capCrunch';
 import type { OptimalPick } from '../services/capCrunch';
 import { getTeamByAbbreviation } from '../data/teams';
@@ -63,6 +65,12 @@ function getCategoryAbbr(category: StatCategory): string {
     case 'receiving_tds': return 'REC TD';
     case 'receptions': return 'REC';
     case 'total_gp': return 'TOT GP';
+    case 'career_passing_yards':   return 'CAREER PASS YD';
+    case 'career_passing_tds':     return 'CAREER PASS TD';
+    case 'career_rushing_yards':   return 'CAREER RUSH YD';
+    case 'career_rushing_tds':     return 'CAREER RUSH TD';
+    case 'career_receiving_yards': return 'CAREER REC YD';
+    case 'career_receiving_tds':   return 'CAREER REC TD';
     default: return 'STAT';
   }
 }
@@ -108,6 +116,7 @@ export function MultiplayerCapCrunchPage() {
   const [loadingYears, setLoadingYears] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [pickError, setPickError] = useState<string | null>(null);
 
   // Prevent realtime sync from clobbering state mid-pick
   const addingPlayerRef = useRef(false);
@@ -300,9 +309,8 @@ export function MultiplayerCapCrunchPage() {
         await updateCareerState(lobbyId, { ...cs, phase: 'results' });
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
-        const newTeam = cs.statCategory === 'total_gp'
-          ? cs.currentTeam  // same team all 5 rounds in GP mode
-          : assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
+        // total_gp rotates teams like normal but never uses divisions (guard is in assignRandomTeam)
+        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
         const resetLineups: Record<string, any> = {};
         playerIds.forEach(pid => {
           resetLineups[pid] = {
@@ -333,7 +341,7 @@ export function MultiplayerCapCrunchPage() {
           allLineups: resetLineups,
           currentRound: nextRound,
           currentTeam: newTeam,
-          usedTeams: cs.statCategory === 'total_gp' ? (cs.usedTeams || []) : [...(cs.usedTeams || []), newTeam],
+          usedTeams: [...(cs.usedTeams || []), newTeam],
           ...hardModeUpdates,
         });
       }
@@ -389,6 +397,7 @@ export function MultiplayerCapCrunchPage() {
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setDuplicateError(null);
+    setPickError(null);
     if (!selectedSport || query.trim().length < 2) {
       setSearchResults([]);
       return;
@@ -396,14 +405,19 @@ export function MultiplayerCapCrunchPage() {
 
     setLoading(true);
     try {
-      const results = await searchPlayersByNameOnly(selectedSport, query);
+      const results = await searchPlayersByNameOnly(selectedSport, query, statCategory ?? undefined);
       setSearchResults(results);
-    } catch {
+    } catch (error) {
+      console.error('[handleSearch] Failed:', error);
       setSearchResults([]);
     } finally {
       setLoading(false);
     }
   };
+
+  const isTotalGP = statCategory === 'total_gp';
+  const isCareerStatRound = statCategory ? isCareerStat(statCategory) : false;
+  const isNoYearSelect = isTotalGP || isCareerStatRound;
 
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
     if (usedPlayerNames.has(player.playerName)) {
@@ -420,39 +434,41 @@ export function MultiplayerCapCrunchPage() {
     setSelectedYear('');
     setAvailableYears([]);
 
-    // total_gp mode: no year needed, go straight to confirm
-    if (statCategory === 'total_gp') return;
+
+    // total_gp and career stat modes: no year needed, go straight to confirm
+    if (isNoYearSelect) return;
 
     setLoadingYears(true);
     try {
       const years = await getPlayerYearsOnTeam(selectedSport!, player.playerName, currentTeam, player.playerId);
       setAvailableYears(years);
-    } catch {
+    } catch (error) {
+      console.error('[handleSelectPlayer] Failed to fetch years:', error);
       setAvailableYears([]);
     } finally {
       setLoadingYears(false);
     }
   };
 
-  const isTotalGP = statCategory === 'total_gp';
-
   const handleConfirmYear = async () => {
     if (!selectedPlayerName || !selectedSport || !statCategory || !lobby || !currentPlayerId) return;
-    if (!isTotalGP && !selectedYear) return;
+    if (!isNoYearSelect && !selectedYear) return;
 
     addingPlayerRef.current = true;
     setAddingPlayer(true);
     try {
       const statValue = isTotalGP
         ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
-        : await getPlayerStatForYearAndTeam(
-            selectedSport as any,
-            selectedPlayerName,
-            currentTeam,
-            selectedYear,
-            statCategory,
-            selectedPlayerId ?? undefined
-          );
+        : isCareerStatRound
+          ? await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, 'career', statCategory, selectedPlayerId ?? undefined)
+          : await getPlayerStatForYearAndTeam(
+              selectedSport as any,
+              selectedPlayerName,
+              currentTeam,
+              selectedYear,
+              statCategory,
+              selectedPlayerId ?? undefined
+            );
 
       // Read latest career_state from store (synced via realtime) to minimize race window
       const latestCS = (lobby.career_state as any) || {};
@@ -469,10 +485,12 @@ export function MultiplayerCapCrunchPage() {
       // Check if this pick would push over the cap
       const wouldBust = (myCurrentLineup.totalStat + statValue) > targetCap;
 
+      const pickTeam = currentTeam;
+
       const newSelectedPlayer: SelectedPlayer = {
         playerName: selectedPlayerName,
-        team: currentTeam,
-        selectedYear: isTotalGP ? 'career' : selectedYear,
+        team: pickTeam,
+        selectedYear: isNoYearSelect ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
         isBust: wouldBust,
@@ -550,6 +568,7 @@ export function MultiplayerCapCrunchPage() {
       setAvailableYears([]);
     } catch (error) {
       console.error('Error confirming pick:', error);
+      setPickError('Something went wrong adding that player. Please try again.');
     } finally {
       addingPlayerRef.current = false;
       setAddingPlayer(false);
@@ -610,7 +629,7 @@ export function MultiplayerCapCrunchPage() {
                 />
                 {loading && <p className="text-white/60 text-sm">Loading...</p>}
                 {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                  <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling. 2025 NFL not yet available.</p>
+                  <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
                 )}
                 {duplicateError && (
                   <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
@@ -640,18 +659,21 @@ export function MultiplayerCapCrunchPage() {
                   </div>
                 )}
               </div>
-            ) : isTotalGP ? (
-              // ── Total GP mode: no year selection, just confirm the player ──
+            ) : isNoYearSelect ? (
+              // ── Total GP / Career stat mode: no year selection, just confirm the player ──
               <div className="flex flex-col gap-3 h-full">
                 <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
                   <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
-                  <p className="text-xs text-white/60 mt-0.5">Will count all career GP with {currentTeam}</p>
+                  <p className="text-xs text-white/60 mt-0.5">
+                    {isCareerStatRound ? `Total career stats (all teams) — must have played for ${currentTeam} at some point` : `Will count all career GP with ${currentTeam}`}
+                  </p>
                 </div>
                 <div className="flex-1 flex items-center justify-center text-center">
                   <p className="text-white/30 sports-font text-xs leading-relaxed">
                     Games played across every season<br />this player was on the team
                   </p>
                 </div>
+                {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
                 <div className="flex gap-2 mt-auto pt-2">
                   <button
                     onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
@@ -677,7 +699,7 @@ export function MultiplayerCapCrunchPage() {
                 </div>
                 <div className="flex items-baseline justify-between">
                   <label className="sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase font-semibold">Select a year</label>
-                  {selectedSport === 'nfl' && <span className="text-white/25 text-[8px] sports-font">through 2024</span>}
+                  {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] sports-font">through 2025</span>}
                 </div>
                 {loadingYears ? (
                   <p className="text-white/60 text-sm">Loading years...</p>
@@ -700,6 +722,7 @@ export function MultiplayerCapCrunchPage() {
                 ) : (
                   <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
                 )}
+                {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
                 <div className="flex gap-2 mt-auto pt-2">
                   <button
                     onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
@@ -902,7 +925,7 @@ export function MultiplayerCapCrunchPage() {
                 <p className="retro-title text-lg text-white leading-none">{targetCap}</p>
               </div>
               <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Stat</div>
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">{isCareerStatRound ? 'Career' : 'Stat'}</div>
                 <p className="retro-title text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
               </div>
               {/* My running total — always visible */}
@@ -956,7 +979,7 @@ export function MultiplayerCapCrunchPage() {
                 <p className="retro-title text-4xl text-white">{targetCap}</p>
               </div>
               <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
-                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
+                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
                 <p className="retro-title text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
               </div>
             </div>
@@ -1101,7 +1124,7 @@ export function MultiplayerCapCrunchPage() {
                           <div>
                             <span className="text-xs text-white/80 font-medium">{opt.playerName}</span>
                             <span className="text-[10px] text-white/35 ml-2">
-                              {opt.year === 'career' ? 'Career GP' : opt.year} · {opt.team}
+                              {opt.year === 'career' ? (isCareerStatRound ? `Career ${getCategoryAbbr(statCategory!)}` : 'Career GP') : opt.year} · {opt.team}
                             </span>
                             {lastPick.isBust && (
                               <span className="block text-[10px] text-emerald-400/70 mt-0.5">

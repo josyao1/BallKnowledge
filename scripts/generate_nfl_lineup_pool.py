@@ -42,7 +42,7 @@ except ImportError:
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
-YEARS = list(range(1999, 2025))   # 1999–2024; covers full career histories including LT, Rice, etc.
+YEARS = list(range(2010, 2026))   # 2010–2025; covers recent career histories
 CAREER_POSITIONS = {"QB", "RB", "WR", "TE"}
 
 # Positions that get gp-only data (no stat columns).
@@ -65,6 +65,43 @@ MIN_SINGLE_SEASON = {
 MIN_SEASONS_NON_SKILL = 4
 
 OUT_PATH = os.path.join(os.path.dirname(__file__), "data", "nfl_lineup_pool.json")
+
+# ─── Known abbreviations (mirrors NFL_FRANCHISE_ALIASES + NFL_TEAMS in capCrunch.ts) ──
+KNOWN_NFL_ABBRS = {
+    "KC", "LV", "LAC", "DEN", "BUF", "MIA", "NE", "NYJ",
+    "BAL", "PIT", "CLE", "CIN",
+    "PHI", "DAL", "NYG", "WAS",
+    "GB", "MIN", "DET", "CHI",
+    "ARI", "LAR", "SF", "SEA",
+    "NO", "CAR", "TB", "ATL",
+    "TEN", "IND", "HOU", "JAX",
+    "OAK", "SD", "STL", "SL", "LA", "ARZ", "BLT", "CLV", "HST",
+}
+
+
+def validate_abbreviations(careers: list, label: str = "") -> None:
+    """Scan all season team fields and report any abbreviation not in KNOWN_NFL_ABBRS."""
+    unknown: dict = {}
+    for player in careers:
+        for s in player.get("seasons", []):
+            team = s.get("team", "")
+            if not team or team == "???" or "/" in team:
+                continue
+            if team not in KNOWN_NFL_ABBRS:
+                unknown.setdefault(team, []).append(player["player_name"])
+
+    tag = f" [{label}]" if label else ""
+    if not unknown:
+        print(f"\n✓ Abbreviation check{tag}: all team codes are known.")
+        return
+
+    print(f"\n⚠ Abbreviation check{tag}: {len(unknown)} UNKNOWN team code(s) found.")
+    print("  These are not covered by NFL_FRANCHISE_ALIASES in src/services/capCrunch.ts.")
+    print("  Per-season stat lookups for these players may return 0 on the wrong team.")
+    print("  Add them to NFL_FRANCHISE_ALIASES if they represent a known franchise:\n")
+    for abbr, names in sorted(unknown.items()):
+        sample = ", ".join(names[:3]) + ("…" if len(names) > 3 else "")
+        print(f"    \"{abbr}\"  ({len(names)} player-seasons)  e.g. {sample}")
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -133,6 +170,18 @@ def load_seasonal_stats(years):
     return pd.concat(frames, ignore_index=True)
 
 
+def meets_career_total_threshold(player_stats, position):
+    """Return True if the player meets minimum career production thresholds.
+    QB: career passing_yards >= 1000
+    RB/WR/TE: career (rushing_yards + receiving_yards) >= 300
+    """
+    if position == "QB":
+        return col_sum(player_stats, "passing_yards") >= 1000
+    elif position in ("RB", "WR", "TE"):
+        return col_sum(player_stats, "rushing_yards") + col_sum(player_stats, "receiving_yards") >= 300
+    return False
+
+
 def meets_single_season_threshold(player_stats, position):
     """Return True if the player hit the per-season minimum in any one season.
     Recent seasons get lower thresholds to capture emerging players:
@@ -162,6 +211,14 @@ def meets_single_season_threshold(player_stats, position):
 
 def main():
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+
+    CAREERS_PATH = os.path.join(os.path.dirname(__file__), "data", "nfl_careers.json")
+    careers_ids = set()
+    if os.path.exists(CAREERS_PATH):
+        with open(CAREERS_PATH) as f:
+            existing = json.load(f)
+        careers_ids = {str(p["player_id"]) for p in existing}
+        print(f"  Loaded {len(careers_ids)} existing player IDs from nfl_careers.json (will skip for career-total fallback)")
 
     print(f"Loading roster data ({YEARS[0]}–{YEARS[-1]})...")
     roster_df = nfl.import_seasonal_rosters(YEARS)
@@ -238,11 +295,19 @@ def main():
             skipped_position += 1
             continue
 
-        # Must have at least one notable season (no career minimum required)
+        # Must have at least one notable season OR meet career total threshold
         player_stats = stats_df[stats_df["player_id"] == pid].sort_values("season")
-        if player_stats.empty or not meets_single_season_threshold(player_stats, player_pos):
+        if player_stats.empty:
             skipped_production += 1
             continue
+        if not meets_single_season_threshold(player_stats, player_pos):
+            # Career total fallback — skip if already in nfl_careers.json
+            if str(pid) in careers_ids:
+                skipped_production += 1
+                continue
+            if not meets_career_total_threshold(player_stats, player_pos):
+                skipped_production += 1
+                continue
 
         latest_roster = roster_group.iloc[-1]
         name = safe_str(latest_roster.get("player_name"))
@@ -463,6 +528,8 @@ def main():
     print(f"  Skipped (no name):    {def_skipped_name}")
 
     print(f"\nTotal players in pool: {len(careers)}")
+
+    validate_abbreviations(careers, "nfl_lineup_pool")
 
     with open(OUT_PATH, "w") as f:
         json.dump(careers, f, separators=(",", ":"))
