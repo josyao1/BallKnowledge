@@ -27,8 +27,9 @@ export interface SelectedPlayer {
   team: string;
   selectedYear: string;
   playerSeason?: PlayerSeason | null;
-  statValue: number; // The actual stat value achieved (0 if not on team that year)
-  isBust?: boolean;  // true if this pick pushed over the cap — counts as 0, game continues
+  statValue: number;      // The actual stat value achieved
+  isBust?: boolean;       // true if this pick pushed over the cap — counts as 0, game continues
+  neverOnTeam?: boolean;  // true if the player was never on the assigned team (total_gp / career stats only)
 }
 
 export interface PlayerLineup {

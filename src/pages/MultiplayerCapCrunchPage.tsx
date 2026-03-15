@@ -117,6 +117,12 @@ export function MultiplayerCapCrunchPage() {
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
+  const [showExactHit, setShowExactHit] = useState(false);
+  const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current); };
+  }, []);
 
   // Prevent realtime sync from clobbering state mid-pick
   const addingPlayerRef = useRef(false);
@@ -194,6 +200,11 @@ export function MultiplayerCapCrunchPage() {
     //  player gets stuck on the green picking screen after the last round.)
     if (cs.phase === 'results') {
       setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
+      if (exactHitTimerRef.current !== null) {
+        clearTimeout(exactHitTimerRef.current);
+        exactHitTimerRef.current = null;
+        setShowExactHit(false);
+      }
       setPhase('results');
       return;
     }
@@ -347,7 +358,7 @@ export function MultiplayerCapCrunchPage() {
       }
     };
 
-    advanceRound();
+    advanceRound().catch(err => console.error('[advanceRound] Failed to advance round:', err));
   }, [lobby?.career_state, isHost, lobby?.id]);
 
   // ── All clients: navigate back to lobby when host resets to waiting ────────
@@ -410,6 +421,7 @@ export function MultiplayerCapCrunchPage() {
     } catch (error) {
       console.error('[handleSearch] Failed:', error);
       setSearchResults([]);
+      setPickError('Player search failed — please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -457,7 +469,7 @@ export function MultiplayerCapCrunchPage() {
     addingPlayerRef.current = true;
     setAddingPlayer(true);
     try {
-      const statValue = isTotalGP
+      const statResult = isTotalGP
         ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
         : isCareerStatRound
           ? await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, 'career', statCategory, selectedPlayerId ?? undefined)
@@ -469,6 +481,8 @@ export function MultiplayerCapCrunchPage() {
               statCategory,
               selectedPlayerId ?? undefined
             );
+      const statValue = statResult.value;
+      const neverOnTeam = statResult.neverOnTeam;
 
       // Read latest career_state from store (synced via realtime) to minimize race window
       const latestCS = (lobby.career_state as any) || {};
@@ -494,6 +508,7 @@ export function MultiplayerCapCrunchPage() {
         playerSeason: null,
         statValue,
         isBust: wouldBust,
+        neverOnTeam,
       };
 
       const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
@@ -506,8 +521,8 @@ export function MultiplayerCapCrunchPage() {
         withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
       }
       (withNewPlayer as any).hasPickedThisRound = true;
-      // Only finished when all 5 picks made
-      if (withNewPlayer.selectedPlayers.length >= 5) withNewPlayer.isFinished = true;
+      // Finished when all 5 picks made OR hit exactly on the cap
+      if (withNewPlayer.selectedPlayers.length >= 5 || (!wouldBust && withNewPlayer.totalStat === targetCap)) withNewPlayer.isFinished = true;
 
       // Hard mode: compute next picker and record locked player-season
       let hardModeUpdates: Record<string, any> = {};
@@ -558,6 +573,12 @@ export function MultiplayerCapCrunchPage() {
 
       // Apply locally so UI reflects immediately
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
+
+      // Exact hit celebration
+      if (!wouldBust && withNewPlayer.totalStat === targetCap) {
+        setShowExactHit(true);
+        exactHitTimerRef.current = setTimeout(() => setShowExactHit(false), 2500);
+      }
 
       // Clear search UI
       setSearchQuery('');
@@ -863,6 +884,29 @@ export function MultiplayerCapCrunchPage() {
           style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
         />
 
+        {/* EXACT HIT CELEBRATION OVERLAY */}
+        {showExactHit && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.25) 0%, rgba(0,0,0,0.85) 100%)' }}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+              className="text-center"
+            >
+              <div className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2" style={{ textShadow: '0 0 40px #d4af37, 0 0 80px #d4af37aa' }}>
+                EXACT!
+              </div>
+              <div className="sports-font text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
+              <div className="retro-title text-3xl md:text-4xl text-[#d4af37]">{targetCap}</div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {/* ── Header ── */}
         <header className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
           <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
@@ -1088,17 +1132,20 @@ export function MultiplayerCapCrunchPage() {
                   <div className="space-y-2 text-xs mb-3 border-t border-white/10 pt-3">
                     {item.lineup.selectedPlayers.map((selected, pidx) => {
                       const isBust = selected.isBust;
-                      const isMiss = !isBust && selected.statValue === 0;
-                      const isBad = isBust || isMiss;
+                      const isNotOnTeam = !isBust && selected.neverOnTeam;
+                      const isMiss = !isBust && !isNotOnTeam && selected.statValue === 0;
+                      const isBad = isBust || isMiss || isNotOnTeam;
+                      const badLabel = isBust ? 'BUST' : isNotOnTeam ? 'NOT ON TEAM' : '0 STAT';
                       return (
                         <div key={pidx} className={`flex justify-between ${isBad ? 'text-red-300' : 'text-white/70'}`}>
                           <div className="flex-1">
                             <div className="flex items-baseline gap-1">
                               <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
-                              {isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                              {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
                             </div>
                             <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
                             {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
+                            {isNotOnTeam && <span className="block text-[10px] text-orange-400/60">Never played for this team — scored 0</span>}
                           </div>
                           <span className={`font-semibold ml-2 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                             {isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
@@ -1124,7 +1171,7 @@ export function MultiplayerCapCrunchPage() {
                           <div>
                             <span className="text-xs text-white/80 font-medium">{opt.playerName}</span>
                             <span className="text-[10px] text-white/35 ml-2">
-                              {opt.year === 'career' ? (isCareerStatRound ? `Career ${getCategoryAbbr(statCategory!)}` : 'Career GP') : opt.year} · {opt.team}
+                              {opt.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory!) : 'Career GP') : opt.year} · {opt.team}
                             </span>
                             {lastPick.isBust && (
                               <span className="block text-[10px] text-emerald-400/70 mt-0.5">
