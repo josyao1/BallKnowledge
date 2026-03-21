@@ -453,7 +453,7 @@ export function SoloCapCrunchPage() {
               <li><span className="text-[#d4af37] font-bold">Each pick:</span> A random team is shown. Search <em>any</em> player by name and choose a year they were active</li>
               <li><span className="text-emerald-400 font-bold">Hit:</span> Player was on that team that year → their stat adds to your total</li>
               <li><span className="text-red-400 font-bold">Miss:</span> Player wasn't on that team that year → you get 0 for that pick</li>
-              <li><span className="text-white font-bold">5 picks max.</span> If a pick pushes you over the cap it <span className="text-red-400 font-bold">busts</span> — that pick counts as 0 and your score reverts. You always play all 5 picks!</li>
+              <li><span className="text-white font-bold">{totalRounds} picks max.</span> If a pick pushes you over the cap it <span className="text-red-400 font-bold">busts</span> — that pick counts as 0 and your score reverts. You always play all {totalRounds} picks!</li>
               <li><span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts wins; then oldest average pick year</li>
             </ul>
           </motion.div>
