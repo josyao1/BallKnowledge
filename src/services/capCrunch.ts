@@ -993,12 +993,20 @@ export async function findOptimalLastPick(
         }
       } else if (statCategory && isCareerStat(statCategory)) {
         const field = careerStatField(statCategory);
+        // Minimum career yards with the team to count as a meaningful optimal pick
+        const careerYardMinimum = 100;
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
-          const wasOnTeam = p.seasons.some(s =>
+          const teamSeasons = p.seasons.filter(s =>
             isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
           );
-          if (!wasOnTeam) continue;
+          if (teamSeasons.length === 0) continue;
+          // For yardage career stats, require at least 100 yards with the team
+          const yardCategories = ['career_passing_yards', 'career_rushing_yards', 'career_receiving_yards'];
+          if (yardCategories.includes(statCategory)) {
+            const yardsWithTeam = teamSeasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+            if (yardsWithTeam < careerYardMinimum) continue;
+          }
           const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
           if (val > actualStatValue && val <= remainingBudget) {
             if (!best || val >= best.statValue) {

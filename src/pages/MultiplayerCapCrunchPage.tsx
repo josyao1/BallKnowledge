@@ -521,8 +521,9 @@ export function MultiplayerCapCrunchPage() {
         withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
       }
       (withNewPlayer as any).hasPickedThisRound = true;
-      // Finished when all 5 picks made OR hit exactly on the cap
-      if (withNewPlayer.selectedPlayers.length >= 5 || (!wouldBust && withNewPlayer.totalStat === targetCap)) withNewPlayer.isFinished = true;
+      // Finished when all picks made OR hit exactly on the cap
+      const picksPerRound = latestCS.totalRounds || 5;
+      if (withNewPlayer.selectedPlayers.length >= picksPerRound || (!wouldBust && withNewPlayer.totalStat === targetCap)) withNewPlayer.isFinished = true;
 
       // Hard mode: compute next picker and record locked player-season
       let hardModeUpdates: Record<string, any> = {};
@@ -629,7 +630,7 @@ export function MultiplayerCapCrunchPage() {
         {myLineup?.isFinished ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
             <p className="text-2xl text-emerald-400 retro-title">All Picks In!</p>
-            <p className="text-white/50 sports-font text-sm">You've made all 5 picks. Sit tight while others finish.</p>
+            <p className="text-white/50 sports-font text-sm">You've made all {totalRounds} picks. Sit tight while others finish.</p>
             {(myLineup.bustCount ?? 0) > 0 && (
               <p className="text-red-400/70 sports-font text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
             )}
