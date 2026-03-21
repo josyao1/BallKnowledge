@@ -97,6 +97,7 @@ export function MultiplayerCapCrunchPage() {
   const [mobileTab, setMobileTab] = useState<'pick' | 'scores'>('pick');
   const [currentRound, setCurrentRound] = useState(1);
   const [totalRounds, setTotalRounds] = useState(5);
+  const totalRoundsRef = useRef(5);
   const [optimalPicks, setOptimalPicks] = useState<Map<string, OptimalPick | null>>(new Map());
 
   // Hard mode state
@@ -172,6 +173,7 @@ export function MultiplayerCapCrunchPage() {
         setAllLineups((cs.allLineups as Record<string, PlayerLineup>) || {});
         setCurrentRound(cs.currentRound ?? 1);
         setTotalRounds(cs.totalRounds ?? 5);
+        totalRoundsRef.current = cs.totalRounds ?? 5;
         setCurrentTeam(cs.currentTeam || '');
         setHardMode(cs.hardMode || false);
         setCurrentPickerId(cs.currentPickerId || null);
@@ -326,7 +328,7 @@ export function MultiplayerCapCrunchPage() {
         playerIds.forEach(pid => {
           resetLineups[pid] = {
             ...lineups[pid],
-            // Players who've used all 5 picks keep hasPickedThisRound true so they're auto-skipped
+            // Players who've used all picks keep hasPickedThisRound true so they're auto-skipped
             hasPickedThisRound: (lineups[pid] as any).isFinished ? true : false,
           };
         });
@@ -522,8 +524,7 @@ export function MultiplayerCapCrunchPage() {
       }
       (withNewPlayer as any).hasPickedThisRound = true;
       // Finished when all picks made OR hit exactly on the cap
-      const picksPerRound = latestCS.totalRounds || 5;
-      if (withNewPlayer.selectedPlayers.length >= picksPerRound || (!wouldBust && withNewPlayer.totalStat === targetCap)) withNewPlayer.isFinished = true;
+      if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || (!wouldBust && withNewPlayer.totalStat === targetCap)) withNewPlayer.isFinished = true;
 
       // Hard mode: compute next picker and record locked player-season
       let hardModeUpdates: Record<string, any> = {};
