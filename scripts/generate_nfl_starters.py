@@ -161,7 +161,7 @@ def build_side(starters: pd.DataFrame, side: str) -> list[dict]:
         r = take_one(['RDE'])
         if r is not None:
             players.append(r)
-        # Interior DL — pick 2 from NT, LDT, RDT (covering 3-4 and 4-3)
+        # Interior DL — pick up to 2 from NT, LDT, RDT (covering 3-4 and 4-3)
         interior = take_n(['NT', 'LDT', 'RDT'], 2)
         # Prefer LDT+RDT if both present; otherwise NT+one
         ldt = [p for p in interior if p['pos_abb'] == 'LDT']
@@ -175,14 +175,13 @@ def build_side(starters: pd.DataFrame, side: str) -> list[dict]:
             players.extend((ldt + rdt)[:1])
         else:
             players.extend(interior[:2])
-        # LBs — prefer WLB, MLB, SLB; fall back to LILB/RILB
-        lb_rows = take_n(['WLB', 'MLB', 'SLB', 'LILB', 'RILB'], 3)
-        # Canonical mapping: prefer exactly one WLB/LILB, one MLB, one SLB/RILB
-        wlb = [p for p in lb_rows if p['pos_abb'] in ('WLB', 'LILB')]
-        mlb = [p for p in lb_rows if p['pos_abb'] == 'MLB']
-        slb = [p for p in lb_rows if p['pos_abb'] in ('SLB', 'RILB')]
-        for group in [wlb[:1], mlb[:1], slb[:1]]:
-            players.extend(group)
+        # LBs — 3-4 defenses need 4 LBs, 4-3 defenses need 3; fill to hit 11 total
+        # DBs = 4 (LCB, RCB, SS, FS); target = 11 - DL_so_far - 4
+        lb_target = max(11 - len(players) - 4, 0)
+        if lb_target == 0:
+            print(f"WARN: {side} defense has 0 LB slots (DL count={len(players)})", file=sys.stderr)
+        lb_rows = take_n(['WLB', 'MLB', 'SLB', 'LILB', 'RILB'], lb_target)
+        players.extend(lb_rows)
         # CBs
         r = take_one(['LCB'])
         if r is not None:
