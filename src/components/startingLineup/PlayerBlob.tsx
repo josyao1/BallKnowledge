@@ -33,6 +33,16 @@ function collegeAbbr(college: string | null): string {
   return words.map(w => w[0]).join('').toUpperCase().slice(0, 3);
 }
 
+const NAME_SUFFIXES = new Set(['jr.', 'sr.', 'ii', 'iii', 'iv', 'jr', 'sr']);
+
+function displayLastName(name: string): string {
+  if (!name) return '?';
+  const parts = name.split(' ');
+  let i = parts.length - 1;
+  while (i > 0 && NAME_SUFFIXES.has(parts[i].toLowerCase())) i--;
+  return parts[i] || '?';
+}
+
 export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect, showHint }: Props) {
   const [guessInput, setGuessInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -70,7 +80,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
         </div>
         <div className="text-center max-w-[60px] md:max-w-[72px]">
           <div className="text-[8px] md:text-[9px] text-white/90 font-semibold leading-tight truncate">
-            {player.name.split(' ').pop()}
+            {displayLastName(player.name)}
           </div>
           <div className="text-[7px] md:text-[8px] text-green-400 sports-font">{player.pos_abb}</div>
         </div>
@@ -89,7 +99,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
             </svg>
           </div>
           <div className="text-[8px] text-green-400 sports-font text-center max-w-[60px] leading-tight truncate">
-            {player.name.split(' ').pop()}
+            {displayLastName(player.name)}
           </div>
         </div>
       );

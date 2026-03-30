@@ -955,36 +955,36 @@ export function MultiplayerCapCrunchPage() {
                 </div>
               ) : (
                 <div
-                  className="flex items-center gap-3 px-5 py-2 rounded border-2 bg-black"
+                  className="flex items-center gap-2 px-2 md:px-5 py-2 rounded border-2 bg-black"
                   style={{ borderColor: getTeamColor(selectedSport, currentTeam), boxShadow: `0 0 14px ${getTeamColor(selectedSport, currentTeam)}44` }}
                 >
-                  <TeamLogo sport={selectedSport as 'nba' | 'nfl'} abbr={currentTeam} size={44} />
-                  <p className="retro-title text-2xl md:text-3xl font-bold leading-tight" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
+                  <TeamLogo sport={selectedSport as 'nba' | 'nfl'} abbr={currentTeam} size={36} />
+                  <p className="retro-title text-xl md:text-3xl font-bold leading-tight" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
                     {currentTeam}
                   </p>
                 </div>
               )}
             </motion.div>
-            <div className="flex gap-2 ml-auto">
-              <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
+            <div className="flex gap-1.5 md:gap-2 ml-auto">
+              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Target</div>
-                <p className="retro-title text-lg text-white leading-none">{targetCap}</p>
+                <p className="retro-title text-sm md:text-lg text-white leading-none">{targetCap}</p>
               </div>
-              <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
+              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">{isCareerStatRound ? 'Career' : 'Stat'}</div>
-                <p className="retro-title text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
+                <p className="retro-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
               </div>
               {/* My running total — always visible */}
-              <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-3 py-1.5 rounded-sm text-center">
+              <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
-                <p className="retro-title text-lg leading-none text-[#d4af37]">
+                <p className="retro-title text-sm md:text-lg leading-none text-[#d4af37]">
                   {fmt(myLineup?.totalStat ?? 0)}
                 </p>
               </div>
               {/* Remaining to cap */}
-              <div className="bg-[#111] border border-white/10 px-3 py-1.5 rounded-sm text-center">
+              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
-                <p className="retro-title text-lg leading-none text-white">
+                <p className="retro-title text-sm md:text-lg leading-none text-white">
                   {fmt(targetCap - (myLineup?.totalStat ?? 0))}
                 </p>
               </div>

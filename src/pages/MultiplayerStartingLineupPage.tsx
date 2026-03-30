@@ -428,7 +428,7 @@ export function MultiplayerStartingLineupPage() {
       hasSubmittedRef.current = true;
       setIsCorrect(true);
       setFeedbackMsg('');
-      // First correct gets 2 pts (no firstCorrectAt yet), subsequent get 1 pt
+      // Points awarded at round end by host via addCareerPoints (3 for first, 1 for others)
       setWasFirstCorrect(!careerState.firstCorrectAt);
       await updatePlayerScore(lobby.id, 0, 1, [], localIncorrect, true);
     } else {
