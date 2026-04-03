@@ -260,9 +260,13 @@ export function CareerGamePage() {
               {visibleSeasons.map((season, idx) => (
                 <motion.tr
                   key={season.season + idx}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 14, backgroundColor: 'rgba(212,175,55,0.22)' }}
+                  animate={{ opacity: 1, y: 0, backgroundColor: 'rgba(0,0,0,0)' }}
+                  transition={{
+                    opacity: { duration: 0.3 },
+                    y: { type: 'spring', stiffness: 350, damping: 26 },
+                    backgroundColor: { duration: 0.9, ease: 'easeOut' },
+                  }}
                   className="border-b border-[#222] hover:bg-[#1a1a1a]"
                 >
                   {columns.map(col => {

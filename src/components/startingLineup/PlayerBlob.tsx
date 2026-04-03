@@ -13,6 +13,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { motion } from 'framer-motion';
 import type { StarterPlayer, StarterEncoding } from '../../services/startingLineupData';
 
 type BlobState = 'hidden' | 'revealed' | 'bonus-guess';
@@ -64,7 +65,13 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
   // ── Revealed state ────────────────────────────────────────────────────────
   if (state === 'revealed') {
     return (
-      <div className="flex flex-col items-center gap-0.5">
+      <motion.div
+        className="flex flex-col items-center gap-0.5"
+        initial={{ rotateY: -90, opacity: 0, scale: 0.85 }}
+        animate={{ rotateY: 0, opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+        style={{ perspective: 600 }}
+      >
         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-800 border-2 border-green-400 flex items-center justify-center shadow-lg overflow-hidden">
           {player.college_espn_id ? (
             <img
@@ -84,7 +91,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           </div>
           <div className="text-[7px] md:text-[8px] text-green-400 sports-font">{player.pos_abb}</div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -92,7 +99,12 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
   if (state === 'bonus-guess') {
     if (bonusCorrect) {
       return (
-        <div className="flex flex-col items-center gap-0.5">
+        <motion.div
+          className="flex flex-col items-center gap-0.5"
+          initial={{ scale: 0, rotate: -15 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+        >
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-700 border-2 border-green-400 flex items-center justify-center shadow-lg">
             <svg className="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -101,7 +113,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           <div className="text-[8px] text-green-400 sports-font text-center max-w-[60px] leading-tight truncate">
             {displayLastName(player.name)}
           </div>
-        </div>
+        </motion.div>
       );
     }
 
@@ -128,15 +140,20 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
     }
 
     return (
-      <button
+      <motion.button
         onClick={openInput}
         className="flex flex-col items-center gap-0.5 group"
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 20 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.93 }}
       >
         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#1c2e1c] border-2 border-dashed border-green-600/60 flex items-center justify-center group-hover:border-green-400 group-hover:bg-[#1a3a1a] transition-all shadow">
           <span className="retro-title text-lg text-green-500/60 group-hover:text-green-400">?</span>
         </div>
         <div className="text-[7px] text-green-600/50 sports-font">{player.pos_abb}</div>
-      </button>
+      </motion.button>
     );
   }
 

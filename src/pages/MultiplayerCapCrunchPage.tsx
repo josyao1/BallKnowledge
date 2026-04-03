@@ -12,6 +12,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { SpinningNumber, getTotalColor, getRemainingColor } from '../components/capCrunch/SpinningNumber';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
@@ -119,6 +120,7 @@ export function MultiplayerCapCrunchPage() {
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
   const [showExactHit, setShowExactHit] = useState(false);
+  const [badFlashKey, setBadFlashKey] = useState(0);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -576,6 +578,8 @@ export function MultiplayerCapCrunchPage() {
       // Apply locally so UI reflects immediately
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
+      if (wouldBust || statValue === 0) setBadFlashKey(k => k + 1);
+
       // Exact hit celebration
       if (!wouldBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
@@ -938,9 +942,11 @@ export function MultiplayerCapCrunchPage() {
           <div className="flex items-center gap-3 px-4 py-2">
             <motion.div
               key={currentTeam + currentRound}
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
+              initial={{ opacity: 0, rotateY: -90, x: -60 }}
+              animate={{ opacity: 1, rotateY: 0, x: 0 }}
+              exit={{ opacity: 0, rotateY: 90, x: 60 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{ perspective: 600 }}
               className="flex items-center gap-2"
             >
               {isDivisionRound(currentTeam) ? (
@@ -977,16 +983,22 @@ export function MultiplayerCapCrunchPage() {
               {/* My running total — always visible */}
               <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
-                <p className="retro-title text-sm md:text-lg leading-none text-[#d4af37]">
-                  {fmt(myLineup?.totalStat ?? 0)}
-                </p>
+                <SpinningNumber
+                  value={fmt(myLineup?.totalStat ?? 0)}
+                  className="retro-title text-sm md:text-lg leading-none"
+                  color={getTotalColor(myLineup?.totalStat ?? 0, targetCap)}
+                  flashKey={badFlashKey}
+                />
               </div>
               {/* Remaining to cap */}
               <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
-                <p className="retro-title text-sm md:text-lg leading-none text-white">
-                  {fmt(targetCap - (myLineup?.totalStat ?? 0))}
-                </p>
+                <SpinningNumber
+                  value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
+                  className="retro-title text-sm md:text-lg leading-none"
+                  color={getRemainingColor(myLineup?.totalStat ?? 0, targetCap)}
+                  flashKey={badFlashKey}
+                />
               </div>
             </div>
           </div>
