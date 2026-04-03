@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from '../components/capCrunch/SpinningNumber';
+import { TeamSlotMachine } from '../components/capCrunch/TeamSlotMachine';
 import {
   selectRandomStatCategory,
   generateTargetCap,
@@ -29,9 +30,6 @@ import {
 
 } from '../services/capCrunch';
 import type { OptimalPick } from '../services/capCrunch';
-import { getTeamByAbbreviation } from '../data/teams';
-import { TeamLogo } from '../components/TeamLogo';
-import { nflTeams } from '../data/nfl-teams';
 import type { Sport } from '../types';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/capCrunch';
 
@@ -69,29 +67,6 @@ function getCategoryAbbr(category: StatCategory): string {
   }
 }
 
-function getTeamColor(sport: Sport, teamAbbr: string): string {
-  if (sport === 'nba') {
-    const team = getTeamByAbbreviation(teamAbbr);
-    return team?.colors.primary || '#666666';
-  } else {
-    const nflTeam = nflTeams.find(t => t.abbreviation === teamAbbr);
-    return nflTeam?.colors?.primary || '#003875';
-  }
-}
-
-/** Returns the team color if it has enough contrast on a black background, otherwise white. */
-function getReadableTeamColor(sport: Sport, teamAbbr: string): string {
-  const color = getTeamColor(sport, teamAbbr);
-  const hex = color.replace('#', '');
-  if (hex.length === 6) {
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    if (luminance < 0.25) return '#FFFFFF';
-  }
-  return color;
-}
 
 
 export function SoloCapCrunchPage() {
@@ -527,16 +502,17 @@ export function SoloCapCrunchPage() {
             <div className="w-16" />
           </div>
           {/* Team / Division Display */}
-          <motion.div
-            key={currentTeam}
-            initial={{ opacity: 0, rotateY: -90, x: -100 }}
-            animate={{ opacity: 1, rotateY: 0, x: 0 }}
-            exit={{ opacity: 0, rotateY: 90, x: 100 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="flex items-center justify-center py-3 px-4"
-          >
+          <div className="flex items-center justify-center py-3 px-4">
             {isDivisionRound(currentTeam) ? (
-              <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#d4af37]/60">
+              <motion.div
+                key={currentTeam}
+                initial={{ opacity: 0, rotateY: -90, x: -100 }}
+                animate={{ opacity: 1, rotateY: 0, x: 0 }}
+                exit={{ opacity: 0, rotateY: 90, x: 100 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ perspective: 600 }}
+                className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#d4af37]/60"
+              >
                 <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Division</p>
                 <p className="retro-title text-2xl md:text-4xl font-bold tracking-tight text-[#d4af37]">
                   {currentTeam}
@@ -544,21 +520,11 @@ export function SoloCapCrunchPage() {
                 <p className="sports-font text-[9px] text-white/35 mt-1">
                   {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                 </p>
-              </div>
+              </motion.div>
             ) : (
-              <div className="flex items-center gap-3 px-3 py-2 md:py-3 rounded-lg border-2 bg-black"
-                style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
-              >
-                <TeamLogo sport={selectedSport!} abbr={currentTeam} size={52} />
-                <p
-                  className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
-                  style={{ color: getReadableTeamColor(selectedSport, currentTeam) }}
-                >
-                  {currentTeam}
-                </p>
-              </div>
+              <TeamSlotMachine sport={selectedSport!} team={currentTeam} size="lg" />
             )}
-          </motion.div>
+          </div>
         </header>
 
         <main className="relative z-10 flex-1 w-full px-2 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">

@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 function computeStep(diff: number): number {
   if (diff <= 1) return 1;
   const raw = diff / 4;
+  // Prevent decimal steps for small integer diffs (raw < 1 → log10 goes negative)
+  if (raw < 1) return 1;
   const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
   const normalized = raw / magnitude;
   let nice: number;
@@ -76,19 +78,27 @@ export function SpinningNumber({ value, className, color, flashKey }: SpinningNu
   // Flash red on bust / zero pick
   const [activeColor, setActiveColor] = useState(color);
   const prevFlashKey = useRef<number | undefined>(undefined);
+  // Ref so the timeout always reads the latest base color, avoiding stale closures
+  const colorRef = useRef(color);
+  const flashingRef = useRef(false);
+
+  useEffect(() => { colorRef.current = color; });
 
   useEffect(() => {
     if (flashKey === undefined || flashKey === prevFlashKey.current) return;
     prevFlashKey.current = flashKey;
+    flashingRef.current = true;
     setActiveColor('#ef4444');
-    const id = setTimeout(() => setActiveColor(color), 550);
+    const id = setTimeout(() => {
+      flashingRef.current = false;
+      setActiveColor(colorRef.current);
+    }, 550);
     return () => clearTimeout(id);
   }, [flashKey]);
 
   // Keep color in sync when the base color changes (e.g. approaching cap)
   useEffect(() => {
-    // Don't override an in-progress flash
-    if (activeColor === '#ef4444') return;
+    if (flashingRef.current) return;
     setActiveColor(color);
   }, [color]);
 

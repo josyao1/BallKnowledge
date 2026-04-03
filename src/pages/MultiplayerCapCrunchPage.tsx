@@ -13,6 +13,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from '../components/capCrunch/SpinningNumber';
+import { TeamSlotMachine } from '../components/capCrunch/TeamSlotMachine';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
@@ -37,10 +38,7 @@ import {
 
 } from '../services/capCrunch';
 import type { OptimalPick } from '../services/capCrunch';
-import { getTeamByAbbreviation } from '../data/teams';
-import { nflTeams } from '../data/nfl-teams';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/capCrunch';
-import { TeamLogo } from '../components/TeamLogo';
 
 type Phase = 'loading' | 'picking' | 'results';
 
@@ -76,15 +74,6 @@ function getCategoryAbbr(category: StatCategory): string {
   }
 }
 
-function getTeamColor(sport: any, teamAbbr: string): string {
-  if (sport === 'nba') {
-    const team = getTeamByAbbreviation(teamAbbr);
-    return team?.colors.primary || '#666666';
-  } else {
-    const nflTeam = nflTeams.find(t => t.abbreviation === teamAbbr);
-    return nflTeam?.colors?.primary || '#003875';
-  }
-}
 
 export function MultiplayerCapCrunchPage() {
   const navigate = useNavigate();
@@ -940,37 +929,27 @@ export function MultiplayerCapCrunchPage() {
           </div>
           {/* Team + compact stats row */}
           <div className="flex items-center gap-3 px-4 py-2">
-            <motion.div
-              key={currentTeam + currentRound}
-              initial={{ opacity: 0, rotateY: -90, x: -60 }}
-              animate={{ opacity: 1, rotateY: 0, x: 0 }}
-              exit={{ opacity: 0, rotateY: 90, x: 60 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}
-              style={{ perspective: 600 }}
-              className="flex items-center gap-2"
-            >
-              {isDivisionRound(currentTeam) ? (
-                <div className="px-5 py-2 rounded border-2 bg-black border-[#d4af37]/80 shadow-[0_0_12px_rgba(212,175,55,0.25)]">
-                  <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
-                  <p className="retro-title text-2xl md:text-3xl font-bold text-[#d4af37] leading-tight">
-                    {currentTeam}
-                  </p>
-                  <p className="sports-font text-[8px] text-white/40 leading-none mt-0.5">
-                    {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
-                  </p>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center gap-2 px-2 md:px-5 py-2 rounded border-2 bg-black"
-                  style={{ borderColor: getTeamColor(selectedSport, currentTeam), boxShadow: `0 0 14px ${getTeamColor(selectedSport, currentTeam)}44` }}
-                >
-                  <TeamLogo sport={selectedSport as 'nba' | 'nfl'} abbr={currentTeam} size={36} />
-                  <p className="retro-title text-xl md:text-3xl font-bold leading-tight" style={{ color: getTeamColor(selectedSport, currentTeam) }}>
-                    {currentTeam}
-                  </p>
-                </div>
-              )}
-            </motion.div>
+            {isDivisionRound(currentTeam) ? (
+              <motion.div
+                key={currentTeam + currentRound}
+                initial={{ opacity: 0, rotateY: -90, x: -60 }}
+                animate={{ opacity: 1, rotateY: 0, x: 0 }}
+                exit={{ opacity: 0, rotateY: 90, x: 60 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ perspective: 600 }}
+                className="px-5 py-2 rounded border-2 bg-black border-[#d4af37]/80 shadow-[0_0_12px_rgba(212,175,55,0.25)]"
+              >
+                <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
+                <p className="retro-title text-2xl md:text-3xl font-bold text-[#d4af37] leading-tight">
+                  {currentTeam}
+                </p>
+                <p className="sports-font text-[8px] text-white/40 leading-none mt-0.5">
+                  {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
+                </p>
+              </motion.div>
+            ) : (
+              <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
+            )}
             <div className="flex gap-1.5 md:gap-2 ml-auto">
               <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
                 <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Target</div>

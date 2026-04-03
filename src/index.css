@@ -405,3 +405,12 @@ body {
   stroke: var(--nba-gold);
 }
 
+@keyframes goldFlash {
+  from { background-color: rgba(212, 175, 55, 0.22); }
+  to   { background-color: transparent; }
+}
+
+.row-gold-flash {
+  animation: goldFlash 0.9s ease-out;
+}
+
