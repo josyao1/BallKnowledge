@@ -9,6 +9,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SpinningNumber } from '../components/capCrunch/SpinningNumber';
 import { useGameStore } from '../stores/gameStore';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -165,9 +166,18 @@ export function GamePage() {
             exit={{ opacity: 0, scale: 1.5 }}
             className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none"
           >
-            <span className="retro-title text-[28rem] md:text-[45rem] text-red-600/10 select-none leading-none">
-              {timeRemaining}
-            </span>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={timeRemaining}
+                initial={{ scale: 1.3, rotate: timeRemaining % 2 === 0 ? -6 : 6, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                exit={{ scale: 0.75, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 480, damping: 24 }}
+                className="retro-title text-[28rem] md:text-[45rem] text-red-600/10 select-none leading-none"
+              >
+                {timeRemaining}
+              </motion.span>
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
@@ -218,15 +228,19 @@ export function GamePage() {
           <div className="flex gap-4">
             <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
               <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Banked</div>
-              <div className="retro-title text-3xl text-white">
-                {hideResultsDuringGame ? '?' : score}
-              </div>
+              {hideResultsDuringGame ? (
+                <div className="retro-title text-3xl text-white">?</div>
+              ) : (
+                <SpinningNumber value={String(score)} className="retro-title text-3xl" color="#ffffff" />
+              )}
             </div>
             <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
               <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Found</div>
-              <div className="retro-title text-3xl text-white">
-                {hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length}
-              </div>
+              <SpinningNumber
+                value={String(hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length)}
+                className="retro-title text-3xl"
+                color="#ffffff"
+              />
             </div>
             <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
               <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Roster</div>

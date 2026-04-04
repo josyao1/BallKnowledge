@@ -460,17 +460,34 @@ export function SoloCapCrunchPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.25) 0%, rgba(0,0,0,0.85) 100%)' }}
+            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(0,0,0,0.9) 100%)' }}
           >
+            {/* Radiating rings */}
+            {[0, 0.25, 0.5].map((delay, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full border-2 border-[#d4af37]/70 pointer-events-none"
+                style={{ width: 160, height: 160, marginLeft: -80, marginTop: -80, left: '50%', top: '50%' }}
+                initial={{ scale: 0.4, opacity: 0.9 }}
+                animate={{ scale: 5, opacity: 0 }}
+                transition={{ duration: 1.4, ease: 'easeOut', delay }}
+              />
+            ))}
+            {/* Text content */}
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-              className="text-center"
+              initial={{ scale: 0.3, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.05 }}
+              className="text-center relative z-10"
             >
-              <div className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2" style={{ textShadow: '0 0 40px #d4af37, 0 0 80px #d4af37aa' }}>
+              <motion.div
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 0.6, delay: 0.5, repeat: 2, ease: 'easeInOut' }}
+                className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2"
+                style={{ textShadow: '0 0 40px #d4af37, 0 0 100px #d4af37bb' }}
+              >
                 EXACT!
-              </div>
+              </motion.div>
               <div className="sports-font text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
               <div className="retro-title text-3xl md:text-4xl text-[#d4af37]">{targetCap}</div>
             </motion.div>
@@ -506,9 +523,9 @@ export function SoloCapCrunchPage() {
             {isDivisionRound(currentTeam) ? (
               <motion.div
                 key={currentTeam}
-                initial={{ opacity: 0, rotateY: -90, x: -100 }}
-                animate={{ opacity: 1, rotateY: 0, x: 0 }}
-                exit={{ opacity: 0, rotateY: 90, x: 100 }}
+                initial={{ opacity: 0, rotateY: -90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                exit={{ opacity: 0, rotateY: 90 }}
                 transition={{ duration: 0.5, ease: 'easeInOut' }}
                 style={{ perspective: 600 }}
                 className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#d4af37]/60"
@@ -713,7 +730,7 @@ export function SoloCapCrunchPage() {
                     return (
                       <motion.div
                         key={idx}
-                        animate={isBad && pick ? { x: [0, -6, 6, -4, 4, 0] } : {}}
+                        animate={isBad && pick ? { x: ['0%', '-8%', '8%', '-5%', '5%', '0%'] } : {}}
                         transition={{ duration: 0.35, ease: 'easeInOut' }}
                         className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[9px] md:text-xs leading-tight ${
                           pick
@@ -902,8 +919,11 @@ export function SoloCapCrunchPage() {
                   const isMiss = !isBust && !isNotOnTeam && player.statValue === 0;
                   const isInvalid = isBust || isMiss || isNotOnTeam;
                   return (
-                    <div
+                    <motion.div
                       key={idx}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.09, type: 'spring', stiffness: 340, damping: 28 }}
                       className={`relative p-3 md:p-4 border transition-all ${
                         isInvalid ? 'border-red-500/30' : 'border-white/20'
                       }`}
@@ -940,7 +960,7 @@ export function SoloCapCrunchPage() {
                           {isMiss && <div className="bg-orange-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">0 STAT</div>}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>

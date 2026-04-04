@@ -14,6 +14,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from '../components/capCrunch/SpinningNumber';
 import { TeamSlotMachine } from '../components/capCrunch/TeamSlotMachine';
+import { RevealingScore } from '../components/capCrunch/RevealingScore';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
@@ -885,17 +886,34 @@ export function MultiplayerCapCrunchPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.25) 0%, rgba(0,0,0,0.85) 100%)' }}
+            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(0,0,0,0.9) 100%)' }}
           >
+            {/* Radiating rings */}
+            {[0, 0.25, 0.5].map((delay, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full border-2 border-[#d4af37]/70 pointer-events-none"
+                style={{ width: 160, height: 160, marginLeft: -80, marginTop: -80, left: '50%', top: '50%' }}
+                initial={{ scale: 0.4, opacity: 0.9 }}
+                animate={{ scale: 5, opacity: 0 }}
+                transition={{ duration: 1.4, ease: 'easeOut', delay }}
+              />
+            ))}
+            {/* Text content */}
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-              className="text-center"
+              initial={{ scale: 0.3, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.05 }}
+              className="text-center relative z-10"
             >
-              <div className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2" style={{ textShadow: '0 0 40px #d4af37, 0 0 80px #d4af37aa' }}>
+              <motion.div
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 0.6, delay: 0.5, repeat: 2, ease: 'easeInOut' }}
+                className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2"
+                style={{ textShadow: '0 0 40px #d4af37, 0 0 100px #d4af37bb' }}
+              >
                 EXACT!
-              </div>
+              </motion.div>
               <div className="sports-font text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
               <div className="retro-title text-3xl md:text-4xl text-[#d4af37]">{targetCap}</div>
             </motion.div>
@@ -932,9 +950,9 @@ export function MultiplayerCapCrunchPage() {
             {isDivisionRound(currentTeam) ? (
               <motion.div
                 key={currentTeam + currentRound}
-                initial={{ opacity: 0, rotateY: -90, x: -60 }}
-                animate={{ opacity: 1, rotateY: 0, x: 0 }}
-                exit={{ opacity: 0, rotateY: 90, x: 60 }}
+                initial={{ opacity: 0, rotateY: -90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                exit={{ opacity: 0, rotateY: 90 }}
                 transition={{ duration: 0.5, ease: 'easeInOut' }}
                 style={{ perspective: 600 }}
                 className="px-5 py-2 rounded border-2 bg-black border-[#d4af37]/80 shadow-[0_0_12px_rgba(212,175,55,0.25)]"
@@ -1091,20 +1109,30 @@ export function MultiplayerCapCrunchPage() {
               </div>
             )}
 
-            <div className="space-y-4">
-              {sortedLineups.map((item, idx) => (
+            {/* Reveal order: last place enters first, winner enters last for drama */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedLineups.map((item, idx) => {
+                const isWinner = idx === 0;
+                const reverseDelay = (sortedLineups.length - 1 - idx) * 0.65;
+                const scoreDelay = (sortedLineups.length - 1 - idx) * 650 + 450;
+                return (
                 <motion.div
                   key={item.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="bg-black/60 border border-white/10 rounded p-4"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: reverseDelay, type: 'spring', stiffness: 300, damping: 26 }}
+                  className={`bg-black/60 rounded p-4 border-2 ${isWinner ? 'border-[#d4af37]/70 shadow-[0_0_24px_rgba(212,175,55,0.2)]' : 'border-white/10'}`}
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="font-semibold text-white text-lg">
-                        {idx + 1}. {item.player_name}
-                      </p>
+                  <div className="flex justify-between items-start mb-3 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {isWinner && (
+                          <span className="sports-font text-[8px] bg-[#d4af37] text-black px-1.5 py-0.5 rounded-sm font-bold tracking-widest uppercase shrink-0">Winner</span>
+                        )}
+                        <p className="font-semibold text-white text-lg truncate">
+                          {idx + 1}. {item.player_name}
+                        </p>
+                      </div>
                       {(item.lineup.bustCount ?? 0) > 0 && (
                         <span className="text-[9px] sports-font text-red-400/70">{item.lineup.bustCount} bust{item.lineup.bustCount !== 1 ? 's' : ''} (each counted as 0)</span>
                       )}
@@ -1112,10 +1140,13 @@ export function MultiplayerCapCrunchPage() {
                         <span className="block text-[9px] sports-font text-[#d4af37]/60">avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="retro-title text-3xl text-[#d4af37]">
-                        {fmt(item.lineup.totalStat)}
-                      </p>
+                    <div className="text-right shrink-0">
+                      <RevealingScore
+                        value={fmt(item.lineup.totalStat)}
+                        delay={scoreDelay}
+                        className="retro-title text-3xl"
+                        color={isWinner ? '#d4af37' : '#ffffff'}
+                      />
                       <p className="text-xs text-white/40">
                         {fmt(Math.abs(item.lineup.totalStat - targetCap))} away
                       </p>
@@ -1183,7 +1214,8 @@ export function MultiplayerCapCrunchPage() {
                     );
                   })()}
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-8 flex flex-col gap-3">

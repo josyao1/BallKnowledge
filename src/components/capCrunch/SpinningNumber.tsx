@@ -110,7 +110,7 @@ export function SpinningNumber({ value, className, color, flashKey }: SpinningNu
       className={`relative overflow-hidden leading-none ${className}`}
       animate={{ color: activeColor }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      style={{ display: 'inline-block' }}
+      style={{ display: 'inline-block', fontVariantNumeric: 'tabular-nums' }}
     >
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.span
@@ -128,22 +128,28 @@ export function SpinningNumber({ value, className, color, flashKey }: SpinningNu
   );
 }
 
-// Hex color values (used for animated color transitions)
+// Hex color values (used for animated color transitions).
+// Thresholds are relative to the cap so color feedback scales with any target:
+//   < 50%  → white (plenty of room)
+//   ≥ 50%  → yellow (halfway there)
+//   ≥ 75%  → orange (getting close)
+//   ≥ 90%  → emerald (danger zone)
+//   ≥ 100% → red (bust)
 export function getTotalColor(total: number, cap: number): string {
   if (total <= 0) return '#ffffff';
   const ratio = total / cap;
-  if (ratio >= 1) return '#f87171';    // red-400
-  if (ratio >= 0.95) return '#34d399'; // emerald-400
-  if (ratio >= 0.85) return '#fb923c'; // orange-400
-  if (ratio >= 0.7) return '#facc15';  // yellow-400
+  if (ratio >= 1) return '#f87171';    // red-400   — bust
+  if (ratio >= 0.9) return '#34d399';  // emerald-400 — very close
+  if (ratio >= 0.75) return '#fb923c'; // orange-400 — 25% remaining
+  if (ratio >= 0.5) return '#facc15';  // yellow-400 — halfway
   return '#ffffff';
 }
 
 export function getRemainingColor(total: number, cap: number): string {
   const ratio = total / cap;
   if (ratio >= 1) return '#f87171';
-  if (ratio >= 0.95) return '#34d399';
-  if (ratio >= 0.85) return '#fb923c';
-  if (ratio >= 0.7) return '#facc15';
+  if (ratio >= 0.9) return '#34d399';
+  if (ratio >= 0.75) return '#fb923c';
+  if (ratio >= 0.5) return '#facc15';
   return '#d4af37';
 }

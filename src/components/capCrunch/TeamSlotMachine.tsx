@@ -95,10 +95,12 @@ export function TeamSlotMachine({ sport, team, size = 'lg' }: TeamSlotMachinePro
   const textClass = size === 'lg'
     ? 'retro-title text-2xl md:text-4xl font-bold tracking-tight'
     : 'retro-title text-xl md:text-3xl font-bold leading-tight';
+  // Fixed min-width prevents the card from shifting as team abbrevs change width
+  const minWidth = size === 'lg' ? 'min-w-[160px]' : 'min-w-[130px]';
 
   return (
     <motion.div
-      className="flex items-center gap-2 px-3 py-2 md:py-3 rounded-lg border-2 bg-black"
+      className={`flex items-center gap-2 px-3 py-2 md:py-3 rounded-lg border-2 bg-black ${minWidth}`}
       animate={{ borderColor: color }}
       transition={{ duration: settled ? 0.4 : 0.05, ease: 'easeOut' }}
     >
