@@ -11,7 +11,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SpinningNumber, getTotalColor, getRemainingColor } from '../components/capCrunch/SpinningNumber';
+import { TeamSlotMachine } from '../components/capCrunch/TeamSlotMachine';
 import {
   selectRandomStatCategory,
   generateTargetCap,
@@ -28,9 +30,6 @@ import {
 
 } from '../services/capCrunch';
 import type { OptimalPick } from '../services/capCrunch';
-import { getTeamByAbbreviation } from '../data/teams';
-import { TeamLogo } from '../components/TeamLogo';
-import { nflTeams } from '../data/nfl-teams';
 import type { Sport } from '../types';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/capCrunch';
 
@@ -68,29 +67,7 @@ function getCategoryAbbr(category: StatCategory): string {
   }
 }
 
-function getTeamColor(sport: Sport, teamAbbr: string): string {
-  if (sport === 'nba') {
-    const team = getTeamByAbbreviation(teamAbbr);
-    return team?.colors.primary || '#666666';
-  } else {
-    const nflTeam = nflTeams.find(t => t.abbreviation === teamAbbr);
-    return nflTeam?.colors?.primary || '#003875';
-  }
-}
 
-/** Returns the team color if it has enough contrast on a black background, otherwise white. */
-function getReadableTeamColor(sport: Sport, teamAbbr: string): string {
-  const color = getTeamColor(sport, teamAbbr);
-  const hex = color.replace('#', '');
-  if (hex.length === 6) {
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    if (luminance < 0.25) return '#FFFFFF';
-  }
-  return color;
-}
 
 export function SoloCapCrunchPage() {
   const navigate = useNavigate();
@@ -124,6 +101,7 @@ export function SoloCapCrunchPage() {
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
   const [showExactHit, setShowExactHit] = useState(false);
+  const [badFlashKey, setBadFlashKey] = useState(0);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -257,6 +235,8 @@ export function SoloCapCrunchPage() {
       }
 
       setLineup(updated);
+
+      if (wouldBust || statValue === 0) setBadFlashKey(k => k + 1);
 
       // Exact hit — celebrate and end game early
       if (!wouldBust && updated.totalStat === targetCap) {
@@ -480,17 +460,34 @@ export function SoloCapCrunchPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.25) 0%, rgba(0,0,0,0.85) 100%)' }}
+            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(0,0,0,0.9) 100%)' }}
           >
+            {/* Radiating rings */}
+            {[0, 0.25, 0.5].map((delay, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full border-2 border-[#d4af37]/70 pointer-events-none"
+                style={{ width: 160, height: 160, marginLeft: -80, marginTop: -80, left: '50%', top: '50%' }}
+                initial={{ scale: 0.4, opacity: 0.9 }}
+                animate={{ scale: 5, opacity: 0 }}
+                transition={{ duration: 1.4, ease: 'easeOut', delay }}
+              />
+            ))}
+            {/* Text content */}
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-              className="text-center"
+              initial={{ scale: 0.3, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.05 }}
+              className="text-center relative z-10"
             >
-              <div className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2" style={{ textShadow: '0 0 40px #d4af37, 0 0 80px #d4af37aa' }}>
+              <motion.div
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 0.6, delay: 0.5, repeat: 2, ease: 'easeInOut' }}
+                className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2"
+                style={{ textShadow: '0 0 40px #d4af37, 0 0 100px #d4af37bb' }}
+              >
                 EXACT!
-              </div>
+              </motion.div>
               <div className="sports-font text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
               <div className="retro-title text-3xl md:text-4xl text-[#d4af37]">{targetCap}</div>
             </motion.div>
@@ -522,16 +519,17 @@ export function SoloCapCrunchPage() {
             <div className="w-16" />
           </div>
           {/* Team / Division Display */}
-          <motion.div
-            key={currentTeam}
-            initial={{ opacity: 0, rotateY: -90, x: -100 }}
-            animate={{ opacity: 1, rotateY: 0, x: 0 }}
-            exit={{ opacity: 0, rotateY: 90, x: 100 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="flex items-center justify-center py-3 px-4"
-          >
+          <div className="flex items-center justify-center py-3 px-4">
             {isDivisionRound(currentTeam) ? (
-              <div className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#d4af37]/60">
+              <motion.div
+                key={currentTeam}
+                initial={{ opacity: 0, rotateY: -90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                exit={{ opacity: 0, rotateY: 90 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ perspective: 600 }}
+                className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#d4af37]/60"
+              >
                 <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Division</p>
                 <p className="retro-title text-2xl md:text-4xl font-bold tracking-tight text-[#d4af37]">
                   {currentTeam}
@@ -539,21 +537,11 @@ export function SoloCapCrunchPage() {
                 <p className="sports-font text-[9px] text-white/35 mt-1">
                   {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                 </p>
-              </div>
+              </motion.div>
             ) : (
-              <div className="flex items-center gap-3 px-3 py-2 md:py-3 rounded-lg border-2 bg-black"
-                style={{ borderColor: getTeamColor(selectedSport, currentTeam) }}
-              >
-                <TeamLogo sport={selectedSport!} abbr={currentTeam} size={52} />
-                <p
-                  className="retro-title text-2xl md:text-4xl font-bold tracking-tight"
-                  style={{ color: getReadableTeamColor(selectedSport, currentTeam) }}
-                >
-                  {currentTeam}
-                </p>
-              </div>
+              <TeamSlotMachine sport={selectedSport!} team={currentTeam} size="lg" />
             )}
-          </motion.div>
+          </div>
         </header>
 
         <main className="relative z-10 flex-1 w-full px-2 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">
@@ -569,10 +557,20 @@ export function SoloCapCrunchPage() {
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
-              <p className="retro-title text-2xl md:text-4xl text-white">{fmt(lineup.totalStat)}</p>
+              <SpinningNumber
+                value={fmt(lineup.totalStat)}
+                className="retro-title text-2xl md:text-4xl"
+                color={getTotalColor(lineup.totalStat, targetCap)}
+                flashKey={badFlashKey}
+              />
               <div className="mt-2 md:mt-3 border-t border-white/10 pt-2 md:pt-3">
                 <div className="sports-font text-[6px] md:text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
-                <p className="retro-title text-xl md:text-3xl text-[#d4af37]">{fmt(targetCap - lineup.totalStat)}</p>
+                <SpinningNumber
+                  value={fmt(targetCap - lineup.totalStat)}
+                  className="retro-title text-xl md:text-3xl"
+                  color={getRemainingColor(lineup.totalStat, targetCap)}
+                  flashKey={badFlashKey}
+                />
               </div>
               {(lineup.bustCount ?? 0) > 0 && (
                 <p className="sports-font text-[7px] text-red-400/70 tracking-wide mt-1 uppercase">{lineup.bustCount} Bust{lineup.bustCount !== 1 ? 's' : ''}</p>
@@ -725,40 +723,55 @@ export function SoloCapCrunchPage() {
             >
                 <h3 className="retro-title text-xs md:text-lg text-[#d4af37] mb-2 md:mb-4">Your Lineup</h3>
                 <div className="space-y-1 md:space-y-2 flex-1 overflow-y-auto">
-                  {Array.from({ length: totalRounds }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[9px] md:text-xs leading-tight ${
-                        idx < lineup.selectedPlayers.length
-                          ? lineup.selectedPlayers[idx].isBust
-                            ? 'bg-red-900/40 border-red-500/60'
-                            : lineup.selectedPlayers[idx].statValue === 0
+                  {Array.from({ length: totalRounds }).map((_, idx) => {
+                    const pick = idx < lineup.selectedPlayers.length ? lineup.selectedPlayers[idx] : null;
+                    const isBad = pick ? (pick.isBust || pick.statValue === 0) : false;
+                    const badLabel = pick?.isBust ? 'BUST' : pick?.neverOnTeam ? 'NOT ON TEAM' : '0 STAT';
+                    return (
+                      <motion.div
+                        key={idx}
+                        animate={isBad && pick ? { x: ['0%', '-8%', '8%', '-5%', '5%', '0%'] } : {}}
+                        transition={{ duration: 0.35, ease: 'easeInOut' }}
+                        className={`px-2 md:px-3 py-1 md:py-2 rounded border text-[9px] md:text-xs leading-tight ${
+                          pick
+                            ? isBad
                               ? 'bg-red-900/40 border-red-500/60'
                               : 'bg-[#1a3a1a] border-[#4a7a4a]'
-                          : 'bg-[#1a1a1a] border-dashed border-white/10'
-                      }`}
-                    >
-                      {idx < lineup.selectedPlayers.length ? (() => {
-                        const pick = lineup.selectedPlayers[idx];
-                        const isBad = pick.isBust || pick.statValue === 0;
-                        const badLabel = pick.isBust ? 'BUST' : pick.neverOnTeam ? 'NOT ON TEAM' : '0 STAT';
-                        return (
-                          <div className={isBad ? 'text-red-300' : 'text-white'}>
-                            <div className="flex items-center gap-1">
-                              <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {pick.playerName}</p>
-                              {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{badLabel}</span>}
-                            </div>
-                            <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{pick.team} • {pick.selectedYear}</p>
-                            <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                              {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
-                            </p>
-                          </div>
-                        );
-                      })() : (
-                        <span className="text-white/40 text-[9px] md:text-xs">Slot {idx + 1}</span>
-                      )}
-                    </div>
-                  ))}
+                            : 'bg-[#1a1a1a] border-dashed border-white/10'
+                        }`}
+                      >
+                        <AnimatePresence mode="wait">
+                          {pick ? (
+                            <motion.div
+                              key={pick.playerName}
+                              initial={{ opacity: 0, x: -14 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                              className={isBad ? 'text-red-300' : 'text-white'}
+                            >
+                              <div className="flex items-center gap-1">
+                                <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {pick.playerName}</p>
+                                {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{badLabel}</span>}
+                              </div>
+                              <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{pick.team} • {pick.selectedYear}</p>
+                              <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                                {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
+                              </p>
+                            </motion.div>
+                          ) : (
+                            <motion.span
+                              key={`empty-${idx}`}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="text-white/40 text-[9px] md:text-xs"
+                            >
+                              Slot {idx + 1}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
                 {(lineup.bustCount ?? 0) > 0 && (
@@ -906,8 +919,11 @@ export function SoloCapCrunchPage() {
                   const isMiss = !isBust && !isNotOnTeam && player.statValue === 0;
                   const isInvalid = isBust || isMiss || isNotOnTeam;
                   return (
-                    <div
+                    <motion.div
                       key={idx}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.09, type: 'spring', stiffness: 340, damping: 28 }}
                       className={`relative p-3 md:p-4 border transition-all ${
                         isInvalid ? 'border-red-500/30' : 'border-white/20'
                       }`}
@@ -944,7 +960,7 @@ export function SoloCapCrunchPage() {
                           {isMiss && <div className="bg-orange-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">0 STAT</div>}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>

@@ -260,10 +260,13 @@ export function CareerGamePage() {
               {visibleSeasons.map((season, idx) => (
                 <motion.tr
                   key={season.season + idx}
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="border-b border-[#222] hover:bg-[#1a1a1a]"
+                  transition={{
+                    opacity: { duration: 0.3 },
+                    y: { type: 'spring', stiffness: 350, damping: 26 },
+                  }}
+                  className="border-b border-[#222] hover:bg-[#1a1a1a] row-gold-flash"
                 >
                   {columns.map(col => {
                     const isHigh = col.key !== 'season' && col.key !== 'team'

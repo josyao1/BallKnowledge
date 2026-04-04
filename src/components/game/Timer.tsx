@@ -51,25 +51,27 @@ export function Timer({ timeRemaining, totalTime }: TimerProps) {
           strokeWidth="6"
         />
         {/* Progress circle */}
-        <circle
+        <motion.circle
           cx="40"
           cy="40"
           r="40"
           fill="none"
-          stroke={getColor()}
+          animate={{ stroke: getColor() }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
           strokeWidth="6"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          className="transition-all duration-1000 ease-linear"
+          className="transition-[stroke-dashoffset] duration-1000 ease-linear"
         />
       </svg>
-      <div
+      <motion.div
         className="absolute text-2xl font-mono font-bold"
-        style={{ color: getColor() }}
+        animate={{ color: getColor() }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
       >
         {formattedTime}
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
