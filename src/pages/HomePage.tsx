@@ -1,8 +1,14 @@
 /**
- * HomePage.tsx — Landing page with card dealing animation.
+ * HomePage.tsx — Landing page orchestrator.
  *
- * Deck → click → five game cards fan out. Hovering a card pops it
- * forward and reveals game info + action buttons.
+ * Holds all shared state and async logic. Renders the header, deck/fan/setup
+ * panels, roulette transition, and modals. The heavy JSX lives in sub-components:
+ *
+ *   GameFanArc        — fanned card display after the deck is dealt
+ *   RosterRoyaleSetup — setup panel for Roster Royale (and Box Score on NFL)
+ *   CareerArcSetup    — setup panel for Career Arc
+ *   ScrambleSetup     — setup panel for Name Scramble
+ *   AboutModal        — about overlay linked from the header
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -10,103 +16,62 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { TeamSelector } from '../components/home/TeamSelector';
-import { YearSelector } from '../components/home/YearSelector';
 import { SettingsModal } from '../components/home/SettingsModal';
+import { AboutModal } from '../components/home/AboutModal';
+import { GameFanArc } from '../components/home/GameFanArc';
+import { RosterRoyaleSetup } from '../components/home/RosterRoyaleSetup';
+import { CareerArcSetup } from '../components/home/CareerArcSetup';
+import { ScrambleSetup } from '../components/home/ScrambleSetup';
+import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
+import { FAN_POSITIONS } from '../data/homeGames';
+import type { GenericTeam, LoadingStatus } from '../data/homeGames';
 import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { warmCareerCache } from '../services/careerData';
 import type { GameMode } from '../types';
-import { RouletteOverlay } from '../components/home/RouletteOverlay';
-
-type LoadingStatus = 'idle' | 'checking' | 'fetching' | 'success' | 'error';
-
-type GenericTeam = {
-  id: number;
-  abbreviation: string;
-  name: string;
-  colors: { primary: string; secondary: string };
-};
-
-type GameCard = {
-  id: string;
-  abbr: string;
-  name: string;
-  tagline: string;
-  color: string;
-  hasSolo: boolean;
-  popular?: boolean;
-  soloPath?: string;
-  multiPath?: string;
-  image: string;
-  imageBySport?: Partial<Record<'nba' | 'nfl', string>>;
-  taglineBySport?: Partial<Record<'nba' | 'nfl', string>>;
-};
-
-const GAMES: GameCard[] = [
-  { id: 'roster',          abbr: 'RR', name: 'Roster Royale',    tagline: 'Name every player from a mystery team & season',    color: '#d4af37', hasSolo: true,  popular: true,  soloPath: '/roster-royale',   image: '/images/roster-royale.svg' },
-  { id: 'career',          abbr: 'CA', name: 'Career Arc',       tagline: "Trace a player's career — team by team",            color: '#22c55e', hasSolo: true,  soloPath: '/career',           image: '/images/career-arc.svg' },
-  { id: 'scramble',        abbr: 'NS', name: 'Name Scramble',    tagline: 'Unscramble athlete names before time runs out',      color: '#3b82f6', hasSolo: true,  soloPath: '/scramble',         image: '/images/name-scramble.svg' },
-  { id: 'lineup',          abbr: 'CC', name: 'Cap Crunch',       tagline: "Chase the stat cap with a lineup — don't bust",     color: '#ec4899', hasSolo: true,  popular: true,  soloPath: '/lineup-is-right',  image: '/images/cap-crunch.svg' },
-  { id: 'starting-lineup', abbr: 'SL', name: 'Starting Lineup',  tagline: 'Guess the team from their starters',                color: '#ea580c', hasSolo: true,  soloPath: '/starting-lineup',  image: '/images/starting-lineup-placeholder.svg', imageBySport: { nfl: '/images/starting-lineup-placeholder.svg', nba: '/images/starting-lineup-nba-placeholder.svg' }, taglineBySport: { nfl: 'Guess the NFL team from their starters', nba: 'Guess the NBA team from their starters' } },
-  { id: 'rollcall',        abbr: 'RC', name: 'Roll Call',        tagline: 'Work together to name as many athletes as you can', color: '#a855f7', hasSolo: false, multiPath: '/roll-call/create', image: '/images/roll-call.svg' },
-];
-
-// Fan arc positions: x/y offsets from card center origin, rotation degrees (6 cards)
-const FAN_POSITIONS = [
-  { x: -270, y: 72, rotate: -27 },
-  { x: -162, y: 36, rotate: -16 },
-  { x:  -54, y: 10, rotate:  -5 },
-  { x:   54, y: 10, rotate:   5 },
-  { x:  162, y: 36, rotate:  16 },
-  { x:  270, y: 72, rotate:  27 },
-];
 
 export function HomePage() {
   const navigate = useNavigate();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
   const { sport, timerDuration, hideResultsDuringGame, setSport } = useSettingsStore();
 
-  // Career Arc filter
-  const [careerActiveYear, setCareerActiveYear] = useState<number | null>(null);
-
-  // Name Scramble filter
+  // ── Filter state ──────────────────────────────────────────────────────────
+  const [careerActiveYear,   setCareerActiveYear]   = useState<number | null>(null);
   const [scrambleActiveYear, setScrambleActiveYear] = useState<number | null>(null);
 
-  // Box Score filters
+  // Box Score filters (NFL only)
   const [boxScoreMinYear, setBoxScoreMinYear] = useState<number>(2015);
   const [boxScoreMaxYear, setBoxScoreMaxYear] = useState<number>(2024);
   const [boxScoreTeam,    setBoxScoreTeam]    = useState<string | null>(null);
 
-  // Roster Royale sub-mode (NFL-only: 'roster' | 'box-score')
-  const [rosterSubMode, setRosterSubMode] = useState<'roster' | 'box-score'>('roster');
+  // ── Roster Royale state ───────────────────────────────────────────────────
+  const [rosterSubMode,  setRosterSubMode]  = useState<'roster' | 'box-score'>('roster');
+  const [gameMode,       setGameMode]       = useState<GameMode>('random');
+  const [selectedTeam,   setSelectedTeam]   = useState<GenericTeam | null>(null);
+  const [selectedYear,   setSelectedYear]   = useState<number | null>(null);
+  const [randomMinYear,  setRandomMinYear]  = useState(2015);
+  const [randomMaxYear,  setRandomMaxYear]  = useState(2025);
+  const [loadingStatus,  setLoadingStatus]  = useState<LoadingStatus>('idle');
+  const [statusMessage,  setStatusMessage]  = useState('');
 
-  // Roster Royale setup
-  const [gameMode, setGameMode] = useState<GameMode>('random');
-  const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [randomMinYear, setRandomMinYear] = useState(2015);
-  const [randomMaxYear, setRandomMaxYear] = useState(2025);
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('idle');
-  const [statusMessage, setStatusMessage] = useState('');
-
-  // UI state
-  const [showSettings, setShowSettings] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-  const [isDealt, setIsDealt] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [tappedCard, setTappedCard] = useState<string | null>(null);
-  const [showRoulette, setShowRoulette] = useState(false);
+  // ── UI state ──────────────────────────────────────────────────────────────
+  const [showSettings,    setShowSettings]    = useState(false);
+  const [showAbout,       setShowAbout]       = useState(false);
+  const [isDealt,         setIsDealt]         = useState(false);
+  const [selectedCard,    setSelectedCard]    = useState<string | null>(null);
+  const [hoveredCard,     setHoveredCard]     = useState<string | null>(null);
+  const [tappedCard,      setTappedCard]      = useState<string | null>(null);
+  const [showRoulette,    setShowRoulette]    = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
-  const [skipAnimation, setSkipAnimation] = useState(false);
+  const [skipAnimation,   setSkipAnimation]   = useState(false);
 
-  // Responsive fan scale — track viewport width and scale card dimensions down on mobile
+  // ── Responsive fan scaling ────────────────────────────────────────────────
+  // Track viewport width to scale card dimensions down on mobile.
+  // Detect touch-primary devices to skip whileHover entirely (prevents stuck cards).
   const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  // Detect touch-primary devices (no fine hover pointer). On these devices we skip
-  // whileHover / onHoverStart / onHoverEnd entirely and rely only on tappedCard.
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+
   useEffect(() => {
     const mq = window.matchMedia('(hover: none) and (pointer: coarse)');
     setIsTouchDevice(mq.matches);
@@ -114,36 +79,35 @@ export function HomePage() {
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
   // Scale thresholds: <400 → 0.52, <500 → 0.63, <640 → 0.77, else full size
-  const fanScale = vw < 400 ? 0.52 : vw < 500 ? 0.63 : vw < 640 ? 0.77 : 1;
-  const cardW = Math.round(165 * fanScale);
-  const cardH = Math.round(235 * fanScale);
-  const containerH = Math.round(360 * fanScale);
-  const popDist = Math.round(100 * fanScale);
-  const fanToJoinGap = Math.round(42 * fanScale);
-  const deckYOffset = Math.round(50 * fanScale);
+  const fanScale        = vw < 400 ? 0.52 : vw < 500 ? 0.63 : vw < 640 ? 0.77 : 1;
+  const cardW           = Math.round(165 * fanScale);
+  const cardH           = Math.round(235 * fanScale);
+  const containerH      = Math.round(360 * fanScale);
+  const popDist         = Math.round(100 * fanScale);
+  const fanToJoinGap    = Math.round(42  * fanScale);
+  const deckYOffset     = Math.round(50  * fanScale);
   const scaledPositions = FAN_POSITIONS.map(fp => ({
     x: Math.round(fp.x * fanScale),
     y: Math.round(fp.y * fanScale),
     rotate: fp.rotate,
   }));
 
-  // Debounce hover to prevent bounce when mouse passes between overlapping cards
+  // Debounce hover to prevent bounce when the mouse passes between overlapping cards
   const hoverClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setHoveredCardDebounced = (id: string | null) => {
     if (id !== null) {
-      // Entering a card — cancel any pending clear and immediately show
       if (hoverClearTimer.current) clearTimeout(hoverClearTimer.current);
       setHoveredCard(id);
     } else {
-      // Leaving a card — wait 120ms before clearing (absorbs inter-card gaps)
+      // Wait 120 ms before clearing — absorbs inter-card gaps
       hoverClearTimer.current = setTimeout(() => setHoveredCard(null), 120);
     }
   };
 
-  useEffect(() => {
-    warmCareerCache(sport);
-  }, [sport]);
+  // ── Side-effects ──────────────────────────────────────────────────────────
+  useEffect(() => { warmCareerCache(sport); }, [sport]);
 
   useEffect(() => {
     setSelectedTeam(null);
@@ -155,12 +119,14 @@ export function HomePage() {
     }
   }, [sport]);
 
+  // ── Roster Royale game start ──────────────────────────────────────────────
   const handleStartGame = async () => {
     setLoadingStatus('checking');
     setStatusMessage('Selecting team...');
     const shouldSkipAnimation = gameMode === 'manual';
     setSkipAnimation(shouldSkipAnimation);
-    const currentTeams = sport === 'nba' ? teams : nflTeams;
+
+    const currentTeams  = sport === 'nba' ? teams : nflTeams;
     const currentMinYear = Math.max(randomMinYear, 2000);
     const currentMaxYear = Math.min(randomMaxYear, 2025);
 
@@ -179,12 +145,12 @@ export function HomePage() {
           const roster = await fetchTeamRoster(team.abbreviation, season);
           if (!roster?.players?.length) return false;
           players = roster.players;
-          league = await fetchStaticSeasonPlayers(season) ?? [];
+          league  = await fetchStaticSeasonPlayers(season) ?? [];
         } else {
           const nflPlayers = await fetchStaticNFLRoster(team.abbreviation, year);
           if (!nflPlayers?.length) return false;
           players = nflPlayers;
-          league = await fetchStaticNFLSeasonPlayers(year) ?? [];
+          league  = await fetchStaticNFLSeasonPlayers(year) ?? [];
         }
         setLoadingStatus('success');
         await new Promise(r => setTimeout(r, 500));
@@ -209,12 +175,15 @@ export function HomePage() {
     }
   };
 
-  const sportArtA = sport === 'nba' ? '/images/Group 27.svg' : '/images/group23.svg';
-  const sportArtB = sport === 'nba' ? '/images/Group 28.svg' : '/images/g28.svg';
-  const deckArt   = sport === 'nba' ? '/images/Group 29 (2).svg' : '/images/Group 29 (1).svg';
+  // ── Derived values ────────────────────────────────────────────────────────
+  const sportArtA = sport === 'nba' ? '/images/Group 27.svg'      : '/images/group23.svg';
+  const sportArtB = sport === 'nba' ? '/images/Group 28.svg'      : '/images/g28.svg';
+  const deckArt   = sport === 'nba' ? '/images/Group 29 (2).svg'  : '/images/Group 29 (1).svg';
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-[#111]">
+      {/* SVG filter used by the title text for the white outline effect */}
       <svg style={{ height: 0, width: 0, position: 'absolute' }}>
         <filter id="whiteOutline">
           <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="1" />
@@ -235,6 +204,7 @@ export function HomePage() {
           </motion.h1>
         </div>
 
+        {/* NBA / NFL sport toggle */}
         <div className="flex shrink-0 border-2 border-[#2a2a2a] overflow-hidden rounded-sm">
           {(['nba', 'nfl'] as const).map((s, i) => {
             const isActive = sport === s;
@@ -243,13 +213,8 @@ export function HomePage() {
               <motion.button
                 key={s}
                 onClick={() => setSport(s)}
-                className={`relative px-4 sm:px-5 py-1.5 sm:py-2 retro-title text-lg sm:text-xl tracking-wider cursor-pointer overflow-hidden ${
-                  i === 0 ? 'border-r-2 border-[#2a2a2a]' : ''
-                }`}
-                animate={{
-                  backgroundColor: isActive ? activeBg : '#0a0a0a',
-                  color: isActive ? '#ffffff' : '#2e2e2e',
-                }}
+                className={`relative px-4 sm:px-5 py-1.5 sm:py-2 retro-title text-lg sm:text-xl tracking-wider cursor-pointer overflow-hidden ${i === 0 ? 'border-r-2 border-[#2a2a2a]' : ''}`}
+                animate={{ backgroundColor: isActive ? activeBg : '#0a0a0a', color: isActive ? '#ffffff' : '#2e2e2e' }}
                 transition={{ duration: 0.08 }}
                 whileTap={{ scale: 0.92, transition: { duration: 0.08 } }}
               >
@@ -267,6 +232,7 @@ export function HomePage() {
           })}
         </div>
 
+        {/* About button */}
         <div className="flex-1 flex justify-end items-center">
           <button
             onClick={() => setShowAbout(true)}
@@ -280,7 +246,7 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* ── Main / Roulette slide ── */}
+      {/* ── Main content — slides up when roulette fires ── */}
       <motion.div
         animate={{ y: showRoulette ? '-100vh' : '0vh' }}
         transition={{ duration: 1.2, ease: [0.65, 0, 0.35, 1] }}
@@ -288,7 +254,7 @@ export function HomePage() {
       >
         <main className="h-screen w-full flex-shrink-0 flex flex-col items-center justify-center p-4 relative overflow-hidden bg-[#111]">
 
-          {/* Decorative background SVGs — always shown */}
+          {/* Decorative background SVGs */}
           <div className="absolute bottom-15 left-1 w-70 h-70 opacity-40 pointer-events-none">
             <img src={sportArtA} alt="" />
           </div>
@@ -315,13 +281,15 @@ export function HomePage() {
                   >
                     Pick a Card
                   </h2>
-                  <p className="sports-font text-[#555] tracking-[0.25em] mt-1.5 uppercase"
-                    style={{ fontSize: Math.max(9, Math.round(12 * fanScale)) }}>
+                  <p
+                    className="sports-font text-[#555] tracking-[0.25em] mt-1.5 uppercase"
+                    style={{ fontSize: Math.max(9, Math.round(12 * fanScale)) }}
+                  >
                     {sport === 'nba' ? 'NBA' : 'NFL'} · Click to deal
                   </p>
                 </div>
 
-                {/* Deck stack */}
+                {/* Deck stack — click to deal the fan */}
                 <motion.button
                   onClick={() => setIsDealt(true)}
                   whileHover={{ y: -8 }}
@@ -329,12 +297,10 @@ export function HomePage() {
                   className="relative focus:outline-none cursor-pointer"
                   style={{ width: Math.round(200 * fanScale), height: Math.round(280 * fanScale) }}
                 >
-                  {/* Offset shadow cards */}
                   <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff]/25 bg-[#161616]"
                     style={{ transform: `rotate(8deg) translate(${Math.round(10 * fanScale)}px, ${Math.round(10 * fanScale)}px)` }} />
                   <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff]/45 bg-[#181818]"
                     style={{ transform: `rotate(4deg) translate(${Math.round(5 * fanScale)}px, ${Math.round(5 * fanScale)}px)` }} />
-                  {/* Top card — SVG fills the full face */}
                   <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff] overflow-hidden shadow-2xl">
                     <img
                       src={deckArt}
@@ -342,476 +308,75 @@ export function HomePage() {
                       className="absolute inset-0 w-full h-full"
                       style={{ objectFit: 'cover', objectPosition: 'center' }}
                     />
-                    {/* Subtle gold tint overlay
-                    <div className="absolute inset-0 bg-[#d4af37]/10" /> */}
-                    {/* Corner marks */}
-                    {/* <div className="absolute top-2 left-2.5 sports-font font-bold text-[#d4af37]/80 z-10 leading-none"
-                      style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div>
-                    <div className="absolute bottom-2 right-2.5 sports-font font-bold text-[#d4af37]/80 z-10 rotate-180 leading-none"
-                      style={{ fontSize: Math.max(7, Math.round(10 * fanScale)) }}>BK</div> */}
                   </div>
                 </motion.button>
               </motion.div>
             )}
 
-            {/* ── Roster Royale setup ── */}
+            {/* ── Roster Royale setup panel ── */}
             {isDealt && selectedCard === 'roster' && (
-              <motion.div
-                key="roster-setup"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.25 }}
-                className="z-10 w-full max-w-md overflow-y-auto max-h-[calc(100vh-120px)]"
-              >
-                <div className="relative bg-[#141414] border-2 border-[#d4af37] rounded-2xl overflow-hidden shadow-2xl">
-                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, #d4af37 0, #d4af37 1px, transparent 0, transparent 50%)', backgroundSize: '14px 14px' }} />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
-                    <img src={deckArt} alt="" className="w-full h-full" style={{ objectFit: 'cover' }} />
-                  </div>
-
-                  <div className="relative z-10 p-5 flex flex-col gap-4">
-                    <div className="flex items-center">
-                      <button onClick={() => { setSelectedCard(null); setLoadingStatus('idle'); }}
-                        className="sports-font text-[10px] text-[#d4af37]/50 hover:text-[#d4af37]/90 tracking-widest uppercase transition">
-                        ← Back
-                      </button>
-                      <div className="flex-1 text-center">
-                        <div className="sports-font text-[9px] text-[#d4af37]/50 tracking-[0.3em] uppercase">RR</div>
-                        <h2 className="retro-title text-2xl text-[#d4af37] leading-tight">Roster Royale</h2>
-                        <p className="sports-font text-[9px] text-[#888] tracking-widest">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
-                      </div>
-                      <div className="w-12" />
-                    </div>
-                    <div className="border-t border-[#d4af37]/20" />
-
-                    {loadingStatus === 'idle' ? (
-                      <>
-                        {/* Sub-mode toggle: Roster Royale vs Box Score (NFL only) */}
-                        {sport === 'nfl' && (
-                          <div className="flex gap-2 justify-center">
-                            {(['roster', 'box-score'] as const).map(m => (
-                              <button key={m} onClick={() => setRosterSubMode(m)}
-                                className={`px-4 py-1.5 rounded-lg sports-font text-xs transition-all ${rosterSubMode === m ? 'bg-[#d4af37] text-[#111]' : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'}`}>
-                                {m === 'roster' ? 'Roster Royale' : 'Box Score'}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {rosterSubMode === 'box-score' && sport === 'nfl' ? (
-                          <>
-                            {/* Year range */}
-                            <div className="flex flex-col gap-2">
-                              <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Year Range</div>
-                              <div className="grid grid-cols-3 gap-2">
-                                {([
-                                  { label: 'Any', min: 2015, max: 2024 },
-                                  { label: '2018+', min: 2018, max: 2024 },
-                                  { label: '2021+', min: 2021, max: 2024 },
-                                ] as { label: string; min: number; max: number }[]).map(opt => (
-                                  <button key={opt.label}
-                                    onClick={() => { setBoxScoreMinYear(opt.min); setBoxScoreMaxYear(opt.max); }}
-                                    className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
-                                      boxScoreMinYear === opt.min && boxScoreMaxYear === opt.max
-                                        ? 'bg-[#f59e0b] text-[#111] border-[#f59e0b]'
-                                        : 'border-[#2a2a2a] text-[#666] hover:border-[#f59e0b]/40 hover:text-[#888]'
-                                    }`}>
-                                    {opt.label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Team filter */}
-                            <div className="flex flex-col gap-2">
-                              <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Team Filter</div>
-                              <select
-                                value={boxScoreTeam ?? ''}
-                                onChange={e => setBoxScoreTeam(e.target.value || null)}
-                                className="bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50"
-                              >
-                                <option value="">Any Team</option>
-                                {nflTeams.map(t => (
-                                  <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="border-t border-[#d4af37]/20" />
-                            <div className="flex gap-2 justify-center">
-                              <button
-                                onClick={() => navigate('/box-score', { state: { minYear: boxScoreMinYear, maxYear: boxScoreMaxYear, team: boxScoreTeam } })}
-                                className="retro-btn retro-btn-gold px-8 py-2.5 text-base">
-                                Start Solo
-                              </button>
-                              <button onClick={() => navigate('/lobby/create', { state: { gameType: 'box-score' } })}
-                                className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
-                                Lobby
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex gap-2 justify-center">
-                              {(['random', 'manual'] as const).map(m => (
-                                <button key={m} onClick={() => setGameMode(m)}
-                                  className={`px-5 py-1.5 rounded-lg sports-font text-xs transition-all ${gameMode === m ? 'bg-[#d4af37] text-[#111]' : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'}`}>
-                                  {m.charAt(0).toUpperCase() + m.slice(1)}
-                                </button>
-                              ))}
-                            </div>
-
-                            {gameMode === 'manual' ? (
-                              <div className="flex flex-col gap-3">
-                                <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-                                <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={2025} sport={sport} />
-                              </div>
-                            ) : (
-                              <div className="bg-[#1a1a1a]/60 rounded-lg p-3 text-center border border-[#2a2a2a]">
-                                <div className="sports-font text-[9px] text-[#888] mb-2 tracking-widest">Year Range</div>
-                                <div className="flex items-center justify-center gap-2">
-                                  <select value={randomMinYear} onChange={e => setRandomMinYear(+e.target.value)} className="bg-[#111] text-[var(--vintage-cream)] px-2 py-1 rounded border border-[#3d3d3d] sports-font text-xs">
-                                    {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
-                                  </select>
-                                  <span className="text-[#666] sports-font text-xs">to</span>
-                                  <select value={randomMaxYear} onChange={e => setRandomMaxYear(+e.target.value)} className="bg-[#111] text-[var(--vintage-cream)] px-2 py-1 rounded border border-[#3d3d3d] sports-font text-xs">
-                                    {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
-                                  </select>
-                                </div>
-                              </div>
-                            )}
-
-                            <button onClick={() => setShowSettings(true)}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a]/60 border border-[#2a2a2a] rounded-lg hover:border-[#444] transition-colors group w-full">
-                              <svg className="w-3.5 h-3.5 text-[#888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span className="sports-font text-sm text-[var(--vintage-cream)]">
-                                {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
-                              </span>
-                              <span className="text-[9px] text-[#555] sports-font tracking-wider">TIMER</span>
-                              <svg className="w-3 h-3 text-[#555]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                              </svg>
-                            </button>
-
-                            <div className="border-t border-[#d4af37]/20" />
-                            <div className="flex flex-wrap gap-2 justify-center">
-                              <button onClick={handleStartGame}
-                                disabled={gameMode === 'manual' && (!selectedTeam || !selectedYear)}
-                                className="retro-btn retro-btn-gold px-8 py-2.5 text-base disabled:opacity-50">
-                                Start Solo
-                              </button>
-                              <button onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
-                                className={`px-4 py-2.5 rounded-lg sports-font border text-xs transition-all ${sport === 'nba' ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white' : 'border-[#4a7fb5] text-[#4a7fb5] hover:bg-[#013369] hover:text-white'}`}>
-                                Create Lobby
-                              </button>
-                              <button onClick={() => navigate('/lobby/join')}
-                                className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
-                                Join Lobby
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center gap-4 py-6">
-                        <div className="w-8 h-8 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin" />
-                        <span className="sports-font text-sm text-[var(--vintage-cream)]">{statusMessage}</span>
-                        {loadingStatus === 'error' && <button onClick={() => setLoadingStatus('idle')} className="text-xs underline text-red-500">Back</button>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
+              <RosterRoyaleSetup
+                sport={sport}
+                deckArt={deckArt}
+                rosterSubMode={rosterSubMode}     setRosterSubMode={setRosterSubMode}
+                boxScoreMinYear={boxScoreMinYear}  setBoxScoreMinYear={setBoxScoreMinYear}
+                boxScoreMaxYear={boxScoreMaxYear}  setBoxScoreMaxYear={setBoxScoreMaxYear}
+                boxScoreTeam={boxScoreTeam}        setBoxScoreTeam={setBoxScoreTeam}
+                gameMode={gameMode}                setGameMode={setGameMode}
+                selectedTeam={selectedTeam}        setSelectedTeam={setSelectedTeam}
+                selectedYear={selectedYear}        setSelectedYear={setSelectedYear}
+                randomMinYear={randomMinYear}      setRandomMinYear={setRandomMinYear}
+                randomMaxYear={randomMaxYear}      setRandomMaxYear={setRandomMaxYear}
+                timerDuration={timerDuration}
+                loadingStatus={loadingStatus}      setLoadingStatus={setLoadingStatus}
+                statusMessage={statusMessage}
+                onBack={() => { setSelectedCard(null); setLoadingStatus('idle'); }}
+                onStartGame={handleStartGame}
+                onOpenSettings={() => setShowSettings(true)}
+              />
             )}
 
-            {/* ── Career Arc setup ── */}
+            {/* ── Career Arc setup panel ── */}
             {isDealt && selectedCard === 'career' && (
-              <motion.div
-                key="career-setup"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.25 }}
-                className="z-10 w-full max-w-sm"
-              >
-                <div className="relative bg-[#141414] border-2 border-[#22c55e] rounded-2xl overflow-hidden shadow-2xl">
-                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, #22c55e 0, #22c55e 1px, transparent 0, transparent 50%)', backgroundSize: '14px 14px' }} />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
-                    {/* <img src={sportArtB} alt="" className="w-full h-full" style={{ objectFit: 'cover' }} /> */}
-                  </div>
-
-                  <div className="relative z-10 p-5 flex flex-col gap-4">
-                    <div className="flex items-center">
-                      <button onClick={() => setSelectedCard(null)}
-                        className="sports-font text-[10px] text-[#22c55e]/50 hover:text-[#22c55e]/90 tracking-widest uppercase transition">
-                        ← Back
-                      </button>
-                      <div className="flex-1 text-center">
-                        <div className="sports-font text-[9px] text-[#22c55e]/50 tracking-[0.3em] uppercase">CA</div>
-                        <h2 className="retro-title text-2xl text-[#22c55e] leading-tight">Career Arc</h2>
-                        <p className="sports-font text-[9px] text-[#888] tracking-widest">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
-                      </div>
-                      <div className="w-12" />
-                    </div>
-                    <div className="border-t border-[#22c55e]/20" />
-
-                    <div className="flex flex-col gap-2">
-                      <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">
-                        Player must be active into
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {([null, 2010, 2015, 2018, 2020, 2022] as (number | null)[]).map(yr => (
-                          <button key={yr ?? 'any'} onClick={() => setCareerActiveYear(yr)}
-                            className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
-                              careerActiveYear === yr
-                                ? 'bg-[#22c55e] text-[#111] border-[#22c55e]'
-                                : 'border-[#2a2a2a] text-[#666] hover:border-[#22c55e]/40 hover:text-[#888]'
-                            }`}>
-                            {yr == null ? 'Any era' : `${yr}+`}
-                          </button>
-                        ))}
-                      </div>
-                      {careerActiveYear && (
-                        <p className="sports-font text-[9px] text-[#555] text-center">
-                          Players who played in {careerActiveYear} or later
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="border-t border-[#22c55e]/20" />
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => navigate('/career', { state: careerActiveYear ? { careerTo: careerActiveYear } : null })}
-                        className="px-8 py-2.5 rounded-lg sports-font text-xs tracking-wider uppercase border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-[#111] transition-all">
-                        Start Solo
-                      </button>
-                      <button onClick={() => navigate('/lobby/create', { state: { gameType: 'career' } })}
-                        className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
-                        Lobby
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+              <CareerArcSetup
+                sport={sport}
+                careerActiveYear={careerActiveYear}
+                setCareerActiveYear={setCareerActiveYear}
+                onBack={() => setSelectedCard(null)}
+              />
             )}
 
-            {/* ── Name Scramble setup ── */}
+            {/* ── Name Scramble setup panel ── */}
             {isDealt && selectedCard === 'scramble' && (
-              <motion.div
-                key="scramble-setup"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.25 }}
-                className="z-10 w-full max-w-sm"
-              >
-                <div className="relative bg-[#141414] border-2 border-[#3b82f6] rounded-2xl overflow-hidden shadow-2xl">
-                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, #3b82f6 0, #3b82f6 1px, transparent 0, transparent 50%)', backgroundSize: '14px 14px' }} />
-
-                  <div className="relative z-10 p-5 flex flex-col gap-4">
-                    <div className="flex items-center">
-                      <button onClick={() => setSelectedCard(null)}
-                        className="sports-font text-[10px] text-[#3b82f6]/50 hover:text-[#3b82f6]/90 tracking-widest uppercase transition">
-                        ← Back
-                      </button>
-                      <div className="flex-1 text-center">
-                        <div className="sports-font text-[9px] text-[#3b82f6]/50 tracking-[0.3em] uppercase">NS</div>
-                        <h2 className="retro-title text-2xl text-[#3b82f6] leading-tight">Name Scramble</h2>
-                        <p className="sports-font text-[9px] text-[#888] tracking-widest">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
-                      </div>
-                      <div className="w-12" />
-                    </div>
-                    <div className="border-t border-[#3b82f6]/20" />
-
-                    <div className="flex flex-col gap-2">
-                      <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">
-                        Player must be active into
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {([null, 2010, 2015, 2018, 2020, 2022] as (number | null)[]).map(yr => (
-                          <button key={yr ?? 'any'} onClick={() => setScrambleActiveYear(yr)}
-                            className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
-                              scrambleActiveYear === yr
-                                ? 'bg-[#3b82f6] text-white border-[#3b82f6]'
-                                : 'border-[#2a2a2a] text-[#666] hover:border-[#3b82f6]/40 hover:text-[#888]'
-                            }`}>
-                            {yr == null ? 'Any era' : `${yr}+`}
-                          </button>
-                        ))}
-                      </div>
-                      {scrambleActiveYear && (
-                        <p className="sports-font text-[9px] text-[#555] text-center">
-                          Players who played in {scrambleActiveYear} or later
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="border-t border-[#3b82f6]/20" />
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => navigate('/scramble', { state: scrambleActiveYear ? { careerTo: scrambleActiveYear } : null })}
-                        className="px-8 py-2.5 rounded-lg sports-font text-xs tracking-wider uppercase border-2 border-[#3b82f6] text-[#3b82f6] hover:bg-[#3b82f6] hover:text-white transition-all">
-                        Start Solo
-                      </button>
-                      <button onClick={() => navigate('/lobby/create', { state: { gameType: 'scramble' } })}
-                        className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs">
-                        Lobby
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+              <ScrambleSetup
+                sport={sport}
+                scrambleActiveYear={scrambleActiveYear}
+                setScrambleActiveYear={setScrambleActiveYear}
+                onBack={() => setSelectedCard(null)}
+              />
             )}
 
-            {/* ── Fan arc (dealt, no sub-panel open) ── */}
+            {/* ── Fan arc (dealt, no setup panel open) ── */}
             {isDealt && selectedCard === null && (
-              <motion.div
-                key="fan"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="flex flex-col items-center z-10 w-full"
-                style={{ transform: `translateY(-${deckYOffset}px)`, rowGap: fanToJoinGap }}
-              >
-                {/* Fan container — cards are absolutely positioned relative to this */}
-                <div
-                  className="relative flex justify-center items-end w-full"
-                  style={{ height: containerH, overflow: 'visible' }}
-                  onClick={() => setTappedCard(null)}
-                >
-                  {GAMES.map((game, i) => {
-                    const fp = scaledPositions[i];
-                    // On touch: only tappedCard drives active state (hover is unreliable on touch)
-                    // On desktop: either hover or tap activates the card
-                    const isActive = isTouchDevice
-                      ? tappedCard === game.id
-                      : hoveredCard === game.id || tappedCard === game.id;
-
-                    // Desktop-only hover props — omitted entirely on touch to prevent
-                    // stuck cards, oscillation, and pointer-event misfires
-                    const hoverProps = isTouchDevice ? {} : {
-                      whileHover: { y: fp.y - popDist, rotate: 0, scale: 1.08, transition: { type: 'spring' as const, stiffness: 380, damping: 28 } },
-                      onHoverStart: () => setHoveredCardDebounced(game.id),
-                      onHoverEnd:   () => setHoveredCardDebounced(null),
-                    };
-
-                    return (
-                      <motion.div
-                        key={game.id}
-                        // Initial deal: cards fly in from above with stagger
-                        initial={{ x: fp.x, y: -(containerH + 20), rotate: (i - 2) * 14, opacity: 0 }}
-                        animate={{ x: fp.x, y: isActive ? fp.y - popDist : fp.y, rotate: isActive ? 0 : fp.rotate, scale: isActive ? 1.08 : 1, opacity: 1 }}
-                        transition={{ delay: i * 0.09, type: 'spring', stiffness: 220, damping: 26 }}
-                        {...hoverProps}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTappedCard(prev => prev === game.id ? null : game.id);
-                        }}
-                        className="absolute bottom-0 cursor-pointer"
-                        style={{ width: cardW, height: cardH, zIndex: isActive ? 20 : i + 1 }}
-                      >
-                        {/* Card face — sport art full bleed with game color border */}
-                        <div className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
-                          style={{ borderColor: game.color }}>
-                          <img
-                            src={game.imageBySport?.[sport] ?? game.image}
-                            alt=""
-                            className="absolute inset-0 w-full h-full"
-                            style={{ objectFit: 'cover', objectPosition: 'center', opacity: 0.8 }}
-                          />
-                          {/* Subtle dark overlay so corners are readable */}
-                          <div className="absolute inset-0 bg-black/20" />
-                          {/* Corner abbr */}
-                          <div className="absolute top-1.5 left-2 sports-font font-bold leading-none z-10" style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(10 * fanScale)) }}>
-                            {game.abbr}
-                          </div>
-                          {/* Most Popular badge */}
-                          {game.popular && !isActive && (
-                            <div className="absolute bottom-1.5 left-2 sports-font font-bold leading-none z-10 tracking-wide uppercase" style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(5, Math.round(7 * fanScale)) }}>
-                              Most Popular
-                            </div>
-                          )}
-                          <div className="absolute bottom-1.5 right-2 rotate-180 sports-font font-bold leading-none z-10" style={{ color: `${game.color}80`, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(7, Math.round(11 * fanScale)) }}>
-                            {game.abbr}
-                          </div>
-
-                          {/* Hover / tap info panel — slides up from bottom */}
-                          <AnimatePresence>
-                            {isActive && (
-                              <motion.div
-                                initial={{ y: '100%' }}
-                                animate={{ y: 0 }}
-                                exit={{ y: '100%' }}
-                                transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                                className="absolute inset-0 flex flex-col justify-end"
-                                style={{ background: 'linear-gradient(to top, rgba(14,14,14,0.97) 60%, rgba(14,14,14,0.7) 100%)', padding: Math.max(6, Math.round(10 * fanScale)) }}
-                              >
-                                <h3 className="retro-title leading-tight" style={{ color: game.color, fontSize: Math.max(10, Math.round(16 * fanScale)) }}>
-                                  {game.name}
-                                </h3>
-                                <p className="sports-font text-[#888] mt-1 leading-snug" style={{ fontSize: Math.max(6, Math.round(9 * fanScale)) }}>
-                                  {game.taglineBySport?.[sport] ?? game.tagline}
-                                </p>
-                                <div className="flex gap-1.5 mt-2" onClick={e => e.stopPropagation()}>
-                                  {game.hasSolo && (
-                                    <button
-                                      onClick={() => {
-                                        if (game.id === 'roster' || game.id === 'career' || game.id === 'scramble') {
-                                          setSelectedCard(game.id);
-                                          setTappedCard(null);
-                                        } else if (game.soloPath) {
-                                          navigate(game.soloPath);
-                                        }
-                                        // starting-lineup navigates via soloPath above
-                                      }}
-                                      className="flex-1 py-1.5 rounded sports-font text-[9px] tracking-wider uppercase border hover:opacity-70 transition-opacity"
-                                      style={{ borderColor: game.color, color: game.color }}
-                                    >
-                                      Solo
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => {
-                                      if (game.multiPath) {
-                                        navigate(game.multiPath);
-                                      } else {
-                                        const modeMap: Record<string, string> = { roster: 'roster', career: 'career', scramble: 'scramble', lineup: 'lineup-is-right', 'starting-lineup': 'starting-lineup' };
-                                        navigate('/lobby/create', { state: { gameType: modeMap[game.id] ?? 'roster' } });
-                                      }
-                                    }}
-                                    className="flex-1 py-1.5 rounded sports-font text-[9px] tracking-wider uppercase border border-[#444] text-[#999] hover:border-[#666] hover:text-[#ccc] transition-colors"
-                                  >
-                                    {game.hasSolo ? 'Lobby' : 'Play'}
-                                  </button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => navigate('/lobby/join')}
-                  className="z-10 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sports-font text-[10px] sm:text-xs tracking-[0.2em] uppercase transition-all bg-[#1a1a1a] border border-[#d4af37]/50 text-[var(--vintage-cream)] hover:border-[#d4af37] hover:bg-[#202020] shadow-[0_0_0_1px_rgba(212,175,55,0.2)]"
-                >
-                  Join Existing Lobby →
-                </button>
-              </motion.div>
+              <GameFanArc
+                sport={sport}
+                cardW={cardW}               cardH={cardH}
+                containerH={containerH}     popDist={popDist}
+                fanToJoinGap={fanToJoinGap} fanScale={fanScale}
+                scaledPositions={scaledPositions}
+                deckYOffset={deckYOffset}
+                isTouchDevice={isTouchDevice}
+                hoveredCard={hoveredCard}   tappedCard={tappedCard}
+                setHoveredCardDebounced={setHoveredCardDebounced}
+                setTappedCard={setTappedCard}
+                onCardSelect={id => setSelectedCard(id)}
+              />
             )}
+
           </AnimatePresence>
         </main>
 
-        {/* Roulette section */}
+        {/* Roulette slide — renders below main, revealed by the slide-up animation */}
         <section className="h-screen w-full flex-shrink-0 flex items-center justify-center relative bg-[#0d2a0b]">
           <div className="absolute inset-0 opacity-50" style={{ background: 'radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)' }} />
           {showRoulette && preparedGameData && (
@@ -822,7 +387,12 @@ export function HomePage() {
               winningTeamData={preparedGameData.team}
               skipAnimation={skipAnimation}
               onComplete={() => {
-                setGameConfig(preparedGameData.sport, preparedGameData.team, preparedGameData.season, preparedGameData.gameMode, preparedGameData.timerDuration, preparedGameData.players, preparedGameData.leaguePlayers, preparedGameData.hideResultsDuringGame);
+                setGameConfig(
+                  preparedGameData.sport, preparedGameData.team, preparedGameData.season,
+                  preparedGameData.gameMode, preparedGameData.timerDuration,
+                  preparedGameData.players, preparedGameData.leaguePlayers,
+                  preparedGameData.hideResultsDuringGame,
+                );
                 navigate('/game');
               }}
             />
@@ -831,40 +401,7 @@ export function HomePage() {
       </motion.div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-
-      {showAbout && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowAbout(false)}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            onClick={e => e.stopPropagation()}
-            className="bg-[#0e0e0e] border border-[#2a2a2a] rounded-xl p-8 max-w-sm w-full mx-4 text-center"
-          >
-            <h2 className="retro-title text-2xl text-white mb-2">BallKnowledge</h2>
-            <p className="sports-font text-[#666] text-sm mb-6 leading-relaxed">
-              A collection of sports trivia games. Built for fans, by fans.
-            </p>
-            <a
-              href="https://github.com/josyao1/BallKnowledge"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-lg text-[#ccc] hover:border-[#555] hover:text-white transition-colors sports-font text-sm"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-              </svg>
-              View on GitHub
-            </a>
-            <button
-              onClick={() => setShowAbout(false)}
-              className="block mx-auto mt-4 sports-font text-[#444] hover:text-[#666] text-xs transition-colors"
-            >
-              close
-            </button>
-          </motion.div>
-        </div>
-      )}
+      {showAbout    && <AboutModal   onClose={() => setShowAbout(false)} />}
     </div>
   );
 }
