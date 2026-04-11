@@ -243,7 +243,7 @@ export function LobbyCreatePage() {
                   : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
             >
-              Roster
+              <span style={{ color: '#d4af37' }}>★</span> Roster
             </button>
             <button
               onClick={() => setLobbyMode('career')}
@@ -273,7 +273,7 @@ export function LobbyCreatePage() {
                   : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
               }`}
             >
-              Cap Crunch
+              <span style={{ color: '#d4af37' }}>★</span> Cap Crunch
             </button>
             <button
               onClick={() => setLobbyMode('box-score')}
@@ -295,6 +295,9 @@ export function LobbyCreatePage() {
             >
               Starters
             </button>
+          </div>
+          <div className="text-center mt-2 sports-font text-[10px] text-white/30 tracking-wider">
+            <span style={{ color: '#d4af37' }}>★</span> = most popular
           </div>
         </motion.div>
 

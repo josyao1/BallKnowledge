@@ -1218,10 +1218,10 @@ export function LobbyWaitingPage() {
                     onChange={e => setEditGameType(e.target.value as typeof editGameType)}
                     className="w-full bg-[#111] text-[#ccc] px-3 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
                   >
-                    <option value="roster">Roster Challenge</option>
+                    <option value="roster">★ Roster Challenge</option>
                     <option value="career">Career Arc</option>
                     <option value="scramble">Name Scramble</option>
-                    <option value="lineup-is-right">Cap Crunch</option>
+                    <option value="lineup-is-right">★ Cap Crunch</option>
                     <option value="box-score">Box Score</option>
                     <option value="starting-lineup">Starters</option>
                   </select>
