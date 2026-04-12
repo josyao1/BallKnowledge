@@ -25,13 +25,19 @@ interface SearchResult {
 
 interface Props {
   myLineup: (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
+  /** False when it's not your turn (hard mode) or you've already submitted this round */
   canPickThisRound: boolean;
+  /** Hard mode = turn-based (one picker at a time); false = simultaneous picks */
   hardMode: boolean;
+  /** Player whose turn it currently is (hard mode only) */
   currentPickerId: string | null;
   players: Player[];
   totalRounds: number;
+  /** Name of the player selected so far this pick (null = still on search view) */
   selectedPlayerName: string | null;
+  /** Skip year selection — used for total_gp and career stat rounds */
   isNoYearSelect: boolean;
+  /** Career stat rounds count all-team totals rather than a single team-season */
   isCareerStatRound: boolean;
   currentTeam: string;
   searchQuery: string;
@@ -41,10 +47,14 @@ interface Props {
   availableYears: string[];
   selectedYear: string;
   duplicateError: string | null;
+  /** Server-side error from the confirm step (e.g. player not on team) */
   pickError: string | null;
   addingPlayer: boolean;
+  /** Players already picked by *this* user across all rounds — shown as "already used" */
   usedPlayerNames: Set<string>;
+  /** Players currently locked in by *other* users this round — shown as "taken" */
   lockedPlayerNames: Set<string>;
+  /** Players who haven't submitted their pick yet this round */
   waitingFor: Player[];
   selectedSport: 'nba' | 'nfl' | null;
   onSearch: (query: string) => void;

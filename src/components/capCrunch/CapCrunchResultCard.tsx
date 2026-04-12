@@ -20,14 +20,20 @@ interface PlayerWithLineup {
 
 interface Props {
   item: PlayerWithLineup;
+  /** Display rank (0-based, already sorted by caller) */
   idx: number;
   isWinner: boolean;
+  /** Whether any tiebreaker was needed to determine the winner */
   tiebreakerUsed: boolean;
+  /** True when the tiebreak was on bust count (triggers avg-year display for top 2) */
   tiedOnBusts: boolean;
   targetCap: number;
+  /** Keyed by player_id; null means no better pick existed */
   optimalPicks: Map<string, OptimalPick | null>;
   statCategory: StatCategory;
+  /** Career stat rounds count all-team totals rather than a single team-season */
   isCareerStatRound: boolean;
+  /** Returns the average pick year for a lineup — used for tiebreaker display */
   avgPickYear: (lineup: PlayerLineup) => number;
 }
 

@@ -12,8 +12,11 @@ interface Props {
   onGuessChange: (v: string) => void;
   onGuess: () => void;
   feedbackMessage: string;
+  /** Controls feedback text color: 'correct' → green, 'wrong' → red, '' → hidden */
   feedbackType: 'correct' | 'wrong' | '';
+  /** Sport-specific accent color (hex) used for the Guess button background */
   accentColor: string;
+  /** Hint buttons become disabled once revealed (each hint costs points) */
   yearsRevealed: boolean;
   bioRevealed: boolean;
   initialsRevealed: boolean;
@@ -21,6 +24,7 @@ interface Props {
   onRevealBio: () => void;
   onRevealInitials: () => void;
   onGiveUp: () => void;
+  /** Optional ref forwarded to the text input — used by the parent to manage focus */
   inputRef?: InputRef;
 }
 

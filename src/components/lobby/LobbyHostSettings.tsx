@@ -34,24 +34,40 @@ export type GameTypeValue =
 export interface HostFormValues {
   gameType: GameTypeValue;
   sport: Sport;
+  /** When true, sport is randomized each round (roster mode only) */
   randomSport: boolean;
+  /** Manual = host picks a specific team/year; random = randomized each round */
   gameMode: 'random' | 'manual';
+  /** Whether the roster challenge pools from one team or an entire division */
   selectionScope: 'team' | 'division';
   team: GenericTeam | null;
   year: number | null;
   timer: number;
+  /** Roster/scramble: inclusive lower bound for eligible seasons */
   minYear: number;
+  /** Roster/scramble: inclusive upper bound for eligible seasons */
   maxYear: number;
+  /** Career/scramble: number of rounds a player must win to claim the match */
   winTarget: number;
+  /** Career: earliest birth/draft year to include (0 = no filter) */
   careerFrom: number;
+  /** Career/scramble: latest birth/draft year to include (0 = no filter) */
   careerTo: number;
+  /** Cap Crunch: forced stat category, or 'random' to pick one each round */
   lineupStat: string;
+  /** Cap Crunch: number of pick rounds per game */
   totalRounds: number;
+  /** Cap Crunch: fixed target cap value; null = randomly generated each round */
   customCap: number | null;
+  /** Cap Crunch: turn-based (one picker at a time) vs simultaneous */
   hardMode: boolean;
+  /** Cap Crunch hard mode: player_id of who picks first; null = random */
   firstPickerId: string | null;
+  /** Box Score: inclusive lower bound for eligible game dates */
   boxMinYear: number;
+  /** Box Score: inclusive upper bound for eligible game dates */
   boxMaxYear: number;
+  /** Box Score: filter to a specific team abbreviation; null = any team */
   boxTeam: string | null;
   startingSport: 'nba' | 'nfl';
 }

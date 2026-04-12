@@ -19,7 +19,9 @@ interface Player {
 }
 
 interface Props {
+  /** Hard mode = turn-based; false = simultaneous picks */
   hardMode: boolean;
+  /** Player whose turn it is in hard mode — used to render the "X's Turn" badge */
   currentPickerId: string | null;
   currentPlayerId: string | null;
   players: Player[];
@@ -30,7 +32,9 @@ interface Props {
   targetCap: number;
   statCategory: StatCategory;
   myLineup: (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
+  /** Increment this value to trigger a red flash on the score display (bust or zero pick) */
   badFlashKey: number;
+  /** Career stat rounds count all-team totals rather than a single team-season */
   isCareerStatRound: boolean;
 }
 
