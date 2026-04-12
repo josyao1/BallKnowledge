@@ -1,8 +1,15 @@
 /**
  * LobbyCreatePage.tsx — Multiplayer lobby creation page.
  *
- * Allows the host to set their name, choose sport/game mode/team/timer,
- * and open a new lobby. On success, navigates to the waiting room.
+ * Holds all state and the handleCreate async flow. UI panels live in
+ * src/components/lobby/create/:
+ *
+ *   CreateGameTypeSelector    — mode buttons + popular legend
+ *   CreateSportSelector       — NBA / NFL toggle
+ *   CreateCareerSettings      — career win target
+ *   CreateScrambleSettings    — scramble points target + era filter
+ *   CreateStartingLineupSettings — starters win target
+ *   CreateRosterSettings      — deck mode, scope, year range, team/year, timer
  */
 
 import { useState, useEffect } from 'react';
@@ -10,12 +17,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { TeamSelector } from '../components/home/TeamSelector';
-import { YearSelector } from '../components/home/YearSelector';
 import { getStoredPlayerName, updateCareerState } from '../services/lobby';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
 import type { GameMode } from '../types';
+import { CreateGameTypeSelector }        from '../components/lobby/create/CreateGameTypeSelector';
+import { CreateSportSelector }           from '../components/lobby/create/CreateSportSelector';
+import { CreateCareerSettings }          from '../components/lobby/create/CreateCareerSettings';
+import { CreateScrambleSettings }        from '../components/lobby/create/CreateScrambleSettings';
+import { CreateStartingLineupSettings }  from '../components/lobby/create/CreateStartingLineupSettings';
+import { CreateRosterSettings }          from '../components/lobby/create/CreateRosterSettings';
 
 type GenericTeam = {
   id: number;
@@ -37,23 +48,22 @@ export function LobbyCreatePage() {
     const passed = (location.state as any)?.gameType;
     return VALID_LOBBY_MODES.includes(passed) ? passed : 'roster';
   });
-  const [winTarget, setWinTarget] = useState<3 | 5 | 7 | 10 | 20 | 30>(10);
-  const [scrambleWinTarget, setScrambleWinTarget] = useState<10 | 20 | 30 | 40 | 50>(20);
-  const [scrambleCareerTo, setScrambleCareerTo] = useState(0);
-  const [hostName, setHostName] = useState(getStoredPlayerName() || '');
-  const [gameMode, setGameMode] = useState<GameMode>('random');
-  const [selectionScope, setSelectionScope] = useState<'team' | 'division'>('team');
-  const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [timerMinutes, setTimerMinutes] = useState(1);
-  const [timerSeconds, setTimerSeconds] = useState(30);
-  const [customTimerInput, setCustomTimerInput] = useState('');
-  const [selectedPreset, setSelectedPreset] = useState<number | null>(90);
+  const [winTarget,           setWinTarget]           = useState<3 | 5 | 7 | 10 | 20 | 30>(10);
+  const [scrambleWinTarget,   setScrambleWinTarget]   = useState<10 | 20 | 30 | 40 | 50>(20);
+  const [scrambleCareerTo,    setScrambleCareerTo]    = useState(0);
+  const [hostName,            setHostName]            = useState(getStoredPlayerName() || '');
+  const [gameMode,            setGameMode]            = useState<GameMode>('random');
+  const [selectionScope,      setSelectionScope]      = useState<'team' | 'division'>('team');
+  const [selectedTeam,        setSelectedTeam]        = useState<GenericTeam | null>(null);
+  const [selectedYear,        setSelectedYear]        = useState<number | null>(null);
+  const [timerMinutes,        setTimerMinutes]        = useState(1);
+  const [timerSeconds,        setTimerSeconds]        = useState(30);
+  const [customTimerInput,    setCustomTimerInput]    = useState('');
+  const [selectedPreset,      setSelectedPreset]      = useState<number | null>(90);
+  const [randomMinYear,       setRandomMinYear]       = useState(2015);
+  const [randomMaxYear,       setRandomMaxYear]       = useState(2025);
 
-  const [randomMinYear, setRandomMinYear] = useState(2015);
-  const [randomMaxYear, setRandomMaxYear] = useState(2025);
-
-  // Box Score is NFL-only — auto-select NFL when this mode is chosen
+  // Box Score is NFL-only — auto-lock when this mode is selected
   useEffect(() => {
     if (lobbyMode === 'box-score') setSport('nfl');
   }, [lobbyMode]);
@@ -75,47 +85,30 @@ export function LobbyCreatePage() {
   const handleCreate = async () => {
     if (!hostName.trim()) return;
 
-    // Career mode: create a career lobby
     if (lobbyMode === 'career') {
       const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'NE';
-      const dummySeason = sport === 'nba' ? '2023-24' : '2023';
-      const lobby = await createLobby(
-        hostName.trim(), sport, dummyTeamAbbr, dummySeason,
-        90, 'random', 2000, 2025, 'career', 'team', null, null
-      );
+      const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
+      const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'career', 'team', null, null);
       if (lobby) {
-        // Initialize career_state with win_target
         await updateCareerState(lobby.id, { win_target: winTarget, round: 0 });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
     }
 
-    // Scramble mode: create a scramble lobby
     if (lobbyMode === 'scramble') {
       const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'NE';
-      const dummySeason = sport === 'nba' ? '2023-24' : '2023';
-      const lobby = await createLobby(
-        hostName.trim(), sport, dummyTeamAbbr, dummySeason,
-        90, 'random', 2000, 2025, 'scramble', 'team', null, null
-      );
+      const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
+      const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'scramble', 'team', null, null);
       if (lobby) {
-        await updateCareerState(lobby.id, {
-          win_target: scrambleWinTarget,
-          round: 0,
-          career_to: scrambleCareerTo,
-        });
+        await updateCareerState(lobby.id, { win_target: scrambleWinTarget, round: 0, career_to: scrambleCareerTo });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
     }
 
-    // Box Score mode
     if (lobbyMode === 'box-score') {
-      const lobby = await createLobby(
-        hostName.trim(), 'nfl', 'KC', '2024',
-        120, 'random', 2015, 2024, 'box-score', 'team', null, null
-      );
+      const lobby = await createLobby(hostName.trim(), 'nfl', 'KC', '2024', 120, 'random', 2015, 2024, 'box-score', 'team', null, null);
       if (lobby) {
         await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2024, team: null });
         navigate(`/lobby/${lobby.join_code}`);
@@ -123,14 +116,10 @@ export function LobbyCreatePage() {
       return;
     }
 
-    // Starting Lineup (Starters) mode
     if (lobbyMode === 'starting-lineup') {
       const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'KC';
-      const dummySeason = sport === 'nba' ? '2024-25' : '2024';
-      const lobby = await createLobby(
-        hostName.trim(), sport, dummyTeamAbbr, dummySeason,
-        90, 'random', 2000, 2025, 'starting-lineup', 'team', null, null
-      );
+      const dummySeason   = sport === 'nba' ? '2024-25' : '2024';
+      const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'starting-lineup', 'team', null, null);
       if (lobby) {
         await updateCareerState(lobby.id, { win_target: winTarget, round: 0 });
         navigate(`/lobby/${lobby.join_code}`);
@@ -138,14 +127,10 @@ export function LobbyCreatePage() {
       return;
     }
 
-    // Lineup Is Right mode: create a lineup is right lobby
     if (lobbyMode === 'lineup-is-right') {
       const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'NE';
-      const dummySeason = sport === 'nba' ? '2023-24' : '2023';
-      const lobby = await createLobby(
-        hostName.trim(), sport, dummyTeamAbbr, dummySeason,
-        90, 'random', 2000, 2025, 'lineup-is-right', 'team', null, null
-      );
+      const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
+      const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'lineup-is-right', 'team', null, null);
       if (lobby) {
         await updateCareerState(lobby.id, { round: 0 });
         navigate(`/lobby/${lobby.join_code}`);
@@ -154,13 +139,12 @@ export function LobbyCreatePage() {
     }
 
     // Roster mode
+    const minYear = Math.max(randomMinYear, 2000);
+    const maxYear = Math.min(randomMaxYear, 2025);
     let teamAbbr: string;
     let season: string;
     let divisionConference: string | null = null;
     let divisionName: string | null = null;
-
-    const minYear = Math.max(randomMinYear, 2000);
-    const maxYear = sport === 'nfl' ? Math.min(randomMaxYear, 2025) : Math.min(randomMaxYear, 2025);
 
     if (gameMode === 'random') {
       const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
@@ -171,15 +155,13 @@ export function LobbyCreatePage() {
         const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
         divisionConference = randomDiv.conference;
         divisionName = randomDiv.division;
-
         const divTeams = sport === 'nba'
           ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
           : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
         teamAbbr = divTeams[0]?.abbreviation || (sport === 'nba' ? teams : nflTeams)[0].abbreviation;
       } else {
         const teamList = sport === 'nba' ? teams : nflTeams;
-        const randomTeam = teamList[Math.floor(Math.random() * teamList.length)];
-        teamAbbr = randomTeam.abbreviation;
+        teamAbbr = teamList[Math.floor(Math.random() * teamList.length)].abbreviation;
       }
     } else {
       if (!selectedTeam || !selectedYear) return;
@@ -187,25 +169,29 @@ export function LobbyCreatePage() {
       season = sport === 'nba' ? `${selectedYear}-${String(selectedYear + 1).slice(-2)}` : `${selectedYear}`;
     }
 
-    const lobby = await createLobby(
-      hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode, minYear, maxYear,
-      'roster', selectionScope, divisionConference, divisionName
-    );
+    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode, minYear, maxYear, 'roster', selectionScope, divisionConference, divisionName);
+    if (lobby) navigate(`/lobby/${lobby.join_code}`);
+  };
 
-    if (lobby) {
-      navigate(`/lobby/${lobby.join_code}`);
-    }
+  const handlePresetSelect = (seconds: number) => {
+    setSelectedPreset(seconds);
+    setCustomTimerInput('');
+    setTimerMinutes(Math.floor(seconds / 60));
+    setTimerSeconds(seconds % 60);
+  };
+
+  const handleCustomTimerChange = (value: string) => {
+    setCustomTimerInput(value);
+    if (value) setSelectedPreset(null);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
-      {/* Green felt background */}
       <div
         className="absolute inset-0 opacity-40 pointer-events-none"
         style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
       />
 
-      {/* Header */}
       <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <button
@@ -223,118 +209,13 @@ export function LobbyCreatePage() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="relative z-10 flex-1 max-w-md mx-auto w-full p-6 space-y-5 overflow-y-auto">
-        {/* Game Type */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-black/50 border border-white/10 rounded-sm p-4"
-        >
-          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-            Game Type
-          </div>
-          <div className="flex gap-2 justify-center flex-wrap">
-            <button
-              onClick={() => setLobbyMode('roster')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'roster'
-                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              <span style={{ color: '#d4af37' }}>★</span> Roster
-            </button>
-            <button
-              onClick={() => setLobbyMode('career')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'career'
-                  ? 'bg-[#22c55e] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              Career
-            </button>
-            <button
-              onClick={() => setLobbyMode('scramble')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'scramble'
-                  ? 'bg-[#3b82f6] text-white shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              Scramble
-            </button>
-            <button
-              onClick={() => setLobbyMode('lineup-is-right')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'lineup-is-right'
-                  ? 'bg-[#ec4899] text-white shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              <span style={{ color: '#d4af37' }}>★</span> Cap Crunch
-            </button>
-            <button
-              onClick={() => setLobbyMode('box-score')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'box-score'
-                  ? 'bg-[#f59e0b] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              Box Score
-            </button>
-            <button
-              onClick={() => setLobbyMode('starting-lineup')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'starting-lineup'
-                  ? 'bg-[#16a34a] text-white shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              Starters
-            </button>
-          </div>
-          <div className="text-center mt-2 sports-font text-[10px] text-white/30 tracking-wider">
-            <span style={{ color: '#d4af37' }}>★</span> = most popular
-          </div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <CreateGameTypeSelector lobbyMode={lobbyMode} onModeChange={setLobbyMode} />
         </motion.div>
 
-        {/* Sport selection */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-black/50 border border-white/10 rounded-sm p-4"
-        >
-          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-            Select League
-          </div>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => { if (lobbyMode !== 'box-score') setSport('nba'); }}
-              disabled={lobbyMode === 'box-score'}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                lobbyMode === 'box-score'
-                  ? 'bg-black/20 text-white/20 border border-white/10 cursor-not-allowed'
-                  : sport === 'nba'
-                    ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                    : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              NBA
-            </button>
-            <button
-              onClick={() => setSport('nfl')}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                sport === 'nfl'
-                  ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                  : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-              }`}
-            >
-              NFL
-            </button>
-          </div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <CreateSportSelector sport={sport} lobbyMode={lobbyMode} onSportChange={setSport} />
         </motion.div>
 
         {/* Host name */}
@@ -357,308 +238,61 @@ export function LobbyCreatePage() {
           />
         </motion.div>
 
-        {/* Career mode: win target */}
+        {/* Mode-specific settings (animated in/out) */}
         <AnimatePresence>
           {lobbyMode === 'career' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-black/50 border border-[#22c55e]/30 rounded-sm p-4"
-            >
-              <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                Win Target
-              </div>
-              <div className="flex gap-2 justify-center">
-                {([3, 5, 7] as const).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setWinTarget(n)}
-                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                      winTarget === n
-                        ? 'bg-[#22c55e] text-black shadow-lg font-bold'
-                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    {n} Wins
-                  </button>
-                ))}
-              </div>
-              <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
-                First player to {winTarget} wins takes the match
-              </div>
-            </motion.div>
+            <CreateCareerSettings
+              winTarget={winTarget}
+              onWinTargetChange={(n) => setWinTarget(n as any)}
+            />
           )}
         </AnimatePresence>
 
-        {/* Scramble settings */}
         <AnimatePresence>
           {lobbyMode === 'scramble' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-black/50 border border-[#3b82f6]/30 rounded-sm p-4 space-y-4"
-            >
-              <div className="sports-font text-[10px] text-white/40 text-center tracking-[0.3em] uppercase">
-                Points Target
-              </div>
-              <div className="flex gap-2 justify-center flex-wrap">
-                {([10, 20, 30, 40, 50] as const).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setScrambleWinTarget(n)}
-                    className={`px-4 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                      scrambleWinTarget === n
-                        ? 'bg-[#3b82f6] text-white shadow-lg font-bold'
-                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-              <div className="text-center text-white/30 text-[10px] sports-font tracking-wider">
-                First to {scrambleWinTarget} pts wins
-              </div>
-
-              <div>
-                <div className="sports-font text-[10px] text-white/40 text-center mb-2 tracking-[0.3em] uppercase">
-                  Career Era (Optional)
-                </div>
-                <select
-                  value={scrambleCareerTo}
-                  onChange={(e) => setScrambleCareerTo(parseInt(e.target.value))}
-                  className="w-full bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#3b82f6]"
-                >
-                  <option value={0}>Any Era</option>
-                  {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map(y => (
-                    <option key={y} value={y}>Active into {y}+</option>
-                  ))}
-                </select>
-              </div>
-            </motion.div>
+            <CreateScrambleSettings
+              winTarget={scrambleWinTarget}
+              onWinTargetChange={(n) => setScrambleWinTarget(n as any)}
+              careerTo={scrambleCareerTo}
+              onCareerToChange={setScrambleCareerTo}
+            />
           )}
         </AnimatePresence>
 
-        {/* Starting Lineup settings */}
         <AnimatePresence>
           {lobbyMode === 'starting-lineup' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-black/50 border border-[#16a34a]/30 rounded-sm p-4"
-            >
-              <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                Win Target
-              </div>
-              <div className="flex gap-2 justify-center">
-                {([10, 20, 30] as const).map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setWinTarget(n)}
-                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                      winTarget === n
-                        ? 'bg-[#16a34a] text-white shadow-lg font-bold'
-                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    {n} pts
-                  </button>
-                ))}
-              </div>
-              <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
-                First player to {winTarget} pts takes the match
-              </div>
-            </motion.div>
+            <CreateStartingLineupSettings
+              winTarget={winTarget}
+              onWinTargetChange={(n) => setWinTarget(n as any)}
+            />
           )}
         </AnimatePresence>
 
-        {/* Roster-only settings */}
         <AnimatePresence>
           {lobbyMode === 'roster' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-4"
-            >
-              {/* Game mode selection */}
-              <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-                <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                  Deck Selection
-                </div>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={() => setGameMode('random')}
-                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                      gameMode === 'random'
-                        ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    Random
-                  </button>
-                  <button
-                    onClick={() => setGameMode('manual')}
-                    className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                      gameMode === 'manual'
-                        ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                        : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    Choose Team
-                  </button>
-                </div>
-              </div>
-
-              {/* Scope toggle */}
-              {gameMode === 'random' && (
-                <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-                  <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                    Scope
-                  </div>
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      onClick={() => setSelectionScope('team')}
-                      className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                        selectionScope === 'team'
-                          ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                          : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                      }`}
-                    >
-                      Team
-                    </button>
-                    <button
-                      onClick={() => setSelectionScope('division')}
-                      className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-                        selectionScope === 'division'
-                          ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                          : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
-                      }`}
-                    >
-                      Division
-                    </button>
-                  </div>
-                  {selectionScope === 'division' && (
-                    <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
-                      Random division — name players from all 4 teams
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Random year range */}
-              {gameMode === 'random' && (
-                <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-                  <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-                    Year Range
-                  </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <select
-                      value={randomMinYear}
-                      onChange={(e) => {
-                        const newMin = parseInt(e.target.value);
-                        setRandomMinYear(newMin);
-                        if (newMin > randomMaxYear) setRandomMaxYear(newMin);
-                      }}
-                      className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
-                    >
-                      {Array.from(
-                        { length: (sport === 'nba' ? 2025 : 2025) - 2000 + 1 },
-                        (_, i) => 2000 + i
-                      ).map((year) => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                    <span className="text-white/40 sports-font">to</span>
-                    <select
-                      value={randomMaxYear}
-                      onChange={(e) => {
-                        const newMax = parseInt(e.target.value);
-                        setRandomMaxYear(newMax);
-                        if (newMax < randomMinYear) setRandomMinYear(newMax);
-                      }}
-                      className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
-                    >
-                      {Array.from(
-                        { length: (sport === 'nba' ? 2025 : 2025) - 2000 + 1 },
-                        (_, i) => 2000 + i
-                      ).map((year) => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Manual team/year selection */}
-              {gameMode === 'manual' && (
-                <div className="space-y-4">
-                  <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-                  <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={2025} sport={sport} />
-                </div>
-              )}
-
-              {/* Timer duration */}
-              <div
-                className="bg-black/50 border border-white/10 rounded-sm p-4"
-              >
-          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
-            Round Timer
-          </div>
-          {/* Preset buttons */}
-          <div className="flex flex-wrap justify-center gap-2 mb-3">
-            {[60, 90, 120, 180, 300].map((seconds) => (
-              <button
-                key={seconds}
-                onClick={() => {
-                  setSelectedPreset(seconds);
-                  setCustomTimerInput('');
-                  setTimerMinutes(Math.floor(seconds / 60));
-                  setTimerSeconds(seconds % 60);
-                }}
-                className={`px-3 py-1.5 rounded-sm sports-font text-sm transition-all ${
-                  selectedPreset === seconds && !customTimerInput
-                    ? 'bg-[#d4af37] text-black font-bold'
-                    : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
-                }`}
-              >
-                {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
-              </button>
-            ))}
-          </div>
-          {/* Custom input */}
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
-            <input
-              type="number"
-              value={customTimerInput}
-              onChange={(e) => {
-                setCustomTimerInput(e.target.value);
-                if (e.target.value) setSelectedPreset(null);
-              }}
-              placeholder="sec"
-              min={10}
-              max={600}
-              className="w-20 px-2 py-1.5 bg-[#111] rounded-sm border border-white/20 text-white text-center sports-font focus:outline-none focus:border-[#d4af37]"
+            <CreateRosterSettings
+              sport={sport}
+              gameMode={gameMode}
+              onGameModeChange={setGameMode}
+              selectionScope={selectionScope}
+              onSelectionScopeChange={setSelectionScope}
+              selectedTeam={selectedTeam}
+              onTeamSelect={setSelectedTeam}
+              selectedYear={selectedYear}
+              onYearSelect={setSelectedYear}
+              randomMinYear={randomMinYear}
+              onRandomMinYearChange={setRandomMinYear}
+              randomMaxYear={randomMaxYear}
+              onRandomMaxYearChange={setRandomMaxYear}
+              timerDuration={timerDuration}
+              customTimerInput={customTimerInput}
+              selectedPreset={selectedPreset}
+              onPresetSelect={handlePresetSelect}
+              onCustomTimerChange={handleCustomTimerChange}
             />
-            {customTimerInput && (
-              <span className="text-white/50 sports-font text-sm">
-                = {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
-              </span>
-            )}
-          </div>
-          <div className="text-center mt-2 retro-title text-2xl text-white">
-            {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
-          </div>
-              </div>
-            </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Error message */}
         {error && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -669,7 +303,6 @@ export function LobbyCreatePage() {
           </motion.div>
         )}
 
-        {/* Create button */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -681,7 +314,6 @@ export function LobbyCreatePage() {
           {isLoading ? 'Opening Table...' : 'Open Table'}
         </motion.button>
 
-        {/* Info */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

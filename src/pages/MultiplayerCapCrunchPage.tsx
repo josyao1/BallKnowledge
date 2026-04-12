@@ -1,5 +1,5 @@
 /**
- * MultiplayerCapCrunchPage.tsx — Simultaneous Multiplayer Cap Crunch.
+ * MultiplayerCapCrunchPage.tsx — Simultaneous Multiplayer Cap Crunch orchestrator.
  *
  * All players pick simultaneously each round:
  * 1. Same team shown to all players each round
@@ -7,14 +7,17 @@
  * 3. Once all players submit → host advances to next round (new team)
  * 4. If a pick exceeds the cap it busts — counts as 0, game always continues all 5 rounds
  * 5. After 5 rounds → results screen (highest score wins; tiebreak: fewest busts, then oldest avg year)
+ *
+ * UI lives in sub-components:
+ *   CapCrunchHeader     — sticky header: team, target, stat, round counter
+ *   CapCrunchPickPanel  — player search → year select → confirm flow
+ *   CapCrunchScoresPanel — live lineups sidebar
+ *   CapCrunchResultCard  — single player card on results screen
  */
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { SpinningNumber, getTotalColor, getRemainingColor } from '../components/capCrunch/SpinningNumber';
-import { TeamSlotMachine } from '../components/capCrunch/TeamSlotMachine';
-import { RevealingScore } from '../components/capCrunch/RevealingScore';
 import { useLobbyStore } from '../stores/lobbyStore';
 import { useLobbySubscription } from '../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../components/multiplayer/EmoteOverlay';
@@ -32,49 +35,17 @@ import {
   getPlayerTotalGPForTeam,
   addPlayerToLineup,
   assignRandomTeam,
-  isDivisionRound,
-  NFL_DIVISIONS,
   findOptimalLastPick,
   isCareerStat,
-
 } from '../services/capCrunch';
 import type { OptimalPick } from '../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../types/capCrunch';
+import { CapCrunchHeader }      from '../components/capCrunch/CapCrunchHeader';
+import { CapCrunchPickPanel }   from '../components/capCrunch/CapCrunchPickPanel';
+import { CapCrunchScoresPanel } from '../components/capCrunch/CapCrunchScoresPanel';
+import { CapCrunchResultCard }  from '../components/capCrunch/CapCrunchResultCard';
 
 type Phase = 'loading' | 'picking' | 'results';
-
-/** Format a stat value: whole numbers show no decimal, others show 1 decimal place. */
-function fmt(val: number): string {
-  const r = parseFloat(val.toFixed(1));
-  return r % 1 === 0 ? r.toFixed(0) : r.toFixed(1);
-}
-
-function getCategoryAbbr(category: StatCategory): string {
-  switch (category) {
-    case 'pts': return 'PTS';
-    case 'ast': return 'AST';
-    case 'reb': return 'REB';
-    case 'min': return 'MIN';
-    case 'pra': return 'PRA';
-    case 'passing_yards': return 'PASS YD';
-    case 'passing_tds': return 'PASS TD';
-    case 'interceptions': return 'INT';
-    case 'rushing_yards': return 'RUSH YD';
-    case 'rushing_tds': return 'RUSH TD';
-    case 'receiving_yards': return 'REC YD';
-    case 'receiving_tds': return 'REC TD';
-    case 'receptions': return 'REC';
-    case 'total_gp': return 'TOT GP';
-    case 'career_passing_yards':   return 'CAREER PASS YD';
-    case 'career_passing_tds':     return 'CAREER PASS TD';
-    case 'career_rushing_yards':   return 'CAREER RUSH YD';
-    case 'career_rushing_tds':     return 'CAREER RUSH TD';
-    case 'career_receiving_yards': return 'CAREER REC YD';
-    case 'career_receiving_tds':   return 'CAREER REC TD';
-    default: return 'STAT';
-  }
-}
-
 
 export function MultiplayerCapCrunchPage() {
   const navigate = useNavigate();
@@ -123,7 +94,7 @@ export function MultiplayerCapCrunchPage() {
   const lastAdvancedRoundRef = useRef(0);
   // Detect round changes to reset ephemeral search UI
   const prevRoundRef = useRef(0);
-  // Saved pick for race-condition recovery: if a concurrent write overwrites our pick, re-send it
+  // Saved pick for race-condition recovery
   const mySubmittedLineupRef = useRef<any>(null);
 
   const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as import('../types').Sport | null;
@@ -134,17 +105,18 @@ export function MultiplayerCapCrunchPage() {
     ? (currentPickerId === currentPlayerId && !myLineup?.isFinished)
     : (!myLineup?.hasPickedThisRound && !myLineup?.isFinished);
 
-  // Players I've already used this game (no repeats allowed)
   const usedPlayerNames = new Set(myLineup?.selectedPlayers.map(p => p.playerName) ?? []);
-
-  // Hard mode: players picked by anyone — entire player is locked globally
   const lockedPlayerNames = hardMode
     ? new Set(pickedPlayerSeasons.map(k => k.split('|')[0]))
     : new Set<string>();
 
+  const isTotalGP = statCategory === 'total_gp';
+  const isCareerStatRound = statCategory ? isCareerStat(statCategory) : false;
+  const isNoYearSelect = isTotalGP || isCareerStatRound;
+
   useLobbySubscription(lobby?.id || null);
 
-  // ── Mount: load lobby and read full game state from career_state ──────────
+  // ── Mount: load lobby and read full game state from career_state ────────────
   useEffect(() => {
     if (!code) { navigate('/'); return; }
 
@@ -173,8 +145,6 @@ export function MultiplayerCapCrunchPage() {
 
         if (cs.phase === 'results') setPhase('results');
         else if (cs.statCategory && cs.allLineups) setPhase('picking');
-        // else: career_state not ready yet — stay on 'loading' and let the
-        // realtime sync rescue us when the write completes (line 215).
       } catch (error) {
         console.error('Error initializing game:', error);
         navigate('/');
@@ -184,14 +154,12 @@ export function MultiplayerCapCrunchPage() {
     initGame();
   }, [code, navigate, setLobby, setPlayers]);
 
-  // ── Realtime sync: when lobby.career_state changes, update local state ────
+  // ── Realtime sync: when lobby.career_state changes, update local state ──────
   useEffect(() => {
     const cs = (lobby?.career_state as any);
     if (!cs?.statCategory || !cs?.allLineups) return;
 
-    // Always process transition to results — even if a pick is in flight.
-    // (The addingPlayerRef guard must not block the final phase change or the
-    //  player gets stuck on the green picking screen after the last round.)
+    // Always process results transition — must not be blocked by addingPlayerRef
     if (cs.phase === 'results') {
       setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
       if (exactHitTimerRef.current !== null) {
@@ -209,7 +177,7 @@ export function MultiplayerCapCrunchPage() {
 
     // Reset ephemeral search UI when the round advances
     if (newRound !== prevRoundRef.current && prevRoundRef.current !== 0) {
-      mySubmittedLineupRef.current = null; // clear saved pick on new round
+      mySubmittedLineupRef.current = null;
       setSearchQuery('');
       setSearchResults([]);
       setSelectedPlayerName(null);
@@ -247,7 +215,7 @@ export function MultiplayerCapCrunchPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobby?.career_state]);
 
-  // ── Host-only: advance round when all players have picked ─────────────────
+  // ── Host-only: advance round when all players have picked ───────────────────
   useEffect(() => {
     if (!isHost || !lobby?.career_state || !lobby?.id) return;
 
@@ -255,8 +223,6 @@ export function MultiplayerCapCrunchPage() {
     if (cs.phase !== 'picking') return;
 
     const lineups = cs.allLineups || {};
-    // Use stored playerOrder (stable, unaffected by JSONB key sorting in Postgres).
-    // Fall back to Object.keys for old lobbies that predate this field.
     const playerIds: string[] = cs.playerOrder || Object.keys(lineups);
     if (playerIds.length === 0) return;
 
@@ -266,7 +232,7 @@ export function MultiplayerCapCrunchPage() {
     if (!allPicked) return;
 
     const round = cs.currentRound || 1;
-    if (lastAdvancedRoundRef.current >= round) return; // guard against double-advance
+    if (lastAdvancedRoundRef.current >= round) return;
     lastAdvancedRoundRef.current = round;
 
     const lobbyId = lobby.id;
@@ -275,7 +241,7 @@ export function MultiplayerCapCrunchPage() {
 
     const advanceRound = async () => {
       if (nextRound > totalRds) {
-        // Determine winner(s) — highest score, then fewest busts, then oldest avg year
+        // Determine winner(s): highest score → fewest busts → oldest avg year
         const avgPickYear = (pid: string): number => {
           const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
           if (picks.length === 0) return 2025;
@@ -284,10 +250,8 @@ export function MultiplayerCapCrunchPage() {
         const sorted = [...playerIds].sort((a, b) => {
           const la = lineups[a] as any, lb = lineups[b] as any;
           if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
-          // Tiebreak 1: fewer busts
           const aBusts = la.bustCount ?? 0, bBusts = lb.bustCount ?? 0;
           if (aBusts !== bBusts) return aBusts - bBusts;
-          // Tiebreak 2: older avg pick year
           return avgPickYear(a) - avgPickYear(b);
         });
         if (sorted.length > 0) {
@@ -298,7 +262,6 @@ export function MultiplayerCapCrunchPage() {
           const topAvgYear = avgPickYear(topPid);
           for (const pid of sorted) {
             const l = lineups[pid] as any;
-            // Award wins to all players fully tied across all three tiebreakers
             if (
               l.totalStat === topStat &&
               (l.bustCount ?? 0) === topBusts &&
@@ -310,22 +273,19 @@ export function MultiplayerCapCrunchPage() {
             }
           }
         }
-        // Game over → go to results
         await updateCareerState(lobbyId, { ...cs, phase: 'results' });
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
-        // total_gp rotates teams like normal but never uses divisions (guard is in assignRandomTeam)
         const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
         const resetLineups: Record<string, any> = {};
         playerIds.forEach(pid => {
           resetLineups[pid] = {
             ...lineups[pid],
-            // Players who've used all picks keep hasPickedThisRound true so they're auto-skipped
             hasPickedThisRound: (lineups[pid] as any).isFinished ? true : false,
           };
         });
 
-        // Hard mode: determine first picker for next round (rotates by 1 each round)
+        // Hard mode: rotate first picker each round
         let hardModeUpdates: Record<string, any> = {};
         if (cs.hardMode) {
           const newRoundStartIndex = ((cs.roundStartPickerIndex ?? 0) + 1) % playerIds.length;
@@ -352,20 +312,17 @@ export function MultiplayerCapCrunchPage() {
       }
     };
 
-    advanceRound().catch(err => console.error('[advanceRound] Failed to advance round:', err));
+    advanceRound().catch(err => console.error('[advanceRound] Failed:', err));
   }, [lobby?.career_state, isHost, lobby?.id]);
 
-  // ── All clients: navigate back to lobby when host resets to waiting ────────
-  // Exclude 'picking' (mid-game) and 'loading' (page refresh before realtime delivers
-  // the current playing state) to avoid navigating away incorrectly.
+  // ── Navigate back to lobby when host resets ─────────────────────────────────
   useEffect(() => {
     if (lobby?.status === 'waiting' && phase !== 'picking' && phase !== 'loading') {
       navigate(`/lobby/${code}`);
     }
   }, [lobby?.status, phase, navigate, code]);
 
-  // ── Optimal last pick — compute once when results screen loads ─────────────
-  // NOTE: must live here (before any early returns) to satisfy Rules of Hooks.
+  // ── Compute optimal last picks once results screen loads ────────────────────
   useEffect(() => {
     if (phase !== 'results' || !statCategory || !selectedSport) return;
     const computeAll = async () => {
@@ -375,12 +332,10 @@ export function MultiplayerCapCrunchPage() {
           const lineup = allLineups[p.player_id] as PlayerLineup | undefined;
           if (!lineup || lineup.selectedPlayers.length === 0) { results.set(p.player_id, null); return; }
           const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
-          // For bust picks the total was reverted, so totalBeforeLast == lineup.totalStat
           const totalBeforeLast = lastPick.isBust
             ? lineup.totalStat
             : parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
           const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
-          // In hard mode, exclude all globally locked players except the one being replaced
           const excludeNames = hardMode
             ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
             : undefined;
@@ -393,6 +348,8 @@ export function MultiplayerCapCrunchPage() {
     computeAll();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const handlePlayAgain = async () => {
     if (!isHost || !lobby) return;
@@ -407,7 +364,6 @@ export function MultiplayerCapCrunchPage() {
       setSearchResults([]);
       return;
     }
-
     setLoading(true);
     try {
       const results = await searchPlayersByNameOnly(selectedSport, query, statCategory ?? undefined);
@@ -420,10 +376,6 @@ export function MultiplayerCapCrunchPage() {
       setLoading(false);
     }
   };
-
-  const isTotalGP = statCategory === 'total_gp';
-  const isCareerStatRound = statCategory ? isCareerStat(statCategory) : false;
-  const isNoYearSelect = isTotalGP || isCareerStatRound;
 
   const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
     if (usedPlayerNames.has(player.playerName)) {
@@ -440,8 +392,6 @@ export function MultiplayerCapCrunchPage() {
     setSelectedYear('');
     setAvailableYears([]);
 
-
-    // total_gp and career stat modes: no year needed, go straight to confirm
     if (isNoYearSelect) return;
 
     setLoadingYears(true);
@@ -456,6 +406,13 @@ export function MultiplayerCapCrunchPage() {
     }
   };
 
+  const handleBackFromPlayer = () => {
+    setSelectedPlayerName(null);
+    setSelectedPlayerId(null);
+    setSelectedYear('');
+    setAvailableYears([]);
+  };
+
   const handleConfirmYear = async () => {
     if (!selectedPlayerName || !selectedSport || !statCategory || !lobby || !currentPlayerId) return;
     if (!isNoYearSelect && !selectedYear) return;
@@ -467,18 +424,11 @@ export function MultiplayerCapCrunchPage() {
         ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
         : isCareerStatRound
           ? await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, 'career', statCategory, selectedPlayerId ?? undefined)
-          : await getPlayerStatForYearAndTeam(
-              selectedSport as any,
-              selectedPlayerName,
-              currentTeam,
-              selectedYear,
-              statCategory,
-              selectedPlayerId ?? undefined
-            );
+          : await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedYear, statCategory, selectedPlayerId ?? undefined);
+
       const statValue = statResult.value;
       const neverOnTeam = statResult.neverOnTeam;
 
-      // Read latest career_state from store (synced via realtime) to minimize race window
       const latestCS = (lobby.career_state as any) || {};
       const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
         playerId: currentPlayerId,
@@ -490,14 +440,11 @@ export function MultiplayerCapCrunchPage() {
         hasPickedThisRound: false,
       };
 
-      // Check if this pick would push over the cap
       const wouldBust = (myCurrentLineup.totalStat + statValue) > targetCap;
-
-      const pickTeam = currentTeam;
 
       const newSelectedPlayer: SelectedPlayer = {
         playerName: selectedPlayerName,
-        team: pickTeam,
+        team: currentTeam,
         selectedYear: isNoYearSelect ? 'career' : selectedYear,
         playerSeason: null,
         statValue,
@@ -506,7 +453,6 @@ export function MultiplayerCapCrunchPage() {
       };
 
       const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
-      // Bust picks revert the total (count as 0); game always continues all 5 picks
       if (wouldBust) {
         withNewPlayer.totalStat = myCurrentLineup.totalStat;
         withNewPlayer.bustCount = (myCurrentLineup.bustCount ?? 0) + 1;
@@ -515,19 +461,18 @@ export function MultiplayerCapCrunchPage() {
         withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
       }
       (withNewPlayer as any).hasPickedThisRound = true;
-      // Finished when all picks made OR hit exactly on the cap
-      if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || (!wouldBust && withNewPlayer.totalStat === targetCap)) withNewPlayer.isFinished = true;
+      if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || (!wouldBust && withNewPlayer.totalStat === targetCap)) {
+        withNewPlayer.isFinished = true;
+      }
 
-      // Hard mode: compute next picker and record locked player-season
+      // Hard mode: compute next picker
       let hardModeUpdates: Record<string, any> = {};
       if (latestCS.hardMode && currentPlayerId) {
         const allLineupsAfterPick = { ...latestCS.allLineups, [currentPlayerId]: withNewPlayer };
-        // Find next player by continuing the rotation from the current picker's position in playerOrder
         const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
         const currentIndexInOrder = order.indexOf(currentPlayerId);
         let nextPickerId: string | null = null;
         if (currentIndexInOrder === -1) {
-          // Player not found in order (e.g. joined after game started) — fall back to first unpicked
           for (const pid of order) {
             if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
               nextPickerId = pid;
@@ -550,33 +495,24 @@ export function MultiplayerCapCrunchPage() {
         };
       }
 
-      // Write merged update: spread latest state, override only my lineup entry
       const updatedCS = {
         ...latestCS,
-        allLineups: {
-          ...latestCS.allLineups,
-          [currentPlayerId]: withNewPlayer,
-        },
+        allLineups: { ...latestCS.allLineups, [currentPlayerId]: withNewPlayer },
         ...hardModeUpdates,
       };
 
       await updateCareerState(lobby.id, updatedCS);
 
-      // Save for race-condition recovery in the realtime sync effect
       mySubmittedLineupRef.current = withNewPlayer;
-
-      // Apply locally so UI reflects immediately
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
       if (wouldBust || statValue === 0) setBadFlashKey(k => k + 1);
 
-      // Exact hit celebration
       if (!wouldBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
         exactHitTimerRef.current = setTimeout(() => setShowExactHit(false), 2500);
       }
 
-      // Clear search UI
       setSearchQuery('');
       setSearchResults([]);
       setSelectedPlayerName(null);
@@ -592,7 +528,7 @@ export function MultiplayerCapCrunchPage() {
     }
   };
 
-  // ── Loading screen ─────────────────────────────────────────────────────────
+  // ── Loading screen ───────────────────────────────────────────────────────────
   if (phase === 'loading') {
     return (
       <div className="min-h-screen bg-[#0d2a0b] text-white flex items-center justify-center relative overflow-hidden">
@@ -607,280 +543,23 @@ export function MultiplayerCapCrunchPage() {
     );
   }
 
-  // ── Picking screen ─────────────────────────────────────────────────────────
+  // ── Picking screen ───────────────────────────────────────────────────────────
   if (phase === 'picking' && statCategory) {
-    // Players who haven't submitted yet this round (and aren't busted/finished)
     const waitingFor = players.filter(p => {
       const l = allLineups[p.player_id] as any;
       return !l?.hasPickedThisRound && !l?.isFinished;
     });
-
-    // Reusable pick panel content (used in both mobile and desktop)
-    const pickPanel = (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-black/60 border-2 border-white/10 rounded p-4 flex-1 flex flex-col"
-      >
-        {myLineup?.isFinished ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
-            <p className="text-2xl text-emerald-400 retro-title">All Picks In!</p>
-            <p className="text-white/50 sports-font text-sm">You've made all {totalRounds} picks. Sit tight while others finish.</p>
-            {(myLineup.bustCount ?? 0) > 0 && (
-              <p className="text-red-400/70 sports-font text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
-            )}
-          </div>
-        ) : canPickThisRound ? (
-          <>
-            {!selectedPlayerName ? (
-              <div>
-                <label className="block sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase mb-3 font-semibold">
-                  Search for a player
-                </label>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Enter player name..."
-                  className="w-full px-4 py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-3 text-base"
-                />
-                {loading && <p className="text-white/60 text-sm">Loading...</p>}
-                {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                  <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
-                )}
-                {duplicateError && (
-                  <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
-                )}
-                {searchResults.length > 0 && (
-                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                    {searchResults.map((result, idx) => {
-                      const alreadyUsed = usedPlayerNames.has(result.playerName);
-                      const taken = lockedPlayerNames.has(result.playerName);
-                      const disabled = alreadyUsed || taken;
-                      return (
-                        <button
-                          key={String(result.playerId) + idx}
-                          onClick={() => handleSelectPlayer(result)}
-                          className={`w-full text-left px-4 py-3 rounded border transition text-sm font-semibold ${
-                            disabled
-                              ? 'bg-[#111] border-white/5 text-white/25 cursor-not-allowed line-through'
-                              : 'bg-[#1a1a1a] hover:bg-[#2a2a2a] border-white/10 text-white'
-                          }`}
-                        >
-                          {result.playerName}
-                          {alreadyUsed && <span className="ml-2 text-[10px] text-white/20 no-underline not-italic font-normal">(already used)</span>}
-                          {taken && <span className="ml-2 text-[10px] text-red-400/40 no-underline not-italic font-normal">(taken)</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ) : isNoYearSelect ? (
-              // ── Total GP / Career stat mode: no year selection, just confirm the player ──
-              <div className="flex flex-col gap-3 h-full">
-                <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
-                  <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
-                  <p className="text-xs text-white/60 mt-0.5">
-                    {isCareerStatRound ? `Total career stats (all teams) — must have played for ${currentTeam} at some point` : `Will count all career GP with ${currentTeam}`}
-                  </p>
-                </div>
-                <div className="flex-1 flex items-center justify-center text-center">
-                  <p className="text-white/30 sports-font text-xs leading-relaxed">
-                    Games played across every season<br />this player was on the team
-                  </p>
-                </div>
-                {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-                <div className="flex gap-2 mt-auto pt-2">
-                  <button
-                    onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
-                    className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleConfirmYear}
-                    disabled={addingPlayer}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm retro-title"
-                  >
-                    {addingPlayer ? 'Adding...' : 'Confirm'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              // ── Normal mode: pick a year ──
-              <div className="flex flex-col gap-3 h-full">
-                <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
-                  <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
-                  <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <label className="sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase font-semibold">Select a year</label>
-                  {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] sports-font">through 2025</span>}
-                </div>
-                {loadingYears ? (
-                  <p className="text-white/60 text-sm">Loading years...</p>
-                ) : availableYears.length > 0 ? (
-                  <div className="space-y-1.5 overflow-y-auto max-h-48 md:max-h-64">
-                    {availableYears.map((year) => (
-                      <button
-                        key={year}
-                        onClick={() => setSelectedYear(year)}
-                        className={`w-full px-4 py-2.5 rounded border transition text-white font-semibold text-sm ${
-                          selectedYear === year
-                            ? 'bg-[#d4af37] text-black border-[#d4af37]'
-                            : 'bg-[#1a1a1a] border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        {year}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
-                )}
-                {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-                <div className="flex gap-2 mt-auto pt-2">
-                  <button
-                    onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
-                    className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleConfirmYear}
-                    disabled={!selectedYear || addingPlayer}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm retro-title"
-                  >
-                    {addingPlayer ? 'Adding...' : 'Confirm'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-            {hardMode && !myLineup?.hasPickedThisRound ? (
-              // Hard mode: waiting for your turn
-              <div>
-                <p className="text-lg text-yellow-400 font-semibold mb-1">Waiting for your turn</p>
-                <p className="text-white/50 sports-font text-sm">
-                  {players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'} is picking
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
-                <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
-              </div>
-            )}
-            {!hardMode && waitingFor.length > 0 && (
-              <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
-                <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
-                {waitingFor.map(p => (
-                  <div key={p.player_id} className="flex items-center gap-2 py-1">
-                    <span className="text-yellow-400 text-xs">⏳</span>
-                    <span className="text-white/70 text-sm">{p.player_name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </motion.div>
-    );
-
-    // Reusable scores panel content
-    const scoresPanel = (
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="bg-black/60 border-2 border-white/10 rounded p-4 flex-1 overflow-y-auto"
-      >
-        <h3 className="retro-title text-base text-[#d4af37] mb-3">Lineups</h3>
-        <div className="space-y-3">
-          {players.map((player) => {
-            const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
-            const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
-            const isMe = player.player_id === currentPlayerId;
-            const maskCurrentRound = canPickThisRound && !isMe;
-            const visiblePicks = maskCurrentRound
-              ? (lineup?.selectedPlayers.slice(0, currentRound - 1) ?? [])
-              : (lineup?.selectedPlayers ?? []);
-            const myBustCount = isMe ? (lineup?.bustCount ?? 0) : 0;
-
-            return (
-              <div
-                key={player.id}
-                className={`p-3 rounded border-2 transition ${
-                  isMe ? 'border-[#d4af37] bg-[#1a1a1a]' : 'border-white/10 bg-black/40'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className={`font-semibold text-sm ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
-                      {player.player_name}
-                    </p>
-                    {isMe && myBustCount > 0 && (
-                      <p className="text-[9px] text-red-400/70 sports-font">{myBustCount} bust{myBustCount !== 1 ? 's' : ''}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {hasPicked ? (
-                      <span className="text-emerald-400 text-sm">✓</span>
-                    ) : (
-                      <span className="text-yellow-400 text-sm">⏳</span>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-1 mb-2 text-xs">
-                  {visiblePicks.map((selected, idx) => (
-                    <div key={idx} className={`flex justify-between ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-300' : 'text-white/70'}`}>
-                      <div className="flex-1 min-w-0 flex items-baseline gap-1">
-                        <span className={`truncate text-xs ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400' : ''}`}>{selected.playerName}</span>
-                        {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
-                        <span className={`ml-1 text-[10px] ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
-                      </div>
-                      {isMe && (
-                        <span className={`font-semibold ml-1 flex-shrink-0 ${(selected.isBust || selected.statValue === 0) ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                          {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                  {maskCurrentRound && hasPicked && (
-                    <div className="text-white/20 italic text-[10px]">Pick hidden until you submit</div>
-                  )}
-                </div>
-                <div className="flex justify-between text-xs border-t border-white/10 pt-1.5">
-                  <span className="text-white/40">{visiblePicks.length}/{totalRounds}</span>
-                  {isMe ? (
-                    <span className="font-semibold text-white">
-                      {fmt(lineup?.totalStat ?? 0)}
-                    </span>
-                  ) : (
-                    <span className="font-semibold text-white/20">—</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
-    );
-
     const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
 
     return (
       <div className="h-[100dvh] bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
         <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
-        {/* Green felt background */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
           style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
         />
 
-        {/* EXACT HIT CELEBRATION OVERLAY */}
+        {/* Exact hit celebration overlay */}
         {showExactHit && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -888,7 +567,6 @@ export function MultiplayerCapCrunchPage() {
             className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(0,0,0,0.9) 100%)' }}
           >
-            {/* Radiating rings */}
             {[0, 0.25, 0.5].map((delay, i) => (
               <motion.div
                 key={i}
@@ -899,7 +577,6 @@ export function MultiplayerCapCrunchPage() {
                 transition={{ duration: 1.4, ease: 'easeOut', delay }}
               />
             ))}
-            {/* Text content */}
             <motion.div
               initial={{ scale: 0.3, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -920,88 +597,23 @@ export function MultiplayerCapCrunchPage() {
           </motion.div>
         )}
 
-        {/* ── Header ── */}
-        <header className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
-          <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
-            <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
-            <div className="flex items-center gap-2">
-              {hardMode && (
-                <div className={`px-3 py-1 rounded-sm border ${
-                  currentPickerId === currentPlayerId
-                    ? 'bg-yellow-400/20 border-yellow-400/60'
-                    : 'bg-black/40 border-white/20'
-                }`}>
-                  <span className={`retro-title text-xs ${
-                    currentPickerId === currentPlayerId ? 'text-yellow-400' : 'text-white/50'
-                  }`}>
-                    {currentPickerId === currentPlayerId
-                      ? 'Your Turn'
-                      : `${players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'}'s Turn`}
-                  </span>
-                </div>
-              )}
-              <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
-                <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
-              </div>
-            </div>
-          </div>
-          {/* Team + compact stats row */}
-          <div className="flex items-center gap-3 px-4 py-2">
-            {isDivisionRound(currentTeam) ? (
-              <motion.div
-                key={currentTeam + currentRound}
-                initial={{ opacity: 0, rotateY: -90 }}
-                animate={{ opacity: 1, rotateY: 0 }}
-                exit={{ opacity: 0, rotateY: 90 }}
-                transition={{ duration: 0.5, ease: 'easeInOut' }}
-                style={{ perspective: 600 }}
-                className="px-5 py-2 rounded border-2 bg-black border-[#d4af37]/80 shadow-[0_0_12px_rgba(212,175,55,0.25)]"
-              >
-                <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
-                <p className="retro-title text-2xl md:text-3xl font-bold text-[#d4af37] leading-tight">
-                  {currentTeam}
-                </p>
-                <p className="sports-font text-[8px] text-white/40 leading-none mt-0.5">
-                  {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
-                </p>
-              </motion.div>
-            ) : (
-              <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
-            )}
-            <div className="flex gap-1.5 md:gap-2 ml-auto">
-              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Target</div>
-                <p className="retro-title text-sm md:text-lg text-white leading-none">{targetCap}</p>
-              </div>
-              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">{isCareerStatRound ? 'Career' : 'Stat'}</div>
-                <p className="retro-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory!)}</p>
-              </div>
-              {/* My running total — always visible */}
-              <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
-                <SpinningNumber
-                  value={fmt(myLineup?.totalStat ?? 0)}
-                  className="retro-title text-sm md:text-lg leading-none"
-                  color={getTotalColor(myLineup?.totalStat ?? 0, targetCap)}
-                  flashKey={badFlashKey}
-                />
-              </div>
-              {/* Remaining to cap */}
-              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
-                <SpinningNumber
-                  value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
-                  className="retro-title text-sm md:text-lg leading-none"
-                  color={getRemainingColor(myLineup?.totalStat ?? 0, targetCap)}
-                  flashKey={badFlashKey}
-                />
-              </div>
-            </div>
-          </div>
-        </header>
+        <CapCrunchHeader
+          hardMode={hardMode}
+          currentPickerId={currentPickerId}
+          currentPlayerId={currentPlayerId}
+          players={players}
+          currentRound={currentRound}
+          totalRounds={totalRounds}
+          currentTeam={currentTeam}
+          selectedSport={selectedSport as 'nba' | 'nfl' | null}
+          targetCap={targetCap}
+          statCategory={statCategory}
+          myLineup={myLineup}
+          badFlashKey={badFlashKey}
+          isCareerStatRound={isCareerStatRound}
+        />
 
-        {/* ── Mobile tab bar (hidden on md+) ── */}
+        {/* Mobile tab bar */}
         <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/40">
           {(['pick', 'scores'] as const).map(tab => (
             <button
@@ -1013,21 +625,59 @@ export function MultiplayerCapCrunchPage() {
                   : 'text-white/40'
               }`}
             >
-              {tab === 'pick' ? (canPickThisRound ? '🟡 Pick' : '✓ Pick') : `Scores`}
+              {tab === 'pick' ? (canPickThisRound ? '🟡 Pick' : '✓ Pick') : 'Scores'}
             </button>
           ))}
         </div>
 
-        {/* ── Main content ── */}
         <main className="relative z-10 flex-1 min-h-0 w-full overflow-hidden">
           {/* Mobile: single tab panel */}
           <div className="md:hidden h-full p-3 flex flex-col">
-            {mobileTab === 'pick' ? pickPanel : scoresPanel}
+            {mobileTab === 'pick' ? (
+              <CapCrunchPickPanel
+                myLineup={myLineup}
+                canPickThisRound={canPickThisRound}
+                hardMode={hardMode}
+                currentPickerId={currentPickerId}
+                players={players}
+                totalRounds={totalRounds}
+                selectedPlayerName={selectedPlayerName}
+                isNoYearSelect={isNoYearSelect}
+                isCareerStatRound={isCareerStatRound}
+                currentTeam={currentTeam}
+                searchQuery={searchQuery}
+                searchResults={searchResults}
+                loading={loading}
+                loadingYears={loadingYears}
+                availableYears={availableYears}
+                selectedYear={selectedYear}
+                duplicateError={duplicateError}
+                pickError={pickError}
+                addingPlayer={addingPlayer}
+                usedPlayerNames={usedPlayerNames}
+                lockedPlayerNames={lockedPlayerNames}
+                waitingFor={waitingFor}
+                selectedSport={selectedSport as 'nba' | 'nfl' | null}
+                onSearch={handleSearch}
+                onSelectPlayer={handleSelectPlayer}
+                onSelectYear={setSelectedYear}
+                onConfirm={handleConfirmYear}
+                onBack={handleBackFromPlayer}
+              />
+            ) : (
+              <CapCrunchScoresPanel
+                players={players}
+                allLineups={allLineups}
+                currentPlayerId={currentPlayerId}
+                currentRound={currentRound}
+                totalRounds={totalRounds}
+                canPickThisRound={canPickThisRound}
+              />
+            )}
           </div>
 
           {/* Desktop: 3-column layout */}
           <div className="hidden md:flex h-full px-6 py-4 gap-4">
-            {/* Left Column */}
             <div className="w-52 flex flex-col gap-4">
               <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
                 <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
@@ -1035,20 +685,58 @@ export function MultiplayerCapCrunchPage() {
               </div>
               <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
                 <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
-                <p className="retro-title text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
+                <p className="retro-title text-2xl text-white">{isCareerStatRound ? 'Career' : statCategory?.toUpperCase()}</p>
               </div>
             </div>
-            {/* Middle Column */}
-            <div className="flex-1 flex flex-col">{pickPanel}</div>
-            {/* Right Column */}
-            <div className="w-96 flex flex-col">{scoresPanel}</div>
+            <div className="flex-1 flex flex-col">
+              <CapCrunchPickPanel
+                myLineup={myLineup}
+                canPickThisRound={canPickThisRound}
+                hardMode={hardMode}
+                currentPickerId={currentPickerId}
+                players={players}
+                totalRounds={totalRounds}
+                selectedPlayerName={selectedPlayerName}
+                isNoYearSelect={isNoYearSelect}
+                isCareerStatRound={isCareerStatRound}
+                currentTeam={currentTeam}
+                searchQuery={searchQuery}
+                searchResults={searchResults}
+                loading={loading}
+                loadingYears={loadingYears}
+                availableYears={availableYears}
+                selectedYear={selectedYear}
+                duplicateError={duplicateError}
+                pickError={pickError}
+                addingPlayer={addingPlayer}
+                usedPlayerNames={usedPlayerNames}
+                lockedPlayerNames={lockedPlayerNames}
+                waitingFor={waitingFor}
+                selectedSport={selectedSport as 'nba' | 'nfl' | null}
+                onSearch={handleSearch}
+                onSelectPlayer={handleSelectPlayer}
+                onSelectYear={setSelectedYear}
+                onConfirm={handleConfirmYear}
+                onBack={handleBackFromPlayer}
+              />
+            </div>
+            <div className="w-96 flex flex-col">
+              <CapCrunchScoresPanel
+                players={players}
+                allLineups={allLineups}
+                currentPlayerId={currentPlayerId}
+                currentRound={currentRound}
+                totalRounds={totalRounds}
+                canPickThisRound={canPickThisRound}
+              />
+            </div>
           </div>
         </main>
       </div>
     );
   }
 
-  // ── Results screen ─────────────────────────────────────────────────────────
+  // ── Results screen ───────────────────────────────────────────────────────────
   if (phase === 'results') {
     const avgPickYear = (lineup: PlayerLineup): number => {
       const picks = lineup.selectedPlayers;
@@ -1062,19 +750,13 @@ export function MultiplayerCapCrunchPage() {
         lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false }) as PlayerLineup,
       }))
       .sort((a, b) => {
-        // Primary: highest score
         if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
-        // Tiebreak 1: fewer busts
         const aBusts = a.lineup.bustCount ?? 0, bBusts = b.lineup.bustCount ?? 0;
         if (aBusts !== bBusts) return aBusts - bBusts;
-        // Tiebreak 2: older avg pick year
         return avgPickYear(a.lineup) - avgPickYear(b.lineup);
       });
 
-    // Detect whether 1st and 2nd place are tied on score (tiebreaker decided it)
-    const tiedOnScore =
-      sortedLineups.length >= 2 &&
-      sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat;
+    const tiedOnScore = sortedLineups.length >= 2 && sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat;
     const tiedOnBusts = tiedOnScore && (sortedLineups[0].lineup.bustCount ?? 0) === (sortedLineups[1].lineup.bustCount ?? 0);
     const tiebreakerUsed = tiedOnScore;
 
@@ -1109,113 +791,23 @@ export function MultiplayerCapCrunchPage() {
               </div>
             )}
 
-            {/* Reveal order: last place enters first, winner enters last for drama */}
+            {/* Reveal order: last place enters first, winner enters last */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedLineups.map((item, idx) => {
-                const isWinner = idx === 0;
-                const reverseDelay = (sortedLineups.length - 1 - idx) * 0.65;
-                const scoreDelay = (sortedLineups.length - 1 - idx) * 650 + 450;
-                return (
-                <motion.div
+              {sortedLineups.map((item, idx) => (
+                <CapCrunchResultCard
                   key={item.id}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: reverseDelay, type: 'spring', stiffness: 300, damping: 26 }}
-                  className={`bg-black/60 rounded p-4 border-2 ${isWinner ? 'border-[#d4af37]/70 shadow-[0_0_24px_rgba(212,175,55,0.2)]' : 'border-white/10'}`}
-                >
-                  <div className="flex justify-between items-start mb-3 gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {isWinner && (
-                          <span className="sports-font text-[8px] bg-[#d4af37] text-black px-1.5 py-0.5 rounded-sm font-bold tracking-widest uppercase shrink-0">Winner</span>
-                        )}
-                        <p className="font-semibold text-white text-lg truncate">
-                          {idx + 1}. {item.player_name}
-                        </p>
-                      </div>
-                      {(item.lineup.bustCount ?? 0) > 0 && (
-                        <span className="text-[9px] sports-font text-red-400/70">{item.lineup.bustCount} bust{item.lineup.bustCount !== 1 ? 's' : ''} (each counted as 0)</span>
-                      )}
-                      {tiebreakerUsed && tiedOnBusts && idx <= 1 && (
-                        <span className="block text-[9px] sports-font text-[#d4af37]/60">avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
-                      )}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <RevealingScore
-                        value={fmt(item.lineup.totalStat)}
-                        delay={scoreDelay}
-                        className="retro-title text-3xl"
-                        color={isWinner ? '#d4af37' : '#ffffff'}
-                      />
-                      <p className="text-xs text-white/40">
-                        {fmt(Math.abs(item.lineup.totalStat - targetCap))} away
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-xs mb-3 border-t border-white/10 pt-3">
-                    {item.lineup.selectedPlayers.map((selected, pidx) => {
-                      const isBust = selected.isBust;
-                      const isNotOnTeam = !isBust && selected.neverOnTeam;
-                      const isMiss = !isBust && !isNotOnTeam && selected.statValue === 0;
-                      const isBad = isBust || isMiss || isNotOnTeam;
-                      const badLabel = isBust ? 'BUST' : isNotOnTeam ? 'NOT ON TEAM' : '0 STAT';
-                      return (
-                        <div key={pidx} className={`flex justify-between ${isBad ? 'text-red-300' : 'text-white/70'}`}>
-                          <div className="flex-1">
-                            <div className="flex items-baseline gap-1">
-                              <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
-                              {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
-                            </div>
-                            <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
-                            {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
-                            {isNotOnTeam && <span className="block text-[10px] text-orange-400/60">Never played for this team — scored 0</span>}
-                          </div>
-                          <span className={`font-semibold ml-2 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                            {isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Optimal last pick hint */}
-                  {(() => {
-                    const opt = optimalPicks.get(item.player_id);
-                    if (!opt || item.lineup.selectedPlayers.length === 0) return null;
-                    const lastPick = item.lineup.selectedPlayers[item.lineup.selectedPlayers.length - 1];
-                    const totalBeforeLast = lastPick.isBust
-                      ? item.lineup.totalStat
-                      : parseFloat((item.lineup.totalStat - lastPick.statValue).toFixed(1));
-                    const wouldFinishAt = parseFloat((totalBeforeLast + opt.statValue).toFixed(1));
-                    return (
-                      <div className="mt-2 bg-black/40 border border-[#d4af37]/25 rounded px-3 py-2">
-                        <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-1">Optimal Last Pick</div>
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="text-xs text-white/80 font-medium">{opt.playerName}</span>
-                            <span className="text-[10px] text-white/35 ml-2">
-                              {opt.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory!) : 'Career GP') : opt.year} · {opt.team}
-                            </span>
-                            {lastPick.isBust && (
-                              <span className="block text-[10px] text-emerald-400/70 mt-0.5">
-                                Would finish: {fmt(wouldFinishAt)} / {targetCap}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <span className="text-sm text-[#d4af37] font-semibold">{fmt(opt.statValue)}</span>
-                            {opt.statValue > lastPick.statValue && (
-                              <span className="text-[10px] text-emerald-400/70 ml-1">+{fmt(opt.statValue - lastPick.statValue)}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </motion.div>
-                );
-              })}
+                  item={item}
+                  idx={idx}
+                  isWinner={idx === 0}
+                  tiebreakerUsed={tiebreakerUsed}
+                  tiedOnBusts={tiedOnBusts}
+                  targetCap={targetCap}
+                  optimalPicks={optimalPicks}
+                  statCategory={statCategory!}
+                  isCareerStatRound={isCareerStatRound}
+                  avgPickYear={avgPickYear}
+                />
+              ))}
             </div>
 
             <div className="mt-8 flex flex-col gap-3">
