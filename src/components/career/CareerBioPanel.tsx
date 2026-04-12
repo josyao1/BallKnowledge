@@ -8,11 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface Bio {
   height?: string;
   weight?: number;
-  school?: string;
-  college?: string;
-  draftYear?: number;
-  draftClub?: string;
-  draftNumber?: number;
+  school?: string;   // NBA field
+  college?: string;  // NFL field — same concept as school, different key
+  draftYear?: number;              // NBA: year drafted
+  draftClub?: string;              // NFL: drafting team
+  draftNumber?: number;            // NFL: overall pick number
 }
 
 interface Props {

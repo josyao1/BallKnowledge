@@ -17,10 +17,12 @@ interface Player {
 
 interface Props {
   players: Player[];
+  /** Keyed by player_id */
   allLineups: Record<string, PlayerLineup>;
   currentPlayerId: string | null;
   currentRound: number;
   totalRounds: number;
+  /** When true, the current-round pick is hidden for opponents until the local player submits */
   canPickThisRound: boolean;
 }
 

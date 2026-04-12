@@ -11,7 +11,9 @@ import type { Sport } from '../../types';
 interface Props {
   columns: { key: string; label: string }[];
   seasons: any[];
+  /** Map of stat key → peak value; cells matching the high are highlighted gold */
   careerHighs: Record<string, number>;
+  /** When false, season year cells render as '???' to hide the player's era */
   yearsRevealed: boolean;
   sport: Sport;
 }
