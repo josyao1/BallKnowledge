@@ -35,6 +35,7 @@ __pycache__/
 *.pyc
 
 MCPs/
+.playwright-mcp/
 
 claudecontext.txt
 CLAUDE.md
