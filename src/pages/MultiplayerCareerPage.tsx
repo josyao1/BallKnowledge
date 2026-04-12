@@ -22,73 +22,13 @@ import {
 } from '../services/lobby';
 import { getNextGame, startPrefetch } from '../services/careerPrefetch';
 import { areSimilarNames } from '../utils/fuzzyDedup';
-import { normalizeTeamAbbr } from '../utils/teamAbbr';
+import { getColumns } from '../components/career/careerColumns';
+import { CareerStatsTable }   from '../components/career/CareerStatsTable';
+import { CareerBioPanel }     from '../components/career/CareerBioPanel';
+import { CareerWrongGuesses } from '../components/career/CareerWrongGuesses';
+import { CareerInitialsHint } from '../components/career/CareerInitialsHint';
+import { CareerControls }     from '../components/career/CareerControls';
 import type { Sport } from '../types';
-
-// ─── Column definitions ──────────────────────────────────────────────────────
-
-const NBA_COLUMNS = [
-  { key: 'season', label: 'Season' },
-  { key: 'team', label: 'Team' },
-  { key: 'gp', label: 'GP' },
-  { key: 'min', label: 'MIN' },
-  { key: 'pts', label: 'PTS' },
-  { key: 'reb', label: 'REB' },
-  { key: 'ast', label: 'AST' },
-  { key: 'stl', label: 'STL' },
-  { key: 'blk', label: 'BLK' },
-  { key: 'fg_pct', label: 'FG%' },
-  { key: 'fg3_pct', label: '3P%' },
-];
-
-const NFL_QB_COLUMNS = [
-  { key: 'season', label: 'Season' },
-  { key: 'team', label: 'Team' },
-  { key: 'gp', label: 'GP' },
-  { key: 'completions', label: 'Comp' },
-  { key: 'attempts', label: 'Att' },
-  { key: 'passing_yards', label: 'Pass Yds' },
-  { key: 'passing_tds', label: 'Pass TD' },
-  { key: 'interceptions', label: 'INT' },
-  { key: 'rushing_yards', label: 'Rush Yds' },
-];
-
-const NFL_RB_COLUMNS = [
-  { key: 'season', label: 'Season' },
-  { key: 'team', label: 'Team' },
-  { key: 'gp', label: 'GP' },
-  { key: 'carries', label: 'Rush Att' },
-  { key: 'rushing_yards', label: 'Rush Yds' },
-  { key: 'rushing_tds', label: 'Rush TD' },
-  { key: 'receptions', label: 'Rec' },
-  { key: 'receiving_yards', label: 'Rec Yds' },
-];
-
-const NFL_WR_TE_COLUMNS = [
-  { key: 'season', label: 'Season' },
-  { key: 'team', label: 'Team' },
-  { key: 'gp', label: 'GP' },
-  { key: 'targets', label: 'Targets' },
-  { key: 'receptions', label: 'Rec' },
-  { key: 'receiving_yards', label: 'Rec Yds' },
-  { key: 'receiving_tds', label: 'Rec TD' },
-];
-
-function getColumns(sport: Sport, position: string) {
-  if (sport === 'nba') return NBA_COLUMNS;
-  switch (position) {
-    case 'QB': return NFL_QB_COLUMNS;
-    case 'RB': return NFL_RB_COLUMNS;
-    default: return NFL_WR_TE_COLUMNS;
-  }
-}
-
-function formatStat(key: string, value: any): string {
-  if (key === 'fg_pct' || key === 'fg3_pct') {
-    return (value * 100).toFixed(1);
-  }
-  return String(value ?? 0);
-}
 
 const POSITION_NAMES: Record<string, string> = {
   PG: 'Point Guard', SG: 'Shooting Guard', SF: 'Small Forward',
@@ -660,114 +600,17 @@ export function MultiplayerCareerPage() {
         })}
       </div>
 
-      {/* Stat table */}
-      <div className="flex-1 overflow-x-auto mb-4">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b-2 border-[#333]">
-              {columns.map(col => (
-                <th key={col.key} className="px-3 py-2 text-left sports-font text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
-                  {col.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <AnimatePresence>
-              {(careerState.seasons || []).map((season: any, idx: number) => (
-                <motion.tr
-                  key={idx}
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: idx * 0.03 }}
-                  className="border-b border-[#222] hover:bg-[#1a1a1a]"
-                >
-                  {columns.map(col => {
-                    const isHigh = col.key !== 'season' && col.key !== 'team'
-                      && careerHighs[col.key] !== undefined
-                      && (Number(season[col.key]) || 0) === careerHighs[col.key];
-                    return (
-                      <td
-                        key={col.key}
-                        className={`px-3 py-2 sports-font text-xs whitespace-nowrap ${
-                          isHigh
-                            ? 'text-[#d4af37] bg-[#d4af37]/10 font-bold'
-                            : 'text-[var(--vintage-cream)]'
-                        }`}
-                      >
-                        {col.key === 'season'
-                          ? (yearsRevealed ? season.season : '???')
-                          : col.key === 'team'
-                            ? normalizeTeamAbbr(formatStat(col.key, season[col.key]), sport)
-                            : formatStat(col.key, season[col.key])
-                        }
-                      </td>
-                    );
-                  })}
-                </motion.tr>
-              ))}
-            </AnimatePresence>
-          </tbody>
-        </table>
-      </div>
+      <CareerStatsTable
+        columns={columns}
+        seasons={careerState.seasons || []}
+        careerHighs={careerHighs}
+        yearsRevealed={yearsRevealed}
+        sport={sport}
+      />
 
-      {/* Bio panel */}
-      <AnimatePresence>
-        {bioRevealed && careerState.bio && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-4 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
-          >
-            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-2 uppercase">Player Bio</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {careerState.bio.height && (
-                <div>
-                  <div className="sports-font text-[8px] text-[#666] tracking-wider">HEIGHT</div>
-                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.height}</div>
-                </div>
-              )}
-              {careerState.bio.weight > 0 && (
-                <div>
-                  <div className="sports-font text-[8px] text-[#666] tracking-wider">WEIGHT</div>
-                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.weight} lbs</div>
-                </div>
-              )}
-              {(careerState.bio.school || careerState.bio.college) && (
-                <div>
-                  <div className="sports-font text-[8px] text-[#666] tracking-wider">SCHOOL</div>
-                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.school || careerState.bio.college}</div>
-                </div>
-              )}
-              {careerState.bio.draftYear ? (
-                <div>
-                  <div className="sports-font text-[8px] text-[#666] tracking-wider">DRAFT</div>
-                  <div className="sports-font text-sm text-[var(--vintage-cream)]">{careerState.bio.draftYear}</div>
-                </div>
-              ) : careerState.bio.draftClub ? (
-                <div>
-                  <div className="sports-font text-[8px] text-[#666] tracking-wider">DRAFT</div>
-                  <div className="sports-font text-sm text-[var(--vintage-cream)]">
-                    {careerState.bio.draftClub} #{careerState.bio.draftNumber}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <CareerBioPanel bio={careerState.bio} revealed={bioRevealed} />
 
-      {/* Wrong guesses */}
-      {localGuesses.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {localGuesses.map((g, i) => (
-            <span key={i} className="px-2 py-1 bg-red-900/30 border border-red-800/50 rounded text-xs sports-font text-red-300">
-              {g}
-            </span>
-          ))}
-        </div>
-      )}
+      <CareerWrongGuesses guesses={localGuesses} />
 
       {/* Done message */}
       <AnimatePresence>
@@ -786,79 +629,24 @@ export function MultiplayerCareerPage() {
         )}
       </AnimatePresence>
 
-      {/* Initials hint display */}
-      <AnimatePresence>
-        {initialsRevealed && playerInitials && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-3 flex items-center justify-center gap-3"
-          >
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Initials</div>
-            <div className="retro-title text-2xl text-[#d4af37] tracking-widest">{playerInitials}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <CareerInitialsHint revealed={initialsRevealed} initials={playerInitials} />
 
-      {/* Controls */}
       {!isDone && (
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={guessInput}
-              onChange={e => setGuessInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleGuess()}
-              placeholder="Type player name..."
-              className="flex-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none focus:border-[#555]"
-              autoFocus
-            />
-            <button
-              onClick={handleGuess}
-              disabled={!guessInput.trim()}
-              className="px-6 py-3 rounded-lg sports-font text-sm text-white disabled:opacity-50 transition-all"
-              style={{ backgroundColor: accentColor }}
-            >
-              Guess
-            </button>
-          </div>
-
-          {feedbackMsg && (
-            <div className={`text-center sports-font text-sm ${feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-              {feedbackMsg}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              onClick={handleRevealYears}
-              disabled={yearsRevealed}
-              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
-            >
-              {yearsRevealed ? 'Years Shown' : 'Show Years (-3)'}
-            </button>
-            <button
-              onClick={handleRevealBio}
-              disabled={bioRevealed}
-              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
-            >
-              {bioRevealed ? 'Bio Shown' : 'Show Bio (-3)'}
-            </button>
-            <button
-              onClick={handleRevealInitials}
-              disabled={initialsRevealed}
-              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3d3d3d] text-[var(--vintage-cream)] hover:border-[#555] disabled:opacity-30 transition-all"
-            >
-              {initialsRevealed ? 'Initials Shown' : 'Show Initials (-10)'}
-            </button>
-            <button
-              onClick={handleGiveUp}
-              className="px-4 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all"
-            >
-              Give Up
-            </button>
-          </div>
-        </div>
+        <CareerControls
+          guessInput={guessInput}
+          onGuessChange={setGuessInput}
+          onGuess={handleGuess}
+          feedbackMessage={feedbackMsg}
+          feedbackType={feedbackType}
+          accentColor={accentColor}
+          yearsRevealed={yearsRevealed}
+          bioRevealed={bioRevealed}
+          initialsRevealed={initialsRevealed}
+          onRevealYears={handleRevealYears}
+          onRevealBio={handleRevealBio}
+          onRevealInitials={handleRevealInitials}
+          onGiveUp={handleGiveUp}
+        />
       )}
     </div>
   );
