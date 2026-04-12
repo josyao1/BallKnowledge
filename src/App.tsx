@@ -7,32 +7,32 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-import { GamePage } from './pages/GamePage';
-import { ResultsPage } from './pages/ResultsPage';
-import { LobbyCreatePage } from './pages/LobbyCreatePage';
-import { LobbyJoinPage } from './pages/LobbyJoinPage';
-import { LobbyWaitingPage } from './pages/LobbyWaitingPage';
-import { MultiplayerResultsPage } from './pages/MultiplayerResultsPage';
-import { RollCallCreatePage } from './pages/RollCallCreatePage';
-import { RollCallSessionPage } from './pages/RollCallSessionPage';
-import { RollCallResultsPage } from './pages/RollCallResultsPage';
-import { CareerGamePage } from './pages/CareerGamePage';
-import { CareerResultsPage } from './pages/CareerResultsPage';
-import { MultiplayerCareerPage } from './pages/MultiplayerCareerPage';
-import { MultiplayerCareerResultsPage } from './pages/MultiplayerCareerResultsPage';
-import { MultiplayerNameScramblePage } from './pages/MultiplayerNameScramblePage';
-import { MultiplayerNameScrambleResultsPage } from './pages/MultiplayerNameScrambleResultsPage';
-import { SoloScramblePage } from './pages/SoloScramblePage';
-import { SoloCapCrunchPage } from './pages/SoloCapCrunchPage';
-import { MultiplayerCapCrunchPage } from './pages/MultiplayerCapCrunchPage';
-import { MultiplayerCapCrunchResultsPage } from './pages/MultiplayerCapCrunchResultsPage';
-import { BoxScoreGamePage } from './pages/BoxScoreGamePage';
-import { BoxScoreResultsPage } from './pages/BoxScoreResultsPage';
-import { MultiplayerBoxScorePage } from './pages/MultiplayerBoxScorePage';
-import { MultiplayerBoxScoreResultsPage } from './pages/MultiplayerBoxScoreResultsPage';
-import { SoloStartingLineupPage } from './pages/SoloStartingLineupPage';
-import { MultiplayerStartingLineupPage } from './pages/MultiplayerStartingLineupPage';
-import { MultiplayerStartingLineupResultsPage } from './pages/MultiplayerStartingLineupResultsPage';
+import { GamePage }             from './pages/roster/GamePage';
+import { ResultsPage }          from './pages/roster/ResultsPage';
+import { MultiplayerResultsPage } from './pages/roster/MultiplayerResultsPage';
+import { LobbyCreatePage }      from './pages/lobby/LobbyCreatePage';
+import { LobbyJoinPage }        from './pages/lobby/LobbyJoinPage';
+import { LobbyWaitingPage }     from './pages/lobby/LobbyWaitingPage';
+import { RollCallCreatePage }   from './pages/rollcall/RollCallCreatePage';
+import { RollCallSessionPage }  from './pages/rollcall/RollCallSessionPage';
+import { RollCallResultsPage }  from './pages/rollcall/RollCallResultsPage';
+import { CareerGamePage }                from './pages/career/CareerGamePage';
+import { CareerResultsPage }             from './pages/career/CareerResultsPage';
+import { MultiplayerCareerPage }         from './pages/career/MultiplayerCareerPage';
+import { MultiplayerCareerResultsPage }  from './pages/career/MultiplayerCareerResultsPage';
+import { SoloScramblePage }                    from './pages/scramble/SoloScramblePage';
+import { MultiplayerNameScramblePage }         from './pages/scramble/MultiplayerNameScramblePage';
+import { MultiplayerNameScrambleResultsPage }  from './pages/scramble/MultiplayerNameScrambleResultsPage';
+import { SoloCapCrunchPage }               from './pages/capCrunch/SoloCapCrunchPage';
+import { MultiplayerCapCrunchPage }        from './pages/capCrunch/MultiplayerCapCrunchPage';
+import { MultiplayerCapCrunchResultsPage } from './pages/capCrunch/MultiplayerCapCrunchResultsPage';
+import { BoxScoreGamePage }                from './pages/boxScore/BoxScoreGamePage';
+import { BoxScoreResultsPage }             from './pages/boxScore/BoxScoreResultsPage';
+import { MultiplayerBoxScorePage }         from './pages/boxScore/MultiplayerBoxScorePage';
+import { MultiplayerBoxScoreResultsPage }  from './pages/boxScore/MultiplayerBoxScoreResultsPage';
+import { SoloStartingLineupPage }                   from './pages/startingLineup/SoloStartingLineupPage';
+import { MultiplayerStartingLineupPage }            from './pages/startingLineup/MultiplayerStartingLineupPage';
+import { MultiplayerStartingLineupResultsPage }     from './pages/startingLineup/MultiplayerStartingLineupResultsPage';
 
 function App() {
   return (
