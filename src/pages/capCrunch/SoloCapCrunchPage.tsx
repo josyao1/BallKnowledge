@@ -25,7 +25,10 @@ import {
   addPlayerToLineup,
   assignRandomTeam,
   isDivisionRound,
+  isConferenceRound,
   NFL_DIVISIONS,
+  P4_CONFERENCES,
+  CONFERENCE_LOGOS,
   findOptimalLastPick,
   isCareerStat,
 
@@ -72,6 +75,7 @@ export function SoloCapCrunchPage() {
   const [pickError, setPickError] = useState<string | null>(null);
   const [showExactHit, setShowExactHit] = useState(false);
   const [badFlashKey, setBadFlashKey] = useState(0);
+  const [showSchools, setShowSchools] = useState(false);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -488,9 +492,60 @@ export function SoloCapCrunchPage() {
             <h1 className="retro-title text-2xl text-[#d4af37]">Cap Crunch</h1>
             <div className="w-16" />
           </div>
-          {/* Team / Division Display */}
+          {/* Team / Division / Conference Display */}
           <div className="flex items-center justify-center py-3 px-4">
-            {isDivisionRound(currentTeam) ? (
+            {isConferenceRound(currentTeam) ? (
+              <motion.div
+                key={currentTeam}
+                initial={{ opacity: 0, rotateY: -90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                exit={{ opacity: 0, rotateY: 90 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ perspective: 600 }}
+                className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#3b82f6]/60"
+              >
+                <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Conference</p>
+                {CONFERENCE_LOGOS[currentTeam] ? (
+                  <div className={`my-1 rounded px-1 py-0.5 mx-auto w-fit ${currentTeam === 'Big Ten' ? 'bg-white/15' : ''}`}>
+                    <img
+                      src={CONFERENCE_LOGOS[currentTeam]}
+                      alt={currentTeam}
+                      className="h-12 md:h-16 object-contain"
+                    />
+                  </div>
+                ) : (
+                  <p className="retro-title text-2xl md:text-4xl font-bold tracking-tight text-[#3b82f6]">
+                    {currentTeam}
+                  </p>
+                )}
+                {currentTeam === 'Non-P4' ? (
+                  <p className="sports-font text-[7px] text-white/35 leading-none mt-0.5">
+                    any year — just need to have attended a non-P4 school
+                  </p>
+                ) : (
+                  <button
+                    onClick={() => setShowSchools(v => !v)}
+                    className="sports-font text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] mt-0.5 transition-colors"
+                  >
+                    {showSchools ? 'hide schools ▲' : 'see schools ▼'}
+                  </button>
+                )}
+                {showSchools && currentTeam in P4_CONFERENCES && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mt-1.5 pt-1.5 border-t border-[#3b82f6]/20"
+                  >
+                    <p className="sports-font text-[7px] text-white/40 leading-relaxed">
+                      {(P4_CONFERENCES[currentTeam] ?? [])
+                        .filter(s => !s.includes('&amp;') && !s.includes('amp;'))
+                        .filter((s, i, a) => a.indexOf(s) === i)
+                        .join(' · ')}
+                    </p>
+                  </motion.div>
+                )}
+              </motion.div>
+            ) : isDivisionRound(currentTeam) ? (
               <motion.div
                 key={currentTeam}
                 initial={{ opacity: 0, rotateY: -90 }}
@@ -825,6 +880,9 @@ export function SoloCapCrunchPage() {
                         <div className="retro-title text-sm text-white truncate">{optimalPick.playerName}</div>
                         <div className="sports-font text-[9px] text-white/40 mt-0.5">
                           {optimalPick.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory!) : 'Career GP') : optimalPick.year} · {optimalPick.team}
+                          {optimalPick.college && (
+                            <span className="text-[#3b82f6]/60 ml-1">({optimalPick.college})</span>
+                          )}
                         </div>
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
@@ -920,7 +978,7 @@ export function SoloCapCrunchPage() {
                             <div className="text-[9px] text-red-400/70 mt-0.5">Exceeded cap — scored 0, total reverted</div>
                           )}
                           {isNotOnTeam && (
-                            <div className="text-[9px] text-orange-400/70 mt-0.5">Never played for this team — scored 0</div>
+                            <div className="text-[9px] text-orange-400/70 mt-0.5">Didn't qualify for this round — scored 0</div>
                           )}
                         </div>
                         <div className="text-right flex-shrink-0">

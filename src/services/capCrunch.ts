@@ -359,19 +359,108 @@ function teamInDivision(dataTeam: string, division: string): boolean {
 }
 
 /**
- * Select a random team (or division) for the given sport.
- * For NFL, ~25% of rounds use a whole division instead of a single team,
- * unless the stat category is total_gp (career GP is team-specific only).
- * Pass excludeTeams to avoid repeating teams across rounds (falls back to full
- * pool if all teams have been used).
+ * P4 college conferences with all school name variants found in the data
+ * (e.g. "Louisiana State" for LSU, "Southern California" for USC, HTML entities).
+ * "Non-P4" is a virtual conference — players who attended at least one non-P4 school.
+ */
+export const P4_CONFERENCES: Record<string, string[]> = {
+  'SEC': [
+    'Alabama', 'Arkansas', 'Auburn', 'Florida', 'Georgia', 'Kentucky',
+    'LSU', 'Louisiana State',
+    'Mississippi', 'Mississippi State', 'Ole Miss',
+    'Missouri', 'Oklahoma',
+    'South Carolina', 'Tennessee', 'Texas',
+    'Texas A&M', 'Texas A&amp;M',
+    'Vanderbilt',
+  ],
+  'Big Ten': [
+    'Illinois', 'Indiana', 'Iowa', 'Maryland',
+    'Michigan', 'Michigan State',
+    'Minnesota', 'Nebraska', 'Northwestern', 'Ohio State', 'Oregon',
+    'Penn State', 'Purdue', 'Rutgers', 'UCLA',
+    'USC', 'Southern California',
+    'Washington', 'Wisconsin',
+  ],
+  'Big 12': [
+    'Arizona', 'Arizona State', 'Baylor',
+    'BYU', 'Brigham Young',
+    'Cincinnati', 'Colorado', 'Houston', 'Iowa State',
+    'Kansas', 'Kansas State', 'Oklahoma State', 'TCU', 'Texas Tech',
+    'UCF', 'Central Florida',
+    'Utah', 'West Virginia',
+  ],
+  'ACC': [
+    'Boston College', 'Clemson', 'California', 'Duke', 'Florida State',
+    'Georgia Tech', 'Louisville', 'Miami',
+    'NC State', 'North Carolina State',
+    'North Carolina', 'Notre Dame', 'Pittsburgh', 'SMU', 'Stanford',
+    'Syracuse', 'Virginia', 'Virginia Tech', 'Wake Forest',
+  ],
+};
+
+const ALL_P4_SCHOOLS = new Set<string>(
+  Object.values(P4_CONFERENCES).flat().map(s => s.toLowerCase())
+);
+
+const COLLEGE_TO_CONF: Record<string, string> = {};
+for (const [conf, schools] of Object.entries(P4_CONFERENCES)) {
+  for (const school of schools) {
+    COLLEGE_TO_CONF[school.toLowerCase()] = conf;
+  }
+}
+
+export const CONFERENCE_LOGOS: Record<string, string> = {
+  'SEC':     '/sec.png',
+  'Big Ten': '/b10.png',
+  'Big 12':  '/b12.png',
+  'ACC':     '/acc.png',
+};
+
+/** Returns true if the string is a P4 conference name or "Non-P4". */
+export function isConferenceRound(s: string): boolean {
+  return s in P4_CONFERENCES || s === 'Non-P4';
+}
+
+/**
+ * Returns true if the player's college(s) match the given conference.
+ * Handles semicolon-separated colleges (e.g. "USC; Oklahoma").
+ * "Non-P4" qualifies if the player attended at least one non-P4 school.
+ * Players with no college data are treated as Non-P4.
+ */
+function playerCollegeInConference(bio: any, conference: string): boolean {
+  const raw = (bio?.college ?? '') as string;
+  if (!raw.trim()) return conference === 'Non-P4';
+  const colleges = raw.split(';').map(c => c.trim()).filter(Boolean);
+  if (conference === 'Non-P4') {
+    return colleges.some(c => !ALL_P4_SCHOOLS.has(c.toLowerCase()));
+  }
+  return colleges.some(c => COLLEGE_TO_CONF[c.toLowerCase()] === conference);
+}
+
+/**
+ * Select a random team (or division/conference) for the given sport.
+ * For NFL non-career, non-total_gp rounds:
+ *   ~15% chance → random division
+ *   ~15% chance → random P4 conference (or Non-P4)
+ *   ~70% chance → single team
+ * Career/total_gp rounds always use a single team (conference/division don't apply).
+ * Pass excludeTeams to avoid repeating teams across rounds.
  */
 export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
-  // Career stat categories use specific teams only (no divisions — player just needs to have been on that team)
-  if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!) && Math.random() < 0.15) {
-    const divs = Object.keys(NFL_DIVISIONS);
-    const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
-    const pool = available.length > 0 ? available : divs;
-    return pool[Math.floor(Math.random() * pool.length)];
+  if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!)) {
+    const roll = Math.random();
+    if (roll < 0.15) {
+      const divs = Object.keys(NFL_DIVISIONS);
+      const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
+      const pool = available.length > 0 ? available : divs;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    if (roll < 0.30) {
+      const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
+      const available = excludeTeams ? confs.filter(c => !excludeTeams.includes(c)) : confs;
+      const pool = available.length > 0 ? available : confs;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
   }
   const allTeams = sport === 'nba' ? (TEST_NBA_TEAMS ?? NBA_TEAMS) : (TEST_NFL_TEAMS ?? NFL_TEAMS);
   const available = excludeTeams ? allTeams.filter(t => !excludeTeams.includes(t)) : allTeams;
@@ -709,6 +798,19 @@ export async function getPlayerStatForYearAndTeam(
 
       if (!player) return { value: 0, neverOnTeam: true };
 
+      // Conference round: qualify by college bio, not NFL team
+      if (isConferenceRound(team)) {
+        if (!playerCollegeInConference((player as any).bio, team)) return { value: 0, neverOnTeam: true };
+        if (isCareerStat(statCategory as StatCategory)) {
+          const field = careerStatField(statCategory as StatCategory);
+          return { value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0), neverOnTeam: false };
+        }
+        const season = player.seasons.find(s => s.season === year);
+        if (!season) return { value: 0, neverOnTeam: true };
+        const statKey = statCategory as keyof typeof season;
+        return { value: (season[statKey] as number) ?? 0, neverOnTeam: false };
+      }
+
       // Career stat: full career total, but only counts if player was on the assigned team at any point
       if (isCareerStat(statCategory as StatCategory)) {
         const wasOnTeam = player.seasons.some(s =>
@@ -801,6 +903,11 @@ export async function getPlayerTotalGPForTeam(
       const players = await loadNFLLineupPool();
       const player = findPlayer(players, playerName, playerId);
       if (!player) return { value: 0, neverOnTeam: true };
+      // Conference round: qualify by college, count all career GP
+      if (isConferenceRound(team)) {
+        if (!playerCollegeInConference((player as any).bio, team)) return { value: 0, neverOnTeam: true };
+        return { value: player.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+      }
       const seasonsOnTeam = player.seasons.filter(s =>
         isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
       );
@@ -912,9 +1019,10 @@ export function calculateWinners(
 
 export interface OptimalPick {
   playerName: string;
-  year: string;   // season string or 'career' for total_gp
-  team: string;   // actual team the player was on
+  year: string;      // season string or 'career' for total_gp
+  team: string;      // actual team the player was on
   statValue: number;
+  college?: string;  // set for conference rounds — the school that qualified them
 }
 
 /**
@@ -979,7 +1087,44 @@ export async function findOptimalLastPick(
     } else {
       const players = await loadNFLLineupPool();
 
-      if (statCategory === 'total_gp') {
+      // Conference round: qualify by college bio, not NFL team
+      if (isConferenceRound(team)) {
+        const confPlayers = players.filter(p => playerCollegeInConference((p as any).bio, team));
+        if (statCategory === 'total_gp') {
+          for (const p of confPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            const totalGP = p.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+            if (totalGP > actualStatValue && totalGP <= remainingBudget) {
+              if (!best || totalGP > best.statValue) {
+                best = { playerName: p.player_name, year: 'career', team, statValue: totalGP, college: (p as any).bio?.college };
+              }
+            }
+          }
+        } else if (statCategory && isCareerStat(statCategory)) {
+          const field = careerStatField(statCategory);
+          for (const p of confPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+            if (val > actualStatValue && val <= remainingBudget) {
+              if (!best || val >= best.statValue) {
+                best = { playerName: p.player_name, year: 'career', team, statValue: val, college: (p as any).bio?.college };
+              }
+            }
+          }
+        } else if (statCategory) {
+          for (const p of confPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            for (const s of p.seasons) {
+              const val = (s as any)[statCategory] ?? 0;
+              if (val > actualStatValue && val <= remainingBudget) {
+                if (!best || val >= best.statValue) {
+                  best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.college };
+                }
+              }
+            }
+          }
+        }
+      } else if (statCategory === 'total_gp') {
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
           const totalGP = p.seasons

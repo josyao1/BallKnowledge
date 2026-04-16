@@ -24,6 +24,7 @@ import {
   updateLobbyStatus,
   updatePlayerScore,
   addCareerPoints,
+  incrementPlayerWins,
   startCareerRound,
   updateCareerState,
 } from '../../services/lobby';
@@ -317,9 +318,11 @@ export function MultiplayerStartingLineupPage() {
       // Check if anyone won
       const updatedPlayers = await getLobbyPlayers(lobby.id);
       const winTarget = careerState.win_target;
-      const winner = (updatedPlayers.players || []).find(p => (p.wins || 0) >= winTarget);
+      const winner = (updatedPlayers.players || []).find(p => (p.points ?? 0) >= winTarget);
 
       if (winner) {
+        // Award session win to the match winner
+        await incrementPlayerWins(lobby.id, winner.player_id);
         await updateLobbyStatus(lobby.id, 'finished');
         return;
       }
@@ -516,7 +519,7 @@ export function MultiplayerStartingLineupPage() {
           {players.slice(0, 4).map(p => (
             <div key={p.player_id} className="text-center min-w-[36px]">
               <div className="text-[9px] text-white/40 sports-font truncate max-w-[40px]">{p.player_name.split(' ')[0]}</div>
-              <div className={`retro-title text-sm ${p.player_id === currentPlayerId ? 'text-[#fdb927]' : 'text-white/60'}`}>{p.wins || 0}</div>
+              <div className={`retro-title text-sm ${p.player_id === currentPlayerId ? 'text-[#fdb927]' : 'text-white/60'}`}>{p.points ?? 0}</div>
             </div>
           ))}
         </div>
@@ -800,7 +803,7 @@ export function MultiplayerStartingLineupPage() {
           <div className="text-[9px] text-white/30 sports-font tracking-widest uppercase mb-2">Leaderboard</div>
           <div className="flex flex-col gap-1.5">
             {[...players]
-              .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+              .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
               .map((p, i) => (
                 <div key={p.player_id} className={`flex items-center gap-3 px-3 py-2 rounded-lg ${p.player_id === currentPlayerId ? 'bg-[#1a2a1a]' : 'bg-[#111]'}`}>
                   <span className="retro-title text-sm text-white/30 w-4">{i + 1}</span>
@@ -810,7 +813,7 @@ export function MultiplayerStartingLineupPage() {
                   {(p.incorrect_guesses?.length ?? 0) > (careerState?.unlock_epoch ?? 0) && !p.finished_at && (
                     <span className="text-red-400 text-xs">🔒</span>
                   )}
-                  <span className="retro-title text-sm text-[#fdb927] w-8 text-right">{p.wins || 0}</span>
+                  <span className="retro-title text-sm text-[#fdb927] w-8 text-right">{p.points ?? 0}</span>
                 </div>
               ))}
           </div>

@@ -191,10 +191,20 @@ export async function joinLobby(
     .single();
 
   if (existingPlayer) {
-    // Update connection status if rejoining
+    // Reset round state on rejoin so stale mid-game values don't desync
+    // with the current game state. wins and points are session-persistent and preserved.
     const { data: updated, error: updateError } = await supabase
       .from('lobby_players')
-      .update({ is_connected: true, player_name: playerName })
+      .update({
+        is_connected: true,
+        player_name: playerName,
+        score: 0,
+        guessed_count: 0,
+        finished_at: null,
+        guessed_players: [],
+        incorrect_guesses: [],
+        is_ready: false,
+      })
       .eq('id', existingPlayer.id)
       .select()
       .single();
@@ -403,8 +413,8 @@ export async function updateLobbySettings(
   return { error: error?.message || null };
 }
 
-// Add pts to a player's wins column (used for Name Scramble positional scoring).
-// Safe to call from host only — no concurrent callers, so no race condition.
+// Add pts to a player's points column (used for Name Scramble / Starting Lineup
+// positional scoring and Career Arc round wins). Safe to call from host only.
 export async function addCareerPoints(lobbyId: string, playerId: string, pts: number): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -412,7 +422,7 @@ export async function addCareerPoints(lobbyId: string, playerId: string, pts: nu
 
   const { data: player, error: fetchError } = await supabase
     .from('lobby_players')
-    .select('wins')
+    .select('points')
     .eq('lobby_id', lobbyId)
     .eq('player_id', playerId)
     .single();
@@ -423,40 +433,41 @@ export async function addCareerPoints(lobbyId: string, playerId: string, pts: nu
 
   const { error } = await supabase
     .from('lobby_players')
-    .update({ wins: (player.wins || 0) + pts })
+    .update({ points: (player.points ?? 0) + pts })
     .eq('lobby_id', lobbyId)
     .eq('player_id', playerId);
 
   return { error: error?.message || null };
 }
 
-// Increment wins for a player.
-// NOTE: This uses read-then-write which has a race condition if two clients
-// call it simultaneously. Acceptable for casual multiplayer; a Supabase RPC
-// with atomic increment would be needed for strict correctness.
+// Increment wins for a player atomically via Supabase RPC.
+// Requires the following function in Supabase:
+//   CREATE OR REPLACE FUNCTION increment_player_wins(p_lobby_id text, p_player_id text)
+//   RETURNS void LANGUAGE sql AS $$
+//     UPDATE lobby_players SET wins = wins + 1
+//     WHERE lobby_id = p_lobby_id AND player_id = p_player_id;
+//   $$;
 export async function incrementPlayerWins(lobbyId: string, playerId: string): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
   }
 
-  // First get the current wins count
-  const { data: player, error: fetchError } = await supabase
-    .from('lobby_players')
-    .select('wins')
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId)
-    .single();
+  const { error } = await supabase.rpc('increment_player_wins', {
+    p_lobby_id: lobbyId,
+    p_player_id: playerId,
+  });
 
-  if (fetchError || !player) {
-    return { error: fetchError?.message || 'Player not found' };
-  }
+  return { error: error?.message || null };
+}
 
+// Reset all player points to 0 for a lobby (between games within a session).
+// wins (session wins) are never reset here — they persist for the whole lobby.
+export async function resetPlayerPoints(lobbyId: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Multiplayer not available' };
   const { error } = await supabase
     .from('lobby_players')
-    .update({ wins: (player.wins || 0) + 1 })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId);
-
+    .update({ points: 0 })
+    .eq('lobby_id', lobbyId);
   return { error: error?.message || null };
 }
 
@@ -579,11 +590,12 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     return { error: lobbyError.message };
   }
 
-  // Reset non-host player scores and ready status
+  // Reset non-host player scores and ready status (points reset too — new game)
   const { error: playersError } = await supabase
     .from('lobby_players')
     .update({
       score: 0,
+      points: 0,
       guessed_count: 0,
       guessed_players: [],
       incorrect_guesses: [],
@@ -602,6 +614,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     .from('lobby_players')
     .update({
       score: 0,
+      points: 0,
       guessed_count: 0,
       guessed_players: [],
       incorrect_guesses: [],
@@ -668,7 +681,8 @@ export async function startCareerRound(
   return { error: error?.message || null };
 }
 
-// Reset all player wins/scores and lobby state for a new career match (Play Again)
+// Reset player points/scores and lobby state for a new match (Play Again).
+// Session wins (wins column) are preserved — they accumulate across all matches in a lobby session.
 export async function resetMatchForPlayAgain(
   lobbyId: string,
   winTarget: number,
@@ -680,7 +694,7 @@ export async function resetMatchForPlayAgain(
   const { error: playersError } = await supabase
     .from('lobby_players')
     .update({
-      wins: 0,
+      points: 0,
       score: 0,
       finished_at: null,
       guessed_count: 0,

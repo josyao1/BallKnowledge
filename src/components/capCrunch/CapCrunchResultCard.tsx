@@ -103,7 +103,7 @@ export function CapCrunchResultCard({
                 </div>
                 <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
                 {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
-                {isNotOnTeam && <span className="block text-[10px] text-orange-400/60">Never played for this team — scored 0</span>}
+                {isNotOnTeam && <span className="block text-[10px] text-orange-400/60">Didn't qualify for this round — scored 0</span>}
               </div>
               <span className={`font-semibold ml-2 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                 {isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}

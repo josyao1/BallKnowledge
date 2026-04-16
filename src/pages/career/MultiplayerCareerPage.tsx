@@ -18,6 +18,7 @@ import {
   updateLobbyStatus,
   updatePlayerScore,
   incrementPlayerWins,
+  addCareerPoints,
   startCareerRound,
 } from '../../services/lobby';
 import { getNextGame, startPrefetch } from '../../services/careerPrefetch';
@@ -201,16 +202,19 @@ export function MultiplayerCareerPage() {
     });
     const winner = sorted[0];
     if (winner && (winner.score || 0) > 0) {
-      await incrementPlayerWins(lobby.id, winner.player_id);
+      // Round win goes to points (in-match tracker); session win awarded when match ends
+      await addCareerPoints(lobby.id, winner.player_id, 1);
     }
 
     // Check win condition with fresh data
     const freshResult = await getLobbyPlayers(lobby.id);
     const freshPlayers = freshResult.players || [];
     const winTarget = careerState.win_target || 3;
-    const gameWinner = freshPlayers.find(p => (p.wins || 0) >= winTarget);
+    const gameWinner = freshPlayers.find(p => (p.points ?? 0) >= winTarget);
 
     if (gameWinner) {
+      // Award session win to the match winner
+      await incrementPlayerWins(lobby.id, gameWinner.player_id);
       await updateLobbyStatus(lobby.id, 'finished');
     } else {
       await updateLobbyStatus(lobby.id, 'waiting');
@@ -452,7 +456,7 @@ export function MultiplayerCareerPage() {
                             </div>
                             <div className="text-right">
                               <div className="sports-font text-[8px] text-[#888] tracking-wider">WINS</div>
-                              <div className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</div>
+                              <div className="retro-title text-lg text-[#d4af37]">{player.points ?? 0}</div>
                             </div>
                           </div>
                         </div>
@@ -481,7 +485,7 @@ export function MultiplayerCareerPage() {
           transition={{ delay: 0.2 }}
           className="mb-6 flex justify-center gap-6 flex-wrap"
         >
-          {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => (
+          {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => (
             <div key={player.player_id} className="text-center">
               <div className="sports-font text-[10px] text-[#888] tracking-wider mb-1">{player.player_name}</div>
               <div className="flex gap-1 justify-center">
@@ -489,7 +493,7 @@ export function MultiplayerCareerPage() {
                   <div
                     key={i}
                     className={`w-4 h-4 rounded-full border-2 ${
-                      i < (player.wins || 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-[#333]'
+                      i < (player.points ?? 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-[#333]'
                     }`}
                   />
                 ))}
@@ -559,12 +563,12 @@ export function MultiplayerCareerPage() {
 
       {/* Win progress dots */}
       <div className="flex gap-4 mb-4 flex-wrap">
-        {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => (
+        {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => (
           <div key={player.player_id} className={`flex items-center gap-1.5 px-2 py-1 rounded ${player.player_id === currentPlayerId ? 'bg-[#d4af37]/10' : ''}`}>
             <span className="sports-font text-[10px] text-white/60">{player.player_name}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: winTarget }).map((_, i) => (
-                <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (player.wins || 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`} />
+                <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (player.points ?? 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`} />
               ))}
             </div>
           </div>
