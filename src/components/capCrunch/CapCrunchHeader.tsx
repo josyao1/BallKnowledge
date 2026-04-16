@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumber';
 import { TeamSlotMachine } from './TeamSlotMachine';
-import { isDivisionRound, isConferenceRound, NFL_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS } from '../../services/capCrunch';
+import { isDivisionRound, isConferenceRound, parseConferenceRound, NFL_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS } from '../../services/capCrunch';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
 
@@ -73,7 +73,9 @@ export function CapCrunchHeader({
 
       {/* Team + compact stats row */}
       <div className="flex items-center gap-3 px-4 py-2">
-        {isConferenceRound(currentTeam) ? (
+        {isConferenceRound(currentTeam) ? (() => {
+          const { college: confName, nflConf } = parseConferenceRound(currentTeam);
+          return (
           <motion.div
             key={currentTeam + currentRound}
             initial={{ opacity: 0, rotateY: -90 }}
@@ -83,21 +85,26 @@ export function CapCrunchHeader({
             style={{ perspective: 600 }}
             className="px-5 py-2 rounded border-2 bg-black border-[#3b82f6]/80 shadow-[0_0_12px_rgba(59,130,246,0.2)]"
           >
-            <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Conference</p>
-            {CONFERENCE_LOGOS[currentTeam] ? (
-              <div className={`my-1 rounded px-1 py-0.5 ${currentTeam === 'Big Ten' ? 'bg-white/15' : ''}`}>
+            <div className="flex items-center justify-between gap-3 mb-0.5">
+              <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none">Conference</p>
+              {nflConf && (
+                <span className="sports-font text-[8px] font-bold text-white bg-[#3b82f6] px-1.5 py-0.5 rounded leading-none tracking-wider">{nflConf}</span>
+              )}
+            </div>
+            {CONFERENCE_LOGOS[confName] ? (
+              <div className={`my-1 rounded px-1 py-0.5 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
                 <img
-                  src={CONFERENCE_LOGOS[currentTeam]}
-                  alt={currentTeam}
+                  src={CONFERENCE_LOGOS[confName]}
+                  alt={confName}
                   className="h-10 md:h-12 object-contain"
                 />
               </div>
             ) : (
               <p className="retro-title text-2xl md:text-3xl font-bold text-[#3b82f6] leading-tight">
-                {currentTeam}
+                {confName}
               </p>
             )}
-            {currentTeam === 'Non-P4' ? (
+            {confName === 'Non-P4' ? (
               <p className="sports-font text-[7px] text-white/35 leading-none mt-0.5">
                 any year — just need to have attended a non-P4 school
               </p>
@@ -109,7 +116,7 @@ export function CapCrunchHeader({
                 {showSchools ? 'hide schools ▲' : 'see schools ▼'}
               </button>
             )}
-            {showSchools && currentTeam in P4_CONFERENCES && (
+            {showSchools && confName in P4_CONFERENCES && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -117,7 +124,7 @@ export function CapCrunchHeader({
                 className="mt-1.5 pt-1.5 border-t border-[#3b82f6]/20"
               >
                 <p className="sports-font text-[7px] text-white/35 leading-relaxed">
-                  {(P4_CONFERENCES[currentTeam] ?? [])
+                  {(P4_CONFERENCES[confName] ?? [])
                     .filter((s, i, a) => a.indexOf(s) === i)
                     .filter(s => !s.includes('&amp;') && !s.includes('amp;'))
                     .join(' · ')}
@@ -125,7 +132,8 @@ export function CapCrunchHeader({
               </motion.div>
             )}
           </motion.div>
-        ) : isDivisionRound(currentTeam) ? (
+          );
+        })() : isDivisionRound(currentTeam) ? (
           <motion.div
             key={currentTeam + currentRound}
             initial={{ opacity: 0, rotateY: -90 }}

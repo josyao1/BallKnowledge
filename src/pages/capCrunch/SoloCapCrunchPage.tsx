@@ -26,6 +26,7 @@ import {
   assignRandomTeam,
   isDivisionRound,
   isConferenceRound,
+  parseConferenceRound,
   NFL_DIVISIONS,
   P4_CONFERENCES,
   CONFERENCE_LOGOS,
@@ -81,6 +82,37 @@ export function SoloCapCrunchPage() {
   useEffect(() => {
     return () => { if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current); };
   }, []);
+
+  // Restore game state from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem('soloCapCrunch');
+    if (!saved) return;
+    try {
+      const s = JSON.parse(saved);
+      if (s.phase && s.phase !== 'sport-select') {
+        setPhase(s.phase);
+        setSelectedSport(s.selectedSport);
+        setTotalRounds(s.totalRounds ?? 5);
+        setStatCategory(s.statCategory);
+        setTargetCap(s.targetCap);
+        setCurrentTeam(s.currentTeam);
+        setLineup(s.lineup);
+        usedTeamsRef.current = s.usedTeams ?? [];
+      }
+    } catch { /* ignore corrupt data */ }
+  }, []);
+
+  // Persist game state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (phase === 'sport-select') {
+      sessionStorage.removeItem('soloCapCrunch');
+      return;
+    }
+    sessionStorage.setItem('soloCapCrunch', JSON.stringify({
+      phase, selectedSport, totalRounds, statCategory, targetCap, currentTeam, lineup,
+      usedTeams: usedTeamsRef.current,
+    }));
+  }, [phase, selectedSport, totalRounds, statCategory, targetCap, currentTeam, lineup]);
 
   // Initialize game
   const handleStartGame = async (sport: Sport, forcedCategory?: StatCategory | null, rounds: number = totalRounds) => {
@@ -181,6 +213,9 @@ export function SoloCapCrunchPage() {
             );
       const statValue = statResult.value;
       const neverOnTeam = statResult.neverOnTeam;
+      const actualTeam = statResult.actualTeam;
+      const actualNflConf = statResult.actualNflConf;
+      const actualCollege = statResult.actualCollege;
 
       // Check if this pick would push over the cap
       const wouldBust = (lineup.totalStat + statValue) > targetCap;
@@ -196,6 +231,9 @@ export function SoloCapCrunchPage() {
         statValue,
         isBust: wouldBust,
         neverOnTeam,
+        actualTeam,
+        actualNflConf,
+        actualCollege,
       };
 
       // Add to lineup; bust picks revert the total (count as 0)
@@ -494,7 +532,9 @@ export function SoloCapCrunchPage() {
           </div>
           {/* Team / Division / Conference Display */}
           <div className="flex items-center justify-center py-3 px-4">
-            {isConferenceRound(currentTeam) ? (
+            {isConferenceRound(currentTeam) ? (() => {
+              const { college: confName, nflConf } = parseConferenceRound(currentTeam);
+              return (
               <motion.div
                 key={currentTeam}
                 initial={{ opacity: 0, rotateY: -90 }}
@@ -504,21 +544,26 @@ export function SoloCapCrunchPage() {
                 style={{ perspective: 600 }}
                 className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#3b82f6]/60"
               >
-                <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Conference</p>
-                {CONFERENCE_LOGOS[currentTeam] ? (
-                  <div className={`my-1 rounded px-1 py-0.5 mx-auto w-fit ${currentTeam === 'Big Ten' ? 'bg-white/15' : ''}`}>
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase">Conference</p>
+                  {nflConf && (
+                    <span className="sports-font text-[8px] font-bold text-white bg-[#3b82f6] px-1.5 py-0.5 rounded tracking-wider">{nflConf}</span>
+                  )}
+                </div>
+                {CONFERENCE_LOGOS[confName] ? (
+                  <div className={`my-1 rounded px-1 py-0.5 mx-auto w-fit ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
                     <img
-                      src={CONFERENCE_LOGOS[currentTeam]}
-                      alt={currentTeam}
+                      src={CONFERENCE_LOGOS[confName]}
+                      alt={confName}
                       className="h-12 md:h-16 object-contain"
                     />
                   </div>
                 ) : (
                   <p className="retro-title text-2xl md:text-4xl font-bold tracking-tight text-[#3b82f6]">
-                    {currentTeam}
+                    {confName}
                   </p>
                 )}
-                {currentTeam === 'Non-P4' ? (
+                {confName === 'Non-P4' ? (
                   <p className="sports-font text-[7px] text-white/35 leading-none mt-0.5">
                     any year — just need to have attended a non-P4 school
                   </p>
@@ -530,14 +575,14 @@ export function SoloCapCrunchPage() {
                     {showSchools ? 'hide schools ▲' : 'see schools ▼'}
                   </button>
                 )}
-                {showSchools && currentTeam in P4_CONFERENCES && (
+                {showSchools && confName in P4_CONFERENCES && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     className="mt-1.5 pt-1.5 border-t border-[#3b82f6]/20"
                   >
                     <p className="sports-font text-[7px] text-white/40 leading-relaxed">
-                      {(P4_CONFERENCES[currentTeam] ?? [])
+                      {(P4_CONFERENCES[confName] ?? [])
                         .filter(s => !s.includes('&amp;') && !s.includes('amp;'))
                         .filter((s, i, a) => a.indexOf(s) === i)
                         .join(' · ')}
@@ -545,7 +590,8 @@ export function SoloCapCrunchPage() {
                   </motion.div>
                 )}
               </motion.div>
-            ) : isDivisionRound(currentTeam) ? (
+              );
+            })() : isDivisionRound(currentTeam) ? (
               <motion.div
                 key={currentTeam}
                 initial={{ opacity: 0, rotateY: -90 }}
@@ -780,7 +826,14 @@ export function SoloCapCrunchPage() {
                                 <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {pick.playerName}</p>
                                 {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{badLabel}</span>}
                               </div>
-                              <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>{pick.team} • {pick.selectedYear}</p>
+                              <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>
+                                {pick.team} • {pick.selectedYear}
+                                {pick.neverOnTeam && pick.actualCollege && pick.actualNflConf && <span className="text-orange-400/80 ml-1">(went to {pick.actualCollege} / in {pick.actualNflConf})</span>}
+                                {pick.neverOnTeam && pick.actualCollege && !pick.actualNflConf && <span className="text-orange-400/80 ml-1">(went to {pick.actualCollege})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && pick.actualNflConf && <span className="text-orange-400/80 ml-1">(in {pick.actualNflConf})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && pick.actualTeam && <span className="text-orange-400/80 ml-1">(played for {pick.actualTeam})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && !pick.actualTeam && <span className="text-orange-400/80 ml-1">(didn't qualify)</span>}
+                              </p>
                               <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                                 {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
                               </p>
@@ -978,7 +1031,9 @@ export function SoloCapCrunchPage() {
                             <div className="text-[9px] text-red-400/70 mt-0.5">Exceeded cap — scored 0, total reverted</div>
                           )}
                           {isNotOnTeam && (
-                            <div className="text-[9px] text-orange-400/70 mt-0.5">Didn't qualify for this round — scored 0</div>
+                            <div className="text-[9px] text-orange-400/70 mt-0.5">
+                              {player.actualCollege && player.actualNflConf ? `went to ${player.actualCollege} / in ${player.actualNflConf}` : player.actualCollege ? `went to ${player.actualCollege}` : player.actualNflConf ? `in ${player.actualNflConf}` : player.actualTeam ? `played for ${player.actualTeam}` : "didn't qualify"}
+                            </div>
                           )}
                         </div>
                         <div className="text-right flex-shrink-0">
