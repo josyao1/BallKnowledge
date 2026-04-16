@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from '../../components/capCrunch/SpinningNumber';
 import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
+import { fmt, getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
   generateTargetCap,
@@ -35,37 +36,6 @@ import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/cap
 
 type Phase = 'sport-select' | 'playing' | 'results';
 
-/** Format a stat value: whole numbers show no decimal, others show 1 decimal place. */
-function fmt(val: number): string {
-  const r = parseFloat(val.toFixed(1));
-  return r % 1 === 0 ? r.toFixed(0) : r.toFixed(1);
-}
-
-function getCategoryAbbr(category: StatCategory): string {
-  switch (category) {
-    case 'pts': return 'PTS';
-    case 'ast': return 'AST';
-    case 'reb': return 'REB';
-    case 'min': return 'MIN';
-    case 'pra': return 'PRA';
-    case 'passing_yards': return 'PASS YD';
-    case 'passing_tds': return 'PASS TD';
-    case 'interceptions': return 'INT';
-    case 'rushing_yards': return 'RUSH YD';
-    case 'rushing_tds': return 'RUSH TD';
-    case 'receiving_yards': return 'REC YD';
-    case 'receiving_tds': return 'REC TD';
-    case 'receptions': return 'REC';
-    case 'total_gp': return 'TOT GP';
-    case 'career_passing_yards':   return 'CAREER PASS YD';
-    case 'career_passing_tds':     return 'CAREER PASS TD';
-    case 'career_rushing_yards':   return 'CAREER RUSH YD';
-    case 'career_rushing_tds':     return 'CAREER RUSH TD';
-    case 'career_receiving_yards': return 'CAREER REC YD';
-    case 'career_receiving_tds':   return 'CAREER REC TD';
-    default: return 'STAT';
-  }
-}
 
 
 
@@ -553,7 +523,9 @@ export function SoloCapCrunchPage() {
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
-              <p className="retro-title text-lg md:text-2xl text-white">{getCategoryAbbr(statCategory!)}</p>
+              <p className="retro-title text-lg md:text-2xl text-white">
+                {isCareerStatRound ? getCategoryAbbr(statCategory!).replace('CAREER ', '') : getCategoryAbbr(statCategory!)}
+              </p>
             </div>
             <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>

@@ -44,6 +44,7 @@ import { CapCrunchHeader }      from '../../components/capCrunch/CapCrunchHeader
 import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPanel';
 import { CapCrunchScoresPanel } from '../../components/capCrunch/CapCrunchScoresPanel';
 import { CapCrunchResultCard }  from '../../components/capCrunch/CapCrunchResultCard';
+import { getCategoryAbbr }      from '../../components/capCrunch/capCrunchUtils';
 
 type Phase = 'loading' | 'picking' | 'results';
 
@@ -685,7 +686,9 @@ export function MultiplayerCapCrunchPage() {
               </div>
               <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
                 <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
-                <p className="retro-title text-2xl text-white">{isCareerStatRound ? 'Career' : statCategory?.toUpperCase()}</p>
+                <p className="retro-title text-2xl text-white">
+                  {statCategory ? (isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)) : '—'}
+                </p>
               </div>
             </div>
             <div className="flex-1 flex flex-col">

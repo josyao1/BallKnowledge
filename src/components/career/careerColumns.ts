@@ -29,6 +29,7 @@ export const NFL_QB_COLUMNS = [
   { key: 'passing_tds', label: 'Pass TD' },
   { key: 'interceptions', label: 'INT' },
   { key: 'rushing_yards', label: 'Rush Yds' },
+  { key: 'receiving_yards', label: 'Rec Yds' },
 ];
 
 export const NFL_RB_COLUMNS = [

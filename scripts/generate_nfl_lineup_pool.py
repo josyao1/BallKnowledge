@@ -182,6 +182,14 @@ def meets_career_total_threshold(player_stats, position):
     return False
 
 
+def has_recent_season(player_stats):
+    """Return True if the player appeared in any 2024 or 2025 game."""
+    for _, row in player_stats.iterrows():
+        if safe_int(row.get("season", 0)) in (2024, 2025) and safe_int(row.get("games", 0)) >= 1:
+            return True
+    return False
+
+
 def meets_single_season_threshold(player_stats, position):
     """Return True if the player hit the per-season minimum in any one season.
     Recent seasons get lower thresholds to capture emerging players:
@@ -301,11 +309,14 @@ def main():
             skipped_production += 1
             continue
         if not meets_single_season_threshold(player_stats, player_pos):
+            # Recent-season bypass — include any skill player who appeared in 2024 or 2025
+            if has_recent_season(player_stats):
+                pass
             # Career total fallback — skip if already in nfl_careers.json
-            if str(pid) in careers_ids:
+            elif str(pid) in careers_ids:
                 skipped_production += 1
                 continue
-            if not meets_career_total_threshold(player_stats, player_pos):
+            elif not meets_career_total_threshold(player_stats, player_pos):
                 skipped_production += 1
                 continue
 
@@ -339,13 +350,16 @@ def main():
 
             if player_pos == "QB":
                 base.update({
-                    "completions":   safe_int(row.get("completions")),
-                    "attempts":      safe_int(row.get("attempts")),
-                    "passing_yards": safe_int(row.get("passing_yards")),
-                    "passing_tds":   safe_int(row.get("passing_tds")),
-                    "interceptions": safe_int(row.get("interceptions")),
-                    "rushing_yards": safe_int(row.get("rushing_yards")),
-                    "rushing_tds":   safe_int(row.get("rushing_tds")),
+                    "completions":     safe_int(row.get("completions")),
+                    "attempts":        safe_int(row.get("attempts")),
+                    "passing_yards":   safe_int(row.get("passing_yards")),
+                    "passing_tds":     safe_int(row.get("passing_tds")),
+                    "interceptions":   safe_int(row.get("interceptions")),
+                    "rushing_yards":   safe_int(row.get("rushing_yards")),
+                    "rushing_tds":     safe_int(row.get("rushing_tds")),
+                    "receptions":      safe_int(row.get("receptions")),
+                    "receiving_yards": safe_int(row.get("receiving_yards")),
+                    "receiving_tds":   safe_int(row.get("receiving_tds")),
                 })
             elif player_pos == "RB":
                 base.update({

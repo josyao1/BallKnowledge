@@ -255,12 +255,15 @@ def main():
 
             if player_pos == "QB":
                 base.update({
-                    "completions":   safe_int(row.get("completions")),
-                    "attempts":      safe_int(row.get("attempts")),
-                    "passing_yards": safe_int(row.get("passing_yards")),
-                    "passing_tds":   safe_int(row.get("passing_tds")),
-                    "interceptions": safe_int(row.get("interceptions")),
-                    "rushing_yards": safe_int(row.get("rushing_yards")),
+                    "completions":     safe_int(row.get("completions")),
+                    "attempts":        safe_int(row.get("attempts")),
+                    "passing_yards":   safe_int(row.get("passing_yards")),
+                    "passing_tds":     safe_int(row.get("passing_tds")),
+                    "interceptions":   safe_int(row.get("interceptions")),
+                    "rushing_yards":   safe_int(row.get("rushing_yards")),
+                    "receptions":      safe_int(row.get("receptions")),
+                    "receiving_yards": safe_int(row.get("receiving_yards")),
+                    "receiving_tds":   safe_int(row.get("receiving_tds")),
                 })
             elif player_pos == "RB":
                 base.update({
