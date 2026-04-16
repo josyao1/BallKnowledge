@@ -78,6 +78,9 @@ export function SoloCapCrunchPage() {
   const [badFlashKey, setBadFlashKey] = useState(0);
   const [showSchools, setShowSchools] = useState(false);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True once the restore-from-storage effect has finished, so the persist effect
+  // doesn't wipe sessionStorage before we've had a chance to read it back.
+  const restoredRef = useRef(false);
 
   useEffect(() => {
     return () => { if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current); };
@@ -86,24 +89,28 @@ export function SoloCapCrunchPage() {
   // Restore game state from sessionStorage on mount
   useEffect(() => {
     const saved = sessionStorage.getItem('soloCapCrunch');
-    if (!saved) return;
-    try {
-      const s = JSON.parse(saved);
-      if (s.phase && s.phase !== 'sport-select') {
-        setPhase(s.phase);
-        setSelectedSport(s.selectedSport);
-        setTotalRounds(s.totalRounds ?? 5);
-        setStatCategory(s.statCategory);
-        setTargetCap(s.targetCap);
-        setCurrentTeam(s.currentTeam);
-        setLineup(s.lineup);
-        usedTeamsRef.current = s.usedTeams ?? [];
-      }
-    } catch { /* ignore corrupt data */ }
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.phase && s.phase !== 'sport-select') {
+          setPhase(s.phase);
+          setSelectedSport(s.selectedSport);
+          setTotalRounds(s.totalRounds ?? 5);
+          setStatCategory(s.statCategory);
+          setTargetCap(s.targetCap);
+          setCurrentTeam(s.currentTeam);
+          setLineup(s.lineup);
+          usedTeamsRef.current = s.usedTeams ?? [];
+        }
+      } catch { /* ignore corrupt data */ }
+    }
+    restoredRef.current = true;
   }, []);
 
-  // Persist game state to sessionStorage whenever it changes
+  // Persist game state to sessionStorage whenever it changes.
+  // Skip until the restore effect above has run to avoid wiping a valid save on mount.
   useEffect(() => {
+    if (!restoredRef.current) return;
     if (phase === 'sport-select') {
       sessionStorage.removeItem('soloCapCrunch');
       return;

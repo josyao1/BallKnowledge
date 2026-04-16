@@ -401,15 +401,20 @@ export const P4_CONFERENCES: Record<string, string[]> = {
     'Arizona', 'Arizona State', 'Baylor',
     'BYU', 'Brigham Young',
     'Cincinnati', 'Colorado', 'Houston', 'Iowa State',
-    'Kansas', 'Kansas State', 'Oklahoma State', 'TCU', 'Texas Tech',
+    'Kansas', 'Kansas State', 'Oklahoma State',
+    'TCU', 'Texas Christian',
+    'Texas Tech',
     'UCF', 'Central Florida',
     'Utah', 'West Virginia',
   ],
   'ACC': [
     'Boston College', 'Clemson', 'California', 'Duke', 'Florida State',
-    'Georgia Tech', 'Louisville', 'Miami',
+    'Georgia Tech', 'Louisville',
+    'Miami', 'Miami (Fla.)',
     'NC State', 'North Carolina State',
-    'North Carolina', 'Notre Dame', 'Pittsburgh', 'SMU', 'Stanford',
+    'North Carolina', 'Notre Dame', 'Pittsburgh',
+    'SMU', 'Southern Methodist',
+    'Stanford',
     'Syracuse', 'Virginia', 'Virginia Tech', 'Wake Forest',
   ],
 };
@@ -477,7 +482,7 @@ function playerCollegeInConference(bio: any, conference: string): boolean {
  * Pass excludeTeams to avoid repeating teams across rounds.
  */
 // ── Test flag — force conference rounds every time for NFL ────────────────────
-const TEST_FORCE_CONFERENCE = true;
+const TEST_FORCE_CONFERENCE = false;
 
 export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
   if (sport === 'nfl' && TEST_FORCE_CONFERENCE) {
