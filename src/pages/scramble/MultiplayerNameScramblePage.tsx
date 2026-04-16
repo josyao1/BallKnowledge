@@ -19,6 +19,7 @@ import {
   updateLobbyStatus,
   updatePlayerScore,
   addCareerPoints,
+  incrementPlayerWins,
   startCareerRound,
 } from '../../services/lobby';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../../services/careerData';
@@ -253,9 +254,11 @@ export function MultiplayerNameScramblePage() {
     const freshResult = await getLobbyPlayers(lobby.id);
     const freshPlayers = freshResult.players || [];
     const winTarget = careerState.win_target || 20;
-    const gameWinner = freshPlayers.find(p => (p.wins || 0) >= winTarget);
+    const gameWinner = freshPlayers.find(p => (p.points ?? 0) >= winTarget);
 
     if (gameWinner) {
+      // Award session win to the match winner
+      await incrementPlayerWins(lobby.id, gameWinner.player_id);
       await updateLobbyStatus(lobby.id, 'finished');
     } else {
       await updateLobbyStatus(lobby.id, 'waiting');
@@ -437,7 +440,7 @@ export function MultiplayerNameScramblePage() {
                       </div>
                       <div className="text-right">
                         <div className="sports-font text-[8px] text-[#888] tracking-wider">TOTAL</div>
-                        <div className="retro-title text-lg text-[#3b82f6]">{player.wins || 0}</div>
+                        <div className="retro-title text-lg text-[#3b82f6]">{player.points ?? 0}</div>
                       </div>
                     </div>
                   </div>
@@ -458,8 +461,8 @@ export function MultiplayerNameScramblePage() {
             Race to {winTarget} pts
           </div>
           <div className="space-y-3">
-            {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => {
-              const pts = player.wins || 0;
+            {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => {
+              const pts = player.points ?? 0;
               const pct = Math.min(100, (pts / winTarget) * 100);
               const isMe = player.player_id === currentPlayerId;
               return (
@@ -573,8 +576,8 @@ export function MultiplayerNameScramblePage() {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {/* Points progress bars */}
         <div className="space-y-2">
-          {[...players].sort((a, b) => (b.wins || 0) - (a.wins || 0)).map(player => {
-            const pts = player.wins || 0;
+          {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => {
+            const pts = player.points ?? 0;
             const pct = Math.min(100, (pts / winTarget) * 100);
             const isMe = player.player_id === currentPlayerId;
             return (

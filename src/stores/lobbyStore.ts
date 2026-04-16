@@ -26,6 +26,7 @@ import {
   incrementPlayerWins,
   updatePlayerTeam,
   updateCareerState,
+  resetPlayerPoints,
 } from '../services/lobby';
 
 interface LobbyState {
@@ -237,6 +238,12 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     if (settings.gameType !== undefined) dbSettings.game_type = settings.gameType;
 
     await updateLobbySettings(lobby.id, dbSettings as Parameters<typeof updateLobbySettings>[1]);
+
+    // Reset in-game points when switching game types — accumulated points
+    // from one mode are meaningless in another. Session wins (wins column) persist.
+    if (settings.gameType !== undefined && settings.gameType !== lobby.game_type) {
+      await resetPlayerPoints(lobby.id);
+    }
   },
 
   incrementWins: async (playerId) => {

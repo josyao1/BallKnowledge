@@ -11,6 +11,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { isConferenceRound } from '../../services/capCrunch';
 import type { PlayerLineup } from '../../types/capCrunch';
 
 interface Player {
@@ -141,8 +142,12 @@ export function CapCrunchPickPanel({
                 <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">
                   {isCareerStatRound
-                    ? `Total career stats (all teams) — must have played for ${currentTeam} at some point`
-                    : `Will count all career GP with ${currentTeam}`}
+                    ? isConferenceRound(currentTeam)
+                      ? `Total career stats — must have attended a ${currentTeam} school`
+                      : `Total career stats (all teams) — must have played for ${currentTeam} at some point`
+                    : isConferenceRound(currentTeam)
+                      ? `Will count all career GP — must have attended a ${currentTeam} school`
+                      : `Will count all career GP with ${currentTeam}`}
                 </p>
               </div>
               <div className="flex-1 flex items-center justify-center text-center">

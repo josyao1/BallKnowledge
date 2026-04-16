@@ -429,6 +429,9 @@ export function MultiplayerCapCrunchPage() {
 
       const statValue = statResult.value;
       const neverOnTeam = statResult.neverOnTeam;
+      const actualTeam = statResult.actualTeam;
+      const actualNflConf = statResult.actualNflConf;
+      const actualCollege = statResult.actualCollege;
 
       const latestCS = (lobby.career_state as any) || {};
       const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
@@ -451,6 +454,9 @@ export function MultiplayerCapCrunchPage() {
         statValue,
         isBust: wouldBust,
         neverOnTeam,
+        actualTeam,
+        actualNflConf,
+        actualCollege,
       };
 
       const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);

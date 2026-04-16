@@ -43,7 +43,7 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
     && lobby.game_type !== 'scramble'
     && lobby.game_type !== 'lineup-is-right'
     && lobby.game_type !== 'starting-lineup';
-  const hasWins = players.some(p => (p.wins || 0) > 0);
+  const hasWins = players.some(p => (p.wins ?? 0) > 0);
 
   return (
     <>
@@ -167,14 +167,14 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
           </div>
           <div className="flex flex-wrap justify-center gap-4">
             {[...players]
-              .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+              .sort((a, b) => (b.wins ?? 0) - (a.wins ?? 0))
               .map(player => (
                 <div
                   key={player.player_id}
                   className="flex items-center gap-2 px-3 py-2 bg-black/30 rounded-sm border border-white/10"
                 >
                   <span className="sports-font text-sm text-white/80">{player.player_name}</span>
-                  <span className="retro-title text-lg text-[#d4af37]">{player.wins || 0}</span>
+                  <span className="retro-title text-lg text-[#d4af37]">{player.wins ?? 0}</span>
                 </div>
               ))}
           </div>

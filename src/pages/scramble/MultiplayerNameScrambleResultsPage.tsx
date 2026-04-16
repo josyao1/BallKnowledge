@@ -51,7 +51,7 @@ export function MultiplayerNameScrambleResultsPage() {
 
   const careerState = lobby?.career_state as any;
   const winTarget = careerState?.win_target || 20;
-  const sortedPlayers = [...players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
+  const sortedPlayers = [...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   const matchWinner = sortedPlayers[0];
   const isWinner = matchWinner?.player_id === currentPlayerId;
 
@@ -115,7 +115,7 @@ export function MultiplayerNameScrambleResultsPage() {
             </div>
             <div className="retro-title text-3xl text-[#d4af37]">{matchWinner.player_name}</div>
             <div className="sports-font text-sm text-[#888] mt-1">
-              {matchWinner.wins || 0} pts
+              {matchWinner.points ?? 0} pts
             </div>
           </div>
         </motion.div>
@@ -135,7 +135,7 @@ export function MultiplayerNameScrambleResultsPage() {
           <div className="space-y-3">
             {sortedPlayers.map((player, rank) => {
               const isMe = player.player_id === currentPlayerId;
-              const pts = player.wins || 0;
+              const pts = player.points ?? 0;
               const pct = Math.min(100, (pts / winTarget) * 100);
               return (
                 <motion.div

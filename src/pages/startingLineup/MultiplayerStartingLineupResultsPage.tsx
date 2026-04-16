@@ -39,7 +39,7 @@ export function MultiplayerStartingLineupResultsPage() {
     }
   }, [lobby?.status]);
 
-  const sorted = [...players].sort((a, b) => (b.wins || 0) - (a.wins || 0));
+  const sorted = [...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   const winner = sorted[0];
   const careerState = (lobby?.career_state as any) || {};
   const winTarget = careerState.win_target || 10;
@@ -70,7 +70,7 @@ export function MultiplayerStartingLineupResultsPage() {
           >
             <div className="sports-font text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">Winner</div>
             <div className="retro-title text-4xl text-[#ea580c] mb-1">{winner.player_name}</div>
-            <div className="retro-title text-2xl text-[#fdb927]">{winner.wins || 0} pts</div>
+            <div className="retro-title text-2xl text-[#fdb927]">{winner.points ?? 0} pts</div>
           </motion.div>
         )}
 
@@ -89,7 +89,7 @@ export function MultiplayerStartingLineupResultsPage() {
                 <span className="retro-title text-lg text-white/40 w-6">{i + 1}</span>
                 {i === 0 && <span className="text-base">🏆</span>}
                 <span className="flex-1 sports-font text-sm text-white">{p.player_name}</span>
-                <span className="retro-title text-xl text-[#fdb927]">{p.wins || 0}</span>
+                <span className="retro-title text-xl text-[#fdb927]">{p.points ?? 0}</span>
               </motion.div>
             ))}
           </div>
