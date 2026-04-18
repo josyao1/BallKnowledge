@@ -7,6 +7,7 @@
 
 import { motion } from 'framer-motion';
 import { fmt } from './capCrunchUtils';
+import { FlipReveal } from './FlipReveal';
 import type { PlayerLineup } from '../../types/capCrunch';
 
 interface Player {
@@ -76,7 +77,7 @@ export function CapCrunchScoresPanel({
                 {visiblePicks.map((selected, idx) => (
                   <div key={idx} className={`flex justify-between ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-300' : 'text-white/70'}`}>
                     <div className="flex-1 min-w-0 flex items-baseline gap-1">
-                      <span className={`truncate text-xs ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400' : ''}`}>{selected.playerName}</span>
+                      <FlipReveal text={selected.playerName} className={`truncate text-xs ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400' : ''}`} />
                       {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
                       <span className={`ml-1 text-[10px] ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
                     </div>

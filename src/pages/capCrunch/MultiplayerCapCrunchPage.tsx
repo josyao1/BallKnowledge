@@ -18,6 +18,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
@@ -45,6 +46,7 @@ import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPa
 import { CapCrunchScoresPanel } from '../../components/capCrunch/CapCrunchScoresPanel';
 import { CapCrunchResultCard }  from '../../components/capCrunch/CapCrunchResultCard';
 import { getCategoryAbbr }      from '../../components/capCrunch/capCrunchUtils';
+import { getTotalColor }        from '../../components/capCrunch/SpinningNumber';
 
 type Phase = 'loading' | 'picking' | 'results';
 
@@ -84,9 +86,13 @@ export function MultiplayerCapCrunchPage() {
   const [showExactHit, setShowExactHit] = useState(false);
   const [badFlashKey, setBadFlashKey] = useState(0);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
-    return () => { if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current); };
+    return () => {
+      if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current);
+      confettiTimersRef.current.forEach(clearTimeout);
+    };
   }, []);
 
   // Prevent realtime sync from clobbering state mid-pick
@@ -517,6 +523,11 @@ export function MultiplayerCapCrunchPage() {
 
       if (!wouldBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
+        confetti({ particleCount: 160, spread: 90, origin: { y: 0.55 }, colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'] });
+        confettiTimersRef.current = [
+          setTimeout(() => confetti({ particleCount: 60, spread: 60, origin: { y: 0.4, x: 0.3 }, colors: ['#d4af37', '#ffffff'] }), 250),
+          setTimeout(() => confetti({ particleCount: 60, spread: 60, origin: { y: 0.4, x: 0.7 }, colors: ['#d4af37', '#ffffff'] }), 400),
+        ];
         exactHitTimerRef.current = setTimeout(() => setShowExactHit(false), 2500);
       }
 
@@ -559,7 +570,11 @@ export function MultiplayerCapCrunchPage() {
     const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
 
     return (
-      <div className="h-[100dvh] bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
+      <motion.div
+        animate={showExactHit ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : {}}
+        transition={{ duration: 0.45, ease: 'easeInOut' }}
+        className="h-[100dvh] bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden"
+      >
         <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
@@ -619,6 +634,18 @@ export function MultiplayerCapCrunchPage() {
           badFlashKey={badFlashKey}
           isCareerStatRound={isCareerStatRound}
         />
+
+        {/* Mobile cap progress strip */}
+        <div className="md:hidden w-full h-1 bg-white/10 flex-shrink-0">
+          <motion.div
+            className="h-full"
+            animate={{
+              width: `${Math.min(((myLineup?.totalStat ?? 0) / targetCap) * 100, 100)}%`,
+              backgroundColor: getTotalColor(myLineup?.totalStat ?? 0, targetCap),
+            }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          />
+        </div>
 
         {/* Mobile tab bar */}
         <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/40">
@@ -696,6 +723,23 @@ export function MultiplayerCapCrunchPage() {
                   {statCategory ? (isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)) : '—'}
                 </p>
               </div>
+              <div className="bg-[#111] border border-white/5 px-3 py-2 rounded-sm shadow-xl">
+                <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    animate={{
+                      width: `${Math.min(((myLineup?.totalStat ?? 0) / targetCap) * 100, 100)}%`,
+                      backgroundColor: getTotalColor(myLineup?.totalStat ?? 0, targetCap),
+                    }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="sports-font text-[6px] text-white/20">0</span>
+                  <span className="sports-font text-[6px] text-white/20">{targetCap}</span>
+                </div>
+              </div>
             </div>
             <div className="flex-1 flex flex-col">
               <CapCrunchPickPanel
@@ -741,7 +785,7 @@ export function MultiplayerCapCrunchPage() {
             </div>
           </div>
         </main>
-      </div>
+      </motion.div>
     );
   }
 
