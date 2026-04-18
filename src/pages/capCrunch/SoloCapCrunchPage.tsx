@@ -12,7 +12,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { SpinningNumber, getTotalColor, getRemainingColor } from '../../components/capCrunch/SpinningNumber';
+import { FlipReveal } from '../../components/capCrunch/FlipReveal';
 import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
 import { fmt, getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import {
@@ -78,12 +80,16 @@ export function SoloCapCrunchPage() {
   const [badFlashKey, setBadFlashKey] = useState(0);
   const [showSchools, setShowSchools] = useState(false);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   // True once the restore-from-storage effect has finished, so the persist effect
   // doesn't wipe sessionStorage before we've had a chance to read it back.
   const restoredRef = useRef(false);
 
   useEffect(() => {
-    return () => { if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current); };
+    return () => {
+      if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current);
+      confettiTimersRef.current.forEach(clearTimeout);
+    };
   }, []);
 
   // Restore game state from sessionStorage on mount
@@ -262,6 +268,12 @@ export function SoloCapCrunchPage() {
         updated.isFinished = true;
         setLineup(updated);
         setShowExactHit(true);
+        // Confetti burst
+        confetti({ particleCount: 160, spread: 90, origin: { y: 0.55 }, colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'] });
+        confettiTimersRef.current = [
+          setTimeout(() => confetti({ particleCount: 60, spread: 60, origin: { y: 0.4, x: 0.3 }, colors: ['#d4af37', '#ffffff'] }), 250),
+          setTimeout(() => confetti({ particleCount: 60, spread: 60, origin: { y: 0.4, x: 0.7 }, colors: ['#d4af37', '#ffffff'] }), 400),
+        ];
         exactHitTimerRef.current = setTimeout(() => {
           setShowExactHit(false);
           setPhase('results');
@@ -463,7 +475,11 @@ export function SoloCapCrunchPage() {
 
   if (phase === 'playing' && lineup && selectedSport && statCategory) {
     return (
-      <div className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden">
+      <motion.div
+        animate={showExactHit ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : {}}
+        transition={{ duration: 0.45, ease: 'easeInOut' }}
+        className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden"
+      >
         {/* GREEN FELT BACKGROUND */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
@@ -620,6 +636,17 @@ export function SoloCapCrunchPage() {
               <TeamSlotMachine sport={selectedSport!} team={currentTeam} size="lg" />
             )}
           </div>
+          {/* Mobile cap progress strip */}
+          <div className="lg:hidden w-full h-1 bg-white/10">
+            <motion.div
+              className="h-full"
+              animate={{
+                width: `${Math.min((lineup.totalStat / targetCap) * 100, 100)}%`,
+                backgroundColor: getTotalColor(lineup.totalStat, targetCap),
+              }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            />
+          </div>
         </header>
 
         <main className="relative z-10 flex-1 w-full px-2 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">
@@ -655,6 +682,25 @@ export function SoloCapCrunchPage() {
               {(lineup.bustCount ?? 0) > 0 && (
                 <p className="sports-font text-[7px] text-red-400/70 tracking-wide mt-1 uppercase">{lineup.bustCount} Bust{lineup.bustCount !== 1 ? 's' : ''}</p>
               )}
+            </div>
+
+            {/* Cap fill bar — desktop only; mobile uses the strip in the header */}
+            <div className="hidden lg:block bg-[#111] border border-white/5 px-3 py-2 rounded-sm shadow-xl">
+              <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  animate={{
+                    width: `${Math.min((lineup.totalStat / targetCap) * 100, 100)}%`,
+                    backgroundColor: getTotalColor(lineup.totalStat, targetCap),
+                  }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="sports-font text-[6px] text-white/20">0</span>
+                <span className="sports-font text-[6px] text-white/20">{targetCap}</span>
+              </div>
             </div>
           </div>
 
@@ -830,7 +876,9 @@ export function SoloCapCrunchPage() {
                               className={isBad ? 'text-red-300' : 'text-white'}
                             >
                               <div className="flex items-center gap-1">
-                                <p className="font-semibold truncate text-[9px] md:text-xs">{idx + 1}. {pick.playerName}</p>
+                                <p className="font-semibold truncate text-[9px] md:text-xs">
+                                  {idx + 1}. <FlipReveal text={pick.playerName} />
+                                </p>
                                 {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{badLabel}</span>}
                               </div>
                               <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>
@@ -869,7 +917,7 @@ export function SoloCapCrunchPage() {
             </motion.div>
           </div>
         </main>
-      </div>
+      </motion.div>
     );
   }
 
