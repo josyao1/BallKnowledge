@@ -463,6 +463,7 @@ export function MultiplayerCapCrunchPage() {
         actualTeam,
         actualNflConf,
         actualCollege,
+        playerId: selectedPlayerId ?? undefined,
       };
 
       const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
@@ -706,6 +707,7 @@ export function MultiplayerCapCrunchPage() {
                 currentRound={currentRound}
                 totalRounds={totalRounds}
                 canPickThisRound={canPickThisRound}
+                sport={selectedSport as 'nba' | 'nfl'}
               />
             )}
           </div>
@@ -781,6 +783,7 @@ export function MultiplayerCapCrunchPage() {
                 currentRound={currentRound}
                 totalRounds={totalRounds}
                 canPickThisRound={canPickThisRound}
+                sport={selectedSport as 'nba' | 'nfl'}
               />
             </div>
           </div>
@@ -859,6 +862,7 @@ export function MultiplayerCapCrunchPage() {
                   statCategory={statCategory!}
                   isCareerStatRound={isCareerStatRound}
                   avgPickYear={avgPickYear}
+                  sport={selectedSport as 'nba' | 'nfl'}
                 />
               ))}
             </div>

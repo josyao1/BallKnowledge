@@ -45,8 +45,13 @@ export function CapCrunchHeader({
   targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound,
 }: Props) {
   const [showSchools, setShowSchools] = useState(false);
+  const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
   return (
-    <header className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm">
+    <motion.header
+      className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm"
+      animate={{ boxShadow: `0 4px 24px -4px ${pressureColor}44` }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+    >
       <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
         <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
         <div className="flex items-center gap-2">
@@ -186,6 +191,6 @@ export function CapCrunchHeader({
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

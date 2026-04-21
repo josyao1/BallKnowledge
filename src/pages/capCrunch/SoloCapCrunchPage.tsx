@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { SpinningNumber, getTotalColor, getRemainingColor } from '../../components/capCrunch/SpinningNumber';
 import { FlipReveal } from '../../components/capCrunch/FlipReveal';
+import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
 import { fmt, getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import {
@@ -247,6 +248,7 @@ export function SoloCapCrunchPage() {
         actualTeam,
         actualNflConf,
         actualCollege,
+        playerId: selectedPlayerId ?? undefined,
       };
 
       // Add to lineup; bust picks revert the total (count as 0)
@@ -876,6 +878,7 @@ export function SoloCapCrunchPage() {
                               className={isBad ? 'text-red-300' : 'text-white'}
                             >
                               <div className="flex items-center gap-1">
+                                <PlayerHeadshot playerId={pick.playerId} sport={selectedSport as 'nba' | 'nfl'} className="w-5 h-5 rounded-full object-cover bg-white/5 shrink-0" />
                                 <p className="font-semibold truncate text-[9px] md:text-xs">
                                   {idx + 1}. <FlipReveal text={pick.playerName} />
                                 </p>
@@ -1071,8 +1074,10 @@ export function SoloCapCrunchPage() {
                           : 'linear-gradient(135deg, #d4af3733 0%, #d4af3720 100%)'
                       }}
                     >
-                      <div className="flex justify-between items-center relative z-10">
-                        <div className="overflow-hidden">
+                      <div className="flex justify-between items-center relative z-10 gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <PlayerHeadshot playerId={player.playerId} sport={selectedSport as 'nba' | 'nfl'} className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover bg-white/5 shrink-0" />
+                          <div className="overflow-hidden flex-1">
                           <div className={`sports-font text-[7px] md:text-[8px] ${isInvalid ? 'text-red-400/50' : 'text-white/50'}`}>
                             {selectedSport?.toUpperCase()} • {getCategoryAbbr(statCategory!)}
                           </div>
@@ -1091,6 +1096,7 @@ export function SoloCapCrunchPage() {
                             </div>
                           )}
                         </div>
+                        </div>
                         <div className="text-right flex-shrink-0">
                           <p className={`retro-title text-lg md:text-xl ${isInvalid ? 'text-red-400' : 'text-[#d4af37]'}`}>
                             {isBust ? `${fmt(player.statValue)}→0` : fmt(player.statValue)}
@@ -1104,6 +1110,42 @@ export function SoloCapCrunchPage() {
                   );
                 })}
               </div>
+              {/* Cap contribution bar chart */}
+              {lineup.selectedPlayers.length > 0 && (() => {
+                const PICK_COLORS = ['#818cf8', '#34d399', '#fb923c', '#f472b6', '#60a5fa'];
+                const validTotal = lineup.selectedPlayers
+                  .filter(p => !p.isBust && !p.neverOnTeam)
+                  .reduce((s, p) => s + p.statValue, 0);
+                if (validTotal === 0) return null;
+                return (
+                  <div className="px-4 md:px-6 pb-4 md:pb-6 border-t border-white/5 pt-3">
+                    <div className="sports-font text-[7px] text-white/25 tracking-widest uppercase mb-2">Cap usage</div>
+                    <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden flex gap-px">
+                      {lineup.selectedPlayers.map((p, i) => {
+                        const pct = p.isBust || p.neverOnTeam ? 0 : Math.min((p.statValue / targetCap) * 100, 100);
+                        return (
+                          <motion.div
+                            key={i}
+                            className="h-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ delay: 0.3 + i * 0.1, duration: 0.45, ease: 'easeOut' }}
+                            style={{ backgroundColor: PICK_COLORS[i % PICK_COLORS.length] }}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
+                      {lineup.selectedPlayers.map((p, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: PICK_COLORS[i % PICK_COLORS.length], opacity: p.isBust || p.neverOnTeam ? 0.25 : 1 }} />
+                          <span className="sports-font text-[8px] text-white/35 truncate max-w-[64px]">{p.playerName.split(' ').slice(-1)[0]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             </div>
           </main>

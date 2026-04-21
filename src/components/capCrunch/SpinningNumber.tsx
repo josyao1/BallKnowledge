@@ -129,27 +129,28 @@ export function SpinningNumber({ value, className, color, flashKey }: SpinningNu
 }
 
 // Hex color values (used for animated color transitions).
-// Thresholds are relative to the cap so color feedback scales with any target:
-//   < 50%  → white (plenty of room)
-//   ≥ 50%  → yellow (halfway there)
-//   ≥ 75%  → orange (getting close)
-//   ≥ 90%  → emerald (danger zone)
-//   ≥ 100% → red (bust)
+// Thresholds are relative to the cap — simulates a pressure gauge:
+//   ≤ 0    → white  (neutral / nothing picked yet)
+//   < 50%  → green  (comfortable, plenty of room)
+//   ≥ 50%  → yellow (halfway, caution)
+//   ≥ 75%  → orange (getting tight)
+//   ≥ 90%  → red    (danger zone)
+//   ≥ 100% → red    (bust)
 export function getTotalColor(total: number, cap: number): string {
   if (total <= 0) return '#ffffff';
   const ratio = total / cap;
-  if (ratio >= 1) return '#f87171';    // red-400   — bust
-  if (ratio >= 0.9) return '#34d399';  // emerald-400 — very close
-  if (ratio >= 0.75) return '#fb923c'; // orange-400 — 25% remaining
+  if (ratio >= 1)   return '#f87171';  // red-400   — bust
+  if (ratio >= 0.9) return '#f87171';  // red-400   — danger zone
+  if (ratio >= 0.75) return '#fb923c'; // orange-400 — getting tight
   if (ratio >= 0.5) return '#facc15';  // yellow-400 — halfway
-  return '#ffffff';
+  return '#4ade80';                    // green-400  — comfortable
 }
 
 export function getRemainingColor(total: number, cap: number): string {
   const ratio = total / cap;
-  if (ratio >= 1) return '#f87171';
-  if (ratio >= 0.9) return '#34d399';
+  if (ratio >= 1)   return '#f87171';
+  if (ratio >= 0.9) return '#f87171';
   if (ratio >= 0.75) return '#fb923c';
   if (ratio >= 0.5) return '#facc15';
-  return '#d4af37';
+  return '#4ade80';
 }

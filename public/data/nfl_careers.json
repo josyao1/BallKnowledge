@@ -44059,6 +44059,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 3,
+                "completions": 58,
+                "attempts": 92,
+                "passing_yards": 544,
+                "passing_tds": 4,
+                "interceptions": 3,
+                "rushing_yards": -1,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -46058,6 +46070,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 16,
+                "completions": 327,
+                "attempts": 498,
+                "passing_yards": 3322,
+                "passing_tds": 24,
+                "interceptions": 7,
+                "rushing_yards": 61,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -51045,6 +51069,19 @@
                 "targets": 1,
                 "receptions": 1,
                 "receiving_yards": 2,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DEN",
+                "gp": 1,
+                "targets": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -59435,6 +59472,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CIN",
+                "gp": 13,
+                "completions": 251,
+                "attempts": 416,
+                "passing_yards": 2479,
+                "passing_tds": 15,
+                "interceptions": 10,
+                "rushing_yards": 35,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -63919,6 +63968,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LA",
+                "gp": 17,
+                "completions": 388,
+                "attempts": 597,
+                "passing_yards": 4707,
+                "passing_tds": 46,
+                "interceptions": 8,
+                "rushing_yards": 1,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -72719,6 +72780,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CAR",
+                "gp": 4,
+                "completions": 25,
+                "attempts": 37,
+                "passing_yards": 293,
+                "passing_tds": 1,
+                "interceptions": 1,
+                "rushing_yards": -2,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -75467,6 +75540,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYJ",
+                "gp": 6,
+                "completions": 80,
+                "attempts": 134,
+                "passing_yards": 779,
+                "passing_tds": 5,
+                "interceptions": 5,
+                "rushing_yards": 143,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -77377,6 +77462,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYG",
+                "gp": 6,
+                "completions": 69,
+                "attempts": 119,
+                "passing_yards": 831,
+                "passing_tds": 3,
+                "interceptions": 3,
+                "rushing_yards": 106,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -78963,6 +79060,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ATL",
+                "gp": 10,
+                "completions": 166,
+                "attempts": 269,
+                "passing_yards": 1721,
+                "passing_tds": 10,
+                "interceptions": 5,
+                "rushing_yards": 7,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -81591,6 +81700,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 13,
+                "targets": 72,
+                "receptions": 50,
+                "receiving_yards": 504,
+                "receiving_tds": 4,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -82656,6 +82778,19 @@
                 "receptions": 70,
                 "receiving_yards": 744,
                 "receiving_tds": 7,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LAC",
+                "gp": 17,
+                "targets": 122,
+                "receptions": 81,
+                "receiving_yards": 777,
+                "receiving_tds": 4,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -84421,6 +84556,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 17,
+                "targets": 108,
+                "receptions": 76,
+                "receiving_yards": 851,
+                "receiving_tds": 5,
+                "rushing_yards": 1,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -85401,6 +85549,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BAL",
+                "gp": 17,
+                "targets": 39,
+                "receptions": 22,
+                "receiving_yards": 330,
+                "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -85570,6 +85731,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LV",
+                "gp": 15,
+                "completions": 302,
+                "attempts": 448,
+                "passing_yards": 3025,
+                "passing_tds": 19,
+                "interceptions": 17,
+                "rushing_yards": 109,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -86120,6 +86293,19 @@
                 "receptions": 48,
                 "receiving_yards": 615,
                 "receiving_tds": 5,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 14,
+                "targets": 35,
+                "receptions": 19,
+                "receiving_yards": 186,
+                "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -87900,6 +88086,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 13,
+                "targets": 36,
+                "receptions": 24,
+                "receiving_yards": 279,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -88041,6 +88240,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TB",
+                "gp": 3,
+                "completions": 8,
+                "attempts": 15,
+                "passing_yards": 62,
+                "passing_tds": 0,
+                "interceptions": 0,
+                "rushing_yards": 4,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -89274,6 +89485,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LA",
+                "gp": 3,
+                "completions": 0,
+                "attempts": 0,
+                "passing_yards": 0,
+                "passing_tds": 0,
+                "interceptions": 0,
+                "rushing_yards": -10,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -89681,6 +89904,19 @@
                 "receptions": 85,
                 "receiving_yards": 1063,
                 "receiving_tds": 8,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LA",
+                "gp": 14,
+                "targets": 114,
+                "receptions": 60,
+                "receiving_yards": 789,
+                "receiving_tds": 14,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -90375,6 +90611,19 @@
                 "receptions": 74,
                 "receiving_yards": 1004,
                 "receiving_tds": 11,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TB",
+                "gp": 8,
+                "targets": 62,
+                "receptions": 30,
+                "receiving_yards": 368,
+                "receiving_tds": 3,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -91157,6 +91406,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYG",
+                "gp": 3,
+                "completions": 37,
+                "attempts": 66,
+                "passing_yards": 567,
+                "passing_tds": 2,
+                "interceptions": 2,
+                "rushing_yards": 23,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -91910,6 +92171,19 @@
                 "rushing_tds": 1,
                 "passing_yards": 13,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 17,
+                "targets": 102,
+                "receptions": 85,
+                "receiving_yards": 1013,
+                "receiving_tds": 4,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -92215,6 +92489,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIA",
+                "gp": 9,
+                "targets": 34,
+                "receptions": 24,
+                "receiving_yards": 283,
+                "receiving_tds": 6,
+                "rushing_yards": 4,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -92344,6 +92631,19 @@
                 "rushing_tds": 2,
                 "receptions": 19,
                 "receiving_yards": 161,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LV",
+                "gp": 12,
+                "carries": 22,
+                "rushing_yards": 104,
+                "rushing_tds": 0,
+                "receptions": 12,
+                "receiving_yards": 70,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -93611,6 +93911,19 @@
                 "receptions": 40,
                 "receiving_yards": 261,
                 "receiving_tds": 3,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 13,
+                "carries": 14,
+                "rushing_yards": 60,
+                "rushing_tds": 1,
+                "receptions": 16,
+                "receiving_yards": 99,
+                "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -95022,6 +95335,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LV",
+                "gp": 17,
+                "targets": 55,
+                "receptions": 32,
+                "receiving_yards": 291,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -95508,6 +95834,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 10,
+                "completions": 139,
+                "attempts": 227,
+                "passing_yards": 1695,
+                "passing_tds": 10,
+                "interceptions": 7,
+                "rushing_yards": 297,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -95609,6 +95947,19 @@
                 "targets": 14,
                 "receptions": 9,
                 "receiving_yards": 72,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CLE",
+                "gp": 4,
+                "targets": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -95945,6 +96296,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TB",
+                "gp": 13,
+                "targets": 53,
+                "receptions": 39,
+                "receiving_yards": 371,
+                "receiving_tds": 1,
+                "rushing_yards": 19,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -96073,6 +96437,19 @@
                 "receptions": 45,
                 "receiving_yards": 476,
                 "receiving_tds": 3,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 13,
+                "targets": 26,
+                "receptions": 21,
+                "receiving_yards": 263,
+                "receiving_tds": 2,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -96315,6 +96692,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 10,
+                "targets": 23,
+                "receptions": 11,
+                "receiving_yards": 207,
+                "receiving_tds": 1,
+                "rushing_yards": 9,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -96511,6 +96901,19 @@
                 "receiving_yards": 215,
                 "receiving_tds": 2,
                 "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DET",
+                "gp": 15,
+                "targets": 30,
+                "receptions": 24,
+                "receiving_yards": 289,
+                "receiving_tds": 1,
+                "rushing_yards": 19,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -96938,6 +97341,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 3,
+                "targets": 9,
+                "receptions": 5,
+                "receiving_yards": 53,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -97217,6 +97633,19 @@
                 "receiving_tds": 2,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BAL",
+                "gp": 17,
+                "carries": 307,
+                "rushing_yards": 1595,
+                "rushing_tds": 16,
+                "receptions": 15,
+                "receiving_yards": 150,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -97439,6 +97868,19 @@
                 "receiving_yards": 505,
                 "receiving_tds": 7,
                 "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SF",
+                "gp": 14,
+                "targets": 35,
+                "receptions": 22,
+                "receiving_yards": 276,
+                "receiving_tds": 1,
+                "rushing_yards": 6,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -97942,6 +98384,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIN",
+                "gp": 5,
+                "completions": 110,
+                "attempts": 169,
+                "passing_yards": 1216,
+                "passing_tds": 6,
+                "interceptions": 5,
+                "rushing_yards": 57,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -98056,6 +98510,19 @@
                 "targets": 3,
                 "receptions": 1,
                 "receiving_yards": 16,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 6,
+                "targets": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -98604,6 +99071,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIA",
+                "gp": 4,
+                "targets": 29,
+                "receptions": 21,
+                "receiving_yards": 265,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -98877,6 +99357,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DAL",
+                "gp": 17,
+                "completions": 404,
+                "attempts": 600,
+                "passing_yards": 4552,
+                "passing_tds": 30,
+                "interceptions": 10,
+                "rushing_yards": 177,
+                "rushing_tds": 2
             }
         ],
         "bio": {
@@ -98992,6 +99484,19 @@
                 "receptions": 66,
                 "receiving_yards": 674,
                 "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 17,
+                "targets": 87,
+                "receptions": 60,
+                "receiving_yards": 768,
+                "receiving_tds": 7,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -99137,6 +99642,18 @@
                 "receptions": 1,
                 "receiving_yards": 7,
                 "receiving_tds": 1
+            },
+            {
+                "season": "2025",
+                "team": "DET",
+                "gp": 17,
+                "completions": 393,
+                "attempts": 578,
+                "passing_yards": 4564,
+                "passing_tds": 34,
+                "interceptions": 8,
+                "rushing_yards": 45,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -99265,6 +99782,19 @@
                 "receptions": 8,
                 "receiving_yards": 66,
                 "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LA",
+                "gp": 10,
+                "targets": 36,
+                "receptions": 25,
+                "receiving_yards": 281,
+                "receiving_tds": 3,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -99529,6 +100059,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ARI",
+                "gp": 14,
+                "completions": 315,
+                "attempts": 485,
+                "passing_yards": 3366,
+                "passing_tds": 23,
+                "interceptions": 8,
+                "rushing_yards": 168,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -99723,6 +100265,19 @@
                 "targets": 22,
                 "receptions": 12,
                 "receiving_yards": 147,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 11,
+                "targets": 20,
+                "receptions": 13,
+                "receiving_yards": 117,
                 "receiving_tds": 1,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -99940,6 +100495,19 @@
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SF",
+                "gp": 17,
+                "carries": 311,
+                "rushing_yards": 1202,
+                "rushing_tds": 10,
+                "receptions": 102,
+                "receiving_yards": 924,
+                "receiving_tds": 7,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -100056,6 +100624,19 @@
                 "receiving_yards": 253,
                 "receiving_tds": 1,
                 "rushing_yards": 14,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 6,
+                "targets": 9,
+                "receptions": 7,
+                "receiving_yards": 81,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -100178,6 +100759,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SF",
+                "gp": 11,
+                "targets": 69,
+                "receptions": 57,
+                "receiving_yards": 628,
+                "receiving_tds": 7,
+                "rushing_yards": -3,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -100297,6 +100891,19 @@
                 "receiving_tds": 2,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIN",
+                "gp": 12,
+                "carries": 132,
+                "rushing_yards": 548,
+                "rushing_tds": 2,
+                "receptions": 28,
+                "receiving_yards": 199,
+                "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -100413,6 +101020,19 @@
                 "receiving_yards": 305,
                 "receiving_tds": 1,
                 "rushing_yards": 6,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SF",
+                "gp": 14,
+                "targets": 53,
+                "receptions": 37,
+                "receiving_yards": 551,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -100635,6 +101255,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "JAX",
+                "gp": 4,
+                "completions": 3,
+                "attempts": 3,
+                "passing_yards": 19,
+                "passing_tds": 0,
+                "interceptions": 0,
+                "rushing_yards": -8,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -100748,6 +101380,18 @@
                 "receptions": 23,
                 "receiving_yards": 187,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NO",
+                "gp": 13,
+                "completions": 2,
+                "attempts": 6,
+                "passing_yards": 57,
+                "passing_tds": 1,
+                "interceptions": 0,
+                "rushing_yards": 114,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -100828,6 +101472,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "JAX",
+                "gp": 13,
+                "targets": 24,
+                "receptions": 15,
+                "receiving_yards": 187,
+                "receiving_tds": 3,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -100903,6 +101560,19 @@
                 "targets": 13,
                 "receptions": 9,
                 "receiving_yards": 100,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DET",
+                "gp": 5,
+                "targets": 10,
+                "receptions": 8,
+                "receiving_yards": 53,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -101131,6 +101801,19 @@
                 "receptions": 28,
                 "receiving_yards": 322,
                 "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CIN",
+                "gp": 15,
+                "carries": 84,
+                "rushing_yards": 382,
+                "rushing_tds": 3,
+                "receptions": 17,
+                "receiving_yards": 87,
+                "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -101484,6 +102167,19 @@
                 "receiving_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ARI",
+                "gp": 3,
+                "carries": 32,
+                "rushing_yards": 95,
+                "rushing_tds": 1,
+                "receptions": 8,
+                "receiving_yards": 38,
+                "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -101587,6 +102283,19 @@
                 "receiving_yards": 378,
                 "receiving_tds": 5,
                 "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 14,
+                "targets": 65,
+                "receptions": 46,
+                "receiving_yards": 550,
+                "receiving_tds": 2,
+                "rushing_yards": 4,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -101750,6 +102459,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CAR",
+                "gp": 3,
+                "targets": 1,
+                "receptions": 1,
+                "receiving_yards": 5,
+                "receiving_tds": 0,
+                "rushing_yards": 12,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -101852,6 +102574,19 @@
                 "receptions": 35,
                 "receiving_yards": 453,
                 "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 4,
+                "targets": 10,
+                "receptions": 5,
+                "receiving_yards": 83,
+                "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -102101,6 +102836,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BAL",
+                "gp": 4,
+                "completions": 34,
+                "attempts": 52,
+                "passing_yards": 303,
+                "passing_tds": 0,
+                "interceptions": 4,
+                "rushing_yards": -4,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -102313,6 +103060,19 @@
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 2,
+                "carries": 14,
+                "rushing_yards": 43,
+                "rushing_tds": 0,
+                "receptions": 5,
+                "receiving_yards": 38,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -102401,6 +103161,19 @@
                 "targets": 17,
                 "receptions": 11,
                 "receiving_yards": 112,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 2,
+                "targets": 1,
+                "receptions": 1,
+                "receiving_yards": 1,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -102711,6 +103484,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 17,
+                "targets": 45,
+                "receptions": 33,
+                "receiving_yards": 345,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -102828,6 +103614,19 @@
                 "receiving_tds": 8,
                 "rushing_yards": -1,
                 "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 17,
+                "targets": 54,
+                "receptions": 38,
+                "receiving_yards": 222,
+                "receiving_tds": 2,
+                "rushing_yards": 70,
+                "rushing_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -102957,6 +103756,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 4,
+                "completions": 25,
+                "attempts": 35,
+                "passing_yards": 313,
+                "passing_tds": 4,
+                "interceptions": 0,
+                "rushing_yards": 6,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -103177,6 +103988,18 @@
                 "receptions": 1,
                 "receiving_yards": 2,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 14,
+                "completions": 315,
+                "attempts": 502,
+                "passing_yards": 3587,
+                "passing_tds": 22,
+                "interceptions": 11,
+                "rushing_yards": 422,
+                "rushing_tds": 5
             }
         ],
         "bio": {
@@ -103389,6 +104212,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DEN",
+                "gp": 16,
+                "targets": 76,
+                "receptions": 50,
+                "receiving_yards": 461,
+                "receiving_tds": 1,
+                "rushing_yards": 7,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -103508,6 +104344,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CLE",
+                "gp": 11,
+                "targets": 48,
+                "receptions": 33,
+                "receiving_yards": 293,
+                "receiving_tds": 4,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -103622,6 +104471,19 @@
                 "targets": 11,
                 "receptions": 8,
                 "receiving_yards": 84,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ARI",
+                "gp": 6,
+                "targets": 18,
+                "receptions": 12,
+                "receiving_yards": 183,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -104146,6 +105008,19 @@
                 "receiving_tds": 2,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NO",
+                "gp": 11,
+                "carries": 131,
+                "rushing_yards": 471,
+                "rushing_tds": 1,
+                "receptions": 33,
+                "receiving_yards": 186,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -104262,6 +105137,19 @@
                 "receiving_yards": 710,
                 "receiving_tds": 6,
                 "rushing_yards": 10,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SEA",
+                "gp": 16,
+                "targets": 70,
+                "receptions": 47,
+                "receiving_yards": 593,
+                "receiving_tds": 2,
+                "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -104384,6 +105272,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TB",
+                "gp": 9,
+                "targets": 51,
+                "receptions": 33,
+                "receiving_yards": 360,
+                "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -104501,6 +105402,19 @@
                 "receptions": 23,
                 "receiving_yards": 176,
                 "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 17,
+                "carries": 163,
+                "rushing_yards": 611,
+                "rushing_tds": 8,
+                "receptions": 18,
+                "receiving_yards": 143,
+                "receiving_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -104920,6 +105834,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYJ",
+                "gp": 5,
+                "targets": 21,
+                "receptions": 11,
+                "receiving_yards": 101,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -105124,6 +106051,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 4,
+                "completions": 7,
+                "attempts": 10,
+                "passing_yards": 65,
+                "passing_tds": 0,
+                "interceptions": 0,
+                "rushing_yards": -5,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -105669,6 +106608,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LAC",
+                "gp": 8,
+                "targets": 16,
+                "receptions": 11,
+                "receiving_yards": 97,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -105868,6 +106820,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LAC",
+                "gp": 6,
+                "targets": 10,
+                "receptions": 7,
+                "receiving_yards": 101,
+                "receiving_tds": 0,
+                "rushing_yards": 2,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -105971,6 +106936,19 @@
                 "receiving_yards": 411,
                 "receiving_tds": 4,
                 "rushing_yards": 4,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 9,
+                "targets": 29,
+                "receptions": 14,
+                "receiving_yards": 120,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -106320,6 +107298,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 30,
                 "passing_tds": 1
+            },
+            {
+                "season": "2025",
+                "team": "DEN",
+                "gp": 17,
+                "targets": 124,
+                "receptions": 74,
+                "receiving_yards": 1017,
+                "receiving_tds": 7,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -106422,6 +107413,19 @@
                 "receptions": 42,
                 "receiving_yards": 496,
                 "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PHI",
+                "gp": 15,
+                "targets": 82,
+                "receptions": 60,
+                "receiving_yards": 591,
+                "receiving_tds": 11,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -106718,6 +107722,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LV",
+                "gp": 9,
+                "targets": 13,
+                "receptions": 13,
+                "receiving_yards": 114,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -106796,6 +107813,19 @@
                 "receptions": 30,
                 "receiving_yards": 241,
                 "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NO",
+                "gp": 4,
+                "carries": 2,
+                "rushing_yards": -2,
+                "rushing_tds": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
+                "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -106904,6 +107934,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "HOU",
+                "gp": 17,
+                "targets": 106,
+                "receptions": 82,
+                "receiving_yards": 777,
+                "receiving_tds": 3,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -106993,6 +108036,19 @@
                 "receptions": 22,
                 "receiving_yards": 289,
                 "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "HOU",
+                "gp": 3,
+                "targets": 4,
+                "receptions": 3,
+                "receiving_yards": 30,
+                "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -107154,6 +108210,19 @@
                 "receiving_yards": 686,
                 "receiving_tds": 1,
                 "rushing_yards": 79,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYG",
+                "gp": 6,
+                "targets": 15,
+                "receptions": 7,
+                "receiving_yards": 69,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -107410,6 +108479,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 21,
                 "passing_tds": 1
+            },
+            {
+                "season": "2025",
+                "team": "MIA",
+                "gp": 6,
+                "targets": 9,
+                "receptions": 5,
+                "receiving_yards": 44,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -107498,6 +108580,19 @@
                 "targets": 4,
                 "receptions": 0,
                 "receiving_yards": 0,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "HOU",
+                "gp": 4,
+                "targets": 8,
+                "receptions": 6,
+                "receiving_yards": 37,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -107689,6 +108784,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 4,
+                "targets": 5,
+                "receptions": 3,
+                "receiving_yards": 21,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -107791,6 +108899,19 @@
                 "receptions": 37,
                 "receiving_yards": 530,
                 "receiving_tds": 6,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYJ",
+                "gp": 9,
+                "targets": 18,
+                "receptions": 10,
+                "receiving_yards": 70,
+                "receiving_tds": 1,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -107908,6 +109029,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DET",
+                "gp": 2,
+                "completions": 0,
+                "attempts": 2,
+                "passing_yards": 0,
+                "passing_tds": 0,
+                "interceptions": 0,
+                "rushing_yards": -3,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -108078,6 +109211,19 @@
                 "rushing_tds": 0,
                 "receptions": 14,
                 "receiving_yards": 81,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 3,
+                "carries": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -108278,6 +109424,19 @@
                 "receiving_tds": 11,
                 "rushing_yards": 5,
                 "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BAL",
+                "gp": 17,
+                "targets": 70,
+                "receptions": 48,
+                "receiving_yards": 422,
+                "receiving_tds": 5,
+                "rushing_yards": 48,
+                "rushing_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -108538,6 +109697,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 5,
+                "completions": 38,
+                "attempts": 52,
+                "passing_yards": 310,
+                "passing_tds": 2,
+                "interceptions": 2,
+                "rushing_yards": 6,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -108639,6 +109810,19 @@
                 "targets": 47,
                 "receptions": 27,
                 "receiving_yards": 379,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "HOU",
+                "gp": 11,
+                "targets": 52,
+                "receptions": 28,
+                "receiving_yards": 239,
                 "receiving_tds": 1,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -108856,6 +110040,19 @@
                 "receiving_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "HOU",
+                "gp": 15,
+                "carries": 122,
+                "rushing_yards": 506,
+                "rushing_tds": 3,
+                "receptions": 13,
+                "receiving_yards": 67,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -108969,6 +110166,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BAL",
+                "gp": 13,
+                "completions": 192,
+                "attempts": 302,
+                "passing_yards": 2549,
+                "passing_tds": 21,
+                "interceptions": 7,
+                "rushing_yards": 349,
+                "rushing_tds": 2
             }
         ],
         "bio": {
@@ -109070,6 +110279,19 @@
                 "targets": 17,
                 "receptions": 9,
                 "receiving_yards": 53,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CHI",
+                "gp": 7,
+                "targets": 6,
+                "receptions": 4,
+                "receiving_yards": 25,
                 "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -109261,6 +110483,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CHI",
+                "gp": 17,
+                "targets": 85,
+                "receptions": 50,
+                "receiving_yards": 682,
+                "receiving_tds": 6,
+                "rushing_yards": 79,
+                "rushing_tds": 1,
+                "passing_yards": 2,
+                "passing_tds": 1
             }
         ],
         "bio": {
@@ -109362,6 +110597,19 @@
                 "targets": 83,
                 "receptions": 65,
                 "receiving_yards": 665,
+                "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CIN",
+                "gp": 12,
+                "targets": 42,
+                "receptions": 28,
+                "receiving_yards": 307,
                 "receiving_tds": 2,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
@@ -109566,6 +110814,19 @@
                 "rushing_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TEN",
+                "gp": 7,
+                "targets": 36,
+                "receptions": 17,
+                "receiving_yards": 303,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -109765,6 +111026,19 @@
                 "receiving_tds": 2,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PHI",
+                "gp": 16,
+                "carries": 280,
+                "rushing_yards": 1140,
+                "rushing_tds": 7,
+                "receptions": 37,
+                "receiving_yards": 273,
+                "receiving_tds": 2,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -109958,6 +111232,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TB",
+                "gp": 17,
+                "completions": 343,
+                "attempts": 543,
+                "passing_yards": 3693,
+                "passing_tds": 26,
+                "interceptions": 11,
+                "rushing_yards": 382,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -110071,6 +111357,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 16,
+                "completions": 319,
+                "attempts": 460,
+                "passing_yards": 3668,
+                "passing_tds": 25,
+                "interceptions": 10,
+                "rushing_yards": 579,
+                "rushing_tds": 14
             }
         ],
         "bio": {
@@ -110160,6 +111458,19 @@
                 "receptions": 12,
                 "receiving_yards": 120,
                 "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NO",
+                "gp": 8,
+                "targets": 11,
+                "receptions": 9,
+                "receiving_yards": 127,
+                "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -110277,6 +111588,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SEA",
+                "gp": 17,
+                "completions": 323,
+                "attempts": 477,
+                "passing_yards": 4048,
+                "passing_tds": 25,
+                "interceptions": 14,
+                "rushing_yards": 95,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -110367,6 +111690,19 @@
                 "receiving_yards": 1027,
                 "receiving_tds": 4,
                 "rushing_yards": 23,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "JAX",
+                "gp": 16,
+                "targets": 110,
+                "receptions": 75,
+                "receiving_yards": 835,
+                "receiving_tds": 3,
+                "rushing_yards": 13,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -110543,6 +111879,19 @@
                 "receiving_tds": 3,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BAL",
+                "gp": 10,
+                "carries": 18,
+                "rushing_yards": 93,
+                "rushing_tds": 2,
+                "receptions": 21,
+                "receiving_yards": 169,
+                "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -110636,6 +111985,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NO",
+                "gp": 7,
+                "targets": 10,
+                "receptions": 7,
+                "receiving_yards": 59,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -110712,6 +112074,19 @@
                 "receptions": 25,
                 "receiving_yards": 255,
                 "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CAR",
+                "gp": 6,
+                "targets": 26,
+                "receptions": 15,
+                "receiving_yards": 89,
+                "receiving_tds": 2,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -110809,6 +112184,19 @@
                 "rushing_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 2,
+                "targets": 1,
+                "receptions": 0,
+                "receiving_yards": 0,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -110899,6 +112287,19 @@
                 "receiving_yards": 506,
                 "receiving_tds": 3,
                 "rushing_yards": 8,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CHI",
+                "gp": 14,
+                "targets": 65,
+                "receptions": 39,
+                "receiving_yards": 313,
+                "receiving_tds": 2,
+                "rushing_yards": 25,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -111094,6 +112495,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ARI",
+                "gp": 5,
+                "completions": 110,
+                "attempts": 161,
+                "passing_yards": 962,
+                "passing_tds": 6,
+                "interceptions": 3,
+                "rushing_yards": 173,
+                "rushing_tds": 1
             }
         ],
         "bio": {
@@ -111183,6 +112596,19 @@
                 "receptions": 41,
                 "receiving_yards": 455,
                 "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIN",
+                "gp": 15,
+                "targets": 66,
+                "receptions": 51,
+                "receiving_yards": 438,
+                "receiving_tds": 3,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -111280,6 +112706,19 @@
                 "receiving_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DAL",
+                "gp": 4,
+                "carries": 20,
+                "rushing_yards": 117,
+                "rushing_tds": 1,
+                "receptions": 8,
+                "receiving_yards": 30,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -111373,6 +112812,19 @@
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYG",
+                "gp": 17,
+                "carries": 119,
+                "rushing_yards": 437,
+                "rushing_tds": 5,
+                "receptions": 18,
+                "receiving_yards": 151,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -111463,6 +112915,19 @@
                 "rushing_tds": 5,
                 "receptions": 41,
                 "receiving_yards": 238,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TEN",
+                "gp": 17,
+                "carries": 242,
+                "rushing_yards": 1082,
+                "rushing_tds": 5,
+                "receptions": 33,
+                "receiving_yards": 206,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -111565,6 +113030,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 4,
+                "completions": 6,
+                "attempts": 13,
+                "passing_yards": 37,
+                "passing_tds": 0,
+                "interceptions": 1,
+                "rushing_yards": 2,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -111658,6 +113135,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 5,
+                "targets": 14,
+                "receptions": 9,
+                "receiving_yards": 62,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -111735,6 +113225,19 @@
                 "rushing_tds": 0,
                 "receptions": 1,
                 "receiving_yards": 11,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SEA",
+                "gp": 1,
+                "carries": 3,
+                "rushing_yards": 6,
+                "rushing_tds": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -111885,6 +113388,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ARI",
+                "gp": 12,
+                "targets": 33,
+                "receptions": 29,
+                "receiving_yards": 206,
+                "receiving_tds": 3,
+                "rushing_yards": 15,
+                "rushing_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -111975,6 +113491,19 @@
                 "receiving_yards": 573,
                 "receiving_tds": 2,
                 "rushing_yards": 17,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NYG",
+                "gp": 14,
+                "targets": 63,
+                "receptions": 37,
+                "receiving_yards": 538,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -112071,6 +113600,19 @@
                 "receiving_tds": 3,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 17,
+                "carries": 50,
+                "rushing_yards": 200,
+                "rushing_tds": 3,
+                "receptions": 24,
+                "receiving_yards": 263,
+                "receiving_tds": 2,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -112160,6 +113702,19 @@
                 "receptions": 6,
                 "receiving_yards": 30,
                 "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DAL",
+                "gp": 1,
+                "targets": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
+                "receiving_tds": 0,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -112257,6 +113812,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PIT",
+                "gp": 15,
+                "targets": 99,
+                "receptions": 59,
+                "receiving_yards": 850,
+                "receiving_tds": 6,
+                "rushing_yards": 12,
+                "rushing_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -112346,6 +113914,19 @@
                 "receptions": 48,
                 "receiving_yards": 500,
                 "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CIN",
+                "gp": 13,
+                "targets": 41,
+                "receptions": 34,
+                "receiving_yards": 288,
+                "receiving_tds": 3,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -112523,6 +114104,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 10,
+                "targets": 60,
+                "receptions": 38,
+                "receiving_yards": 582,
+                "receiving_tds": 3,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -112612,6 +114206,19 @@
                 "receptions": 9,
                 "receiving_yards": 91,
                 "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 16,
+                "targets": 74,
+                "receptions": 49,
+                "receiving_yards": 587,
+                "receiving_tds": 5,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -112789,6 +114396,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PHI",
+                "gp": 15,
+                "targets": 121,
+                "receptions": 78,
+                "receiving_yards": 1003,
+                "receiving_tds": 7,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -112882,6 +114502,19 @@
                 "receiving_tds": 0,
                 "passing_yards": 3,
                 "passing_tds": 1
+            },
+            {
+                "season": "2025",
+                "team": "DET",
+                "gp": 17,
+                "carries": 158,
+                "rushing_yards": 716,
+                "rushing_tds": 8,
+                "receptions": 24,
+                "receiving_yards": 192,
+                "receiving_tds": 0,
+                "passing_yards": 3,
+                "passing_tds": 1
             }
         ],
         "bio": {
@@ -112971,6 +114604,19 @@
                 "receptions": 22,
                 "receiving_yards": 311,
                 "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 16,
+                "targets": 49,
+                "receptions": 36,
+                "receiving_yards": 417,
+                "receiving_tds": 4,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -113068,6 +114714,19 @@
                 "receiving_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "GB",
+                "gp": 15,
+                "carries": 234,
+                "rushing_yards": 929,
+                "rushing_tds": 13,
+                "receptions": 36,
+                "receiving_yards": 282,
+                "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -113153,6 +114812,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SEA",
+                "gp": 3,
+                "completions": 2,
+                "attempts": 3,
+                "passing_yards": 15,
+                "passing_tds": 0,
+                "interceptions": 0,
+                "rushing_yards": -5,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -113252,6 +114923,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 13,
+                "completions": 261,
+                "attempts": 384,
+                "passing_yards": 3101,
+                "passing_tds": 19,
+                "interceptions": 8,
+                "rushing_yards": 164,
+                "rushing_tds": 5
             }
         ],
         "bio": {
@@ -113342,6 +115025,19 @@
                 "receiving_yards": 670,
                 "receiving_tds": 3,
                 "rushing_yards": 136,
+                "rushing_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "WAS",
+                "gp": 16,
+                "targets": 99,
+                "receptions": 72,
+                "receiving_yards": 727,
+                "receiving_tds": 5,
+                "rushing_yards": 75,
                 "rushing_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -113492,6 +115188,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NO",
+                "gp": 17,
+                "targets": 102,
+                "receptions": 77,
+                "receiving_yards": 889,
+                "receiving_tds": 3,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -113544,6 +115253,19 @@
                 "receptions": 39,
                 "receiving_yards": 249,
                 "receiving_tds": 3,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CAR",
+                "gp": 17,
+                "carries": 236,
+                "rushing_yards": 1076,
+                "rushing_tds": 6,
+                "receptions": 39,
+                "receiving_yards": 297,
+                "receiving_tds": 1,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -113610,6 +115332,19 @@
                 "rushing_tds": 9,
                 "receptions": 32,
                 "receiving_yards": 153,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DEN",
+                "gp": 10,
+                "carries": 153,
+                "rushing_yards": 772,
+                "rushing_tds": 4,
+                "receptions": 11,
+                "receiving_yards": 37,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -113693,6 +115428,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIA",
+                "gp": 13,
+                "targets": 20,
+                "receptions": 11,
+                "receiving_yards": 89,
+                "receiving_tds": 0,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -113769,6 +115517,19 @@
                 "receptions": 20,
                 "receiving_yards": 239,
                 "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "BUF",
+                "gp": 6,
+                "targets": 18,
+                "receptions": 12,
+                "receiving_yards": 129,
+                "receiving_tds": 1,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -113858,6 +115619,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIA",
+                "gp": 14,
+                "completions": 260,
+                "attempts": 384,
+                "passing_yards": 2660,
+                "passing_tds": 20,
+                "interceptions": 15,
+                "rushing_yards": 43,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -113990,6 +115763,19 @@
                 "receptions": 18,
                 "receiving_yards": 136,
                 "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 17,
+                "carries": 323,
+                "rushing_yards": 1585,
+                "rushing_tds": 18,
+                "receptions": 46,
+                "receiving_yards": 378,
+                "receiving_tds": 2,
                 "passing_yards": 0,
                 "passing_tds": 0
             }
@@ -114219,6 +116005,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "IND",
+                "gp": 17,
+                "targets": 111,
+                "receptions": 80,
+                "receiving_yards": 784,
+                "receiving_tds": 7,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -114282,6 +116081,19 @@
                 "receptions": 77,
                 "receiving_yards": 975,
                 "receiving_tds": 6,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SF",
+                "gp": 15,
+                "targets": 90,
+                "receptions": 55,
+                "receiving_yards": 643,
+                "receiving_tds": 9,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -114437,6 +116249,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "GB",
+                "gp": 15,
+                "completions": 291,
+                "attempts": 439,
+                "passing_yards": 3381,
+                "passing_tds": 23,
+                "interceptions": 6,
+                "rushing_yards": 199,
+                "rushing_tds": 0
             }
         ],
         "bio": {
@@ -114501,6 +116325,19 @@
                 "rushing_tds": 2,
                 "receptions": 22,
                 "receiving_yards": 223,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PHI",
+                "gp": 6,
+                "carries": 12,
+                "rushing_yards": 60,
+                "rushing_tds": 0,
+                "receptions": 3,
+                "receiving_yards": 21,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -114731,6 +116568,19 @@
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CHI",
+                "gp": 16,
+                "carries": 223,
+                "rushing_yards": 1087,
+                "rushing_tds": 9,
+                "receptions": 34,
+                "receiving_yards": 299,
+                "receiving_tds": 1,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -114807,6 +116657,19 @@
                 "receptions": 47,
                 "receiving_yards": 474,
                 "receiving_tds": 4,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CHI",
+                "gp": 16,
+                "targets": 48,
+                "receptions": 30,
+                "receiving_yards": 347,
+                "receiving_tds": 2,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -114891,6 +116754,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "ATL",
+                "gp": 15,
+                "targets": 72,
+                "receptions": 32,
+                "receiving_yards": 443,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -114970,6 +116846,19 @@
                 "rushing_yards": 3,
                 "rushing_tds": 0,
                 "passing_yards": 22,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "MIN",
+                "gp": 17,
+                "targets": 141,
+                "receptions": 84,
+                "receiving_yards": 1048,
+                "receiving_tds": 2,
+                "rushing_yards": 7,
+                "rushing_tds": 0,
+                "passing_yards": 0,
                 "passing_tds": 0
             }
         ],
@@ -115115,6 +117004,19 @@
                 "rushing_tds": 1,
                 "receptions": 23,
                 "receiving_yards": 206,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "NE",
+                "gp": 5,
+                "carries": 25,
+                "rushing_yards": 106,
+                "rushing_tds": 1,
+                "receptions": 2,
+                "receiving_yards": 6,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -115270,6 +117172,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "LAC",
+                "gp": 16,
+                "completions": 340,
+                "attempts": 512,
+                "passing_yards": 3727,
+                "passing_tds": 26,
+                "interceptions": 13,
+                "rushing_yards": 498,
+                "rushing_tds": 2
             }
         ],
         "bio": {
@@ -115350,6 +117264,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DAL",
+                "gp": 13,
+                "targets": 117,
+                "receptions": 75,
+                "receiving_yards": 1077,
+                "receiving_tds": 3,
+                "rushing_yards": 2,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -115427,6 +117354,19 @@
                 "rushing_tds": 0,
                 "receptions": 3,
                 "receiving_yards": 24,
+                "receiving_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "KC",
+                "gp": 2,
+                "carries": 7,
+                "rushing_yards": 13,
+                "rushing_tds": 0,
+                "receptions": 2,
+                "receiving_yards": 9,
                 "receiving_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
@@ -115675,6 +117615,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "PHI",
+                "gp": 16,
+                "completions": 294,
+                "attempts": 454,
+                "passing_yards": 3224,
+                "passing_tds": 25,
+                "interceptions": 6,
+                "rushing_yards": 421,
+                "rushing_tds": 8
             }
         ],
         "bio": {
@@ -115755,6 +117707,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CLE",
+                "gp": 17,
+                "targets": 106,
+                "receptions": 50,
+                "receiving_yards": 602,
+                "receiving_tds": 2,
+                "rushing_yards": 5,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -115831,6 +117796,19 @@
                 "receptions": 73,
                 "receiving_yards": 911,
                 "receiving_tds": 10,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CIN",
+                "gp": 15,
+                "targets": 98,
+                "receptions": 59,
+                "receiving_yards": 846,
+                "receiving_tds": 11,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -115915,6 +117893,19 @@
                 "receiving_tds": 3,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "SEA",
+                "gp": 4,
+                "carries": 5,
+                "rushing_yards": 19,
+                "rushing_tds": 0,
+                "receptions": 0,
+                "receiving_yards": 0,
+                "receiving_tds": 0,
+                "passing_yards": 32,
+                "passing_tds": 1
             }
         ],
         "bio": {
@@ -115995,6 +117986,19 @@
                 "rushing_tds": 0,
                 "passing_yards": 0,
                 "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "TEN",
+                "gp": 14,
+                "targets": 52,
+                "receptions": 29,
+                "receiving_yards": 350,
+                "receiving_tds": 1,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
             }
         ],
         "bio": {
@@ -116071,6 +118075,19 @@
                 "receptions": 13,
                 "receiving_yards": 188,
                 "receiving_tds": 2,
+                "rushing_yards": 0,
+                "rushing_tds": 0,
+                "passing_yards": 0,
+                "passing_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "DEN",
+                "gp": 13,
+                "targets": 23,
+                "receptions": 20,
+                "receiving_yards": 195,
+                "receiving_tds": 1,
                 "rushing_yards": 0,
                 "rushing_tds": 0,
                 "passing_yards": 0,
@@ -116160,6 +118177,18 @@
                 "receptions": 0,
                 "receiving_yards": 0,
                 "receiving_tds": 0
+            },
+            {
+                "season": "2025",
+                "team": "CIN",
+                "gp": 8,
+                "completions": 173,
+                "attempts": 259,
+                "passing_yards": 1809,
+                "passing_tds": 17,
+                "interceptions": 5,
+                "rushing_yards": 41,
+                "rushing_tds": 0
             }
         ],
         "bio": {

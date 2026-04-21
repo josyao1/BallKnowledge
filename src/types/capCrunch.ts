@@ -33,6 +33,7 @@ export interface SelectedPlayer {
   actualTeam?: string;    // the team the player actually played for that year (shown when neverOnTeam due to wrong NFL team)
   actualNflConf?: string; // the NFL conf the player was actually in (shown when neverOnTeam due to wrong NFL conf)
   actualCollege?: string; // the player's college(s) from bio (shown when neverOnTeam due to wrong college conf)
+  playerId?: string | number; // ESPN player ID — used for headshot URL
 }
 
 export interface PlayerLineup {

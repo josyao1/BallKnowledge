@@ -8,6 +8,7 @@
 import { motion } from 'framer-motion';
 import { fmt } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
+import { PlayerHeadshot } from './PlayerHeadshot';
 import type { PlayerLineup } from '../../types/capCrunch';
 
 interface Player {
@@ -25,10 +26,11 @@ interface Props {
   totalRounds: number;
   /** When true, the current-round pick is hidden for opponents until the local player submits */
   canPickThisRound: boolean;
+  sport: 'nba' | 'nfl';
 }
 
 export function CapCrunchScoresPanel({
-  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound,
+  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport,
 }: Props) {
   return (
     <motion.div
@@ -74,20 +76,31 @@ export function CapCrunchScoresPanel({
               </div>
 
               <div className="space-y-1 mb-2 text-xs">
-                {visiblePicks.map((selected, idx) => (
-                  <div key={idx} className={`flex justify-between ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-300' : 'text-white/70'}`}>
-                    <div className="flex-1 min-w-0 flex items-baseline gap-1">
-                      <FlipReveal text={selected.playerName} className={`truncate text-xs ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400' : ''}`} />
-                      {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
-                      <span className={`ml-1 text-[10px] ${isMe && (selected.isBust || selected.statValue === 0) ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                {visiblePicks.map((selected, idx) => {
+                  const isBad = isMe && (selected.isBust || selected.statValue === 0);
+                  return (
+                  <motion.div
+                    key={idx}
+                    animate={isMe && selected.isBust ? { x: [0, -5, 5, -3, 3, 0] } : {}}
+                    transition={{ duration: 0.35 }}
+                    className={`flex justify-between items-center gap-1 ${isBad ? 'text-red-300' : 'text-white/70'}`}
+                  >
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                      {isMe && <PlayerHeadshot playerId={selected.playerId} sport={sport} className="w-5 h-5 rounded-full object-cover bg-white/5 shrink-0" />}
+                      <div className="min-w-0 flex items-baseline gap-1">
+                        <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
+                        {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                        <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                      </div>
                     </div>
                     {isMe && (
-                      <span className={`font-semibold ml-1 flex-shrink-0 ${(selected.isBust || selected.statValue === 0) ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                      <span className={`font-semibold ml-1 flex-shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                         {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
                       </span>
                     )}
-                  </div>
-                ))}
+                  </motion.div>
+                  );
+                })}
                 {maskCurrentRound && hasPicked && (
                   <div className="text-white/20 italic text-[10px]">Pick hidden until you submit</div>
                 )}
