@@ -27,7 +27,7 @@ def collect_gsis_ids() -> set[str]:
     """Collect every player_id from our existing NFL data files."""
     ids: set[str] = set()
 
-    lineup_path = PUBLIC_DATA / "nfl_lineups_pool.json"
+    lineup_path = PUBLIC_DATA / "nfl_lineup_pool.json"
     careers_path = PUBLIC_DATA / "nfl_careers.json"
 
     for path in (lineup_path, careers_path):
