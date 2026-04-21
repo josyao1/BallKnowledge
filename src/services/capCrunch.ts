@@ -983,6 +983,7 @@ export function calculateWinners(
 
 export interface OptimalPick {
   playerName: string;
+  playerId?: string | number;
   year: string;      // season string or 'career' for total_gp
   team: string;      // actual team the player was on
   statValue: number;
@@ -1030,7 +1031,7 @@ export async function findOptimalLastPick(
             const totalGP = p.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
             if (totalGP > actualStatValue && totalGP <= remainingBudget) {
               if (!best || totalGP > best.statValue) {
-                best = { playerName: p.player_name, year: 'career', team, statValue: totalGP, college: (p as any).bio?.school };
+                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, college: (p as any).bio?.school };
               }
             }
           }
@@ -1044,7 +1045,7 @@ export async function findOptimalLastPick(
                 : ((s as any)[statCategory] ?? 0);
               if (val > actualStatValue && val <= remainingBudget) {
                 if (!best || val >= best.statValue) {
-                  best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.school };
+                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.school };
                 }
               }
             }
@@ -1058,7 +1059,7 @@ export async function findOptimalLastPick(
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
           if (totalGP > actualStatValue && totalGP <= remainingBudget) {
             if (!best || totalGP > best.statValue) {
-              best = { playerName: p.player_name, year: 'career', team, statValue: totalGP };
+              best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP };
             }
           }
         }
@@ -1072,7 +1073,7 @@ export async function findOptimalLastPick(
               : ((s as any)[statCategory] ?? 0);
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val };
+                best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val };
               }
             }
           }
@@ -1092,7 +1093,7 @@ export async function findOptimalLastPick(
             const totalGP = p.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
             if (totalGP > actualStatValue && totalGP <= remainingBudget) {
               if (!best || totalGP > best.statValue) {
-                best = { playerName: p.player_name, year: 'career', team, statValue: totalGP, college: (p as any).bio?.college };
+                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, college: (p as any).bio?.college };
               }
             }
           }
@@ -1104,7 +1105,7 @@ export async function findOptimalLastPick(
             const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, year: 'career', team, statValue: val, college: (p as any).bio?.college };
+                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: val, college: (p as any).bio?.college };
               }
             }
           }
@@ -1117,7 +1118,7 @@ export async function findOptimalLastPick(
               const val = (s as any)[statCategory] ?? 0;
               if (val > actualStatValue && val <= remainingBudget) {
                 if (!best || val >= best.statValue) {
-                  best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.college };
+                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.college };
                 }
               }
             }
@@ -1131,7 +1132,7 @@ export async function findOptimalLastPick(
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
           if (totalGP > actualStatValue && totalGP <= remainingBudget) {
             if (!best || totalGP > best.statValue) {
-              best = { playerName: p.player_name, year: 'career', team, statValue: totalGP };
+              best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP };
             }
           }
         }
@@ -1154,7 +1155,7 @@ export async function findOptimalLastPick(
           const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
           if (val > actualStatValue && val <= remainingBudget) {
             if (!best || val >= best.statValue) {
-              best = { playerName: p.player_name, year: 'career', team, statValue: val };
+              best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: val };
             }
           }
         }
@@ -1169,7 +1170,7 @@ export async function findOptimalLastPick(
             const val = (s as any)[statCategory] ?? 0;
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, year: s.season, team: s.team, statValue: val };
+                best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val };
               }
             }
           }

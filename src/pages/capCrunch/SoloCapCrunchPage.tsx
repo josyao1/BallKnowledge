@@ -987,6 +987,8 @@ export function SoloCapCrunchPage() {
                   <div className="bg-black/60 border border-[#d4af37]/30 rounded-sm p-3 md:p-4">
                     <div className="sports-font text-[8px] text-[#d4af37]/60 tracking-widest uppercase mb-2">Optimal Last Pick</div>
                     <div className="flex justify-between items-start gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <PlayerHeadshot playerId={optimalPick.playerId} sport={selectedSport as 'nba' | 'nfl'} className="w-8 h-8 rounded-full object-cover shrink-0" />
                       <div className="overflow-hidden">
                         <div className="retro-title text-sm text-white truncate">{optimalPick.playerName}</div>
                         <div className="sports-font text-[9px] text-white/40 mt-0.5">
@@ -998,11 +1000,10 @@ export function SoloCapCrunchPage() {
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
                         </div>
-                        {lastPick.isBust && (
-                          <div className="sports-font text-[9px] text-emerald-400/70 mt-1">
-                            Would finish: {fmt(wouldFinishAt)} / {targetCap}
-                          </div>
-                        )}
+                        <div className="sports-font text-[9px] text-emerald-400/70 mt-1">
+                          Would finish: {fmt(wouldFinishAt)} / {targetCap}
+                        </div>
+                      </div>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="retro-title text-xl text-[#d4af37]">{fmt(optimalPick.statValue)}</div>
