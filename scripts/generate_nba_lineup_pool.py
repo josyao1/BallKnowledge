@@ -40,7 +40,7 @@ except ImportError:
 REQUEST_DELAY = 1.5     # seconds between API calls — stats.nba.com rate-limits aggressively
 MIN_PPG       = 5.0     # 5+ PPG average in at least one recent season
 # Scan recent seasons to catch players who don't have long careers yet
-RECENT_YEARS  = list(range(2019, 2026))  # 2019-20 through 2024-25
+RECENT_YEARS  = list(range(2019, 2027))  # 2019-20 through 2025-26
 
 OUT_PATH = os.path.join(os.path.dirname(__file__), "data", "nba_lineup_pool.json")
 

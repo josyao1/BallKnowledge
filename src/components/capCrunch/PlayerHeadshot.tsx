@@ -1,10 +1,23 @@
-import { useState } from 'react';
-import nflHeadshots from '../../../public/data/nfl_headshots.json';
+import { useState, useEffect } from 'react';
 
 interface Props {
   playerId: string | number | undefined;
   sport: 'nba' | 'nfl';
   className?: string;
+}
+
+// Module-level cache so the JSON is fetched once and shared across all instances.
+let _nflHeadshots: Record<string, string> | null = null;
+let _nflHeadshotsPromise: Promise<Record<string, string>> | null = null;
+
+function loadNflHeadshots(): Promise<Record<string, string>> {
+  if (_nflHeadshots) return Promise.resolve(_nflHeadshots);
+  if (!_nflHeadshotsPromise) {
+    _nflHeadshotsPromise = fetch('/data/nfl_headshots.json')
+      .then(r => r.json())
+      .then(data => { _nflHeadshots = data; return data; });
+  }
+  return _nflHeadshotsPromise;
 }
 
 /** Generic silhouette shown when no headshot exists for the player. */
@@ -22,19 +35,25 @@ function Silhouette({ className }: { className: string }) {
 /**
  * Renders a player headshot.
  * NBA: uses NBA.com CDN directly (player IDs in our data are NBA.com IDs).
- * NFL: looks up GSIS ID in nfl_headshots.json (pre-generated from nflverse).
+ * NFL: looks up GSIS ID in nfl_headshots.json (fetched once, cached in memory).
  * Falls back to a generic silhouette if no headshot is found.
  */
 export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-full object-cover shrink-0' }: Props) {
   const [error, setError] = useState(false);
+  const [nflUrl, setNflUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (sport !== 'nfl' || !playerId) return;
+    loadNflHeadshots().then(map => {
+      setNflUrl(map[String(playerId)] ?? null);
+    });
+  }, [sport, playerId]);
+
   if (!playerId || error) return <Silhouette className={className} />;
 
-  let url: string | null = null;
-  if (sport === 'nba') {
-    url = `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`;
-  } else {
-    url = (nflHeadshots as Record<string, string>)[String(playerId)] ?? null;
-  }
+  const url = sport === 'nba'
+    ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
+    : nflUrl;
 
   if (!url) return <Silhouette className={className} />;
   return (
