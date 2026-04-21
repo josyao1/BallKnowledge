@@ -206,7 +206,7 @@ PRE1999_PATCHES = {
 NEW_PLAYERS = [
     # ── Jim Brown ──────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-JIM-BROWN",
+        "player_id":   "00-0003346",
         "player_name": "Jim Brown",
         "position":    "RB",
         "bio":         {"height": "6-2", "weight": 232, "college": "Syracuse", "years_exp": 9, "draft_club": "CLE", "draft_number": 6},
@@ -224,7 +224,7 @@ NEW_PLAYERS = [
     },
     # ── Barry Sanders ──────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-BARRY-SANDERS",
+        "player_id":   "00-0014313",
         "player_name": "Barry Sanders",
         "position":    "RB",
         "bio":         {"height": "5-8", "weight": 203, "college": "Oklahoma State", "years_exp": 10, "draft_club": "DET", "draft_number": 3},
@@ -243,7 +243,7 @@ NEW_PLAYERS = [
     },
     # ── Bo Jackson ─────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-BO-JACKSON",
+        "player_id":   "JAC631960",
         "player_name": "Bo Jackson",
         "position":    "RB",
         "bio":         {"height": "6-1", "weight": 230, "college": "Auburn", "years_exp": 4, "draft_club": "OAK", "draft_number": 183},
@@ -256,7 +256,7 @@ NEW_PLAYERS = [
     },
     # ── Dan Marino ─────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-DAN-MARINO",
+        "player_id":   "00-0010379",
         "player_name": "Dan Marino",
         "position":    "QB",
         "bio":         {"height": "6-4", "weight": 228, "college": "Pittsburgh", "years_exp": 17, "draft_club": "MIA", "draft_number": 27},
@@ -282,7 +282,7 @@ NEW_PLAYERS = [
     },
     # ── Joe Montana ────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-JOE-MONTANA",
+        "player_id":   "00-0011493",
         "player_name": "Joe Montana",
         "position":    "QB",
         "bio":         {"height": "6-2", "weight": 200, "college": "Notre Dame", "years_exp": 16, "draft_club": "SF", "draft_number": 82},
@@ -306,7 +306,7 @@ NEW_PLAYERS = [
     },
     # ── Steve Young ────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-STEVE-YOUNG",
+        "player_id":   "00-0018441",
         "player_name": "Steve Young",
         "position":    "QB",
         "bio":         {"height": "6-2", "weight": 215, "college": "Brigham Young", "years_exp": 15, "draft_club": "TB", "draft_number": 1},
@@ -330,7 +330,7 @@ NEW_PLAYERS = [
     },
     # ── Cris Carter ────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-CRIS-CARTER",
+        "player_id":   "00-0002721",
         "player_name": "Cris Carter",
         "position":    "WR",
         "bio":         {"height": "6-3", "weight": 202, "college": "Ohio State", "years_exp": 16, "draft_club": "PHI", "draft_number": 83},
@@ -355,7 +355,7 @@ NEW_PLAYERS = [
     },
     # ── Michael Irvin ──────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-MICHAEL-IRVIN",
+        "player_id":   "00-0008044",
         "player_name": "Michael Irvin",
         "position":    "WR",
         "bio":         {"height": "6-2", "weight": 207, "college": "Miami", "years_exp": 12, "draft_club": "DAL", "draft_number": 11},
@@ -376,7 +376,7 @@ NEW_PLAYERS = [
     },
     # ── Andre Reed ─────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-ANDRE-REED",
+        "player_id":   "00-0013499",
         "player_name": "Andre Reed",
         "position":    "WR",
         "bio":         {"height": "6-2", "weight": 190, "college": "Kutztown", "years_exp": 16, "draft_club": "BUF", "draft_number": 86},
@@ -401,7 +401,7 @@ NEW_PLAYERS = [
     },
     # ── John Elway ─────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-JOHN-ELWAY",
+        "player_id":   "00-0004884",
         "player_name": "John Elway",
         "position":    "QB",
         "bio":         {"height": "6-3", "weight": 215, "college": "Stanford", "years_exp": 16, "draft_club": "DEN", "draft_number": 1},
@@ -426,7 +426,7 @@ NEW_PLAYERS = [
     },
     # ── Randall Cunningham ─────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-RANDALL-CUNNINGHAM",
+        "player_id":   "00-0003761",
         "player_name": "Randall Cunningham",
         "position":    "QB",
         "bio":         {"height": "6-4", "weight": 212, "college": "UNLV", "years_exp": 16, "draft_club": "PHI", "draft_number": 37},
@@ -450,7 +450,7 @@ NEW_PLAYERS = [
     },
     # ── Terrell Davis ──────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-TERRELL-DAVIS",
+        "player_id":   "00-0004054",
         "player_name": "Terrell Davis",
         "position":    "RB",
         "bio":         {"height": "5-11", "weight": 210, "college": "Georgia", "years_exp": 7, "draft_club": "DEN", "draft_number": 196},
@@ -466,7 +466,7 @@ NEW_PLAYERS = [
     },
     # ── Walter Payton ──────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-WALTER-PAYTON",
+        "player_id":   "PAY738296",
         "player_name": "Walter Payton",
         "position":    "RB",
         "bio":         {"height": "5-10", "weight": 202, "college": "Jackson State", "years_exp": 13, "draft_club": "CHI", "draft_number": 4},
@@ -489,7 +489,7 @@ NEW_PLAYERS = [
     # ── Eric Dickerson ─────────────────────────────────────────────────────────
     # 1987 split: traded from LAR to IND mid-season — stored as two entries
     {
-        "player_id":   "HISTORIC-ERIC-DICKERSON",
+        "player_id":   "00-0004416",
         "player_name": "Eric Dickerson",
         "position":    "RB",
         "bio":         {"height": "6-3", "weight": 220, "college": "SMU", "years_exp": 11, "draft_club": "LAR", "draft_number": 2},
@@ -510,7 +510,7 @@ NEW_PLAYERS = [
     },
     # ── Steve Largent ──────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-STEVE-LARGENT",
+        "player_id":   "LAR118653",
         "player_name": "Steve Largent",
         "position":    "WR",
         "bio":         {"height": "5-11", "weight": 187, "college": "Tulsa", "years_exp": 14, "draft_club": "SEA", "draft_number": 117},
@@ -533,7 +533,7 @@ NEW_PLAYERS = [
     },
     # ── Kellen Winslow Sr. ─────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-KELLEN-WINSLOW",
+        "player_id":   "WIN521505",
         "player_name": "Kellen Winslow",
         "position":    "TE",
         "bio":         {"height": "6-5", "weight": 251, "college": "Missouri", "years_exp": 9, "draft_club": "LAC", "draft_number": 13},
@@ -551,7 +551,7 @@ NEW_PLAYERS = [
     },
     # ── Roger Craig ────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-ROGER-CRAIG",
+        "player_id":   "00-0003602",
         "player_name": "Roger Craig",
         "position":    "RB",
         "bio":         {"height": "6-0", "weight": 224, "college": "Nebraska", "years_exp": 11, "draft_club": "SF", "draft_number": 49},
@@ -571,7 +571,7 @@ NEW_PLAYERS = [
     },
     # ── OJ Simpson ─────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-OJ-SIMPSON",
+        "player_id":   "SIM593235",
         "player_name": "O.J. Simpson",
         "position":    "RB",
         "bio":         {"height": "6-1", "weight": 212, "college": "USC", "years_exp": 11, "draft_club": "BUF", "draft_number": 1},
@@ -591,7 +591,7 @@ NEW_PLAYERS = [
     },
     # ── Terry Bradshaw ─────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-TERRY-BRADSHAW",
+        "player_id":   "BRA301078",
         "player_name": "Terry Bradshaw",
         "position":    "QB",
         "bio":         {"height": "6-3", "weight": 215, "college": "Louisiana Tech", "years_exp": 14, "draft_club": "PIT", "draft_number": 1},
@@ -614,7 +614,7 @@ NEW_PLAYERS = [
     },
     # ── Roger Staubach ─────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-ROGER-STAUBACH",
+        "player_id":   "STA762496",
         "player_name": "Roger Staubach",
         "position":    "QB",
         "bio":         {"height": "6-3", "weight": 202, "college": "Navy", "years_exp": 11, "draft_club": "DAL", "draft_number": 129},
@@ -634,7 +634,7 @@ NEW_PLAYERS = [
     },
     # ── Troy Aikman ────────────────────────────────────────────────────────────
     {
-        "player_id":   "HISTORIC-TROY-AIKMAN",
+        "player_id":   "00-0000104",
         "player_name": "Troy Aikman",
         "position":    "QB",
         "bio":         {"height": "6-4", "weight": 219, "college": "UCLA", "years_exp": 12, "draft_club": "DAL", "draft_number": 1},
