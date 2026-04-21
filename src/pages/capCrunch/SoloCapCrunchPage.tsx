@@ -878,7 +878,10 @@ export function SoloCapCrunchPage() {
                               className={isBad ? 'text-red-300' : 'text-white'}
                             >
                               <div className="flex items-center gap-1">
-                                <PlayerHeadshot playerId={pick.playerId} sport={selectedSport as 'nba' | 'nfl'} className="w-5 h-5 rounded-full object-cover bg-white/5 shrink-0" />
+                                <div className="relative shrink-0">
+                                  <PlayerHeadshot playerId={pick.playerId} sport={selectedSport as 'nba' | 'nfl'} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
+                                  {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
+                                </div>
                                 <p className="font-semibold truncate text-[9px] md:text-xs">
                                   {idx + 1}. <FlipReveal text={pick.playerName} />
                                 </p>
@@ -1077,7 +1080,10 @@ export function SoloCapCrunchPage() {
                     >
                       <div className="flex justify-between items-center relative z-10 gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <PlayerHeadshot playerId={player.playerId} sport={selectedSport as 'nba' | 'nfl'} className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover bg-white/5 shrink-0" />
+                          <div className="relative shrink-0">
+                            <PlayerHeadshot playerId={player.playerId} sport={selectedSport as 'nba' | 'nfl'} className={`w-8 h-8 md:w-10 md:h-10 rounded-full object-cover bg-white/5${isInvalid ? ' grayscale' : ''}`} />
+                            {isInvalid && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
+                          </div>
                           <div className="overflow-hidden flex-1">
                           <div className={`sports-font text-[7px] md:text-[8px] ${isInvalid ? 'text-red-400/50' : 'text-white/50'}`}>
                             {selectedSport?.toUpperCase()} • {getCategoryAbbr(statCategory!)}

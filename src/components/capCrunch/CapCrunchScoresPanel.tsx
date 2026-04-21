@@ -86,7 +86,12 @@ export function CapCrunchScoresPanel({
                     className={`flex justify-between items-center gap-1 ${isBad ? 'text-red-300' : 'text-white/70'}`}
                   >
                     <div className="flex items-center gap-1 min-w-0 flex-1">
-                      {isMe && <PlayerHeadshot playerId={selected.playerId} sport={sport} className="w-5 h-5 rounded-full object-cover bg-white/5 shrink-0" />}
+                      {isMe && (
+                        <div className="relative shrink-0">
+                          <PlayerHeadshot playerId={selected.playerId} sport={sport} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
+                          {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
+                        </div>
+                      )}
                       <div className="min-w-0 flex items-baseline gap-1">
                         <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
                         {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}

@@ -106,11 +106,14 @@ export function CapCrunchResultCard({
               className={`flex justify-between items-start gap-2 ${isBad ? 'text-red-300' : 'text-white/70'}`}
             >
               <div className="flex items-start gap-1.5 flex-1 min-w-0">
-                <PlayerHeadshot
-                  playerId={selected.playerId}
-                  sport={sport}
-                  className="w-6 h-6 rounded-full object-cover bg-white/5 shrink-0 mt-0.5"
-                />
+                <div className="relative shrink-0 mt-0.5">
+                  <PlayerHeadshot
+                    playerId={selected.playerId}
+                    sport={sport}
+                    className={`w-6 h-6 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`}
+                  />
+                  {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1">
                     <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
