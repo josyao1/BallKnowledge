@@ -60,7 +60,7 @@ def fetch_headshot_map(our_ids: set[str]) -> dict[str, str]:
     for row in reader:
         total_rows += 1
         gsis_id = row.get("gsis_id", "").strip()
-        headshot_url = row.get("headshot_url", "").strip()
+        headshot_url = row.get("headshot", "").strip()
         if gsis_id and headshot_url and gsis_id in our_ids:
             mapping[gsis_id] = headshot_url
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import nflHeadshots from '../../../public/data/nfl_headshots.json';
 
 interface Props {
   playerId: string | number | undefined;
@@ -6,7 +7,7 @@ interface Props {
   className?: string;
 }
 
-/** Generic silhouette shown when no ESPN headshot exists for the player. */
+/** Generic silhouette shown when no headshot exists for the player. */
 function Silhouette({ className }: { className: string }) {
   return (
     <div className={`${className} bg-white/8 flex items-center justify-center overflow-hidden`}>
@@ -19,17 +20,22 @@ function Silhouette({ className }: { className: string }) {
 }
 
 /**
- * Renders an ESPN player headshot fetched by player_id.
- * Falls back to a generic silhouette if no headshot exists.
+ * Renders a player headshot.
+ * NBA: uses NBA.com CDN directly (player IDs in our data are NBA.com IDs).
+ * NFL: looks up GSIS ID in nfl_headshots.json (pre-generated from nflverse).
+ * Falls back to a generic silhouette if no headshot is found.
  */
 export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-full object-cover shrink-0' }: Props) {
   const [error, setError] = useState(false);
   if (!playerId || error) return <Silhouette className={className} />;
-  // NBA: player IDs in our data are NBA.com IDs — use the NBA CDN directly.
-  // NFL: handled via nfl_headshots.json lookup (see PlayerHeadshot usage); fall back to silhouette.
-  const url = sport === 'nba'
-    ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
-    : null;
+
+  let url: string | null = null;
+  if (sport === 'nba') {
+    url = `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`;
+  } else {
+    url = (nflHeadshots as Record<string, string>)[String(playerId)] ?? null;
+  }
+
   if (!url) return <Silhouette className={className} />;
   return (
     <img
