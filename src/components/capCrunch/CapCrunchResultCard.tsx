@@ -8,8 +8,11 @@
 import { motion } from 'framer-motion';
 import { RevealingScore } from './RevealingScore';
 import { fmt, getCategoryAbbr } from './capCrunchUtils';
+import { PlayerHeadshot } from './PlayerHeadshot';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 import type { OptimalPick } from '../../services/capCrunch';
+
+const PICK_COLORS = ['#818cf8', '#34d399', '#fb923c', '#f472b6', '#60a5fa'];
 
 interface PlayerWithLineup {
   id: string;
@@ -35,11 +38,12 @@ interface Props {
   isCareerStatRound: boolean;
   /** Returns the average pick year for a lineup — used for tiebreaker display */
   avgPickYear: (lineup: PlayerLineup) => number;
+  sport: 'nba' | 'nfl';
 }
 
 export function CapCrunchResultCard({
   item, idx, isWinner, tiebreakerUsed, tiedOnBusts, targetCap,
-  optimalPicks, statCategory, isCareerStatRound, avgPickYear,
+  optimalPicks, statCategory, isCareerStatRound, avgPickYear, sport,
 }: Props) {
   const reverseDelay = idx * 0.65; // passed in already reversed by caller
   const scoreDelay = idx * 650 + 450;
@@ -95,27 +99,80 @@ export function CapCrunchResultCard({
           const isBad = isBust || isMiss || isNotOnTeam;
           const badLabel = isBust ? 'BUST' : isNotOnTeam ? 'NOT ON TEAM' : '0 STAT';
           return (
-            <div key={pidx} className={`flex justify-between ${isBad ? 'text-red-300' : 'text-white/70'}`}>
-              <div className="flex-1">
-                <div className="flex items-baseline gap-1">
-                  <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
-                  {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
+            <motion.div
+              key={pidx}
+              animate={isBust ? { x: [0, -6, 6, -4, 4, 0] } : {}}
+              transition={{ duration: 0.4, delay: pidx * 0.08 }}
+              className={`flex justify-between items-start gap-2 ${isBad ? 'text-red-300' : 'text-white/70'}`}
+            >
+              <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                <PlayerHeadshot
+                  playerId={selected.playerId}
+                  sport={sport}
+                  className="w-6 h-6 rounded-full object-cover bg-white/5 shrink-0 mt-0.5"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
+                    {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
+                  </div>
+                  <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                  {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
+                  {isNotOnTeam && (
+                    <span className="block text-[10px] text-orange-400/60">
+                      {selected.actualCollege && selected.actualNflConf ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}` : selected.actualCollege ? `went to ${selected.actualCollege}` : selected.actualNflConf ? `in ${selected.actualNflConf}` : selected.actualTeam ? `played for ${selected.actualTeam}` : "didn't qualify"}
+                    </span>
+                  )}
                 </div>
-                <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
-                {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
-                {isNotOnTeam && (
-                  <span className="block text-[10px] text-orange-400/60">
-                    {selected.actualCollege && selected.actualNflConf ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}` : selected.actualCollege ? `went to ${selected.actualCollege}` : selected.actualNflConf ? `in ${selected.actualNflConf}` : selected.actualTeam ? `played for ${selected.actualTeam}` : "didn't qualify"}
-                  </span>
-                )}
               </div>
-              <span className={`font-semibold ml-2 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+              <span className={`font-semibold ml-2 shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                 {isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
               </span>
-            </div>
+            </motion.div>
           );
         })}
       </div>
+
+      {/* Cap contribution bar chart */}
+      {item.lineup.selectedPlayers.length > 0 && (() => {
+        const validTotal = item.lineup.selectedPlayers
+          .filter(p => !p.isBust && !p.neverOnTeam)
+          .reduce((s, p) => s + p.statValue, 0);
+        if (validTotal === 0) return null;
+        return (
+          <div className="mb-3 pb-3 border-b border-white/10">
+            <div className="sports-font text-[7px] text-white/25 tracking-widest uppercase mb-1.5">Cap usage</div>
+            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden flex gap-px">
+              {item.lineup.selectedPlayers.map((p, i) => {
+                const pct = p.isBust || p.neverOnTeam ? 0 : Math.min((p.statValue / targetCap) * 100, 100);
+                return (
+                  <motion.div
+                    key={i}
+                    className="h-full rounded-sm"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ delay: 1.0 + i * 0.1, duration: 0.4, ease: 'easeOut' }}
+                    style={{ backgroundColor: PICK_COLORS[i % PICK_COLORS.length] }}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1.5">
+              {item.lineup.selectedPlayers.map((p, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <div
+                    className="w-1.5 h-1.5 rounded-sm shrink-0"
+                    style={{ backgroundColor: PICK_COLORS[i % PICK_COLORS.length], opacity: p.isBust || p.neverOnTeam ? 0.25 : 1 }}
+                  />
+                  <span className="sports-font text-[8px] text-white/35 truncate max-w-[52px]">
+                    {p.playerName.split(' ').slice(-1)[0]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Optimal last pick hint */}
       {hasOptimal && (() => {
