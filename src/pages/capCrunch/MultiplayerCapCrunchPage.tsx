@@ -38,6 +38,7 @@ import {
   assignRandomTeam,
   findOptimalLastPick,
   isCareerStat,
+  stripPositionSuffix,
 } from '../../services/capCrunch';
 import type { OptimalPick } from '../../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
@@ -453,7 +454,7 @@ export function MultiplayerCapCrunchPage() {
       const wouldBust = (myCurrentLineup.totalStat + statValue) > targetCap;
 
       const newSelectedPlayer: SelectedPlayer = {
-        playerName: selectedPlayerName,
+        playerName: stripPositionSuffix(selectedPlayerName),
         team: currentTeam,
         selectedYear: isNoYearSelect ? 'career' : selectedYear,
         playerSeason: null,

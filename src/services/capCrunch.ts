@@ -575,9 +575,9 @@ export async function searchPlayersByNameOnly(
   }
 }
 
-/** Strip ` (POS)` disambiguation suffix if present, e.g. "Michael Pittman (WR)" → "Michael Pittman". */
-function stripPositionSuffix(name: string): string {
-  return name.replace(/\s*\([A-Z]+\)$/, '');
+/** Strip ` (POS)` or ` (POS, TEAM)` disambiguation suffix if present, e.g. "Adrian Peterson (RB, MIN)" → "Adrian Peterson". */
+export function stripPositionSuffix(name: string): string {
+  return name.replace(/\s*\([A-Z]+(,\s*[A-Z]+)?\)$/, '');
 }
 
 /** Find a player in the pool, using player_id when available (exact), falling back to name. */
