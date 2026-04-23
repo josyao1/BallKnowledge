@@ -223,12 +223,12 @@ function HowToPlay({ gameType }: { gameType: string }) {
 
   if (gameType === 'lineup-is-right') return (
     <div className={prose}>
-      <p>Each round everyone sees the same random NFL team (or division) and a stat category.</p>
+      <p>Each round everyone sees the same random team and a stat category. Teams can be a single franchise, a division, or a college + pro conference combo (e.g. SEC players who played in the AFC).</p>
       <p>Search for any player and pick a season — their stat for that year adds to your running total.</p>
-      <p>If the stat is <span className="text-white/70">Total GP</span>, the same team locks in for all 5 rounds. Pick players and their entire career GP with that team is added — no year needed.</p>
-      <p>Go over the target cap and you <span className="text-red-400">bust</span>. If everyone busts, the player who went over by the least wins.</p>
+      <p>If the stat is <span className="text-white/70">Total GP</span>, pick any player and their entire career GP with that team counts — no year needed.</p>
+      <p>A pick that pushes you over the cap <span className="text-red-400">busts</span> — it scores 0 and your total reverts. You still play all 5 rounds.</p>
       <p>You <span className="text-white/70">cannot repeat a player</span> across rounds.</p>
-      <p className="text-[#d4af37]/60">🏆 Closest to the target without busting wins.</p>
+      <p className="text-[#d4af37]/60">🏆 Closest to the target without busting wins. Tiebreaker: fewest busts, then oldest average pick year.</p>
     </div>
   );
 

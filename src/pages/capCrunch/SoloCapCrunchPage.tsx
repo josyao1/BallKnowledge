@@ -35,7 +35,7 @@ import {
   CONFERENCE_LOGOS,
   findOptimalLastPick,
   isCareerStat,
-
+  stripPositionSuffix,
 } from '../../services/capCrunch';
 import type { OptimalPick } from '../../services/capCrunch';
 import type { Sport } from '../../types';
@@ -238,7 +238,7 @@ export function SoloCapCrunchPage() {
 
       // Create selected player object — bust picks are still shown but count as 0
       const newSelectedPlayer: SelectedPlayer = {
-        playerName: selectedPlayerName,
+        playerName: stripPositionSuffix(selectedPlayerName),
         team: pickTeam,
         selectedYear: isNoYearSelect ? 'career' : selectedYear,
         playerSeason: null,

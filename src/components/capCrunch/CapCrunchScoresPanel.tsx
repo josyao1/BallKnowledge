@@ -77,7 +77,7 @@ export function CapCrunchScoresPanel({
 
               <div className="space-y-1 mb-2 text-xs">
                 {visiblePicks.map((selected, idx) => {
-                  const isBad = isMe && (selected.isBust || selected.statValue === 0);
+                  const isBad = isMe && (selected.isBust || selected.neverOnTeam || selected.statValue === 0);
                   return (
                   <motion.div
                     key={idx}
@@ -85,17 +85,32 @@ export function CapCrunchScoresPanel({
                     transition={{ duration: 0.35 }}
                     className={`flex justify-between items-center gap-1 ${isBad ? 'text-red-300' : 'text-white/70'}`}
                   >
-                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                    <div className="flex items-start gap-1 min-w-0 flex-1">
                       {isMe && (
-                        <div className="relative shrink-0">
+                        <div className="relative shrink-0 mt-0.5">
                           <PlayerHeadshot playerId={selected.playerId} sport={sport} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
                           {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
                         </div>
                       )}
-                      <div className="min-w-0 flex items-baseline gap-1">
-                        <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
-                        {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
-                        <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-1">
+                          <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
+                          {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                          <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                        </div>
+                        {isMe && selected.neverOnTeam && (
+                          <div className="text-[9px] text-orange-400/80 mt-0.5">
+                            {selected.actualCollege && selected.actualNflConf
+                              ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
+                              : selected.actualCollege
+                              ? `went to ${selected.actualCollege}`
+                              : selected.actualNflConf
+                              ? `in ${selected.actualNflConf}`
+                              : selected.actualTeam
+                              ? `played for ${selected.actualTeam}`
+                              : "didn't qualify"}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {isMe && (
