@@ -17,6 +17,7 @@ import { SpinningNumber, getTotalColor, getRemainingColor } from '../../componen
 import { FlipReveal } from '../../components/capCrunch/FlipReveal';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
+import { ConferenceRoundCard } from '../../components/capCrunch/ConferenceRoundCard';
 import { fmt, getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
@@ -31,8 +32,7 @@ import {
   isConferenceRound,
   parseConferenceRound,
   NFL_DIVISIONS,
-  P4_CONFERENCES,
-  CONFERENCE_LOGOS,
+
   findOptimalLastPick,
   isCareerStat,
   stripPositionSuffix,
@@ -79,7 +79,6 @@ export function SoloCapCrunchPage() {
   const [pickError, setPickError] = useState<string | null>(null);
   const [showExactHit, setShowExactHit] = useState(false);
   const [badFlashKey, setBadFlashKey] = useState(0);
-  const [showSchools, setShowSchools] = useState(false);
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confettiTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   // True once the restore-from-storage effect has finished, so the persist effect
@@ -564,56 +563,10 @@ export function SoloCapCrunchPage() {
                 key={currentTeam}
                 initial={{ opacity: 0, rotateY: -90 }}
                 animate={{ opacity: 1, rotateY: 0 }}
-                exit={{ opacity: 0, rotateY: 90 }}
                 transition={{ duration: 0.5, ease: 'easeInOut' }}
                 style={{ perspective: 600 }}
-                className="text-center px-8 md:px-12 py-2 md:py-3 rounded-lg border-2 bg-black border-[#3b82f6]/60"
               >
-                <div className="flex items-center justify-between gap-3 mb-1">
-                  <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase">Conference</p>
-                  {nflConf && (
-                    <span className="sports-font text-[8px] font-bold text-white bg-[#3b82f6] px-1.5 py-0.5 rounded tracking-wider">{nflConf}</span>
-                  )}
-                </div>
-                {CONFERENCE_LOGOS[confName] ? (
-                  <div className={`my-1 rounded px-1 py-0.5 mx-auto w-fit ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
-                    <img
-                      src={CONFERENCE_LOGOS[confName]}
-                      alt={confName}
-                      className="h-12 md:h-16 object-contain"
-                    />
-                  </div>
-                ) : (
-                  <p className="retro-title text-2xl md:text-4xl font-bold tracking-tight text-[#3b82f6]">
-                    {confName}
-                  </p>
-                )}
-                {confName === 'Non-P4' ? (
-                  <p className="sports-font text-[7px] text-white/35 leading-none mt-0.5">
-                    any year — just need to have attended a non-P4 school
-                  </p>
-                ) : (
-                  <button
-                    onClick={() => setShowSchools(v => !v)}
-                    className="sports-font text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] mt-0.5 transition-colors"
-                  >
-                    {showSchools ? 'hide schools ▲' : 'see schools ▼'}
-                  </button>
-                )}
-                {showSchools && confName in P4_CONFERENCES && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-1.5 pt-1.5 border-t border-[#3b82f6]/20"
-                  >
-                    <p className="sports-font text-[7px] text-white/40 leading-relaxed">
-                      {(P4_CONFERENCES[confName] ?? [])
-                        .filter(s => !s.includes('&amp;') && !s.includes('amp;'))
-                        .filter((s, i, a) => a.indexOf(s) === i)
-                        .join(' · ')}
-                    </p>
-                  </motion.div>
-                )}
+                <ConferenceRoundCard confName={confName} nflConf={nflConf} size="lg" />
               </motion.div>
               );
             })() : isDivisionRound(currentTeam) ? (

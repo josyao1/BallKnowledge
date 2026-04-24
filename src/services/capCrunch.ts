@@ -307,7 +307,7 @@ const TEST_FORCE_CONFERENCE = false;
 // ── Test flag — force a specific college conference every round (both sports) ─
 // Set to any key from P4_CONFERENCES or 'Non-P4'. Set to null in production.
 // Example: 'SEC', 'Big Ten', 'ACC', 'Big 12', 'Non-P4'
-const TEST_FORCE_COLLEGE: string | null = 'SEC';
+const TEST_FORCE_COLLEGE: string | null = null;
 
 export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
   if (TEST_FORCE_COLLEGE) {

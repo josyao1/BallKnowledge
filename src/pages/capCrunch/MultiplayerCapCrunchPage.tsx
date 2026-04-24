@@ -105,6 +105,8 @@ export function MultiplayerCapCrunchPage() {
   const addingPlayerRef = useRef(false);
   // Prevent host from double-advancing the same round
   const lastAdvancedRoundRef = useRef(0);
+  // Prevent double-click on blind finish from inflating win counts
+  const blindFinishingRef = useRef(false);
   // Detect round changes to reset ephemeral search UI
   const prevRoundRef = useRef(0);
   // Saved pick for race-condition recovery
@@ -395,11 +397,13 @@ export function MultiplayerCapCrunchPage() {
     if (!isHost || !lobby) return;
     const cs = (lobby.career_state as any) || {};
     const nextStep = (cs.revealStep ?? 0) + 1;
+    if (nextStep > (cs.totalRounds ?? 5)) return;
     await updateCareerState(lobby.id, { ...cs, revealStep: nextStep });
   };
 
   const handleBlindFinish = async () => {
-    if (!isHost || !lobby) return;
+    if (!isHost || !lobby || blindFinishingRef.current) return;
+    blindFinishingRef.current = true;
     const cs = (lobby.career_state as any) || {};
     const lineups = cs.allLineups || {};
     const playerIds: string[] = cs.playerOrder || Object.keys(lineups);

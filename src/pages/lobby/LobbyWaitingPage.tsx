@@ -284,10 +284,11 @@ export function LobbyWaitingPage() {
         if (idx > 0) playerOrder = [...playerOrder.slice(idx), ...playerOrder.slice(0, idx)];
       }
 
+      const firstTeam = assignRandomTeam(sport, statCategory);
       const newState = {
         sport, win_target: cs.win_target || 3, statCategory, targetCap,
         allLineups: initialLineups, currentRound: 1, totalRounds: cs.totalRounds || 5,
-        currentTeam: assignRandomTeam(sport, statCategory), usedTeams: [assignRandomTeam(sport, statCategory)],
+        currentTeam: firstTeam, usedTeams: [firstTeam],
         phase: 'picking', hardMode, blindMode,
         currentPickerId: hardMode && playerOrder.length > 0 ? playerOrder[0] : null,
         roundStartPickerIndex: 0, playerOrder, pickedPlayerSeasons: [],

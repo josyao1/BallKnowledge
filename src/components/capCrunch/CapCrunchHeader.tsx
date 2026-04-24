@@ -6,11 +6,11 @@
  * In hard mode it also shows whose turn it is.
  */
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumber';
 import { TeamSlotMachine } from './TeamSlotMachine';
-import { isDivisionRound, isConferenceRound, parseConferenceRound, NFL_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS } from '../../services/capCrunch';
+import { ConferenceRoundCard } from './ConferenceRoundCard';
+import { isDivisionRound, isConferenceRound, parseConferenceRound, NFL_DIVISIONS } from '../../services/capCrunch';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
 
@@ -46,7 +46,6 @@ export function CapCrunchHeader({
   currentRound, totalRounds, currentTeam, selectedSport,
   targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound, blindMode = false,
 }: Props) {
-  const [showSchools, setShowSchools] = useState(false);
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
   return (
     <motion.header
@@ -83,76 +82,15 @@ export function CapCrunchHeader({
         {isConferenceRound(currentTeam) ? (() => {
           const { college: confName, nflConf } = parseConferenceRound(currentTeam);
           return (
-          <motion.div
-            key={currentTeam + currentRound}
-            initial={{ opacity: 0, rotateY: -90 }}
-            animate={{ opacity: 1, rotateY: 0 }}
-            exit={{ opacity: 0, rotateY: 90 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-            style={{ perspective: 600 }}
-            className="px-4 py-2 rounded border-2 bg-black border-[#3b82f6]/80 shadow-[0_0_12px_rgba(59,130,246,0.2)]"
-          >
-            <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-1">Conference</p>
-
-            {/* College conference */}
-            {CONFERENCE_LOGOS[confName] ? (
-              <div className={`rounded px-1 py-0.5 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
-                <img
-                  src={CONFERENCE_LOGOS[confName]}
-                  alt={confName}
-                  className="h-8 md:h-10 object-contain"
-                />
-              </div>
-            ) : (
-              <p className="retro-title text-2xl md:text-3xl font-bold text-[#3b82f6] leading-tight">
-                {confName}
-              </p>
-            )}
-
-            {/* Pro conference — large and prominent */}
-            {nflConf && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="sports-font text-[9px] text-white/30 tracking-widest">+</span>
-                <div className={`px-3 py-1 rounded-sm ${
-                  nflConf === 'AFC' ? 'bg-[#1d4ed8]/80 border border-[#3b82f6]' :
-                  nflConf === 'NFC' ? 'bg-[#b91c1c]/80 border border-[#ef4444]' :
-                  nflConf === 'East' ? 'bg-[#065f46]/80 border border-[#34d399]' :
-                  nflConf === 'West' ? 'bg-[#7c2d12]/80 border border-[#fb923c]' :
-                  'bg-white/10 border border-white/20'
-                }`}>
-                  <span className="retro-title text-lg md:text-xl leading-none text-white tracking-wider">{nflConf}</span>
-                </div>
-              </div>
-            )}
-
-            {confName === 'Non-P4' ? (
-              <p className="sports-font text-[7px] text-white/35 leading-none mt-1.5">
-                any year — just need to have attended a non-P4 school
-              </p>
-            ) : (
-              <button
-                onClick={() => setShowSchools(v => !v)}
-                className="sports-font text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] leading-none mt-1.5 transition-colors"
-              >
-                {showSchools ? 'hide schools ▲' : 'see schools ▼'}
-              </button>
-            )}
-            {showSchools && confName in P4_CONFERENCES && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-1.5 pt-1.5 border-t border-[#3b82f6]/20"
-              >
-                <p className="sports-font text-[7px] text-white/35 leading-relaxed">
-                  {(P4_CONFERENCES[confName] ?? [])
-                    .filter((s, i, a) => a.indexOf(s) === i)
-                    .filter(s => !s.includes('&amp;') && !s.includes('amp;'))
-                    .join(' · ')}
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
+            <motion.div
+              key={currentTeam + currentRound}
+              initial={{ opacity: 0, rotateY: -90 }}
+              animate={{ opacity: 1, rotateY: 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{ perspective: 600 }}
+            >
+              <ConferenceRoundCard confName={confName} nflConf={nflConf} size="sm" />
+            </motion.div>
           );
         })() : isDivisionRound(currentTeam) ? (
           <motion.div
