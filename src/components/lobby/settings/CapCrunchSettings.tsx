@@ -41,6 +41,8 @@ interface Props {
   onCustomCapChange: (cap: number | null) => void;
   hardMode: boolean;
   onHardModeChange: (on: boolean) => void;
+  blindMode: boolean;
+  onBlindModeChange: (on: boolean) => void;
   firstPickerId: string | null;
   onFirstPickerIdChange: (id: string | null) => void;
   totalRounds: number;
@@ -51,6 +53,7 @@ interface Props {
 export function CapCrunchSettings({
   sport, onSportChange, lineupStat, onLineupStatChange,
   customCap, onCustomCapChange, hardMode, onHardModeChange,
+  blindMode, onBlindModeChange,
   firstPickerId, onFirstPickerIdChange, totalRounds, onTotalRoundsChange, players,
 }: Props) {
   const nbaCats = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'];
@@ -174,6 +177,22 @@ export function CapCrunchSettings({
           }`}
         >
           {hardMode ? 'ON' : 'OFF'}
+        </button>
+      </div>
+
+      {/* Blind mode */}
+      <div className="flex items-center justify-between border-t border-[#1a1a1a] pt-4">
+        <div>
+          <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Blind Mode</div>
+          <div className="sports-font text-[9px] text-[#444] mt-0.5">Scores hidden; host reveals picks at end</div>
+        </div>
+        <button
+          onClick={() => onBlindModeChange(!blindMode)}
+          className={`px-4 py-1.5 rounded-sm retro-title text-sm tracking-wider transition-all ${
+            blindMode ? 'bg-[#7c3aed] text-white' : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a]'
+          }`}
+        >
+          {blindMode ? 'ON' : 'OFF'}
         </button>
       </div>
 

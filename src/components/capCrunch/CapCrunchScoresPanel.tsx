@@ -5,6 +5,7 @@
  * so players can't just copy whoever submitted first.
  */
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { fmt } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
@@ -27,11 +28,22 @@ interface Props {
   /** When true, the current-round pick is hidden for opponents until the local player submits */
   canPickThisRound: boolean;
   sport: 'nba' | 'nfl';
+  /** When true, running totals are hidden for all players */
+  blindMode?: boolean;
 }
 
 export function CapCrunchScoresPanel({
-  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport,
+  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport, blindMode = false,
 }: Props) {
+  // Per-pick stat guesses typed by the local player in blind mode.
+  // Keyed by pick index; values are raw input strings so partial input is preserved.
+  const [myGuesses, setMyGuesses] = useState<Record<number, string>>({});
+
+  const myEstimate = Object.values(myGuesses).reduce((sum, v) => {
+    const n = parseFloat(v);
+    return sum + (isNaN(n) ? 0 : n);
+  }, 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -48,7 +60,7 @@ export function CapCrunchScoresPanel({
           const visiblePicks = maskCurrentRound
             ? (lineup?.selectedPlayers.slice(0, currentRound - 1) ?? [])
             : (lineup?.selectedPlayers ?? []);
-          const myBustCount = isMe ? (lineup?.bustCount ?? 0) : 0;
+          const myBustCount = !blindMode && isMe ? (lineup?.bustCount ?? 0) : 0;
 
           return (
             <div
@@ -77,28 +89,26 @@ export function CapCrunchScoresPanel({
 
               <div className="space-y-1 mb-2 text-xs">
                 {visiblePicks.map((selected, idx) => {
-                  const isBad = isMe && (selected.isBust || selected.neverOnTeam || selected.statValue === 0);
+                  const isBad = isMe && !blindMode && (selected.isBust || selected.neverOnTeam || selected.statValue === 0);
                   return (
                   <motion.div
                     key={idx}
-                    animate={isMe && selected.isBust ? { x: [0, -5, 5, -3, 3, 0] } : {}}
+                    animate={isMe && !blindMode && selected.isBust ? { x: [0, -5, 5, -3, 3, 0] } : {}}
                     transition={{ duration: 0.35 }}
                     className={`flex justify-between items-center gap-1 ${isBad ? 'text-red-300' : 'text-white/70'}`}
                   >
                     <div className="flex items-start gap-1 min-w-0 flex-1">
-                      {isMe && (
-                        <div className="relative shrink-0 mt-0.5">
-                          <PlayerHeadshot playerId={selected.playerId} sport={sport} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
-                          {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
-                        </div>
-                      )}
+                      <div className="relative shrink-0 mt-0.5">
+                        <PlayerHeadshot playerId={selected.playerId} sport={sport} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
+                        {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-1">
                           <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
-                          {isMe && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                          {isMe && !blindMode && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
                           <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
                         </div>
-                        {isMe && selected.neverOnTeam && (
+                        {isMe && !blindMode && selected.neverOnTeam && (
                           <div className="text-[9px] text-orange-400/80 mt-0.5">
                             {selected.actualCollege && selected.actualNflConf
                               ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
@@ -113,10 +123,20 @@ export function CapCrunchScoresPanel({
                         )}
                       </div>
                     </div>
-                    {isMe && (
+                    {isMe && !blindMode && (
                       <span className={`font-semibold ml-1 flex-shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                         {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
                       </span>
+                    )}
+                    {isMe && blindMode && (
+                      <input
+                        type="number"
+                        min={0}
+                        value={myGuesses[idx] ?? ''}
+                        placeholder="?"
+                        onChange={e => setMyGuesses(prev => ({ ...prev, [idx]: e.target.value }))}
+                        className="w-12 text-center bg-[#7c3aed]/10 border border-[#7c3aed]/30 rounded-sm text-[#a78bfa] retro-title text-xs py-0.5 focus:outline-none focus:border-[#7c3aed] placeholder-[#7c3aed]/30 ml-1 flex-shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
                     )}
                   </motion.div>
                   );
@@ -128,7 +148,16 @@ export function CapCrunchScoresPanel({
 
               <div className="flex justify-between text-xs border-t border-white/10 pt-1.5">
                 <span className="text-white/40">{visiblePicks.length}/{totalRounds}</span>
-                {isMe ? (
+                {blindMode && isMe ? (
+                  <div className="flex items-baseline gap-1">
+                    <span className="sports-font text-[8px] text-[#7c3aed]/50 tracking-widest uppercase">est</span>
+                    <span className="font-semibold text-[#a78bfa]">
+                      {Object.keys(myGuesses).length > 0 ? fmt(myEstimate) : '—'}
+                    </span>
+                  </div>
+                ) : blindMode ? (
+                  <span className="font-semibold text-white/20">—</span>
+                ) : isMe ? (
                   <span className="font-semibold text-white">
                     {fmt(lineup?.totalStat ?? 0)}
                   </span>

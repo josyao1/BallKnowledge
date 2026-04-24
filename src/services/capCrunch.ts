@@ -304,7 +304,17 @@ function playerCollegeInConference(bio: any, conference: string): boolean {
 // ── Test flag — force conference rounds every time for NFL ────────────────────
 const TEST_FORCE_CONFERENCE = false;
 
+// ── Test flag — force a specific college conference every round (both sports) ─
+// Set to any key from P4_CONFERENCES or 'Non-P4'. Set to null in production.
+// Example: 'SEC', 'Big Ten', 'ACC', 'Big 12', 'Non-P4'
+const TEST_FORCE_COLLEGE: string | null = null;
+
 export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
+  if (TEST_FORCE_COLLEGE) {
+    const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
+    const nbaConf = Math.random() < 0.5 ? 'East' : 'West';
+    return `${TEST_FORCE_COLLEGE}|${sport === 'nba' ? nbaConf : nflConf}`;
+  }
   if (sport === 'nfl' && TEST_FORCE_CONFERENCE) {
     const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
     const available = excludeTeams ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c))) : confs;
