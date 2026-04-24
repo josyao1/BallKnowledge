@@ -37,12 +37,14 @@ interface Props {
   badFlashKey: number;
   /** Career stat rounds count all-team totals rather than a single team-season */
   isCareerStatRound: boolean;
+  /** When true, hides the player's running total and remaining cap (blind mode) */
+  blindMode?: boolean;
 }
 
 export function CapCrunchHeader({
   hardMode, currentPickerId, currentPlayerId, players,
   currentRound, totalRounds, currentTeam, selectedSport,
-  targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound,
+  targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound, blindMode = false,
 }: Props) {
   const [showSchools, setShowSchools] = useState(false);
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
@@ -88,20 +90,17 @@ export function CapCrunchHeader({
             exit={{ opacity: 0, rotateY: 90 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             style={{ perspective: 600 }}
-            className="px-5 py-2 rounded border-2 bg-black border-[#3b82f6]/80 shadow-[0_0_12px_rgba(59,130,246,0.2)]"
+            className="px-4 py-2 rounded border-2 bg-black border-[#3b82f6]/80 shadow-[0_0_12px_rgba(59,130,246,0.2)]"
           >
-            <div className="flex items-center justify-between gap-3 mb-0.5">
-              <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none">Conference</p>
-              {nflConf && (
-                <span className="sports-font text-[8px] font-bold text-white bg-[#3b82f6] px-1.5 py-0.5 rounded leading-none tracking-wider">{nflConf}</span>
-              )}
-            </div>
+            <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-1">Conference</p>
+
+            {/* College conference */}
             {CONFERENCE_LOGOS[confName] ? (
-              <div className={`my-1 rounded px-1 py-0.5 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
+              <div className={`rounded px-1 py-0.5 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
                 <img
                   src={CONFERENCE_LOGOS[confName]}
                   alt={confName}
-                  className="h-10 md:h-12 object-contain"
+                  className="h-8 md:h-10 object-contain"
                 />
               </div>
             ) : (
@@ -109,14 +108,31 @@ export function CapCrunchHeader({
                 {confName}
               </p>
             )}
+
+            {/* Pro conference — large and prominent */}
+            {nflConf && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="sports-font text-[9px] text-white/30 tracking-widest">+</span>
+                <div className={`px-3 py-1 rounded-sm ${
+                  nflConf === 'AFC' ? 'bg-[#1d4ed8]/80 border border-[#3b82f6]' :
+                  nflConf === 'NFC' ? 'bg-[#b91c1c]/80 border border-[#ef4444]' :
+                  nflConf === 'East' ? 'bg-[#065f46]/80 border border-[#34d399]' :
+                  nflConf === 'West' ? 'bg-[#7c2d12]/80 border border-[#fb923c]' :
+                  'bg-white/10 border border-white/20'
+                }`}>
+                  <span className="retro-title text-lg md:text-xl leading-none text-white tracking-wider">{nflConf}</span>
+                </div>
+              </div>
+            )}
+
             {confName === 'Non-P4' ? (
-              <p className="sports-font text-[7px] text-white/35 leading-none mt-0.5">
+              <p className="sports-font text-[7px] text-white/35 leading-none mt-1.5">
                 any year — just need to have attended a non-P4 school
               </p>
             ) : (
               <button
                 onClick={() => setShowSchools(v => !v)}
-                className="sports-font text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] leading-none mt-0.5 transition-colors"
+                className="sports-font text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] leading-none mt-1.5 transition-colors"
               >
                 {showSchools ? 'hide schools ▲' : 'see schools ▼'}
               </button>
@@ -169,26 +185,36 @@ export function CapCrunchHeader({
             <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">{isCareerStatRound ? 'Career' : 'Stat'}</div>
             <p className="retro-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory)}</p>
           </div>
-          {/* My running total */}
-          <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-            <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
-            <SpinningNumber
-              value={fmt(myLineup?.totalStat ?? 0)}
-              className="retro-title text-sm md:text-lg leading-none"
-              color={getTotalColor(myLineup?.totalStat ?? 0, targetCap)}
-              flashKey={badFlashKey}
-            />
-          </div>
-          {/* Remaining to cap */}
-          <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-            <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
-            <SpinningNumber
-              value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
-              className="retro-title text-sm md:text-lg leading-none"
-              color={getRemainingColor(myLineup?.totalStat ?? 0, targetCap)}
-              flashKey={badFlashKey}
-            />
-          </div>
+          {/* My running total — hidden in blind mode */}
+          {!blindMode && (
+            <>
+              <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
+                <SpinningNumber
+                  value={fmt(myLineup?.totalStat ?? 0)}
+                  className="retro-title text-sm md:text-lg leading-none"
+                  color={getTotalColor(myLineup?.totalStat ?? 0, targetCap)}
+                  flashKey={badFlashKey}
+                />
+              </div>
+              {/* Remaining to cap */}
+              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
+                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
+                <SpinningNumber
+                  value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
+                  className="retro-title text-sm md:text-lg leading-none"
+                  color={getRemainingColor(myLineup?.totalStat ?? 0, targetCap)}
+                  flashKey={badFlashKey}
+                />
+              </div>
+            </>
+          )}
+          {blindMode && (
+            <div className="bg-[#7c3aed]/10 border border-[#7c3aed]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
+              <div className="sports-font text-[7px] text-[#7c3aed]/70 tracking-widest uppercase">Blind</div>
+              <p className="retro-title text-sm md:text-lg leading-none text-[#7c3aed]/70">?</p>
+            </div>
+          )}
         </div>
       </div>
     </motion.header>

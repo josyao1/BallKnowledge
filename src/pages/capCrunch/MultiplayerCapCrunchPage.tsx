@@ -46,10 +46,11 @@ import { CapCrunchHeader }      from '../../components/capCrunch/CapCrunchHeader
 import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPanel';
 import { CapCrunchScoresPanel } from '../../components/capCrunch/CapCrunchScoresPanel';
 import { CapCrunchResultCard }  from '../../components/capCrunch/CapCrunchResultCard';
+import { BlindModeReveal }      from '../../components/capCrunch/BlindModeReveal';
 import { getCategoryAbbr }      from '../../components/capCrunch/capCrunchUtils';
 import { getTotalColor }        from '../../components/capCrunch/SpinningNumber';
 
-type Phase = 'loading' | 'picking' | 'results';
+type Phase = 'loading' | 'picking' | 'blind-reveal' | 'results';
 
 export function MultiplayerCapCrunchPage() {
   const navigate = useNavigate();
@@ -70,6 +71,10 @@ export function MultiplayerCapCrunchPage() {
   const [hardMode, setHardMode] = useState(false);
   const [currentPickerId, setCurrentPickerId] = useState<string | null>(null);
   const [pickedPlayerSeasons, setPickedPlayerSeasons] = useState<string[]>([]);
+
+  // Blind mode state
+  const [blindMode, setBlindMode] = useState(false);
+  const [revealStep, setRevealStep] = useState(0);
 
   // Ephemeral UI state — never synced to Supabase
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,10 +153,13 @@ export function MultiplayerCapCrunchPage() {
         totalRoundsRef.current = cs.totalRounds ?? 5;
         setCurrentTeam(cs.currentTeam || '');
         setHardMode(cs.hardMode || false);
+        setBlindMode(cs.blindMode || false);
         setCurrentPickerId(cs.currentPickerId || null);
         setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
+        setRevealStep(cs.revealStep ?? 0);
 
         if (cs.phase === 'results') setPhase('results');
+        else if (cs.phase === 'blind-reveal') { setPhase('blind-reveal'); }
         else if (cs.statCategory && cs.allLineups) setPhase('picking');
       } catch (error) {
         console.error('Error initializing game:', error);
@@ -167,7 +175,7 @@ export function MultiplayerCapCrunchPage() {
     const cs = (lobby?.career_state as any);
     if (!cs?.statCategory || !cs?.allLineups) return;
 
-    // Always process results transition — must not be blocked by addingPlayerRef
+    // Always process results/blind-reveal transitions — must not be blocked by addingPlayerRef
     if (cs.phase === 'results') {
       setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
       if (exactHitTimerRef.current !== null) {
@@ -176,6 +184,17 @@ export function MultiplayerCapCrunchPage() {
         setShowExactHit(false);
       }
       setPhase('results');
+      return;
+    }
+    if (cs.phase === 'blind-reveal') {
+      setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
+      setRevealStep(cs.revealStep ?? 0);
+      if (exactHitTimerRef.current !== null) {
+        clearTimeout(exactHitTimerRef.current);
+        exactHitTimerRef.current = null;
+        setShowExactHit(false);
+      }
+      setPhase('blind-reveal');
       return;
     }
 
@@ -201,6 +220,7 @@ export function MultiplayerCapCrunchPage() {
     setTotalRounds(cs.totalRounds ?? 5);
     setCurrentTeam(cs.currentTeam || '');
     setHardMode(cs.hardMode || false);
+    setBlindMode(cs.blindMode || false);
     setCurrentPickerId(cs.currentPickerId || null);
     setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
 
@@ -249,39 +269,46 @@ export function MultiplayerCapCrunchPage() {
 
     const advanceRound = async () => {
       if (nextRound > totalRds) {
-        // Determine winner(s): highest score → fewest busts → oldest avg year
-        const avgPickYear = (pid: string): number => {
-          const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
-          if (picks.length === 0) return 2025;
-          return picks.reduce((s: number, p: any) => s + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
-        };
-        const sorted = [...playerIds].sort((a, b) => {
-          const la = lineups[a] as any, lb = lineups[b] as any;
-          if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
-          const aBusts = la.bustCount ?? 0, bBusts = lb.bustCount ?? 0;
-          if (aBusts !== bBusts) return aBusts - bBusts;
-          return avgPickYear(a) - avgPickYear(b);
-        });
-        if (sorted.length > 0) {
-          const topPid = sorted[0];
-          const topLineup = lineups[topPid] as any;
-          const topStat = topLineup?.totalStat ?? 0;
-          const topBusts = topLineup?.bustCount ?? 0;
-          const topAvgYear = avgPickYear(topPid);
-          for (const pid of sorted) {
-            const l = lineups[pid] as any;
-            if (
-              l.totalStat === topStat &&
-              (l.bustCount ?? 0) === topBusts &&
-              avgPickYear(pid) === topAvgYear
-            ) {
-              await incrementPlayerWins(lobbyId, pid);
-            } else {
-              break;
+        const isBlind = cs.blindMode || false;
+
+        if (isBlind) {
+          // Blind mode: go to reveal phase first; winner determined after all revealed
+          await updateCareerState(lobbyId, { ...cs, phase: 'blind-reveal', revealStep: 0 });
+        } else {
+          // Normal mode: determine winner(s): highest score → fewest busts → oldest avg year
+          const avgPickYear = (pid: string): number => {
+            const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
+            if (picks.length === 0) return 2025;
+            return picks.reduce((s: number, p: any) => s + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
+          };
+          const sorted = [...playerIds].sort((a, b) => {
+            const la = lineups[a] as any, lb = lineups[b] as any;
+            if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
+            const aBusts = la.bustCount ?? 0, bBusts = lb.bustCount ?? 0;
+            if (aBusts !== bBusts) return aBusts - bBusts;
+            return avgPickYear(a) - avgPickYear(b);
+          });
+          if (sorted.length > 0) {
+            const topPid = sorted[0];
+            const topLineup = lineups[topPid] as any;
+            const topStat = topLineup?.totalStat ?? 0;
+            const topBusts = topLineup?.bustCount ?? 0;
+            const topAvgYear = avgPickYear(topPid);
+            for (const pid of sorted) {
+              const l = lineups[pid] as any;
+              if (
+                l.totalStat === topStat &&
+                (l.bustCount ?? 0) === topBusts &&
+                avgPickYear(pid) === topAvgYear
+              ) {
+                await incrementPlayerWins(lobbyId, pid);
+              } else {
+                break;
+              }
             }
           }
+          await updateCareerState(lobbyId, { ...cs, phase: 'results' });
         }
-        await updateCareerState(lobbyId, { ...cs, phase: 'results' });
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
         const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
@@ -362,6 +389,38 @@ export function MultiplayerCapCrunchPage() {
   const handlePlayAgain = async () => {
     if (!isHost || !lobby) return;
     await updateLobbyStatus(lobby.id, 'waiting');
+  };
+
+  const handleBlindReveal = async () => {
+    if (!isHost || !lobby) return;
+    const cs = (lobby.career_state as any) || {};
+    const nextStep = (cs.revealStep ?? 0) + 1;
+    await updateCareerState(lobby.id, { ...cs, revealStep: nextStep });
+  };
+
+  const handleBlindFinish = async () => {
+    if (!isHost || !lobby) return;
+    const cs = (lobby.career_state as any) || {};
+    const lineups = cs.allLineups || {};
+    const playerIds: string[] = cs.playerOrder || Object.keys(lineups);
+    const cap: number = cs.targetCap || 0;
+
+    // Blind mode winner: absolute value closest to cap
+    const rawTotal = (pid: string): number => {
+      const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
+      return parseFloat(picks.reduce((s: number, p: any) => s + (p.statValue ?? 0), 0).toFixed(1));
+    };
+    const dist = (pid: string) => Math.abs(cap - rawTotal(pid));
+    const sorted = [...playerIds].sort((a, b) => dist(a) - dist(b));
+
+    if (sorted.length > 0) {
+      const topDist = dist(sorted[0]);
+      for (const pid of sorted) {
+        if (dist(pid) === topDist) await incrementPlayerWins(lobby.id, pid);
+        else break;
+      }
+    }
+    await updateCareerState(lobby.id, { ...cs, phase: 'results' });
   };
 
   const handleSearch = async (query: string) => {
@@ -451,7 +510,8 @@ export function MultiplayerCapCrunchPage() {
         hasPickedThisRound: false,
       };
 
-      const wouldBust = (myCurrentLineup.totalStat + statValue) > targetCap;
+      const isBlindMode = (latestCS.blindMode || false) as boolean;
+      const wouldBust = !isBlindMode && (myCurrentLineup.totalStat + statValue) > targetCap;
 
       const newSelectedPlayer: SelectedPlayer = {
         playerName: stripPositionSuffix(selectedPlayerName),
@@ -469,14 +529,18 @@ export function MultiplayerCapCrunchPage() {
 
       const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
       if (wouldBust) {
+        // Normal mode bust: revert total, increment bust count
         withNewPlayer.totalStat = myCurrentLineup.totalStat;
         withNewPlayer.bustCount = (myCurrentLineup.bustCount ?? 0) + 1;
       } else {
+        // Blind mode: always accumulate (no revert); normal mode: accumulate if under cap
         withNewPlayer.totalStat = parseFloat((myCurrentLineup.totalStat + statValue).toFixed(1));
         withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
       }
       (withNewPlayer as any).hasPickedThisRound = true;
-      if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || (!wouldBust && withNewPlayer.totalStat === targetCap)) {
+      // In blind mode, only finish when all rounds are played (no early exit on exact cap hit)
+      const exactHit = !isBlindMode && !wouldBust && withNewPlayer.totalStat === targetCap;
+      if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || exactHit) {
         withNewPlayer.isFinished = true;
       }
 
@@ -521,9 +585,9 @@ export function MultiplayerCapCrunchPage() {
       mySubmittedLineupRef.current = withNewPlayer;
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
-      if (wouldBust || statValue === 0) setBadFlashKey(k => k + 1);
+      if (!isBlindMode && (wouldBust || statValue === 0)) setBadFlashKey(k => k + 1);
 
-      if (!wouldBust && withNewPlayer.totalStat === targetCap) {
+      if (!isBlindMode && !wouldBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
         confetti({ particleCount: 160, spread: 90, origin: { y: 0.55 }, colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'] });
         confettiTimersRef.current = [
@@ -635,19 +699,22 @@ export function MultiplayerCapCrunchPage() {
           myLineup={myLineup}
           badFlashKey={badFlashKey}
           isCareerStatRound={isCareerStatRound}
+          blindMode={blindMode}
         />
 
-        {/* Mobile cap progress strip */}
-        <div className="md:hidden w-full h-1 bg-white/10 flex-shrink-0">
-          <motion.div
-            className="h-full"
-            animate={{
-              width: `${Math.min(((myLineup?.totalStat ?? 0) / targetCap) * 100, 100)}%`,
-              backgroundColor: getTotalColor(myLineup?.totalStat ?? 0, targetCap),
-            }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          />
-        </div>
+        {/* Mobile cap progress strip — hidden in blind mode */}
+        {!blindMode && (
+          <div className="md:hidden w-full h-1 bg-white/10 flex-shrink-0">
+            <motion.div
+              className="h-full"
+              animate={{
+                width: `${Math.min(((myLineup?.totalStat ?? 0) / targetCap) * 100, 100)}%`,
+                backgroundColor: getTotalColor(myLineup?.totalStat ?? 0, targetCap),
+              }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            />
+          </div>
+        )}
 
         {/* Mobile tab bar */}
         <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/40">
@@ -709,6 +776,7 @@ export function MultiplayerCapCrunchPage() {
                 totalRounds={totalRounds}
                 canPickThisRound={canPickThisRound}
                 sport={selectedSport as 'nba' | 'nfl'}
+                blindMode={blindMode}
               />
             )}
           </div>
@@ -726,6 +794,7 @@ export function MultiplayerCapCrunchPage() {
                   {statCategory ? (isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)) : '—'}
                 </p>
               </div>
+              {!blindMode && (
               <div className="bg-[#111] border border-white/5 px-3 py-2 rounded-sm shadow-xl">
                 <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -743,6 +812,7 @@ export function MultiplayerCapCrunchPage() {
                   <span className="sports-font text-[6px] text-white/20">{targetCap}</span>
                 </div>
               </div>
+              )}
             </div>
             <div className="flex-1 flex flex-col">
               <CapCrunchPickPanel
@@ -785,11 +855,31 @@ export function MultiplayerCapCrunchPage() {
                 totalRounds={totalRounds}
                 canPickThisRound={canPickThisRound}
                 sport={selectedSport as 'nba' | 'nfl'}
+                blindMode={blindMode}
               />
             </div>
           </div>
         </main>
       </motion.div>
+    );
+  }
+
+  // ── Blind reveal screen ──────────────────────────────────────────────────────
+  if (phase === 'blind-reveal' && statCategory) {
+    return (
+      <BlindModeReveal
+        players={players}
+        allLineups={allLineups}
+        targetCap={targetCap}
+        totalRounds={totalRounds}
+        revealStep={revealStep}
+        isHost={isHost}
+        statCategory={statCategory}
+        isCareerStatRound={isCareerStatRound}
+        sport={selectedSport as 'nba' | 'nfl'}
+        onReveal={handleBlindReveal}
+        onFinish={handleBlindFinish}
+      />
     );
   }
 
@@ -807,14 +897,24 @@ export function MultiplayerCapCrunchPage() {
         lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false }) as PlayerLineup,
       }))
       .sort((a, b) => {
+        if (blindMode) {
+          // Blind mode: absolute value closest to cap wins
+          const distA = Math.abs(targetCap - a.lineup.totalStat);
+          const distB = Math.abs(targetCap - b.lineup.totalStat);
+          return distA - distB;
+        }
         if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
         const aBusts = a.lineup.bustCount ?? 0, bBusts = b.lineup.bustCount ?? 0;
         if (aBusts !== bBusts) return aBusts - bBusts;
         return avgPickYear(a.lineup) - avgPickYear(b.lineup);
       });
 
-    const tiedOnScore = sortedLineups.length >= 2 && sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat;
-    const tiedOnBusts = tiedOnScore && (sortedLineups[0].lineup.bustCount ?? 0) === (sortedLineups[1].lineup.bustCount ?? 0);
+    const tiedOnScore = sortedLineups.length >= 2 && (
+      blindMode
+        ? Math.abs(targetCap - sortedLineups[0].lineup.totalStat) === Math.abs(targetCap - sortedLineups[1].lineup.totalStat)
+        : sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat
+    );
+    const tiedOnBusts = tiedOnScore && !blindMode && (sortedLineups[0].lineup.bustCount ?? 0) === (sortedLineups[1].lineup.bustCount ?? 0);
     const tiebreakerUsed = tiedOnScore;
 
     return (

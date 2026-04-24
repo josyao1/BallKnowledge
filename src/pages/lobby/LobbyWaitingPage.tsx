@@ -277,6 +277,7 @@ export function LobbyWaitingPage() {
       });
 
       const hardMode = cs.hardMode || false;
+      const blindMode = cs.blindMode || false;
       let playerOrder = lobbyPlayers.map((p: any) => p.player_id);
       if (hardMode && cs.firstPickerId) {
         const idx = playerOrder.indexOf(cs.firstPickerId);
@@ -287,7 +288,7 @@ export function LobbyWaitingPage() {
         sport, win_target: cs.win_target || 3, statCategory, targetCap,
         allLineups: initialLineups, currentRound: 1, totalRounds: cs.totalRounds || 5,
         currentTeam: assignRandomTeam(sport, statCategory), usedTeams: [assignRandomTeam(sport, statCategory)],
-        phase: 'picking', hardMode,
+        phase: 'picking', hardMode, blindMode,
         currentPickerId: hardMode && playerOrder.length > 0 ? playerOrder[0] : null,
         roundStartPickerIndex: 0, playerOrder, pickedPlayerSeasons: [],
       };
@@ -389,7 +390,7 @@ export function LobbyWaitingPage() {
       await updateSettings({ sport: v.sport });
       setLobby({ ...lobby, career_state: newState, sport: v.sport });
     } else if (v.gameType === 'lineup-is-right') {
-      const newState = { ...(lobby.career_state as any) || {}, sport: v.sport, forcedStatCategory: v.lineupStat === 'random' ? null : v.lineupStat, forcedTargetCap: (v.lineupStat !== 'random' && v.customCap) ? v.customCap : null, hardMode: v.hardMode, firstPickerId: v.hardMode ? v.firstPickerId : null, totalRounds: v.totalRounds };
+      const newState = { ...(lobby.career_state as any) || {}, sport: v.sport, forcedStatCategory: v.lineupStat === 'random' ? null : v.lineupStat, forcedTargetCap: (v.lineupStat !== 'random' && v.customCap) ? v.customCap : null, hardMode: v.hardMode, blindMode: v.blindMode, firstPickerId: v.hardMode ? v.firstPickerId : null, totalRounds: v.totalRounds };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...lobby, career_state: newState, sport: v.sport });
