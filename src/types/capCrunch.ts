@@ -34,6 +34,8 @@ export interface SelectedPlayer {
   actualNflConf?: string; // the NFL conf the player was actually in (shown when neverOnTeam due to wrong NFL conf)
   actualCollege?: string; // the player's college(s) from bio (shown when neverOnTeam due to wrong college conf)
   playerId?: string | number; // ESPN player ID — used for headshot URL
+  /** True when this pick slot was auto-skipped (timer expired with no selection) */
+  isSkipped?: boolean;
 }
 
 export interface PlayerLineup {

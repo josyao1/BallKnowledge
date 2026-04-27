@@ -12,10 +12,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
+import { HomeButton } from '../../components/multiplayer/HomeButton';
 import {
   findLobbyByCode,
   getLobbyPlayers,
   updateLobbyStatus,
+  updateCareerState,
   updatePlayerScore,
 } from '../../services/lobby';
 import { loadBoxScoreYear, type BoxScoreGame } from '../../services/boxScoreData';
@@ -157,6 +159,17 @@ export function MultiplayerBoxScorePage() {
       });
     }
   }, [lobby?.status]);
+
+  // ── Abandoned by host — return everyone to home ──
+  useEffect(() => {
+    if ((lobby?.career_state as { abandoned?: boolean } | null)?.abandoned) navigate('/');
+  }, [(lobby?.career_state as { abandoned?: boolean } | null)?.abandoned]);
+
+  async function handleEndGame() {
+    if (!lobby) return;
+    await updateCareerState(lobby.id, { abandoned: true });
+    await updateLobbyStatus(lobby.id, 'waiting');
+  }
 
   // Build guessed_players entries from guesses
   function buildGuessedEntries(g: BoxScoreGame | null, gs: Record<string, string>): string[] {
@@ -345,10 +358,13 @@ export function MultiplayerBoxScorePage() {
           </div>
 
           {/* Score pill */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/10 shrink-0">
-            <span className="retro-title text-xl tabular-nums" style={{ color: '#f59e0b' }}>{correctCount}</span>
-            <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
-            {finished && spreadOk && <span className="sports-font text-[10px] text-green-400 ml-0.5">+S</span>}
+          <div className="flex items-center gap-2 shrink-0">
+            <HomeButton isHost={isHost} onEndGame={handleEndGame} />
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/10">
+              <span className="retro-title text-xl tabular-nums" style={{ color: '#f59e0b' }}>{correctCount}</span>
+              <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
+              {finished && spreadOk && <span className="sports-font text-[10px] text-green-400 ml-0.5">+S</span>}
+            </div>
           </div>
         </div>
 

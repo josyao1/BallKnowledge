@@ -103,11 +103,11 @@ export function LobbyActionButtons({
           disabled={isLoadingRoster || lobby.status === 'countdown'}
           className={`w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all disabled:opacity-50 ${
             currentPlayer.is_ready
-              ? 'bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1'
-              : 'bg-black/50 text-white/70 border-2 border-[#d4af37] hover:bg-[#d4af37]/10'
+              ? 'bg-emerald-900/50 text-emerald-300 border-2 border-emerald-700/60'
+              : 'bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 hover:from-[#fdf0d5] hover:to-[#e0ceaa]'
           }`}
         >
-          {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? '✓ Ready (click to unready)' : 'Ready Up'}
+          {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? '✓ Ready' : 'Ready Up'}
         </button>
       )}
 

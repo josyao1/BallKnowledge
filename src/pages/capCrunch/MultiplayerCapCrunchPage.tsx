@@ -76,6 +76,16 @@ export function MultiplayerCapCrunchPage() {
   const [blindMode, setBlindMode] = useState(false);
   const [revealStep, setRevealStep] = useState(0);
 
+  // Pick timer setting (seconds); null = no timer
+  const [pickTimer, setPickTimer] = useState<number | null>(null);
+  // Active countdown displayed to this player; null = not counting down
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track what triggered the current countdown so we can detect changes
+  const countdownKeyRef = useRef<string>(''); // "round:currentPickerId_or_lastPicker"
+  // Signals the auto-skip effect to fire (set when interval hits 0)
+  const [autoSkipNeeded, setAutoSkipNeeded] = useState(false);
+
   // Ephemeral UI state — never synced to Supabase
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
@@ -98,6 +108,8 @@ export function MultiplayerCapCrunchPage() {
     return () => {
       if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current);
       confettiTimersRef.current.forEach(clearTimeout);
+      if (countdownIntervalRef.current !== null) clearInterval(countdownIntervalRef.current);
+
     };
   }, []);
 
@@ -111,6 +123,103 @@ export function MultiplayerCapCrunchPage() {
   const prevRoundRef = useRef(0);
   // Saved pick for race-condition recovery
   const mySubmittedLineupRef = useRef<any>(null);
+
+  // ── Pick timer countdown — purely local, never synced to Supabase ──────────
+  useEffect(() => {
+    if (phase !== 'picking' || !pickTimer || !currentPlayerId) {
+      // Not in picking phase or timer disabled — clear any running countdown
+      if (countdownIntervalRef.current !== null) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      setCountdown(null);
+      countdownKeyRef.current = '';
+      return;
+    }
+
+    const cs = (lobby?.career_state as any) || {};
+    const lineups = cs.allLineups || {};
+    const playerIds: string[] = cs.playerOrder || Object.keys(lineups);
+
+    // Determine whether this player should have an active countdown right now.
+    // Hard mode: it's my turn (currentPickerId === me and I haven't picked)
+    // Normal mode: I'm the last one who hasn't picked this round
+    let shouldCountdown = false;
+    const myLineupCs = lineups[currentPlayerId] as any;
+    const iAlreadyPicked = myLineupCs?.hasPickedThisRound || myLineupCs?.isFinished;
+
+    if (!iAlreadyPicked) {
+      if (hardMode) {
+        shouldCountdown = currentPickerId === currentPlayerId;
+      } else {
+        // Normal mode: countdown if I'm the only one left
+        const stillWaiting = playerIds.filter(pid => {
+          const l = lineups[pid] as any;
+          return !l?.hasPickedThisRound && !l?.isFinished;
+        });
+        shouldCountdown = stillWaiting.length === 1 && stillWaiting[0] === currentPlayerId;
+      }
+    }
+
+    // Build a key that uniquely identifies this countdown trigger.
+    // When the key changes, reset the timer (new round or new hard-mode turn).
+    const triggerKey = hardMode
+      ? `${cs.currentRound}:${currentPickerId}`
+      : `${cs.currentRound}:last`;
+
+    if (!shouldCountdown) {
+      // Not my turn / I already picked — clear countdown
+      if (countdownIntervalRef.current !== null) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      setCountdown(null);
+      countdownKeyRef.current = '';
+      return;
+    }
+
+    // Same trigger as what's already running — don't restart
+    if (countdownKeyRef.current === triggerKey && countdownIntervalRef.current !== null) {
+      return;
+    }
+
+    // New trigger: clear old interval and start fresh
+    if (countdownIntervalRef.current !== null) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    countdownKeyRef.current = triggerKey;
+    setCountdown(pickTimer);
+
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          if (countdownIntervalRef.current !== null) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          countdownKeyRef.current = '';
+          setAutoSkipNeeded(true);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  // allLineups is the reactive signal here — it changes whenever anyone picks
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allLineups, phase, pickTimer, currentPlayerId, currentPickerId, hardMode]);
+
+  // ── Auto-skip when countdown expires ────────────────────────────────────────
+  useEffect(() => {
+    if (!autoSkipNeeded) return;
+    setAutoSkipNeeded(false);
+    // Only skip if it's actually still my turn (race-condition guard: I may have
+    // picked manually in the same tick the timer fired)
+    if (phase !== 'picking' || !canPickThisRound) return;
+    handleAutoSkip();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSkipNeeded]);
 
   const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as import('../../types').Sport | null;
 
@@ -159,6 +268,7 @@ export function MultiplayerCapCrunchPage() {
         setCurrentPickerId(cs.currentPickerId || null);
         setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
         setRevealStep(cs.revealStep ?? 0);
+        setPickTimer((cs.pickTimer as number | null) ?? null);
 
         if (cs.phase === 'results') setPhase('results');
         else if (cs.phase === 'blind-reveal') { setPhase('blind-reveal'); }
@@ -225,6 +335,7 @@ export function MultiplayerCapCrunchPage() {
     setBlindMode(cs.blindMode || false);
     setCurrentPickerId(cs.currentPickerId || null);
     setPickedPlayerSeasons(cs.pickedPlayerSeasons || []);
+    setPickTimer((cs.pickTimer as number | null) ?? null);
 
     if (phase === 'loading') setPhase('picking');
 
@@ -352,12 +463,13 @@ export function MultiplayerCapCrunchPage() {
     advanceRound().catch(err => console.error('[advanceRound] Failed:', err));
   }, [lobby?.career_state, isHost, lobby?.id]);
 
-  // ── Navigate back to lobby when host resets ─────────────────────────────────
+  // ── Navigate back to lobby when host resets or abandons ────────────────────
   useEffect(() => {
+    if ((lobby?.career_state as any)?.abandoned) { navigate(`/lobby/${code}`); return; }
     if (lobby?.status === 'waiting' && phase !== 'picking' && phase !== 'loading') {
       navigate(`/lobby/${code}`);
     }
-  }, [lobby?.status, phase, navigate, code]);
+  }, [lobby?.career_state, lobby?.status, phase, navigate, code]);
 
   // ── Compute optimal last picks once results screen loads ────────────────────
   useEffect(() => {
@@ -391,6 +503,74 @@ export function MultiplayerCapCrunchPage() {
   const handlePlayAgain = async () => {
     if (!isHost || !lobby) return;
     await updateLobbyStatus(lobby.id, 'waiting');
+  };
+
+  const handleEndGame = async () => {
+    if (!isHost || !lobby) return;
+    // Replacing career_state with {abandoned:true} signals all clients to return
+    // to the lobby without processing results.
+    await updateCareerState(lobby.id, { abandoned: true });
+    await updateLobbyStatus(lobby.id, 'waiting');
+  };
+
+  const handleAutoSkip = async () => {
+    if (!currentPlayerId || !lobby) return;
+    const latestCS = (lobby.career_state as any) || {};
+    const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
+      playerId: currentPlayerId,
+      playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
+      selectedPlayers: [],
+      totalStat: 0,
+      bustCount: 0,
+      isFinished: false,
+      hasPickedThisRound: false,
+    };
+    // Don't skip if already acted this round
+    if (myCurrentLineup.hasPickedThisRound || myCurrentLineup.isFinished) return;
+
+    const skipPick: SelectedPlayer = {
+      playerName: 'SKIPPED',
+      team: currentTeam,
+      selectedYear: 'career',
+      playerSeason: null,
+      statValue: 0,
+      isBust: false,
+      neverOnTeam: false,
+      isSkipped: true,
+    };
+
+    const withSkip = addPlayerToLineup(myCurrentLineup as PlayerLineup, skipPick);
+    withSkip.totalStat = myCurrentLineup.totalStat;
+    withSkip.bustCount = myCurrentLineup.bustCount ?? 0;
+    (withSkip as any).hasPickedThisRound = true;
+    if (withSkip.selectedPlayers.length >= totalRoundsRef.current) {
+      withSkip.isFinished = true;
+    }
+
+    let hardModeUpdates: Record<string, any> = {};
+    if (latestCS.hardMode) {
+      const allLineupsAfterSkip = { ...latestCS.allLineups, [currentPlayerId]: withSkip };
+      const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+      const currentIdx = order.indexOf(currentPlayerId);
+      let nextPickerId: string | null = null;
+      for (let i = 1; i <= order.length; i++) {
+        const pid = order[(currentIdx + i) % order.length];
+        if (!((allLineupsAfterSkip[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterSkip[pid] as any)?.isFinished)) {
+          nextPickerId = pid;
+          break;
+        }
+      }
+      hardModeUpdates = { currentPickerId: nextPickerId };
+    }
+
+    const updatedCS = {
+      ...latestCS,
+      allLineups: { ...latestCS.allLineups, [currentPlayerId]: withSkip },
+      ...hardModeUpdates,
+    };
+    await updateCareerState(lobby.id, updatedCS);
+    mySubmittedLineupRef.current = withSkip;
+    setAllLineups(prev => ({ ...prev, [currentPlayerId]: withSkip }));
   };
 
   const handleBlindReveal = async () => {
@@ -704,6 +884,8 @@ export function MultiplayerCapCrunchPage() {
           badFlashKey={badFlashKey}
           isCareerStatRound={isCareerStatRound}
           blindMode={blindMode}
+          isHost={isHost}
+          onEndGame={handleEndGame}
         />
 
         {/* Mobile cap progress strip — hidden in blind mode */}
@@ -740,7 +922,15 @@ export function MultiplayerCapCrunchPage() {
         <main className="relative z-10 flex-1 min-h-0 w-full overflow-hidden">
           {/* Mobile: single tab panel */}
           <div className="md:hidden h-full p-3 flex flex-col">
-            {mobileTab === 'pick' ? (
+            {/* Countdown banner — shown to the player whose turn it is */}
+            {countdown !== null && mobileTab === 'pick' && (
+              <div className={`flex-shrink-0 mb-2 py-2 rounded-sm text-center retro-title text-lg tracking-wider transition-colors ${
+                countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
+              }`}>
+                {hardMode ? 'Your turn — ' : 'Last to pick — '}{countdown}s
+              </div>
+            )}
+            <div className={mobileTab !== 'pick' ? 'hidden' : 'flex-1 min-h-0 flex flex-col'}>
               <CapCrunchPickPanel
                 myLineup={myLineup}
                 canPickThisRound={canPickThisRound}
@@ -771,7 +961,8 @@ export function MultiplayerCapCrunchPage() {
                 onConfirm={handleConfirmYear}
                 onBack={handleBackFromPlayer}
               />
-            ) : (
+            </div>
+            <div className={mobileTab !== 'scores' ? 'hidden' : 'flex-1 min-h-0'}>
               <CapCrunchScoresPanel
                 players={players}
                 allLineups={allLineups}
@@ -782,7 +973,7 @@ export function MultiplayerCapCrunchPage() {
                 sport={selectedSport as 'nba' | 'nfl'}
                 blindMode={blindMode}
               />
-            )}
+            </div>
           </div>
 
           {/* Desktop: 3-column layout */}
@@ -819,6 +1010,14 @@ export function MultiplayerCapCrunchPage() {
               )}
             </div>
             <div className="flex-1 flex flex-col">
+              {/* Countdown banner — desktop */}
+              {countdown !== null && (
+                <div className={`flex-shrink-0 mb-3 py-2.5 rounded-sm text-center retro-title text-xl tracking-wider transition-colors ${
+                  countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
+                }`}>
+                  {hardMode ? 'Your turn — ' : 'Last to pick — '}{countdown}s
+                </div>
+              )}
               <CapCrunchPickPanel
                 myLineup={myLineup}
                 canPickThisRound={canPickThisRound}

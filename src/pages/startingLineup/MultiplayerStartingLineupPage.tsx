@@ -41,6 +41,7 @@ import {
   type StarterEncoding,
 } from '../../services/startingLineupData';
 import { NFLFieldLayout } from '../../components/startingLineup/NFLFieldLayout';
+import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { NBACourtLayout } from '../../components/startingLineup/NBACourtLayout';
 import { nflTeams } from '../../data/nfl-teams';
 import { teams as nbaTeams } from '../../data/teams';
@@ -187,6 +188,17 @@ export function MultiplayerStartingLineupPage() {
       navigate(`/lobby/${code}/starting-lineup/results`);
     }
   }, [lobby?.status]);
+
+  // ── Abandoned by host — return everyone to home ──
+  useEffect(() => {
+    if ((careerState as { abandoned?: boolean } | null)?.abandoned) navigate('/');
+  }, [(careerState as { abandoned?: boolean } | null)?.abandoned]);
+
+  async function handleEndGame() {
+    if (!lobby) return;
+    await updateCareerState(lobby.id, { abandoned: true });
+    await updateLobbyStatus(lobby.id, 'waiting');
+  }
 
   // ── Check if current player is locked ──
   const currentPlayer = players.find(p => p.player_id === currentPlayerId);
@@ -502,7 +514,10 @@ export function MultiplayerStartingLineupPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-[#1a2a1a]">
         <div>
-          <h1 className="retro-title text-lg text-[#ea580c]">Starting Lineup</h1>
+          <div className="flex items-center gap-2 mb-0.5">
+            <h1 className="retro-title text-lg text-[#ea580c]">Starting Lineup</h1>
+            <HomeButton isHost={isHost} onEndGame={handleEndGame} />
+          </div>
           <div className="text-[9px] text-white/30 sports-font">Round {careerState.round} · Race to {careerState.win_target} pts</div>
         </div>
         <div className="text-center">
