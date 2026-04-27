@@ -1,21 +1,26 @@
 /**
  * GuessPlayerSetup.tsx — Two-level setup panel for "Guess the Player".
  *
- * Level 1: choose between Career Arc, Name Scramble, or Face Reveal.
- * Level 2: the chosen game's own setup UI (existing CareerArcSetup /
- *           ScrambleSetup, or new FaceRevealSetup). Back → returns to level 1.
+ * mode='solo'  → Level 1 mode picker → Level 2 sub-setup (Start Solo + Lobby buttons)
+ * mode='lobby' → Level 1 mode picker only; clicking a mode creates a lobby
+ *                immediately (using stored player name) and navigates to the
+ *                waiting room. Falls back to /lobby/create if no stored name.
  */
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { CareerArcSetup } from './CareerArcSetup';
 import { ScrambleSetup } from './ScrambleSetup';
 import { FaceRevealSetup } from './FaceRevealSetup';
+import { useLobbyStore } from '../../stores/lobbyStore';
+import { getStoredPlayerName, updateCareerState } from '../../services/lobby';
 
 type SubMode = 'career' | 'scramble' | 'face-reveal' | null;
 
 interface Props {
   sport: 'nba' | 'nfl';
+  mode: 'solo' | 'lobby';
   onBack: () => void;
 }
 
@@ -27,10 +32,57 @@ const MODES: { id: SubMode; label: string; abbr: string; desc: string; color: st
   { id: 'face-reveal', label: 'Face Reveal',   abbr: 'FR', desc: 'Identify a player from their zoomed headshot', color: '#06b6d4' },
 ];
 
-export function GuessPlayerSetup({ sport, onBack }: Props) {
+export function GuessPlayerSetup({ sport, mode, onBack }: Props) {
+  const navigate = useNavigate();
+  const { createLobby } = useLobbyStore();
   const [subMode, setSubMode] = useState<SubMode>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [careerActiveYear,   setCareerActiveYear]   = useState<number | null>(null);
   const [scrambleActiveYear, setScrambleActiveYear] = useState<number | null>(null);
+
+  async function handleLobbyMode(id: SubMode) {
+    const hostName = getStoredPlayerName();
+    if (!hostName) {
+      navigate('/lobby/create', { state: { gameType: id } });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'NE';
+      const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
+
+      if (id === 'career') {
+        const lobby = await createLobby(hostName, sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'career', 'team', null, null);
+        if (lobby) {
+          await updateCareerState(lobby.id, { win_target: 10, round: 0 });
+          navigate(`/lobby/${lobby.join_code}`);
+        }
+      } else if (id === 'scramble') {
+        const lobby = await createLobby(hostName, sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'scramble', 'team', null, null);
+        if (lobby) {
+          await updateCareerState(lobby.id, { win_target: 20, round: 0, career_to: 0 });
+          navigate(`/lobby/${lobby.join_code}`);
+        }
+      } else if (id === 'face-reveal') {
+        const lobby = await createLobby(hostName, sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'face-reveal', 'team', null, null);
+        if (lobby) {
+          await updateCareerState(lobby.id, { win_target: 20, career_to: 0, timer: 60, min_yards: 0, defense_mode: 'known', round: 0 });
+          navigate(`/lobby/${lobby.join_code}`);
+        }
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  function handleModeClick(id: SubMode) {
+    if (mode === 'lobby') {
+      handleLobbyMode(id);
+    } else {
+      setSubMode(id);
+    }
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -74,24 +126,26 @@ export function GuessPlayerSetup({ sport, onBack }: Props) {
 
               {/* Mode selector buttons */}
               <div className="flex flex-col gap-2">
-                <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center mb-1">Choose a mode</div>
+                <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center mb-1">
+                  {mode === 'lobby' ? 'Open a lobby for...' : 'Choose a mode'}
+                </div>
                 {MODES.map(m => (
                   <button
                     key={m.id}
-                    onClick={() => setSubMode(m.id)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2a2a2a] bg-[#0e0e0e] hover:border-[#3a3a3a] transition-all group"
+                    onClick={() => handleModeClick(m.id)}
+                    disabled={isCreating}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2a2a2a] bg-[#0e0e0e] hover:border-[#3a3a3a] transition-all group disabled:opacity-50"
                   >
-                    <span
-                      className="retro-title text-sm w-8 shrink-0"
-                      style={{ color: m.color }}
-                    >
+                    <span className="retro-title text-sm w-8 shrink-0" style={{ color: m.color }}>
                       {m.abbr}
                     </span>
                     <div className="text-left flex-1">
                       <div className="retro-title text-base leading-tight" style={{ color: m.color }}>{m.label}</div>
                       <div className="sports-font text-[9px] text-[#555] tracking-wider mt-0.5">{m.desc}</div>
                     </div>
-                    <span className="text-[#444] group-hover:text-[#888] transition-colors text-sm">→</span>
+                    <span className="text-[#444] group-hover:text-[#888] transition-colors text-sm">
+                      {isCreating ? '...' : '→'}
+                    </span>
                   </button>
                 ))}
               </div>

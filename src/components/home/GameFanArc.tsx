@@ -179,8 +179,8 @@ export function GameFanArc({
                         <button
                           onClick={() => {
                             if (game.id === 'guess-player') {
-                              // Lobby selection happens inside the setup panel
-                              onCardSelect(game.id);
+                              // Lobby path: mode picker will create the lobby directly
+                              onCardSelect('guess-player-lobby');
                               setTappedCard(null);
                             } else if (game.multiPath) {
                               navigate(game.multiPath);

@@ -17,7 +17,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZoomedHeadshot } from '../../components/faceReveal/ZoomedHeadshot';
-import { areSimilarNames } from '../../utils/fuzzyDedup';
+import { areSimilarNames, normalize } from '../../utils/fuzzyDedup';
 import { loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
@@ -43,6 +43,40 @@ function weightedRandom(candidates: PlayerEntry[]): PlayerEntry {
     if (r <= 0) return p;
   }
   return candidates[candidates.length - 1];
+}
+
+// ── Autocomplete suggestions ─────────────────────────────────────────────────
+// Returns up to `limit` pool entries whose names are "decently close" to the
+// input without being overly aggressive. Requires at least 3 characters and
+// matches on: full-name prefix, every input word matching a name-word prefix,
+// or a single long-enough first token matching a name's first token.
+
+function getSuggestions(input: string, pool: PlayerEntry[], limit = 5): PlayerEntry[] {
+  if (input.length < 3) return [];
+  const norm = normalize(input);
+  const normWords = norm.split(' ').filter(Boolean);
+
+  const scored: { entry: PlayerEntry; score: number }[] = [];
+  for (const p of pool) {
+    const pNorm = normalize(p.player_name);
+    const pWords = pNorm.split(' ');
+
+    if (pNorm.startsWith(norm)) {
+      // Full input is a prefix of the full name — highest confidence
+      scored.push({ entry: p, score: 100 });
+    } else if (normWords.every(iw => pWords.some(pw => pw.startsWith(iw)))) {
+      // Every typed word matches the start of some name word (e.g. "le ja" → "LeBron James")
+      scored.push({ entry: p, score: 80 });
+    } else if (normWords[0]?.length >= 3 && pWords[0]?.startsWith(normWords[0])) {
+      // First typed token is a prefix of the first name token (3+ chars to avoid noise)
+      scored.push({ entry: p, score: 60 });
+    }
+  }
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(s => s.entry);
 }
 
 // ── NFL yards filter ──────────────────────────────────────────────────────────
@@ -83,8 +117,8 @@ export function SoloFaceRevealPage() {
   const location = useLocation();
 
   // Read settings from navigation state (set by FaceRevealSetup).
-  const { sport: initSport = 'nba', careerTo = 0, timer: timerSecs = 60, minYards = 0, defenseMode = 'known' } =
-    (location.state as { sport?: 'nba' | 'nfl'; careerTo?: number; timer?: number; minYards?: number; defenseMode?: 'known' | 'all' } | null) ?? {};
+  const { sport: initSport = 'nba', careerTo = 0, timer: timerSecs = 60, minYards = 0, minMpg = 0, defenseMode = 'known' } =
+    (location.state as { sport?: 'nba' | 'nfl'; careerTo?: number; timer?: number; minYards?: number; minMpg?: number; defenseMode?: 'known' | 'all' } | null) ?? {};
 
   const [sport] = useState<'nba' | 'nfl'>(initSport);
 
@@ -102,10 +136,18 @@ export function SoloFaceRevealPage() {
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
   const [feedbackMsg, setFeedbackMsg]   = useState('');
   const [showFlash, setShowFlash]       = useState(false);
+  // Randomised zoom focal point per player so the zoomed-in spot varies each round.
+  const [focalPoint, setFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 28 });
+
+  const [suggestions, setSuggestions] = useState<PlayerEntry[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Separate ref for the level-1 correct flash so it doesn't overwrite autoAdvanceRef.
+  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Debounce guard — prevents two code paths from calling pickNext within 800ms.
+  const lastPickTimeRef = useRef<number>(0);
 
   // ── Pool loading ──────────────────────────────────────────────────────────
 
@@ -115,6 +157,9 @@ export function SoloFaceRevealPage() {
         const all = await loadNBALineupPool();
         let filtered = all.filter(p => p.player_id != null);
         if (careerTo) filtered = filtered.filter(p => nbaEndYear(p) >= careerTo);
+        if (minMpg) filtered = filtered.filter(p =>
+          p.seasons.some(s => (s.min ?? 0) >= minMpg)
+        );
         setPool(filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name })));
       } else {
         const all = await loadNFLLineupPool();
@@ -125,12 +170,21 @@ export function SoloFaceRevealPage() {
       }
     }
     loadPool();
-  }, [sport, careerTo, minYards, defenseMode]);
+  }, [sport, careerTo, minYards, minMpg, defenseMode]);
 
   // ── Pick next player ──────────────────────────────────────────────────────
 
   const pickNext = useCallback((currentPool: PlayerEntry[]) => {
     if (!currentPool.length) return;
+
+    // Debounce: suppress if called again within 800ms (race-condition guard).
+    const now = Date.now();
+    if (now - lastPickTimeRef.current < 800) {
+      console.warn('[FaceReveal] pickNext suppressed — called again within 800ms');
+      return;
+    }
+    lastPickTimeRef.current = now;
+    console.log('[FaceReveal] pickNext at', now);
 
     // Avoid repeating recently seen players; reset if we've exhausted the pool.
     let candidates = currentPool.filter(p => !usedIdsRef.current.has(p.player_id));
@@ -142,12 +196,19 @@ export function SoloFaceRevealPage() {
     const chosen = weightedRandom(candidates);
     usedIdsRef.current.add(chosen.player_id);
 
+    // Randomise the zoom focal point so it's not always both eyes.
+    // X: ±12% from center (38–62%). Y: ±8% from face baseline (20–36%).
+    const fx = Math.round(38 + Math.random() * 24);
+    const fy = Math.round(20 + Math.random() * 16);
+    setFocalPoint({ x: fx, y: fy });
+
     setPlayer(chosen);
     setZoomLevel(1);
     setCountdown(timerSecs);
     setGuessInput('');
     setWrongGuesses([]);
     setFeedbackMsg('');
+    setSuggestions([]);
     setStatus('active');
 
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -160,7 +221,9 @@ export function SoloFaceRevealPage() {
     }
   }, [pool]);
 
-  // ── Countdown timer ───────────────────────────────────────────────────────
+  // ── Countdown timer — only ticks; zoom advance is handled separately ─────
+  // Restarted whenever zoomLevel changes (skip or auto-advance) so the old
+  // interval is always cleared before it can double-fire a zoom advance.
 
   useEffect(() => {
     if (status !== 'active') {
@@ -169,28 +232,28 @@ export function SoloFaceRevealPage() {
     }
 
     timerRef.current = setInterval(() => {
-      setCountdown(c => {
-        if (c <= 1) {
-          // Advance zoom level or reveal after level 3.
-          setZoomLevel(z => {
-            if (z < 3) {
-              return (z + 1) as 1 | 2 | 3;
-            }
-            // Level 3 expired — reveal answer.
-            setStatus('revealed');
-            setStreak(0);
-            return z;
-          });
-          return timerSecs;
-        }
-        return c - 1;
-      });
+      setCountdown(c => (c > 0 ? c - 1 : 0));
     }, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [status, timerSecs]);
+  }, [status, timerSecs, zoomLevel]);
+
+  // ── Zoom advance / reveal when countdown hits 0 ───────────────────────────
+  // Separated from the interval so that handleSkipZoom's setCountdown(timerSecs)
+  // and this effect can't both queue a setZoomLevel update in the same batch.
+
+  useEffect(() => {
+    if (status !== 'active' || countdown > 0) return;
+    if (zoomLevel < 3) {
+      setZoomLevel(z => (z + 1) as 1 | 2 | 3);
+      setCountdown(timerSecs);
+    } else {
+      setStatus('revealed');
+      setStreak(0);
+    }
+  }, [countdown, status]);
 
   // ── Auto-advance after revealed ───────────────────────────────────────────
 
@@ -208,6 +271,7 @@ export function SoloFaceRevealPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
     };
   }, []);
 
@@ -221,17 +285,21 @@ export function SoloFaceRevealPage() {
     if (areSimilarNames(name, player.player_name)) {
       // Correct!
       if (timerRef.current) clearInterval(timerRef.current);
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
       setStatus('correct');
       setStreak(s => s + 1);
       setFeedbackMsg('');
+      setSuggestions([]);
 
       // Level 1 correct → big flash; others → smaller celebration via border.
       if (zoomLevel === 1) {
         setShowFlash(true);
-        autoAdvanceRef.current = setTimeout(() => setShowFlash(false), 600);
+        // Use a dedicated ref so the auto-advance ref isn't clobbered.
+        if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+        flashTimeoutRef.current = setTimeout(() => setShowFlash(false), 600);
       }
 
-      // Auto-advance after a short delay (tracked so it can be cleared on unmount).
+      // Auto-advance after a short delay (can be cancelled if user clicks Next Player).
       autoAdvanceRef.current = setTimeout(() => pickNext(pool), 2500);
     } else {
       setWrongGuesses(prev => [...prev, name]);
@@ -352,6 +420,8 @@ export function SoloFaceRevealPage() {
                   playerId={player.player_id}
                   sport={sport}
                   zoomLevel={zoomLevel}
+                  originX={focalPoint.x}
+                  originY={focalPoint.y}
                 />
               )}
             </motion.div>
@@ -413,18 +483,68 @@ export function SoloFaceRevealPage() {
             {status === 'active' && (
               <div className="w-full max-w-sm flex flex-col gap-3">
                 <div className="flex gap-2">
+                  <div className="flex-1 relative">
                   <input
                     ref={inputRef}
                     type="text"
                     value={guessInput}
-                    onChange={e => setGuessInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleGuess()}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setGuessInput(val);
+                      setSuggestions(getSuggestions(val, pool));
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleGuess();
+                      if (e.key === 'Escape') setSuggestions([]);
+                    }}
                     placeholder="Type the player's name..."
-                    className="flex-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none"
+                    className="w-full bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none"
                     style={{ borderColor: `${COLOR}60` }}
                     onFocus={e => (e.currentTarget.style.borderColor = COLOR)}
-                    onBlur={e => (e.currentTarget.style.borderColor = `${COLOR}60`)}
+                    onBlur={e => {
+                      e.currentTarget.style.borderColor = `${COLOR}60`;
+                      // Delay so suggestion onMouseDown fires before the dropdown disappears
+                      setTimeout(() => setSuggestions([]), 150);
+                    }}
                   />
+                  {/* Autocomplete dropdown */}
+                  {suggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-[#1a1a1a] border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
+                      {suggestions.map(s => (
+                        <button
+                          key={s.player_id}
+                          // mouseDown fires before blur; preventDefault keeps input focused
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            setGuessInput(s.player_name);
+                            setSuggestions([]);
+                            // Submit the guess immediately
+                            if (player && areSimilarNames(s.player_name, player.player_name)) {
+                              if (timerRef.current) clearInterval(timerRef.current);
+                              if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+                              setStatus('correct');
+                              setStreak(st => st + 1);
+                              setFeedbackMsg('');
+                              setGuessInput('');
+                              if (zoomLevel === 1) {
+                                setShowFlash(true);
+                                if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+                                flashTimeoutRef.current = setTimeout(() => setShowFlash(false), 600);
+                              }
+                              autoAdvanceRef.current = setTimeout(() => pickNext(pool), 2500);
+                            } else {
+                              // Slight delay so the input value settles before focus
+                              setTimeout(() => inputRef.current?.focus(), 10);
+                            }
+                          }}
+                          className="w-full text-left px-4 py-2.5 sports-font text-sm text-[var(--vintage-cream)] hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
+                        >
+                          {s.player_name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  </div>
                   <button
                     onClick={handleGuess}
                     disabled={!guessInput.trim()}
@@ -456,7 +576,11 @@ export function SoloFaceRevealPage() {
             {/* Manual next when correct */}
             {status === 'correct' && (
               <button
-                onClick={() => pickNext(pool)}
+                onClick={() => {
+                  // Cancel the auto-advance timer so it doesn't also fire later.
+                  if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+                  pickNext(pool);
+                }}
                 className="w-full max-w-sm py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#06b6d4] to-[#0891b2] text-[#111] shadow-[0_4px_0_#0e7490] active:shadow-none active:translate-y-1"
               >
                 Next Player

@@ -333,9 +333,10 @@ export function HomePage() {
             )}
 
             {/* ── Guess the Player setup panel ── */}
-            {isDealt && selectedCard === 'guess-player' && (
+            {isDealt && (selectedCard === 'guess-player' || selectedCard === 'guess-player-lobby') && (
               <GuessPlayerSetup
                 sport={sport}
+                mode={selectedCard === 'guess-player-lobby' ? 'lobby' : 'solo'}
                 onBack={() => setSelectedCard(null)}
               />
             )}

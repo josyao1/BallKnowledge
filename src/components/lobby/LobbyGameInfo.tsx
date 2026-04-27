@@ -105,6 +105,16 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
                   First to {cs?.win_target ?? '?'} pts
                 </div>
               </>
+            ) : lobby.game_type === 'face-reveal' ? (
+              <>
+                <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                  {(cs?.sport || lobby.sport || 'nba').toUpperCase()} Face Reveal
+                </div>
+                <div className="retro-title text-xl text-[#06b6d4]">Face Reveal</div>
+                <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                  First to {cs?.win_target ?? '?'} pts
+                </div>
+              </>
             ) : (
               /* Roster mode */
               <>

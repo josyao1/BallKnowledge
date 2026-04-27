@@ -33,6 +33,13 @@ interface Props {
   playerId: string | number;
   sport: 'nba' | 'nfl';
   zoomLevel: 1 | 2 | 3;
+  /**
+   * Focal point for both objectPosition and transformOrigin, as percentages.
+   * Defaults to { x: 50, y: 28 } (center horizontally, upper face vertically).
+   * Randomised per-player in SoloFaceRevealPage so the zoom-in spot varies.
+   */
+  originX?: number;
+  originY?: number;
   /** Optional extra class on the outer container (e.g. for rounded corners). */
   className?: string;
 }
@@ -48,7 +55,7 @@ function Silhouette() {
   );
 }
 
-export function ZoomedHeadshot({ playerId, sport, zoomLevel, className = '' }: Props) {
+export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, originY = 28, className = '' }: Props) {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [error, setError]   = useState(false);
 
@@ -87,9 +94,9 @@ export function ZoomedHeadshot({ playerId, sport, zoomLevel, className = '' }: P
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center 28%',
+            objectPosition: `${originX}% ${originY}%`,
             transform: `scale(${scale})`,
-            transformOrigin: 'center 28%',
+            transformOrigin: `${originX}% ${originY}%`,
             transition: 'transform 1.2s ease-out',
           }}
         />

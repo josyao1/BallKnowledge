@@ -130,10 +130,12 @@ export function MultiplayerFaceRevealPage() {
   const playerPoolRef = useRef<PlayerEntry[]>([]);
   const usedIdsRef    = useRef<Set<string | number>>(new Set());
 
-  // ── Load lobby on mount ──
+  // ── Load lobby on mount (and whenever player_name is missing) ──
+  // Guards on player_name so the initial career_state (round:0, no player) doesn't
+  // satisfy the check. Re-runs if a realtime event clears career_state.
   useEffect(() => {
     if (!code) { navigate('/'); return; }
-    if (lobby?.career_state) return;
+    if (careerState?.player_name) return;
 
     findLobbyByCode(code).then(result => {
       if (!result.lobby) { navigate('/'); return; }
@@ -142,7 +144,7 @@ export function MultiplayerFaceRevealPage() {
         if (pr.players) setPlayers(pr.players);
       });
     });
-  }, []);
+  }, [careerState?.player_name]);
 
   // ── Pre-load player pool (host needs it to start rounds) ──
   useEffect(() => {
@@ -344,6 +346,14 @@ export function MultiplayerFaceRevealPage() {
       await updateLobbyStatus(lobby.id, 'waiting');
     }
   }, [lobby]);
+
+  // ── HOST: auto-end round when every player has finished (correct or gave up) ──
+  useEffect(() => {
+    if (!isHost || lobby?.status !== 'playing') return;
+    if (players.length === 0) return;
+    if (!players.every(p => p.finished_at !== null)) return;
+    endRound();
+  }, [players, isHost, lobby?.status, endRound]);
 
   // ── Guess handler ──
   function handleGuess() {
