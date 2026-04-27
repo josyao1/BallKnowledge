@@ -162,7 +162,7 @@ export function GameFanArc({
                         {game.hasSolo && (
                           <button
                             onClick={() => {
-                              if (game.id === 'roster' || game.id === 'career' || game.id === 'scramble') {
+                              if (game.id === 'roster' || game.id === 'guess-player') {
                                 // These games have a setup panel — open it
                                 onCardSelect(game.id);
                                 setTappedCard(null);
@@ -178,13 +178,15 @@ export function GameFanArc({
                         )}
                         <button
                           onClick={() => {
-                            if (game.multiPath) {
+                            if (game.id === 'guess-player') {
+                              // Lobby selection happens inside the setup panel
+                              onCardSelect(game.id);
+                              setTappedCard(null);
+                            } else if (game.multiPath) {
                               navigate(game.multiPath);
                             } else {
                               const modeMap: Record<string, string> = {
                                 roster: 'roster',
-                                career: 'career',
-                                scramble: 'scramble',
                                 lineup: 'lineup-is-right',
                                 'starting-lineup': 'starting-lineup',
                               };

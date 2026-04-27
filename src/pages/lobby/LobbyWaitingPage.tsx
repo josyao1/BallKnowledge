@@ -24,7 +24,9 @@ import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../../data/nfl
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, getStoredPlayerName, startCareerRound } from '../../services/lobby';
 import { getNextGame, startPrefetch } from '../../services/careerPrefetch';
 import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../../services/capCrunch';
-import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../../services/careerData';
+import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer, loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
+import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
+import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../../services/boxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
@@ -176,6 +178,8 @@ export function LobbyWaitingPage() {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/box-score`); }
       } else if (lobby.game_type === 'starting-lineup') {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/starting-lineup`); }
+      } else if (lobby.game_type === 'face-reveal') {
+        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/face-reveal`); }
       } else {
         // Roster mode: trigger dealing animation; non-hosts jump straight to game load
         if (!hasStartedGame.current) {
@@ -190,6 +194,7 @@ export function LobbyWaitingPage() {
         'lineup-is-right': `/lobby/${code}/lineup-is-right/results`,
         'box-score': `/lobby/${code}/box-score/results`,
         'starting-lineup': `/lobby/${code}/starting-lineup/results`,
+        'face-reveal': `/lobby/${code}/face-reveal/results`,
       };
       navigate(routes[lobby.game_type] ?? `/lobby/${code}/results`);
     }
@@ -352,6 +357,88 @@ export function LobbyWaitingPage() {
     }
   };
 
+  const handleFaceRevealStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+    try {
+      const cs = (lobby.career_state as any) || {};
+      const sport = lobby.sport as 'nba' | 'nfl';
+      const careerTo: number = cs.career_to || 0;
+      const timerSecs: number = cs.timer || 60;
+      const winTarget: number = cs.win_target || 20;
+      const minYards: number    = cs.min_yards || 0;
+      const defenseMode: string = cs.defense_mode || 'known';
+
+      // NFL pool filter: ST always out; offense filtered by yards; defense by mode.
+      const NFL_OFF = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
+      const NFL_ST  = new Set(['K', 'P', 'LS']);
+      const nflInPool = (p: NFLCareerPlayer) => {
+        if (NFL_ST.has(p.position)) return false;
+        if (NFL_OFF.has(p.position)) {
+          if (minYards === 0) return true;
+          return p.seasons.some(
+            (s: any) => (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >= minYards
+          );
+        }
+        return defenseMode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));
+      };
+
+      // Load player pool and filter by era + yards.
+      let pool: { player_id: string | number; player_name: string }[] = [];
+      if (sport === 'nba') {
+        const all = await loadNBALineupPool();
+        let filtered = all.filter((p: NBACareerPlayer) => p.player_id != null);
+        if (careerTo) {
+          filtered = filtered.filter((p: NBACareerPlayer) => {
+            const years = p.seasons.map((s: any) => parseInt(s.season)).filter(Boolean);
+            return years.length ? Math.max(...years) >= careerTo : false;
+          });
+        }
+        pool = filtered.map((p: NBACareerPlayer) => ({ player_id: p.player_id, player_name: p.player_name }));
+      } else {
+        const all = await loadNFLLineupPool();
+        let filtered = all.filter((p: NFLCareerPlayer) => p.player_id != null);
+        if (careerTo) {
+          filtered = filtered.filter((p: NFLCareerPlayer) => {
+            const years = p.seasons.map((s: any) => parseInt(s.season)).filter(Boolean);
+            return years.length ? Math.max(...years) >= careerTo : false;
+          });
+        }
+        filtered = filtered.filter(nflInPool);
+        pool = filtered.map((p: NFLCareerPlayer) => ({ player_id: p.player_id, player_name: p.player_name, position: p.position }));
+      }
+
+      if (!pool.length) { setIsLoadingRoster(false); return; }
+
+      // Weighted pick: NFL offensive positions 3×, others 1×.
+      const totalWeight = pool.reduce((s: number, p: any) => s + (NFL_OFF.has(p.position) ? 3 : 1), 0);
+      let r = Math.random() * totalWeight;
+      let chosen = pool[pool.length - 1];
+      for (const p of pool) {
+        r -= NFL_OFF.has((p as any).position) ? 3 : 1;
+        if (r <= 0) { chosen = p; break; }
+      }
+      const newState = {
+        sport,
+        win_target: winTarget,
+        career_to: careerTo,
+        timer: timerSecs,
+        min_yards: minYards,
+        defense_mode: defenseMode,
+        round: 1,
+        player_name: chosen.player_name,
+        player_id: chosen.player_id,
+        zoom_level: 1,
+        zoom_deadline: new Date(Date.now() + timerSecs * 1000).toISOString(),
+      };
+
+      await startCareerRound(lobby.id, newState);
+      setLobby({ ...lobby, career_state: newState, status: 'playing' });
+      navigate(`/lobby/${code}/face-reveal`);
+    } catch { setIsLoadingRoster(false); }
+  };
+
   const handleReroll = useCallback(async () => {
     if (!isHost || !lobby) return;
     const currentSport = lobby.sport as Sport;
@@ -405,6 +492,11 @@ export function LobbyWaitingPage() {
       const newState = { ...(lobby.career_state as any) || {}, win_target: v.winTarget, sport: v.startingSport };
       await updateCareerState(newState);
       setLobby({ ...lobby, career_state: newState });
+    } else if (v.gameType === 'face-reveal') {
+      const newState = { ...(lobby.career_state as any) || {}, win_target: v.winTarget, career_to: v.careerTo, timer: v.faceRevealTimer, min_yards: v.faceRevealMinYards, defense_mode: v.faceRevealDefenseMode };
+      await updateCareerState(newState);
+      await updateSettings({ sport: v.sport });
+      setLobby({ ...lobby, career_state: newState, sport: v.sport });
     } else {
       // Roster mode
       const finalSport: Sport = v.randomSport ? (Math.random() < 0.5 ? 'nba' : 'nfl') : v.sport;
@@ -615,6 +707,7 @@ export function LobbyWaitingPage() {
           onLineupStart={handleLineupIsRightStart}
           onBoxScoreStart={handleBoxScoreStart}
           onStartingLineupStart={handleStartingLineupStart}
+          onFaceRevealStart={handleFaceRevealStart}
         />
       </main>
     </div>
