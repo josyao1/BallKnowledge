@@ -63,6 +63,8 @@ export interface HostFormValues {
   hardMode: boolean;
   /** Cap Crunch: scores hidden during game; host reveals picks after all rounds */
   blindMode: boolean;
+  /** Cap Crunch: seconds allowed per turn (hard mode) or for last player (normal); null = no timer */
+  pickTimer: number | null;
   /** Cap Crunch hard mode: player_id of who picks first; null = random */
   firstPickerId: string | null;
   /** Box Score: inclusive lower bound for eligible game dates */
@@ -101,6 +103,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editCustomCap,      setEditCustomCap]      = useState<number | null>(null);
   const [editHardMode,       setEditHardMode]       = useState(false);
   const [editBlindMode,      setEditBlindMode]      = useState(false);
+  const [editPickTimer,      setEditPickTimer]      = useState<number | null>(null);
   const [editFirstPickerId,  setEditFirstPickerId]  = useState<string | null>(null);
   const [editBoxMinYear,     setEditBoxMinYear]     = useState(2015);
   const [editBoxMaxYear,     setEditBoxMaxYear]     = useState(2024);
@@ -129,6 +132,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditCustomCap((cs.forcedTargetCap as number | null) || null);
     setEditHardMode((cs.hardMode as boolean) || false);
     setEditBlindMode((cs.blindMode as boolean) || false);
+    setEditPickTimer((cs.pickTimer as number | null) ?? null);
     setEditFirstPickerId((cs.firstPickerId as string) || null);
     setEditTotalRounds((cs.totalRounds as number) || 5);
     setEditBoxMinYear(cs.min_year || 2015);
@@ -173,7 +177,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       careerFrom: editCareerFrom, careerTo: editCareerTo,
       lineupStat: editLineupStat, totalRounds: editTotalRounds,
       customCap: editCustomCap, hardMode: editHardMode, blindMode: editBlindMode,
-      firstPickerId: editFirstPickerId, boxMinYear: editBoxMinYear,
+      pickTimer: editPickTimer, firstPickerId: editFirstPickerId, boxMinYear: editBoxMinYear,
       boxMaxYear: editBoxMaxYear, boxTeam: editBoxTeam,
       startingSport: editStartingSport,
     });
@@ -242,6 +246,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
               customCap={editCustomCap} onCustomCapChange={setEditCustomCap}
               hardMode={editHardMode} onHardModeChange={setEditHardMode}
               blindMode={editBlindMode} onBlindModeChange={setEditBlindMode}
+              pickTimer={editPickTimer} onPickTimerChange={setEditPickTimer}
               firstPickerId={editFirstPickerId} onFirstPickerIdChange={setEditFirstPickerId}
               totalRounds={editTotalRounds} onTotalRoundsChange={setEditTotalRounds}
               players={players}

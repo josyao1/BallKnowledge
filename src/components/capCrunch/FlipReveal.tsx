@@ -2,7 +2,8 @@
  * FlipReveal.tsx — Family Feud-style letter-by-letter reveal animation.
  *
  * Each character flips up from below in sequence, like a split-flap board.
- * Re-triggers whenever `text` changes.
+ * Animation fires on mount. The parent is responsible for stable React keys
+ * on the pick row so this component only mounts when a pick is genuinely new.
  */
 
 import { motion } from 'framer-motion';

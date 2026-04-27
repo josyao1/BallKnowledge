@@ -92,51 +92,63 @@ export function CapCrunchScoresPanel({
                   const isBad = isMe && !blindMode && (selected.isBust || selected.neverOnTeam || selected.statValue === 0);
                   return (
                   <motion.div
-                    key={idx}
+                    key={`${selected.playerName}-${selected.team}-${selected.selectedYear}`}
                     animate={isMe && !blindMode && selected.isBust ? { x: [0, -5, 5, -3, 3, 0] } : {}}
                     transition={{ duration: 0.35 }}
                     className={`flex justify-between items-center gap-1 ${isBad ? 'text-red-300' : 'text-white/70'}`}
                   >
-                    <div className="flex items-start gap-1 min-w-0 flex-1">
-                      <div className="relative shrink-0 mt-0.5">
-                        <PlayerHeadshot playerId={selected.playerId} sport={sport} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
-                        {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-1">
-                          <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
-                          {isMe && !blindMode && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
-                          <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                    {selected.isSkipped ? (
+                      // Skipped pick — timer expired with no selection
+                      <div className="flex items-center gap-1.5 flex-1">
+                        <div className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                          <span className="text-[8px] text-white/25">✕</span>
                         </div>
-                        {isMe && !blindMode && selected.neverOnTeam && (
-                          <div className="text-[9px] text-orange-400/80 mt-0.5">
-                            {selected.actualCollege && selected.actualNflConf
-                              ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
-                              : selected.actualCollege
-                              ? `went to ${selected.actualCollege}`
-                              : selected.actualNflConf
-                              ? `in ${selected.actualNflConf}`
-                              : selected.actualTeam
-                              ? `played for ${selected.actualTeam}`
-                              : "didn't qualify"}
-                          </div>
-                        )}
+                        <span className="sports-font text-[10px] text-white/25 italic">Skipped</span>
                       </div>
-                    </div>
-                    {isMe && !blindMode && (
-                      <span className={`font-semibold ml-1 flex-shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
-                        {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
-                      </span>
-                    )}
-                    {isMe && blindMode && (
-                      <input
-                        type="number"
-                        min={0}
-                        value={myGuesses[idx] ?? ''}
-                        placeholder="?"
-                        onChange={e => setMyGuesses(prev => ({ ...prev, [idx]: e.target.value }))}
-                        className="w-12 text-center bg-[#7c3aed]/10 border border-[#7c3aed]/30 rounded-sm text-[#a78bfa] retro-title text-xs py-0.5 focus:outline-none focus:border-[#7c3aed] placeholder-[#7c3aed]/30 ml-1 flex-shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-1 min-w-0 flex-1">
+                          <div className="relative shrink-0 mt-0.5">
+                            <PlayerHeadshot playerId={selected.playerId} sport={sport} className={`w-5 h-5 rounded-full object-cover bg-white/5${isBad ? ' grayscale' : ''}`} />
+                            {isBad && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline gap-1">
+                              <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
+                              {isMe && !blindMode && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                              <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                            </div>
+                            {isMe && !blindMode && selected.neverOnTeam && (
+                              <div className="text-[9px] text-orange-400/80 mt-0.5">
+                                {selected.actualCollege && selected.actualNflConf
+                                  ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
+                                  : selected.actualCollege
+                                  ? `went to ${selected.actualCollege}`
+                                  : selected.actualNflConf
+                                  ? `in ${selected.actualNflConf}`
+                                  : selected.actualTeam
+                                  ? `played for ${selected.actualTeam}`
+                                  : "didn't qualify"}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {isMe && !blindMode && (
+                          <span className={`font-semibold ml-1 flex-shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                            {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
+                          </span>
+                        )}
+                        {isMe && blindMode && (
+                          <input
+                            type="number"
+                            min={0}
+                            value={myGuesses[idx] ?? ''}
+                            placeholder="?"
+                            onChange={e => setMyGuesses(prev => ({ ...prev, [idx]: e.target.value }))}
+                            className="w-12 text-center bg-[#7c3aed]/10 border border-[#7c3aed]/30 rounded-sm text-[#a78bfa] retro-title text-xs py-0.5 focus:outline-none focus:border-[#7c3aed] placeholder-[#7c3aed]/30 ml-1 flex-shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        )}
+                      </>
                     )}
                   </motion.div>
                   );

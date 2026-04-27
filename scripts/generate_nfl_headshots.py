@@ -4,6 +4,12 @@ generate_nfl_headshots.py
 Fetches the nflverse players dataset and produces a compact GSIS ID → headshot URL
 mapping for only the players that exist in our nfl_lineups_pool.json and nfl_careers.json.
 
+URL preference order (most reliable for retired players first):
+  1. ESPN CDN  https://a.espncdn.com/i/headshots/nfl/players/full/{espn_id}.png
+     — deterministic, stable for historical players, never purged
+  2. nflverse  headshot column (static.www.nfl.com Cloudinary URL)
+     — can go dead for retired/obscure players
+
 Output: public/data/nfl_headshots.json  { "00-0036410": "https://...", ... }
 
 Run once and commit the output:
@@ -47,7 +53,11 @@ def collect_gsis_ids() -> set[str]:
 
 
 def fetch_headshot_map(our_ids: set[str]) -> dict[str, str]:
-    """Download nflverse players.csv and return {gsis_id: headshot_url} for our players."""
+    """Download nflverse players.csv and return {gsis_id: headshot_url} for our players.
+
+    Prefers ESPN CDN URL when espn_id is available — more stable for retired players.
+    Falls back to the nflverse Cloudinary URL when no espn_id exists.
+    """
     print(f"\nFetching nflverse players.csv from GitHub...")
     resp = requests.get(NFLVERSE_PLAYERS_URL, timeout=60)
     resp.raise_for_status()
@@ -56,16 +66,31 @@ def fetch_headshot_map(our_ids: set[str]) -> dict[str, str]:
     reader = csv.DictReader(io.StringIO(resp.text))
     mapping: dict[str, str] = {}
     total_rows = 0
+    espn_count = 0
+    nflverse_count = 0
 
     for row in reader:
         total_rows += 1
         gsis_id = row.get("gsis_id", "").strip()
-        headshot_url = row.get("headshot", "").strip()
-        if gsis_id and headshot_url and gsis_id in our_ids:
-            mapping[gsis_id] = headshot_url
+        if not gsis_id or gsis_id not in our_ids:
+            continue
+
+        espn_id = row.get("espn_id", "").strip()
+        nflverse_url = row.get("headshot", "").strip()
+
+        if espn_id:
+            # ESPN CDN is stable for both active and retired players
+            mapping[gsis_id] = f"https://a.espncdn.com/i/headshots/nfl/players/full/{espn_id}.png"
+            espn_count += 1
+        elif nflverse_url:
+            # Fallback: nflverse Cloudinary URL (may go dead for retired players)
+            mapping[gsis_id] = nflverse_url
+            nflverse_count += 1
 
     print(f"  nflverse total rows: {total_rows}")
     print(f"  Matched {len(mapping)} of our {len(our_ids)} players")
+    print(f"    ESPN CDN URLs: {espn_count}")
+    print(f"    nflverse fallback URLs: {nflverse_count}")
     missed = len(our_ids) - len(mapping)
     if missed:
         print(f"  {missed} players have no headshot in nflverse (old/obscure players)")

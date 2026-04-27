@@ -11,6 +11,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { fmt } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
+import { HomeButton } from '../multiplayer/HomeButton';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 
 const PLAYER_COLORS = ['#818cf8', '#34d399', '#fb923c', '#f472b6', '#60a5fa', '#a78bfa', '#4ade80', '#f87171'];
@@ -67,9 +68,12 @@ export function BlindModeReveal({
       {/* Header */}
       <header className="relative z-10 p-4 md:p-6 border-b border-white/10 bg-black/40 backdrop-blur-sm flex-shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div>
-            <div className="sports-font text-[9px] text-[#7c3aed]/70 tracking-[0.3em] uppercase mb-0.5">Blind Mode</div>
-            <h1 className="retro-title text-xl md:text-2xl text-[#7c3aed]">Reveal</h1>
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="sports-font text-[9px] text-[#7c3aed]/70 tracking-[0.3em] uppercase mb-0.5">Blind Mode</div>
+              <h1 className="retro-title text-xl md:text-2xl text-[#7c3aed]">Reveal</h1>
+            </div>
+            <HomeButton />
           </div>
           <div className="text-center">
             <div className="sports-font text-[9px] text-white/30 tracking-widest uppercase">Target</div>

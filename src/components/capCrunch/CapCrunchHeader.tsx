@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumber';
 import { TeamSlotMachine } from './TeamSlotMachine';
 import { ConferenceRoundCard } from './ConferenceRoundCard';
+import { HomeButton } from '../multiplayer/HomeButton';
 import { isDivisionRound, isConferenceRound, parseConferenceRound, NFL_DIVISIONS } from '../../services/capCrunch';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
@@ -39,12 +40,17 @@ interface Props {
   isCareerStatRound: boolean;
   /** When true, hides the player's running total and remaining cap (blind mode) */
   blindMode?: boolean;
+  /** Whether the local player is the lobby host (shows End Game option in HomeButton) */
+  isHost?: boolean;
+  /** Called when host chooses to end the game for all players */
+  onEndGame?: () => void;
 }
 
 export function CapCrunchHeader({
   hardMode, currentPickerId, currentPlayerId, players,
   currentRound, totalRounds, currentTeam, selectedSport,
   targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound, blindMode = false,
+  isHost = false, onEndGame,
 }: Props) {
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
   return (
@@ -54,7 +60,10 @@ export function CapCrunchHeader({
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
       <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
-        <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
+          <HomeButton isHost={isHost} onEndGame={onEndGame} />
+        </div>
         <div className="flex items-center gap-2">
           {hardMode && (
             <div className={`px-3 py-1 rounded-sm border ${
@@ -76,6 +85,7 @@ export function CapCrunchHeader({
           </div>
         </div>
       </div>
+
 
       {/* Team + compact stats row */}
       <div className="flex items-center gap-3 px-4 py-2">

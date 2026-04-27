@@ -12,10 +12,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
+import { HomeButton } from '../../components/multiplayer/HomeButton';
 import {
   findLobbyByCode,
   getLobbyPlayers,
   updateLobbyStatus,
+  updateCareerState,
   updatePlayerScore,
   incrementPlayerWins,
   addCareerPoints,
@@ -144,6 +146,17 @@ export function MultiplayerCareerPage() {
       navigate(`/lobby/${code}/career/results`, { state: { roundHistory: roundHistoryRef.current } });
     }
   }, [lobby?.status]);
+
+  // ── Abandoned by host — return everyone to home ──
+  useEffect(() => {
+    if ((lobby?.career_state as { abandoned?: boolean } | null)?.abandoned) navigate('/');
+  }, [(lobby?.career_state as { abandoned?: boolean } | null)?.abandoned]);
+
+  async function handleEndGame() {
+    if (!lobby) return;
+    await updateCareerState(lobby.id, { abandoned: true });
+    await updateLobbyStatus(lobby.id, 'waiting');
+  }
 
   // ── Detect new round — reset all local state ──
   const currentRound = careerState?.round ?? 0;
@@ -548,6 +561,7 @@ export function MultiplayerCareerPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <HomeButton isHost={isHost} onEndGame={handleEndGame} />
           <div className="bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-2 text-center">
             <div className="sports-font text-[8px] text-[#888] tracking-widest">SCORE</div>
             <div className="retro-title text-2xl" style={{ color: localScore > 10 ? '#22c55e' : localScore > 5 ? '#eab308' : '#ef4444' }}>
