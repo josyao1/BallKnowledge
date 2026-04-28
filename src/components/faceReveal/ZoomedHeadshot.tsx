@@ -43,6 +43,8 @@ interface Props {
    */
   originX?: number;
   originY?: number;
+  /** Square size in px. Defaults to 320. Use smaller values for thumbnails. */
+  size?: number;
   /** Optional extra class on the outer container (e.g. for rounded corners). */
   className?: string;
 }
@@ -58,7 +60,7 @@ function Silhouette() {
   );
 }
 
-export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, originY = 28, className = '' }: Props) {
+export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, originY = 28, size = 320, className = '' }: Props) {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [error, setError]   = useState(false);
 
@@ -80,7 +82,7 @@ export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, origi
   return (
     <div
       className={`relative overflow-hidden bg-[#0e0e0e] ${className}`}
-      style={{ width: 320, height: 320 }}
+      style={{ width: size, height: size }}
     >
       {(!imgUrl || error) ? (
         <Silhouette />

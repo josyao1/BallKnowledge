@@ -42,7 +42,8 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
   const showTimer = lobby.game_type !== 'career'
     && lobby.game_type !== 'scramble'
     && lobby.game_type !== 'lineup-is-right'
-    && lobby.game_type !== 'starting-lineup';
+    && lobby.game_type !== 'starting-lineup'
+    && lobby.game_type !== 'face-reveal';
   const hasWins = players.some(p => (p.wins ?? 0) > 0);
 
   return (

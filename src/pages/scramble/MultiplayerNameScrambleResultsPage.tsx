@@ -198,6 +198,11 @@ export function MultiplayerNameScrambleResultsPage() {
                   const bT = round.finishedAt[b.player_id] ? new Date(round.finishedAt[b.player_id]!).getTime() : Infinity;
                   return aT - bT;
                 });
+                const finisherMs = players
+                  .map(p => round.finishedAt[p.player_id])
+                  .filter((t): t is string => !!t)
+                  .map(t => new Date(t).getTime());
+                const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
                   <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
@@ -220,6 +225,10 @@ export function MultiplayerNameScrambleResultsPage() {
                         const isMe = player.player_id === currentPlayerId;
                         const gotIt = pts > 0;
                         const badge = gotIt ? (POSITION_BADGES[rank] ?? `${rank + 1}th`) : '—';
+                        const finMs = round.finishedAt[player.player_id]
+                          ? new Date(round.finishedAt[player.player_id]!).getTime()
+                          : null;
+                        const offsetMs = finMs !== null && firstMs !== null ? finMs - firstMs : null;
                         return (
                           <div
                             key={player.player_id}
@@ -231,6 +240,11 @@ export function MultiplayerNameScrambleResultsPage() {
                                 {player.player_name}
                                 {isMe && <span className="text-white/30 ml-1">(you)</span>}
                               </span>
+                              {offsetMs !== null && offsetMs > 0 && (
+                                <span className="sports-font text-[9px] text-[#d4af37]">
+                                  +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                                </span>
+                              )}
                             </div>
                             <span className={`retro-title text-base ${gotIt ? 'text-[#d4af37]' : 'text-[#444]'}`}>
                               {gotIt ? `+${pts}` : '—'}

@@ -41,7 +41,7 @@ import {
 import { loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
-import { areSimilarNames } from '../../utils/fuzzyDedup';
+import { areSimilarNames, normalize } from '../../utils/fuzzyDedup';
 import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -100,6 +100,7 @@ interface RoundSummary {
   playerId: string | number;
   round: number;
   pts: Record<string, number>;
+  finishedAt: Record<string, string | null>;
 }
 
 function nbaEndYear(p: NBACareerPlayer): number {
@@ -110,6 +111,28 @@ function nbaEndYear(p: NBACareerPlayer): number {
 function nflEndYear(p: NFLCareerPlayer): number {
   const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
   return years.length ? Math.max(...years) : 0;
+}
+
+// ── Autocomplete suggestions ──────────────────────────────────────────────────
+
+function getSuggestions(input: string, pool: PlayerEntry[], limit = 5): PlayerEntry[] {
+  if (input.length < 3) return [];
+  const norm = normalize(input);
+  const normWords = norm.split(' ').filter(Boolean);
+
+  const scored: { entry: PlayerEntry; score: number }[] = [];
+  for (const p of pool) {
+    const pNorm = normalize(p.player_name);
+    const pWords = pNorm.split(' ');
+    if (pNorm.startsWith(norm)) {
+      scored.push({ entry: p, score: 100 });
+    } else if (normWords.every(iw => pWords.some(pw => pw.startsWith(iw)))) {
+      scored.push({ entry: p, score: 80 });
+    } else if (normWords[0]?.length >= 3 && pWords[0]?.startsWith(normWords[0])) {
+      scored.push({ entry: p, score: 60 });
+    }
+  }
+  return scored.sort((a, b) => b.score - a.score).slice(0, limit).map(s => s.entry);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -125,6 +148,7 @@ export function MultiplayerFaceRevealPage() {
 
   // ── Local state ──
   const [guessInput, setGuessInput]     = useState('');
+  const [suggestions, setSuggestions]   = useState<PlayerEntry[]>([]);
   const [feedbackMsg, setFeedbackMsg]   = useState('');
   const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
   const [localDone, setLocalDone]       = useState(false);
@@ -151,6 +175,10 @@ export function MultiplayerFaceRevealPage() {
   // because Supabase realtime delivers the lobbies and lobby_players updates
   // as separate events (lobbies arrives first).
   const roundReadyRef      = useRef(false);
+  // Stable reference to lobby so endRound doesn't need to be recreated on
+  // every career_state change (zoom level, skip votes). Without this, the
+  // "all done" effect would re-run on every lobby update.
+  const lobbyRef           = useRef(lobby);
 
   // Player pool for host (to pick next player).
   const playerPoolRef = useRef<PlayerEntry[]>([]);
@@ -208,6 +236,9 @@ export function MultiplayerFaceRevealPage() {
     }
     loadPool();
   }, [careerState?.sport, careerState?.career_to, (careerState as any)?.min_yards, (careerState as any)?.min_mpg, (careerState as any)?.defense_mode]);
+
+  // Keep lobbyRef in sync so endRound always sees the latest lobby object.
+  useEffect(() => { lobbyRef.current = lobby; }, [lobby]);
 
   // ── Countdown timer: tracks seconds until zoom_deadline ──
   useEffect(() => {
@@ -294,6 +325,13 @@ export function MultiplayerFaceRevealPage() {
       isZoomAdvancingRef.current = false;
       isStartingNextRef.current = false;
       setTimeout(() => inputRef.current?.focus(), 100);
+
+      // Fallback: if the lobby_players reset realtime event is delayed or
+      // dropped, force roundReady after 3 s so endRound can still fire.
+      const timeout = setTimeout(() => {
+        if (!roundReadyRef.current) roundReadyRef.current = true;
+      }, 3000);
+      return () => clearTimeout(timeout);
     }
   }, [currentRound]);
 
@@ -330,11 +368,15 @@ export function MultiplayerFaceRevealPage() {
         else ptsMap[p.player_id] = 0;
       });
 
+      const finishedAtMap: Record<string, string | null> = {};
+      players.forEach(p => { finishedAtMap[p.player_id] = p.finished_at ?? null; });
+
       const newSummary: RoundSummary = {
         playerName: careerState.player_name,
         playerId: careerState.player_id,
         round: careerState.round,
         pts: ptsMap,
+        finishedAt: finishedAtMap,
       };
       setRoundSummary(newSummary);
       roundHistoryRef.current = [...roundHistoryRef.current, newSummary];
@@ -354,41 +396,51 @@ export function MultiplayerFaceRevealPage() {
   });
 
   // ── End round (host only) ──
-  // Reads fresh lobby_players to avoid stale closure issues: score > 0 means
-  // correct, and finished_at order determines who was first (3pts vs 1pt).
+  // Uses lobbyRef.current instead of lobby so this callback is stable — it
+  // won't be recreated on every career_state change (zoom level, skip votes),
+  // which would otherwise cause the "all done" watcher to re-run constantly.
+  // Error recovery: if any DB write fails, hasAdvancedRef is reset so the
+  // next polling tick or player event can retry rather than being stuck forever.
   const endRound = useCallback(async () => {
-    if (!lobby || hasAdvancedRef.current) return;
+    const currentLobby = lobbyRef.current;
+    if (!currentLobby || hasAdvancedRef.current) return;
     hasAdvancedRef.current = true; // set before any await — prevents double-fire
     console.log('[FaceReveal] endRound fired at', Date.now());
 
-    const winTarget = (lobby.career_state as FaceRevealState | null)?.win_target || 20;
+    try {
+      const winTarget = (currentLobby.career_state as FaceRevealState | null)?.win_target || 20;
 
-    // Fetch fresh player data to get authoritative score/finished_at values.
-    const freshResult = await getLobbyPlayers(lobby.id);
-    const freshPlayers = freshResult.players || [];
+      // Fetch fresh player data to get authoritative score/finished_at values.
+      const freshResult = await getLobbyPlayers(currentLobby.id);
+      const freshPlayers = freshResult.players || [];
 
-    // Correct players sorted by finish time; earliest = first correct (+3pts).
-    const correctPlayers = freshPlayers
-      .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
-      .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
+      // Correct players sorted by finish time; earliest = first correct (+3pts).
+      const correctPlayers = freshPlayers
+        .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
+        .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
 
-    await Promise.all([
-      correctPlayers[0] ? addCareerPoints(lobby.id, correctPlayers[0].player_id, 3) : Promise.resolve(),
-      ...correctPlayers.slice(1).map(p => addCareerPoints(lobby.id, p.player_id, 1)),
-    ]);
+      await Promise.all([
+        correctPlayers[0] ? addCareerPoints(currentLobby.id, correctPlayers[0].player_id, 3) : Promise.resolve(),
+        ...correctPlayers.slice(1).map(p => addCareerPoints(currentLobby.id, p.player_id, 1)),
+      ]);
 
-    // Check win condition with updated points.
-    const afterPtsResult = await getLobbyPlayers(lobby.id);
-    const afterPts = afterPtsResult.players || [];
-    const gameWinner = afterPts.find(p => (p.points ?? 0) >= winTarget);
+      // Check win condition with updated points.
+      const afterPtsResult = await getLobbyPlayers(currentLobby.id);
+      const afterPts = afterPtsResult.players || [];
+      const gameWinner = afterPts.find(p => (p.points ?? 0) >= winTarget);
 
-    if (gameWinner) {
-      await incrementPlayerWins(lobby.id, gameWinner.player_id);
-      await updateLobbyStatus(lobby.id, 'finished');
-    } else {
-      await updateLobbyStatus(lobby.id, 'waiting');
+      if (gameWinner) {
+        await incrementPlayerWins(currentLobby.id, gameWinner.player_id);
+        await updateLobbyStatus(currentLobby.id, 'finished');
+      } else {
+        await updateLobbyStatus(currentLobby.id, 'waiting');
+      }
+    } catch (err) {
+      // Reset so the next poll/trigger can retry rather than being permanently stuck.
+      console.error('[FaceReveal] endRound error:', err);
+      hasAdvancedRef.current = false;
     }
-  }, [lobby]);
+  }, []);
 
   // ── HOST: auto-end round when every player has finished (correct or gave up) ──
   // roundReadyRef gates this so stale previous-round players (all finished_at
@@ -401,13 +453,50 @@ export function MultiplayerFaceRevealPage() {
     endRound();
   }, [players, isHost, lobby?.status, endRound]);
 
+  // ── HOST: polling fallback — catch missed realtime events ──
+  // If the lobby_players realtime event was dropped, the host's all-done
+  // watcher never fires. Poll every 5 s when playing to catch this.
+  useEffect(() => {
+    if (!isHost || lobby?.status !== 'playing' || !lobby?.id) return;
+    const lobbyId = lobby.id;
+    const interval = setInterval(async () => {
+      if (hasAdvancedRef.current || !roundReadyRef.current) return;
+      const { players: fresh } = await getLobbyPlayers(lobbyId);
+      if (fresh && fresh.length > 0 && fresh.every(p => p.finished_at !== null)) {
+        endRound();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isHost, lobby?.status, lobby?.id, endRound]);
+
+  // ── NON-HOST: polling fallback — catch missed status='playing' events ──
+  // Non-hosts detect new rounds solely via realtime. If that event is dropped,
+  // they stay stuck on the between-round interstitial. Poll every 3 s when in
+  // 'waiting' state so a missed event is caught within seconds, not never.
+  useEffect(() => {
+    if (isHost || !code || lobby?.status !== 'waiting') return;
+    const interval = setInterval(async () => {
+      const result = await findLobbyByCode(code);
+      if (result.lobby?.status === 'playing') {
+        setLobby(result.lobby);
+        const { players: fresh } = await getLobbyPlayers(result.lobby.id);
+        if (fresh) setPlayers(fresh);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isHost, code, lobby?.status]);
+
   // ── Guess handler ──
-  function handleGuess() {
+  // Awaited (not fire-and-forget) so the host sees finished_at promptly.
+  // Retries up to 3× on failure — a silent write failure here means the host
+  // never sees this player as done, and endRound never fires.
+  async function handleGuess(nameOverride?: string) {
     if (!careerState || localDone || !lobby || hasSubmittedRef.current) return;
-    const name = guessInput.trim();
+    const name = (nameOverride ?? guessInput).trim();
     if (!name) return;
 
     setGuessInput('');
+    setSuggestions([]);
 
     if (areSimilarNames(name, careerState.player_name)) {
       hasSubmittedRef.current = true;
@@ -418,7 +507,15 @@ export function MultiplayerFaceRevealPage() {
       // Write score=1 + finished_at to lobby_players. The host's endRound reads
       // these to award pts (first finished_at = 3pts, others = 1pt).
       // Avoids the read-modify-write race that would occur writing to career_state.
-      updatePlayerScore(lobby.id, 1, 0, [], [], true);
+      const lobbyId = lobby.id;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await updatePlayerScore(lobbyId, 1, 0, [], [], true);
+          break;
+        } catch {
+          if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+        }
+      }
     } else {
       setFeedbackMsg(`"${name}" — try again`);
       setFeedbackType('wrong');
@@ -426,11 +523,19 @@ export function MultiplayerFaceRevealPage() {
     }
   }
 
-  function handleGiveUp() {
+  async function handleGiveUp() {
     if (localDone || hasSubmittedRef.current || !lobby) return;
     hasSubmittedRef.current = true;
     setLocalDone(true);
-    updatePlayerScore(lobby.id, 0, 0, [], [], true);
+    const lobbyId = lobby.id;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await updatePlayerScore(lobbyId, 0, 0, [], [], true);
+        break;
+      } catch {
+        if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+      }
+    }
   }
 
   // Vote to skip to the next zoom level. Each player writes their own ID.
@@ -545,6 +650,11 @@ export function MultiplayerFaceRevealPage() {
   // ── BETWEEN-ROUND INTERSTITIAL ──
   if (lobby.status === 'waiting') {
     const summary = roundSummary;
+    const interFinisherMs = players
+      .map(p => summary?.finishedAt?.[p.player_id])
+      .filter((t): t is string => !!t)
+      .map(t => new Date(t).getTime());
+    const interFirstMs = interFinisherMs.length > 0 ? Math.min(...interFinisherMs) : null;
     return (
       <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
@@ -571,9 +681,7 @@ export function MultiplayerFaceRevealPage() {
             <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">The Answer Was</div>
             <div className="retro-title text-3xl text-[#d4af37]">{summary.playerName}</div>
             <div className="flex justify-center">
-              <div className="rounded-xl overflow-hidden" style={{ width: 200, height: 200 }}>
-                <ZoomedHeadshot playerId={summary.playerId} sport={careerState.sport} zoomLevel={0} />
-              </div>
+              <ZoomedHeadshot playerId={summary.playerId} sport={careerState.sport} zoomLevel={0} size={200} className="rounded-xl" />
             </div>
           </motion.div>
         )}
@@ -593,6 +701,10 @@ export function MultiplayerFaceRevealPage() {
               const pts = summary?.pts[player.player_id] ?? 0;
               const isMe = player.player_id === currentPlayerId;
               const badge = pts === 3 ? '🥇' : pts === 1 ? '✓' : '—';
+              const finMs = summary?.finishedAt?.[player.player_id]
+                ? new Date(summary.finishedAt[player.player_id]!).getTime()
+                : null;
+              const offsetMs = finMs !== null && interFirstMs !== null ? finMs - interFirstMs : null;
 
               return (
                 <div
@@ -606,6 +718,11 @@ export function MultiplayerFaceRevealPage() {
                     <div>
                       <span className="sports-font text-sm text-white/80">{player.player_name}</span>
                       {isMe && <span className="text-[10px] text-white/40 sports-font ml-1">(you)</span>}
+                      {offsetMs !== null && offsetMs > 0 && (
+                        <span className="sports-font text-[9px] text-[#d4af37] ml-1.5">
+                          +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -896,20 +1013,48 @@ export function MultiplayerFaceRevealPage() {
       {!localDone && (
         <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 bg-[#111] space-y-2">
           <div className="flex gap-2">
+            <div className="relative flex-1">
             <input
               ref={inputRef}
               type="text"
               value={guessInput}
-              onChange={e => setGuessInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleGuess()}
+              onChange={e => {
+                const val = e.target.value;
+                setGuessInput(val);
+                setSuggestions(getSuggestions(val, playerPoolRef.current));
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleGuess();
+                if (e.key === 'Escape') setSuggestions([]);
+              }}
               placeholder="Type the player's name..."
-              className="flex-1 bg-[#1a1a1a] border-2 rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none"
+              className="w-full bg-[#1a1a1a] border-2 rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none"
               style={{ borderColor: `${COLOR}60` }}
               onFocus={e => (e.currentTarget.style.borderColor = COLOR)}
-              onBlur={e => (e.currentTarget.style.borderColor = `${COLOR}60`)}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = `${COLOR}60`;
+                setTimeout(() => setSuggestions([]), 150);
+              }}
             />
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 bottom-full mb-1 z-20 bg-[#1a1a1a] border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
+                {suggestions.map(s => (
+                  <button
+                    key={s.player_id}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      handleGuess(s.player_name);
+                    }}
+                    className="w-full text-left px-4 py-2.5 sports-font text-sm text-[var(--vintage-cream)] hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
+                  >
+                    {s.player_name}
+                  </button>
+                ))}
+              </div>
+            )}
+            </div>
             <button
-              onClick={handleGuess}
+              onClick={() => handleGuess()}
               disabled={!guessInput.trim()}
               className="px-6 py-3 rounded-lg sports-font text-sm text-[#111] disabled:opacity-50 transition-all"
               style={{ backgroundColor: COLOR }}

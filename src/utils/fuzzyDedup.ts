@@ -61,8 +61,35 @@ function levenshtein(a: string, b: string): number {
 
 // --- Similarity detection ---
 
+// Strip generational suffixes so "Derrick Lively II" ≈ "Derrick Lively"
+function stripSuffix(s: string): string {
+  return s.replace(/\s+(jr|sr|ii|iii|iv|v)$/, '').trim();
+}
+
 function areSimilar(normA: string, normB: string): boolean {
   if (normA === normB) return true;
+
+  // Suffix-stripped exact match: "derrick lively ii" ≈ "derrick lively"
+  const strippedA = stripSuffix(normA);
+  const strippedB = stripSuffix(normB);
+  if (strippedA === strippedB) return true;
+
+  // First-name prefix match: "herb jones" ≈ "herbert jones"
+  // Requires last names to match exactly and one first name to be a prefix
+  // of the other (min 3 chars so "TJ" / initials don't over-match).
+  const tokA = strippedA.split(' ');
+  const tokB = strippedB.split(' ');
+  if (tokA.length >= 2 && tokB.length >= 2) {
+    const lastA = tokA[tokA.length - 1];
+    const lastB = tokB[tokB.length - 1];
+    if (lastA === lastB) {
+      const firstA = tokA[0];
+      const firstB = tokB[0];
+      const shorterFirst = firstA.length <= firstB.length ? firstA : firstB;
+      const longerFirst  = firstA.length <= firstB.length ? firstB : firstA;
+      if (shorterFirst.length >= 3 && longerFirst.startsWith(shorterFirst)) return true;
+    }
+  }
 
   // Substring check: only if the shorter name covers ≥80% of the longer one.
   // Handles "Jr" suffix variants (e.g. "Michael Pittman" ≈ "Michael Pittman Jr")

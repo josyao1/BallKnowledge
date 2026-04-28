@@ -204,10 +204,12 @@ export function MultiplayerCareerResultsPage() {
                     )
                   : topScorers;
                 const roundWinnerId = sortedTopScorers[0]?.player_id;
-                const timeDiffMs = isTiebreaker && sortedTopScorers.length >= 2
-                  ? new Date(round.finishedAt[sortedTopScorers[1].player_id]!).getTime() -
-                    new Date(round.finishedAt[sortedTopScorers[0].player_id]!).getTime()
-                  : 0;
+                // First guesser among all correct players (for time offset display)
+                const finisherMs = players
+                  .map(p => round.finishedAt[p.player_id])
+                  .filter((t): t is string => !!t)
+                  .map(t => new Date(t).getTime());
+                const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
                   <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
@@ -225,6 +227,10 @@ export function MultiplayerCareerResultsPage() {
                           const isMe = player.player_id === currentPlayerId;
                           const isWinner = player.player_id === roundWinnerId && topScore > 0;
                           const gotIt = score > 0;
+                          const finMs = round.finishedAt[player.player_id]
+                            ? new Date(round.finishedAt[player.player_id]!).getTime()
+                            : null;
+                          const offsetMs = finMs !== null && firstMs !== null ? finMs - firstMs : null;
                           return (
                             <div
                               key={player.player_id}
@@ -240,6 +246,11 @@ export function MultiplayerCareerResultsPage() {
                                     {isTiebreaker ? '⚡' : '★'}
                                   </span>
                                 )}
+                                {offsetMs !== null && offsetMs > 0 && (
+                                  <span className="sports-font text-[9px] text-[#d4af37]">
+                                    +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                                  </span>
+                                )}
                               </div>
                               <span className={`retro-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
                                 {gotIt ? score : '—'}
@@ -248,15 +259,6 @@ export function MultiplayerCareerResultsPage() {
                           );
                         })}
                     </div>
-                    {/* Tiebreaker note */}
-                    {isTiebreaker && timeDiffMs > 0 && (
-                      <div className="px-3 py-1.5 bg-[#0a0a0a] text-center sports-font text-[9px] text-[#666]">
-                        {players.find(p => p.player_id === roundWinnerId)?.player_name} won by{' '}
-                        <span className="text-[#d4af37]">
-                          {timeDiffMs < 1000 ? `${timeDiffMs}ms` : `${(timeDiffMs / 1000).toFixed(1)}s`}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 );
               })}

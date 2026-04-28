@@ -18,6 +18,7 @@ interface RoundSummary {
   playerId: string | number;
   round: number;
   pts: Record<string, number>;
+  finishedAt: Record<string, string | null>;
 }
 
 const COLOR = '#06b6d4';
@@ -186,13 +187,18 @@ export function MultiplayerFaceRevealResultsPage() {
                 const sortedForRound = [...players].sort((a, b) =>
                   (round.pts[b.player_id] ?? 0) - (round.pts[a.player_id] ?? 0)
                 );
+                const finisherMs = players
+                  .map(p => round.finishedAt?.[p.player_id])
+                  .filter((t): t is string => !!t)
+                  .map(t => new Date(t).getTime());
+                const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
                   <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
                     {/* Round header */}
                     <div className="px-3 py-2 bg-[#111] flex items-center gap-3">
-                      <div className="rounded-lg overflow-hidden flex-shrink-0" style={{ width: 40, height: 40 }}>
-                        <ZoomedHeadshot playerId={round.playerId} sport={sport} zoomLevel={3} className="w-full h-full" />
+                      <div className="rounded-lg overflow-hidden flex-shrink-0">
+                        <ZoomedHeadshot playerId={round.playerId} sport={sport} zoomLevel={0} size={40} />
                       </div>
                       <div>
                         <div className="sports-font text-[10px] text-[#666] tracking-wider uppercase">
@@ -207,6 +213,10 @@ export function MultiplayerFaceRevealResultsPage() {
                         const pts = round.pts[player.player_id] ?? 0;
                         const isMe = player.player_id === currentPlayerId;
                         const badge = pts === 3 ? '🥇' : pts === 1 ? '✓' : '—';
+                        const finMs = round.finishedAt?.[player.player_id]
+                          ? new Date(round.finishedAt[player.player_id]!).getTime()
+                          : null;
+                        const offsetMs = finMs !== null && firstMs !== null ? finMs - firstMs : null;
                         return (
                           <div
                             key={player.player_id}
@@ -218,6 +228,11 @@ export function MultiplayerFaceRevealResultsPage() {
                                 {player.player_name}
                                 {isMe && <span className="text-white/30 ml-1">(you)</span>}
                               </span>
+                              {offsetMs !== null && offsetMs > 0 && (
+                                <span className="sports-font text-[9px] text-[#d4af37]">
+                                  +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                                </span>
+                              )}
                             </div>
                             <span className={`retro-title text-base ${pts > 0 ? 'text-[#d4af37]' : 'text-[#444]'}`}>
                               {pts > 0 ? `+${pts}` : '—'}
