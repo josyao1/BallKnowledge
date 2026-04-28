@@ -42,6 +42,7 @@ import { loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData'
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
+import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,8 @@ interface FaceRevealState {
   zoom_level: 1 | 2 | 3 | 4; // 4 = initials+team hint level (final before reveal)
   zoom_deadline: string;  // ISO timestamp when current level expires
   skip_votes?: string[];  // player_ids who voted to skip to the next zoom level
+  focal_x?: number;       // zoom focal point X% (randomised per player so it's not always both eyes)
+  focal_y?: number;       // zoom focal point Y%
 }
 
 interface PlayerEntry {
@@ -343,28 +346,12 @@ export function MultiplayerFaceRevealPage() {
     }
   }, [lobby?.status]);
 
-  // ── Abandoned by host → non-host clients return to lobby waiting room ──
-  // Hard reload clears all stale Zustand/React state (lobby status, player
-  // scores, refs) so the waiting room mounts cleanly without residual game state.
-  useEffect(() => {
-    if (isHost) return;
-    if ((lobby?.career_state as { abandoned?: boolean } | null)?.abandoned) {
-      window.location.href = `/lobby/${code}`;
-    }
-  }, [(lobby?.career_state as { abandoned?: boolean } | null)?.abandoned, isHost]);
-
-  async function handleEndGame() {
-    if (!lobby || !careerState) return;
-    // Merge abandoned flag INTO existing career_state so game settings
-    // (sport, win_target, timer, etc.) are preserved when the host returns
-    // to the lobby waiting room. A bare { abandoned: true } would wipe them.
-    const updatedState = { ...careerState, abandoned: true };
-    await updateCareerState(lobby.id, updatedState);
-    await updateLobbyStatus(lobby.id, 'waiting');
-    // Hard reload — clears all stale Zustand/React state so the waiting room
-    // mounts fresh. Non-host clients do the same when they detect abandoned=true.
-    window.location.href = `/lobby/${code}`;
-  }
+  const { handleEndGame } = useGameAbandonment({
+    code,
+    lobbyId: lobby?.id,
+    careerState: careerState as unknown as Record<string, unknown> | null,
+    isHost,
+  });
 
   // ── End round (host only) ──
   // Reads fresh lobby_players to avoid stale closure issues: score > 0 means
@@ -491,6 +478,10 @@ export function MultiplayerFaceRevealPage() {
     if (!player) { isStartingNextRef.current = false; setIsLoadingNext(false); return; }
 
     const timerSecs = careerState.timer || 60;
+    // Randomise focal point so the zoom-in spot varies per player
+    // (X: 38–62%, Y: 20–36% — keeps face region in frame for both sports).
+    const focalX = Math.round(38 + Math.random() * 24);
+    const focalY = Math.round(20 + Math.random() * 16);
     const newState: FaceRevealState = {
       sport: careerState.sport,
       win_target: careerState.win_target || 20,
@@ -502,6 +493,8 @@ export function MultiplayerFaceRevealPage() {
       longest_team: player.longestTeam ?? '',
       zoom_level: 1,
       zoom_deadline: new Date(Date.now() + timerSecs * 1000).toISOString(),
+      focal_x: focalX,
+      focal_y: focalY,
     };
 
     try {
@@ -578,8 +571,8 @@ export function MultiplayerFaceRevealPage() {
             <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">The Answer Was</div>
             <div className="retro-title text-3xl text-[#d4af37]">{summary.playerName}</div>
             <div className="flex justify-center">
-              <div className="rounded-xl overflow-hidden" style={{ width: 160, height: 160 }}>
-                <ZoomedHeadshot playerId={summary.playerId} sport={careerState.sport} zoomLevel={3} className="w-full h-full" />
+              <div className="rounded-xl overflow-hidden" style={{ width: 200, height: 200 }}>
+                <ZoomedHeadshot playerId={summary.playerId} sport={careerState.sport} zoomLevel={0} />
               </div>
             </div>
           </motion.div>
@@ -745,11 +738,13 @@ export function MultiplayerFaceRevealPage() {
                 : `0 0 0 2px ${COLOR}50`,
             }}
           >
-            {/* Always show the face — at zoom 4 use level 3 (fully zoomed out) */}
+            {/* Always show the face — at zoom 4 use level 3 (mostly zoomed out) */}
             <ZoomedHeadshot
               playerId={careerState.player_id}
               sport={careerState.sport}
               zoomLevel={displayZoom >= 4 ? 3 : displayZoom as 1 | 2 | 3}
+              originX={careerState.focal_x ?? 50}
+              originY={careerState.focal_y ?? 28}
             />
           </motion.div>
           {/* Level-4 hint strip: initials + longest-tenured team logo */}

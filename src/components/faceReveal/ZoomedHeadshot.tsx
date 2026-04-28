@@ -26,13 +26,16 @@ function loadNflHeadshots(): Promise<Record<string, string>> {
   return _nflHeadshotsPromise;
 }
 
-const NBA_ZOOM = [6.0, 3.0, 1.5] as const;
-const NFL_ZOOM = [4.0, 2.2, 1.3] as const;
+// Index 0 = scale 1.0 (full unzoomed view, used for answer reveals).
+// Index 1–3 = progressive zoom levels used during gameplay.
+const NBA_ZOOM = [1.0, 6.0, 3.0, 1.5] as const;
+const NFL_ZOOM = [1.0, 4.0, 2.2, 1.3] as const;
 
 interface Props {
   playerId: string | number;
   sport: 'nba' | 'nfl';
-  zoomLevel: 1 | 2 | 3;
+  /** 0 = full unzoomed (answer reveal); 1–3 = gameplay zoom levels (most → least zoomed). */
+  zoomLevel: 0 | 1 | 2 | 3;
   /**
    * Focal point for both objectPosition and transformOrigin, as percentages.
    * Defaults to { x: 50, y: 28 } (center horizontally, upper face vertically).
@@ -72,7 +75,7 @@ export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, origi
     }
   }, [playerId, sport]);
 
-  const scale = sport === 'nba' ? NBA_ZOOM[zoomLevel - 1] : NFL_ZOOM[zoomLevel - 1];
+  const scale = sport === 'nba' ? NBA_ZOOM[zoomLevel] : NFL_ZOOM[zoomLevel];
 
   return (
     <div

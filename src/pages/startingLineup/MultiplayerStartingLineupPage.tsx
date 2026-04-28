@@ -45,6 +45,7 @@ import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { NBACourtLayout } from '../../components/startingLineup/NBACourtLayout';
 import { nflTeams } from '../../data/nfl-teams';
 import { teams as nbaTeams } from '../../data/teams';
+import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -189,16 +190,12 @@ export function MultiplayerStartingLineupPage() {
     }
   }, [lobby?.status]);
 
-  // ── Abandoned by host — return everyone to home ──
-  useEffect(() => {
-    if ((careerState as { abandoned?: boolean } | null)?.abandoned) navigate('/');
-  }, [(careerState as { abandoned?: boolean } | null)?.abandoned]);
-
-  async function handleEndGame() {
-    if (!lobby) return;
-    await updateCareerState(lobby.id, { abandoned: true });
-    await updateLobbyStatus(lobby.id, 'waiting');
-  }
+  const { handleEndGame } = useGameAbandonment({
+    code,
+    lobbyId: lobby?.id,
+    careerState: careerState as Record<string, unknown> | null,
+    isHost,
+  });
 
   // ── Check if current player is locked ──
   const currentPlayer = players.find(p => p.player_id === currentPlayerId);

@@ -79,6 +79,8 @@ export interface HostFormValues {
   faceRevealTimer: number;
   /** Face Reveal (NFL): min peak-season yards for offensive players */
   faceRevealMinYards: number;
+  /** Face Reveal (NBA): min season MPG to include role players (0 = any) */
+  faceRevealMinMpg: number;
   /** Face Reveal (NFL): 'known' = curated allowlist only; 'all' = all positions */
   faceRevealDefenseMode: 'known' | 'all';
 }
@@ -118,6 +120,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editStartingSport,  setEditStartingSport]  = useState<'nba' | 'nfl'>('nfl');
   const [editFaceRevealTimer,       setEditFaceRevealTimer]       = useState(60);
   const [editFaceRevealMinYards,    setEditFaceRevealMinYards]    = useState(0);
+  const [editFaceRevealMinMpg,      setEditFaceRevealMinMpg]      = useState(0);
   const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>('known');
 
   // Sync form state from lobby whenever the settings panel mounts / lobby changes.
@@ -151,6 +154,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditStartingSport((cs.sport as 'nba' | 'nfl') || 'nfl');
     setEditFaceRevealTimer((cs.timer as number) || 60);
     setEditFaceRevealMinYards((cs.min_yards as number) || 0);
+    setEditFaceRevealMinMpg((cs.min_mpg as number) || 0);
     setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -195,6 +199,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       startingSport: editStartingSport,
       faceRevealTimer: editFaceRevealTimer,
       faceRevealMinYards: editFaceRevealMinYards,
+      faceRevealMinMpg: editFaceRevealMinMpg,
       faceRevealDefenseMode: editFaceRevealDefenseMode,
     });
   };
@@ -246,6 +251,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
               careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
               faceRevealTimer={editFaceRevealTimer} onFaceRevealTimerChange={setEditFaceRevealTimer}
               minYards={editFaceRevealMinYards} onMinYardsChange={setEditFaceRevealMinYards}
+              minMpg={editFaceRevealMinMpg} onMinMpgChange={setEditFaceRevealMinMpg}
               defenseMode={editFaceRevealDefenseMode} onDefenseModeChange={setEditFaceRevealDefenseMode}
             />
           )}

@@ -18,7 +18,6 @@ import {
   findLobbyByCode,
   getLobbyPlayers,
   updateLobbyStatus,
-  updateCareerState,
   updatePlayerScore,
   addCareerPoints,
   incrementPlayerWins,
@@ -28,6 +27,7 @@ import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../../se
 import { scrambleName } from '../../utils/scramble';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
 import type { Sport } from '../../types';
+import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -187,16 +187,12 @@ export function MultiplayerNameScramblePage() {
     }
   }, [lobby?.status]);
 
-  // ── Abandoned by host — return everyone to home ──
-  useEffect(() => {
-    if ((lobby?.career_state as { abandoned?: boolean } | null)?.abandoned) navigate('/');
-  }, [(lobby?.career_state as { abandoned?: boolean } | null)?.abandoned]);
-
-  async function handleEndGame() {
-    if (!lobby) return;
-    await updateCareerState(lobby.id, { abandoned: true });
-    await updateLobbyStatus(lobby.id, 'waiting');
-  }
+  const { handleEndGame } = useGameAbandonment({
+    code,
+    lobbyId: lobby?.id,
+    careerState: lobby?.career_state as Record<string, unknown> | null,
+    isHost,
+  });
 
   // ── Detect new round — reset all local state ──
   const currentRound = careerState?.round ?? 0;

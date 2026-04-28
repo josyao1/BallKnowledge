@@ -444,6 +444,8 @@ export function LobbyWaitingPage() {
         r -= NFL_OFF.has((p as any).position) ? 3 : 1;
         if (r <= 0) { chosen = p; break; }
       }
+      const focalX = Math.round(38 + Math.random() * 24);
+      const focalY = Math.round(20 + Math.random() * 16);
       const newState = {
         sport,
         win_target: winTarget,
@@ -458,6 +460,8 @@ export function LobbyWaitingPage() {
         longest_team: chosen.longestTeam ?? '',
         zoom_level: 1,
         zoom_deadline: new Date(Date.now() + timerSecs * 1000).toISOString(),
+        focal_x: focalX,
+        focal_y: focalY,
       };
 
       await startCareerRound(lobby.id, newState);
@@ -520,7 +524,7 @@ export function LobbyWaitingPage() {
       await updateCareerState(newState);
       setLobby({ ...lobby, career_state: newState });
     } else if (v.gameType === 'face-reveal') {
-      const newState = { ...(lobby.career_state as any) || {}, win_target: v.winTarget, career_to: v.careerTo, timer: v.faceRevealTimer, min_yards: v.faceRevealMinYards, defense_mode: v.faceRevealDefenseMode };
+      const newState = { ...(lobby.career_state as any) || {}, win_target: v.winTarget, career_to: v.careerTo, timer: v.faceRevealTimer, min_yards: v.faceRevealMinYards, min_mpg: v.faceRevealMinMpg, defense_mode: v.faceRevealDefenseMode };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...lobby, career_state: newState, sport: v.sport });

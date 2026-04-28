@@ -438,12 +438,11 @@ export function SoloFaceRevealPage() {
                 className="rounded-xl overflow-hidden"
               >
                 {player && (status === 'correct' || status === 'revealed') && (
-                  // Reveal: always show the full face (zoom 3) so it animates smoothly
-                  // from whatever level the player was on when the round ended.
+                  // Reveal: zoomLevel 0 = scale 1.0 so the full headshot is visible.
                   <ZoomedHeadshot
                     playerId={player.player_id}
                     sport={sport}
-                    zoomLevel={3}
+                    zoomLevel={0}
                     originX={50}
                     originY={28}
                   />

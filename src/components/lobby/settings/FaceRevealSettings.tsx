@@ -17,6 +17,8 @@ interface Props {
   onFaceRevealTimerChange: (n: number) => void;
   minYards: number;
   onMinYardsChange: (n: number) => void;
+  minMpg: number;
+  onMinMpgChange: (n: number) => void;
   defenseMode: 'known' | 'all';
   onDefenseModeChange: (m: 'known' | 'all') => void;
 }
@@ -27,6 +29,12 @@ const MIN_YARDS_OPTIONS = [
   { label: '500+',  value: 500  },
   { label: '1000+', value: 1000 },
 ];
+const MIN_MPG_OPTIONS = [
+  { label: 'Any', value: 0  },
+  { label: '15+', value: 15 },
+  { label: '20+', value: 20 },
+  { label: '25+', value: 25 },
+];
 
 export function FaceRevealSettings({
   sport, onSportChange,
@@ -34,6 +42,7 @@ export function FaceRevealSettings({
   careerTo, onCareerToChange,
   faceRevealTimer, onFaceRevealTimerChange,
   minYards, onMinYardsChange,
+  minMpg, onMinMpgChange,
   defenseMode, onDefenseModeChange,
 }: Props) {
   return (
@@ -110,6 +119,28 @@ export function FaceRevealSettings({
                     : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
                 }`}
                 style={minYards === opt.value ? { backgroundColor: '#06b6d4' } : {}}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sport === 'nba' && (
+        <div>
+          <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Min Season MPG (NBA)</div>
+          <div className="flex gap-1.5">
+            {MIN_MPG_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => onMinMpgChange(opt.value)}
+                className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
+                  minMpg === opt.value
+                    ? 'text-[#111]'
+                    : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
+                }`}
+                style={minMpg === opt.value ? { backgroundColor: '#06b6d4' } : {}}
               >
                 {opt.label}
               </button>
