@@ -27,6 +27,7 @@ import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { ZoomedHeadshot } from '../../components/faceReveal/ZoomedHeadshot';
+import { TeamLogo } from '../../components/TeamLogo';
 import {
   findLobbyByCode,
   getLobbyPlayers,
@@ -52,15 +53,30 @@ interface FaceRevealState {
   round: number;
   player_name: string;
   player_id: string | number;
-  zoom_level: 1 | 2 | 3;
-  zoom_deadline: string; // ISO timestamp when current level expires
-  skip_votes?: string[]; // player_ids who voted to skip to the next zoom level
+  longest_team?: string; // team abbreviation the player spent the most seasons with
+  zoom_level: 1 | 2 | 3 | 4; // 4 = initials+team hint level (final before reveal)
+  zoom_deadline: string;  // ISO timestamp when current level expires
+  skip_votes?: string[];  // player_ids who voted to skip to the next zoom level
 }
 
 interface PlayerEntry {
   player_id: string | number;
   player_name: string;
   position?: string;
+  longestTeam?: string;
+}
+
+function longestTenuredTeam(seasons: Array<{ team: string }>): string {
+  const counts: Record<string, number> = {};
+  for (const s of seasons) {
+    const team = (s.team || '').split('/')[0].trim();
+    if (team) counts[team] = (counts[team] || 0) + 1;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+}
+
+function getInitials(name: string): string {
+  return name.split(' ').map(w => w[0] ?? '').join('').toUpperCase();
 }
 
 const MP_OFF_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
@@ -114,7 +130,7 @@ export function MultiplayerFaceRevealPage() {
   // Live countdown for current zoom level (computed from zoom_deadline).
   const [countdown, setCountdown]       = useState(0);
   // Local zoom level display (mirrors careerState but updates instantly from deadline watcher).
-  const [displayZoom, setDisplayZoom]   = useState<1 | 2 | 3>(1);
+  const [displayZoom, setDisplayZoom]   = useState<1 | 2 | 3 | 4>(1);
 
   // ── Refs ──
   const hasSubmittedRef    = useRef(false);
@@ -125,6 +141,13 @@ export function MultiplayerFaceRevealPage() {
   const roundHistoryRef    = useRef<RoundSummary[]>([]);
   const zoomTimerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef           = useRef<HTMLInputElement>(null);
+  // Gate for the "all players done" effect. Set to false when a new round is
+  // detected (career_state has incremented round), then flipped to true only
+  // once the lobby_players update arrives with all finished_at === null.
+  // Prevents endRound from firing with stale previous-round player data
+  // because Supabase realtime delivers the lobbies and lobby_players updates
+  // as separate events (lobbies arrives first).
+  const roundReadyRef      = useRef(false);
 
   // Player pool for host (to pick next player).
   const playerPoolRef = useRef<PlayerEntry[]>([]);
@@ -151,6 +174,7 @@ export function MultiplayerFaceRevealPage() {
     if (!careerState || playerPoolRef.current.length) return;
     const { sport, career_to } = careerState;
     const min_yards: number     = (careerState as any).min_yards    || 0;
+    const min_mpg: number       = (careerState as any).min_mpg      || 0;
     const defense_mode: string  = (careerState as any).defense_mode || 'known';
     const NFL_OFF = MP_OFF_POSITIONS;
     const NFL_ST  = new Set(['K', 'P', 'LS']);
@@ -160,7 +184,8 @@ export function MultiplayerFaceRevealPage() {
         const all = await loadNBALineupPool();
         let filtered = all.filter(p => p.player_id != null);
         if (career_to) filtered = filtered.filter(p => nbaEndYear(p) >= career_to);
-        playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name }));
+        if (min_mpg) filtered = filtered.filter(p => p.seasons.some((s: any) => (s.min ?? 0) >= min_mpg));
+        playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, longestTeam: longestTenuredTeam(p.seasons) }));
       } else {
         const all = await loadNFLLineupPool();
         let filtered = all.filter(p => p.player_id != null);
@@ -175,11 +200,11 @@ export function MultiplayerFaceRevealPage() {
           }
           return defense_mode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));
         });
-        playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, position: p.position }));
+        playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, position: p.position, longestTeam: longestTenuredTeam(p.seasons) }));
       }
     }
     loadPool();
-  }, [careerState?.sport, careerState?.career_to, (careerState as any)?.min_yards, (careerState as any)?.defense_mode]);
+  }, [careerState?.sport, careerState?.career_to, (careerState as any)?.min_yards, (careerState as any)?.min_mpg, (careerState as any)?.defense_mode]);
 
   // ── Countdown timer: tracks seconds until zoom_deadline ──
   useEffect(() => {
@@ -206,23 +231,25 @@ export function MultiplayerFaceRevealPage() {
   useEffect(() => {
     if (!isHost || !careerState || lobby?.status !== 'playing') return;
     if (countdown > 0) return;
+    // Extra guard: verify the deadline has actually passed (not just initial countdown===0).
+    if (careerState.zoom_deadline && new Date(careerState.zoom_deadline).getTime() > Date.now()) return;
     // Guard against firing multiple times while countdown stays at 0
     // between 500ms ticks and before the Supabase write propagates back.
     if (hasAdvancedRef.current) return;
 
     const currentZoom = careerState.zoom_level;
-    if (currentZoom < 3) {
+    if (currentZoom < 4) {
       if (isZoomAdvancingRef.current) return;
       isZoomAdvancingRef.current = true;
       const nextDeadline = new Date(Date.now() + careerState.timer * 1000).toISOString();
       updateCareerState(lobby!.id, {
         ...careerState,
-        zoom_level: (currentZoom + 1) as 1 | 2 | 3,
+        zoom_level: (currentZoom + 1) as 1 | 2 | 3 | 4,
         zoom_deadline: nextDeadline,
         skip_votes: [],
       });
     } else {
-      // Level 3 expired — end the round.
+      // Level 4 expired — end the round.
       endRound();
     }
   }, [countdown, isHost, lobby?.status]);
@@ -230,7 +257,7 @@ export function MultiplayerFaceRevealPage() {
   // ── HOST: advance zoom when all eligible players voted to skip ──
   useEffect(() => {
     if (!isHost || !careerState || lobby?.status !== 'playing') return;
-    if (displayZoom >= 3) return;
+    if (displayZoom >= 4) return;
     if (isZoomAdvancingRef.current) return;
 
     const skipVotes  = careerState.skip_votes ?? [];
@@ -243,7 +270,7 @@ export function MultiplayerFaceRevealPage() {
     const nextDeadline = new Date(Date.now() + careerState.timer * 1000).toISOString();
     updateCareerState(lobby!.id, {
       ...careerState,
-      zoom_level: (displayZoom + 1) as 1 | 2 | 3,
+      zoom_level: (displayZoom + 1) as 1 | 2 | 3 | 4,
       zoom_deadline: nextDeadline,
       skip_votes: [],
     });
@@ -254,6 +281,7 @@ export function MultiplayerFaceRevealPage() {
   useEffect(() => {
     if (currentRound > 0 && currentRound !== prevRoundRef.current) {
       prevRoundRef.current = currentRound;
+      roundReadyRef.current = false; // Players haven't confirmed fresh yet — block endRound
       setLocalDone(false);
       setGuessInput('');
       setFeedbackMsg('');
@@ -261,9 +289,22 @@ export function MultiplayerFaceRevealPage() {
       hasSubmittedRef.current = false;
       hasAdvancedRef.current = false;
       isZoomAdvancingRef.current = false;
+      isStartingNextRef.current = false;
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [currentRound]);
+
+  // ── Confirm round is fresh once all players have finished_at === null ──
+  // lobby_players update arrives after lobbies, so players still reflects the
+  // previous round when the new-round effect fires. This effect watches for
+  // the lobby_players reset and marks the round as ready to end normally.
+  useEffect(() => {
+    if (lobby?.status !== 'playing') return;
+    if (players.length === 0) return;
+    if (players.every(p => p.finished_at === null)) {
+      roundReadyRef.current = true;
+    }
+  }, [players, lobby?.status]);
 
   // ── Handle lobby status transitions ──
   useEffect(() => {
@@ -271,7 +312,9 @@ export function MultiplayerFaceRevealPage() {
     const prev = prevStatusRef.current;
     prevStatusRef.current = lobby.status;
 
-    if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState) {
+    if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState
+        && !(careerState as any).abandoned) {
+      // Skipped when host sends everyone to lobby (abandoned=true) — no round summary needed.
       // Derive pts from lobby_players: score > 0 means correct; earliest finished_at = first (3pts).
       const ptsMap: Record<string, number> = {};
       const correctPlayers = [...players]
@@ -300,15 +343,27 @@ export function MultiplayerFaceRevealPage() {
     }
   }, [lobby?.status]);
 
-  // ── Abandoned by host ──
+  // ── Abandoned by host → non-host clients return to lobby waiting room ──
+  // Hard reload clears all stale Zustand/React state (lobby status, player
+  // scores, refs) so the waiting room mounts cleanly without residual game state.
   useEffect(() => {
-    if ((lobby?.career_state as { abandoned?: boolean } | null)?.abandoned) navigate('/');
-  }, [(lobby?.career_state as { abandoned?: boolean } | null)?.abandoned]);
+    if (isHost) return;
+    if ((lobby?.career_state as { abandoned?: boolean } | null)?.abandoned) {
+      window.location.href = `/lobby/${code}`;
+    }
+  }, [(lobby?.career_state as { abandoned?: boolean } | null)?.abandoned, isHost]);
 
   async function handleEndGame() {
-    if (!lobby) return;
-    await updateCareerState(lobby.id, { abandoned: true });
+    if (!lobby || !careerState) return;
+    // Merge abandoned flag INTO existing career_state so game settings
+    // (sport, win_target, timer, etc.) are preserved when the host returns
+    // to the lobby waiting room. A bare { abandoned: true } would wipe them.
+    const updatedState = { ...careerState, abandoned: true };
+    await updateCareerState(lobby.id, updatedState);
     await updateLobbyStatus(lobby.id, 'waiting');
+    // Hard reload — clears all stale Zustand/React state so the waiting room
+    // mounts fresh. Non-host clients do the same when they detect abandoned=true.
+    window.location.href = `/lobby/${code}`;
   }
 
   // ── End round (host only) ──
@@ -316,7 +371,8 @@ export function MultiplayerFaceRevealPage() {
   // correct, and finished_at order determines who was first (3pts vs 1pt).
   const endRound = useCallback(async () => {
     if (!lobby || hasAdvancedRef.current) return;
-    hasAdvancedRef.current = true;
+    hasAdvancedRef.current = true; // set before any await — prevents double-fire
+    console.log('[FaceReveal] endRound fired at', Date.now());
 
     const winTarget = (lobby.career_state as FaceRevealState | null)?.win_target || 20;
 
@@ -348,9 +404,12 @@ export function MultiplayerFaceRevealPage() {
   }, [lobby]);
 
   // ── HOST: auto-end round when every player has finished (correct or gave up) ──
+  // roundReadyRef gates this so stale previous-round players (all finished_at
+  // non-null) cannot trigger endRound before the lobby_players reset arrives.
   useEffect(() => {
     if (!isHost || lobby?.status !== 'playing') return;
     if (players.length === 0) return;
+    if (!roundReadyRef.current) return;
     if (!players.every(p => p.finished_at !== null)) return;
     endRound();
   }, [players, isHost, lobby?.status, endRound]);
@@ -391,7 +450,7 @@ export function MultiplayerFaceRevealPage() {
   // Host watches the vote count and advances when all eligible players agree.
   async function handleSkipZoom() {
     if (!careerState || !lobby || !currentPlayerId) return;
-    if (displayZoom >= 3) return;
+    if (displayZoom >= 4) return;
     const already = (careerState.skip_votes ?? []).includes(currentPlayerId);
     if (already) return;
     await updateCareerState(lobby.id, {
@@ -417,12 +476,19 @@ export function MultiplayerFaceRevealPage() {
   }
 
   // ── HOST: start next round ──
+  // isLoadingNext is set immediately (before any await) to prevent double-fires
+  // when the button is clicked rapidly or when two triggers race (e.g. all-done
+  // watcher + countdown expiry watcher both calling endRound in the same tick).
+  const isStartingNextRef = useRef(false);
+
   async function handleNextRound() {
-    if (!isHost || !lobby || isLoadingNext || !careerState) return;
+    if (!isHost || !lobby || !careerState) return;
+    if (isLoadingNext || isStartingNextRef.current) return;
+    isStartingNextRef.current = true;
     setIsLoadingNext(true);
 
     const player = pickNextPlayer();
-    if (!player) { setIsLoadingNext(false); return; }
+    if (!player) { isStartingNextRef.current = false; setIsLoadingNext(false); return; }
 
     const timerSecs = careerState.timer || 60;
     const newState: FaceRevealState = {
@@ -433,12 +499,18 @@ export function MultiplayerFaceRevealPage() {
       round: (careerState.round || 0) + 1,
       player_name: player.player_name,
       player_id: player.player_id,
+      longest_team: player.longestTeam ?? '',
       zoom_level: 1,
       zoom_deadline: new Date(Date.now() + timerSecs * 1000).toISOString(),
     };
 
-    await startCareerRound(lobby.id, newState as unknown as Record<string, unknown>);
-    setIsLoadingNext(false);
+    try {
+      await startCareerRound(lobby.id, newState as unknown as Record<string, unknown>);
+    } finally {
+      // Always reset guards so the host can retry if the write failed.
+      isStartingNextRef.current = false;
+      setIsLoadingNext(false);
+    }
   }
 
   // ── Render guard ──
@@ -645,7 +717,7 @@ export function MultiplayerFaceRevealPage() {
         {/* Zoom level info + countdown */}
         <div className="flex items-center justify-between mb-2">
           <div className="sports-font text-[9px] text-[#888] tracking-widest uppercase">
-            Zoom {displayZoom}/3
+            Zoom {displayZoom}/4
           </div>
           <div className="flex items-center gap-2">
             <div className="w-20 h-1 bg-[#222] rounded-full overflow-hidden">
@@ -663,8 +735,8 @@ export function MultiplayerFaceRevealPage() {
           </div>
         </div>
 
-        {/* Headshot */}
-        <div className="flex justify-center">
+        {/* Headshot + optional Level-4 hint strip below */}
+        <div className="flex flex-col items-center gap-2">
           <motion.div
             className="rounded-xl overflow-hidden"
             animate={{
@@ -673,12 +745,37 @@ export function MultiplayerFaceRevealPage() {
                 : `0 0 0 2px ${COLOR}50`,
             }}
           >
+            {/* Always show the face — at zoom 4 use level 3 (fully zoomed out) */}
             <ZoomedHeadshot
               playerId={careerState.player_id}
               sport={careerState.sport}
-              zoomLevel={displayZoom}
+              zoomLevel={displayZoom >= 4 ? 3 : displayZoom as 1 | 2 | 3}
             />
           </motion.div>
+          {/* Level-4 hint strip: initials + longest-tenured team logo */}
+          {displayZoom >= 4 && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-4 px-4 py-2.5 rounded-lg border"
+              style={{ width: 320, backgroundColor: '#1a1a1a', borderColor: `${COLOR}30` }}
+            >
+              <div className="retro-title text-4xl tracking-widest" style={{ color: COLOR }}>
+                {getInitials(careerState.player_name)}
+              </div>
+              {careerState.longest_team && (
+                <>
+                  <div className="w-px self-stretch bg-[#333]" />
+                  <div className="flex flex-col items-center gap-1">
+                    <TeamLogo sport={careerState.sport} abbr={careerState.longest_team} size={48} />
+                    <div className="sports-font text-[8px] text-[#555] tracking-[0.2em] uppercase">
+                      Longest Team
+                    </div>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -739,7 +836,7 @@ export function MultiplayerFaceRevealPage() {
 
         {/* Skip-zoom vote indicator */}
         <AnimatePresence>
-          {displayZoom < 3 && votedPlayers.length > 0 && (
+          {displayZoom < 4 && votedPlayers.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -826,7 +923,7 @@ export function MultiplayerFaceRevealPage() {
             </button>
           </div>
           <div className="flex gap-2">
-            {displayZoom < 3 && (
+            {displayZoom < 4 && (
               <button
                 onClick={handleSkipZoom}
                 disabled={iHaveVoted}
@@ -837,7 +934,7 @@ export function MultiplayerFaceRevealPage() {
             )}
             <button
               onClick={handleGiveUp}
-              className={`py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all ${displayZoom < 3 ? 'flex-1' : 'w-full'}`}
+              className={`py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all ${displayZoom < 4 ? 'flex-1' : 'w-full'}`}
             >
               Give Up
             </button>

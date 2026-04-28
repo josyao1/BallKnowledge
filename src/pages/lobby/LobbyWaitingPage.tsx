@@ -368,7 +368,18 @@ export function LobbyWaitingPage() {
       const timerSecs: number = cs.timer || 60;
       const winTarget: number = cs.win_target || 20;
       const minYards: number    = cs.min_yards || 0;
+      const minMpg: number      = cs.min_mpg   || 0;
       const defenseMode: string = cs.defense_mode || 'known';
+
+      // Returns the team abbreviation a player spent the most seasons with.
+      const getLongestTeam = (seasons: Array<{ team: string }>): string => {
+        const counts: Record<string, number> = {};
+        for (const s of seasons) {
+          const team = (s.team || '').split('/')[0].trim();
+          if (team) counts[team] = (counts[team] || 0) + 1;
+        }
+        return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+      };
 
       // NFL pool filter: ST always out; offense filtered by yards; defense by mode.
       const NFL_OFF = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
@@ -384,8 +395,8 @@ export function LobbyWaitingPage() {
         return defenseMode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));
       };
 
-      // Load player pool and filter by era + yards.
-      let pool: { player_id: string | number; player_name: string }[] = [];
+      // Load player pool and filter by era, yards, and MPG.
+      let pool: { player_id: string | number; player_name: string; longestTeam: string }[] = [];
       if (sport === 'nba') {
         const all = await loadNBALineupPool();
         let filtered = all.filter((p: NBACareerPlayer) => p.player_id != null);
@@ -395,7 +406,16 @@ export function LobbyWaitingPage() {
             return years.length ? Math.max(...years) >= careerTo : false;
           });
         }
-        pool = filtered.map((p: NBACareerPlayer) => ({ player_id: p.player_id, player_name: p.player_name }));
+        if (minMpg) {
+          filtered = filtered.filter((p: NBACareerPlayer) =>
+            p.seasons.some((s: any) => (s.min ?? 0) >= minMpg)
+          );
+        }
+        pool = filtered.map((p: NBACareerPlayer) => ({
+          player_id: p.player_id,
+          player_name: p.player_name,
+          longestTeam: getLongestTeam(p.seasons),
+        }));
       } else {
         const all = await loadNFLLineupPool();
         let filtered = all.filter((p: NFLCareerPlayer) => p.player_id != null);
@@ -406,7 +426,12 @@ export function LobbyWaitingPage() {
           });
         }
         filtered = filtered.filter(nflInPool);
-        pool = filtered.map((p: NFLCareerPlayer) => ({ player_id: p.player_id, player_name: p.player_name, position: p.position }));
+        pool = filtered.map((p: NFLCareerPlayer) => ({
+          player_id: p.player_id,
+          player_name: p.player_name,
+          position: p.position,
+          longestTeam: getLongestTeam(p.seasons),
+        } as any));
       }
 
       if (!pool.length) { setIsLoadingRoster(false); return; }
@@ -425,10 +450,12 @@ export function LobbyWaitingPage() {
         career_to: careerTo,
         timer: timerSecs,
         min_yards: minYards,
+        min_mpg: minMpg,
         defense_mode: defenseMode,
         round: 1,
         player_name: chosen.player_name,
         player_id: chosen.player_id,
+        longest_team: chosen.longestTeam ?? '',
         zoom_level: 1,
         zoom_deadline: new Date(Date.now() + timerSecs * 1000).toISOString(),
       };

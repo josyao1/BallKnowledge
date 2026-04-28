@@ -17,6 +17,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZoomedHeadshot } from '../../components/faceReveal/ZoomedHeadshot';
+import { TeamLogo } from '../../components/TeamLogo';
 import { areSimilarNames, normalize } from '../../utils/fuzzyDedup';
 import { loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
@@ -27,7 +28,24 @@ type GameStatus = 'loading' | 'active' | 'correct' | 'revealed';
 interface PlayerEntry {
   player_id: string | number;
   player_name: string;
-  position?: string; // NFL only; used for pick weighting
+  position?: string;    // NFL only; used for pick weighting
+  longestTeam?: string; // most-season team abbreviation; shown at zoom level 4
+}
+
+/** Compute the team abbreviation a player spent the most seasons with. */
+function longestTenuredTeam(seasons: Array<{ team: string }>): string {
+  const counts: Record<string, number> = {};
+  for (const s of seasons) {
+    // Handle slash seasons (e.g. "LAL/MIA" for traded players) — use first team.
+    const team = (s.team || '').split('/')[0].trim();
+    if (team) counts[team] = (counts[team] || 0) + 1;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+}
+
+/** Player initials — first letter of each space-separated word. */
+function getInitials(name: string): string {
+  return name.split(' ').map(w => w[0] ?? '').join('').toUpperCase();
 }
 
 // NFL offensive positions get 3× weight; everyone else gets 1×.
@@ -129,7 +147,7 @@ export function SoloFaceRevealPage() {
   // Game state.
   const [status, setStatus]         = useState<GameStatus>('loading');
   const [player, setPlayer]         = useState<PlayerEntry | null>(null);
-  const [zoomLevel, setZoomLevel]   = useState<1 | 2 | 3>(1);
+  const [zoomLevel, setZoomLevel]   = useState<1 | 2 | 3 | 4>(1);
   const [countdown, setCountdown]   = useState(timerSecs);
   const [streak, setStreak]         = useState(0);
   const [guessInput, setGuessInput] = useState('');
@@ -160,13 +178,13 @@ export function SoloFaceRevealPage() {
         if (minMpg) filtered = filtered.filter(p =>
           p.seasons.some(s => (s.min ?? 0) >= minMpg)
         );
-        setPool(filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name })));
+        setPool(filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, longestTeam: longestTenuredTeam(p.seasons) })));
       } else {
         const all = await loadNFLLineupPool();
         let filtered = all.filter(p => p.player_id != null);
         if (careerTo) filtered = filtered.filter(p => nflEndYear(p) >= careerTo);
         filtered = filtered.filter(p => nflInPool(p, minYards, defenseMode));
-        setPool(filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, position: p.position })));
+        setPool(filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, position: p.position, longestTeam: longestTenuredTeam(p.seasons) })));
       }
     }
     loadPool();
@@ -203,7 +221,7 @@ export function SoloFaceRevealPage() {
     setFocalPoint({ x: fx, y: fy });
 
     setPlayer(chosen);
-    setZoomLevel(1);
+    setZoomLevel(1 as 1 | 2 | 3 | 4);
     setCountdown(timerSecs);
     setGuessInput('');
     setWrongGuesses([]);
@@ -243,11 +261,12 @@ export function SoloFaceRevealPage() {
   // ── Zoom advance / reveal when countdown hits 0 ───────────────────────────
   // Separated from the interval so that handleSkipZoom's setCountdown(timerSecs)
   // and this effect can't both queue a setZoomLevel update in the same batch.
+  // Levels 1–4: each gets `timer` seconds. After level 4 expires → reveal.
 
   useEffect(() => {
     if (status !== 'active' || countdown > 0) return;
-    if (zoomLevel < 3) {
-      setZoomLevel(z => (z + 1) as 1 | 2 | 3);
+    if (zoomLevel < 4) {
+      setZoomLevel(z => (z + 1) as 1 | 2 | 3 | 4);
       setCountdown(timerSecs);
     } else {
       setStatus('revealed');
@@ -310,9 +329,11 @@ export function SoloFaceRevealPage() {
   }
 
   // Advance to the next zoom level immediately and reset the per-level timer.
+  // Only available for levels 1–3; at level 4 (initials/team hint) the next
+  // step is the answer reveal — use "Reveal answer" instead.
   function handleSkipZoom() {
-    if (status !== 'active' || zoomLevel >= 3) return;
-    setZoomLevel(z => (z + 1) as 1 | 2 | 3);
+    if (status !== 'active' || zoomLevel >= 4) return;
+    setZoomLevel(z => (z + 1) as 1 | 2 | 3 | 4);
     setCountdown(timerSecs);
   }
 
@@ -397,34 +418,77 @@ export function SoloFaceRevealPage() {
 
             {/* Zoom level + countdown */}
             <div className="flex items-center gap-4 sports-font text-[10px] text-[#555] tracking-widest uppercase">
-              <span>Zoom {zoomLevel}/3</span>
+              <span>Zoom {zoomLevel}/4</span>
               <span style={{ color: timerColor }}>{countdown}s</span>
             </div>
 
-            {/* Headshot */}
-            <motion.div
-              key={player?.player_id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                boxShadow: status === 'correct'
-                  ? '0 0 0 4px #22c55e'
-                  : '0 0 0 2px rgba(6,182,212,0.3)',
-              }}
-              transition={{ duration: 0.3 }}
-              className="rounded-xl overflow-hidden"
-            >
-              {player && (
-                <ZoomedHeadshot
-                  playerId={player.player_id}
-                  sport={sport}
-                  zoomLevel={zoomLevel}
-                  originX={focalPoint.x}
-                  originY={focalPoint.y}
-                />
-              )}
-            </motion.div>
+            {/* Headshot + optional Level-4 hint strip below */}
+            <div className="flex flex-col items-center gap-2">
+              <motion.div
+                key={player?.player_id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  boxShadow: status === 'correct'
+                    ? '0 0 0 4px #22c55e'
+                    : '0 0 0 2px rgba(6,182,212,0.3)',
+                }}
+                transition={{ duration: 0.3 }}
+                className="rounded-xl overflow-hidden"
+              >
+                {player && (status === 'correct' || status === 'revealed') && (
+                  // Reveal: always show the full face (zoom 3) so it animates smoothly
+                  // from whatever level the player was on when the round ended.
+                  <ZoomedHeadshot
+                    playerId={player.player_id}
+                    sport={sport}
+                    zoomLevel={3}
+                    originX={50}
+                    originY={28}
+                  />
+                )}
+                {player && status === 'active' && (
+                  // At zoom 4, still show the face (at level 3, fully zoomed out);
+                  // the initials + team hint appears as a strip below the image.
+                  <ZoomedHeadshot
+                    playerId={player.player_id}
+                    sport={sport}
+                    zoomLevel={zoomLevel >= 4 ? 3 : zoomLevel as 1 | 2 | 3}
+                    originX={zoomLevel >= 4 ? 50 : focalPoint.x}
+                    originY={zoomLevel >= 4 ? 28 : focalPoint.y}
+                  />
+                )}
+              </motion.div>
+
+              {/* Level-4 hint strip: initials + longest-tenured team logo */}
+              <AnimatePresence>
+                {player && status === 'active' && zoomLevel === 4 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center justify-center gap-4 px-4 py-2.5 rounded-lg border"
+                    style={{ width: 320, backgroundColor: '#1a1a1a', borderColor: 'rgba(6,182,212,0.3)' }}
+                  >
+                    <div className="retro-title text-4xl tracking-widest" style={{ color: COLOR }}>
+                      {getInitials(player.player_name)}
+                    </div>
+                    {player.longestTeam && (
+                      <>
+                        <div className="w-px self-stretch bg-[#333]" />
+                        <div className="flex flex-col items-center gap-1">
+                          <TeamLogo sport={sport} abbr={player.longestTeam} size={48} />
+                          <div className="sports-font text-[8px] text-[#555] tracking-[0.2em] uppercase">
+                            Longest Team
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Answer revealed / correct */}
             <AnimatePresence>
@@ -555,7 +619,7 @@ export function SoloFaceRevealPage() {
                   </button>
                 </div>
                 <div className="flex gap-2">
-                  {zoomLevel < 3 && (
+                  {zoomLevel < 4 && (
                     <button
                       onClick={handleSkipZoom}
                       className="flex-1 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3a3a3a] text-[#888] hover:border-[#06b6d4]/50 hover:text-[#06b6d4] transition-all"
@@ -565,7 +629,7 @@ export function SoloFaceRevealPage() {
                   )}
                   <button
                     onClick={handleSkip}
-                    className={`py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all ${zoomLevel < 3 ? 'flex-1' : 'w-full'}`}
+                    className={`py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all ${zoomLevel < 4 ? 'flex-1' : 'w-full'}`}
                   >
                     Reveal answer
                   </button>

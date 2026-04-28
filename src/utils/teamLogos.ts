@@ -17,6 +17,12 @@ const NBA_HISTORICAL_TO_CURRENT: Record<string, string> = {
   NOH: 'NOP',   // Hornets → Pelicans 2013
   NOK: 'NOP',
   VAN: 'MEM',   // Grizzlies moved to Memphis 2001
+  UTH: 'UTA',   // ESPN alias for Utah Jazz
+  GOS: 'GSW',   // ESPN alias for Golden State Warriors
+  CHH: 'CHA',   // Charlotte Hornets (original; Charlotte Bobcats later became Hornets)
+  KCK: 'SAC',   // Kansas City Kings moved to Sacramento 1985
+  PHL: 'PHI',   // ESPN alias for Philadelphia 76ers
+  SAN: 'SAS',   // ESPN alias for San Antonio Spurs
 };
 
 // ── Standard abbr → ESPN CDN slug (NBA) ──────────────────────────────────────

@@ -113,13 +113,13 @@ export function GameFanArc({
                   {game.abbr}
                 </div>
 
-                {/* "Most Popular" label — hidden when card is active (info panel covers it) */}
+                {/* "Most Popular" / "3 gamemodes" label — hidden when card is active */}
                 {game.popular && !isActive && (
                   <div
                     className="absolute bottom-1.5 left-2 sports-font font-bold leading-none z-10 tracking-wide uppercase"
                     style={{ color: game.color, textShadow: '0 1px 4px rgba(0,0,0,0.9)', fontSize: Math.max(5, Math.round(7 * fanScale)) }}
                   >
-                    Most Popular
+                    {game.id === 'guess-player' ? '3 gamemodes' : 'Most Popular'}
                   </div>
                 )}
 
