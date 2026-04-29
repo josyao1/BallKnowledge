@@ -3,7 +3,7 @@
  * Shows all available modes with popular indicators and a legend.
  */
 
-type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup';
+type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal';
 
 const MODES: { value: LobbyMode; label: React.ReactNode; activeClass: string }[] = [
   {
@@ -11,15 +11,16 @@ const MODES: { value: LobbyMode; label: React.ReactNode; activeClass: string }[]
     label: <><span style={{ color: '#d4af37' }}>★</span> Roster</>,
     activeClass: 'bg-[#d4af37] text-black',
   },
-  { value: 'career',         label: 'Career',    activeClass: 'bg-[#22c55e] text-black' },
-  { value: 'scramble',       label: 'Scramble',  activeClass: 'bg-[#3b82f6] text-white' },
+  { value: 'career',         label: 'Career',       activeClass: 'bg-[#22c55e] text-black' },
+  { value: 'scramble',       label: 'Scramble',     activeClass: 'bg-[#3b82f6] text-white' },
+  { value: 'face-reveal',    label: 'Face Reveal',  activeClass: 'bg-[#06b6d4] text-[#111]' },
   {
     value: 'lineup-is-right',
     label: <><span style={{ color: '#d4af37' }}>★</span> Cap Crunch</>,
     activeClass: 'bg-[#ec4899] text-white',
   },
-  { value: 'box-score',      label: 'Box Score', activeClass: 'bg-[#f59e0b] text-black' },
-  { value: 'starting-lineup', label: 'Starters', activeClass: 'bg-[#16a34a] text-white' },
+  { value: 'box-score',      label: 'Box Score',    activeClass: 'bg-[#f59e0b] text-black' },
+  { value: 'starting-lineup', label: 'Starters',   activeClass: 'bg-[#16a34a] text-white' },
 ];
 
 interface Props {

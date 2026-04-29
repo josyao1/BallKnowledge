@@ -42,7 +42,8 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
   const showTimer = lobby.game_type !== 'career'
     && lobby.game_type !== 'scramble'
     && lobby.game_type !== 'lineup-is-right'
-    && lobby.game_type !== 'starting-lineup';
+    && lobby.game_type !== 'starting-lineup'
+    && lobby.game_type !== 'face-reveal';
   const hasWins = players.some(p => (p.wins ?? 0) > 0);
 
   return (
@@ -101,6 +102,16 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
                   {(cs?.sport || 'nfl').toUpperCase()} Starting Lineup
                 </div>
                 <div className="retro-title text-xl text-[#ea580c]">Starters</div>
+                <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                  First to {cs?.win_target ?? '?'} pts
+                </div>
+              </>
+            ) : lobby.game_type === 'face-reveal' ? (
+              <>
+                <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                  {(cs?.sport || lobby.sport || 'nba').toUpperCase()} Face Reveal
+                </div>
+                <div className="retro-title text-xl text-[#06b6d4]">Face Reveal</div>
                 <div className="sports-font text-[9px] text-white/40 tracking-widest">
                   First to {cs?.win_target ?? '?'} pts
                 </div>

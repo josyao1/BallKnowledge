@@ -23,12 +23,13 @@ import { CapCrunchSettings }      from './settings/CapCrunchSettings';
 import { BoxScoreSettings }       from './settings/BoxScoreSettings';
 import { StartingLineupSettings } from './settings/StartingLineupSettings';
 import { RosterSettings }         from './settings/RosterSettings';
+import { FaceRevealSettings }     from './settings/FaceRevealSettings';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type GameTypeValue =
   | 'roster' | 'career' | 'scramble'
-  | 'lineup-is-right' | 'box-score' | 'starting-lineup';
+  | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal';
 
 /** All current form values, passed to onApply so the parent can write to Supabase. */
 export interface HostFormValues {
@@ -74,6 +75,14 @@ export interface HostFormValues {
   /** Box Score: filter to a specific team abbreviation; null = any team */
   boxTeam: string | null;
   startingSport: 'nba' | 'nfl';
+  /** Face Reveal: seconds per zoom level */
+  faceRevealTimer: number;
+  /** Face Reveal (NFL): min peak-season yards for offensive players */
+  faceRevealMinYards: number;
+  /** Face Reveal (NBA): min season MPG to include role players (0 = any) */
+  faceRevealMinMpg: number;
+  /** Face Reveal (NFL): 'known' = curated allowlist only; 'all' = all positions */
+  faceRevealDefenseMode: 'known' | 'all';
 }
 
 interface Props {
@@ -109,6 +118,10 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editBoxMaxYear,     setEditBoxMaxYear]     = useState(2024);
   const [editBoxTeam,        setEditBoxTeam]        = useState<string | null>(null);
   const [editStartingSport,  setEditStartingSport]  = useState<'nba' | 'nfl'>('nfl');
+  const [editFaceRevealTimer,       setEditFaceRevealTimer]       = useState(60);
+  const [editFaceRevealMinYards,    setEditFaceRevealMinYards]    = useState(0);
+  const [editFaceRevealMinMpg,      setEditFaceRevealMinMpg]      = useState(0);
+  const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>('known');
 
   // Sync form state from lobby whenever the settings panel mounts / lobby changes.
   useEffect(() => {
@@ -139,6 +152,10 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditBoxMaxYear(cs.max_year || 2024);
     setEditBoxTeam(cs.team || null);
     setEditStartingSport((cs.sport as 'nba' | 'nfl') || 'nfl');
+    setEditFaceRevealTimer((cs.timer as number) || 60);
+    setEditFaceRevealMinYards((cs.min_yards as number) || 0);
+    setEditFaceRevealMinMpg((cs.min_mpg as number) || 0);
+    setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
     setEditTeam(teamList.find(t => t.abbreviation === lobby.team_abbreviation) || null);
@@ -180,6 +197,10 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       pickTimer: editPickTimer, firstPickerId: editFirstPickerId, boxMinYear: editBoxMinYear,
       boxMaxYear: editBoxMaxYear, boxTeam: editBoxTeam,
       startingSport: editStartingSport,
+      faceRevealTimer: editFaceRevealTimer,
+      faceRevealMinYards: editFaceRevealMinYards,
+      faceRevealMinMpg: editFaceRevealMinMpg,
+      faceRevealDefenseMode: editFaceRevealDefenseMode,
     });
   };
 
@@ -215,6 +236,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
               <option value="roster">★ Roster Challenge</option>
               <option value="career">Career Arc</option>
               <option value="scramble">Name Scramble</option>
+              <option value="face-reveal">Face Reveal</option>
               <option value="lineup-is-right">★ Cap Crunch</option>
               <option value="box-score">Box Score</option>
               <option value="starting-lineup">Starters</option>
@@ -222,6 +244,18 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
           </div>
 
           {/* Game-type-specific settings */}
+          {editGameType === 'face-reveal' && (
+            <FaceRevealSettings
+              sport={editSport} onSportChange={setEditSport}
+              winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
+              careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
+              faceRevealTimer={editFaceRevealTimer} onFaceRevealTimerChange={setEditFaceRevealTimer}
+              minYards={editFaceRevealMinYards} onMinYardsChange={setEditFaceRevealMinYards}
+              minMpg={editFaceRevealMinMpg} onMinMpgChange={setEditFaceRevealMinMpg}
+              defenseMode={editFaceRevealDefenseMode} onDefenseModeChange={setEditFaceRevealDefenseMode}
+            />
+          )}
+
           {editGameType === 'scramble' && (
             <ScrambleSettings
               sport={editSport} onSportChange={setEditSport}

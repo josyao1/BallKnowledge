@@ -33,6 +33,9 @@ import { MultiplayerBoxScoreResultsPage }  from './pages/boxScore/MultiplayerBox
 import { SoloStartingLineupPage }                   from './pages/startingLineup/SoloStartingLineupPage';
 import { MultiplayerStartingLineupPage }            from './pages/startingLineup/MultiplayerStartingLineupPage';
 import { MultiplayerStartingLineupResultsPage }     from './pages/startingLineup/MultiplayerStartingLineupResultsPage';
+import { SoloFaceRevealPage }                   from './pages/faceReveal/SoloFaceRevealPage';
+import { MultiplayerFaceRevealPage }            from './pages/faceReveal/MultiplayerFaceRevealPage';
+import { MultiplayerFaceRevealResultsPage }     from './pages/faceReveal/MultiplayerFaceRevealResultsPage';
 
 function App() {
   return (
@@ -78,6 +81,10 @@ function App() {
         <Route path="/starting-lineup" element={<SoloStartingLineupPage />} />
         <Route path="/lobby/:code/starting-lineup" element={<MultiplayerStartingLineupPage />} />
         <Route path="/lobby/:code/starting-lineup/results" element={<MultiplayerStartingLineupResultsPage />} />
+        {/* Face Reveal routes */}
+        <Route path="/face-reveal" element={<SoloFaceRevealPage />} />
+        <Route path="/lobby/:code/face-reveal" element={<MultiplayerFaceRevealPage />} />
+        <Route path="/lobby/:code/face-reveal/results" element={<MultiplayerFaceRevealResultsPage />} />
       </Routes>
     </BrowserRouter>
   );

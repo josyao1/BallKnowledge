@@ -1,9 +1,8 @@
 /**
- * MultiplayerNameScrambleResultsPage.tsx — Final results for Name Scramble mode.
+ * MultiplayerFaceRevealResultsPage.tsx — Final results for Face Reveal mode.
  *
- * Shows match winner, final standings with pts bar, and round history.
- * Each round in history shows the scrambled name → answer, per-player
- * position badge and pts earned.
+ * Shows match winner, final standings, and round history (player name per round
+ * with pts awarded: 3 for first correct, 1 for others).
  */
 
 import { useEffect, useState } from 'react';
@@ -12,18 +11,19 @@ import { motion } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, resetMatchForPlayAgain } from '../../services/lobby';
+import { ZoomedHeadshot } from '../../components/faceReveal/ZoomedHeadshot';
 
 interface RoundSummary {
-  scrambledName: string;
-  answer: string;
+  playerName: string;
+  playerId: string | number;
   round: number;
   pts: Record<string, number>;
   finishedAt: Record<string, string | null>;
 }
 
-const POSITION_BADGES = ['🥇', '🥈', '🥉', '4th'];
+const COLOR = '#06b6d4';
 
-export function MultiplayerNameScrambleResultsPage() {
+export function MultiplayerFaceRevealResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const location = useLocation();
@@ -35,7 +35,6 @@ export function MultiplayerNameScrambleResultsPage() {
 
   useLobbySubscription(lobby?.id || null);
 
-  // Load lobby if not in store (page refresh)
   useEffect(() => {
     if (!code) { navigate('/'); return; }
     if (lobby) return;
@@ -51,16 +50,15 @@ export function MultiplayerNameScrambleResultsPage() {
 
   const careerState = lobby?.career_state as any;
   const winTarget = careerState?.win_target || 20;
+  const sport = careerState?.sport || 'nba';
   const sortedPlayers = [...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   const matchWinner = sortedPlayers[0];
   const isWinner = matchWinner?.player_id === currentPlayerId;
 
-  // Non-host: follow when host resets to waiting (Play Again)
+  // Non-host: follow host back to lobby when play again is clicked.
   useEffect(() => {
     if (!lobby || isHost) return;
-    if (lobby.status === 'waiting') {
-      navigate(`/lobby/${code}`);
-    }
+    if (lobby.status === 'waiting') navigate(`/lobby/${code}`);
   }, [lobby?.status]);
 
   const handlePlayAgain = async () => {
@@ -91,7 +89,7 @@ export function MultiplayerNameScrambleResultsPage() {
       {/* Header */}
       <header className="text-center mb-8 mt-4">
         <div className="sports-font text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
-        <h1 className="retro-title text-4xl md:text-5xl text-[#3b82f6]">Name Scramble</h1>
+        <h1 className="retro-title text-4xl md:text-5xl" style={{ color: COLOR }}>Face Reveal</h1>
         <div className="sports-font text-[10px] text-[#555] tracking-widest mt-1 uppercase">
           {lobby.sport.toUpperCase()} · First to {winTarget} pts
         </div>
@@ -104,19 +102,16 @@ export function MultiplayerNameScrambleResultsPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md mx-auto w-full mb-8"
         >
-          <div className={`p-6 rounded-lg text-center border-2 ${
-            isWinner
-              ? 'bg-[#3b82f6]/10 border-[#3b82f6]'
-              : 'bg-[#1a1a1a] border-[#333]'
-          }`}>
+          <div
+            className={`p-6 rounded-lg text-center border-2 ${isWinner ? '' : 'bg-[#1a1a1a] border-[#333]'}`}
+            style={isWinner ? { backgroundColor: `${COLOR}18`, borderColor: COLOR } : {}}
+          >
             <div className="text-4xl mb-2">{isWinner ? '🏆' : '🎯'}</div>
             <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-1">
               {isWinner ? 'You won the match!' : 'Match Winner'}
             </div>
             <div className="retro-title text-3xl text-[#d4af37]">{matchWinner.player_name}</div>
-            <div className="sports-font text-sm text-[#888] mt-1">
-              {matchWinner.points ?? 0} pts
-            </div>
+            <div className="sports-font text-sm text-[#888] mt-1">{matchWinner.points ?? 0} pts</div>
           </div>
         </motion.div>
       )}
@@ -145,28 +140,27 @@ export function MultiplayerNameScrambleResultsPage() {
                   transition={{ delay: 0.1 + rank * 0.05 }}
                   className={`p-3 rounded-lg ${
                     rank === 0
-                      ? 'bg-[#3b82f6]/10 border border-[#3b82f6]/40'
+                      ? 'border'
                       : isMe
                         ? 'bg-white/5 border border-white/20'
                         : 'bg-black/20'
                   }`}
+                  style={rank === 0 ? { backgroundColor: `${COLOR}10`, borderColor: `${COLOR}50` } : {}}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className={`retro-title text-lg w-8 text-center ${
-                        rank === 0 ? 'text-[#d4af37]' : 'text-[#555]'
-                      }`}>
+                      <span className={`retro-title text-lg w-8 text-center ${rank === 0 ? 'text-[#d4af37]' : 'text-[#555]'}`}>
                         #{rank + 1}
                       </span>
                       <span className="sports-font text-sm text-white/90">{player.player_name}</span>
                       {isMe && <span className="text-[10px] text-white/40 sports-font">(you)</span>}
                     </div>
-                    <span className="retro-title text-xl text-[#3b82f6]">{pts}</span>
+                    <span className="retro-title text-xl" style={{ color: COLOR }}>{pts}</span>
                   </div>
                   <div className="h-2 bg-[#222] rounded-full overflow-hidden ml-10">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa] transition-all duration-700"
-                      style={{ width: `${pct}%` }}
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: `linear-gradient(to right, ${COLOR}, #67e8f9)` }}
                     />
                   </div>
                 </motion.div>
@@ -190,16 +184,11 @@ export function MultiplayerNameScrambleResultsPage() {
             </div>
             <div className="space-y-3">
               {roundHistory.map((round) => {
-                // Sort players for this round: by pts desc, then finished_at asc
-                const sortedForRound = [...players].sort((a, b) => {
-                  const diff = (round.pts[b.player_id] ?? 0) - (round.pts[a.player_id] ?? 0);
-                  if (diff !== 0) return diff;
-                  const aT = round.finishedAt[a.player_id] ? new Date(round.finishedAt[a.player_id]!).getTime() : Infinity;
-                  const bT = round.finishedAt[b.player_id] ? new Date(round.finishedAt[b.player_id]!).getTime() : Infinity;
-                  return aT - bT;
-                });
+                const sortedForRound = [...players].sort((a, b) =>
+                  (round.pts[b.player_id] ?? 0) - (round.pts[a.player_id] ?? 0)
+                );
                 const finisherMs = players
-                  .map(p => round.finishedAt[p.player_id])
+                  .map(p => round.finishedAt?.[p.player_id])
                   .filter((t): t is string => !!t)
                   .map(t => new Date(t).getTime());
                 const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
@@ -207,36 +196,35 @@ export function MultiplayerNameScrambleResultsPage() {
                 return (
                   <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
                     {/* Round header */}
-                    <div className="px-3 py-2 bg-[#111] space-y-0.5">
-                      <div className="flex items-center justify-between">
-                        <span className="sports-font text-[10px] text-[#666] tracking-wider uppercase">
-                          Round {round.round}
-                        </span>
-                        <span className="retro-title text-xs text-[#3b82f6]">{round.scrambledName}</span>
+                    <div className="px-3 py-2 bg-[#111] flex items-center gap-3">
+                      <div className="rounded-lg overflow-hidden flex-shrink-0">
+                        <ZoomedHeadshot playerId={round.playerId} sport={sport} zoomLevel={0} size={40} />
                       </div>
-                      <div className="flex items-center justify-end">
-                        <span className="sports-font text-xs text-[var(--vintage-cream)]">→ {round.answer}</span>
+                      <div>
+                        <div className="sports-font text-[10px] text-[#666] tracking-wider uppercase">
+                          Round {round.round}
+                        </div>
+                        <div className="retro-title text-sm text-[var(--vintage-cream)]">{round.playerName}</div>
                       </div>
                     </div>
                     {/* Player rows */}
                     <div className="divide-y divide-[#222]">
-                      {sortedForRound.map((player, rank) => {
+                      {sortedForRound.map((player) => {
                         const pts = round.pts[player.player_id] ?? 0;
                         const isMe = player.player_id === currentPlayerId;
-                        const gotIt = pts > 0;
-                        const badge = gotIt ? (POSITION_BADGES[rank] ?? `${rank + 1}th`) : '—';
-                        const finMs = round.finishedAt[player.player_id]
+                        const badge = pts === 3 ? '🥇' : pts === 1 ? '✓' : '—';
+                        const finMs = round.finishedAt?.[player.player_id]
                           ? new Date(round.finishedAt[player.player_id]!).getTime()
                           : null;
                         const offsetMs = finMs !== null && firstMs !== null ? finMs - firstMs : null;
                         return (
                           <div
                             key={player.player_id}
-                            className={`flex items-center justify-between px-3 py-2 ${isMe ? 'bg-[#3b82f6]/5' : ''}`}
+                            className={`flex items-center justify-between px-3 py-2 ${isMe ? 'bg-[#06b6d4]/5' : ''}`}
                           >
                             <div className="flex items-center gap-2">
                               <span className="text-sm w-6 text-center">{badge}</span>
-                              <span className={`sports-font text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
+                              <span className={`sports-font text-xs ${pts > 0 ? 'text-white/80' : 'text-white/30'}`}>
                                 {player.player_name}
                                 {isMe && <span className="text-white/30 ml-1">(you)</span>}
                               </span>
@@ -246,8 +234,8 @@ export function MultiplayerNameScrambleResultsPage() {
                                 </span>
                               )}
                             </div>
-                            <span className={`retro-title text-base ${gotIt ? 'text-[#d4af37]' : 'text-[#444]'}`}>
-                              {gotIt ? `+${pts}` : '—'}
+                            <span className={`retro-title text-base ${pts > 0 ? 'text-[#d4af37]' : 'text-[#444]'}`}>
+                              {pts > 0 ? `+${pts}` : '—'}
                             </span>
                           </div>
                         );
@@ -272,7 +260,8 @@ export function MultiplayerNameScrambleResultsPage() {
           <button
             onClick={handlePlayAgain}
             disabled={isResetting}
-            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_0_#1d4ed8] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all text-[#111] shadow-[0_4px_0_#0e7490] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            style={{ background: `linear-gradient(to bottom, ${COLOR}, #0891b2)` }}
           >
             {isResetting ? 'Starting...' : 'Play Again'}
           </button>

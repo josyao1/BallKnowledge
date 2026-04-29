@@ -16,6 +16,9 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export function useLobbySubscription(lobbyId: string | null) {
   const channelRef = useRef<RealtimeChannel | null>(null);
+  // Monotonic counter: prevents an older in-flight fetch from overwriting a
+  // newer one when two lobby_players events arrive in rapid succession.
+  const fetchSeqRef = useRef(0);
   const { setLobby, setPlayers, updatePlayer, removePlayer } = useLobbyStore();
 
   useEffect(() => {
@@ -56,6 +59,8 @@ export function useLobbySubscription(lobbyId: string | null) {
           filter: `lobby_id=eq.${lobbyId}`,
         },
         async (payload) => {
+          // Stamp this fetch; discard the result if a newer fetch completes first.
+          const mySeq = ++fetchSeqRef.current;
           // Always refresh all players to ensure consistency
           // This handles batch updates (like reset) better than individual updates
           const { data } = await supabase!
@@ -63,7 +68,9 @@ export function useLobbySubscription(lobbyId: string | null) {
             .select()
             .eq('lobby_id', lobbyId)
             .order('joined_at', { ascending: true });
-          if (data) setPlayers(data as LobbyPlayer[]);
+          if (data && mySeq === fetchSeqRef.current) {
+            setPlayers(data as LobbyPlayer[]);
+          }
 
           // Also handle deletion specifically
           if (payload.eventType === 'DELETE') {

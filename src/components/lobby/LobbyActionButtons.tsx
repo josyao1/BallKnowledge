@@ -37,12 +37,13 @@ interface Props {
   onLineupStart: () => void;
   onBoxScoreStart: () => void;
   onStartingLineupStart: () => void;
+  onFaceRevealStart: () => void;
 }
 
 export function LobbyActionButtons({
   lobby, players, currentPlayer, isHost, isLoadingRoster, allReady,
   onReadyToggle, onManualStart, onCareerStart, onScrambleStart,
-  onLineupStart, onBoxScoreStart, onStartingLineupStart,
+  onLineupStart, onBoxScoreStart, onStartingLineupStart, onFaceRevealStart,
 }: Props) {
   const readyCount = players.filter(p => p.is_ready).length;
   const allPlayersReady = players.every(p => p.is_ready);
@@ -84,6 +85,13 @@ export function LobbyActionButtons({
       loadingLabel: 'Loading...',
       btnClass: 'bg-gradient-to-b from-[#ea580c] to-[#c2410c] text-white shadow-[0_4px_0_#9a3412]',
       forceHoverClass: 'hover:border-[#ea580c] hover:text-orange-400',
+    },
+    'face-reveal': {
+      onStart: onFaceRevealStart,
+      label: 'Start Face Reveal',
+      loadingLabel: 'Loading...',
+      btnClass: 'bg-gradient-to-b from-[#06b6d4] to-[#0891b2] text-[#111] shadow-[0_4px_0_#0e7490]',
+      forceHoverClass: 'hover:border-[#06b6d4] hover:text-[#06b6d4]',
     },
   };
 
@@ -238,6 +246,15 @@ function HowToPlay({ gameType }: { gameType: string }) {
       <p>Race to type the correct team name. Wrong guesses lock you out until everyone else is also wrong, then everyone unlocks.</p>
       <p>Fewest wrong answers wins each round. Ties broken by who guessed first.</p>
       <p className="text-[#16a34a]/70">🏆 First to the win target takes the match.</p>
+    </div>
+  );
+
+  if (gameType === 'face-reveal') return (
+    <div className={prose}>
+      <p>A player's headshot is shown heavily zoomed in. After the timer runs out, it zooms out — and again.</p>
+      <p>Guess the player at any time. The first correct guess scores 3 pts; everyone else who gets it scores 1 pt.</p>
+      <p>Guess wrong? Keep trying — there's no penalty for wrong guesses.</p>
+      <p className="text-[#06b6d4]/70">🏆 First to the win target takes the match.</p>
     </div>
   );
 

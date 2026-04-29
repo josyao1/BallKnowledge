@@ -30,9 +30,10 @@ Supabase is only needed for multiplayer and leaderboard features.
 
 - **Roster Royale** — Name every player on a team's roster for a given season. Solo or multiplayer.
 
-- **Career Arc** — Identify a player from their season-by-season stat line. NBA and NFL supported.
-
-- **Name Scramble** — Unscramble an anagrammed player name against a timer. Solo or multiplayer race-to-answer.
+- **Guess the Player** — Three sub-modes under one card on the home screen:
+  - **Career Arc** — Identify a player from their season-by-season stat line. NBA and NFL supported.
+  - **Name Scramble** — Unscramble an anagrammed player name against a timer. Solo or multiplayer race-to-answer.
+  - **Face Reveal** — A player's headshot is shown heavily zoomed in. It zooms out in 4 levels (zoom 1–3, then initials + longest-tenured team logo). Guess at any time. First correct = 3 pts; others who get it = 1 pt. Configurable era filter, MPG (NBA) / yards (NFL) threshold, and timer. Solo and multiplayer.
 
 - **Starting Lineup** — See an NFL or NBA formation with players encoded as college logos, jersey numbers, or draft pick numbers — guess the team. Bonus round to name individual players.
 

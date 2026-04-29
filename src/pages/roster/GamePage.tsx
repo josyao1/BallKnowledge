@@ -18,6 +18,7 @@ import { PlayerInput } from '../../components/game/PlayerInput';
 import { GuessedPlayersList } from '../../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../../components/game/TeamDisplay';
 import { LiveScoreboard } from '../../components/multiplayer/LiveScoreboard';
+import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../../services/roster';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 import { getTeammateGuessedPlayers, TEAM_COLORS } from '../../utils/teamUtils';
 
@@ -49,10 +50,13 @@ export function GamePage() {
     hideResultsDuringGame,
     divisionTeams,
     sport,
+    timerDuration,
+    gameMode,
     startGame,
     endGame,
     processGuesses,
     tick,
+    setGameConfig,
   } = useGameStore();
 
   const lobbyDivisionConference = useLobbyStore((state) => state.lobby?.division_conference);
@@ -123,6 +127,43 @@ export function GamePage() {
   }, [status, tick]);
 
   useEffect(() => { if (timeRemaining <= 0 && status === 'playing') endGame(); }, [timeRemaining, status, endGame]);
+
+  // ── 0-roster recovery: if the game starts but currentRoster is empty, re-fetch ──
+  // Can happen when a network hiccup or race condition causes the roster fetch to
+  // return [] before setGameConfig is called. We detect this 1s into gameplay and
+  // retry the fetch once. If it succeeds the game continues normally; on failure
+  // the game still runs (players just have no targets to match).
+  const hasRetriedRosterRef = useRef(false);
+  useEffect(() => {
+    if (status !== 'playing') return;
+    if (currentRoster.length > 0) return;
+    if (hasRetriedRosterRef.current) return;
+    if (!selectedTeam || !selectedSeason) return;
+
+    const timer = setTimeout(async () => {
+      if (currentRoster.length > 0 || hasRetriedRosterRef.current) return;
+      hasRetriedRosterRef.current = true;
+      try {
+        let rosterPlayers: any[] = [];
+        let leaguePlayers: any[] = [];
+        if (sport === 'nba') {
+          const result = await fetchTeamRoster(selectedTeam.abbreviation, selectedSeason);
+          rosterPlayers = result.players;
+          leaguePlayers = await fetchStaticSeasonPlayers(selectedSeason) ?? [];
+        } else {
+          const year = parseInt(selectedSeason);
+          rosterPlayers = await fetchStaticNFLRoster(selectedTeam.abbreviation, year) ?? [];
+          leaguePlayers = await fetchStaticNFLSeasonPlayers(year) ?? [];
+        }
+        if (rosterPlayers.length > 0) {
+          setGameConfig(sport, selectedTeam, selectedSeason, gameMode, timerDuration, rosterPlayers, leaguePlayers, hideResultsDuringGame);
+        }
+      } catch {
+        // Silently swallow — the game remains playable, just with an empty roster
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [status, currentRoster.length, selectedTeam, selectedSeason, sport]);
 
   useEffect(() => {
     if (status === 'ended') {

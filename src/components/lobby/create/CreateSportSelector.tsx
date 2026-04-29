@@ -5,7 +5,7 @@
 
 import type { Sport } from '../../../types';
 
-type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup';
+type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal';
 
 interface Props {
   sport: Sport;

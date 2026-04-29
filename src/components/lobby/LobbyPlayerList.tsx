@@ -63,8 +63,8 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
   };
 
   // Games that don't use team assignment or multipliers
-  const isTeamlessMode = ['career', 'scramble', 'box-score', 'starting-lineup'].includes(lobby.game_type);
-  const isMultiplierlessMode = ['career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup'].includes(lobby.game_type);
+  const isTeamlessMode = ['career', 'scramble', 'box-score', 'starting-lineup', 'face-reveal'].includes(lobby.game_type);
+  const isMultiplierlessMode = ['career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal'].includes(lobby.game_type);
 
   return (
     <motion.div

@@ -20,8 +20,7 @@ import { SettingsModal } from '../components/home/SettingsModal';
 import { AboutModal } from '../components/home/AboutModal';
 import { GameFanArc } from '../components/home/GameFanArc';
 import { RosterRoyaleSetup } from '../components/home/RosterRoyaleSetup';
-import { CareerArcSetup } from '../components/home/CareerArcSetup';
-import { ScrambleSetup } from '../components/home/ScrambleSetup';
+import { GuessPlayerSetup } from '../components/home/GuessPlayerSetup';
 import { RouletteOverlay } from '../components/home/RouletteOverlay';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
@@ -37,9 +36,6 @@ export function HomePage() {
   const { sport, timerDuration, hideResultsDuringGame, setSport } = useSettingsStore();
 
   // ── Filter state ──────────────────────────────────────────────────────────
-  const [careerActiveYear,   setCareerActiveYear]   = useState<number | null>(null);
-  const [scrambleActiveYear, setScrambleActiveYear] = useState<number | null>(null);
-
   // Box Score filters (NFL only)
   const [boxScoreMinYear, setBoxScoreMinYear] = useState<number>(2015);
   const [boxScoreMaxYear, setBoxScoreMaxYear] = useState<number>(2024);
@@ -336,22 +332,11 @@ export function HomePage() {
               />
             )}
 
-            {/* ── Career Arc setup panel ── */}
-            {isDealt && selectedCard === 'career' && (
-              <CareerArcSetup
+            {/* ── Guess the Player setup panel ── */}
+            {isDealt && (selectedCard === 'guess-player' || selectedCard === 'guess-player-lobby') && (
+              <GuessPlayerSetup
                 sport={sport}
-                careerActiveYear={careerActiveYear}
-                setCareerActiveYear={setCareerActiveYear}
-                onBack={() => setSelectedCard(null)}
-              />
-            )}
-
-            {/* ── Name Scramble setup panel ── */}
-            {isDealt && selectedCard === 'scramble' && (
-              <ScrambleSetup
-                sport={sport}
-                scrambleActiveYear={scrambleActiveYear}
-                setScrambleActiveYear={setScrambleActiveYear}
+                mode={selectedCard === 'guess-player-lobby' ? 'lobby' : 'solo'}
                 onBack={() => setSelectedCard(null)}
               />
             )}
