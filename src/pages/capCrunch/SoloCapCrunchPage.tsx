@@ -401,8 +401,8 @@ export function SoloCapCrunchPage() {
                       RANDOM
                     </button>
                     {(selectedSport === 'nba'
-                      ? (['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'] as const)
-                      : (['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp'] as const)
+                      ? (['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'] as const)
+                      : (['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'] as const)
                     ).map((cat) => (
                       <button
                         key={cat}
@@ -986,7 +986,10 @@ export function SoloCapCrunchPage() {
                         <div className="sports-font text-[9px] text-white/40 mt-0.5">
                           {optimalPick.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory!) : 'Career GP') : optimalPick.year} · {optimalPick.team}
                           {optimalPick.college && (
-                            <span className="text-[#3b82f6]/60 ml-1">({optimalPick.college})</span>
+                            <span className="text-[#3b82f6]/60 ml-1">· {optimalPick.college}</span>
+                          )}
+                          {optimalPick.draftRound && (
+                            <span className="text-[#a855f7]/60 ml-1">· {optimalPick.draftRound}</span>
                           )}
                         </div>
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">

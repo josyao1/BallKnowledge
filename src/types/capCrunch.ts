@@ -55,6 +55,13 @@ export type StatCategory =
   | 'reb'    // NBA: rebounds per game
   | 'min'    // NBA: minutes per game
   | 'pra'    // NBA: points + rebounds + assists per game
+  | 'total_pts'  // NBA: season total points (pts × gp)
+  | 'total_reb'  // NBA: season total rebounds (reb × gp)
+  | 'total_ast'  // NBA: season total assists (ast × gp)
+  | 'total_blk'  // NBA: season total blocks (blk × gp)
+  | 'total_3pm'  // NBA: season total 3-pointers made (fg3m × gp)
+  | 'total_ftm'  // NBA: season total free throws made (ftm × gp)
+  | 'total_pf'   // NBA: season total personal fouls (pf × gp)
   | 'passing_yards'  // NFL: passing yards
   | 'passing_tds'    // NFL: passing touchdowns
   | 'interceptions'  // NFL: interceptions thrown (QB)
@@ -63,6 +70,7 @@ export type StatCategory =
   | 'receiving_yards'  // NFL: receiving yards
   | 'receiving_tds'    // NFL: receiving touchdowns
   | 'receptions'       // NFL: receptions (RB/WR/TE)
+  | 'fpts'             // NFL: fantasy points PPR (calculated)
   | 'total_gp'         // NBA/NFL: total career games played for a team (no year selection)
   | 'career_passing_yards'    // NFL: total career passing yards (all teams summed)
   | 'career_passing_tds'      // NFL: total career passing TDs (all teams summed)

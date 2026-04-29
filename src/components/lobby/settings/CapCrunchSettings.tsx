@@ -8,10 +8,13 @@ import type { Sport } from '../../../types';
 
 const LINEUP_STAT_ABBR: Record<string, string> = {
   random: 'RANDOM',
-  pts: 'PTS', ast: 'AST', reb: 'REB', min: 'MIN', pra: 'PRA',
+  pts: 'PTS/G', ast: 'AST/G', reb: 'REB/G', min: 'MIN/G', pra: 'PRA/G',
+  total_pts: 'TOT PTS', total_reb: 'TOT REB', total_ast: 'TOT AST', total_blk: 'TOT BLK',
+  total_3pm: 'TOT 3PM', total_ftm: 'TOT FTM', total_pf: 'TOT PF',
   passing_yards: 'PASS YD', passing_tds: 'PASS TD', interceptions: 'INT',
   rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD',
   receiving_yards: 'REC YD', receiving_tds: 'REC TD', receptions: 'REC',
+  fpts: 'FPTS',
   total_gp: 'TOT GP',
   career_passing_yards:   'CAREER PASS YD',
   career_passing_tds:     'CAREER PASS TD',
@@ -67,8 +70,8 @@ export function CapCrunchSettings({
   blindMode, onBlindModeChange, pickTimer, onPickTimerChange,
   firstPickerId, onFirstPickerIdChange, totalRounds, onTotalRoundsChange, players,
 }: Props) {
-  const nbaCats = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'];
-  const nflCats = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'total_gp'];
+  const nbaCats = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'];
+  const nflCats = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'];
 
   return (
     <>
