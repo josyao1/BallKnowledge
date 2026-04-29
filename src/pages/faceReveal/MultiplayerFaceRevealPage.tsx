@@ -281,7 +281,7 @@ export function MultiplayerFaceRevealPage() {
         zoom_level: (currentZoom + 1) as 1 | 2 | 3 | 4,
         zoom_deadline: nextDeadline,
         skip_votes: [],
-      });
+      }).catch(() => { isZoomAdvancingRef.current = false; });
     } else {
       // Level 4 expired — end the round.
       endRound();
@@ -307,7 +307,7 @@ export function MultiplayerFaceRevealPage() {
       zoom_level: (displayZoom + 1) as 1 | 2 | 3 | 4,
       zoom_deadline: nextDeadline,
       skip_votes: [],
-    });
+    }).catch(() => { isZoomAdvancingRef.current = false; });
   }, [careerState?.skip_votes?.length, players, isHost, displayZoom, lobby?.status]);
 
   // ── Detect new round — reset all local state ──
@@ -405,7 +405,6 @@ export function MultiplayerFaceRevealPage() {
     const currentLobby = lobbyRef.current;
     if (!currentLobby || hasAdvancedRef.current) return;
     hasAdvancedRef.current = true; // set before any await — prevents double-fire
-    console.log('[FaceReveal] endRound fired at', Date.now());
 
     try {
       const winTarget = (currentLobby.career_state as FaceRevealState | null)?.win_target || 20;

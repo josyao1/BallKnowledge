@@ -38,7 +38,7 @@ export function useGameAbandonment({ code, lobbyId, careerState, isHost }: Optio
     if ((careerState as { abandoned?: boolean } | null | undefined)?.abandoned) {
       window.location.href = `/lobby/${code}`;
     }
-  }, [(careerState as { abandoned?: boolean } | null | undefined)?.abandoned, isHost]);
+  }, [(careerState as { abandoned?: boolean } | null | undefined)?.abandoned, isHost, code]);
 
   async function handleEndGame() {
     if (!lobbyId || !code) return;

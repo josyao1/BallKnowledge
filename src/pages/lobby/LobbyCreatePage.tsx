@@ -133,7 +133,7 @@ export function LobbyCreatePage() {
       const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
       const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'face-reveal', 'team', null, null);
       if (lobby) {
-        await updateCareerState(lobby.id, { win_target: 20, career_to: 0, timer: 60, min_yards: 0, defense_mode: 'known', round: 0 });
+        await updateCareerState(lobby.id, { win_target: 20, career_to: 0, timer: 60, min_yards: 0, min_mpg: 0, defense_mode: 'known', round: 0 });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;

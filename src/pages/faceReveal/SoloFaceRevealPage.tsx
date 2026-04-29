@@ -197,12 +197,8 @@ export function SoloFaceRevealPage() {
 
     // Debounce: suppress if called again within 800ms (race-condition guard).
     const now = Date.now();
-    if (now - lastPickTimeRef.current < 800) {
-      console.warn('[FaceReveal] pickNext suppressed — called again within 800ms');
-      return;
-    }
+    if (now - lastPickTimeRef.current < 800) return;
     lastPickTimeRef.current = now;
-    console.log('[FaceReveal] pickNext at', now);
 
     // Avoid repeating recently seen players; reset if we've exhausted the pool.
     let candidates = currentPool.filter(p => !usedIdsRef.current.has(p.player_id));

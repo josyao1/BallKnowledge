@@ -467,7 +467,10 @@ export function LobbyWaitingPage() {
       await startCareerRound(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
       navigate(`/lobby/${code}/face-reveal`);
-    } catch { setIsLoadingRoster(false); }
+    } catch {
+      hasStartedGame.current = false;
+      setIsLoadingRoster(false);
+    }
   };
 
   const handleReroll = useCallback(async () => {
