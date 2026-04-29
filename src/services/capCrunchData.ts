@@ -56,17 +56,17 @@ export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
   UTA: ['UTA', 'UTH'],
   UTH: ['UTA', 'UTH'],
 
-  // Golden State Warriors (GOS was used in older data)
-  GSW: ['GSW', 'GOS'],
-  GOS: ['GSW', 'GOS'],
+  // Golden State Warriors (GOS older data; PHW = Philadelphia Warriors; SFW = San Francisco Warriors)
+  GSW: ['GSW', 'GOS', 'PHW', 'SFW'],
+  GOS: ['GSW', 'GOS', 'PHW', 'SFW'],
 
   // Charlotte — original CHH (1988–2002) shares franchise history with current CHA
   CHA: ['CHA', 'CHH'],
   CHH: ['CHA', 'CHH'],
 
-  // Sacramento Kings (formerly Kansas City Kings, KCK)
-  SAC: ['SAC', 'KCK'],
-  KCK: ['SAC', 'KCK'],
+  // Sacramento Kings (formerly Kansas City Kings KCK, Cincinnati Royals CIN)
+  SAC: ['SAC', 'KCK', 'CIN'],
+  KCK: ['SAC', 'KCK', 'CIN'],
 
   // Philadelphia 76ers (PHL was an older abbreviation)
   PHI: ['PHI', 'PHL'],
@@ -92,6 +92,21 @@ export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
   // Memphis Grizzlies (formerly Vancouver Grizzlies)
   MEM: ['MEM', 'VAN'],
   VAN: ['MEM', 'VAN'],
+
+  // Golden State Warriors historical — Philadelphia Warriors (PHW) and San Francisco Warriors (SFW)
+  PHW: ['GSW', 'GOS', 'PHW', 'SFW'],
+  SFW: ['GSW', 'GOS', 'PHW', 'SFW'],
+
+  // Los Angeles Lakers historical — Minneapolis Lakers (MNL)
+  LAL: ['LAL', 'MNL'],
+  MNL: ['LAL', 'MNL'],
+
+  // Sacramento Kings historical — Cincinnati Royals (CIN)
+  CIN: ['SAC', 'KCK', 'CIN'],
+
+  // Washington Wizards historical — Washington Bullets (WSB)
+  WAS: ['WAS', 'WSB'],
+  WSB: ['WAS', 'WSB'],
 };
 
 // ─── Team lists for random assignment ────────────────────────────────────────
