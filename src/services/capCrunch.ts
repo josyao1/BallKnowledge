@@ -149,16 +149,16 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory): num
       case 'reb': return r(30, 50);    // 5× avg starter ~8 RPG = 40
       case 'min': return r(130, 175);  // 5× avg starter ~34 MPG = 170
       case 'pra': return r(120, 225);  // 5× avg starter ~22+7+5=34 PRA; elite ~45+ PRA
-      case 'total_pts': return r(3500, 7000); // 5× season totals; good scorer ~1200 pts/yr (15 PPG × 80), elite ~2400 (LeBron, Kobe)
+      case 'total_pts': return r(3500, 10000); // 5× season totals; good scorer ~1200 pts/yr (15 PPG × 80), elite ~2400 (LeBron, Kobe)
       case 'total_reb': return r(2000, 4000); // 5× season totals; good big ~700 reb/yr (9 RPG × 78), elite ~1100 (Dwight, Gobert)
-      case 'total_ast': return r(800,  2000); // 5× season totals; good PG ~500 ast/yr (7 APG × 72), elite ~1164 (Stockton '90-91)
+      case 'total_ast': return r(900,  3000); // 5× season totals; good PG ~500 ast/yr (7 APG × 72), elite ~1164 (Stockton '90-91)
       case 'total_blk': return r(200,  700);  // 5× season totals; good blocker ~120 blk/yr (1.5 BPG × 80), elite ~456 (Mark Eaton '85)
       // total_3pm: elite shooter ~200/yr (Curry '15-16: 402); good shooter ~100/yr; role player ~30
-      case 'total_3pm': return r(250,  800);  // 5 picks avg ~100-200 each; Curry '15-16: 402 alone
+      case 'total_3pm': return r(250,  1400);  // 5 picks avg ~100-200 each; Curry '15-16: 402 alone
       // total_ftm: elite FT shooter ~700/yr (Harden '18-19: 702); good player ~300/yr; role ~100
-      case 'total_ftm': return r(500,  2000); // 5 picks avg ~300 each = 1500 mid-range
+      case 'total_ftm': return r(500,  2100); // 5 picks avg ~300 each = 1500 mid-range
       // total_pf: heavy fouler ~300/yr (3.8 PF/G × 80); guard ~150/yr; 5 picks avg ~220 = 1100
-      case 'total_pf':  return r(600,  1400); // 5 picks avg ~220 each = 1100 mid-range
+      case 'total_pf':  return r(600,  1500); // 5 picks avg ~220 each = 1100 mid-range
       case 'total_gp': return r(700, 2000); // 5 picks of career GP with one team; franchise guy ~300-500+ GP
       default: return 100;
     }
