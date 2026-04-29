@@ -12,11 +12,19 @@ export function fmt(val: number): string {
 
 export function getCategoryAbbr(category: StatCategory): string {
   switch (category) {
-    case 'pts': return 'PTS';
-    case 'ast': return 'AST';
-    case 'reb': return 'REB';
-    case 'min': return 'MIN';
-    case 'pra': return 'PRA';
+    case 'pts': return 'PTS/G';
+    case 'ast': return 'AST/G';
+    case 'reb': return 'REB/G';
+    case 'min': return 'MIN/G';
+    case 'pra': return 'PRA/G';
+    case 'total_pts': return 'TOT PTS';
+    case 'total_reb': return 'TOT REB';
+    case 'total_ast': return 'TOT AST';
+    case 'total_blk': return 'TOT BLK';
+    case 'total_3pm': return 'TOT 3PM';
+    case 'total_ftm': return 'TOT FTM';
+    case 'total_pf':  return 'TOT PF';
+    case 'fpts': return 'FPTS';
     case 'passing_yards': return 'PASS YD';
     case 'passing_tds': return 'PASS TD';
     case 'interceptions': return 'INT';

@@ -366,7 +366,7 @@ export function LobbyWaitingPage() {
       const sport = lobby.sport as 'nba' | 'nfl';
       const careerTo: number = cs.career_to || 0;
       const timerSecs: number = cs.timer || 60;
-      const winTarget: number = cs.win_target || 20;
+      const winTarget: number = cs.win_target || 30;
       const minYards: number    = cs.min_yards || 0;
       const minMpg: number      = cs.min_mpg   || 0;
       const defenseMode: string = cs.defense_mode || 'known';

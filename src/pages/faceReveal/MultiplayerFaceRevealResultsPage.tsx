@@ -49,7 +49,7 @@ export function MultiplayerFaceRevealResultsPage() {
   }, []);
 
   const careerState = lobby?.career_state as any;
-  const winTarget = careerState?.win_target || 20;
+  const winTarget = careerState?.win_target || 30;
   const sport = careerState?.sport || 'nba';
   const sortedPlayers = [...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   const matchWinner = sortedPlayers[0];
@@ -65,7 +65,7 @@ export function MultiplayerFaceRevealResultsPage() {
     if (!lobby || !isHost) return;
     setIsResetting(true);
     const cs = (lobby.career_state as any) || {};
-    await resetMatchForPlayAgain(lobby.id, cs.win_target || 20, 0, cs.career_to || 0);
+    await resetMatchForPlayAgain(lobby.id, cs.win_target || 30, 0, cs.career_to || 0);
     setLobby({ ...lobby, status: 'waiting' });
     navigate(`/lobby/${code}`);
   };

@@ -111,7 +111,7 @@ export function CapCrunchPickPanel({
                 <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
               )}
               {searchResults.length > 0 && (
-                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                <div className="space-y-1.5 max-h-64 overflow-y-auto overscroll-contain">
                   {searchResults.map((result, idx) => {
                     const alreadyUsed = usedPlayerNames.has(result.playerName);
                     const taken = lockedPlayerNames.has(result.playerName);
@@ -186,7 +186,7 @@ export function CapCrunchPickPanel({
               {loadingYears ? (
                 <p className="text-white/60 text-sm">Loading years...</p>
               ) : availableYears.length > 0 ? (
-                <div className="space-y-1.5 overflow-y-auto max-h-48 md:max-h-64">
+                <div className="space-y-1.5 overflow-y-auto overscroll-contain max-h-48 md:max-h-64">
                   {availableYears.map((year) => (
                     <button
                       key={year}

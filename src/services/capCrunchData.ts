@@ -56,17 +56,17 @@ export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
   UTA: ['UTA', 'UTH'],
   UTH: ['UTA', 'UTH'],
 
-  // Golden State Warriors (GOS was used in older data)
-  GSW: ['GSW', 'GOS'],
-  GOS: ['GSW', 'GOS'],
+  // Golden State Warriors (GOS older data; PHW = Philadelphia Warriors; SFW = San Francisco Warriors)
+  GSW: ['GSW', 'GOS', 'PHW', 'SFW'],
+  GOS: ['GSW', 'GOS', 'PHW', 'SFW'],
 
   // Charlotte — original CHH (1988–2002) shares franchise history with current CHA
   CHA: ['CHA', 'CHH'],
   CHH: ['CHA', 'CHH'],
 
-  // Sacramento Kings (formerly Kansas City Kings, KCK)
-  SAC: ['SAC', 'KCK'],
-  KCK: ['SAC', 'KCK'],
+  // Sacramento Kings (formerly Kansas City Kings KCK, Cincinnati Royals CIN)
+  SAC: ['SAC', 'KCK', 'CIN'],
+  KCK: ['SAC', 'KCK', 'CIN'],
 
   // Philadelphia 76ers (PHL was an older abbreviation)
   PHI: ['PHI', 'PHL'],
@@ -92,6 +92,21 @@ export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
   // Memphis Grizzlies (formerly Vancouver Grizzlies)
   MEM: ['MEM', 'VAN'],
   VAN: ['MEM', 'VAN'],
+
+  // Golden State Warriors historical — Philadelphia Warriors (PHW) and San Francisco Warriors (SFW)
+  PHW: ['GSW', 'GOS', 'PHW', 'SFW'],
+  SFW: ['GSW', 'GOS', 'PHW', 'SFW'],
+
+  // Los Angeles Lakers historical — Minneapolis Lakers (MNL)
+  LAL: ['LAL', 'MNL'],
+  MNL: ['LAL', 'MNL'],
+
+  // Sacramento Kings historical — Cincinnati Royals (CIN)
+  CIN: ['SAC', 'KCK', 'CIN'],
+
+  // Washington Wizards historical — Washington Bullets (WSB)
+  WAS: ['WAS', 'WSB'],
+  WSB: ['WAS', 'WSB'],
 };
 
 // ─── Team lists for random assignment ────────────────────────────────────────
@@ -124,6 +139,19 @@ export const NFL_DIVISIONS: Record<string, string[]> = {
   'NFC North': ['GB',  'MIN', 'DET', 'CHI'],
   'NFC South': ['NO',  'CAR', 'TB',  'ATL'],
   'NFC West':  ['ARI', 'LAR', 'SF',  'SEA'],
+};
+
+// ─── NBA divisions ───────────────────────────────────────────────────────────
+// Uses standard current abbreviations. Historical aliases (CHH→CHA, SEA→OKC,
+// NJN→BKN, NOH/NOK→NOP, VAN→MEM) are resolved by NBA_FRANCHISE_ALIASES before
+// the division lookup in capCrunch.ts.
+export const NBA_DIVISIONS: Record<string, string[]> = {
+  'Atlantic':  ['BOS', 'BKN', 'NYK', 'PHI', 'TOR'],
+  'Central':   ['CHI', 'CLE', 'DET', 'IND', 'MIL'],
+  'Southeast': ['ATL', 'CHA', 'MIA', 'ORL', 'WAS'],
+  'Northwest': ['DEN', 'MIN', 'OKC', 'POR', 'UTA'],
+  'Pacific':   ['GSW', 'LAC', 'LAL', 'PHX', 'SAC'],
+  'Southwest': ['DAL', 'HOU', 'MEM', 'NOP', 'SAS'],
 };
 
 // ─── NBA conference team sets ────────────────────────────────────────────────
@@ -222,11 +250,18 @@ export const CONFERENCE_LOGOS: Record<string, string> = {
 
 // ─── Stat labels ──────────────────────────────────────────────────────────────
 export const STAT_LABELS: Record<StatCategory, string> = {
-  pts: 'Points',
-  ast: 'Assists',
-  reb: 'Rebounds',
-  min: 'Minutes Played',
-  pra: 'Points + Rebounds + Assists',
+  pts: 'Points (avg)',
+  ast: 'Assists (avg)',
+  reb: 'Rebounds (avg)',
+  min: 'Minutes (avg)',
+  pra: 'PTS + REB + AST (avg)',
+  total_pts: 'Total Points',
+  total_reb: 'Total Rebounds',
+  total_ast: 'Total Assists',
+  total_blk: 'Total Blocks',
+  total_3pm: 'Total 3-Pointers Made',
+  total_ftm: 'Total Free Throws Made',
+  total_pf:  'Total Personal Fouls',
   passing_yards: 'Passing Yards',
   passing_tds: 'Passing Touchdowns',
   interceptions: 'Interceptions Thrown',
@@ -235,6 +270,7 @@ export const STAT_LABELS: Record<StatCategory, string> = {
   receiving_yards: 'Receiving Yards',
   receiving_tds: 'Receiving Touchdowns',
   receptions: 'Receptions',
+  fpts: 'Fantasy Points (PPR)',
   total_gp: 'Total Games Played',
   career_passing_yards:   'Career Passing Yards',
   career_passing_tds:     'Career Passing Touchdowns',
@@ -251,6 +287,7 @@ export const NFL_STAT_WEIGHTS: Array<{ category: StatCategory; weight: number }>
   { category: 'passing_yards',   weight: 1 },
   { category: 'passing_tds',     weight: 1 },
   { category: 'interceptions',   weight: 1 },
+  { category: 'fpts',            weight: 2 }, // fantasy points: broad skill-position coverage
   { category: 'rushing_yards',   weight: 2 },
   { category: 'rushing_tds',     weight: 2 },
   { category: 'receiving_yards', weight: 2 },
@@ -266,4 +303,4 @@ export const NFL_STAT_WEIGHTS: Array<{ category: StatCategory; weight: number }>
 ];
 
 // ─── NBA stat categories ──────────────────────────────────────────────────────
-export const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp'];
+export const NBA_STAT_CATEGORIES: StatCategory[] = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'];

@@ -9,8 +9,25 @@ import { motion } from 'framer-motion';
 import { RevealingScore } from './RevealingScore';
 import { fmt, getCategoryAbbr } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
+import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 import type { OptimalPick } from '../../services/capCrunch';
+
+function draftLabel(code: string): string {
+  if (code === 'R1')  return '1st Round';
+  if (code === 'R2')  return '2nd Round';
+  if (code === 'R23') return '2nd–3rd Round';
+  if (code === 'R47') return '4th–7th Round';
+  return code;
+}
+
+function formatPickTeam(team: string): string {
+  if (isDivisionDraftRound(team)) {
+    const { division, draftRound } = parseDivisionDraftRound(team);
+    return `${division} · ${draftLabel(draftRound)}`;
+  }
+  return team;
+}
 
 const PICK_COLORS = ['#818cf8', '#34d399', '#fb923c', '#f472b6', '#60a5fa'];
 
@@ -119,11 +136,23 @@ export function CapCrunchResultCard({
                     <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
                     {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
                   </div>
-                  <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                  <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
                   {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
                   {isNotOnTeam && (
                     <span className="block text-[10px] text-orange-400/60">
-                      {selected.actualCollege && selected.actualNflConf ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}` : selected.actualCollege ? `went to ${selected.actualCollege}` : selected.actualNflConf ? `in ${selected.actualNflConf}` : selected.actualTeam ? `played for ${selected.actualTeam}` : "didn't qualify"}
+                      {selected.actualCollege && selected.actualNflConf
+                        ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
+                        : selected.actualCollege
+                        ? `went to ${selected.actualCollege}`
+                        : selected.actualNflConf && selected.actualDraftRound
+                        ? `in ${selected.actualNflConf} / drafted in ${selected.actualDraftRound}`
+                        : selected.actualNflConf
+                        ? `in ${selected.actualNflConf}`
+                        : selected.actualDraftRound
+                        ? `drafted in ${selected.actualDraftRound}`
+                        : selected.actualTeam
+                        ? `played for ${selected.actualTeam}`
+                        : "didn't qualify"}
                     </span>
                   )}
                 </div>
@@ -194,6 +223,8 @@ export function CapCrunchResultCard({
                 <span className="text-xs text-white/80 font-medium">{opt!.playerName}</span>
                 <span className="text-[10px] text-white/35 ml-2">
                   {opt!.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory) : 'Career GP') : opt!.year} · {opt!.team}
+                  {opt!.college ? ` · ${opt!.college}` : ''}
+                  {opt!.draftRound ? ` · ${opt!.draftRound}` : ''}
                 </span>
                 <span className="block text-[10px] text-emerald-400/70 mt-0.5">
                   Would finish: {fmt(wouldFinishAt)} / {targetCap}

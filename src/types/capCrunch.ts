@@ -31,8 +31,9 @@ export interface SelectedPlayer {
   isBust?: boolean;       // true if this pick pushed over the cap — counts as 0, game continues
   neverOnTeam?: boolean;  // true if the player was never on the assigned team (total_gp / career stats only)
   actualTeam?: string;    // the team the player actually played for that year (shown when neverOnTeam due to wrong NFL team)
-  actualNflConf?: string; // the NFL conf the player was actually in (shown when neverOnTeam due to wrong NFL conf)
-  actualCollege?: string; // the player's college(s) from bio (shown when neverOnTeam due to wrong college conf)
+  actualNflConf?: string;    // the NFL conf / division the player was actually in
+  actualCollege?: string;    // the player's college(s) from bio (shown when neverOnTeam due to wrong college conf)
+  actualDraftRound?: string; // the round label ("1st Round", "2nd-3rd Round", etc.) for division+draft rounds
   playerId?: string | number; // ESPN player ID — used for headshot URL
   /** True when this pick slot was auto-skipped (timer expired with no selection) */
   isSkipped?: boolean;
@@ -54,6 +55,13 @@ export type StatCategory =
   | 'reb'    // NBA: rebounds per game
   | 'min'    // NBA: minutes per game
   | 'pra'    // NBA: points + rebounds + assists per game
+  | 'total_pts'  // NBA: season total points (pts × gp)
+  | 'total_reb'  // NBA: season total rebounds (reb × gp)
+  | 'total_ast'  // NBA: season total assists (ast × gp)
+  | 'total_blk'  // NBA: season total blocks (blk × gp)
+  | 'total_3pm'  // NBA: season total 3-pointers made (fg3m × gp)
+  | 'total_ftm'  // NBA: season total free throws made (ftm × gp)
+  | 'total_pf'   // NBA: season total personal fouls (pf × gp)
   | 'passing_yards'  // NFL: passing yards
   | 'passing_tds'    // NFL: passing touchdowns
   | 'interceptions'  // NFL: interceptions thrown (QB)
@@ -62,6 +70,7 @@ export type StatCategory =
   | 'receiving_yards'  // NFL: receiving yards
   | 'receiving_tds'    // NFL: receiving touchdowns
   | 'receptions'       // NFL: receptions (RB/WR/TE)
+  | 'fpts'             // NFL: fantasy points PPR (calculated)
   | 'total_gp'         // NBA/NFL: total career games played for a team (no year selection)
   | 'career_passing_yards'    // NFL: total career passing yards (all teams summed)
   | 'career_passing_tds'      // NFL: total career passing TDs (all teams summed)

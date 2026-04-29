@@ -10,7 +10,24 @@ import { motion } from 'framer-motion';
 import { fmt } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
+import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
 import type { PlayerLineup } from '../../types/capCrunch';
+
+function draftLabel(code: string): string {
+  if (code === 'R1')  return '1st Round';
+  if (code === 'R2')  return '2nd Round';
+  if (code === 'R23') return '2nd–3rd Round';
+  if (code === 'R47') return '4th–7th Round';
+  return code;
+}
+
+function formatPickTeam(team: string): string {
+  if (isDivisionDraftRound(team)) {
+    const { division, draftRound } = parseDivisionDraftRound(team);
+    return `${division} · ${draftLabel(draftRound)}`;
+  }
+  return team;
+}
 
 interface Player {
   id: string;
@@ -44,15 +61,23 @@ export function CapCrunchScoresPanel({
     return sum + (isNaN(n) ? 0 : n);
   }, 0);
 
+  // Put the current player first, then everyone else in original order
+  const sortedPlayers = currentPlayerId
+    ? [
+        ...players.filter(p => p.player_id === currentPlayerId),
+        ...players.filter(p => p.player_id !== currentPlayerId),
+      ]
+    : players;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-black/60 border-2 border-white/10 rounded p-4 flex-1 overflow-y-auto"
+      className="bg-black/60 border-2 border-white/10 rounded p-4 h-full overflow-y-auto"
     >
       <h3 className="retro-title text-base text-[#d4af37] mb-3">Lineups</h3>
       <div className="space-y-3">
-        {players.map((player) => {
+        {sortedPlayers.map((player) => {
           const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
           const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
           const isMe = player.player_id === currentPlayerId;
@@ -116,7 +141,7 @@ export function CapCrunchScoresPanel({
                             <div className="flex items-baseline gap-1">
                               <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
                               {isMe && !blindMode && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
-                              <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {selected.team})</span>
+                              <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
                             </div>
                             {isMe && !blindMode && selected.neverOnTeam && (
                               <div className="text-[9px] text-orange-400/80 mt-0.5">
@@ -124,8 +149,12 @@ export function CapCrunchScoresPanel({
                                   ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
                                   : selected.actualCollege
                                   ? `went to ${selected.actualCollege}`
+                                  : selected.actualNflConf && selected.actualDraftRound
+                                  ? `in ${selected.actualNflConf} / drafted in ${selected.actualDraftRound}`
                                   : selected.actualNflConf
                                   ? `in ${selected.actualNflConf}`
+                                  : selected.actualDraftRound
+                                  ? `drafted in ${selected.actualDraftRound}`
                                   : selected.actualTeam
                                   ? `played for ${selected.actualTeam}`
                                   : "didn't qualify"}
