@@ -18,6 +18,7 @@ import { FlipReveal } from '../../components/capCrunch/FlipReveal';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
 import { ConferenceRoundCard } from '../../components/capCrunch/ConferenceRoundCard';
+import { DivisionDraftRoundCard } from '../../components/capCrunch/DivisionDraftRoundCard';
 import { fmt, getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
@@ -31,6 +32,8 @@ import {
   isDivisionRound,
   isConferenceRound,
   parseConferenceRound,
+  isDivisionDraftRound,
+  parseDivisionDraftRound,
   NFL_DIVISIONS,
 
   findOptimalLastPick,
@@ -42,6 +45,22 @@ import type { Sport } from '../../types';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
 
 type Phase = 'sport-select' | 'playing' | 'results';
+
+function draftLabel(code: string): string {
+  if (code === 'R1')  return '1st Round';
+  if (code === 'R2')  return '2nd Round';
+  if (code === 'R23') return '2nd–3rd Round';
+  if (code === 'R47') return '4th–7th Round';
+  return code;
+}
+
+function formatPickTeam(team: string): string {
+  if (isDivisionDraftRound(team)) {
+    const { division, draftRound } = parseDivisionDraftRound(team);
+    return `${division} · ${draftLabel(draftRound)}`;
+  }
+  return team;
+}
 
 
 
@@ -229,6 +248,7 @@ export function SoloCapCrunchPage() {
       const actualTeam = statResult.actualTeam;
       const actualNflConf = statResult.actualNflConf;
       const actualCollege = statResult.actualCollege;
+      const actualDraftRound = statResult.actualDraftRound;
 
       // Check if this pick would push over the cap
       const wouldBust = (lineup.totalStat + statValue) > targetCap;
@@ -247,6 +267,7 @@ export function SoloCapCrunchPage() {
         actualTeam,
         actualNflConf,
         actualCollege,
+        actualDraftRound,
         playerId: selectedPlayerId ?? undefined,
       };
 
@@ -556,7 +577,20 @@ export function SoloCapCrunchPage() {
           </div>
           {/* Team / Division / Conference Display */}
           <div className="flex items-center justify-center py-3 px-4">
-            {isConferenceRound(currentTeam) ? (() => {
+            {isDivisionDraftRound(currentTeam) ? (() => {
+              const { division, draftRound } = parseDivisionDraftRound(currentTeam);
+              return (
+                <motion.div
+                  key={currentTeam}
+                  initial={{ opacity: 0, rotateY: -90 }}
+                  animate={{ opacity: 1, rotateY: 0 }}
+                  transition={{ duration: 0.5, ease: 'easeInOut' }}
+                  style={{ perspective: 600 }}
+                >
+                  <DivisionDraftRoundCard division={division} draftRound={draftRound} sport={selectedSport!} size="lg" />
+                </motion.div>
+              );
+            })() : isConferenceRound(currentTeam) ? (() => {
               const { college: confName, nflConf } = parseConferenceRound(currentTeam);
               return (
               <motion.div
@@ -841,12 +875,14 @@ export function SoloCapCrunchPage() {
                                 {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{badLabel}</span>}
                               </div>
                               <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>
-                                {pick.team} • {pick.selectedYear}
+                                {formatPickTeam(pick.team)} • {pick.selectedYear}
                                 {pick.neverOnTeam && pick.actualCollege && pick.actualNflConf && <span className="text-orange-400/80 ml-1">(went to {pick.actualCollege} / in {pick.actualNflConf})</span>}
                                 {pick.neverOnTeam && pick.actualCollege && !pick.actualNflConf && <span className="text-orange-400/80 ml-1">(went to {pick.actualCollege})</span>}
-                                {pick.neverOnTeam && !pick.actualCollege && pick.actualNflConf && <span className="text-orange-400/80 ml-1">(in {pick.actualNflConf})</span>}
-                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && pick.actualTeam && <span className="text-orange-400/80 ml-1">(played for {pick.actualTeam})</span>}
-                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && !pick.actualTeam && <span className="text-orange-400/80 ml-1">(didn't qualify)</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && pick.actualNflConf && pick.actualDraftRound && <span className="text-orange-400/80 ml-1">(in {pick.actualNflConf} / drafted {pick.actualDraftRound})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && pick.actualNflConf && !pick.actualDraftRound && <span className="text-orange-400/80 ml-1">(in {pick.actualNflConf})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && pick.actualDraftRound && <span className="text-orange-400/80 ml-1">(drafted {pick.actualDraftRound})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && !pick.actualDraftRound && pick.actualTeam && <span className="text-orange-400/80 ml-1">(played for {pick.actualTeam})</span>}
+                                {pick.neverOnTeam && !pick.actualCollege && !pick.actualNflConf && !pick.actualDraftRound && !pick.actualTeam && <span className="text-orange-400/80 ml-1">(didn't qualify)</span>}
                               </p>
                               <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
                                 {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
@@ -1045,14 +1081,26 @@ export function SoloCapCrunchPage() {
                             {player.playerName}
                           </div>
                           <div className={`text-xs ${isInvalid ? 'text-red-400/60' : 'text-white/60'}`}>
-                            {player.team} • {player.selectedYear}
+                            {formatPickTeam(player.team)} • {player.selectedYear}
                           </div>
                           {isBust && (
                             <div className="text-[9px] text-red-400/70 mt-0.5">Exceeded cap — scored 0, total reverted</div>
                           )}
                           {isNotOnTeam && (
                             <div className="text-[9px] text-orange-400/70 mt-0.5">
-                              {player.actualCollege && player.actualNflConf ? `went to ${player.actualCollege} / in ${player.actualNflConf}` : player.actualCollege ? `went to ${player.actualCollege}` : player.actualNflConf ? `in ${player.actualNflConf}` : player.actualTeam ? `played for ${player.actualTeam}` : "didn't qualify"}
+                              {player.actualCollege && player.actualNflConf
+                                ? `went to ${player.actualCollege} / in ${player.actualNflConf}`
+                                : player.actualCollege
+                                ? `went to ${player.actualCollege}`
+                                : player.actualNflConf && player.actualDraftRound
+                                ? `in ${player.actualNflConf} / drafted ${player.actualDraftRound}`
+                                : player.actualNflConf
+                                ? `in ${player.actualNflConf}`
+                                : player.actualDraftRound
+                                ? `drafted ${player.actualDraftRound}`
+                                : player.actualTeam
+                                ? `played for ${player.actualTeam}`
+                                : "didn't qualify"}
                             </div>
                           )}
                         </div>

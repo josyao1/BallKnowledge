@@ -962,7 +962,7 @@ export function MultiplayerCapCrunchPage() {
                 onBack={handleBackFromPlayer}
               />
             </div>
-            <div className={mobileTab !== 'scores' ? 'hidden' : 'flex-1 min-h-0'}>
+            <div className={mobileTab !== 'scores' ? 'hidden' : 'flex-1 min-h-0 flex flex-col'}>
               <CapCrunchScoresPanel
                 players={players}
                 allLineups={allLineups}

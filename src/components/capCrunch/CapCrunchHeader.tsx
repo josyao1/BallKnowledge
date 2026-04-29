@@ -11,7 +11,8 @@ import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumb
 import { TeamSlotMachine } from './TeamSlotMachine';
 import { ConferenceRoundCard } from './ConferenceRoundCard';
 import { HomeButton } from '../multiplayer/HomeButton';
-import { isDivisionRound, isConferenceRound, parseConferenceRound, NFL_DIVISIONS } from '../../services/capCrunch';
+import { isDivisionRound, isConferenceRound, parseConferenceRound, isDivisionDraftRound, parseDivisionDraftRound, NFL_DIVISIONS } from '../../services/capCrunch';
+import { DivisionDraftRoundCard } from './DivisionDraftRoundCard';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
 
@@ -89,7 +90,20 @@ export function CapCrunchHeader({
 
       {/* Team + compact stats row */}
       <div className="flex items-center gap-3 px-4 py-2">
-        {isConferenceRound(currentTeam) ? (() => {
+        {isDivisionDraftRound(currentTeam) ? (() => {
+          const { division, draftRound } = parseDivisionDraftRound(currentTeam);
+          return (
+            <motion.div
+              key={currentTeam + currentRound}
+              initial={{ opacity: 0, rotateY: -90 }}
+              animate={{ opacity: 1, rotateY: 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{ perspective: 600 }}
+            >
+              <DivisionDraftRoundCard division={division} draftRound={draftRound} sport={selectedSport ?? 'nfl'} size="sm" />
+            </motion.div>
+          );
+        })() : isConferenceRound(currentTeam) ? (() => {
           const { college: confName, nflConf } = parseConferenceRound(currentTeam);
           return (
             <motion.div

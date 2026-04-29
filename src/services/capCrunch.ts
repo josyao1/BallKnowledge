@@ -20,6 +20,7 @@ import {
   NBA_TEAMS,
   NFL_TEAMS,
   NFL_DIVISIONS,
+  NBA_DIVISIONS,
   NBA_EAST_TEAMS,
   NBA_WEST_TEAMS,
   AFC_TEAMS,
@@ -31,7 +32,7 @@ import {
 } from './capCrunchData';
 
 // Re-export static data so existing importers don't need to update their import paths.
-export { NFL_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS, NBA_TEAMS, NFL_TEAMS } from './capCrunchData';
+export { NFL_DIVISIONS, NBA_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS, NBA_TEAMS, NFL_TEAMS } from './capCrunchData';
 
 /** Strip diacritics, periods, and lowercase so names like "T.Y. Hilton" match query "ty hilton". */
 function normalizeStr(s: string): string {
@@ -292,6 +293,109 @@ function playerCollegeInConference(bio: any, conference: string): boolean {
   return colleges.some(c => COLLEGE_TO_CONF[c.toLowerCase()] === conference);
 }
 
+// ─── Division + Draft Round helpers ─────────────────────────────────────────
+//
+// Assignment format: "NFC South|R1", "Atlantic|R2", "AFC North|R23", etc.
+// The |R suffix is unambiguous — conference rounds use "|AFC"/"|NFC"/"|East"/"|West".
+//
+// NFL draft round buckets (derived from bio.draft_number — overall pick):
+//   R1  : picks  1–32    (1st round)
+//   R23 : picks 33–105   (2nd–3rd round; extends to ~105 to include comp picks)
+//   R47 : picks 106–262  (4th–7th round)
+//   null: undrafted (draft_number missing or 0)
+//
+// NBA draft rounds (stored as bio.draft_round after backfill script):
+//   R1  : round 1  (picks 1–30)
+//   R2  : round 2  (picks 31–60)
+//   null: undrafted
+
+/** True when the assignment string encodes a division+draft-round category. */
+export function isDivisionDraftRound(s: string): boolean {
+  return /\|(R1|R23|R47|R2)$/.test(s);
+}
+
+/** Parse "NFC South|R1" → { division: "NFC South", draftRound: "R1" } */
+export function parseDivisionDraftRound(s: string): { division: string; draftRound: string } {
+  const idx = s.lastIndexOf('|');
+  return { division: s.slice(0, idx), draftRound: s.slice(idx + 1) };
+}
+
+/** Human-readable label for a draft round code. */
+function draftRoundLabel(code: string): string {
+  if (code === 'R1')  return '1st Round';
+  if (code === 'R23') return '2nd-3rd Round';
+  if (code === 'R47') return '4th-7th Round';
+  if (code === 'R2')  return '2nd Round';
+  return code;
+}
+
+/** Human-readable draft round with pick number for optimal pick display. */
+function draftRoundWithPick(bio: any, sport: 'nba' | 'nfl'): string | undefined {
+  if (sport === 'nfl') {
+    const pick = bio?.draft_number;
+    if (!pick || pick <= 0) return 'Undrafted';
+    const round = nflDraftRoundCode(bio);
+    return round ? `${draftRoundLabel(round)} (pick ${pick})` : undefined;
+  } else {
+    const r = String(bio?.draft_round ?? '');
+    const pick = bio?.draft_pick;
+    if (r === '1') return pick ? `1st Round (pick ${pick})` : '1st Round';
+    if (r === '2') return pick ? `2nd Round (pick ${pick})` : '2nd Round';
+    return 'Undrafted';
+  }
+}
+
+/** Return the draft round bucket code for an NFL player's bio, or null if undrafted. */
+function nflDraftRoundCode(bio: any): string | null {
+  const pick = bio?.draft_number;
+  if (!pick || pick <= 0) return null;
+  if (pick <= 32)  return 'R1';
+  if (pick <= 105) return 'R23';
+  return 'R47';
+}
+
+/** Return the draft round bucket code for an NBA player's bio, or null if undrafted. */
+function nbaDraftRoundCode(bio: any): string | null {
+  const r = String(bio?.draft_round ?? '');
+  if (r === '1') return 'R1';
+  if (r === '2') return 'R2';
+  return null;
+}
+
+/** True if the player's bio matches the target draft round bucket for the given sport. */
+function playerInDraftRound(bio: any, draftRound: string, sport: 'nba' | 'nfl'): boolean {
+  const actual = sport === 'nfl' ? nflDraftRoundCode(bio) : nbaDraftRoundCode(bio);
+  return actual === draftRound;
+}
+
+/** Which NFL division does this team belong to? Returns the division name or null. */
+function getActualNflDivision(team: string): string | null {
+  const aliases = NFL_FRANCHISE_ALIASES[team] ?? [team];
+  for (const [div, teams] of Object.entries(NFL_DIVISIONS)) {
+    if (aliases.some(a => teams.includes(a)) || teams.includes(team)) return div;
+  }
+  return null;
+}
+
+/** Which NBA division does this team belong to? Returns the division name or null. */
+function getActualNbaDivision(team: string): string | null {
+  const candidates = NBA_FRANCHISE_ALIASES[team] ? [team, ...NBA_FRANCHISE_ALIASES[team]] : [team];
+  for (const [div, teams] of Object.entries(NBA_DIVISIONS)) {
+    if (candidates.some(c => teams.includes(c))) return div;
+  }
+  return null;
+}
+
+/** Returns true if dataTeam played in the given NBA division. Handles slash-seasons and franchise aliases. */
+function teamInNbaDivision(dataTeam: string, division: string): boolean {
+  if (dataTeam.includes('/')) {
+    return dataTeam.split('/').some(t => teamInNbaDivision(t.trim(), division));
+  }
+  const divTeams = NBA_DIVISIONS[division] ?? [];
+  const candidates = NBA_FRANCHISE_ALIASES[dataTeam] ? [dataTeam, ...NBA_FRANCHISE_ALIASES[dataTeam]] : [dataTeam];
+  return candidates.some(t => divTeams.includes(t));
+}
+
 /**
  * Select a random team (or division/conference) for the given sport.
  * For NFL non-career, non-total_gp rounds:
@@ -309,7 +413,19 @@ const TEST_FORCE_CONFERENCE = false;
 // Example: 'SEC', 'Big Ten', 'ACC', 'Big 12', 'Non-P4'
 const TEST_FORCE_COLLEGE: string | null = null;
 
+// ── Test flag — force division+draft-round category every round ──────────────
+// Set to true to test the new round type in both solo and multiplayer.
+// Must be false before merging to production.
+const TEST_FORCE_DIVISION_DRAFT = true;
+
 export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
+  // ── Test overrides ──
+  if (TEST_FORCE_DIVISION_DRAFT && sport === 'nfl') {
+    const divs = Object.keys(NFL_DIVISIONS);
+    const div = divs[Math.floor(Math.random() * divs.length)];
+    const rounds = ['R1', 'R23', 'R47'] as const;
+    return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
+  }
   if (TEST_FORCE_COLLEGE) {
     const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
     const nbaConf = Math.random() < 0.5 ? 'East' : 'West';
@@ -337,13 +453,22 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excl
   }
   if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!)) {
     const roll = Math.random();
-    if (roll < 0.15) {
+    // ~10% chance → division + draft round (NFL: 1st / 2nd-3rd / 4th-7th)
+    if (roll < 0.10) {
+      const divs = Object.keys(NFL_DIVISIONS);
+      const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
+      const pool = available.length > 0 ? available : divs;
+      const div = pool[Math.floor(Math.random() * pool.length)];
+      const rounds = ['R1', 'R23', 'R47'] as const;
+      return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
+    }
+    if (roll < 0.25) {
       const divs = Object.keys(NFL_DIVISIONS);
       const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
       const pool = available.length > 0 ? available : divs;
       return pool[Math.floor(Math.random() * pool.length)];
     }
-    if (roll < 0.30) {
+    if (roll < 0.40) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
       const available = excludeTeams
         ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
@@ -656,13 +781,35 @@ export async function getPlayerStatForYearAndTeam(
   year: string,
   statCategory: string,
   playerId?: string | number
-): Promise<{ value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string }> {
+): Promise<{ value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string; actualDraftRound?: string }> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
       const player = findPlayer(players, playerName, playerId);
 
       if (!player) return { value: 0, neverOnTeam: true };
+
+      // Division + Draft round: player must be in the right draft round AND play for a team in the division that year
+      if (isDivisionDraftRound(team)) {
+        const { division, draftRound } = parseDivisionDraftRound(team);
+        if (!playerInDraftRound((player as any).bio, draftRound, 'nba')) {
+          const actual = nbaDraftRoundCode((player as any).bio);
+          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+        }
+        const numYear = parseInt(year);
+        const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
+        const season = player.seasons.find(s => s.season === seasonStr && teamInNbaDivision(s.team, division));
+        if (!season) {
+          const actualSeason = player.seasons.find(s => s.season === seasonStr);
+          const actualDiv = actualSeason ? getActualNbaDivision(actualSeason.team) : null;
+          return { value: 0, neverOnTeam: true, actualNflConf: actualDiv ?? undefined };
+        }
+        if (statCategory === 'pra') {
+          return { value: (season.pts ?? 0) + (season.reb ?? 0) + (season.ast ?? 0), neverOnTeam: false };
+        }
+        const statKey = statCategory as keyof typeof season;
+        return { value: (season[statKey] as number) ?? 0, neverOnTeam: false };
+      }
 
       // Conference round: qualify by college school; year-by-year also requires NBA conf match
       if (isConferenceRound(team)) {
@@ -728,6 +875,29 @@ export async function getPlayerStatForYearAndTeam(
       const player = findPlayer(players, playerName, playerId);
 
       if (!player) return { value: 0, neverOnTeam: true };
+
+      // Division + Draft round: player must be in the right draft round AND play for a team in the division that year
+      if (isDivisionDraftRound(team)) {
+        const { division, draftRound } = parseDivisionDraftRound(team);
+        if (!playerInDraftRound((player as any).bio, draftRound, 'nfl')) {
+          const actual = nflDraftRoundCode((player as any).bio);
+          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+        }
+        if (isCareerStat(statCategory as StatCategory)) {
+          const wasInDiv = player.seasons.some(s => teamInDivision(s.team, division));
+          if (!wasInDiv) return { value: 0, neverOnTeam: true };
+          const field = careerStatField(statCategory as StatCategory);
+          return { value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0), neverOnTeam: false };
+        }
+        const season = player.seasons.find(s => s.season === year && teamInDivision(s.team, division));
+        if (!season) {
+          const actualSeason = player.seasons.find(s => s.season === year);
+          const actualDiv = actualSeason ? getActualNflDivision(actualSeason.team) : null;
+          return { value: 0, neverOnTeam: true, actualNflConf: actualDiv ?? undefined };
+        }
+        const statKey = statCategory as keyof typeof season;
+        return { value: (season[statKey] as number) ?? 0, neverOnTeam: false };
+      }
 
       // Conference round: qualify by college bio; year-by-year also requires NFL conf match
       if (isConferenceRound(team)) {
@@ -853,12 +1023,25 @@ export async function getPlayerTotalGPForTeam(
   playerName: string,
   team: string,
   playerId?: string | number
-): Promise<{ value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string }> {
+): Promise<{ value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string; actualDraftRound?: string }> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
       const player = findPlayer(players, playerName, playerId);
       if (!player) return { value: 0, neverOnTeam: true };
+      // Division + Draft round: check draft round then sum GP for seasons in the division
+      if (isDivisionDraftRound(team)) {
+        const { division, draftRound } = parseDivisionDraftRound(team);
+        if (!playerInDraftRound((player as any).bio, draftRound, 'nba')) {
+          const actual = nbaDraftRoundCode((player as any).bio);
+          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+        }
+        const total = player.seasons
+          .filter(s => teamInNbaDivision(s.team, division))
+          .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+        if (total === 0) return { value: 0, neverOnTeam: true };
+        return { value: total, neverOnTeam: false };
+      }
       // Conference round: college check only for total_gp (career stat)
       if (isConferenceRound(team)) {
         const { college: confName } = parseConferenceRound(team);
@@ -874,6 +1057,17 @@ export async function getPlayerTotalGPForTeam(
       const players = await loadNFLLineupPool();
       const player = findPlayer(players, playerName, playerId);
       if (!player) return { value: 0, neverOnTeam: true };
+      // Division + Draft round: check draft round then sum GP for seasons in the division
+      if (isDivisionDraftRound(team)) {
+        const { division, draftRound } = parseDivisionDraftRound(team);
+        if (!playerInDraftRound((player as any).bio, draftRound, 'nfl')) {
+          const actual = nflDraftRoundCode((player as any).bio);
+          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+        }
+        const seasonsInDiv = player.seasons.filter(s => teamInDivision(s.team, division));
+        if (seasonsInDiv.length === 0) return { value: 0, neverOnTeam: true };
+        return { value: seasonsInDiv.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+      }
       // Conference round: qualify by college; total_gp is a career stat so no NFL conf restriction
       if (isConferenceRound(team)) {
         const { college: confName } = parseConferenceRound(team);
@@ -998,6 +1192,7 @@ export interface OptimalPick {
   team: string;      // actual team the player was on
   statValue: number;
   college?: string;  // set for conference rounds — the school that qualified them
+  draftRound?: string; // set for division+draft rounds — e.g. "1st Round (pick 5)"
 }
 
 /**
@@ -1031,8 +1226,40 @@ export async function findOptimalLastPick(
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
 
+      // Division + Draft round: filter by draft round, then by division per-season
+      if (isDivisionDraftRound(team)) {
+        const { division, draftRound } = parseDivisionDraftRound(team);
+        const draftPlayers = players.filter(p => playerInDraftRound((p as any).bio, draftRound, 'nba'));
+        if (statCategory === 'total_gp') {
+          for (const p of draftPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            const totalGP = p.seasons
+              .filter(s => teamInNbaDivision(s.team, division))
+              .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+            if (totalGP > actualStatValue && totalGP <= remainingBudget) {
+              if (!best || totalGP > best.statValue) {
+                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, draftRound: draftRoundWithPick((p as any).bio, 'nba') };
+              }
+            }
+          }
+        } else {
+          for (const p of draftPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            for (const s of p.seasons) {
+              if (!teamInNbaDivision(s.team, division)) continue;
+              const val = statCategory === 'pra'
+                ? ((s.pts ?? 0) + (s.reb ?? 0) + (s.ast ?? 0))
+                : ((s as any)[statCategory] ?? 0);
+              if (val > actualStatValue && val <= remainingBudget) {
+                if (!best || val >= best.statValue) {
+                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, draftRound: draftRoundWithPick((p as any).bio, 'nba') };
+                }
+              }
+            }
+          }
+        }
       // Conference round: filter by college school, then optionally NBA conf
-      if (isConferenceRound(team)) {
+      } else if (isConferenceRound(team)) {
         const { college: confName, nflConf: nbaConf } = parseConferenceRound(team);
         const confPlayers = players.filter(p => playerCollegeInConference((p as any).bio, confName));
         if (statCategory === 'total_gp') {
@@ -1092,8 +1319,51 @@ export async function findOptimalLastPick(
     } else {
       const players = await loadNFLLineupPool();
 
+      // Division + Draft round: filter by draft round, then by division per-season
+      if (isDivisionDraftRound(team)) {
+        const { division, draftRound } = parseDivisionDraftRound(team);
+        const draftPlayers = players.filter(p => playerInDraftRound((p as any).bio, draftRound, 'nfl'));
+        if (statCategory === 'total_gp') {
+          for (const p of draftPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            const totalGP = p.seasons
+              .filter(s => teamInDivision(s.team, division))
+              .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
+            if (totalGP > actualStatValue && totalGP <= remainingBudget) {
+              if (!best || totalGP > best.statValue) {
+                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, draftRound: draftRoundWithPick((p as any).bio, 'nfl') };
+              }
+            }
+          }
+        } else if (statCategory && isCareerStat(statCategory)) {
+          const field = careerStatField(statCategory);
+          for (const p of draftPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            const wasInDiv = p.seasons.some(s => teamInDivision(s.team, division));
+            if (!wasInDiv) continue;
+            const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+            if (val > actualStatValue && val <= remainingBudget) {
+              if (!best || val >= best.statValue) {
+                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: val, draftRound: draftRoundWithPick((p as any).bio, 'nfl') };
+              }
+            }
+          }
+        } else if (statCategory) {
+          for (const p of draftPlayers) {
+            if (excluded?.has(p.player_name)) continue;
+            for (const s of p.seasons) {
+              if (!teamInDivision(s.team, division)) continue;
+              const val = (s as any)[statCategory] ?? 0;
+              if (val > actualStatValue && val <= remainingBudget) {
+                if (!best || val >= best.statValue) {
+                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, draftRound: draftRoundWithPick((p as any).bio, 'nfl') };
+                }
+              }
+            }
+          }
+        }
       // Conference round: qualify by college bio; year-by-year also requires NFL conf match
-      if (isConferenceRound(team)) {
+      } else if (isConferenceRound(team)) {
         const { college: confName, nflConf } = parseConferenceRound(team);
         const confPlayers = players.filter(p => playerCollegeInConference((p as any).bio, confName));
         if (statCategory === 'total_gp') {

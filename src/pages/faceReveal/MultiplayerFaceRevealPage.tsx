@@ -78,6 +78,13 @@ function longestTenuredTeam(seasons: Array<{ team: string }>): string {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
 }
 
+// Points earned based on the zoom level at which a player answered correctly.
+// score field stores zoom level (1–4) when correct, 0 when gave up.
+// +1 bonus is added to the first overall correct guesser in endRound / ptsMap.
+function zoomToPoints(zoom: number): number {
+  return [0, 5, 3, 2, 1][zoom] ?? 0;
+}
+
 function getInitials(name: string): string {
   return name.split(' ').map(w => w[0] ?? '').join('').toUpperCase();
 }
@@ -356,16 +363,20 @@ export function MultiplayerFaceRevealPage() {
     if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState
         && !(careerState as any).abandoned) {
       // Skipped when host sends everyone to lobby (abandoned=true) — no round summary needed.
-      // Derive pts from lobby_players: score > 0 means correct; earliest finished_at = first (3pts).
+      // Derive pts from lobby_players: score = zoom level (1–4) when correct, 0 = gave up.
+      // Points = zoomToPoints(zoom) + 1 bonus for the earliest finished_at (first guesser).
       const ptsMap: Record<string, number> = {};
       const correctPlayers = [...players]
         .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
         .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
       const firstId = correctPlayers[0]?.player_id ?? null;
       players.forEach(p => {
-        if (p.player_id === firstId) ptsMap[p.player_id] = 3;
-        else if ((p.score || 0) > 0) ptsMap[p.player_id] = 1;
-        else ptsMap[p.player_id] = 0;
+        const zoom = p.score || 0;
+        if (zoom === 0) {
+          ptsMap[p.player_id] = 0;
+        } else {
+          ptsMap[p.player_id] = zoomToPoints(zoom) + (p.player_id === firstId ? 1 : 0);
+        }
       });
 
       const finishedAtMap: Record<string, string | null> = {};
@@ -407,21 +418,21 @@ export function MultiplayerFaceRevealPage() {
     hasAdvancedRef.current = true; // set before any await — prevents double-fire
 
     try {
-      const winTarget = (currentLobby.career_state as FaceRevealState | null)?.win_target || 20;
+      const winTarget = (currentLobby.career_state as FaceRevealState | null)?.win_target || 30;
 
       // Fetch fresh player data to get authoritative score/finished_at values.
       const freshResult = await getLobbyPlayers(currentLobby.id);
       const freshPlayers = freshResult.players || [];
 
-      // Correct players sorted by finish time; earliest = first correct (+3pts).
+      // score field = zoom level (1–4) when correct, 0 = gave up/wrong.
+      // Sort by finished_at so [0] is the first correct guesser (+1 speed bonus).
       const correctPlayers = freshPlayers
         .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
         .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
 
-      await Promise.all([
-        correctPlayers[0] ? addCareerPoints(currentLobby.id, correctPlayers[0].player_id, 3) : Promise.resolve(),
-        ...correctPlayers.slice(1).map(p => addCareerPoints(currentLobby.id, p.player_id, 1)),
-      ]);
+      await Promise.all(correctPlayers.map((p, i) =>
+        addCareerPoints(currentLobby.id, p.player_id, zoomToPoints(p.score!) + (i === 0 ? 1 : 0))
+      ));
 
       // Check win condition with updated points.
       const afterPtsResult = await getLobbyPlayers(currentLobby.id);
@@ -503,13 +514,14 @@ export function MultiplayerFaceRevealPage() {
       setFeedbackMsg('Correct!');
       setFeedbackType('correct');
 
-      // Write score=1 + finished_at to lobby_players. The host's endRound reads
-      // these to award pts (first finished_at = 3pts, others = 1pt).
-      // Avoids the read-modify-write race that would occur writing to career_state.
+      // Write the current zoom level as score + finished_at to lobby_players.
+      // endRound converts zoom level → pts (5/3/2/1) and adds +1 to the first
+      // correct guesser. Using zoom level avoids a read-modify-write race on
+      // career_state when multiple players guess simultaneously.
       const lobbyId = lobby.id;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          await updatePlayerScore(lobbyId, 1, 0, [], [], true);
+          await updatePlayerScore(lobbyId, displayZoom, 0, [], [], true);
           break;
         } catch {
           if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
@@ -588,7 +600,7 @@ export function MultiplayerFaceRevealPage() {
     const focalY = Math.round(20 + Math.random() * 16);
     const newState: FaceRevealState = {
       sport: careerState.sport,
-      win_target: careerState.win_target || 20,
+      win_target: careerState.win_target || 30,
       career_to: careerState.career_to || 0,
       timer: timerSecs,
       round: (careerState.round || 0) + 1,
@@ -620,7 +632,7 @@ export function MultiplayerFaceRevealPage() {
   }
 
   const COLOR = '#06b6d4';
-  const winTarget = careerState.win_target || 20;
+  const winTarget = careerState.win_target || 30;
   const doneCount = players.filter(p => p.finished_at !== null).length;
   const totalCount = players.length;
   const myPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
@@ -997,11 +1009,11 @@ export function MultiplayerFaceRevealPage() {
               className="p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
             >
               <div className="sports-font text-sm text-[#888]">
-                {iGotIt
-                  ? isFirstCorrect
-                    ? '🥇 First! +3 pts — waiting for others...'
-                    : '✓ Got it! +1 pt — waiting for others...'
-                  : 'Waiting for others...'}
+                {iGotIt ? (() => {
+                  const base = zoomToPoints(myRow?.score || 0);
+                  const total = base + (isFirstCorrect ? 1 : 0);
+                  return `${isFirstCorrect ? '🥇 First!' : '✓ Got it!'} +${total} pts — waiting for others...`;
+                })() : 'Waiting for others...'}
               </div>
             </motion.div>
           )}

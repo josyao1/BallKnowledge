@@ -126,6 +126,19 @@ export const NFL_DIVISIONS: Record<string, string[]> = {
   'NFC West':  ['ARI', 'LAR', 'SF',  'SEA'],
 };
 
+// ─── NBA divisions ───────────────────────────────────────────────────────────
+// Uses standard current abbreviations. Historical aliases (CHH→CHA, SEA→OKC,
+// NJN→BKN, NOH/NOK→NOP, VAN→MEM) are resolved by NBA_FRANCHISE_ALIASES before
+// the division lookup in capCrunch.ts.
+export const NBA_DIVISIONS: Record<string, string[]> = {
+  'Atlantic':  ['BOS', 'BKN', 'NYK', 'PHI', 'TOR'],
+  'Central':   ['CHI', 'CLE', 'DET', 'IND', 'MIL'],
+  'Southeast': ['ATL', 'CHA', 'MIA', 'ORL', 'WAS'],
+  'Northwest': ['DEN', 'MIN', 'OKC', 'POR', 'UTA'],
+  'Pacific':   ['GSW', 'LAC', 'LAL', 'PHX', 'SAC'],
+  'Southwest': ['DAL', 'HOU', 'MEM', 'NOP', 'SAS'],
+};
+
 // ─── NBA conference team sets ────────────────────────────────────────────────
 // Includes all historical/alternate abbreviations so conference checks work
 // across relocated franchises and older data.

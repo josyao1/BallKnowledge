@@ -52,7 +52,7 @@ export function FaceRevealSettings({
       <div>
         <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Points Target</div>
         <div className="flex gap-1.5">
-          {[10, 15, 20, 25, 30].map(n => (
+          {[20, 25, 30, 40, 50].map(n => (
             <button
               key={n}
               onClick={() => onWinTargetChange(n)}
