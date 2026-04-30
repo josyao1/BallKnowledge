@@ -115,6 +115,12 @@ function staticMeta(url: string): { title: string; description: string } {
       description: 'Start a multiplayer sports trivia game and invite your friends.',
     };
   }
+  if (url.startsWith('/lobby/')) {
+    return {
+      title: 'Join a Game — BallKnowledge',
+      description: 'Click to join a BallKnowledge multiplayer sports trivia game.',
+    };
+  }
   return {
     title: 'BallKnowledge — Sports Trivia',
     description: 'NBA & NFL sports trivia: Cap Crunch, Face Reveal, Roster Royale, Career Arc & more.',
@@ -134,8 +140,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     isLobby = true;
     const code = lobbyMatch[1].toUpperCase();
     try {
-      const supabaseUrl = process.env.VITE_SUPABASE_URL;
-      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY;
       if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
         const { data: lobby } = await supabase
@@ -154,7 +160,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           description = 'Click to join a BallKnowledge multiplayer sports trivia game.';
         }
       } else {
-        ({ title, description } = staticMeta(url));
+        title = 'Join a Game — BallKnowledge';
+        description = 'Click to join a BallKnowledge multiplayer sports trivia game.';
       }
     } catch {
       title = 'Join a Game — BallKnowledge';
