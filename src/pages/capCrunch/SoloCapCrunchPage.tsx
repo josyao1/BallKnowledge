@@ -736,7 +736,7 @@ export function SoloCapCrunchPage() {
                   // ── Total GP / Career stat mode: no year needed ──
                   <div className="space-y-2 md:space-y-4 flex flex-col flex-1">
                     <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
-                      <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
+                      <p className="retro-title text-xs md:text-lg text-white truncate">{selectedPlayerName}</p>
                       <p className="text-[10px] md:text-sm text-white/60">
                         {isCareerStatRound ? `Total career stats (all teams) — must have played for ${currentTeam} at some point` : `Will count all career GP with ${currentTeam}`}
                       </p>
@@ -747,10 +747,10 @@ export function SoloCapCrunchPage() {
                       </p>
                     </div>
                     {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-                    <div className="flex gap-1 md:gap-2 mt-auto">
+                    <div className="flex gap-1 md:gap-2">
                       <button
                         onClick={() => { setSelectedPlayerName(null); setSelectedPlayerId(null); setSelectedYear(''); setAvailableYears([]); }}
-                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-xs md:text-base"
+                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] shadow-[0_2px_0_#1a1a1a] active:translate-y-1 active:shadow-none text-white/80 font-semibold rounded-sm transition text-xs md:text-base retro-title"
                       >
                         Back
                       </button>
@@ -767,7 +767,7 @@ export function SoloCapCrunchPage() {
                   // ── Normal mode: pick a year ──
                   <div className="space-y-2 md:space-y-4 flex flex-col flex-1 overflow-hidden">
                     <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
-                      <p className="font-semibold text-white text-xs md:text-lg truncate">{selectedPlayerName}</p>
+                      <p className="retro-title text-xs md:text-lg text-white truncate">{selectedPlayerName}</p>
                       <p className="text-[10px] md:text-sm text-white/60">Select any year this player played</p>
                     </div>
 
@@ -783,7 +783,7 @@ export function SoloCapCrunchPage() {
                       {loadingYears ? (
                         <p className="text-white/60 text-xs md:text-sm">Loading years...</p>
                       ) : availableYears.length > 0 ? (
-                        <div className="space-y-1 md:space-y-2 overflow-y-auto max-h-40 md:max-h-56">
+                        <div className="max-h-40 md:max-h-56 overflow-y-auto space-y-1 md:space-y-2">
                           {availableYears.map((year) => (
                             <button
                               key={year}
@@ -804,7 +804,7 @@ export function SoloCapCrunchPage() {
                     </div>
 
                     {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-                    <div className="flex gap-1 md:gap-2 mt-2 md:mt-auto">
+                    <div className="flex gap-1 md:gap-2">
                       <button
                         onClick={() => {
                           setSelectedPlayerName(null);
@@ -812,7 +812,7 @@ export function SoloCapCrunchPage() {
                           setSelectedYear('');
                           setAvailableYears([]);
                         }}
-                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-xs md:text-base"
+                        className="flex-1 px-2 md:px-4 py-1 md:py-2 bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] shadow-[0_2px_0_#1a1a1a] active:translate-y-1 active:shadow-none text-white/80 font-semibold rounded-sm transition text-xs md:text-base retro-title"
                       >
                         Back
                       </button>

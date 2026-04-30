@@ -139,7 +139,7 @@ export function CapCrunchPickPanel({
             // ── Total GP / career stat: no year needed, just confirm ──────
             <div className="flex flex-col gap-3 h-full">
               <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
-                <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
+                <p className="retro-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">
                   {isCareerStatRound
                     ? isConferenceRound(currentTeam)
@@ -156,10 +156,10 @@ export function CapCrunchPickPanel({
                 </p>
               </div>
               {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-              <div className="flex gap-2 mt-auto pt-2">
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={onBack}
-                  className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] shadow-[0_2px_0_#1a1a1a] active:translate-y-1 active:shadow-none text-white/80 font-semibold rounded-sm transition text-sm retro-title"
                 >
                   Back
                 </button>
@@ -176,7 +176,7 @@ export function CapCrunchPickPanel({
             // ── Normal mode: pick a year ──────────────────────────────────
             <div className="flex flex-col gap-3 h-full">
               <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
-                <p className="font-semibold text-white text-base truncate">{selectedPlayerName}</p>
+                <p className="retro-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
               </div>
               <div className="flex items-baseline justify-between">
@@ -186,7 +186,7 @@ export function CapCrunchPickPanel({
               {loadingYears ? (
                 <p className="text-white/60 text-sm">Loading years...</p>
               ) : availableYears.length > 0 ? (
-                <div className="space-y-1.5 overflow-y-auto overscroll-contain max-h-48 md:max-h-64">
+                <div className="max-h-48 md:max-h-64 overflow-y-auto overscroll-contain space-y-1.5">
                   {availableYears.map((year) => (
                     <button
                       key={year}
@@ -205,10 +205,10 @@ export function CapCrunchPickPanel({
                 <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
               )}
               {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-              <div className="flex gap-2 mt-auto pt-2">
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={onBack}
-                  className="flex-1 px-4 py-2.5 bg-[#333] hover:bg-[#444] text-white rounded-sm transition border border-white/10 text-sm"
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] shadow-[0_2px_0_#1a1a1a] active:translate-y-1 active:shadow-none text-white/80 font-semibold rounded-sm transition text-sm retro-title"
                 >
                   Back
                 </button>
@@ -228,14 +228,14 @@ export function CapCrunchPickPanel({
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
           {hardMode && !myLineup?.hasPickedThisRound ? (
             <div>
-              <p className="text-lg text-yellow-400 font-semibold mb-1">Waiting for your turn</p>
+              <p className="text-lg text-yellow-400 retro-title mb-1">Waiting for your turn</p>
               <p className="text-white/50 sports-font text-sm">
                 {players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'} is picking
               </p>
             </div>
           ) : (
             <div>
-              <p className="text-lg text-emerald-400 font-semibold mb-1">Pick submitted!</p>
+              <p className="text-lg text-emerald-400 retro-title mb-1">Pick submitted!</p>
               <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
             </div>
           )}
