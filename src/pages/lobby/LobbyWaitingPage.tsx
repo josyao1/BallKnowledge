@@ -23,7 +23,7 @@ import { teams, getNBADivisions, getNBATeamsByDivision } from '../../data/teams'
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../../data/nfl-teams';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, getStoredPlayerName, startCareerRound } from '../../services/lobby';
 import { getNextGame, startPrefetch } from '../../services/careerPrefetch';
-import { selectRandomStatCategory, generateTargetCap, assignRandomTeam } from '../../services/capCrunch';
+import { selectRandomStatCategory, selectRandomHWFilter, generateTargetCap, assignRandomTeam } from '../../services/capCrunch';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer, loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
@@ -291,8 +291,9 @@ export function LobbyWaitingPage() {
       }
 
       const firstTeam = assignRandomTeam(sport, statCategory);
+      const hwFilter = selectRandomHWFilter(sport, firstTeam, statCategory);
       const newState = {
-        sport, win_target: cs.win_target || 3, statCategory, targetCap,
+        sport, win_target: cs.win_target || 3, statCategory, targetCap, hwFilter,
         allLineups: initialLineups, currentRound: 1, totalRounds: cs.totalRounds || 5,
         currentTeam: firstTeam, usedTeams: [firstTeam],
         phase: 'picking', hardMode, blindMode, pickTimer,

@@ -8,6 +8,7 @@
 import { loadNBALineupPool, loadNFLLineupPool } from './careerData';
 import type {
   StatCategory,
+  HWFilter,
   LineupIsRightGameState,
   PlayerLineup,
   PlayerSeason,
@@ -29,10 +30,15 @@ import {
   STAT_LABELS,
   NFL_STAT_WEIGHTS,
   NBA_STAT_CATEGORIES,
+  HEIGHT_THRESHOLD_NBA,
+  HEIGHT_THRESHOLD_NFL,
+  WEIGHT_THRESHOLD,
 } from './capCrunchData';
 
 // Re-export static data so existing importers don't need to update their import paths.
 export { NFL_DIVISIONS, NBA_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS, NBA_TEAMS, NFL_TEAMS } from './capCrunchData';
+// Re-export HWFilter type so importers only need to reference capCrunch.ts
+export type { HWFilter } from '../types/capCrunch';
 
 /** Strip diacritics, periods, and lowercase so names like "T.Y. Hilton" match query "ty hilton". */
 function normalizeStr(s: string): string {
@@ -73,6 +79,10 @@ function nbaTeamMatches(dataTeam: string, targetTeam: string, depth = 0): boolea
 // Set to null in production.
 const FORCE_NFL_STAT: StatCategory | null = null;
 
+// ── Test flag — force a height/weight filter for testing. Set to null in production. ──
+// Example: 'height_above' | 'height_below' | 'weight_above' | 'weight_below'
+const FORCE_HW_FILTER: HWFilter | null = 'height_above';
+
 // ── Test flag — restrict team pool to these abbreviations for targeted testing ─
 // Example: ['LAR', 'LV'] to test franchise alias fixes. Set to null in production.
 const TEST_NFL_TEAMS: string[] | null = null;
@@ -108,6 +118,42 @@ function computeNflStat(season: any, statCategory: string): number {
     ).toFixed(1));
   }
   return (season[statCategory] as number) ?? 0;
+}
+
+/** Returns true if `val` is a height/weight eligibility filter. */
+export function isHWFilter(val: HWFilter | null | undefined): val is HWFilter {
+  return val === 'height_above' || val === 'height_below' ||
+         val === 'weight_above' || val === 'weight_below';
+}
+
+/**
+ * Randomly pick a height/weight filter to layer onto a round, or null for no filter.
+ * Only applicable to plain single-team rounds (not divisions/conferences/draft rounds).
+ * Called after assignRandomTeam — pass the resulting team to gate on round type.
+ * ~15% chance of getting a filter for eligible stat/team combos.
+ */
+export function selectRandomHWFilter(_sport: Sport, team: string, statCategory: StatCategory): HWFilter | null {
+  if (FORCE_HW_FILTER) return FORCE_HW_FILTER;
+  // Only applies to plain team rounds (not division, conference, or draft special rounds)
+  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team)) return null;
+  // Only applies to per-season stats — not career totals or total_gp
+  if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
+  if (Math.random() > 0.15) return null;
+  const filters: HWFilter[] = ['height_above', 'height_below', 'weight_above', 'weight_below'];
+  return filters[Math.floor(Math.random() * filters.length)];
+}
+
+/** Parse a bio height string like "6-4" → inches (76). Returns null if missing/invalid. */
+function parseBioHeight(h: string | undefined): number | null {
+  if (!h) return null;
+  const parts = h.split('-').map(Number);
+  if (parts.length !== 2 || parts.some(isNaN)) return null;
+  return parts[0] * 12 + parts[1];
+}
+
+/** Format inches as feet-and-inches string, e.g. 76 → "6'4\"" */
+export function formatHeightInches(inches: number): string {
+  return `${Math.floor(inches / 12)}'${inches % 12}"`;
 }
 
 /** Career stat categories: sum all seasons across ALL teams — no team/year selection needed. */
@@ -504,13 +550,13 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excl
       const rounds = ['R1', 'R23', 'R47'] as const;
       return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
     }
-    if (roll < 0.25) {
+    if (roll < 0.20) {
       const divs = Object.keys(NFL_DIVISIONS);
       const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
       const pool = available.length > 0 ? available : divs;
       return pool[Math.floor(Math.random() * pool.length)];
     }
-    if (roll < 0.40) {
+    if (roll < 0.30) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
       const available = excludeTeams
         ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
@@ -812,9 +858,39 @@ export async function getPlayerYearsOnTeam(
   }
 }
 
+type StatResult = { value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string; actualDraftRound?: string; hwFilterFailed?: HWFilter; actualHeight?: string; actualWeight?: number };
+
+type HWCheckResult = { passes: true } | { passes: false; hwFilterFailed: HWFilter; actualHeight?: string; actualWeight?: number };
+
+/**
+ * Check whether a player's bio satisfies a height/weight filter.
+ * Thresholds are inclusive on the "below/light" side — a player exactly at the threshold
+ * qualifies for "below" (e.g. 6'2" passes height_below), NOT for "above" (height_above requires strictly taller).
+ * Returns { passes: true } if the constraint is met, or a failure object with hwFilterFailed always set.
+ */
+function checkHWFilter(bio: any, hwFilter: HWFilter, sport: Sport): HWCheckResult {
+  const heightInches = parseBioHeight(bio?.height);
+  const weight: number | null = bio?.weight ?? null;
+  const threshold = (hwFilter === 'height_above' || hwFilter === 'height_below')
+    ? (sport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)
+    : WEIGHT_THRESHOLD;
+  if (hwFilter === 'height_above' || hwFilter === 'height_below') {
+    if (heightInches === null) return { passes: false, hwFilterFailed: hwFilter };
+    // height_above: strictly above threshold; height_below: at or below (inclusive)
+    const qualifies = hwFilter === 'height_above' ? heightInches > threshold : heightInches <= threshold;
+    return qualifies ? { passes: true } : { passes: false, hwFilterFailed: hwFilter, actualHeight: bio?.height };
+  } else {
+    if (weight === null) return { passes: false, hwFilterFailed: hwFilter };
+    // weight_above: strictly above threshold; weight_below: at or below (inclusive)
+    const qualifies = hwFilter === 'weight_above' ? weight > threshold : weight <= threshold;
+    return qualifies ? { passes: true } : { passes: false, hwFilterFailed: hwFilter, actualWeight: weight };
+  }
+}
+
 /**
  * Get a player's stat value for a specific year on a specific team.
  * Returns 0 if the player was not on that team in that year.
+ * Optionally also checks a height/weight filter; if the player fails it, neverOnTeam=true with actualHeight/actualWeight set.
  */
 export async function getPlayerStatForYearAndTeam(
   sport: Sport,
@@ -822,8 +898,9 @@ export async function getPlayerStatForYearAndTeam(
   team: string,
   year: string,
   statCategory: string,
-  playerId?: string | number
-): Promise<{ value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string; actualDraftRound?: string }> {
+  playerId?: string | number,
+  hwFilter?: HWFilter | null
+): Promise<StatResult> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
@@ -896,6 +973,10 @@ export async function getPlayerStatForYearAndTeam(
 
       if (!season) return { value: 0, neverOnTeam: true };
 
+      if (hwFilter) {
+        const hw = checkHWFilter((player as any).bio, hwFilter, sport);
+        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+      }
       return { value: computeNbaStat(season, statCategory), neverOnTeam: false };
     } else {
       // NFL
@@ -990,6 +1071,10 @@ export async function getPlayerStatForYearAndTeam(
         return { value: 0, neverOnTeam: true, actualTeam: actualSeason?.team };
       }
 
+      if (hwFilter) {
+        const hw = checkHWFilter((player as any).bio, hwFilter, sport);
+        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+      }
       return { value: computeNflStat(season, statCategory), neverOnTeam: false };
     }
   } catch (error) {
@@ -1047,8 +1132,9 @@ export async function getPlayerTotalGPForTeam(
   sport: Sport,
   playerName: string,
   team: string,
-  playerId?: string | number
-): Promise<{ value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string; actualDraftRound?: string }> {
+  playerId?: string | number,
+  hwFilter?: HWFilter | null
+): Promise<StatResult> {
   try {
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
@@ -1077,6 +1163,10 @@ export async function getPlayerTotalGPForTeam(
       }
       const seasonsOnTeam = player.seasons.filter(s => nbaTeamMatches(s.team, team));
       if (seasonsOnTeam.length === 0) return { value: 0, neverOnTeam: true };
+      if (hwFilter) {
+        const hw = checkHWFilter((player as any).bio, hwFilter, sport);
+        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+      }
       return { value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
     } else {
       const players = await loadNFLLineupPool();
@@ -1105,6 +1195,10 @@ export async function getPlayerTotalGPForTeam(
         isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
       );
       if (seasonsOnTeam.length === 0) return { value: 0, neverOnTeam: true };
+      if (hwFilter) {
+        const hw = checkHWFilter((player as any).bio, hwFilter, sport);
+        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+      }
       return { value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
     }
   } catch (error) {

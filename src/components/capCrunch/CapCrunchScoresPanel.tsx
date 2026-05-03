@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { fmt } from './capCrunchUtils';
+import { fmt, getPickErrorMessage } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
 import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
@@ -145,19 +145,7 @@ export function CapCrunchScoresPanel({
                             </div>
                             {isMe && !blindMode && selected.neverOnTeam && (
                               <div className="text-[9px] text-orange-400/80 mt-0.5">
-                                {selected.actualCollege && selected.actualNflConf
-                                  ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
-                                  : selected.actualCollege
-                                  ? `went to ${selected.actualCollege}`
-                                  : selected.actualNflConf && selected.actualDraftRound
-                                  ? `in ${selected.actualNflConf} / drafted in ${selected.actualDraftRound}`
-                                  : selected.actualNflConf
-                                  ? `in ${selected.actualNflConf}`
-                                  : selected.actualDraftRound
-                                  ? `drafted in ${selected.actualDraftRound}`
-                                  : selected.actualTeam
-                                  ? `played for ${selected.actualTeam}`
-                                  : "didn't qualify"}
+                                {getPickErrorMessage(selected)}
                               </div>
                             )}
                           </div>

@@ -7,7 +7,7 @@
 
 import { motion } from 'framer-motion';
 import { RevealingScore } from './RevealingScore';
-import { fmt, getCategoryAbbr } from './capCrunchUtils';
+import { fmt, getCategoryAbbr, getPickErrorMessage } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
 import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -140,19 +140,7 @@ export function CapCrunchResultCard({
                   {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
                   {isNotOnTeam && (
                     <span className="block text-[10px] text-orange-400/60">
-                      {selected.actualCollege && selected.actualNflConf
-                        ? `went to ${selected.actualCollege} / in ${selected.actualNflConf}`
-                        : selected.actualCollege
-                        ? `went to ${selected.actualCollege}`
-                        : selected.actualNflConf && selected.actualDraftRound
-                        ? `in ${selected.actualNflConf} / drafted in ${selected.actualDraftRound}`
-                        : selected.actualNflConf
-                        ? `in ${selected.actualNflConf}`
-                        : selected.actualDraftRound
-                        ? `drafted in ${selected.actualDraftRound}`
-                        : selected.actualTeam
-                        ? `played for ${selected.actualTeam}`
-                        : "didn't qualify"}
+                      {getPickErrorMessage(selected)}
                     </span>
                   )}
                 </div>

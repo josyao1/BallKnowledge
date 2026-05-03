@@ -2,7 +2,30 @@
  * capCrunchUtils.ts — Pure helpers shared across Cap Crunch components.
  */
 
-import type { StatCategory } from '../../types/capCrunch';
+import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
+
+/**
+ * Produce the human-readable reason a pick didn't qualify.
+ * Used in the in-game pick list, scores panel, and results card.
+ * Returns null when the pick is not a neverOnTeam failure.
+ */
+export function getPickErrorMessage(pick: SelectedPlayer): string | null {
+  if (!pick.neverOnTeam) return null;
+  const hwMsg = pick.hwFilterFailed
+    ? pick.hwFilterFailed === 'height_above' ? (pick.actualHeight ? `too short — ${pick.actualHeight.replace('-', "'")}\"` : 'too short')
+    : pick.hwFilterFailed === 'height_below' ? (pick.actualHeight ? `too tall — ${pick.actualHeight.replace('-', "'")}\"` : 'too tall')
+    : pick.hwFilterFailed === 'weight_above' ? (pick.actualWeight != null ? `too light — ${pick.actualWeight} lbs` : 'too light')
+    : (pick.actualWeight != null ? `too heavy — ${pick.actualWeight} lbs` : 'too heavy')
+    : null;
+  const teamMsg = pick.actualCollege && pick.actualNflConf ? `went to ${pick.actualCollege} / in ${pick.actualNflConf}`
+    : pick.actualCollege ? `went to ${pick.actualCollege}`
+    : pick.actualNflConf && pick.actualDraftRound ? `in ${pick.actualNflConf} / drafted ${pick.actualDraftRound}`
+    : pick.actualNflConf ? `in ${pick.actualNflConf}`
+    : pick.actualDraftRound ? `drafted ${pick.actualDraftRound}`
+    : pick.actualTeam ? `played for ${pick.actualTeam}`
+    : null;
+  return hwMsg && teamMsg ? `${teamMsg} / ${hwMsg}` : hwMsg ?? teamMsg ?? "didn't qualify";
+}
 
 /** Format a stat value: whole numbers show no decimal, others show 1 decimal place. */
 export function fmt(val: number): string {

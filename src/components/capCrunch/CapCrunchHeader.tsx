@@ -11,7 +11,9 @@ import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumb
 import { TeamSlotMachine } from './TeamSlotMachine';
 import { ConferenceRoundCard } from './ConferenceRoundCard';
 import { HomeButton } from '../multiplayer/HomeButton';
-import { isDivisionRound, isConferenceRound, parseConferenceRound, isDivisionDraftRound, parseDivisionDraftRound, NFL_DIVISIONS } from '../../services/capCrunch';
+import { isDivisionRound, isConferenceRound, parseConferenceRound, isDivisionDraftRound, parseDivisionDraftRound, NFL_DIVISIONS, formatHeightInches } from '../../services/capCrunch';
+import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
+import type { HWFilter } from '../../services/capCrunch';
 import { DivisionDraftRoundCard } from './DivisionDraftRoundCard';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
@@ -39,6 +41,8 @@ interface Props {
   badFlashKey: number;
   /** Career stat rounds count all-team totals rather than a single team-season */
   isCareerStatRound: boolean;
+  /** Optional height/weight eligibility filter applied this game */
+  hwFilter?: HWFilter | null;
   /** When true, hides the player's running total and remaining cap (blind mode) */
   blindMode?: boolean;
   /** Whether the local player is the lobby host (shows End Game option in HomeButton) */
@@ -51,7 +55,7 @@ export function CapCrunchHeader({
   hardMode, currentPickerId, currentPlayerId, players,
   currentRound, totalRounds, currentTeam, selectedSport,
   targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound, blindMode = false,
-  isHost = false, onEndGame,
+  isHost = false, onEndGame, hwFilter,
 }: Props) {
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
   return (
@@ -135,7 +139,17 @@ export function CapCrunchHeader({
             </p>
           </motion.div>
         ) : (
-          <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
+          <div className="flex flex-col items-center gap-1">
+            <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
+            {hwFilter && (
+              <div className="px-2 py-0.5 rounded border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] sports-font text-[8px] tracking-widest uppercase whitespace-nowrap">
+                {hwFilter === 'height_above' ? `Above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
+                : hwFilter === 'height_below' ? `Below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
+                : hwFilter === 'weight_above' ? `Above ${WEIGHT_THRESHOLD} lbs`
+                : `Below ${WEIGHT_THRESHOLD} lbs`}
+              </div>
+            )}
+          </div>
         )}
 
         <div className="flex gap-1.5 md:gap-2 ml-auto">
