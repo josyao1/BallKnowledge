@@ -32,15 +32,16 @@ import {
 import {
   searchPlayersByNameOnly,
   getPlayerYearsOnTeam,
-  getPlayerStatForYearAndTeam,
-  getPlayerTotalGPForTeam,
+  resolvePickResult,
   addPlayerToLineup,
   assignRandomTeam,
   findOptimalLastPick,
   isCareerStat,
-  stripPositionSuffix,
+  classifySpecialRoundType,
+  advanceSpecialRoundCycle,
+  selectRandomHWFilter,
 } from '../../services/capCrunch';
-import type { OptimalPick, HWFilter } from '../../services/capCrunch';
+import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
 import { CapCrunchHeader }      from '../../components/capCrunch/CapCrunchHeader';
 import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPanel';
@@ -427,7 +428,10 @@ export function MultiplayerCapCrunchPage() {
         }
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
-        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
+        const usedSpecial: SpecialRoundType[] = cs.usedSpecialTypes || [];
+        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial);
+        const newHwFilter = selectRandomHWFilter(cs.sport || 'nba', newTeam, cs.statCategory, usedSpecial);
+        const nextUsedSpecial = advanceSpecialRoundCycle(usedSpecial, classifySpecialRoundType(newTeam, newHwFilter));
         const resetLineups: Record<string, any> = {};
         playerIds.forEach(pid => {
           resetLineups[pid] = {
@@ -457,7 +461,9 @@ export function MultiplayerCapCrunchPage() {
           allLineups: resetLineups,
           currentRound: nextRound,
           currentTeam: newTeam,
+          hwFilter: newHwFilter,
           usedTeams: [...(cs.usedTeams || []), newTeam],
+          usedSpecialTypes: nextUsedSpecial,
           ...hardModeUpdates,
         });
       }
@@ -674,24 +680,8 @@ export function MultiplayerCapCrunchPage() {
     addingPlayerRef.current = true;
     setAddingPlayer(true);
     try {
-      const statResult = isTotalGP
-        ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined, hwFilter)
-        : isCareerStatRound
-          ? await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, 'career', statCategory, selectedPlayerId ?? undefined, hwFilter)
-          : await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedYear, statCategory, selectedPlayerId ?? undefined, hwFilter);
-
-      const statValue = statResult.value;
-      const neverOnTeam = statResult.neverOnTeam;
-      const r = statResult as any;
-      const actualTeam      = r.actualTeam      as string | undefined;
-      const actualNflConf   = r.actualNflConf   as string | undefined;
-      const actualCollege   = r.actualCollege   as string | undefined;
-      const hwFilterFailed  = r.hwFilterFailed  as HWFilter | undefined;
-      const actualHeight    = r.actualHeight    as string | undefined;
-      const actualWeight    = r.actualWeight    as number | undefined;
-
       const latestCS = (lobby.career_state as any) || {};
-      const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
+      const myCurrentLineup: PlayerLineup = latestCS.allLineups?.[currentPlayerId] || {
         playerId: currentPlayerId,
         playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
         selectedPlayers: [],
@@ -702,38 +692,23 @@ export function MultiplayerCapCrunchPage() {
       };
 
       const isBlindMode = (latestCS.blindMode || false) as boolean;
-      const wouldBust = !isBlindMode && (myCurrentLineup.totalStat + statValue) > targetCap;
 
-      const newSelectedPlayer: SelectedPlayer = {
-        playerName: stripPositionSuffix(selectedPlayerName),
-        team: currentTeam,
-        selectedYear: isNoYearSelect ? 'career' : selectedYear,
-        playerSeason: null,
-        statValue,
-        isBust: wouldBust,
-        neverOnTeam,
-        actualTeam,
-        actualNflConf,
-        actualCollege,
-        hwFilterFailed,
-        actualHeight,
-        actualWeight,
+      const { selectedPlayer: newSelectedPlayer, updatedLineup: withNewPlayer } = await resolvePickResult({
+        sport: selectedSport as any,
+        playerName: selectedPlayerName,
         playerId: selectedPlayerId ?? undefined,
-      };
+        team: currentTeam,
+        year: selectedYear,
+        statCategory,
+        hwFilter,
+        lineup: myCurrentLineup,
+        targetCap,
+        isBlindMode,
+      });
 
-      const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
-      if (wouldBust) {
-        // Normal mode bust: revert total, increment bust count
-        withNewPlayer.totalStat = myCurrentLineup.totalStat;
-        withNewPlayer.bustCount = (myCurrentLineup.bustCount ?? 0) + 1;
-      } else {
-        // Blind mode: always accumulate (no revert); normal mode: accumulate if under cap
-        withNewPlayer.totalStat = parseFloat((myCurrentLineup.totalStat + statValue).toFixed(1));
-        withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
-      }
       (withNewPlayer as any).hasPickedThisRound = true;
       // In blind mode, only finish when all rounds are played (no early exit on exact cap hit)
-      const exactHit = !isBlindMode && !wouldBust && withNewPlayer.totalStat === targetCap;
+      const exactHit = !isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap;
       if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || exactHit) {
         withNewPlayer.isFinished = true;
       }
@@ -779,9 +754,9 @@ export function MultiplayerCapCrunchPage() {
       mySubmittedLineupRef.current = withNewPlayer;
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
-      if (!isBlindMode && (wouldBust || statValue === 0)) setBadFlashKey(k => k + 1);
+      if (!isBlindMode && (newSelectedPlayer.isBust || newSelectedPlayer.statValue === 0)) setBadFlashKey(k => k + 1);
 
-      if (!isBlindMode && !wouldBust && withNewPlayer.totalStat === targetCap) {
+      if (!isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
         confetti({ particleCount: 160, spread: 90, origin: { y: 0.55 }, colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'] });
         confettiTimersRef.current = [

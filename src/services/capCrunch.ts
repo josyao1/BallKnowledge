@@ -127,17 +127,55 @@ export function isHWFilter(val: HWFilter | null | undefined): val is HWFilter {
 }
 
 /**
+ * The four "special" round types that must each appear before any can repeat.
+ * Plain team (no filter) is unrestricted and sits outside this cycle.
+ */
+export type SpecialRoundType = 'division_draft' | 'division' | 'conference' | 'hw_filter';
+
+/**
+ * Classify which special round type a round is, or null for plain team (no filter).
+ * Used to track the rotation cycle.
+ */
+export function classifySpecialRoundType(team: string, hwFilter: HWFilter | null): SpecialRoundType | null {
+  if (isDivisionDraftRound(team)) return 'division_draft';
+  if (isDivisionRound(team))      return 'division';
+  if (isConferenceRound(team))    return 'conference';
+  if (hwFilter !== null)          return 'hw_filter';
+  return null;
+}
+
+/**
+ * Return the updated usedSpecialTypes after a round with the given type.
+ * Resets to [] once all 4 special types have appeared (cycle complete).
+ */
+export function advanceSpecialRoundCycle(
+  current: SpecialRoundType[],
+  roundType: SpecialRoundType | null,
+): SpecialRoundType[] {
+  if (roundType === null) return current; // plain team — no change
+  const updated = current.includes(roundType) ? current : [...current, roundType];
+  return updated.length >= 4 ? [] : updated; // reset cycle once all 4 seen
+}
+
+/**
  * Randomly pick a height/weight filter to layer onto a round, or null for no filter.
  * Only applicable to plain single-team rounds (not divisions/conferences/draft rounds).
- * Called after assignRandomTeam — pass the resulting team to gate on round type.
  * ~15% chance of getting a filter for eligible stat/team combos.
+ * Pass usedSpecialTypes to block hw_filter from repeating before the cycle completes.
  */
-export function selectRandomHWFilter(_sport: Sport, team: string, statCategory: StatCategory): HWFilter | null {
+export function selectRandomHWFilter(
+  _sport: Sport,
+  team: string,
+  statCategory: StatCategory,
+  usedSpecialTypes?: SpecialRoundType[],
+): HWFilter | null {
   if (FORCE_HW_FILTER) return FORCE_HW_FILTER;
   // Only applies to plain team rounds (not division, conference, or draft special rounds)
   if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team)) return null;
   // Only applies to per-season stats — not career totals or total_gp
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
+  // Block if hw_filter already appeared this cycle
+  if (usedSpecialTypes?.includes('hw_filter')) return null;
   if (Math.random() > 0.15) return null;
   const filters: HWFilter[] = ['height_above', 'height_below', 'weight_above', 'weight_below'];
   return filters[Math.floor(Math.random() * filters.length)];
@@ -504,9 +542,14 @@ const TEST_FORCE_COLLEGE: string | null = null;
 // ── Test flag — force division+draft-round category every round ──────────────
 // Set to true to test the new round type in both solo and multiplayer.
 // Must be false before merging to production.
-const TEST_FORCE_DIVISION_DRAFT = false;
+const TEST_FORCE_DIVISION_DRAFT = true;
 
-export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excludeTeams?: string[]): string {
+export function assignRandomTeam(
+  sport: Sport,
+  statCategory?: StatCategory,
+  excludeTeams?: string[],
+  usedSpecialTypes?: SpecialRoundType[],
+): string {
   // ── Test overrides ──
   if (TEST_FORCE_DIVISION_DRAFT && sport === 'nfl') {
     const divs = Object.keys(NFL_DIVISIONS);
@@ -527,8 +570,10 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excl
     const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
     return `${college}|${nflConf}`;
   }
+  // NBA conference round — skip if 'conference' already used this cycle
   if (sport === 'nba' && (TEST_FORCE_CONFERENCE || statCategory !== 'total_gp')) {
-    if (TEST_FORCE_CONFERENCE || Math.random() < 0.15) {
+    const conferenceUsed = usedSpecialTypes?.includes('conference');
+    if (TEST_FORCE_CONFERENCE || (!conferenceUsed && Math.random() < 0.15)) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
       const available = excludeTeams
         ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
@@ -541,8 +586,8 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excl
   }
   if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!)) {
     const roll = Math.random();
-    // ~10% chance → division + draft round (NFL: 1st / 2nd-3rd / 4th-7th)
-    if (roll < 0.10) {
+    // ~10% → division + draft round; skip if already used this cycle
+    if (roll < 0.10 && !usedSpecialTypes?.includes('division_draft')) {
       const divs = Object.keys(NFL_DIVISIONS);
       const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
       const pool = available.length > 0 ? available : divs;
@@ -550,13 +595,15 @@ export function assignRandomTeam(sport: Sport, statCategory?: StatCategory, excl
       const rounds = ['R1', 'R23', 'R47'] as const;
       return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
     }
-    if (roll < 0.20) {
+    // ~10% → division only; skip if already used this cycle
+    if (roll < 0.20 && !usedSpecialTypes?.includes('division')) {
       const divs = Object.keys(NFL_DIVISIONS);
       const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
       const pool = available.length > 0 ? available : divs;
       return pool[Math.floor(Math.random() * pool.length)];
     }
-    if (roll < 0.30) {
+    // ~10% → conference round; skip if already used this cycle
+    if (roll < 0.30 && !usedSpecialTypes?.includes('conference')) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
       const available = excludeTeams
         ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
@@ -1264,6 +1311,77 @@ export function addPlayerToLineup(
     ...lineup,
     selectedPlayers: [...lineup.selectedPlayers, selectedPlayer],
   };
+}
+
+/**
+ * Fetch the stat for a pick, build the SelectedPlayer, and return the updated lineup.
+ * Shared by solo and multiplayer confirm handlers — only differs in isBlindMode.
+ */
+export async function resolvePickResult(params: {
+  sport: Sport;
+  playerName: string;
+  playerId?: string | number;
+  team: string;
+  year: string;
+  statCategory: StatCategory;
+  hwFilter: HWFilter | null;
+  lineup: PlayerLineup;
+  targetCap: number;
+  isBlindMode?: boolean;
+}): Promise<{ selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup }> {
+  const { sport, playerName, playerId, team, year, statCategory, hwFilter, lineup, targetCap, isBlindMode = false } = params;
+
+  const isTotalGP = statCategory === 'total_gp';
+  const isCareerStatRound = isCareerStat(statCategory);
+  const isNoYearSelect = isTotalGP || isCareerStatRound;
+
+  const statResult = isTotalGP
+    ? await getPlayerTotalGPForTeam(sport, playerName, team, playerId, hwFilter)
+    : isCareerStatRound
+      ? await getPlayerStatForYearAndTeam(sport, playerName, team, 'career', statCategory, playerId, hwFilter)
+      : await getPlayerStatForYearAndTeam(sport, playerName, team, year, statCategory, playerId, hwFilter);
+
+  const r = statResult as any;
+  const statValue: number        = r.value;
+  const neverOnTeam: boolean     = r.neverOnTeam;
+  const actualTeam               = r.actualTeam       as string | undefined;
+  const actualNflConf            = r.actualNflConf    as string | undefined;
+  const actualCollege            = r.actualCollege    as string | undefined;
+  const actualDraftRound         = r.actualDraftRound as string | undefined;
+  const hwFilterFailed           = r.hwFilterFailed   as HWFilter | undefined;
+  const actualHeight             = r.actualHeight     as string | undefined;
+  const actualWeight             = r.actualWeight     as number | undefined;
+
+  const wouldBust = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+
+  const selectedPlayer: SelectedPlayer = {
+    playerName: stripPositionSuffix(playerName),
+    team,
+    selectedYear: isNoYearSelect ? 'career' : year,
+    playerSeason: null,
+    statValue,
+    isBust: wouldBust,
+    neverOnTeam,
+    actualTeam,
+    actualNflConf,
+    actualCollege,
+    actualDraftRound,
+    hwFilterFailed,
+    actualHeight,
+    actualWeight,
+    playerId,
+  };
+
+  const updatedLineup = addPlayerToLineup(lineup, selectedPlayer);
+  if (wouldBust) {
+    updatedLineup.totalStat = lineup.totalStat; // bust reverts total
+    updatedLineup.bustCount = (lineup.bustCount ?? 0) + 1;
+  } else {
+    updatedLineup.totalStat = parseFloat((lineup.totalStat + statValue).toFixed(1));
+    updatedLineup.bustCount = lineup.bustCount ?? 0;
+  }
+
+  return { selectedPlayer, updatedLineup };
 }
 
 /**

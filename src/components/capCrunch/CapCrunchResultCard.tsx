@@ -7,7 +7,7 @@
 
 import { motion } from 'framer-motion';
 import { RevealingScore } from './RevealingScore';
-import { fmt, getCategoryAbbr, getPickErrorMessage } from './capCrunchUtils';
+import { fmt, getCategoryAbbr, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
 import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -114,7 +114,7 @@ export function CapCrunchResultCard({
           const isNotOnTeam = !isBust && selected.neverOnTeam;
           const isMiss = !isBust && !isNotOnTeam && selected.statValue === 0;
           const isBad = isBust || isMiss || isNotOnTeam;
-          const badLabel = isBust ? 'BUST' : isNotOnTeam ? 'NOT ON TEAM' : '0 STAT';
+          const badLabel = getPickBadgeLabel(selected);
           return (
             <motion.div
               key={pidx}

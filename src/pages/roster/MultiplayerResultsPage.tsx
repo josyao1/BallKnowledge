@@ -756,15 +756,23 @@ export function MultiplayerResultsPage() {
                   ).map((rosterPlayer) => {
                     const guessers = rosterBreakdown.breakdown.get(rosterPlayer.name) || [];
                     const wasGuessed = guessers.length > 0;
+                    const isUnique = showBonuses && guessers.length === 1;
+                    const uniqueColor = isUnique ? guessers[0].color : null;
 
                     return (
                       <div
                         key={rosterPlayer.id}
-                        className={`flex items-center justify-between p-2 rounded-sm border ${
-                          wasGuessed
+                        className={`flex items-center justify-between p-2 rounded-sm border transition-all ${
+                          isUnique
+                            ? 'bg-black/30'
+                            : wasGuessed
                             ? 'bg-black/30 border-white/20'
                             : 'bg-black/10 border-white/5'
                         }`}
+                        style={isUnique && uniqueColor ? {
+                          borderColor: uniqueColor,
+                          boxShadow: `0 0 8px ${uniqueColor}55, inset 0 0 8px ${uniqueColor}11`,
+                        } : undefined}
                       >
                         <div className="truncate mr-2">
                           {rosterPlayer.position && (
