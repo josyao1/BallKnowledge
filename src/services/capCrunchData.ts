@@ -280,6 +280,15 @@ export const STAT_LABELS: Record<StatCategory, string> = {
   career_receiving_tds:   'Career Receiving Touchdowns',
 };
 
+// ─── Height / weight thresholds ───────────────────────────────────────────────
+// NBA: 6'6" (78") is the exact median; separates guards/wings from bigs.
+// NFL: 6'2" (74") is one tick above skill-position median; separates shorter
+//      skill players from taller QBs, TEs, and bigger WRs.
+// Weight: 215 lbs is the median for both NBA and NFL skill positions.
+export const HEIGHT_THRESHOLD_NBA = 78; // inches (6'6")
+export const HEIGHT_THRESHOLD_NFL = 74; // inches (6'2")
+export const WEIGHT_THRESHOLD     = 215; // lbs — same for NBA and NFL skill
+
 // ─── Weighted NFL stat pool ───────────────────────────────────────────────────
 // Rushing/receiving appear 2× as often as QB passing stats.
 // Career stats and total_gp get 2× weight for broad player pool variety.

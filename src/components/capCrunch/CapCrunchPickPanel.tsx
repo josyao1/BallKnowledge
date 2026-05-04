@@ -11,8 +11,10 @@
  */
 
 import { motion } from 'framer-motion';
-import { isConferenceRound } from '../../services/capCrunch';
-import type { PlayerLineup } from '../../types/capCrunch';
+import { isConferenceRound, formatHeightInches } from '../../services/capCrunch';
+import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
+import type { HWFilter } from '../../services/capCrunch';
+import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 
 interface Player {
   player_id: string;
@@ -58,6 +60,8 @@ interface Props {
   /** Players who haven't submitted their pick yet this round */
   waitingFor: Player[];
   selectedSport: 'nba' | 'nfl' | null;
+  statCategory: StatCategory | null;
+  hwFilter?: HWFilter | null;
   onSearch: (query: string) => void;
   onSelectPlayer: (player: SearchResult) => void;
   onSelectYear: (year: string) => void;
@@ -70,7 +74,7 @@ export function CapCrunchPickPanel({
   selectedPlayerName, isNoYearSelect, isCareerStatRound, currentTeam,
   searchQuery, searchResults, loading, loadingYears, availableYears, selectedYear,
   duplicateError, pickError, addingPlayer, usedPlayerNames, lockedPlayerNames,
-  waitingFor, selectedSport, onSearch, onSelectPlayer, onSelectYear, onConfirm, onBack,
+  waitingFor, selectedSport, statCategory: _statCategory, hwFilter, onSearch, onSelectPlayer, onSelectYear, onConfirm, onBack,
 }: Props) {
   return (
     <motion.div
@@ -148,6 +152,7 @@ export function CapCrunchPickPanel({
                     : isConferenceRound(currentTeam)
                       ? `Will count all career GP — must have attended a ${currentTeam} school`
                       : `Will count all career GP with ${currentTeam}`}
+                  {hwFilter && ` — ${hwFilter === 'height_above' ? `above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'height_below' ? `below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'weight_above' ? `above ${WEIGHT_THRESHOLD} lbs` : `below ${WEIGHT_THRESHOLD} lbs`}`}
                 </p>
               </div>
               <div className="flex-1 flex items-center justify-center text-center">

@@ -32,15 +32,16 @@ import {
 import {
   searchPlayersByNameOnly,
   getPlayerYearsOnTeam,
-  getPlayerStatForYearAndTeam,
-  getPlayerTotalGPForTeam,
+  resolvePickResult,
   addPlayerToLineup,
   assignRandomTeam,
   findOptimalLastPick,
   isCareerStat,
-  stripPositionSuffix,
+  classifySpecialRoundType,
+  advanceSpecialRoundCycle,
+  selectRandomHWFilter,
 } from '../../services/capCrunch';
-import type { OptimalPick } from '../../services/capCrunch';
+import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
 import { CapCrunchHeader }      from '../../components/capCrunch/CapCrunchHeader';
 import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPanel';
@@ -60,6 +61,7 @@ export function MultiplayerCapCrunchPage() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [statCategory, setStatCategory] = useState<StatCategory | null>(null);
   const [targetCap, setTargetCap] = useState<number>(0);
+  const [hwFilter, setHwFilter] = useState<HWFilter | null>(null);
   const [allLineups, setAllLineups] = useState<Record<string, PlayerLineup>>({});
   const [mobileTab, setMobileTab] = useState<'pick' | 'scores'>('pick');
   const [currentRound, setCurrentRound] = useState(1);
@@ -258,6 +260,7 @@ export function MultiplayerCapCrunchPage() {
         const cs = (result.lobby.career_state as any) || {};
         setStatCategory((cs.statCategory as StatCategory) || null);
         setTargetCap(cs.targetCap || 0);
+        setHwFilter((cs.hwFilter as HWFilter) || null);
         setAllLineups((cs.allLineups as Record<string, PlayerLineup>) || {});
         setCurrentRound(cs.currentRound ?? 1);
         setTotalRounds(cs.totalRounds ?? 5);
@@ -327,6 +330,7 @@ export function MultiplayerCapCrunchPage() {
 
     setStatCategory(cs.statCategory as StatCategory);
     setTargetCap(cs.targetCap);
+    setHwFilter((cs.hwFilter as HWFilter) || null);
     setAllLineups(cs.allLineups as Record<string, PlayerLineup>);
     setCurrentRound(newRound);
     setTotalRounds(cs.totalRounds ?? 5);
@@ -424,7 +428,10 @@ export function MultiplayerCapCrunchPage() {
         }
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
-        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || []);
+        const usedSpecial: SpecialRoundType[] = cs.usedSpecialTypes || [];
+        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial);
+        const newHwFilter = selectRandomHWFilter(cs.sport || 'nba', newTeam, cs.statCategory, usedSpecial);
+        const nextUsedSpecial = advanceSpecialRoundCycle(usedSpecial, classifySpecialRoundType(newTeam, newHwFilter));
         const resetLineups: Record<string, any> = {};
         playerIds.forEach(pid => {
           resetLineups[pid] = {
@@ -454,7 +461,9 @@ export function MultiplayerCapCrunchPage() {
           allLineups: resetLineups,
           currentRound: nextRound,
           currentTeam: newTeam,
+          hwFilter: newHwFilter,
           usedTeams: [...(cs.usedTeams || []), newTeam],
+          usedSpecialTypes: nextUsedSpecial,
           ...hardModeUpdates,
         });
       }
@@ -671,20 +680,8 @@ export function MultiplayerCapCrunchPage() {
     addingPlayerRef.current = true;
     setAddingPlayer(true);
     try {
-      const statResult = isTotalGP
-        ? await getPlayerTotalGPForTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedPlayerId ?? undefined)
-        : isCareerStatRound
-          ? await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, 'career', statCategory, selectedPlayerId ?? undefined)
-          : await getPlayerStatForYearAndTeam(selectedSport as any, selectedPlayerName, currentTeam, selectedYear, statCategory, selectedPlayerId ?? undefined);
-
-      const statValue = statResult.value;
-      const neverOnTeam = statResult.neverOnTeam;
-      const actualTeam = statResult.actualTeam;
-      const actualNflConf = statResult.actualNflConf;
-      const actualCollege = statResult.actualCollege;
-
       const latestCS = (lobby.career_state as any) || {};
-      const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
+      const myCurrentLineup: PlayerLineup = latestCS.allLineups?.[currentPlayerId] || {
         playerId: currentPlayerId,
         playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
         selectedPlayers: [],
@@ -695,35 +692,23 @@ export function MultiplayerCapCrunchPage() {
       };
 
       const isBlindMode = (latestCS.blindMode || false) as boolean;
-      const wouldBust = !isBlindMode && (myCurrentLineup.totalStat + statValue) > targetCap;
 
-      const newSelectedPlayer: SelectedPlayer = {
-        playerName: stripPositionSuffix(selectedPlayerName),
-        team: currentTeam,
-        selectedYear: isNoYearSelect ? 'career' : selectedYear,
-        playerSeason: null,
-        statValue,
-        isBust: wouldBust,
-        neverOnTeam,
-        actualTeam,
-        actualNflConf,
-        actualCollege,
+      const { selectedPlayer: newSelectedPlayer, updatedLineup: withNewPlayer } = await resolvePickResult({
+        sport: selectedSport as any,
+        playerName: selectedPlayerName,
         playerId: selectedPlayerId ?? undefined,
-      };
+        team: currentTeam,
+        year: selectedYear,
+        statCategory,
+        hwFilter,
+        lineup: myCurrentLineup,
+        targetCap,
+        isBlindMode,
+      });
 
-      const withNewPlayer = addPlayerToLineup(myCurrentLineup as PlayerLineup, newSelectedPlayer);
-      if (wouldBust) {
-        // Normal mode bust: revert total, increment bust count
-        withNewPlayer.totalStat = myCurrentLineup.totalStat;
-        withNewPlayer.bustCount = (myCurrentLineup.bustCount ?? 0) + 1;
-      } else {
-        // Blind mode: always accumulate (no revert); normal mode: accumulate if under cap
-        withNewPlayer.totalStat = parseFloat((myCurrentLineup.totalStat + statValue).toFixed(1));
-        withNewPlayer.bustCount = myCurrentLineup.bustCount ?? 0;
-      }
       (withNewPlayer as any).hasPickedThisRound = true;
       // In blind mode, only finish when all rounds are played (no early exit on exact cap hit)
-      const exactHit = !isBlindMode && !wouldBust && withNewPlayer.totalStat === targetCap;
+      const exactHit = !isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap;
       if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || exactHit) {
         withNewPlayer.isFinished = true;
       }
@@ -769,9 +754,9 @@ export function MultiplayerCapCrunchPage() {
       mySubmittedLineupRef.current = withNewPlayer;
       setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
-      if (!isBlindMode && (wouldBust || statValue === 0)) setBadFlashKey(k => k + 1);
+      if (!isBlindMode && (newSelectedPlayer.isBust || newSelectedPlayer.statValue === 0)) setBadFlashKey(k => k + 1);
 
-      if (!isBlindMode && !wouldBust && withNewPlayer.totalStat === targetCap) {
+      if (!isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
         confetti({ particleCount: 160, spread: 90, origin: { y: 0.55 }, colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'] });
         confettiTimersRef.current = [
@@ -883,6 +868,7 @@ export function MultiplayerCapCrunchPage() {
           myLineup={myLineup}
           badFlashKey={badFlashKey}
           isCareerStatRound={isCareerStatRound}
+          hwFilter={hwFilter}
           blindMode={blindMode}
           isHost={isHost}
           onEndGame={handleEndGame}
@@ -955,6 +941,8 @@ export function MultiplayerCapCrunchPage() {
                 lockedPlayerNames={lockedPlayerNames}
                 waitingFor={waitingFor}
                 selectedSport={selectedSport as 'nba' | 'nfl' | null}
+                statCategory={statCategory}
+                hwFilter={hwFilter}
                 onSearch={handleSearch}
                 onSelectPlayer={handleSelectPlayer}
                 onSelectYear={setSelectedYear}
@@ -1042,6 +1030,8 @@ export function MultiplayerCapCrunchPage() {
                 lockedPlayerNames={lockedPlayerNames}
                 waitingFor={waitingFor}
                 selectedSport={selectedSport as 'nba' | 'nfl' | null}
+                statCategory={statCategory}
+                hwFilter={hwFilter}
                 onSearch={handleSearch}
                 onSelectPlayer={handleSelectPlayer}
                 onSelectYear={setSelectedYear}
