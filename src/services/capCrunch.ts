@@ -81,7 +81,7 @@ const FORCE_NFL_STAT: StatCategory | null = null;
 
 // ── Test flag — force a height/weight filter for testing. Set to null in production. ──
 // Example: 'height_above' | 'height_below' | 'weight_above' | 'weight_below'
-const FORCE_HW_FILTER: HWFilter | null = 'height_above';
+const FORCE_HW_FILTER: HWFilter | null = null;
 
 // ── Test flag — restrict team pool to these abbreviations for targeted testing ─
 // Example: ['LAR', 'LV'] to test franchise alias fixes. Set to null in production.
@@ -542,7 +542,7 @@ const TEST_FORCE_COLLEGE: string | null = null;
 // ── Test flag — force division+draft-round category every round ──────────────
 // Set to true to test the new round type in both solo and multiplayer.
 // Must be false before merging to production.
-const TEST_FORCE_DIVISION_DRAFT = true;
+const TEST_FORCE_DIVISION_DRAFT = false;
 
 export function assignRandomTeam(
   sport: Sport,
@@ -586,32 +586,37 @@ export function assignRandomTeam(
   }
   if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!)) {
     const roll = Math.random();
-    // ~10% → division + draft round; skip if already used this cycle
-    if (roll < 0.10 && !usedSpecialTypes?.includes('division_draft')) {
-      const divs = Object.keys(NFL_DIVISIONS);
-      const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
-      const pool = available.length > 0 ? available : divs;
-      const div = pool[Math.floor(Math.random() * pool.length)];
-      const rounds = ['R1', 'R23', 'R47'] as const;
-      return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
-    }
-    // ~10% → division only; skip if already used this cycle
-    if (roll < 0.20 && !usedSpecialTypes?.includes('division')) {
-      const divs = Object.keys(NFL_DIVISIONS);
-      const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
-      const pool = available.length > 0 ? available : divs;
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-    // ~10% → conference round; skip if already used this cycle
-    if (roll < 0.30 && !usedSpecialTypes?.includes('conference')) {
-      const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
-      const available = excludeTeams
-        ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
-        : confs;
-      const pool = available.length > 0 ? available : confs;
-      const college = pool[Math.floor(Math.random() * pool.length)];
-      const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
-      return `${college}|${nflConf}`;
+    // Each band is exclusive — a blocked type falls to plain team, not the next special type.
+    if (roll < 0.10) {
+      // ~10% → division + draft round; skip if already used this cycle
+      if (!usedSpecialTypes?.includes('division_draft')) {
+        const divs = Object.keys(NFL_DIVISIONS);
+        const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
+        const pool = available.length > 0 ? available : divs;
+        const div = pool[Math.floor(Math.random() * pool.length)];
+        const rounds = ['R1', 'R23', 'R47'] as const;
+        return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
+      }
+    } else if (roll < 0.20) {
+      // ~10% → division only; skip if already used this cycle
+      if (!usedSpecialTypes?.includes('division')) {
+        const divs = Object.keys(NFL_DIVISIONS);
+        const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
+        const pool = available.length > 0 ? available : divs;
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+    } else if (roll < 0.30) {
+      // ~10% → conference round; skip if already used this cycle
+      if (!usedSpecialTypes?.includes('conference')) {
+        const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
+        const available = excludeTeams
+          ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
+          : confs;
+        const pool = available.length > 0 ? available : confs;
+        const college = pool[Math.floor(Math.random() * pool.length)];
+        const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
+        return `${college}|${nflConf}`;
+      }
     }
   }
   const allTeams = sport === 'nba' ? (TEST_NBA_TEAMS ?? NBA_TEAMS) : (TEST_NFL_TEAMS ?? NFL_TEAMS);
@@ -1372,14 +1377,12 @@ export async function resolvePickResult(params: {
     playerId,
   };
 
-  const updatedLineup = addPlayerToLineup(lineup, selectedPlayer);
-  if (wouldBust) {
-    updatedLineup.totalStat = lineup.totalStat; // bust reverts total
-    updatedLineup.bustCount = (lineup.bustCount ?? 0) + 1;
-  } else {
-    updatedLineup.totalStat = parseFloat((lineup.totalStat + statValue).toFixed(1));
-    updatedLineup.bustCount = lineup.bustCount ?? 0;
-  }
+  const updatedLineup: PlayerLineup = {
+    ...lineup,
+    selectedPlayers: [...lineup.selectedPlayers, selectedPlayer],
+    totalStat: wouldBust ? lineup.totalStat : parseFloat((lineup.totalStat + statValue).toFixed(1)),
+    bustCount: wouldBust ? (lineup.bustCount ?? 0) + 1 : (lineup.bustCount ?? 0),
+  };
 
   return { selectedPlayer, updatedLineup };
 }
