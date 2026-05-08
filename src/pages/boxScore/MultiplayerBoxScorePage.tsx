@@ -9,13 +9,10 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLobbyStore } from '../../stores/lobbyStore';
-import { useLobbySubscription } from '../../hooks/useLobbySubscription';
+import { useMultiplayerGame } from '../../hooks/useMultiplayerGame';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import {
-  findLobbyByCode,
-  getLobbyPlayers,
   updateLobbyStatus,
   updateCareerState,
   updatePlayerScore,
@@ -48,9 +45,7 @@ interface BoxScoreCareerState {
 export function MultiplayerBoxScorePage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers } = useLobbyStore();
-
-  useLobbySubscription(lobby?.id || null);
+  const { lobby, players, isHost, currentPlayerId } = useMultiplayerGame({ code });
 
   const careerState = lobby?.career_state as BoxScoreCareerState | null;
 
@@ -92,19 +87,6 @@ export function MultiplayerBoxScorePage() {
       setMyHintRequestedLocal(true);
     }
   }, [players, currentPlayerId]);
-
-  // Load lobby on mount (refresh recovery)
-  useEffect(() => {
-    if (!code) { navigate('/'); return; }
-    if (lobby) return;
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
-      setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
-        if (pr.players) setPlayers(pr.players);
-      });
-    });
-  }, []);
 
   // Load game when career_state is available
   useEffect(() => {

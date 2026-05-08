@@ -1,7 +1,7 @@
 ================================================================================
 BALL KNOWLEDGE — CONTEXT FILE
 ================================================================================
-Last Updated: 2026-03-02
+Last Updated: 2026-05-08
 
 ================================================================================
 PENDING / MONITOR
@@ -23,10 +23,9 @@ Deployment: Vercel only (frontend + all static data). Render fully decommissione
 ================================================================================
 WHAT THIS APP IS
 ================================================================================
-Multiplayer + solo sports roster trivia game. Players guess who was on a team's
-roster in a given season within a time limit. Supports NBA and NFL. Multiple
-game modes: Roster Royale, Division Mode, Career Mode, Name Scramble, Roll Call,
-Lineup Is Right, Starting Lineup.
+Multiplayer + solo sports trivia game. Supports NBA and NFL. Game modes:
+Roster Royale, Division Mode, Career Arc, Name Scramble, Roll Call,
+Cap Crunch (a.k.a. Lineup Is Right), Starting Lineup, Box Score, Face Reveal.
 
 Tech Stack:
 - Frontend:  React 19 + TypeScript + Vite 7
@@ -112,7 +111,7 @@ Career mode uses careerData.ts which fetches static JSON from Vercel CDN:
 Random selection and filtering happen client-side. No backend needed.
 Render is fully decommissioned — api_server.py and nfl_api_server.py are archived.
 
-LINEUP IS RIGHT MODE — FULLY STATIC
+CAP CRUNCH MODE (a.k.a. LINEUP IS RIGHT) — FULLY STATIC
 -------------------------------------
 Price-Is-Right inspired game. Pick players whose stats add up as close as
 possible to a randomly assigned target cap without going over. 5 rounds, same
@@ -148,7 +147,7 @@ Multiplayer: host sets stat category in the waiting room settings panel.
 
 Optimal Last Pick: results screen shows the best player that could have been
   picked for the final slot (highest stat ≤ remaining budget, better than
-  actual pick). Computed by findOptimalLastPick() in lineupIsRight.ts.
+  actual pick). Computed by findOptimalLastPick() in capCrunch.ts.
 
 Multiplayer race condition: simultaneous writes are self-healing via
   mySubmittedLineupRef — if one player's write overwrites another's, the
@@ -284,12 +283,12 @@ PAGES (src/pages/)
   RollCallCreatePage.tsx    Roll Call mode setup
   RollCallSessionPage.tsx   Roll Call active session
   RollCallResultsPage.tsx
-  SoloLineupIsRightPage.tsx     Solo Lineup Is Right: two-step sport→stat picker,
-                                5-round game, optimal last pick hint on results
-  MultiplayerLineupIsRightPage.tsx
-                                Simultaneous multiplayer Lineup Is Right: all players
-                                pick at once per round, host advances rounds, results
-                                show optimal pick hint per player
+  SoloCapCrunchPage.tsx         Solo Cap Crunch (Lineup Is Right): two-step sport→stat
+                                picker, 5-round game, optimal last pick hint on results
+  MultiplayerCapCrunchPage.tsx  Simultaneous multiplayer Cap Crunch: all players pick
+                                at once per round, host advances rounds
+  MultiplayerCapCrunchResultsPage.tsx
+                                Final standings + round history for Cap Crunch
   SoloStartingLineupPage.tsx    Solo Starting Lineup: guessing + bonus + results phases,
                                 NBA/NFL, PPG hint toggle (NBA only)
   MultiplayerStartingLineupPage.tsx
@@ -297,6 +296,16 @@ PAGES (src/pages/)
                                 give-up handling, 30s pressure timer, 3pt/1pt scoring
   MultiplayerStartingLineupResultsPage.tsx
                                 Final standings + Play Again for starting lineup
+  BoxScoreGamePage.tsx          Solo Box Score: guess NFL players from jersey numbers
+  MultiplayerBoxScorePage.tsx   Multiplayer Box Score: simultaneous guessing + spread
+  BoxScoreResultsPage.tsx       Solo Box Score results
+  MultiplayerBoxScoreResultsPage.tsx
+                                Multiplayer Box Score final standings
+  SoloFaceRevealPage.tsx        Solo Face Reveal: headshot zoom-in, streak tracking
+  MultiplayerFaceRevealPage.tsx Multiplayer Face Reveal: 3pt/1pt race scoring, skip
+                                votes, zoom deadline, between-round interstitial
+  MultiplayerFaceRevealResultsPage.tsx
+                                Final standings + round history for Face Reveal
 
 SERVICES (src/services/)
   roster.ts         PRIMARY DATA LAYER for roster mode. Fetches static JSON
@@ -313,7 +322,7 @@ SERVICES (src/services/)
                     (deduped by player_id, seasons unioned, pool wins on overlap).
                     loadNFLLineupPool() does the same for NFL.
                     Both pool loaders fall back gracefully if pool file is missing.
-  lineupIsRight.ts  All Lineup Is Right game logic:
+  capCrunch.ts      All Cap Crunch game logic:
                     searchPlayersByNameOnly(), getPlayerYearsOnTeam(),
                     getPlayerStatForYearAndTeam(), getPlayerTotalGPForTeam(sport,...),
                     addPlayerToLineup(), calculateLineupStat(), assignRandomTeam(),
@@ -322,6 +331,9 @@ SERVICES (src/services/)
                     StatCategory type: pts|ast|reb|min|pra|total_gp|passing_yards|
                       passing_tds|rushing_yards|rushing_tds|receiving_yards|
                       receiving_tds (pra = pts+reb+ast per season).
+  capCrunchData.ts  Static lookup tables: franchise aliases, NFL/NBA teams,
+                    divisions, conferences, P4 college conference school lists.
+  boxScoreData.ts   NFL box score loader and player matching for Box Score mode.
   careerPrefetch.ts Background prefetch for career mode (keeps 2 players cached)
   api.ts            *** ARCHIVED — NOT IMPORTED ANYWHERE ***
                     Was the NBA Render backend client. Superseded by static files.
@@ -354,6 +366,13 @@ UTILS (src/utils/)
   fuzzyDedup.ts     Fuzzy deduplication for player name matching
   scramble.ts       scrambleName(name) — Fisher-Yates word-by-word shuffle.
                     Words ≤2 chars unchanged. Guarantees result ≠ original.
+
+PAGE-LEVEL UTILS (co-located with their page directories)
+  src/pages/faceReveal/faceRevealUtils.ts
+                    Shared between SoloFaceRevealPage and MultiplayerFaceRevealPage.
+                    PlayerEntry interface, nflInPool(), weightedRandom(),
+                    getSuggestions(), longestTenuredTeam(), getInitials(),
+                    nbaEndYear(), nflEndYear(), timerColor(fraction).
 
 DATA (src/data/)
   teams.ts          All 30 NBA teams (id, abbreviation, name, colors)
@@ -389,6 +408,15 @@ COMPONENTS (src/components/)
 HOOKS (src/hooks/)
   useLobbySubscription.ts    Supabase realtime lobby updates
   useRollCallSubscription.ts Supabase realtime roll call updates
+  useGameAbandonment.ts      Host "Send to Lobby" + non-host abandoned redirect
+                             (Career, Scramble, FaceReveal, StartingLineup multiplayer)
+  useMultiplayerGame.ts      useLobbyStore + useLobbySubscription + load-on-mount
+                             effect; used by BoxScore, Career, Scramble multiplayer pages
+  useMultiplayerResults.ts   Lobby sync, Play Again, Leave logic for all multiplayer
+                             results pages (Career, Scramble, FaceReveal)
+  useGuessInput.ts           guessInput / feedbackMsg / feedbackType / inputRef state
+                             + clearInput / clearFeedback / focus utilities;
+                             used by Career, Scramble, FaceReveal (solo + multiplayer)
 
 ================================================================================
 SCRIPTS (scripts/)

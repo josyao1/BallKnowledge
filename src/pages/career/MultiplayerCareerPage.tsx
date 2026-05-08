@@ -7,14 +7,13 @@
  */
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLobbyStore } from '../../stores/lobbyStore';
-import { useLobbySubscription } from '../../hooks/useLobbySubscription';
+import { useMultiplayerGame } from '../../hooks/useMultiplayerGame';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import {
-  findLobbyByCode,
   getLobbyPlayers,
   updateLobbyStatus,
   updatePlayerScore,
@@ -64,9 +63,7 @@ interface RoundSummary {
 export function MultiplayerCareerPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers } = useLobbyStore();
-
-  useLobbySubscription(lobby?.id || null);
+  const { lobby, players, isHost, currentPlayerId } = useMultiplayerGame({ code });
 
   const careerState = lobby?.career_state as CareerState | null;
 
@@ -77,9 +74,7 @@ export function MultiplayerCareerPage() {
   const [yearsRevealed, setYearsRevealed] = useState(false);
   const [bioRevealed, setBioRevealed] = useState(false);
   const [initialsRevealed, setInitialsRevealed] = useState(false);
-  const [guessInput, setGuessInput] = useState('');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } = useGuessInput();
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
 
@@ -98,20 +93,6 @@ export function MultiplayerCareerPage() {
   // Avoids race conditions where post-round DB writes (wins increment, next-round
   // score reset) arrive via realtime before the summary capture effect fires.
   const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
-
-  // ── Load lobby on mount (handles page refresh) ──
-  useEffect(() => {
-    if (!code) { navigate('/'); return; }
-    if (lobby) return;
-
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
-      setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
-        if (pr.players) setPlayers(pr.players);
-      });
-    });
-  }, []);
 
   // ── Handle lobby status transitions ──
   useEffect(() => {
