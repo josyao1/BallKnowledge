@@ -663,7 +663,7 @@ export function LobbyWaitingPage() {
             winningLabel={lobby.selection_scope === 'division' ? 'DIVISION' : 'TEAM'}
             winningYear={lobby.season}
             sport={sport}
-            winningTeamData={team}
+            winningTeamData={lobby.selection_scope === 'division' ? undefined : team}
             onComplete={handleDealingComplete}
             canSkip={isHost}
             onReroll={handleReroll}

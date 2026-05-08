@@ -14,121 +14,27 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZoomedHeadshot } from '../../components/faceReveal/ZoomedHeadshot';
 import { TeamLogo } from '../../components/TeamLogo';
-import { areSimilarNames, normalize } from '../../utils/fuzzyDedup';
+import { areSimilarNames } from '../../utils/fuzzyDedup';
 import { loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
-import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
-import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
+import {
+  type PlayerEntry,
+  longestTenuredTeam,
+  getInitials,
+  weightedRandom,
+  getSuggestions,
+  nbaEndYear,
+  nflEndYear,
+  nflInPool,
+  timerColor,
+} from './faceRevealUtils';
 
 type GameStatus = 'loading' | 'active' | 'correct' | 'revealed';
 
-interface PlayerEntry {
-  player_id: string | number;
-  player_name: string;
-  position?: string;    // NFL only; used for pick weighting
-  longestTeam?: string; // most-season team abbreviation; shown at zoom level 4
-}
-
-/** Compute the team abbreviation a player spent the most seasons with. */
-function longestTenuredTeam(seasons: Array<{ team: string }>): string {
-  const counts: Record<string, number> = {};
-  for (const s of seasons) {
-    // Handle slash seasons (e.g. "LAL/MIA" for traded players) — use first team.
-    const team = (s.team || '').split('/')[0].trim();
-    if (team) counts[team] = (counts[team] || 0) + 1;
-  }
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
-}
-
-/** Player initials — first letter of each space-separated word. */
-function getInitials(name: string): string {
-  return name.split(' ').map(w => w[0] ?? '').join('').toUpperCase();
-}
-
-// NFL offensive positions get 3× weight; everyone else gets 1×.
-function pickWeight(entry: PlayerEntry): number {
-  return entry.position && NFL_OFF_POSITIONS.has(entry.position) ? 3 : 1;
-}
-
-function weightedRandom(candidates: PlayerEntry[]): PlayerEntry {
-  const total = candidates.reduce((sum, p) => sum + pickWeight(p), 0);
-  let r = Math.random() * total;
-  for (const p of candidates) {
-    r -= pickWeight(p);
-    if (r <= 0) return p;
-  }
-  return candidates[candidates.length - 1];
-}
-
-// ── Autocomplete suggestions ─────────────────────────────────────────────────
-// Returns up to `limit` pool entries whose names are "decently close" to the
-// input without being overly aggressive. Requires at least 3 characters and
-// matches on: full-name prefix, every input word matching a name-word prefix,
-// or a single long-enough first token matching a name's first token.
-
-function getSuggestions(input: string, pool: PlayerEntry[], limit = 5): PlayerEntry[] {
-  if (input.length < 3) return [];
-  const norm = normalize(input);
-  const normWords = norm.split(' ').filter(Boolean);
-
-  const scored: { entry: PlayerEntry; score: number }[] = [];
-  for (const p of pool) {
-    const pNorm = normalize(p.player_name);
-    const pWords = pNorm.split(' ');
-
-    if (pNorm.startsWith(norm)) {
-      // Full input is a prefix of the full name — highest confidence
-      scored.push({ entry: p, score: 100 });
-    } else if (normWords.every(iw => pWords.some(pw => pw.startsWith(iw)))) {
-      // Every typed word matches the start of some name word (e.g. "le ja" → "LeBron James")
-      scored.push({ entry: p, score: 80 });
-    } else if (normWords[0]?.length >= 3 && pWords[0]?.startsWith(normWords[0])) {
-      // First typed token is a prefix of the first name token (3+ chars to avoid noise)
-      scored.push({ entry: p, score: 60 });
-    }
-  }
-
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map(s => s.entry);
-}
-
-// ── NFL yards filter ──────────────────────────────────────────────────────────
-
-const NFL_OFF_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
-const NFL_ST_POSITIONS  = new Set(['K', 'P', 'LS']);
-
-/**
- * Returns true if this NFL player should be included in the Face Reveal pool.
- * - K / P / LS: always excluded.
- * - Offense (QB, RB, WR, TE, FB): included when peak single-season yards >= minYards (0 = any).
- * - Defense: 'known' = curated DEFENSE_ALLOWLIST only; 'all' = all non-ST defensive players.
- */
-function nflInPool(p: NFLCareerPlayer, minYards: number, defenseMode: 'known' | 'all'): boolean {
-  if (NFL_ST_POSITIONS.has(p.position)) return false;
-  if (NFL_OFF_POSITIONS.has(p.position)) {
-    if (minYards === 0) return true;
-    return p.seasons.some(
-      s => (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >= minYards
-    );
-  }
-  return defenseMode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));
-}
-
-// Derive the last season year from a player's seasons array.
-function nbaEndYear(p: NBACareerPlayer): number {
-  const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
-  return years.length ? Math.max(...years) : 0;
-}
-
-function nflEndYear(p: NFLCareerPlayer): number {
-  const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
-  return years.length ? Math.max(...years) : 0;
-}
 
 export function SoloFaceRevealPage() {
   const navigate = useNavigate();
@@ -150,16 +56,14 @@ export function SoloFaceRevealPage() {
   const [zoomLevel, setZoomLevel]   = useState<1 | 2 | 3 | 4>(1);
   const [countdown, setCountdown]   = useState(timerSecs);
   const [streak, setStreak]         = useState(0);
-  const [guessInput, setGuessInput] = useState('');
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, inputRef } = useGuessInput();
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
-  const [feedbackMsg, setFeedbackMsg]   = useState('');
   const [showFlash, setShowFlash]       = useState(false);
   // Randomised zoom focal point per player so the zoomed-in spot varies each round.
   const [focalPoint, setFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 28 });
 
   const [suggestions, setSuggestions] = useState<PlayerEntry[]>([]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Separate ref for the level-1 correct flash so it doesn't overwrite autoAdvanceRef.
@@ -340,12 +244,8 @@ export function SoloFaceRevealPage() {
     setStatus('revealed');
   }
 
-  // Timer color: green → yellow → orange → red.
   const timerFraction = countdown / timerSecs;
-  const timerColor = timerFraction > 0.6 ? '#22c55e'
-    : timerFraction > 0.35 ? '#eab308'
-    : timerFraction > 0.15 ? '#f97316'
-    : '#ef4444';
+  const color = timerColor(timerFraction);
 
   const COLOR = '#06b6d4';
 
@@ -406,7 +306,7 @@ export function SoloFaceRevealPage() {
             <div className="w-full max-w-sm h-1 bg-[#222] rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
-                style={{ backgroundColor: timerColor }}
+                style={{ backgroundColor: color }}
                 animate={{ width: `${(countdown / timerSecs) * 100}%` }}
                 transition={{ duration: 0.3 }}
               />
@@ -415,7 +315,7 @@ export function SoloFaceRevealPage() {
             {/* Zoom level + countdown */}
             <div className="flex items-center gap-4 sports-font text-[10px] text-[#555] tracking-widest uppercase">
               <span>Zoom {zoomLevel}/4</span>
-              <span style={{ color: timerColor }}>{countdown}s</span>
+              <span style={{ color: color }}>{countdown}s</span>
             </div>
 
             {/* Headshot + optional Level-4 hint strip below */}

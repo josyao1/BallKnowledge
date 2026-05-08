@@ -5,12 +5,9 @@
  * with pts awarded: 3 for first correct, 1 for others).
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useLobbyStore } from '../../stores/lobbyStore';
-import { useLobbySubscription } from '../../hooks/useLobbySubscription';
-import { findLobbyByCode, getLobbyPlayers, resetMatchForPlayAgain } from '../../services/lobby';
+import { useMultiplayerResults } from '../../hooks/useMultiplayerResults';
 import { ZoomedHeadshot } from '../../components/faceReveal/ZoomedHeadshot';
 
 interface RoundSummary {
@@ -24,57 +21,19 @@ interface RoundSummary {
 const COLOR = '#06b6d4';
 
 export function MultiplayerFaceRevealResultsPage() {
-  const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const location = useLocation();
-  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } = useLobbyStore();
-  const [isLeaving, setIsLeaving] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const {
+    lobby, players, isHost, currentPlayerId,
+    sortedPlayers, matchWinner, isWinner,
+    isLeaving, isResetting, handlePlayAgain, handleLeave,
+  } = useMultiplayerResults({ code, defaultWinTarget: 30 });
 
   const roundHistory: RoundSummary[] = (location.state as any)?.roundHistory ?? [];
-
-  useLobbySubscription(lobby?.id || null);
-
-  useEffect(() => {
-    if (!code) { navigate('/'); return; }
-    if (lobby) return;
-
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
-      setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
-        if (pr.players) setPlayers(pr.players);
-      });
-    });
-  }, []);
 
   const careerState = lobby?.career_state as any;
   const winTarget = careerState?.win_target || 30;
   const sport = careerState?.sport || 'nba';
-  const sortedPlayers = [...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
-  const matchWinner = sortedPlayers[0];
-  const isWinner = matchWinner?.player_id === currentPlayerId;
-
-  // Non-host: follow host back to lobby when play again is clicked.
-  useEffect(() => {
-    if (!lobby || isHost) return;
-    if (lobby.status === 'waiting') navigate(`/lobby/${code}`);
-  }, [lobby?.status]);
-
-  const handlePlayAgain = async () => {
-    if (!lobby || !isHost) return;
-    setIsResetting(true);
-    const cs = (lobby.career_state as any) || {};
-    await resetMatchForPlayAgain(lobby.id, cs.win_target || 30, 0, cs.career_to || 0);
-    setLobby({ ...lobby, status: 'waiting' });
-    navigate(`/lobby/${code}`);
-  };
-
-  const handleLeave = async () => {
-    setIsLeaving(true);
-    await leaveLobby();
-    navigate('/');
-  };
 
   if (!lobby) {
     return (

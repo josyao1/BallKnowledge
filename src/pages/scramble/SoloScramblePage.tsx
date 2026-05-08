@@ -6,7 +6,8 @@
  * Press "Next Player" to keep playing.
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -29,12 +30,10 @@ export function SoloScramblePage() {
 
   const [scrambled, setScrambled] = useState('');
   const [answer, setAnswer] = useState('');
-  const [guessInput, setGuessInput] = useState('');
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, inputRef } = useGuessInput();
   const [status, setStatus] = useState<GameStatus>('loading');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
   const [streak, setStreak] = useState(0);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   async function loadPlayer(currentSport: Sport) {
     setStatus('loading');

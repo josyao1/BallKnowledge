@@ -8,14 +8,13 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLobbyStore } from '../../stores/lobbyStore';
-import { useLobbySubscription } from '../../hooks/useLobbySubscription';
+import { useMultiplayerGame } from '../../hooks/useMultiplayerGame';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import {
-  findLobbyByCode,
   getLobbyPlayers,
   updateLobbyStatus,
   updatePlayerScore,
@@ -57,17 +56,13 @@ const POSITION_PTS = [5, 3, 2, 1];
 export function MultiplayerNameScramblePage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers } = useLobbyStore();
-
-  useLobbySubscription(lobby?.id || null);
+  const { lobby, players, isHost, currentPlayerId } = useMultiplayerGame({ code });
 
   const careerState = lobby?.career_state as ScrambleState | null;
 
   // ── Local state ──
   const [localStatus, setLocalStatus] = useState<'playing' | 'done'>('playing');
-  const [guessInput, setGuessInput] = useState('');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } = useGuessInput();
   const [pressureTimer, setPressureTimer] = useState(30);
   const [pressureActive, setPressureActive] = useState(false);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
@@ -85,20 +80,6 @@ export function MultiplayerNameScramblePage() {
   // Snapshot of round scores taken when allPlayersFinished (still in 'playing' phase).
   // Prevents post-round realtime events from corrupting the interstitial ptsMap.
   const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
-
-  // ── Load lobby on mount ──
-  useEffect(() => {
-    if (!code) { navigate('/'); return; }
-    if (lobby?.career_state) return;
-
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
-      setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
-        if (pr.players) setPlayers(pr.players);
-      });
-    });
-  }, []);
 
   // ── Pressure timer: start when first correct answer arrives ──
   useEffect(() => {

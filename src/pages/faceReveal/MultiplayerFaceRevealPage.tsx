@@ -20,6 +20,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
@@ -39,9 +40,18 @@ import {
   startCareerRound,
 } from '../../services/lobby';
 import { loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
-import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
-import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
-import { areSimilarNames, normalize } from '../../utils/fuzzyDedup';
+import { areSimilarNames } from '../../utils/fuzzyDedup';
+import {
+  type PlayerEntry,
+  longestTenuredTeam,
+  getInitials,
+  weightedRandom,
+  getSuggestions,
+  nbaEndYear,
+  nflEndYear,
+  nflInPool,
+  timerColor,
+} from './faceRevealUtils';
 import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -62,44 +72,11 @@ interface FaceRevealState {
   focal_y?: number;       // zoom focal point Y%
 }
 
-interface PlayerEntry {
-  player_id: string | number;
-  player_name: string;
-  position?: string;
-  longestTeam?: string;
-}
-
-function longestTenuredTeam(seasons: Array<{ team: string }>): string {
-  const counts: Record<string, number> = {};
-  for (const s of seasons) {
-    const team = (s.team || '').split('/')[0].trim();
-    if (team) counts[team] = (counts[team] || 0) + 1;
-  }
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
-}
-
 // Points earned based on the zoom level at which a player answered correctly.
 // score field stores zoom level (1–4) when correct, 0 when gave up.
 // +1 bonus is added to the first overall correct guesser in endRound / ptsMap.
 function zoomToPoints(zoom: number): number {
   return [0, 5, 3, 2, 1][zoom] ?? 0;
-}
-
-function getInitials(name: string): string {
-  return name.split(' ').map(w => w[0] ?? '').join('').toUpperCase();
-}
-
-const MP_OFF_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
-
-function weightedRandom(candidates: PlayerEntry[]): PlayerEntry {
-  const total = candidates.reduce((sum, p) =>
-    sum + (p.position && MP_OFF_POSITIONS.has(p.position) ? 3 : 1), 0);
-  let r = Math.random() * total;
-  for (const p of candidates) {
-    r -= p.position && MP_OFF_POSITIONS.has(p.position) ? 3 : 1;
-    if (r <= 0) return p;
-  }
-  return candidates[candidates.length - 1];
 }
 
 interface RoundSummary {
@@ -108,38 +85,6 @@ interface RoundSummary {
   round: number;
   pts: Record<string, number>;
   finishedAt: Record<string, string | null>;
-}
-
-function nbaEndYear(p: NBACareerPlayer): number {
-  const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
-  return years.length ? Math.max(...years) : 0;
-}
-
-function nflEndYear(p: NFLCareerPlayer): number {
-  const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
-  return years.length ? Math.max(...years) : 0;
-}
-
-// ── Autocomplete suggestions ──────────────────────────────────────────────────
-
-function getSuggestions(input: string, pool: PlayerEntry[], limit = 5): PlayerEntry[] {
-  if (input.length < 3) return [];
-  const norm = normalize(input);
-  const normWords = norm.split(' ').filter(Boolean);
-
-  const scored: { entry: PlayerEntry; score: number }[] = [];
-  for (const p of pool) {
-    const pNorm = normalize(p.player_name);
-    const pWords = pNorm.split(' ');
-    if (pNorm.startsWith(norm)) {
-      scored.push({ entry: p, score: 100 });
-    } else if (normWords.every(iw => pWords.some(pw => pw.startsWith(iw)))) {
-      scored.push({ entry: p, score: 80 });
-    } else if (normWords[0]?.length >= 3 && pWords[0]?.startsWith(normWords[0])) {
-      scored.push({ entry: p, score: 60 });
-    }
-  }
-  return scored.sort((a, b) => b.score - a.score).slice(0, limit).map(s => s.entry);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -154,10 +99,8 @@ export function MultiplayerFaceRevealPage() {
   const careerState = lobby?.career_state as FaceRevealState | null;
 
   // ── Local state ──
-  const [guessInput, setGuessInput]     = useState('');
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType, inputRef: guessInputRef } = useGuessInput();
   const [suggestions, setSuggestions]   = useState<PlayerEntry[]>([]);
-  const [feedbackMsg, setFeedbackMsg]   = useState('');
-  const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
   const [localDone, setLocalDone]       = useState(false);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
@@ -174,7 +117,6 @@ export function MultiplayerFaceRevealPage() {
   const prevStatusRef      = useRef<string | null>(null);
   const roundHistoryRef    = useRef<RoundSummary[]>([]);
   const zoomTimerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
-  const inputRef           = useRef<HTMLInputElement>(null);
   // Gate for the "all players done" effect. Set to false when a new round is
   // detected (career_state has incremented round), then flipped to true only
   // once the lobby_players update arrives with all finished_at === null.
@@ -214,8 +156,6 @@ export function MultiplayerFaceRevealPage() {
     const min_yards: number     = (careerState as any).min_yards    || 0;
     const min_mpg: number       = (careerState as any).min_mpg      || 0;
     const defense_mode: string  = (careerState as any).defense_mode || 'known';
-    const NFL_OFF = MP_OFF_POSITIONS;
-    const NFL_ST  = new Set(['K', 'P', 'LS']);
 
     async function loadPool() {
       if (sport === 'nba') {
@@ -228,16 +168,7 @@ export function MultiplayerFaceRevealPage() {
         const all = await loadNFLLineupPool();
         let filtered = all.filter(p => p.player_id != null);
         if (career_to) filtered = filtered.filter(p => nflEndYear(p) >= career_to);
-        filtered = filtered.filter(p => {
-          if (NFL_ST.has(p.position)) return false;
-          if (NFL_OFF.has(p.position)) {
-            if (min_yards === 0) return true;
-            return p.seasons.some(
-              (s: any) => (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >= min_yards
-            );
-          }
-          return defense_mode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));
-        });
+        filtered = filtered.filter(p => nflInPool(p, min_yards, defense_mode as 'known' | 'all'));
         playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, position: p.position, longestTeam: longestTenuredTeam(p.seasons) }));
       }
     }
@@ -331,7 +262,7 @@ export function MultiplayerFaceRevealPage() {
       hasAdvancedRef.current = false;
       isZoomAdvancingRef.current = false;
       isStartingNextRef.current = false;
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setTimeout(() => guessInputRef.current?.focus(), 100);
 
       // Fallback: if the lobby_players reset realtime event is delayed or
       // dropped, force roundReady after 3 s so endRound can still fire.
@@ -651,12 +582,8 @@ export function MultiplayerFaceRevealPage() {
   const votedPlayers = players.filter(p => skipVotes.includes(p.player_id));
   const eligibleForSkip = players.filter(p => p.finished_at === null);
 
-  // Timer color.
   const timerFraction = careerState.timer ? countdown / careerState.timer : 0;
-  const timerColor = timerFraction > 0.6 ? '#22c55e'
-    : timerFraction > 0.35 ? '#eab308'
-    : timerFraction > 0.15 ? '#f97316'
-    : '#ef4444';
+  const color = timerColor(timerFraction);
 
   // ── BETWEEN-ROUND INTERSTITIAL ──
   if (lobby.status === 'waiting') {
@@ -846,11 +773,11 @@ export function MultiplayerFaceRevealPage() {
                 className="h-full rounded-full transition-all duration-300"
                 style={{
                   width: `${(countdown / (careerState.timer || 60)) * 100}%`,
-                  backgroundColor: timerColor,
+                  backgroundColor: color,
                 }}
               />
             </div>
-            <span className="sports-font text-[10px] tabular-nums" style={{ color: timerColor }}>
+            <span className="sports-font text-[10px] tabular-nums" style={{ color: color }}>
               {countdown}s
             </span>
           </div>
@@ -1026,7 +953,7 @@ export function MultiplayerFaceRevealPage() {
           <div className="flex gap-2">
             <div className="relative flex-1">
             <input
-              ref={inputRef}
+              ref={guessInputRef}
               type="text"
               value={guessInput}
               onChange={e => {

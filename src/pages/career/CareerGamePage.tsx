@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCareerStore } from '../../stores/careerStore';
@@ -34,10 +35,7 @@ export function CareerGamePage() {
     return state?.careerTo ? { careerTo: state.careerTo } : undefined;
   }, []);
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
-  const [guessInput, setGuessInput] = useState('');
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | ''>('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { guessInput, setGuessInput, feedbackMsg: feedbackMessage, setFeedbackMsg: setFeedbackMessage, feedbackType, setFeedbackType, inputRef } = useGuessInput();
 
   const accentColor = sport === 'nba' ? 'var(--nba-orange)' : '#013369';
 
