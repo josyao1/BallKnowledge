@@ -17,7 +17,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
@@ -48,7 +48,7 @@ import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPa
 import { CapCrunchScoresPanel } from '../../components/capCrunch/CapCrunchScoresPanel';
 import { CapCrunchResultCard }  from '../../components/capCrunch/CapCrunchResultCard';
 import { BlindModeReveal }      from '../../components/capCrunch/BlindModeReveal';
-import { getCategoryAbbr }      from '../../components/capCrunch/capCrunchUtils';
+import { getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import { getTotalColor }        from '../../components/capCrunch/SpinningNumber';
 
 type Phase = 'loading' | 'picking' | 'blind-reveal' | 'results';
@@ -106,12 +106,20 @@ export function MultiplayerCapCrunchPage() {
   const exactHitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confettiTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // Mobile toast for opponent picks
+  const [opponentPickToast, setOpponentPickToast] = useState<{
+    key: number; name: string; pick: string; isSkipped: boolean;
+  } | null>(null);
+  const opponentToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastKeyRef = useRef(0);
+  const prevAllLineupsRef = useRef<Record<string, PlayerLineup>>({});
+
   useEffect(() => {
     return () => {
       if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current);
       confettiTimersRef.current.forEach(clearTimeout);
       if (countdownIntervalRef.current !== null) clearInterval(countdownIntervalRef.current);
-
+      if (opponentToastTimerRef.current !== null) clearTimeout(opponentToastTimerRef.current);
     };
   }, []);
 
@@ -222,6 +230,39 @@ export function MultiplayerCapCrunchPage() {
     handleAutoSkip();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSkipNeeded]);
+
+  // ── Mobile toast: show brief notification when an opponent picks ─────────────
+  useEffect(() => {
+    if (!currentPlayerId || phase !== 'picking' || !hardMode) {
+      prevAllLineupsRef.current = { ...allLineups };
+      return;
+    }
+    const prev = prevAllLineupsRef.current;
+    if (Object.keys(prev).length === 0) {
+      prevAllLineupsRef.current = { ...allLineups };
+      return;
+    }
+    for (const [pid, lineup] of Object.entries(allLineups)) {
+      if (pid === currentPlayerId) continue;
+      const prevLineup = prev[pid];
+      if ((lineup.selectedPlayers.length ?? 0) > (prevLineup?.selectedPlayers.length ?? 0)) {
+        const newPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
+        const opponentName = players.find(p => p.player_id === pid)?.player_name ?? 'Opponent';
+        toastKeyRef.current += 1;
+        setOpponentPickToast({
+          key: toastKeyRef.current,
+          name: opponentName,
+          pick: newPick.playerName,
+          isSkipped: (newPick as any).isSkipped ?? false,
+        });
+        if (opponentToastTimerRef.current !== null) clearTimeout(opponentToastTimerRef.current);
+        opponentToastTimerRef.current = setTimeout(() => setOpponentPickToast(null), 3000);
+        break;
+      }
+    }
+    prevAllLineupsRef.current = { ...allLineups };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allLineups]);
 
   const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as import('../../types').Sport | null;
 
@@ -497,7 +538,7 @@ export function MultiplayerCapCrunchPage() {
           const excludeNames = hardMode
             ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
             : undefined;
-          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames);
+          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames, hwFilter);
           results.set(p.player_id, opt);
         })
       );
@@ -854,6 +895,27 @@ export function MultiplayerCapCrunchPage() {
           </motion.div>
         )}
 
+        {/* Mobile: floating toast when an opponent makes a pick */}
+        <AnimatePresence>
+          {opponentPickToast && (
+            <motion.div
+              key={opponentPickToast.key}
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.18 }}
+              className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-black/90 border border-white/20 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-none max-w-[88vw]"
+            >
+              <span className="text-white/50 text-[11px] sports-font truncate shrink-0">{opponentPickToast.name}:</span>
+              {opponentPickToast.isSkipped ? (
+                <span className="text-white/30 text-[11px] retro-title italic">skipped</span>
+              ) : (
+                <span className="text-white text-[11px] retro-title truncate">{opponentPickToast.pick}</span>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <CapCrunchHeader
           hardMode={hardMode}
           currentPickerId={currentPickerId}
@@ -960,6 +1022,7 @@ export function MultiplayerCapCrunchPage() {
                 canPickThisRound={canPickThisRound}
                 sport={selectedSport as 'nba' | 'nfl'}
                 blindMode={blindMode}
+                hardMode={hardMode}
               />
             </div>
           </div>
@@ -1049,6 +1112,7 @@ export function MultiplayerCapCrunchPage() {
                 canPickThisRound={canPickThisRound}
                 sport={selectedSport as 'nba' | 'nfl'}
                 blindMode={blindMode}
+                hardMode={hardMode}
               />
             </div>
           </div>

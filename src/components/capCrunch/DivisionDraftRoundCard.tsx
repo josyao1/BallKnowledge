@@ -1,7 +1,7 @@
 /**
  * DivisionDraftRoundCard.tsx — Displays a division + draft round category in Cap Crunch.
  *
- * e.g. "AFC North | R47" → "AFC North" in gold, "4th–7th Round" in purple.
+ * e.g. "AFC North | R47" → "AFC North" in gold, "4th Round+" in purple.
  * Clicking "see teams" opens a centered floating panel with team logos;
  * clicking outside dismisses it.
  *
@@ -18,7 +18,7 @@ function draftLabel(code: string): string {
   if (code === 'R1')  return '1st Round';
   if (code === 'R2')  return '2nd Round';
   if (code === 'R23') return '2nd–3rd Round';
-  if (code === 'R47') return '4th–7th Round';
+  if (code === 'R47') return '4th Round+';
   return code;
 }
 

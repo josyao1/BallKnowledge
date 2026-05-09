@@ -450,7 +450,7 @@ export function parseDivisionDraftRound(s: string): { division: string; draftRou
 function draftRoundLabel(code: string): string {
   if (code === 'R1')  return '1st Round';
   if (code === 'R23') return '2nd-3rd Round';
-  if (code === 'R47') return '4th-7th Round';
+  if (code === 'R47') return '4th Round+';
   if (code === 'R2')  return '2nd Round';
   return code;
 }
@@ -491,6 +491,8 @@ function nbaDraftRoundCode(bio: any): string | null {
 /** True if the player's bio matches the target draft round bucket for the given sport. */
 function playerInDraftRound(bio: any, draftRound: string, sport: 'nba' | 'nfl'): boolean {
   const actual = sport === 'nfl' ? nflDraftRoundCode(bio) : nbaDraftRoundCode(bio);
+  // R47 includes undrafted players
+  if (draftRound === 'R47') return actual === 'R47' || actual === null;
   return actual === draftRound;
 }
 
@@ -1452,6 +1454,7 @@ export async function findOptimalLastPick(
   remainingBudget: number,
   actualStatValue: number,
   excludePlayerNames?: string[],
+  hwFilter?: HWFilter | null,
 ): Promise<OptimalPick | null> {
   // No headroom left, or they already hit exactly on the dot
   if (remainingBudget <= 0 || remainingBudget === actualStatValue) return null;
@@ -1539,6 +1542,10 @@ export async function findOptimalLastPick(
       } else {
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
+          if (hwFilter) {
+            const hw = checkHWFilter((p as any).bio, hwFilter, sport);
+            if (!hw.passes) continue;
+          }
           for (const s of p.seasons) {
             if (!nbaTeamMatches(s.team, team)) continue;
             const val = computeNbaStat(s, statCategory);
@@ -1676,6 +1683,10 @@ export async function findOptimalLastPick(
       } else {
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
+          if (hwFilter) {
+            const hw = checkHWFilter((p as any).bio, hwFilter, sport);
+            if (!hw.passes) continue;
+          }
           for (const s of p.seasons) {
             const teamMatch = isDivisionRound(team)
               ? teamInDivision(s.team, team)
