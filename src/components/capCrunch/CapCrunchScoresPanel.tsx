@@ -17,7 +17,7 @@ function draftLabel(code: string): string {
   if (code === 'R1')  return '1st Round';
   if (code === 'R2')  return '2nd Round';
   if (code === 'R23') return '2nd–3rd Round';
-  if (code === 'R47') return '4th–7th Round';
+  if (code === 'R47') return '4th Round+';
   return code;
 }
 
@@ -47,10 +47,12 @@ interface Props {
   sport: 'nba' | 'nfl';
   /** When true, running totals are hidden for all players */
   blindMode?: boolean;
+  /** When true, picks are never masked — all players can always see all picks */
+  hardMode?: boolean;
 }
 
 export function CapCrunchScoresPanel({
-  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport, blindMode = false,
+  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport, blindMode = false, hardMode = false,
 }: Props) {
   // Per-pick stat guesses typed by the local player in blind mode.
   // Keyed by pick index; values are raw input strings so partial input is preserved.
@@ -81,7 +83,7 @@ export function CapCrunchScoresPanel({
           const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
           const hasPicked = lineup?.hasPickedThisRound || lineup?.isFinished;
           const isMe = player.player_id === currentPlayerId;
-          const maskCurrentRound = canPickThisRound && !isMe;
+          const maskCurrentRound = !hardMode && canPickThisRound && !isMe;
           const visiblePicks = maskCurrentRound
             ? (lineup?.selectedPlayers.slice(0, currentRound - 1) ?? [])
             : (lineup?.selectedPlayers ?? []);

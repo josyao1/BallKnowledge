@@ -17,7 +17,7 @@ function draftLabel(code: string): string {
   if (code === 'R1')  return '1st Round';
   if (code === 'R2')  return '2nd Round';
   if (code === 'R23') return '2nd–3rd Round';
-  if (code === 'R47') return '4th–7th Round';
+  if (code === 'R47') return '4th Round+';
   return code;
 }
 
