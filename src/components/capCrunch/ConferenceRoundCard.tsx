@@ -10,7 +10,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { P4_CONFERENCES, CONFERENCE_LOGOS } from '../../services/capCrunch';
+import { CONFERENCE_LOGOS } from '../../services/capCrunch';
+import { P4_CONFERENCES_DISPLAY } from '../../services/capCrunchData';
 
 const PRO_CONF_STYLES: Record<string, string> = {
   AFC: 'bg-[#b91c1c]/80 border border-[#ef4444]',
@@ -32,11 +33,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
   const proTextSize = size === 'lg' ? 'text-xl md:text-2xl' : 'text-lg md:text-xl';
   const confTextSize = size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl';
 
-  const schools = confName in P4_CONFERENCES
-    ? (P4_CONFERENCES[confName] ?? [])
-        .filter((s, i, a) => a.indexOf(s) === i)
-        .filter(s => !s.includes('&amp;') && !s.includes('amp;'))
-    : [];
+  const schools = P4_CONFERENCES_DISPLAY[confName] ?? [];
 
   return (
     <div className="px-4 py-2 rounded border-2 bg-black border-[#3b82f6]/80 shadow-[0_0_12px_rgba(59,130,246,0.2)]">
