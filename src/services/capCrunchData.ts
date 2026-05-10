@@ -240,6 +240,33 @@ export const P4_CONFERENCES: Record<string, string[]> = {
   ],
 };
 
+// ─── Canonical school names for display (one name per school, no aliases) ────────
+// P4_CONFERENCES keeps all aliases for player-data matching; this is display-only.
+export const P4_CONFERENCES_DISPLAY: Record<string, string[]> = {
+  'SEC': [
+    'Alabama', 'Arkansas', 'Auburn', 'Florida', 'Georgia', 'Kentucky',
+    'LSU', 'Ole Miss', 'Mississippi State', 'Missouri', 'Oklahoma',
+    'South Carolina', 'Tennessee', 'Texas', 'Texas A&M', 'Vanderbilt',
+  ],
+  'Big Ten': [
+    'Illinois', 'Indiana', 'Iowa', 'Maryland',
+    'Michigan', 'Michigan State', 'Minnesota', 'Nebraska', 'Northwestern',
+    'Ohio State', 'Oregon', 'Penn State', 'Purdue', 'Rutgers', 'UCLA',
+    'USC', 'Washington', 'Wisconsin',
+  ],
+  'Big 12': [
+    'Arizona', 'Arizona State', 'Baylor', 'BYU', 'Cincinnati', 'Colorado',
+    'Houston', 'Iowa State', 'Kansas', 'Kansas State', 'Oklahoma State',
+    'TCU', 'Texas Tech', 'UCF', 'Utah', 'West Virginia',
+  ],
+  'ACC': [
+    'Boston College', 'Clemson', 'California', 'Duke', 'Florida State',
+    'Georgia Tech', 'Louisville', 'Miami', 'NC State', 'North Carolina',
+    'Notre Dame', 'Pittsburgh', 'SMU', 'Stanford', 'Syracuse',
+    'Virginia', 'Virginia Tech', 'Wake Forest',
+  ],
+};
+
 // ─── Conference logo paths ─────────────────────────────────────────────────────
 export const CONFERENCE_LOGOS: Record<string, string> = {
   'SEC':     '/sec.png',

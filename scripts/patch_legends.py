@@ -2,9 +2,10 @@
 """
 patch_legends.py — Consolidated patch for all NFL legends.
 
-Two operations:
+Three operations:
   1. PRE1999_PATCHES  — prepend missing pre-1999 seasons onto existing DB players
   2. NEW_PLAYERS      — add complete careers for players not in the DB at all
+  3. BIO_FIXES        — correct bio fields (e.g. draft_number) that nflverse stores wrong
 
 Stats sourced from Pro Football Reference.
 Run: python patch_legends.py
@@ -14,6 +15,82 @@ After: cp data/nfl_careers.json ../public/data/nfl_careers.json
 import json, os
 
 CAREERS_PATH = os.path.join(os.path.dirname(__file__), "data", "nfl_careers.json")
+POOL_PATH    = os.path.join(os.path.dirname(__file__), "data", "nfl_lineup_pool.json")
+
+# ─── 3. BIO FIXES ────────────────────────────────────────────────────────────
+# Correct bio fields that nflverse stores incorrectly.
+# Applies to both nfl_careers.json and nfl_lineup_pool.json.
+# draft_number: nflverse has 0 for ~66 players from 2003-2015 draft classes
+# despite them having a valid draft_club. Correct values from PFR.
+# Terrelle Pryor (00-0028825) left at 0 — supplemental draft, no standard overall pick.
+BIO_FIXES: dict[str, dict] = {
+    "00-0021429": {"draft_number": 1},    # Carson Palmer 2003 R1 P1
+    "00-0022084": {"draft_number": 54},   # Anquan Boldin 2003 R2 P54
+    "00-0023564": {"draft_number": 130},  # Darren Sproles 2005 R4 P130
+    "00-0023578": {"draft_number": 145},  # Dan Orlovsky 2005 R5 P145
+    "00-0024221": {"draft_number": 6},    # Vernon Davis 2006 R1 P6
+    "00-0024334": {"draft_number": 119},  # Brandon Marshall 2006 R4 P119
+    "00-0024389": {"draft_number": 175},  # Delanie Walker 2006 R6 P175
+    "00-0025399": {"draft_number": 12},   # Marshawn Lynch 2007 R1 P12
+    "00-0026144": {"draft_number": 4},    # Darren McFadden 2008 R1 P4
+    "00-0026153": {"draft_number": 13},   # Jonathan Stewart 2008 R1 P13
+    "00-0026164": {"draft_number": 24},   # Chris Johnson 2008 R1 P24
+    "00-0026201": {"draft_number": 61},   # Martellus Bennett 2008 R2 P61
+    "00-0026213": {"draft_number": 73},   # Jamaal Charles 2008 R3 P73
+    "00-0026289": {"draft_number": 149},  # Tim Hightower 2008 R5 P149
+    "00-0026345": {"draft_number": 205},  # Pierre Garcon 2008 R6 P205
+    "00-0026986": {"draft_number": 10},   # Michael Crabtree 2009 R1 P10
+    "00-0027006": {"draft_number": 30},   # Kenny Britt 2009 R1 P30
+    "00-0027057": {"draft_number": 83},   # Brandon Tate 2009 R3 P83
+    "00-0027125": {"draft_number": 180},  # Zach Miller 2009 R6 P180 (JAX TE)
+    "00-0027675": {"draft_number": 70},   # Ed Dickson 2010 R3 P70
+    "00-0027681": {"draft_number": 78},   # Brandon LaFell 2010 R3 P78
+    "00-0027690": {"draft_number": 87},   # Eric Decker 2010 R3 P87
+    "00-0027725": {"draft_number": 125},  # Clay Harbor 2010 R4 P125
+    "00-0027854": {"draft_number": 1},    # Sam Bradford 2010 R1 P1
+    "00-0027864": {"draft_number": 12},   # Ryan Mathews 2010 R1 P12
+    "00-0027874": {"draft_number": 22},   # Demaryius Thomas 2010 R1 P22
+    "00-0027985": {"draft_number": 47},   # Lance Kendricks 2011 R2 P47
+    "00-0027994": {"draft_number": 56},   # Shane Vereen 2011 R2 P56
+    "00-0027996": {"draft_number": 58},   # Torrey Smith 2011 R2 P58
+    "00-0027997": {"draft_number": 59},   # Greg Little 2011 R2 P59
+    "00-0028067": {"draft_number": 129},  # Julius Thomas 2011 R4 P129
+    "00-0028083": {"draft_number": 145},  # Jacquizz Rodgers 2011 R5 P145
+    "00-0028091": {"draft_number": 153},  # Jeremy Kerley 2011 R5 P153
+    "00-0028112": {"draft_number": 174},  # Charles Clay 2011 R6 P174
+    "00-0028116": {"draft_number": 178},  # Aldrick Robinson 2011 R6 P178
+    "00-0029262": {"draft_number": 63},   # Rueben Randle 2012 R2 P63
+    "00-0029264": {"draft_number": 84},   # Bernard Pierce 2012 R3 P84
+    "00-0029273": {"draft_number": 106},  # Robert Turbin 2012 R4 P106
+    "00-0029572": {"draft_number": 118},  # Jarius Wright 2012 R4 P118
+    "00-0029580": {"draft_number": 227},  # Rishard Matthews 2012 R7 P227
+    "00-0029613": {"draft_number": 31},   # Doug Martin 2012 R1 P31
+    "00-0029638": {"draft_number": 13},   # Michael Floyd 2012 R1 P13
+    "00-0029640": {"draft_number": 33},   # Brian Quick 2012 R2 P33
+    "00-0029668": {"draft_number": 1},    # Andrew Luck 2012 R1 P1
+    "00-0029683": {"draft_number": 67},   # Ronnie Hillman 2012 R3 P67
+    "00-0029689": {"draft_number": 64},   # Dwayne Allen 2012 R3 P64
+    "00-0029697": {"draft_number": 34},   # Coby Fleener 2012 R2 P34
+    "00-0029708": {"draft_number": 20},   # Kendall Wright 2012 R1 P20
+    "00-0030287": {"draft_number": 187},  # Andre Ellington 2013 R6 P187
+    "00-0030432": {"draft_number": 62},   # Christine Michael 2013 R2 P62
+    "00-0030433": {"draft_number": 164},  # Mike Gillislee 2013 R5 P164
+    "00-0030460": {"draft_number": 79},   # Markus Wheaton 2013 R3 P79
+    "00-0030514": {"draft_number": 184},  # Mychal Rivera 2013 R6 P184
+    "00-0030516": {"draft_number": 209},  # Brice Butler 2013 R7 P209
+    "00-0030521": {"draft_number": 34},   # Justin Hunter 2013 R2 P34
+    "00-0030526": {"draft_number": 16},   # EJ Manuel 2013 R1 P16
+    "00-0030542": {"draft_number": 74},   # Terrance Williams 2013 R3 P74
+    "00-0031023": {"draft_number": 209},  # Quincy Enunwa 2014 R6 P209
+    "00-0031068": {"draft_number": 142},  # Ryan Grant WR 2014 R5 P142 (NOT the RB Ryan Grant who was UDFA)
+    "00-0031075": {"draft_number": 181},  # Alfred Blue 2014 R6 P181
+    "00-0031301": {"draft_number": 55},   # Jeremy Hill 2014 R2 P55
+    "00-0031375": {"draft_number": 94},   # Terrance West 2014 R3 P94
+    "00-0031390": {"draft_number": 69},   # Charles Sims 2014 R3 P69
+    "00-0031418": {"draft_number": 38},   # Austin Seferian-Jenkins 2014 R2 P38
+    "00-0031577": {"draft_number": 125},  # Javorius Allen 2015 R4 P125
+    "00-0031590": {"draft_number": 149},  # Jay Ajayi 2015 R5 P149
+}
 
 # ─── 1. PRE-1999 PATCHES FOR EXISTING DB PLAYERS ─────────────────────────────
 # Keyed by nfl_data_py player_id. Only seasons missing from the DB are listed;
@@ -706,6 +783,25 @@ def main():
 
     print(f"\nDone. Patched {patched} existing players, added {added} new players.")
     print("Run: cp data/nfl_careers.json ../public/data/nfl_careers.json")
+
+    # ── Apply bio fixes to both careers and pool ──────────────────────────────
+    print("\n── Bio fixes (draft_number corrections) ──")
+    for path, label in [(CAREERS_PATH, "nfl_careers"), (POOL_PATH, "nfl_lineup_pool")]:
+        if not os.path.exists(path):
+            continue
+        with open(path) as f:
+            players = json.load(f)
+        by_id = {str(p["player_id"]): p for p in players}
+        bio_patched = 0
+        for pid, fixes in BIO_FIXES.items():
+            player = by_id.get(pid)
+            if not player:
+                continue
+            player.setdefault("bio", {}).update(fixes)
+            bio_patched += 1
+        with open(path, "w") as f:
+            json.dump(players, f, separators=(",", ":"))
+        print(f"  {label}: {bio_patched} bio fields updated")
 
 
 if __name__ == "__main__":
