@@ -28,6 +28,7 @@ import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer, loadNBALineupPo
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../../services/boxScoreData';
+import { getRandomNBABoxScoreGame, ALL_NBA_BOX_SCORE_YEARS } from '../../services/nbaBoxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
 import { RouletteOverlay } from '../../components/home/RouletteOverlay';
@@ -164,7 +165,7 @@ export function LobbyWaitingPage() {
       hasStartedGame.current = false;
       hasAutoStarted.current = false;
     } else if (lobby.status === 'countdown') {
-      if (lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'starting-lineup') {
+      if (lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'starting-lineup' && lobby.game_type !== 'nba-box-score') {
         setShowDealingAnimation(true);
       }
     } else if (lobby.status === 'playing') {
@@ -176,6 +177,8 @@ export function LobbyWaitingPage() {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/lineup-is-right`); }
       } else if (lobby.game_type === 'box-score') {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/box-score`); }
+      } else if (lobby.game_type === 'nba-box-score') {
+        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/nba-box-score`); }
       } else if (lobby.game_type === 'starting-lineup') {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/starting-lineup`); }
       } else if (lobby.game_type === 'face-reveal') {
@@ -193,6 +196,7 @@ export function LobbyWaitingPage() {
         scramble: `/lobby/${code}/scramble/results`,
         'lineup-is-right': `/lobby/${code}/lineup-is-right/results`,
         'box-score': `/lobby/${code}/box-score/results`,
+        'nba-box-score': `/lobby/${code}/nba-box-score/results`,
         'starting-lineup': `/lobby/${code}/starting-lineup/results`,
         'face-reveal': `/lobby/${code}/face-reveal/results`,
       };
@@ -322,6 +326,24 @@ export function LobbyWaitingPage() {
       setPlayers(players.map(p => ({ ...p, finished_at: null, score: 0, guessed_count: 0, guessed_players: [], incorrect_guesses: [] })));
       setLobby({ ...lobby, career_state: newState, status: 'playing', started_at: new Date().toISOString() });
       navigate(`/lobby/${code}/box-score`);
+    } catch { setIsLoadingRoster(false); }
+  };
+
+  const handleNBABoxScoreStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    hasStartedGame.current = true;
+    try {
+      const cs = (lobby.career_state as any) || {};
+      const minYear = cs.min_year || 2014;
+      const maxYear = cs.max_year || 2025;
+      const filteredYears = ALL_NBA_BOX_SCORE_YEARS.filter(y => y >= minYear && y <= maxYear);
+      const game = await getRandomNBABoxScoreGame({ years: filteredYears.length > 0 ? filteredYears : undefined, team: cs.team || null });
+      const newState = { type: 'nba_box_score', game_id: game.game_id, season: game.season, min_year: minYear, max_year: maxYear, team: cs.team || null };
+      await startCareerRound(lobby.id, newState);
+      setPlayers(players.map(p => ({ ...p, finished_at: null, score: 0, guessed_count: 0, guessed_players: [], incorrect_guesses: [] })));
+      setLobby({ ...lobby, career_state: newState, status: 'playing', started_at: new Date().toISOString() });
+      navigate(`/lobby/${code}/nba-box-score`);
     } catch { setIsLoadingRoster(false); }
   };
 
@@ -523,6 +545,11 @@ export function LobbyWaitingPage() {
       const newState = { ...(lobby.career_state as any) || {}, type: 'box_score', min_year: v.boxMinYear, max_year: v.boxMaxYear, team: v.boxTeam };
       await updateCareerState(newState);
       await updateSettings({ timerDuration: v.timer });
+      setLobby({ ...lobby, career_state: newState });
+    } else if (v.gameType === 'nba-box-score') {
+      const newState = { ...(lobby.career_state as any) || {}, type: 'nba_box_score', min_year: v.boxMinYear, max_year: v.boxMaxYear, team: v.boxTeam };
+      await updateCareerState(newState);
+      await updateSettings({ timerDuration: v.timer, gameType: 'nba-box-score' });
       setLobby({ ...lobby, career_state: newState });
     } else if (v.gameType === 'starting-lineup') {
       const newState = { ...(lobby.career_state as any) || {}, win_target: v.winTarget, sport: v.startingSport };
@@ -742,6 +769,7 @@ export function LobbyWaitingPage() {
           onScrambleStart={handleScrambleStart}
           onLineupStart={handleLineupIsRightStart}
           onBoxScoreStart={handleBoxScoreStart}
+          onNBABoxScoreStart={handleNBABoxScoreStart}
           onStartingLineupStart={handleStartingLineupStart}
           onFaceRevealStart={handleFaceRevealStart}
         />

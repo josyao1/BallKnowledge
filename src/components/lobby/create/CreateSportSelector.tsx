@@ -5,17 +5,13 @@
 
 import type { Sport } from '../../../types';
 
-type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal';
-
 interface Props {
   sport: Sport;
-  lobbyMode: LobbyMode;
+  lobbyMode: string;
   onSportChange: (s: Sport) => void;
 }
 
-export function CreateSportSelector({ sport, lobbyMode, onSportChange }: Props) {
-  const isBoxScore = lobbyMode === 'box-score';
-
+export function CreateSportSelector({ sport, onSportChange }: Props) {
   return (
     <div className="bg-black/50 border border-white/10 rounded-sm p-4">
       <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
@@ -23,14 +19,11 @@ export function CreateSportSelector({ sport, lobbyMode, onSportChange }: Props) 
       </div>
       <div className="flex gap-2 justify-center">
         <button
-          onClick={() => { if (!isBoxScore) onSportChange('nba'); }}
-          disabled={isBoxScore}
+          onClick={() => onSportChange('nba')}
           className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
-            isBoxScore
-              ? 'bg-black/20 text-white/20 border border-white/10 cursor-not-allowed'
-              : sport === 'nba'
-                ? 'bg-[#d4af37] text-black shadow-lg font-bold'
-                : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
+            sport === 'nba'
+              ? 'bg-[#d4af37] text-black shadow-lg font-bold'
+              : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
           }`}
         >
           NBA

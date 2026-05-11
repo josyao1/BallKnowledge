@@ -46,6 +46,7 @@ export function LobbyCreatePage() {
 
   const [lobbyMode, setLobbyMode] = useState<LobbyMode>(() => {
     const passed = (location.state as any)?.gameType;
+    if (passed === 'nba-box-score') return 'box-score';
     return VALID_LOBBY_MODES.includes(passed) ? passed : 'roster';
   });
   const [winTarget,           setWinTarget]           = useState<3 | 5 | 7 | 10 | 20 | 30>(10);
@@ -63,10 +64,10 @@ export function LobbyCreatePage() {
   const [randomMinYear,       setRandomMinYear]       = useState(2015);
   const [randomMaxYear,       setRandomMaxYear]       = useState(2025);
 
-  // Box Score is NFL-only — auto-lock when this mode is selected
+  // If arriving from NBA box score home card, pre-select NBA
   useEffect(() => {
-    if (lobbyMode === 'box-score') setSport('nfl');
-  }, [lobbyMode]);
+    if ((location.state as any)?.gameType === 'nba-box-score') setSport('nba');
+  }, []);
 
   const timerDuration = customTimerInput
     ? Math.max(10, Math.min(600, parseInt(customTimerInput) || 90))
@@ -109,10 +110,18 @@ export function LobbyCreatePage() {
     }
 
     if (lobbyMode === 'box-score') {
-      const lobby = await createLobby(hostName.trim(), 'nfl', 'KC', '2024', 120, 'random', 2015, 2024, 'box-score', 'team', null, null);
-      if (lobby) {
-        await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2024, team: null });
-        navigate(`/lobby/${lobby.join_code}`);
+      if (sport === 'nba') {
+        const lobby = await createLobby(hostName.trim(), 'nba', 'LAL', '2024-25', 120, 'random', 2014, 2025, 'nba-box-score', 'team', null, null);
+        if (lobby) {
+          await updateCareerState(lobby.id, { type: 'nba_box_score', min_year: 2014, max_year: 2025, team: null });
+          navigate(`/lobby/${lobby.join_code}`);
+        }
+      } else {
+        const lobby = await createLobby(hostName.trim(), 'nfl', 'KC', '2024', 120, 'random', 2015, 2024, 'box-score', 'team', null, null);
+        if (lobby) {
+          await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2024, team: null });
+          navigate(`/lobby/${lobby.join_code}`);
+        }
       }
       return;
     }

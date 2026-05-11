@@ -3,17 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   getRandomNBABoxScoreGame,
+  getNBASeasonPlayerPool,
   ALL_NBA_BOX_SCORE_YEARS,
-  NBA_BOX_SCORE_GAME_TYPE_LABELS,
   type NBABoxScoreGame,
 } from '../../services/nbaBoxScoreData';
-import { fetchStaticSeasonPlayers } from '../../services/roster';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
-import {
-  getNBATeamColor, getNBALogoUrl, cleanJersey, getInitials, scoreMatch,
-} from '../../components/boxScore/boxScoreHelpers';
+import { getNBATeamColor, cleanJersey, getInitials, scoreMatch, nbk } from '../../components/boxScore/boxScoreHelpers';
 import { FlipReveal } from '../../components/boxScore/FlipReveal';
 import { SectionHeader } from '../../components/boxScore/SectionHeader';
+import { NBATeamLogo } from '../../components/boxScore/NBATeamLogo';
+import { NBAStatLine, computeLeaders } from '../../components/boxScore/NBAStatLine';
+import { NBAScoreboard } from '../../components/boxScore/NBAScoreboard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,33 +29,6 @@ function buildYearRange(min: number, max: number): number[] {
   const out: number[] = [];
   for (let y = min; y <= max; y++) if (ALL_NBA_BOX_SCORE_YEARS.includes(y)) out.push(y);
   return out.length > 0 ? out : ALL_NBA_BOX_SCORE_YEARS;
-}
-
-function nbaSeasonStr(year: number): string {
-  return `${year}-${String(year + 1).slice(-2)}`;
-}
-
-function formatDate(s: string): string {
-  try { return new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
-  catch { return s; }
-}
-
-function nbk(side: 'home' | 'away', idx: number): string {
-  return `${side}_${idx}`;
-}
-
-// ─── Team logo ────────────────────────────────────────────────────────────────
-
-function NBATeamLogo({ abbr, className, imgStyle }: { abbr: string; className?: string; imgStyle?: React.CSSProperties }) {
-  return (
-    <img
-      src={getNBALogoUrl(abbr)}
-      alt={abbr}
-      className={className ?? 'w-16 h-16 object-contain'}
-      style={imgStyle}
-      onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
-    />
-  );
 }
 
 // ─── Player row ───────────────────────────────────────────────────────────────
@@ -147,7 +120,7 @@ export function NBABoxScoreGamePage() {
 
   const [loading,       setLoading]       = useState(true);
   const [game,          setGame]          = useState<NBABoxScoreGame | null>(null);
-  const [seasonPlayers, setSeasonPlayers] = useState<{ id: number; name: string }[]>([]);
+  const [seasonPlayers, setSeasonPlayers] = useState<{ name: string }[]>([]);
   const [guesses,       setGuesses]       = useState<Record<string, string>>({});
   const [revealed,      setRevealed]      = useState(false);
   const [hintsRevealed, setHintsRevealed] = useState(false);
@@ -161,12 +134,9 @@ export function NBABoxScoreGamePage() {
   useEffect(() => {
     const years = buildYearRange(filters.minYear, filters.maxYear);
     getRandomNBABoxScoreGame({ years, team: filters.team ?? undefined })
-      .then(async g => {
+      .then(g => {
         setGame(g);
-        try {
-          const players = await fetchStaticSeasonPlayers(nbaSeasonStr(g.season));
-          setSeasonPlayers(players ?? []);
-        } catch { /* autocomplete works even without this */ }
+        getNBASeasonPlayerPool(g.season).then(setSeasonPlayers).catch(() => {});
         setLoading(false);
         setTimeout(() => searchRef.current?.focus(), 120);
       })
@@ -190,9 +160,7 @@ export function NBABoxScoreGamePage() {
 
   const candidates = useMemo(() => {
     if (!globalInput.trim() || globalInput.length < 2) return [];
-    const pool = seasonPlayers.length > 0
-      ? seasonPlayers.map(p => ({ name: p.name }))
-      : allPlayers;
+    const pool = seasonPlayers.length > 0 ? seasonPlayers : allPlayers;
     return pool
       .map(p => ({ name: p.name, score: scoreMatch(globalInput, p.name) }))
       .filter(p => p.score > 0)
@@ -227,7 +195,6 @@ export function NBABoxScoreGamePage() {
     if (e.key === 'Escape') { setGlobalInput(''); setShowDropdown(false); }
   }
 
-  // Score
   let totalRows = 0, correctCount = 0;
   if (game) {
     for (const side of ['home', 'away'] as const) {
@@ -249,7 +216,6 @@ export function NBABoxScoreGamePage() {
 
   const homeColor = getNBATeamColor(game.home_team);
   const awayColor = getNBATeamColor(game.away_team);
-  const gameLabel = NBA_BOX_SCORE_GAME_TYPE_LABELS[game.game_type] ?? game.game_type;
   const pct = totalRows > 0 ? Math.round(correctCount / totalRows * 100) : 0;
 
   return (
@@ -282,77 +248,7 @@ export function NBABoxScoreGamePage() {
 
       <div className="max-w-5xl mx-auto px-3 py-4 space-y-4">
 
-        {/* ── SCOREBOARD ── */}
-        <div
-          className="relative overflow-hidden rounded-2xl"
-          style={{
-            background: `linear-gradient(135deg, ${awayColor}28 0%, #111 40%, #111 60%, ${homeColor}28 100%)`,
-            border: `1px solid rgba(255,255,255,0.08)`,
-          }}
-        >
-          <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-52 h-52 rounded-full blur-3xl pointer-events-none"
-            style={{ background: awayColor, opacity: 0.18 }} />
-          <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-52 h-52 rounded-full blur-3xl pointer-events-none"
-            style={{ background: homeColor, opacity: 0.18 }} />
-
-          <div className="relative flex items-center justify-between px-6 sm:px-12 py-7">
-            {/* Away */}
-            <div className="flex flex-col items-center gap-2 flex-1">
-              <NBATeamLogo abbr={game.away_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
-              <span className="retro-title text-2xl sm:text-4xl leading-none" style={{ color: awayColor, textShadow: `0 0 30px ${awayColor}80` }}>
-                {game.away_team}
-              </span>
-              <span className="retro-title text-6xl sm:text-7xl text-white leading-none tabular-nums"
-                style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
-                {game.away_score}
-              </span>
-              <span className="sports-font text-[10px] text-[#666] tracking-[0.3em] uppercase">Away</span>
-            </div>
-
-            {/* Center */}
-            <div className="flex flex-col items-center gap-3 px-2 sm:px-6">
-              {game.overtime && (
-                <span className="px-2.5 py-1 rounded-full sports-font text-[10px] tracking-wider"
-                  style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b' }}>
-                  OT
-                </span>
-              )}
-              <div className="sports-font text-[12px] text-[#444] tracking-[0.4em]">FINAL</div>
-              <div className="flex items-center">
-                <div className="w-px h-10 bg-white/10" />
-              </div>
-              <div className="text-center">
-                <div className="sports-font text-[11px] text-[#666]">{gameLabel}</div>
-              </div>
-            </div>
-
-            {/* Home */}
-            <div className="flex flex-col items-center gap-2 flex-1">
-              <NBATeamLogo abbr={game.home_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
-              <span className="retro-title text-2xl sm:text-4xl leading-none" style={{ color: homeColor, textShadow: `0 0 30px ${homeColor}80` }}>
-                {game.home_team}
-              </span>
-              <span className="retro-title text-6xl sm:text-7xl text-white leading-none tabular-nums"
-                style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
-                {game.home_score}
-              </span>
-              <span className="sports-font text-[10px] text-[#666] tracking-[0.3em] uppercase">Home</span>
-            </div>
-          </div>
-
-          {/* Game info chips */}
-          <div className="relative border-t border-white/6 px-4 py-3 flex flex-wrap justify-center gap-2">
-            <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
-              <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Season</span>
-              <span className="retro-title text-base text-white leading-tight">{nbaSeasonStr(game.season)}</span>
-              <span className="sports-font text-[9px] text-[#666]">{formatDate(game.game_date)}</span>
-            </div>
-            <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
-              <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Type</span>
-              <span className="sports-font text-[11px] text-[#ccc] leading-tight text-center mt-0.5">{gameLabel}</span>
-            </div>
-          </div>
-        </div>
+        <NBAScoreboard game={game} />
 
         {/* ── GLOBAL SEARCH ── */}
         <div className="relative z-20">
@@ -441,10 +337,11 @@ export function NBABoxScoreGamePage() {
         {/* ── BOX SCORE COLUMNS ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(['away', 'home'] as const).map(side => {
-            const color = side === 'home' ? homeColor : awayColor;
-            const abbr  = side === 'home' ? game.home_team : game.away_team;
+            const color   = side === 'home' ? homeColor : awayColor;
+            const abbr    = side === 'home' ? game.home_team : game.away_team;
             const players = game.box_score[side];
             const doneCount = players.filter((p, i) => isCorrect(side, i, p.name)).length;
+            const leaders = computeLeaders(players);
 
             return (
               <div
@@ -455,7 +352,6 @@ export function NBABoxScoreGamePage() {
                   border: `1px solid ${color}30`,
                 }}
               >
-                {/* Team header */}
                 <div
                   className="flex items-center gap-3 px-4 py-3 border-b"
                   style={{ background: `linear-gradient(90deg, ${color}25 0%, transparent 80%)`, borderColor: `${color}20` }}
@@ -465,7 +361,7 @@ export function NBABoxScoreGamePage() {
                     <div className="retro-title text-xl leading-none" style={{ color }}>{abbr}</div>
                     <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
-                  <div className="ml-auto text-center">
+                  <div className="ml-auto">
                     <div className="sports-font text-[10px] tracking-wider" style={{ color: doneCount === players.length ? '#4ade80' : '#555' }}>
                       {doneCount}/{players.length}
                     </div>
@@ -488,18 +384,7 @@ export function NBABoxScoreGamePage() {
                         onGuessChange={v => setGuesses(prev => ({ ...prev, [key]: v }))}
                         rowRef={el => { rowRefs.current[key] = el; }}
                         showHint={hintsRevealed && !isCorrect(side, i, p.name) && !revealed}
-                        statLine={
-                          <span className="sports-font text-[11px] tabular-nums">
-                            <span className="text-[#ddd] font-semibold">{p.pts}pts</span>
-                            {' '}<span className="text-[#888]">{p.reb}reb</span>
-                            {' '}<span className="text-[#888]">{p.ast}ast</span>
-                            {(p.stl > 0 || p.blk > 0) && (
-                              <span className="text-[#666] hidden sm:inline">
-                                {p.stl > 0 ? ` ${p.stl}stl` : ''}{p.blk > 0 ? ` ${p.blk}blk` : ''}
-                              </span>
-                            )}
-                          </span>
-                        }
+                        statLine={<NBAStatLine player={p} leaders={leaders} />}
                       />
                     );
                   })}

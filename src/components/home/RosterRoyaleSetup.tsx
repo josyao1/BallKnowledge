@@ -175,14 +175,12 @@ export function RosterRoyaleSetup({
                         >
                           Start Solo
                         </button>
-                        {sport === 'nfl' && (
-                          <button
-                            onClick={() => navigate('/lobby/create', { state: { gameType: 'box-score' } })}
-                            className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs"
-                          >
-                            Lobby
-                          </button>
-                        )}
+                        <button
+                          onClick={() => navigate('/lobby/create', { state: { gameType: sport === 'nba' ? 'nba-box-score' : 'box-score' } })}
+                          className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs"
+                        >
+                          Lobby
+                        </button>
                       </div>
                     </>
                   );

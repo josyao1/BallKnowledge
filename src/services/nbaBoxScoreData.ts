@@ -59,6 +59,16 @@ export interface NBABoxScoreFilters {
   team?: string | null;
 }
 
+export async function getNBASeasonPlayerPool(year: number): Promise<{ name: string }[]> {
+  const games = await loadNBABoxScoreYear(year);
+  const seen = new Set<string>();
+  const out: { name: string }[] = [];
+  for (const g of games)
+    for (const p of [...g.box_score.home, ...g.box_score.away])
+      if (!seen.has(p.name)) { seen.add(p.name); out.push({ name: p.name }); }
+  return out;
+}
+
 export async function getRandomNBABoxScoreGame(filters: NBABoxScoreFilters = {}): Promise<NBABoxScoreGame> {
   const years = filters.years && filters.years.length > 0
     ? filters.years
