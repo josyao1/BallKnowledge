@@ -30,6 +30,8 @@ import { BoxScoreGamePage }                from './pages/boxScore/BoxScoreGamePa
 import { BoxScoreResultsPage }             from './pages/boxScore/BoxScoreResultsPage';
 import { MultiplayerBoxScorePage }         from './pages/boxScore/MultiplayerBoxScorePage';
 import { MultiplayerBoxScoreResultsPage }  from './pages/boxScore/MultiplayerBoxScoreResultsPage';
+import { NBABoxScoreGamePage }             from './pages/boxScore/NBABoxScoreGamePage';
+import { NBABoxScoreResultsPage }          from './pages/boxScore/NBABoxScoreResultsPage';
 import { SoloStartingLineupPage }                   from './pages/startingLineup/SoloStartingLineupPage';
 import { MultiplayerStartingLineupPage }            from './pages/startingLineup/MultiplayerStartingLineupPage';
 import { MultiplayerStartingLineupResultsPage }     from './pages/startingLineup/MultiplayerStartingLineupResultsPage';
@@ -77,6 +79,8 @@ function App() {
         <Route path="/box-score/results" element={<BoxScoreResultsPage />} />
         <Route path="/lobby/:code/box-score" element={<MultiplayerBoxScorePage />} />
         <Route path="/lobby/:code/box-score/results" element={<MultiplayerBoxScoreResultsPage />} />
+        <Route path="/nba-box-score" element={<NBABoxScoreGamePage />} />
+        <Route path="/nba-box-score/results" element={<NBABoxScoreResultsPage />} />
         {/* Starting Lineup routes */}
         <Route path="/starting-lineup" element={<SoloStartingLineupPage />} />
         <Route path="/lobby/:code/starting-lineup" element={<MultiplayerStartingLineupPage />} />

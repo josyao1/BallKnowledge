@@ -4,6 +4,7 @@
  */
 
 import { nflTeams } from '../../data/nfl-teams';
+import { teams as nbaTeams } from '../../data/teams';
 import { areSimilarNames, normalize } from '../../utils/fuzzyDedup';
 
 export const GAME_TYPE_LABELS: Record<string, string> = {
@@ -17,6 +18,14 @@ export function getTeamColor(abbr: string): string {
 
 export function getLogoUrl(abbr: string): string {
   return `https://a.espncdn.com/i/teamlogos/nfl/500/${abbr.toLowerCase()}.png`;
+}
+
+export function getNBATeamColor(abbr: string): string {
+  return nbaTeams.find(t => t.abbreviation === abbr)?.colors.primary ?? '#4a4a4a';
+}
+
+export function getNBALogoUrl(abbr: string): string {
+  return `https://a.espncdn.com/i/teamlogos/nba/500/${abbr.toLowerCase()}.png`;
 }
 
 /** Strip ".0" from jersey numbers stored as floats in parquet */

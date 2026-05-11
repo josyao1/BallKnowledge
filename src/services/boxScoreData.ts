@@ -81,10 +81,8 @@ const _cache: Record<number, Promise<BoxScoreGame[]>> = {};
 
 export function loadBoxScoreYear(year: number): Promise<BoxScoreGame[]> {
   if (!_cache[year]) {
-    const url = `/data/nfl/box_scores/${year}.json`;
-    _cache[year] = fetch(url)
+    _cache[year] = fetch(`/data/nfl/box_scores/${year}.json`, { cache: 'no-store' })
       .then(r => {
-        console.log(`[BoxScoreData] ${url} → ${r.status} ${r.ok}`);
         if (!r.ok) throw new Error(`Box score fetch failed: ${r.status} for ${year}`);
         return r.json() as Promise<BoxScoreGame[]>;
       })

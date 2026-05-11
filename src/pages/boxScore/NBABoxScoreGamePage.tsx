@@ -1,51 +1,67 @@
-/**
- * BoxScoreGamePage.tsx — Solo Box Score game.
- *
- * Single search bar → auto-fill with Family Feud flip animation.
- * Live correct-answer validation. Vibrant team-color UI.
- */
-
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  getRandomBoxScoreGame,
-  ALL_BOX_SCORE_YEARS,
-  type BoxScoreGame,
-} from '../../services/boxScoreData';
-import { fetchStaticNFLSeasonPlayers } from '../../services/roster';
+  getRandomNBABoxScoreGame,
+  ALL_NBA_BOX_SCORE_YEARS,
+  NBA_BOX_SCORE_GAME_TYPE_LABELS,
+  type NBABoxScoreGame,
+} from '../../services/nbaBoxScoreData';
+import { fetchStaticSeasonPlayers } from '../../services/roster';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
 import {
-  GAME_TYPE_LABELS, getTeamColor, cleanJersey, getInitials, scoreMatch, bk,
+  getNBATeamColor, getNBALogoUrl, cleanJersey, getInitials, scoreMatch,
 } from '../../components/boxScore/boxScoreHelpers';
-import { FlipReveal }    from '../../components/boxScore/FlipReveal';
+import { FlipReveal } from '../../components/boxScore/FlipReveal';
 import { SectionHeader } from '../../components/boxScore/SectionHeader';
-import { TeamLogo }      from '../../components/boxScore/TeamLogo';
 
-// ─── Page-local helpers ───────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type NBABoxFilters = { minYear: number; maxYear: number; team: string | null };
+
+interface PlayerEntry {
+  key: string; name: string; side: 'home' | 'away'; index: number; number: string;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildYearRange(min: number, max: number): number[] {
   const out: number[] = [];
-  for (let y = min; y <= max; y++) if (ALL_BOX_SCORE_YEARS.includes(y)) out.push(y);
-  return out.length > 0 ? out : ALL_BOX_SCORE_YEARS;
+  for (let y = min; y <= max; y++) if (ALL_NBA_BOX_SCORE_YEARS.includes(y)) out.push(y);
+  return out.length > 0 ? out : ALL_NBA_BOX_SCORE_YEARS;
 }
+
+function nbaSeasonStr(year: number): string {
+  return `${year}-${String(year + 1).slice(-2)}`;
+}
+
 function formatDate(s: string): string {
   try { return new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   catch { return s; }
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+function nbk(side: 'home' | 'away', idx: number): string {
+  return `${side}_${idx}`;
+}
 
-export type BoxFilters = { minYear: number; maxYear: number; team: string | null };
-interface PlayerEntry {
-  key: string; name: string; side: 'home' | 'away';
-  category: 'passing' | 'rushing' | 'receiving'; index: number; number: string;
+// ─── Team logo ────────────────────────────────────────────────────────────────
+
+function NBATeamLogo({ abbr, className, imgStyle }: { abbr: string; className?: string; imgStyle?: React.CSSProperties }) {
+  return (
+    <img
+      src={getNBALogoUrl(abbr)}
+      alt={abbr}
+      className={className ?? 'w-16 h-16 object-contain'}
+      style={imgStyle}
+      onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+    />
+  );
 }
 
 // ─── Player row ───────────────────────────────────────────────────────────────
 
 interface RowProps {
-  playerKey: string; playerName: string; number: string;
+  playerName: string; number: string;
   correct: boolean; revealed: boolean; teamColor: string;
   guess: string; onGuessChange: (v: string) => void;
   rowRef: (el: HTMLDivElement | null) => void;
@@ -55,10 +71,8 @@ interface RowProps {
 
 function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, onGuessChange, rowRef, statLine, showHint }: RowProps) {
   const jersey = cleanJersey(number);
-
   return (
     <div ref={rowRef} className="flex items-center gap-2 py-1 rounded-lg">
-      {/* Jersey badge */}
       <div
         className="shrink-0 w-9 h-7 flex items-center justify-center rounded-md sports-font text-[11px] font-bold tabular-nums"
         style={{ background: `${teamColor}30`, color: teamColor, border: `1px solid ${teamColor}50` }}
@@ -66,7 +80,6 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
         {jersey ? `#${jersey}` : '–'}
       </div>
 
-      {/* Name cell */}
       <div className="flex-1 min-w-0">
         <AnimatePresence mode="wait">
           {correct ? (
@@ -105,7 +118,6 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
                 onChange={e => onGuessChange(e.target.value)}
                 placeholder="Player name..."
                 className="w-full bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
-                style={{ '--tw-ring-color': teamColor } as React.CSSProperties}
                 onFocus={e => (e.currentTarget.style.borderColor = `${teamColor}60`)}
                 onBlur={e => (e.currentTarget.style.borderColor = '')}
               />
@@ -119,8 +131,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
         </AnimatePresence>
       </div>
 
-      {/* Stat line */}
-      <div className="shrink-0 text-right" style={{ minWidth: 88 }}>
+      <div className="shrink-0 text-right" style={{ minWidth: 96 }}>
         {statLine}
       </div>
     </div>
@@ -129,32 +140,31 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function BoxScoreGamePage() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const filters: BoxFilters = (location.state as BoxFilters | null) ?? { minYear: 2015, maxYear: 2024, team: null };
+export function NBABoxScoreGamePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const filters: NBABoxFilters = (location.state as NBABoxFilters | null) ?? { minYear: 2014, maxYear: 2025, team: null };
 
   const [loading,       setLoading]       = useState(true);
-  const [game,          setGame]          = useState<BoxScoreGame | null>(null);
-  const [seasonPlayers, setSeasonPlayers] = useState<{ id: string; name: string }[]>([]);
+  const [game,          setGame]          = useState<NBABoxScoreGame | null>(null);
+  const [seasonPlayers, setSeasonPlayers] = useState<{ id: number; name: string }[]>([]);
   const [guesses,       setGuesses]       = useState<Record<string, string>>({});
-  const [spreadGuess,   setSpreadGuess]   = useState('');
   const [revealed,      setRevealed]      = useState(false);
   const [hintsRevealed, setHintsRevealed] = useState(false);
   const [globalInput,   setGlobalInput]   = useState('');
   const [showDropdown,  setShowDropdown]  = useState(false);
-  const [notInGame,     setNotInGame]     = useState<string | null>(null); // name that wasn't found
+  const [notInGame,     setNotInGame]     = useState<string | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const rowRefs   = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     const years = buildYearRange(filters.minYear, filters.maxYear);
-    getRandomBoxScoreGame({ years, team: filters.team ?? undefined })
+    getRandomNBABoxScoreGame({ years, team: filters.team ?? undefined })
       .then(async g => {
         setGame(g);
         try {
-          const players = await fetchStaticNFLSeasonPlayers(g.season);
+          const players = await fetchStaticSeasonPlayers(nbaSeasonStr(g.season));
           setSeasonPlayers(players ?? []);
         } catch { /* autocomplete works even without this */ }
         setLoading(false);
@@ -163,28 +173,26 @@ export function BoxScoreGamePage() {
       .catch(() => navigate('/'));
   }, []);
 
-  // All players flat
   const allPlayers = useMemo((): PlayerEntry[] => {
     if (!game) return [];
     const out: PlayerEntry[] = [];
     for (const side of ['home', 'away'] as const)
-      for (const cat of ['passing', 'rushing', 'receiving'] as const)
-        (game.box_score[side][cat] as any[]).forEach((p, i) =>
-          out.push({ key: bk(side, cat, i), name: p.name, side, category: cat, index: i, number: p.number || '' })
-        );
+      game.box_score[side].forEach((p, i) =>
+        out.push({ key: nbk(side, i), name: p.name, side, index: i, number: p.number || '' })
+      );
     return out;
   }, [game]);
 
-  function isCorrect(side: 'home' | 'away', cat: string, i: number, name: string): boolean {
-    const g = guesses[bk(side, cat, i)] ?? '';
+  function isCorrect(side: 'home' | 'away', i: number, name: string): boolean {
+    const g = guesses[nbk(side, i)] ?? '';
     return !!g && areSimilarNames(g, name);
   }
 
-
-  // Candidates from ALL season players — not just box score players (doesn't give away answers)
   const candidates = useMemo(() => {
     if (!globalInput.trim() || globalInput.length < 2) return [];
-    const pool = seasonPlayers.length > 0 ? seasonPlayers : allPlayers;
+    const pool = seasonPlayers.length > 0
+      ? seasonPlayers.map(p => ({ name: p.name }))
+      : allPlayers;
     return pool
       .map(p => ({ name: p.name, score: scoreMatch(globalInput, p.name) }))
       .filter(p => p.score > 0)
@@ -192,11 +200,9 @@ export function BoxScoreGamePage() {
       .slice(0, 4);
   }, [globalInput, seasonPlayers, allPlayers]);
 
-  // On confirm: find ALL rows in box score matching this name (any team, any category)
   function confirmCandidate(name: string) {
     const matches = allPlayers.filter(p => areSimilarNames(name, p.name));
     if (matches.length === 0) {
-      // Not in this game
       setNotInGame(name);
       setGlobalInput('');
       setTimeout(() => { setNotInGame(null); searchRef.current?.focus(); }, 1800);
@@ -209,7 +215,6 @@ export function BoxScoreGamePage() {
     });
     setGlobalInput('');
     setShowDropdown(false);
-    // Scroll to first match
     setTimeout(() => rowRefs.current[matches[0].key]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
     searchRef.current?.focus();
   }
@@ -222,17 +227,13 @@ export function BoxScoreGamePage() {
     if (e.key === 'Escape') { setGlobalInput(''); setShowDropdown(false); }
   }
 
-  function setGuess(key: string, v: string) { setGuesses(prev => ({ ...prev, [key]: v })); }
-
   // Score
   let totalRows = 0, correctCount = 0;
   if (game) {
-    for (const side of ['home', 'away'] as const)
-      for (const cat of ['passing', 'rushing', 'receiving'] as const) {
-        const rows = game.box_score[side][cat] as any[];
-        totalRows += rows.length;
-        rows.forEach((p, i) => { if (isCorrect(side, cat, i, p.name)) correctCount++; });
-      }
+    for (const side of ['home', 'away'] as const) {
+      totalRows += game.box_score[side].length;
+      game.box_score[side].forEach((p, i) => { if (isCorrect(side, i, p.name)) correctCount++; });
+    }
   }
 
   if (loading || !game) {
@@ -246,11 +247,9 @@ export function BoxScoreGamePage() {
     );
   }
 
-  const homeColor = getTeamColor(game.home_team);
-  const awayColor = getTeamColor(game.away_team);
-  const gameLabel = GAME_TYPE_LABELS[game.game_type] ?? game.game_type;
-  const spreadCorrect = game.spread_line != null && spreadGuess !== ''
-    && Math.abs(parseFloat(spreadGuess) - game.spread_line) <= 0.5;
+  const homeColor = getNBATeamColor(game.home_team);
+  const awayColor = getNBATeamColor(game.away_team);
+  const gameLabel = NBA_BOX_SCORE_GAME_TYPE_LABELS[game.game_type] ?? game.game_type;
   const pct = totalRows > 0 ? Math.round(correctCount / totalRows * 100) : 0;
 
   return (
@@ -267,7 +266,6 @@ export function BoxScoreGamePage() {
           <div className="flex-1 text-center">
             <span className="retro-title text-xl tracking-widest" style={{ color: '#f59e0b' }}>BOX SCORE</span>
           </div>
-          {/* Live score pill */}
           <div
             className="flex items-center gap-1.5 px-3 py-1 rounded-full border shrink-0"
             style={{ background: `${homeColor}18`, borderColor: `${homeColor}50` }}
@@ -292,17 +290,15 @@ export function BoxScoreGamePage() {
             border: `1px solid rgba(255,255,255,0.08)`,
           }}
         >
-          {/* Team color glows */}
           <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-52 h-52 rounded-full blur-3xl pointer-events-none"
             style={{ background: awayColor, opacity: 0.18 }} />
           <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-52 h-52 rounded-full blur-3xl pointer-events-none"
             style={{ background: homeColor, opacity: 0.18 }} />
 
-          {/* Scores */}
           <div className="relative flex items-center justify-between px-6 sm:px-12 py-7">
             {/* Away */}
             <div className="flex flex-col items-center gap-2 flex-1">
-              <TeamLogo abbr={game.away_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
+              <NBATeamLogo abbr={game.away_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
               <span className="retro-title text-2xl sm:text-4xl leading-none" style={{ color: awayColor, textShadow: `0 0 30px ${awayColor}80` }}>
                 {game.away_team}
               </span>
@@ -327,13 +323,12 @@ export function BoxScoreGamePage() {
               </div>
               <div className="text-center">
                 <div className="sports-font text-[11px] text-[#666]">{gameLabel}</div>
-                <div className="sports-font text-[11px] text-[#555] mt-0.5">WK {game.week}</div>
               </div>
             </div>
 
             {/* Home */}
             <div className="flex flex-col items-center gap-2 flex-1">
-              <TeamLogo abbr={game.home_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
+              <NBATeamLogo abbr={game.home_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
               <span className="retro-title text-2xl sm:text-4xl leading-none" style={{ color: homeColor, textShadow: `0 0 30px ${homeColor}80` }}>
                 {game.home_team}
               </span>
@@ -347,41 +342,15 @@ export function BoxScoreGamePage() {
 
           {/* Game info chips */}
           <div className="relative border-t border-white/6 px-4 py-3 flex flex-wrap justify-center gap-2">
-            {/* Season / Date */}
             <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
               <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Season</span>
-              <span className="retro-title text-base text-white leading-tight">{game.season}</span>
-              <span className="sports-font text-[9px] text-[#666]">{formatDate(game.gameday)}</span>
+              <span className="retro-title text-base text-white leading-tight">{nbaSeasonStr(game.season)}</span>
+              <span className="sports-font text-[9px] text-[#666]">{formatDate(game.game_date)}</span>
             </div>
-            {/* Week / Type */}
-            <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[60px]">
-              <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Week</span>
-              <span className="retro-title text-base text-white leading-tight">{game.week}</span>
-              <span className="sports-font text-[9px] text-[#666]">{gameLabel}</span>
+            <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
+              <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Type</span>
+              <span className="sports-font text-[11px] text-[#ccc] leading-tight text-center mt-0.5">{gameLabel}</span>
             </div>
-            {/* Stadium */}
-            {game.stadium && (
-              <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 max-w-[140px]">
-                <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Stadium</span>
-                <span className="sports-font text-[10px] text-[#bbb] text-center leading-snug mt-0.5 line-clamp-2">{game.stadium}</span>
-              </div>
-            )}
-            {/* Conditions */}
-            {(game.temp != null || game.roof) && (
-              <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[60px]">
-                <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Conditions</span>
-                {game.temp != null && <span className="retro-title text-base text-white leading-tight">{game.temp}°F</span>}
-                {game.roof && <span className="sports-font text-[9px] text-[#666] capitalize">{game.roof}</span>}
-              </div>
-            )}
-            {/* Wind */}
-            {game.wind != null && (
-              <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[52px]">
-                <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Wind</span>
-                <span className="retro-title text-base text-white leading-tight">{game.wind}</span>
-                <span className="sports-font text-[9px] text-[#666]">mph</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -406,12 +375,11 @@ export function BoxScoreGamePage() {
               onKeyDown={handleSearchKeyDown}
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
-              placeholder="Type a player name — hits Enter to fill the box score..."
+              placeholder="Type a player name — press Enter to fill the box score..."
               className="flex-1 bg-transparent sports-font text-base text-white placeholder-[#3a3a3a] focus:outline-none"
             />
             {globalInput ? (
-              <button onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }}
-                className="text-[#555] hover:text-white transition-colors">
+              <button onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }} className="text-[#555] hover:text-white transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -421,7 +389,6 @@ export function BoxScoreGamePage() {
             )}
           </div>
 
-          {/* Candidate dropdown */}
           <AnimatePresence>
             {showDropdown && candidates.length > 0 && (
               <motion.div
@@ -476,7 +443,8 @@ export function BoxScoreGamePage() {
           {(['away', 'home'] as const).map(side => {
             const color = side === 'home' ? homeColor : awayColor;
             const abbr  = side === 'home' ? game.home_team : game.away_team;
-            const data  = game.box_score[side];
+            const players = game.box_score[side];
+            const doneCount = players.filter((p, i) => isCorrect(side, i, p.name)).length;
 
             return (
               <div
@@ -490,166 +458,56 @@ export function BoxScoreGamePage() {
                 {/* Team header */}
                 <div
                   className="flex items-center gap-3 px-4 py-3 border-b"
-                  style={{
-                    background: `linear-gradient(90deg, ${color}25 0%, transparent 80%)`,
-                    borderColor: `${color}20`,
-                  }}
+                  style={{ background: `linear-gradient(90deg, ${color}25 0%, transparent 80%)`, borderColor: `${color}20` }}
                 >
-                  <TeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
+                  <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
                     <div className="retro-title text-xl leading-none" style={{ color }}>{abbr}</div>
                     <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
-                  {/* Mini progress */}
-                  <div className="ml-auto flex items-center gap-1.5">
-                    {(['passing', 'rushing', 'receiving'] as const).map(cat => {
-                      const rows = data[cat] as any[];
-                      const done = rows.filter((p, i) => isCorrect(side, cat, i, p.name)).length;
-                      return rows.length > 0 ? (
-                        <div key={cat} className="text-center">
-                          <div className="sports-font text-[8px] tracking-wider" style={{ color: done === rows.length ? '#4ade80' : '#555' }}>
-                            {done}/{rows.length}
-                          </div>
-                          <div className="sports-font text-[7px] text-[#3a3a3a] uppercase tracking-wider">{cat.slice(0, 3)}</div>
-                        </div>
-                      ) : null;
-                    })}
+                  <div className="ml-auto text-center">
+                    <div className="sports-font text-[10px] tracking-wider" style={{ color: doneCount === players.length ? '#4ade80' : '#555' }}>
+                      {doneCount}/{players.length}
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-4 space-y-5">
-                  {/* Passing */}
-                  {data.passing.length > 0 && (
-                    <section>
-                      <SectionHeader label="Passing" color={color} />
-                      {data.passing.map((p, i) => {
-                        const key = bk(side, 'passing', i);
-                        return (
-                          <PlayerRow
-                            key={`${p.id}-p-${i}`}
-                            playerKey={key}
-                            playerName={p.name}
-                            number={p.number}
-                            correct={isCorrect(side, 'passing', i, p.name)}
-                            revealed={revealed}
-                            teamColor={color}
-                            guess={guesses[key] ?? ''}
-                            onGuessChange={v => setGuess(key, v)}
-                            rowRef={el => { rowRefs.current[key] = el; }}
-                            showHint={hintsRevealed && !isCorrect(side, 'passing', i, p.name) && !revealed}
-                            statLine={
-                              <span className="sports-font text-[11px] tabular-nums">
-                                <span className="text-[#888] hidden sm:inline">{p.completions}/{p.attempts} </span>
-                                <span className="text-[#ddd] font-semibold">{p.yards}yd</span>
-                                {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
-                                {p.ints > 0 && <span className="text-red-400"> {p.ints}INT</span>}
+                <div className="p-4">
+                  <SectionHeader label="Players" color={color} />
+                  {players.map((p, i) => {
+                    const key = nbk(side, i);
+                    return (
+                      <PlayerRow
+                        key={`${p.id}-${i}`}
+                        playerName={p.name}
+                        number={p.number}
+                        correct={isCorrect(side, i, p.name)}
+                        revealed={revealed}
+                        teamColor={color}
+                        guess={guesses[key] ?? ''}
+                        onGuessChange={v => setGuesses(prev => ({ ...prev, [key]: v }))}
+                        rowRef={el => { rowRefs.current[key] = el; }}
+                        showHint={hintsRevealed && !isCorrect(side, i, p.name) && !revealed}
+                        statLine={
+                          <span className="sports-font text-[11px] tabular-nums">
+                            <span className="text-[#ddd] font-semibold">{p.pts}pts</span>
+                            {' '}<span className="text-[#888]">{p.reb}reb</span>
+                            {' '}<span className="text-[#888]">{p.ast}ast</span>
+                            {(p.stl > 0 || p.blk > 0) && (
+                              <span className="text-[#666] hidden sm:inline">
+                                {p.stl > 0 ? ` ${p.stl}stl` : ''}{p.blk > 0 ? ` ${p.blk}blk` : ''}
                               </span>
-                            }
-                          />
-                        );
-                      })}
-                    </section>
-                  )}
-
-                  {/* Rushing */}
-                  {data.rushing.length > 0 && (
-                    <section>
-                      <SectionHeader label="Rushing" color={color} />
-                      {data.rushing.map((p, i) => {
-                        const key = bk(side, 'rushing', i);
-                        return (
-                          <PlayerRow
-                            key={`${p.id}-r-${i}`}
-                            playerKey={key}
-                            playerName={p.name}
-                            number={p.number}
-                            correct={isCorrect(side, 'rushing', i, p.name)}
-                            revealed={revealed}
-                            teamColor={color}
-                            guess={guesses[key] ?? ''}
-                            onGuessChange={v => setGuess(key, v)}
-                            rowRef={el => { rowRefs.current[key] = el; }}
-                            showHint={hintsRevealed && !isCorrect(side, 'rushing', i, p.name) && !revealed}
-                            statLine={
-                              <span className="sports-font text-[11px] tabular-nums">
-                                <span className="text-[#888] hidden sm:inline">{p.carries}car </span>
-                                <span className="text-[#ddd] font-semibold">{p.yards}yd</span>
-                                {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
-                              </span>
-                            }
-                          />
-                        );
-                      })}
-                    </section>
-                  )}
-
-                  {/* Receiving */}
-                  {data.receiving.length > 0 && (
-                    <section>
-                      <SectionHeader label="Receiving" color={color} />
-                      {data.receiving.map((p, i) => {
-                        const key = bk(side, 'receiving', i);
-                        return (
-                          <PlayerRow
-                            key={`${p.id}-rec-${i}`}
-                            playerKey={key}
-                            playerName={p.name}
-                            number={p.number}
-                            correct={isCorrect(side, 'receiving', i, p.name)}
-                            revealed={revealed}
-                            teamColor={color}
-                            guess={guesses[key] ?? ''}
-                            onGuessChange={v => setGuess(key, v)}
-                            rowRef={el => { rowRefs.current[key] = el; }}
-                            showHint={hintsRevealed && !isCorrect(side, 'receiving', i, p.name) && !revealed}
-                            statLine={
-                              <span className="sports-font text-[11px] tabular-nums">
-                                <span className="text-[#888] hidden sm:inline">{p.receptions}/{p.targets} </span>
-                                <span className="text-[#ddd] font-semibold">{p.yards}yd</span>
-                                {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
-                              </span>
-                            }
-                          />
-                        );
-                      })}
-                    </section>
-                  )}
+                            )}
+                          </span>
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
         </div>
-
-        {/* ── SPREAD ── */}
-        {game.spread_line != null && (
-          <div className="rounded-2xl p-5" style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)' }}>
-            <SectionHeader label="Vegas Spread" color="#f59e0b" />
-            <div className="flex items-center gap-4 flex-wrap mt-3">
-              <input
-                type="number" step="0.5"
-                value={spreadGuess}
-                onChange={e => setSpreadGuess(e.target.value)}
-                placeholder="e.g. 3 or −3"
-                disabled={revealed}
-                className="w-36 bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-2.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#f59e0b]/40 disabled:opacity-40 transition-colors"
-              />
-              <span className="sports-font text-xs text-[#666]">pts · + = home favored · − = away favored</span>
-              {revealed && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`sports-font text-sm font-bold px-3 py-1 rounded-full ${
-                    spreadCorrect
-                      ? 'text-green-300 bg-green-900/30 border border-green-700/40'
-                      : 'text-red-400 bg-red-950/30 border border-red-900/40'
-                  }`}
-                >
-                  Answer: {game.spread_line > 0 ? '+' : ''}{game.spread_line} {spreadCorrect ? '✓' : '✗'}
-                </motion.span>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* ── ACTIONS ── */}
         <div className="flex gap-3 pb-14">
@@ -661,7 +519,6 @@ export function BoxScoreGamePage() {
                   ? 'border-amber-500/60 text-amber-400 bg-amber-900/15'
                   : 'border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa]'
               }`}
-              title="Show player initials as a hint"
             >
               {hintsRevealed ? 'Hide Hints' : 'Hints'}
             </button>
@@ -675,7 +532,7 @@ export function BoxScoreGamePage() {
             </button>
           )}
           <button
-            onClick={() => navigate('/box-score/results', { state: { game, guesses, spreadGuess, filters, revealed } })}
+            onClick={() => navigate('/nba-box-score/results', { state: { game, guesses, filters, revealed } })}
             className="flex-1 py-4 rounded-2xl retro-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
             style={{
               background: `linear-gradient(135deg, ${homeColor}, ${homeColor}88)`,
