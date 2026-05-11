@@ -14,6 +14,8 @@ import { nflTeams } from '../../data/nfl-teams';
 import type { GenericTeam, LoadingStatus } from '../../data/homeGames';
 import type { GameMode } from '../../types';
 
+const BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+
 interface Props {
   sport: 'nba' | 'nfl';
   deckArt: string;
@@ -48,11 +50,6 @@ interface Props {
   onOpenSettings: () => void;
 }
 
-const BOX_SCORE_YEAR_PRESETS = [
-  { label: 'Any',   min: 2015, max: 2024 },
-  { label: '2018+', min: 2018, max: 2024 },
-  { label: '2021+', min: 2021, max: 2024 },
-] as const;
 
 export function RosterRoyaleSetup({
   sport, deckArt,
@@ -132,20 +129,22 @@ export function RosterRoyaleSetup({
                 <>
                   <div className="flex flex-col gap-2">
                     <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Year Range</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {BOX_SCORE_YEAR_PRESETS.map(opt => (
-                        <button
-                          key={opt.label}
-                          onClick={() => { setBoxScoreMinYear(opt.min); setBoxScoreMaxYear(opt.max); }}
-                          className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
-                            boxScoreMinYear === opt.min && boxScoreMaxYear === opt.max
-                              ? 'bg-[#f59e0b] text-[#111] border-[#f59e0b]'
-                              : 'border-[#2a2a2a] text-[#666] hover:border-[#f59e0b]/40 hover:text-[#888]'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={boxScoreMinYear}
+                        onChange={e => { const v = parseInt(e.target.value); setBoxScoreMinYear(v); if (v > boxScoreMaxYear) setBoxScoreMaxYear(v); }}
+                        className="flex-1 bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50 appearance-none"
+                      >
+                        {BOX_SCORE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                      <span className="text-[#555] sports-font text-xs">to</span>
+                      <select
+                        value={boxScoreMaxYear}
+                        onChange={e => { const v = parseInt(e.target.value); setBoxScoreMaxYear(v); if (v < boxScoreMinYear) setBoxScoreMinYear(v); }}
+                        className="flex-1 bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50 appearance-none"
+                      >
+                        {BOX_SCORE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
                     </div>
                   </div>
 

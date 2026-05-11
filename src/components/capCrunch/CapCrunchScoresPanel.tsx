@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { fmt, getPickErrorMessage } from './capCrunchUtils';
+import { fmt, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
 import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
@@ -142,7 +142,7 @@ export function CapCrunchScoresPanel({
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-1">
                               <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
-                              {isMe && !blindMode && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                              {isMe && !blindMode && isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{getPickBadgeLabel(selected)}</span>}
                               <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
                             </div>
                             {isMe && !blindMode && selected.neverOnTeam && (

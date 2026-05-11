@@ -152,16 +152,19 @@ export function BoxScoreGamePage() {
     const years = buildYearRange(filters.minYear, filters.maxYear);
     getRandomBoxScoreGame({ years, team: filters.team ?? undefined })
       .then(async g => {
+        console.log('[BoxScore] game loaded:', g?.game_id, 'season:', g?.season);
         setGame(g);
-        // Load all players for that season for autocomplete (doesn't reveal who's in the game)
+        console.log('[BoxScore] setGame done, fetching players for season', g.season);
         try {
           const players = await fetchStaticNFLSeasonPlayers(g.season);
+          console.log('[BoxScore] players fetched:', players?.length ?? 'null');
           setSeasonPlayers(players ?? []);
-        } catch { /* autocomplete works even without this */ }
+        } catch (e) { console.warn('[BoxScore] player fetch error (non-fatal):', e); }
+        console.log('[BoxScore] setLoading(false)');
         setLoading(false);
         setTimeout(() => searchRef.current?.focus(), 120);
       })
-      .catch(() => navigate('/'));
+      .catch(err => { console.error('[BoxScore] load failed:', err); navigate('/'); });
   }, []);
 
   // All players flat

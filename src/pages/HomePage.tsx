@@ -38,7 +38,7 @@ export function HomePage() {
   // ── Filter state ──────────────────────────────────────────────────────────
   // Box Score filters (NFL only)
   const [boxScoreMinYear, setBoxScoreMinYear] = useState<number>(2015);
-  const [boxScoreMaxYear, setBoxScoreMaxYear] = useState<number>(2024);
+  const [boxScoreMaxYear, setBoxScoreMaxYear] = useState<number>(2025);
   const [boxScoreTeam,    setBoxScoreTeam]    = useState<string | null>(null);
 
   // ── Roster Royale state ───────────────────────────────────────────────────

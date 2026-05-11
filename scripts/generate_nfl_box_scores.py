@@ -2,20 +2,21 @@
 """
 generate_nfl_box_scores.py — Build static NFL box score data for the Box Score game mode.
 
-For each qualifying game (both teams ≥ 17 pts, 2015–2024):
+For each qualifying game (both teams ≥ 17 pts, 2015–2025):
   - Passing stats:   players with ≥ 1 attempt
   - Rushing stats:   players with ≥ 1 carry
   - Receiving stats: players with ≥ 1 target
 
 Output:
   scripts/data/nfl_box_scores/{year}.json   per-season array of game objects
-  scripts/data/nfl_box_scores/index.json    { "2015": 142, ..., "2024": 151 }
+  scripts/data/nfl_box_scores/index.json    { "2015": 142, ..., "2025": 151 }
 
 Run:
     cd scripts && python generate_nfl_box_scores.py
     cp -r data/nfl_box_scores ../public/data/nfl/box_scores
 """
 
+import argparse
 import json
 import os
 import sys
@@ -29,7 +30,7 @@ except ImportError:
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
-YEARS     = list(range(2015, 2025))
+YEARS     = list(range(2015, 2026))
 MIN_SCORE = 17   # both teams must reach this to qualify
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "data", "nfl_box_scores")
@@ -98,11 +99,18 @@ def safe_bool(val) -> bool:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--year", type=int, default=None,
+                        help="Only generate data for this single year (merges into existing index)")
+    args = parser.parse_args()
+
+    years = [args.year] if args.year else YEARS
+
     os.makedirs(OUT_DIR, exist_ok=True)
 
     # ── 1. Schedules ──────────────────────────────────────────────────────────
-    print(f"Loading schedules ({YEARS[0]}–{YEARS[-1]})...")
-    sched_df = nfl.import_schedules(YEARS)
+    print(f"Loading schedules ({years[0]}–{years[-1]})...")
+    sched_df = nfl.import_schedules(years)
     print(f"  Total rows: {len(sched_df)}")
 
     sched_df = sched_df.dropna(subset=["home_score", "away_score"])
@@ -134,8 +142,29 @@ def main():
             team_week_to_gid[(season, week, away)] = gid
 
     # ── 2. Weekly player stats ─────────────────────────────────────────────────
-    print(f"\nLoading weekly player stats ({YEARS[0]}–{YEARS[-1]})...")
-    weekly_df = nfl.import_weekly_data(YEARS)
+    # nflverse moved to a new release layout for 2025+: the old player_stats_{year}.parquet
+    # no longer exists; use stats_player_week_{year}.parquet and normalise column names.
+    print(f"\nLoading weekly player stats ({years[0]}–{years[-1]})...")
+    import pandas as pd
+    OLD_URL = r'https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats_{0}.parquet'
+    NEW_URL = r'https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_{0}.parquet'
+
+    def load_weekly_for_year(yr):
+        try:
+            df = pd.read_parquet(OLD_URL.format(yr))
+        except Exception:
+            df = pd.read_parquet(NEW_URL.format(yr))
+            # Normalise new column names to match what the rest of the script expects
+            renames = {}
+            if "team" in df.columns and "recent_team" not in df.columns:
+                renames["team"] = "recent_team"
+            if "passing_interceptions" in df.columns and "interceptions" not in df.columns:
+                renames["passing_interceptions"] = "interceptions"
+            if renames:
+                df = df.rename(columns=renames)
+        return df
+
+    weekly_df = pd.concat([load_weekly_for_year(yr) for yr in years], ignore_index=True)
     print(f"  Total player-week rows: {len(weekly_df)}")
 
     # ── 3. Jersey numbers ─────────────────────────────────────────────────────
@@ -159,15 +188,15 @@ def main():
             if (pid, season) not in jersey_map_season:
                 jersey_map_season[(pid, season)] = jersey
 
-    print(f"\nLoading roster / jersey data ({YEARS[0]}–{YEARS[-1]})...")
+    print(f"\nLoading roster / jersey data ({years[0]}–{years[-1]})...")
     try:
-        roster_df = nfl.import_weekly_rosters(YEARS)
+        roster_df = nfl.import_weekly_rosters(years)
         print(f"  Weekly rosters loaded: {len(roster_df)} rows")
         ingest_roster_df(roster_df)
     except Exception as e:
         print(f"  import_weekly_rosters failed ({e}), trying import_seasonal_rosters...")
         try:
-            roster_df = nfl.import_seasonal_rosters(YEARS)
+            roster_df = nfl.import_seasonal_rosters(years)
             print(f"  Seasonal rosters loaded: {len(roster_df)} rows")
             ingest_roster_df(roster_df)
         except Exception as e2:
@@ -202,9 +231,16 @@ def main():
 
     # ── 5. Build JSON per season ───────────────────────────────────────────────
     print("\nBuilding box score files...")
-    index: dict[str, int] = {}
 
-    for year in YEARS:
+    # When running for a single year, load the existing index so we don't wipe other years
+    index_path = os.path.join(OUT_DIR, "index.json")
+    if args.year and os.path.exists(index_path):
+        with open(index_path) as f:
+            index: dict[str, int] = json.load(f)
+    else:
+        index = {}
+
+    for year in years:
         season_games = games_by_season.get(year, {})
         if not season_games:
             print(f"  {year}: no data — skipping")
@@ -336,7 +372,6 @@ def main():
         index[str(year)] = len(output_games)
 
     # ── 6. Index file ─────────────────────────────────────────────────────────
-    index_path = os.path.join(OUT_DIR, "index.json")
     with open(index_path, "w") as f:
         json.dump(index, f, separators=(",", ":"))
 

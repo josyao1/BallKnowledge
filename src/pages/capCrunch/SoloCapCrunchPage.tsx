@@ -860,7 +860,7 @@ export function SoloCapCrunchPage() {
                                 <p className="font-semibold truncate text-[9px] md:text-xs">
                                   {idx + 1}. <FlipReveal text={pick.playerName} />
                                 </p>
-                                {pick.isBust && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">BUST</span>}
+                                {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{getPickBadgeLabel(pick)}</span>}
                               </div>
                               <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>
                                 {formatPickTeam(pick.team)} • {pick.selectedYear}

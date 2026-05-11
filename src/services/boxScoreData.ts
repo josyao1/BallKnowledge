@@ -72,7 +72,7 @@ export interface BoxScoreGame {
 
 // ─── Cache ────────────────────────────────────────────────────────────────────
 
-export const ALL_BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
+export const ALL_BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
 // Per-season lazy cache — each year fetched at most once per session
 const _cache: Record<number, Promise<BoxScoreGame[]>> = {};
@@ -81,8 +81,10 @@ const _cache: Record<number, Promise<BoxScoreGame[]>> = {};
 
 export function loadBoxScoreYear(year: number): Promise<BoxScoreGame[]> {
   if (!_cache[year]) {
-    _cache[year] = fetch(`/data/nfl/box_scores/${year}.json`)
+    const url = `/data/nfl/box_scores/${year}.json`;
+    _cache[year] = fetch(url)
       .then(r => {
+        console.log(`[BoxScoreData] ${url} → ${r.status} ${r.ok}`);
         if (!r.ok) throw new Error(`Box score fetch failed: ${r.status} for ${year}`);
         return r.json() as Promise<BoxScoreGame[]>;
       })

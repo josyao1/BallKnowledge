@@ -1025,7 +1025,10 @@ export async function getPlayerStatForYearAndTeam(
         s => s.season === seasonStr && nbaTeamMatches(s.team, team)
       );
 
-      if (!season) return { value: 0, neverOnTeam: true };
+      if (!season) {
+        const actualSeason = player.seasons.find(s => s.season === seasonStr);
+        return { value: 0, neverOnTeam: true, actualTeam: actualSeason?.team };
+      }
 
       if (hwFilter) {
         const hw = checkHWFilter((player as any).bio, hwFilter, sport);
