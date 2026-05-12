@@ -7,10 +7,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { fmt, getPickErrorMessage } from './capCrunchUtils';
+import { fmt, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
-import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
+import { isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound } from '../../services/capCrunch';
 import type { PlayerLineup } from '../../types/capCrunch';
 
 function draftLabel(code: string): string {
@@ -25,6 +25,10 @@ function formatPickTeam(team: string): string {
   if (isDivisionDraftRound(team)) {
     const { division, draftRound } = parseDivisionDraftRound(team);
     return `${division} · ${draftLabel(draftRound)}`;
+  }
+  if (isTeammateRound(team)) {
+    const { pickIndex } = parseTeammateRound(team);
+    return `Teammate of Pick ${pickIndex}`;
   }
   return team;
 }
@@ -45,6 +49,7 @@ interface Props {
   /** When true, the current-round pick is hidden for opponents until the local player submits */
   canPickThisRound: boolean;
   sport: 'nba' | 'nfl';
+  targetCap?: number;
   /** When true, running totals are hidden for all players */
   blindMode?: boolean;
   /** When true, picks are never masked — all players can always see all picks */
@@ -52,7 +57,7 @@ interface Props {
 }
 
 export function CapCrunchScoresPanel({
-  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport, blindMode = false, hardMode = false,
+  players, allLineups, currentPlayerId, currentRound, totalRounds, canPickThisRound, sport, targetCap = 0, blindMode = false, hardMode = false,
 }: Props) {
   // Per-pick stat guesses typed by the local player in blind mode.
   // Keyed by pick index; values are raw input strings so partial input is preserved.
@@ -115,7 +120,11 @@ export function CapCrunchScoresPanel({
               </div>
 
               <div className="space-y-1 mb-2 text-xs">
-                {visiblePicks.map((selected, idx) => {
+                {(() => {
+                  let running = 0;
+                  return visiblePicks.map((selected, idx) => {
+                  const totalBefore = running;
+                  if (!selected.isBust && !selected.neverOnTeam) running += selected.statValue;
                   const isBad = isMe && !blindMode && (selected.isBust || selected.neverOnTeam || selected.statValue === 0);
                   return (
                   <motion.div
@@ -142,9 +151,12 @@ export function CapCrunchScoresPanel({
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-1">
                               <FlipReveal text={selected.playerName} className={`truncate text-xs ${isBad ? 'text-red-400' : ''}`} />
-                              {isMe && !blindMode && selected.isBust && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">BUST</span>}
+                              {isMe && !blindMode && isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{getPickBadgeLabel(selected)}</span>}
                               <span className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
                             </div>
+                            {isMe && !blindMode && selected.isBust && targetCap > 0 && (
+                              <div className="text-[9px] text-red-400/70 mt-0.5">busted by {fmt(totalBefore + selected.statValue - targetCap)}</div>
+                            )}
                             {isMe && !blindMode && selected.neverOnTeam && (
                               <div className="text-[9px] text-orange-400/80 mt-0.5">
                                 {getPickErrorMessage(selected)}
@@ -171,7 +183,8 @@ export function CapCrunchScoresPanel({
                     )}
                   </motion.div>
                   );
-                })}
+                  });
+                })()}
                 {maskCurrentRound && hasPicked && (
                   <div className="text-white/20 italic text-[10px]">Pick hidden until you submit</div>
                 )}

@@ -29,7 +29,7 @@ import { FaceRevealSettings }     from './settings/FaceRevealSettings';
 
 export type GameTypeValue =
   | 'roster' | 'career' | 'scramble'
-  | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal';
+  | 'lineup-is-right' | 'box-score' | 'nba-box-score' | 'starting-lineup' | 'face-reveal';
 
 /** All current form values, passed to onApply so the parent can write to Supabase. */
 export interface HostFormValues {
@@ -117,6 +117,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editBoxMinYear,     setEditBoxMinYear]     = useState(2015);
   const [editBoxMaxYear,     setEditBoxMaxYear]     = useState(2024);
   const [editBoxTeam,        setEditBoxTeam]        = useState<string | null>(null);
+  const [editBoxSport,       setEditBoxSport]       = useState<'nba' | 'nfl'>('nfl');
   const [editStartingSport,  setEditStartingSport]  = useState<'nba' | 'nfl'>('nfl');
   const [editFaceRevealTimer,       setEditFaceRevealTimer]       = useState(60);
   const [editFaceRevealMinYards,    setEditFaceRevealMinYards]    = useState(0);
@@ -148,8 +149,10 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditPickTimer((cs.pickTimer as number | null) ?? null);
     setEditFirstPickerId((cs.firstPickerId as string) || null);
     setEditTotalRounds((cs.totalRounds as number) || 5);
-    setEditBoxMinYear(cs.min_year || 2015);
-    setEditBoxMaxYear(cs.max_year || 2024);
+    const isNBABox = lobby.game_type === 'nba-box-score';
+    setEditBoxSport(isNBABox ? 'nba' : 'nfl');
+    setEditBoxMinYear(cs.min_year || (isNBABox ? 2014 : 2015));
+    setEditBoxMaxYear(cs.max_year || (isNBABox ? 2025 : 2024));
     setEditBoxTeam(cs.team || null);
     setEditStartingSport((cs.sport as 'nba' | 'nfl') || 'nfl');
     setEditFaceRevealTimer((cs.timer as number) || 60);
@@ -184,6 +187,14 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       }
     }
   };
+
+  function handleBoxSportChange(s: 'nba' | 'nfl') {
+    setEditBoxSport(s);
+    setEditBoxTeam(null);
+    setEditBoxMinYear(s === 'nba' ? 2014 : 2015);
+    setEditBoxMaxYear(s === 'nba' ? 2025 : 2024);
+    setEditGameType(s === 'nba' ? 'nba-box-score' : 'box-score');
+  }
 
   const handleApply = () => {
     onApply({
@@ -229,8 +240,12 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
           <div>
             <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Mode</div>
             <select
-              value={editGameType}
-              onChange={e => setEditGameType(e.target.value as GameTypeValue)}
+              value={editGameType === 'nba-box-score' ? 'box-score' : editGameType}
+              onChange={e => {
+                const v = e.target.value as GameTypeValue;
+                setEditGameType(v);
+                if (v === 'box-score') { setEditBoxSport('nfl'); setEditBoxMinYear(2015); setEditBoxMaxYear(2024); setEditBoxTeam(null); }
+              }}
               className="w-full bg-[#111] text-[#ccc] px-3 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
             >
               <option value="roster">★ Roster Challenge</option>
@@ -287,8 +302,9 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
             />
           )}
 
-          {editGameType === 'box-score' && (
+          {(editGameType === 'box-score' || editGameType === 'nba-box-score') && (
             <BoxScoreSettings
+              sport={editBoxSport} onSportChange={handleBoxSportChange}
               boxMinYear={editBoxMinYear} onBoxMinYearChange={setEditBoxMinYear}
               boxMaxYear={editBoxMaxYear} onBoxMaxYearChange={setEditBoxMaxYear}
               boxTeam={editBoxTeam} onBoxTeamChange={setEditBoxTeam}

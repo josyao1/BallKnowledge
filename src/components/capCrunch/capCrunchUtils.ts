@@ -11,6 +11,7 @@ import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
 export function getPickBadgeLabel(pick: SelectedPlayer): string {
   if (pick.isBust) return 'BUST';
   if (pick.neverOnTeam) {
+    if (pick.actualTeammate)   return 'NOT TEAMMATE';
     if (pick.actualDraftRound) return 'WRONG ROUND';
     if (pick.hwFilterFailed)   return pick.hwFilterFailed.startsWith('height') ? 'WRONG HEIGHT' : 'WRONG WEIGHT';
     if (pick.actualCollege || pick.actualNflConf) return 'WRONG CONF';
@@ -26,6 +27,7 @@ export function getPickBadgeLabel(pick: SelectedPlayer): string {
  */
 export function getPickErrorMessage(pick: SelectedPlayer): string | null {
   if (!pick.neverOnTeam) return null;
+  if (pick.actualTeammate) return `never played with ${pick.actualTeammate}`;
   const hwMsg = pick.hwFilterFailed
     ? pick.hwFilterFailed === 'height_above' ? (pick.actualHeight ? `too short — ${pick.actualHeight.replace('-', "'")}\"` : 'too short')
     : pick.hwFilterFailed === 'height_below' ? (pick.actualHeight ? `too tall — ${pick.actualHeight.replace('-', "'")}\"` : 'too tall')

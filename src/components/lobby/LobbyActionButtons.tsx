@@ -36,6 +36,7 @@ interface Props {
   onScrambleStart: () => void;
   onLineupStart: () => void;
   onBoxScoreStart: () => void;
+  onNBABoxScoreStart: () => void;
   onStartingLineupStart: () => void;
   onFaceRevealStart: () => void;
 }
@@ -43,7 +44,7 @@ interface Props {
 export function LobbyActionButtons({
   lobby, players, currentPlayer, isHost, isLoadingRoster, allReady,
   onReadyToggle, onManualStart, onCareerStart, onScrambleStart,
-  onLineupStart, onBoxScoreStart, onStartingLineupStart, onFaceRevealStart,
+  onLineupStart, onBoxScoreStart, onNBABoxScoreStart, onStartingLineupStart, onFaceRevealStart,
 }: Props) {
   const readyCount = players.filter(p => p.is_ready).length;
   const allPlayersReady = players.every(p => p.is_ready);
@@ -75,6 +76,13 @@ export function LobbyActionButtons({
     'box-score': {
       onStart: onBoxScoreStart,
       label: 'Start Box Score',
+      loadingLabel: 'Loading Game...',
+      btnClass: 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e]',
+      forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
+    },
+    'nba-box-score': {
+      onStart: onNBABoxScoreStart,
+      label: 'Start NBA Box Score',
       loadingLabel: 'Loading Game...',
       btnClass: 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e]',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
@@ -225,6 +233,16 @@ function HowToPlay({ gameType }: { gameType: string }) {
       <p>Fill in the names from memory — QBs, rushers, and receivers for both teams — within the time limit.</p>
       <p>Use the search bar to find players and confirm matches. Correct guesses light up green.</p>
       <p>You can also guess the Vegas spread for a bonus point.</p>
+      <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
+    </div>
+  );
+
+  if (gameType === 'nba-box-score') return (
+    <div className={prose}>
+      <p>A real NBA game's box score is shown with all player names blacked out.</p>
+      <p>Fill in the names from memory — all players for both teams — within the time limit.</p>
+      <p>Use the search bar to find players and confirm matches. Correct guesses light up green.</p>
+      <p>Request hints to reveal player initials — but all players must agree.</p>
       <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
     </div>
   );

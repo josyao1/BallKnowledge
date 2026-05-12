@@ -89,9 +89,12 @@ export function BlindModeReveal({
       {/* Main: scrollable player columns */}
       <main className="relative z-10 flex-1 overflow-y-auto p-3 md:p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Running totals row */}
-          <div className="overflow-x-auto pb-2 mb-4">
-            <div className="flex gap-3 min-w-max">
+          {/* Single scroll container keeps totals row and pick rows in sync */}
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+
+            {/* Running totals row */}
+            <div className="flex gap-3 pb-2 mb-4">
               {players.map((player, pi) => {
                 const lineup = allLineups[player.player_id];
                 const total = lineup ? runningTotal(lineup, revealStep) : 0;
@@ -133,11 +136,9 @@ export function BlindModeReveal({
                 );
               })}
             </div>
-          </div>
 
-          {/* Pick rows */}
-          <div className="overflow-x-auto">
-            <div className="flex gap-3 min-w-max">
+            {/* Pick rows */}
+            <div className="flex gap-3">
               {players.map((player, pi) => {
                 const lineup = allLineups[player.player_id];
                 const picks = lineup?.selectedPlayers ?? [];
@@ -188,7 +189,9 @@ export function BlindModeReveal({
                 );
               })}
             </div>
-          </div>
+
+            </div>{/* min-w-max */}
+          </div>{/* overflow-x-auto */}
         </div>
       </main>
 

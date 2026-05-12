@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { RevealingScore } from './RevealingScore';
 import { fmt, getCategoryAbbr, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
-import { isDivisionDraftRound, parseDivisionDraftRound } from '../../services/capCrunch';
+import { isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 import type { OptimalPick } from '../../services/capCrunch';
 
@@ -25,6 +25,10 @@ function formatPickTeam(team: string): string {
   if (isDivisionDraftRound(team)) {
     const { division, draftRound } = parseDivisionDraftRound(team);
     return `${division} · ${draftLabel(draftRound)}`;
+  }
+  if (isTeammateRound(team)) {
+    const { pickIndex } = parseTeammateRound(team);
+    return `Teammate of Pick ${pickIndex}`;
   }
   return team;
 }
@@ -109,7 +113,11 @@ export function CapCrunchResultCard({
 
       {/* Pick list */}
       <div className="space-y-2 text-xs mb-3 border-t border-white/10 pt-3">
-        {item.lineup.selectedPlayers.map((selected, pidx) => {
+        {(() => {
+          let running = 0;
+          return item.lineup.selectedPlayers.map((selected, pidx) => {
+            const totalBefore = running;
+            if (!selected.isBust && !selected.neverOnTeam) running += selected.statValue;
           const isBust = selected.isBust;
           const isNotOnTeam = !isBust && selected.neverOnTeam;
           const isMiss = !isBust && !isNotOnTeam && selected.statValue === 0;
@@ -137,7 +145,7 @@ export function CapCrunchResultCard({
                     {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
                   </div>
                   <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
-                  {isBust && <span className="block text-[10px] text-red-400/60">Exceeded cap — scored 0, total reverted</span>}
+                  {isBust && <span className="block text-[10px] text-red-400/60">busted by {fmt(totalBefore + selected.statValue - targetCap)}</span>}
                   {isNotOnTeam && (
                     <span className="block text-[10px] text-orange-400/60">
                       {getPickErrorMessage(selected)}
@@ -150,7 +158,8 @@ export function CapCrunchResultCard({
               </span>
             </motion.div>
           );
-        })}
+        });
+        })()}
       </div>
 
       {/* Cap contribution bar chart */}
@@ -213,6 +222,7 @@ export function CapCrunchResultCard({
                   {opt!.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory) : 'Career GP') : opt!.year} · {opt!.team}
                   {opt!.college ? ` · ${opt!.college}` : ''}
                   {opt!.draftRound ? ` · ${opt!.draftRound}` : ''}
+                  {opt!.teammate ? ` · played with ${opt!.teammate}${opt!.teammateYear ? ` in ${opt!.teammateYear}` : ''}` : ''}
                 </span>
                 <span className="block text-[10px] text-emerald-400/70 mt-0.5">
                   Would finish: {fmt(wouldFinishAt)} / {targetCap}

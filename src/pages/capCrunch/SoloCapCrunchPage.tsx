@@ -19,6 +19,7 @@ import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
 import { ConferenceRoundCard } from '../../components/capCrunch/ConferenceRoundCard';
 import { DivisionDraftRoundCard } from '../../components/capCrunch/DivisionDraftRoundCard';
+import { TeammateRoundCard } from '../../components/capCrunch/TeammateRoundCard';
 import { fmt, getCategoryAbbr, getPickErrorMessage, getPickBadgeLabel } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
@@ -33,6 +34,8 @@ import {
   parseConferenceRound,
   isDivisionDraftRound,
   parseDivisionDraftRound,
+  isTeammateRound,
+  parseTeammateRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
   isCareerStat,
@@ -60,6 +63,10 @@ function formatPickTeam(team: string): string {
   if (isDivisionDraftRound(team)) {
     const { division, draftRound } = parseDivisionDraftRound(team);
     return `${division} · ${draftLabel(draftRound)}`;
+  }
+  if (isTeammateRound(team)) {
+    const { pickIndex } = parseTeammateRound(team);
+    return `Teammate of Pick ${pickIndex}`;
   }
   return team;
 }
@@ -251,6 +258,7 @@ export function SoloCapCrunchPage() {
         hwFilter,
         lineup,
         targetCap,
+        prevPicks: lineup.selectedPlayers,
       });
 
       setLineup(updated);
@@ -281,7 +289,7 @@ export function SoloCapCrunchPage() {
         setPhase('results');
       } else {
         // Switch team for next turn — no repeats; advance special round cycle
-        const nextTeam = assignRandomTeam(selectedSport, statCategory, usedTeamsRef.current, usedSpecialTypes);
+        const nextTeam = assignRandomTeam(selectedSport, statCategory, usedTeamsRef.current, usedSpecialTypes, updated.selectedPlayers, updated.selectedPlayers.length === totalRounds - 1);
         const nextFilter = selectRandomHWFilter(selectedSport, nextTeam, statCategory, usedSpecialTypes);
         const nextUsed = advanceSpecialRoundCycle(usedSpecialTypes, classifySpecialRoundType(nextTeam, nextFilter));
         usedTeamsRef.current = [...usedTeamsRef.current, nextTeam];
@@ -318,7 +326,7 @@ export function SoloCapCrunchPage() {
       : parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
     const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
     setOptimalPick(undefined); // reset to loading
-    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, undefined, hwFilter)
+    findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, undefined, hwFilter, picks)
       .then(result => setOptimalPick(result ?? null))
       .catch(() => setOptimalPick(null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -597,7 +605,10 @@ export function SoloCapCrunchPage() {
                   {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                 </p>
               </motion.div>
-            ) : (
+            ) : isTeammateRound(currentTeam) ? (() => {
+              const { pickIndex } = parseTeammateRound(currentTeam);
+              return <TeammateRoundCard key={currentTeam} pickIndex={pickIndex} size="lg" />;
+            })() : (
               <div className="flex flex-col items-center gap-2">
                 <TeamSlotMachine sport={selectedSport!} team={currentTeam} size="lg" />
                 {isHWFilter(hwFilter) && (
@@ -860,7 +871,7 @@ export function SoloCapCrunchPage() {
                                 <p className="font-semibold truncate text-[9px] md:text-xs">
                                   {idx + 1}. <FlipReveal text={pick.playerName} />
                                 </p>
-                                {pick.isBust && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">BUST</span>}
+                                {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{getPickBadgeLabel(pick)}</span>}
                               </div>
                               <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>
                                 {formatPickTeam(pick.team)} • {pick.selectedYear}
@@ -975,6 +986,9 @@ export function SoloCapCrunchPage() {
                           {optimalPick.draftRound && (
                             <span className="text-[#a855f7]/60 ml-1">· {optimalPick.draftRound}</span>
                           )}
+                          {optimalPick.teammate && (
+                            <span className="text-[#22c55e]/60 ml-1">· played with {optimalPick.teammate}{optimalPick.teammateYear ? ` in ${optimalPick.teammateYear}` : ''}</span>
+                          )}
                         </div>
                         <div className="sports-font text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
@@ -1034,7 +1048,11 @@ export function SoloCapCrunchPage() {
               
               <div className="flex-1 overflow-y-auto p-4 md:p-6 max-h-96 lg:max-h-none">
                 <div className="space-y-2">
-                {lineup.selectedPlayers.map((player, idx) => {
+                {(() => {
+                  let running = 0;
+                  return lineup.selectedPlayers.map((player, idx) => {
+                    const totalBefore = running;
+                    if (!player.isBust && !player.neverOnTeam) running += player.statValue;
                   const isBust = player.isBust;
                   const isNotOnTeam = !isBust && player.neverOnTeam;
                   const isMiss = !isBust && !isNotOnTeam && player.statValue === 0;
@@ -1071,7 +1089,7 @@ export function SoloCapCrunchPage() {
                             {formatPickTeam(player.team)} • {player.selectedYear}
                           </div>
                           {isBust && (
-                            <div className="text-[9px] text-red-400/70 mt-0.5">Exceeded cap — scored 0, total reverted</div>
+                            <div className="text-[9px] text-red-400/70 mt-0.5">busted by {fmt(totalBefore + player.statValue - targetCap)}</div>
                           )}
                           {isNotOnTeam && (
                             <div className="text-[9px] text-orange-400/70 mt-0.5">
@@ -1084,12 +1102,13 @@ export function SoloCapCrunchPage() {
                           <p className={`retro-title text-lg md:text-xl ${isInvalid ? 'text-red-400' : 'text-[#d4af37]'}`}>
                             {isBust ? `${fmt(player.statValue)}→0` : fmt(player.statValue)}
                           </p>
-                          {(isBust || isNotOnTeam || isMiss) && <div className="bg-red-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1">{getPickBadgeLabel(player)}</div>}
+                          {(isBust || isNotOnTeam || isMiss) && <div className="bg-red-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1 text-center">{getPickBadgeLabel(player)}</div>}
                         </div>
                       </div>
                     </motion.div>
                   );
-                })}
+                  });
+                })()}
               </div>
               {/* Cap contribution bar chart */}
               {lineup.selectedPlayers.length > 0 && (() => {

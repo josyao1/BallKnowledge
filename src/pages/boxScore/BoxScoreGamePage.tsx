@@ -153,7 +153,6 @@ export function BoxScoreGamePage() {
     getRandomBoxScoreGame({ years, team: filters.team ?? undefined })
       .then(async g => {
         setGame(g);
-        // Load all players for that season for autocomplete (doesn't reveal who's in the game)
         try {
           const players = await fetchStaticNFLSeasonPlayers(g.season);
           setSeasonPlayers(players ?? []);

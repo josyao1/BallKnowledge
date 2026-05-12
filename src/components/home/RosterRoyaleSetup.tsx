@@ -11,8 +11,12 @@ import { useNavigate } from 'react-router-dom';
 import { TeamSelector } from './TeamSelector';
 import { YearSelector } from './YearSelector';
 import { nflTeams } from '../../data/nfl-teams';
+import { teams as nbaTeams } from '../../data/teams';
 import type { GenericTeam, LoadingStatus } from '../../data/homeGames';
 import type { GameMode } from '../../types';
+
+const NFL_BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+const NBA_BOX_SCORE_YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
 interface Props {
   sport: 'nba' | 'nfl';
@@ -48,11 +52,6 @@ interface Props {
   onOpenSettings: () => void;
 }
 
-const BOX_SCORE_YEAR_PRESETS = [
-  { label: 'Any',   min: 2015, max: 2024 },
-  { label: '2018+', min: 2018, max: 2024 },
-  { label: '2021+', min: 2021, max: 2024 },
-] as const;
 
 export function RosterRoyaleSetup({
   sport, deckArt,
@@ -108,77 +107,84 @@ export function RosterRoyaleSetup({
 
           {loadingStatus === 'idle' ? (
             <>
-              {/* NFL-only: sub-mode toggle between Roster Royale and Box Score */}
-              {sport === 'nfl' && (
-                <div className="flex gap-2 justify-center">
-                  {(['roster', 'box-score'] as const).map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setRosterSubMode(m)}
-                      className={`px-4 py-1.5 rounded-lg sports-font text-xs transition-all ${
-                        rosterSubMode === m
-                          ? 'bg-[#d4af37] text-[#111]'
-                          : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'
-                      }`}
-                    >
-                      {m === 'roster' ? 'Roster Royale' : 'Box Score'}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Sub-mode toggle: Roster Royale vs Box Score */}
+              <div className="flex gap-2 justify-center">
+                {(['roster', 'box-score'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setRosterSubMode(m)}
+                    className={`px-4 py-1.5 rounded-lg sports-font text-xs transition-all ${
+                      rosterSubMode === m
+                        ? 'bg-[#d4af37] text-[#111]'
+                        : 'bg-[#1a1a1a] text-[#888] border border-[#3d3d3d]'
+                    }`}
+                  >
+                    {m === 'roster' ? 'Roster Royale' : 'Box Score'}
+                  </button>
+                ))}
+              </div>
 
-              {rosterSubMode === 'box-score' && sport === 'nfl' ? (
+              {rosterSubMode === 'box-score' ? (
                 // ── Box Score sub-mode ──
-                <>
-                  <div className="flex flex-col gap-2">
-                    <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Year Range</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {BOX_SCORE_YEAR_PRESETS.map(opt => (
-                        <button
-                          key={opt.label}
-                          onClick={() => { setBoxScoreMinYear(opt.min); setBoxScoreMaxYear(opt.max); }}
-                          className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
-                            boxScoreMinYear === opt.min && boxScoreMaxYear === opt.max
-                              ? 'bg-[#f59e0b] text-[#111] border-[#f59e0b]'
-                              : 'border-[#2a2a2a] text-[#666] hover:border-[#f59e0b]/40 hover:text-[#888]'
-                          }`}
+                (() => {
+                  const bsYears = sport === 'nba' ? NBA_BOX_SCORE_YEARS : NFL_BOX_SCORE_YEARS;
+                  const teamList = sport === 'nba' ? nbaTeams : nflTeams;
+                  const soloPath = sport === 'nba' ? '/nba-box-score' : '/box-score';
+                  return (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Year Range</div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={boxScoreMinYear}
+                            onChange={e => { const v = parseInt(e.target.value); setBoxScoreMinYear(v); if (v > boxScoreMaxYear) setBoxScoreMaxYear(v); }}
+                            className="flex-1 bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50 appearance-none"
+                          >
+                            {bsYears.map(y => <option key={y} value={y}>{y}</option>)}
+                          </select>
+                          <span className="text-[#555] sports-font text-xs">to</span>
+                          <select
+                            value={boxScoreMaxYear}
+                            onChange={e => { const v = parseInt(e.target.value); setBoxScoreMaxYear(v); if (v < boxScoreMinYear) setBoxScoreMinYear(v); }}
+                            className="flex-1 bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50 appearance-none"
+                          >
+                            {bsYears.map(y => <option key={y} value={y}>{y}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Team Filter</div>
+                        <select
+                          value={boxScoreTeam ?? ''}
+                          onChange={e => setBoxScoreTeam(e.target.value || null)}
+                          className="bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50"
                         >
-                          {opt.label}
+                          <option value="">Any Team</option>
+                          {teamList.map(t => (
+                            <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="border-t border-[#d4af37]/20" />
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={() => navigate(soloPath, { state: { minYear: boxScoreMinYear, maxYear: boxScoreMaxYear, team: boxScoreTeam } })}
+                          className="retro-btn retro-btn-gold px-8 py-2.5 text-base"
+                        >
+                          Start Solo
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">Team Filter</div>
-                    <select
-                      value={boxScoreTeam ?? ''}
-                      onChange={e => setBoxScoreTeam(e.target.value || null)}
-                      className="bg-[#111] text-[var(--vintage-cream)] px-3 py-2 rounded-lg border border-[#3d3d3d] sports-font text-xs focus:outline-none focus:border-[#f59e0b]/50"
-                    >
-                      <option value="">Any Team</option>
-                      {nflTeams.map(t => (
-                        <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="border-t border-[#d4af37]/20" />
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      onClick={() => navigate('/box-score', { state: { minYear: boxScoreMinYear, maxYear: boxScoreMaxYear, team: boxScoreTeam } })}
-                      className="retro-btn retro-btn-gold px-8 py-2.5 text-base"
-                    >
-                      Start Solo
-                    </button>
-                    <button
-                      onClick={() => navigate('/lobby/create', { state: { gameType: 'box-score' } })}
-                      className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs"
-                    >
-                      Lobby
-                    </button>
-                  </div>
-                </>
+                        <button
+                          onClick={() => navigate('/lobby/create', { state: { gameType: sport === 'nba' ? 'nba-box-score' : 'box-score' } })}
+                          className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs"
+                        >
+                          Lobby
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()
               ) : (
                 // ── Roster Royale sub-mode ──
                 <>
