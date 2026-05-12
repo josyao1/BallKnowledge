@@ -37,6 +37,7 @@ export interface SelectedPlayer {
   hwFilterFailed?: HWFilter; // which height/weight filter this pick failed (always set when neverOnTeam due to HW)
   actualHeight?: string;     // player's actual height (e.g. "6-4") when they failed a height constraint — may be missing if bio lacks data
   actualWeight?: number;     // player's actual weight in lbs when they failed a weight constraint — may be missing if bio lacks data
+  actualTeammate?: string;   // referenced player name when neverOnTeam due to teammate round check
   playerId?: string | number; // ESPN player ID — used for headshot URL
   /** True when this pick slot was auto-skipped (timer expired with no selection) */
   isSkipped?: boolean;

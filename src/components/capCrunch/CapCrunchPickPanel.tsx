@@ -11,7 +11,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { isConferenceRound, formatHeightInches } from '../../services/capCrunch';
+import { isConferenceRound, isTeammateRound, parseTeammateRound, formatHeightInches } from '../../services/capCrunch';
 import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -148,10 +148,14 @@ export function CapCrunchPickPanel({
                   {isCareerStatRound
                     ? isConferenceRound(currentTeam)
                       ? `Total career stats — must have attended a ${currentTeam} school`
-                      : `Total career stats (all teams) — must have played for ${currentTeam} at some point`
+                      : isTeammateRound(currentTeam)
+                        ? `Total career stats — must have played with Pick ${parseTeammateRound(currentTeam).pickIndex} at some point`
+                        : `Total career stats (all teams) — must have played for ${currentTeam} at some point`
                     : isConferenceRound(currentTeam)
                       ? `Will count all career GP — must have attended a ${currentTeam} school`
-                      : `Will count all career GP with ${currentTeam}`}
+                      : isTeammateRound(currentTeam)
+                        ? `Will count all career GP — must have played with Pick ${parseTeammateRound(currentTeam).pickIndex} at some point`
+                        : `Will count all career GP with ${currentTeam}`}
                   {hwFilter && ` — ${hwFilter === 'height_above' ? `above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'height_below' ? `below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'weight_above' ? `above ${WEIGHT_THRESHOLD} lbs` : `below ${WEIGHT_THRESHOLD} lbs`}`}
                 </p>
               </div>

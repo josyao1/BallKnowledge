@@ -7,8 +7,9 @@ this pool uses lower thresholds so it includes current players who are still ear
 in their careers but have had at least one notable season (e.g. Bijan Robinson,
 Drake London, Puka Nacua).
 
-Also includes defensive players (DE, DT, LB, CB, S) and kickers/punters (K, P)
-with gp-only data so they can be picked in total_gp mode.
+Also includes defensive players (DE, DT, LB, CB, S), kickers/punters (K, P),
+and offensive linemen (C, G, T, OT, OL, OG) with gp-only data so they can be
+picked in total_gp mode.
 
 The frontend merges this file with nfl_careers.json and deduplicates by player_id,
 so it's safe to have the same player in both files — the lineup pool version wins
@@ -50,6 +51,9 @@ CAREER_POSITIONS = {"QB", "RB", "WR", "TE"}
 # Broad position groups as they appear in nfl_data_py roster data:
 DEFENSIVE_POSITIONS = {"DE", "DT", "LB", "ILB", "OLB", "MLB", "CB", "S", "SS", "FS", "DB", "DL", "NT", "EDGE"}
 KICKER_POSITIONS    = {"K", "P", "LS"}
+# OL positions — included for total_gp mode with the same snap-count GP approach.
+# Stat columns are intentionally omitted (rushing/receiving yards on trick plays are noise).
+OL_POSITIONS        = {"C", "G", "T", "OT", "OL", "OG"}
 
 # Minimum production in at LEAST ONE season (not career totals).
 # These are intentionally low so emerging stars are included.
@@ -423,14 +427,14 @@ def main():
     print(f"  Skipped (production): {skipped_production}")
     print(f"  Skipped (no name):    {skipped_name}")
 
-    # ── Pass 2: Defensive players + kickers (gp-only seasons) ────────────────
-    NON_SKILL_POSITIONS = DEFENSIVE_POSITIONS | KICKER_POSITIONS
+    # ── Pass 2: Defensive players, kickers, and OL (gp-only seasons) ─────────
+    NON_SKILL_POSITIONS = DEFENSIVE_POSITIONS | KICKER_POSITIONS | OL_POSITIONS
     def_skipped_position = 0
     def_skipped_seasons  = 0
     def_skipped_name     = 0
     def_added            = 0
 
-    print(f"\nPass 2 — defensive/kicker positions ({len(all_pids)} player IDs)...")
+    print(f"\nPass 2 — defensive/kicker/OL positions ({len(all_pids)} player IDs)...")
 
     for pid in all_pids:
         # Skip any player already captured as a skill position
@@ -536,7 +540,7 @@ def main():
         })
         def_added += 1
 
-    print(f"  Defensive/kicker players added: {def_added}")
+    print(f"  Defensive/kicker/OL players added: {def_added}")
     print(f"  Skipped (position):   {def_skipped_position}")
     print(f"  Skipped (seasons):    {def_skipped_seasons}")
     print(f"  Skipped (no name):    {def_skipped_name}")

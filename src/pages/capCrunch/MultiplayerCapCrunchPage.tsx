@@ -470,7 +470,8 @@ export function MultiplayerCapCrunchPage() {
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
         const usedSpecial: SpecialRoundType[] = cs.usedSpecialTypes || [];
-        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial);
+        const hostLineup = lineups[currentPlayerId] as PlayerLineup | undefined;
+        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial, hostLineup?.selectedPlayers, nextRound >= totalRds);
         const newHwFilter = selectRandomHWFilter(cs.sport || 'nba', newTeam, cs.statCategory, usedSpecial);
         const nextUsedSpecial = advanceSpecialRoundCycle(usedSpecial, classifySpecialRoundType(newTeam, newHwFilter));
         const resetLineups: Record<string, any> = {};
@@ -538,7 +539,7 @@ export function MultiplayerCapCrunchPage() {
           const excludeNames = hardMode
             ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
             : undefined;
-          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames, hwFilter);
+          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames, hwFilter, lineup.selectedPlayers);
           results.set(p.player_id, opt);
         })
       );
@@ -745,6 +746,7 @@ export function MultiplayerCapCrunchPage() {
         lineup: myCurrentLineup,
         targetCap,
         isBlindMode,
+        prevPicks: myCurrentLineup.selectedPlayers,
       });
 
       (withNewPlayer as any).hasPickedThisRound = true;
@@ -1021,6 +1023,7 @@ export function MultiplayerCapCrunchPage() {
                 totalRounds={totalRounds}
                 canPickThisRound={canPickThisRound}
                 sport={selectedSport as 'nba' | 'nfl'}
+                targetCap={targetCap}
                 blindMode={blindMode}
                 hardMode={hardMode}
               />
@@ -1111,6 +1114,7 @@ export function MultiplayerCapCrunchPage() {
                 totalRounds={totalRounds}
                 canPickThisRound={canPickThisRound}
                 sport={selectedSport as 'nba' | 'nfl'}
+                targetCap={targetCap}
                 blindMode={blindMode}
                 hardMode={hardMode}
               />
