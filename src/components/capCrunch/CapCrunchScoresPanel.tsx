@@ -28,7 +28,7 @@ function formatPickTeam(team: string): string {
   }
   if (isTeammateRound(team)) {
     const { pickIndex } = parseTeammateRound(team);
-    return `Teammate of Pick ${pickIndex}`;
+    return `Played with Pick ${pickIndex}`;
   }
   return team;
 }

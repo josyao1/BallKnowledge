@@ -66,7 +66,7 @@ function formatPickTeam(team: string): string {
   }
   if (isTeammateRound(team)) {
     const { pickIndex } = parseTeammateRound(team);
-    return `Teammate of Pick ${pickIndex}`;
+    return `Played with Pick ${pickIndex}`;
   }
   return team;
 }
@@ -164,7 +164,7 @@ export function SoloCapCrunchPage() {
     setSelectedSport(sport);
     setTotalRounds(rounds);
     const category = forcedCategory ?? selectRandomStatCategory(sport);
-    const cap = generateTargetCap(sport, category);
+    const cap = generateTargetCap(sport, category, rounds);
     const freshUsed: SpecialRoundType[] = []; // reset cycle on new game
     const team = assignRandomTeam(sport, category, undefined, freshUsed);
     const filter = selectRandomHWFilter(sport, team, category, freshUsed);

@@ -28,7 +28,7 @@ function formatPickTeam(team: string): string {
   }
   if (isTeammateRound(team)) {
     const { pickIndex } = parseTeammateRound(team);
-    return `Teammate of Pick ${pickIndex}`;
+    return `Played with Pick ${pickIndex}`;
   }
   return team;
 }
@@ -47,30 +47,29 @@ interface Props {
   /** Display rank (0-based, already sorted by caller) */
   idx: number;
   isWinner: boolean;
-  /** Whether any tiebreaker was needed to determine the winner */
   tiebreakerUsed: boolean;
-  /** True when the tiebreak was on bust count (triggers avg-year display for top 2) */
   tiedOnBusts: boolean;
+  tiedOnUnique: boolean;
   targetCap: number;
-  /** Keyed by player_id; null means no better pick existed */
   optimalPicks: Map<string, OptimalPick | null>;
   statCategory: StatCategory;
-  /** Career stat rounds count all-team totals rather than a single team-season */
   isCareerStatRound: boolean;
-  /** Returns the average pick year for a lineup — used for tiebreaker display */
   avgPickYear: (lineup: PlayerLineup) => number;
+  uniquePickCount: (lineup: PlayerLineup) => number;
   sport: 'nba' | 'nfl';
 }
 
 export function CapCrunchResultCard({
-  item, idx, isWinner, tiebreakerUsed, tiedOnBusts, targetCap,
-  optimalPicks, statCategory, isCareerStatRound, avgPickYear, sport,
+  item, idx, isWinner, tiebreakerUsed, tiedOnBusts, tiedOnUnique, targetCap,
+  optimalPicks, statCategory, isCareerStatRound, avgPickYear, uniquePickCount, sport,
 }: Props) {
   const reverseDelay = idx * 0.65; // passed in already reversed by caller
   const scoreDelay = idx * 650 + 450;
 
   const opt = optimalPicks.get(item.player_id);
   const hasOptimal = opt && item.lineup.selectedPlayers.length > 0;
+  const myUniqueCount = uniquePickCount(item.lineup);
+  const myAvgYear = avgPickYear(item.lineup);
 
   return (
     <motion.div
@@ -94,8 +93,11 @@ export function CapCrunchResultCard({
           {(item.lineup.bustCount ?? 0) > 0 && (
             <span className="text-[9px] sports-font text-red-400/70">{item.lineup.bustCount} bust{item.lineup.bustCount !== 1 ? 's' : ''} (each counted as 0)</span>
           )}
-          {tiebreakerUsed && tiedOnBusts && idx <= 1 && (
-            <span className="block text-[9px] sports-font text-[#d4af37]/60">avg yr {avgPickYear(item.lineup).toFixed(1)}</span>
+          {tiebreakerUsed && tiedOnBusts && !tiedOnUnique && idx <= 1 && (
+            <span className="block text-[9px] sports-font text-[#d4af37]/60">{myUniqueCount} unique pick{myUniqueCount !== 1 ? 's' : ''}</span>
+          )}
+          {tiebreakerUsed && tiedOnUnique && idx <= 1 && (
+            <span className="block text-[9px] sports-font text-[#d4af37]/60">avg yr {myAvgYear.toFixed(1)}</span>
           )}
         </div>
         <div className="text-right shrink-0">

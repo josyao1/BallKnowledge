@@ -231,8 +231,9 @@ function careerStatField(cat: StatCategory): string {
 /**
  * Generate a reasonable target cap based on the stat category and sport.
  */
-export function generateTargetCap(sport: Sport, statCategory: StatCategory): number {
-  const r = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+export function generateTargetCap(sport: Sport, statCategory: StatCategory, totalRounds: number = 5): number {
+  const scale = totalRounds / 5;
+  const r = (min: number, max: number) => Math.round((min + Math.floor(Math.random() * (max - min + 1))) * scale);
 
   if (sport === 'nba') {
     // NBA stats are per-game averages (e.g. LeBron: 22 pts, 7 ast, 6 reb, 33 min).
@@ -1528,32 +1529,62 @@ export function isGameFinished(state: LineupIsRightGameState): boolean {
   );
 }
 
-/**
- * Determine winners and return sorted players by score and bust status.
- * Tiebreaker: lower average pick year wins (older lineup beat a tied newer one).
- * 'career' picks (total_gp) count as year 2025 for averaging.
- */
-export function calculateWinners(
-  lineups: PlayerLineup[]
-): PlayerLineup[] {
-  const avgPickYear = (lineup: PlayerLineup): number => {
-    const picks = lineup.selectedPlayers;
-    if (picks.length === 0) return 2025;
-    const sum = picks.reduce((acc, p) => {
-      const yr = p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025);
-      return acc + yr;
-    }, 0);
-    return sum / picks.length;
-  };
+// ─── Shared tiebreak helpers ──────────────────────────────────────────────────
 
+/** First pick number (1-based) where the running valid-pick total reaches the lineup's final score. */
+export function lineupHitRound(lineup: PlayerLineup): number {
+  const picks = lineup.selectedPlayers;
+  const total = lineup.totalStat;
+  if (total === 0 || picks.length === 0) return picks.length || 5;
+  let cum = 0;
+  for (let i = 0; i < picks.length; i++) {
+    const p = picks[i];
+    if (!p.isBust && !p.neverOnTeam && !p.isSkipped) cum += p.statValue ?? 0;
+    if (cum >= total) return i + 1;
+  }
+  return picks.length;
+}
+
+/** Average selected year across all picks; 'career' picks count as 2025. */
+// Intentionally averages ALL picks (including busts) — a bust is still a year-choice the player made.
+// lineupUniquePickCount below uses only valid picks; this asymmetry is deliberate.
+export function lineupAvgPickYear(lineup: PlayerLineup): number {
+  const picks = lineup.selectedPlayers;
+  if (picks.length === 0) return 2025;
+  return picks.reduce((sum, p) => sum + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
+}
+
+/** Number of valid (non-bust, non-invalid) picks in this lineup that no other lineup also picked. */
+export function lineupUniquePickCount(lineup: PlayerLineup, allLineups: PlayerLineup[]): number {
+  const selfId = String(lineup.playerId);
+  const othersNames = new Set<string>();
+  for (const other of allLineups) {
+    if (String(other.playerId) === selfId) continue;
+    for (const p of other.selectedPlayers) {
+      if (!p.isBust && !p.neverOnTeam && !p.isSkipped)
+        othersNames.add(p.playerName.toLowerCase().trim());
+    }
+  }
+  return lineup.selectedPlayers.filter(p =>
+    !p.isBust && !p.neverOnTeam && !p.isSkipped &&
+    !othersNames.has(p.playerName.toLowerCase().trim())
+  ).length;
+}
+
+/**
+ * Sort lineups by the full tiebreak cascade:
+ * score → hit round → fewest busts → most unique picks → oldest avg year
+ */
+export function calculateWinners(lineups: PlayerLineup[]): PlayerLineup[] {
   return [...lineups].sort((a, b) => {
-    // Primary: highest score
     if (b.totalStat !== a.totalStat) return b.totalStat - a.totalStat;
-    // Tiebreak 1: fewer busts
+    const aHit = lineupHitRound(a), bHit = lineupHitRound(b);
+    if (aHit !== bHit) return aHit - bHit;
     const aBusts = a.bustCount ?? 0, bBusts = b.bustCount ?? 0;
     if (aBusts !== bBusts) return aBusts - bBusts;
-    // Tiebreak 2: older avg pick year
-    return avgPickYear(a) - avgPickYear(b);
+    const aUniq = lineupUniquePickCount(a, lineups), bUniq = lineupUniquePickCount(b, lineups);
+    if (aUniq !== bUniq) return bUniq - aUniq;
+    return lineupAvgPickYear(a) - lineupAvgPickYear(b);
   });
 }
 

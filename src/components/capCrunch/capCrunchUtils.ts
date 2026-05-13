@@ -11,7 +11,7 @@ import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
 export function getPickBadgeLabel(pick: SelectedPlayer): string {
   if (pick.isBust) return 'BUST';
   if (pick.neverOnTeam) {
-    if (pick.actualTeammate)   return 'NOT TEAMMATE';
+    if (pick.actualTeammate)   return 'NEVER PLAYED';
     if (pick.actualDraftRound) return 'WRONG ROUND';
     if (pick.hwFilterFailed)   return pick.hwFilterFailed.startsWith('height') ? 'WRONG HEIGHT' : 'WRONG WEIGHT';
     if (pick.actualCollege || pick.actualNflConf) return 'WRONG CONF';
