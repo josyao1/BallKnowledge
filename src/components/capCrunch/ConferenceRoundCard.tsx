@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CONFERENCE_LOGOS } from '../../services/capCrunch';
-import { P4_CONFERENCES_DISPLAY } from '../../services/capCrunchData';
+import { P4_CONFERENCES_DISPLAY, P4_SCHOOL_ESPN_IDS } from '../../services/capCrunchData';
 
 const PRO_CONF_STYLES: Record<string, string> = {
   AFC: 'bg-[#b91c1c]/80 border border-[#ef4444]',
@@ -29,6 +29,7 @@ interface Props {
 
 export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
   const [showPanel, setShowPanel] = useState(false);
+  const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
   const logoH = size === 'lg' ? 'h-10 md:h-14' : 'h-8 md:h-10';
   const proTextSize = size === 'lg' ? 'text-xl md:text-2xl' : 'text-lg md:text-xl';
   const confTextSize = size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl';
@@ -125,16 +126,35 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
                   </button>
                 </div>
 
-                {/* School grid */}
-                <div className="flex flex-wrap gap-1.5">
-                  {schools.map(school => (
-                    <span
-                      key={school}
-                      className="sports-font text-[9px] text-white/60 bg-white/5 border border-white/10 rounded px-2 py-1 leading-none"
-                    >
-                      {school}
-                    </span>
-                  ))}
+                {/* School grid — logos where available, text pill fallback */}
+                <div className="flex flex-wrap gap-2">
+                  {schools.map(school => {
+                    const espnId = P4_SCHOOL_ESPN_IDS[school];
+                    if (espnId && !imgErrors.has(school)) {
+                      return (
+                        <div
+                          key={school}
+                          title={school}
+                          className="w-10 h-10 flex items-center justify-center bg-white/20 rounded p-1 hover:bg-white/30 transition-colors"
+                        >
+                          <img
+                            src={`https://a.espncdn.com/i/teamlogos/ncaa/500/${espnId}.png`}
+                            alt={school}
+                            className="w-full h-full object-contain"
+                            onError={() => setImgErrors(prev => new Set(prev).add(school))}
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <span
+                        key={school}
+                        className="sports-font text-[9px] text-white/60 bg-white/5 border border-white/10 rounded px-2 py-1 leading-none"
+                      >
+                        {school}
+                      </span>
+                    );
+                  })}
                 </div>
               </motion.div>
             </>

@@ -40,6 +40,9 @@ import {
   classifySpecialRoundType,
   advanceSpecialRoundCycle,
   selectRandomHWFilter,
+  lineupHitRound,
+  lineupAvgPickYear,
+  lineupUniquePickCount,
 } from '../../services/capCrunch';
 import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
@@ -433,33 +436,41 @@ export function MultiplayerCapCrunchPage() {
           // Blind mode: go to reveal phase first; winner determined after all revealed
           await updateCareerState(lobbyId, { ...cs, phase: 'blind-reveal', revealStep: 0 });
         } else {
-          // Normal mode: determine winner(s): highest score → fewest busts → oldest avg year
-          const avgPickYear = (pid: string): number => {
-            const picks = (lineups[pid] as any)?.selectedPlayers ?? [];
-            if (picks.length === 0) return 2025;
-            return picks.reduce((s: number, p: any) => s + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
-          };
+          // Normal mode: determine winner(s): score → hit round → fewest busts → most unique picks → oldest avg year
+          const allLineupsList = playerIds.map(pid => lineups[pid] as PlayerLineup);
           const sorted = [...playerIds].sort((a, b) => {
-            const la = lineups[a] as any, lb = lineups[b] as any;
+            const la = lineups[a] as PlayerLineup, lb = lineups[b] as PlayerLineup;
             if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
+            const aHit = lineupHitRound(la), bHit = lineupHitRound(lb);
+            if (aHit !== bHit) return aHit - bHit;
             const aBusts = la.bustCount ?? 0, bBusts = lb.bustCount ?? 0;
             if (aBusts !== bBusts) return aBusts - bBusts;
-            return avgPickYear(a) - avgPickYear(b);
+            const aUniq = lineupUniquePickCount(la, allLineupsList), bUniq = lineupUniquePickCount(lb, allLineupsList);
+            if (aUniq !== bUniq) return bUniq - aUniq;
+            return lineupAvgPickYear(la) - lineupAvgPickYear(lb);
           });
           if (sorted.length > 0) {
             const topPid = sorted[0];
-            const topLineup = lineups[topPid] as any;
+            const topLineup = lineups[topPid] as PlayerLineup;
             const topStat = topLineup?.totalStat ?? 0;
+            const topHit = lineupHitRound(topLineup);
             const topBusts = topLineup?.bustCount ?? 0;
-            const topAvgYear = avgPickYear(topPid);
+            const topUniq = lineupUniquePickCount(topLineup, allLineupsList);
+            const topAvgYear = lineupAvgPickYear(topLineup);
             for (const pid of sorted) {
-              const l = lineups[pid] as any;
+              const l = lineups[pid] as PlayerLineup;
               if (
                 l.totalStat === topStat &&
+                lineupHitRound(l) === topHit &&
                 (l.bustCount ?? 0) === topBusts &&
-                avgPickYear(pid) === topAvgYear
+                lineupUniquePickCount(l, allLineupsList) === topUniq &&
+                lineupAvgPickYear(l) === topAvgYear
               ) {
-                await incrementPlayerWins(lobbyId, pid);
+                try {
+                  await incrementPlayerWins(lobbyId, pid);
+                } catch (err) {
+                  console.error(`[advanceRound] Failed to increment wins for ${pid}:`, err);
+                }
               } else {
                 break;
               }
@@ -526,11 +537,10 @@ export function MultiplayerCapCrunchPage() {
   useEffect(() => {
     if (phase !== 'results' || !statCategory || !selectedSport) return;
     const computeAll = async () => {
-      const results = new Map<string, OptimalPick | null>();
-      await Promise.all(
+      const settled = await Promise.allSettled(
         players.map(async (p) => {
           const lineup = allLineups[p.player_id] as PlayerLineup | undefined;
-          if (!lineup || lineup.selectedPlayers.length === 0) { results.set(p.player_id, null); return; }
+          if (!lineup || lineup.selectedPlayers.length === 0) return { playerId: p.player_id, opt: null };
           const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
           const totalBeforeLast = lastPick.isBust
             ? lineup.totalStat
@@ -540,9 +550,17 @@ export function MultiplayerCapCrunchPage() {
             ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
             : undefined;
           const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames, hwFilter, lineup.selectedPlayers);
-          results.set(p.player_id, opt);
+          return { playerId: p.player_id, opt };
         })
       );
+      const results = new Map<string, OptimalPick | null>();
+      for (const result of settled) {
+        if (result.status === 'fulfilled') {
+          results.set(result.value.playerId, result.value.opt);
+        } else {
+          console.error('[computeAll] Failed to compute optimal pick for a player:', result.reason);
+        }
+      }
       setOptimalPicks(results);
     };
     computeAll();
@@ -1146,36 +1164,38 @@ export function MultiplayerCapCrunchPage() {
 
   // ── Results screen ───────────────────────────────────────────────────────────
   if (phase === 'results') {
-    const avgPickYear = (lineup: PlayerLineup): number => {
-      const picks = lineup.selectedPlayers;
-      if (picks.length === 0) return 2025;
-      return picks.reduce((sum, p) => sum + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
-    };
+    const mappedLineups = players.map((p) => ({
+      ...p,
+      lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false }) as PlayerLineup,
+    }));
 
-    const sortedLineups = players
-      .map((p) => ({
-        ...p,
-        lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false }) as PlayerLineup,
-      }))
-      .sort((a, b) => {
-        if (blindMode) {
-          // Blind mode: absolute value closest to cap wins
-          const distA = Math.abs(targetCap - a.lineup.totalStat);
-          const distB = Math.abs(targetCap - b.lineup.totalStat);
-          return distA - distB;
-        }
-        if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
-        const aBusts = a.lineup.bustCount ?? 0, bBusts = b.lineup.bustCount ?? 0;
-        if (aBusts !== bBusts) return aBusts - bBusts;
-        return avgPickYear(a.lineup) - avgPickYear(b.lineup);
-      });
+    const allMappedLineups = mappedLineups.map(m => m.lineup);
 
+    const sortedLineups = mappedLineups.sort((a, b) => {
+      if (blindMode) {
+        const distA = Math.abs(targetCap - a.lineup.totalStat);
+        const distB = Math.abs(targetCap - b.lineup.totalStat);
+        return distA - distB;
+      }
+      if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
+      const aHit = lineupHitRound(a.lineup), bHit = lineupHitRound(b.lineup);
+      if (aHit !== bHit) return aHit - bHit;
+      const aBusts = a.lineup.bustCount ?? 0, bBusts = b.lineup.bustCount ?? 0;
+      if (aBusts !== bBusts) return aBusts - bBusts;
+      const aUniq = lineupUniquePickCount(a.lineup, allMappedLineups), bUniq = lineupUniquePickCount(b.lineup, allMappedLineups);
+      if (aUniq !== bUniq) return bUniq - aUniq;
+      return lineupAvgPickYear(a.lineup) - lineupAvgPickYear(b.lineup);
+    });
+
+    const allSortedLineups = sortedLineups.map(m => m.lineup);
     const tiedOnScore = sortedLineups.length >= 2 && (
       blindMode
         ? Math.abs(targetCap - sortedLineups[0].lineup.totalStat) === Math.abs(targetCap - sortedLineups[1].lineup.totalStat)
         : sortedLineups[0].lineup.totalStat === sortedLineups[1].lineup.totalStat
     );
-    const tiedOnBusts = tiedOnScore && !blindMode && (sortedLineups[0].lineup.bustCount ?? 0) === (sortedLineups[1].lineup.bustCount ?? 0);
+    const tiedOnHitRound = tiedOnScore && !blindMode && lineupHitRound(sortedLineups[0].lineup) === lineupHitRound(sortedLineups[1].lineup);
+    const tiedOnBusts = tiedOnHitRound && (sortedLineups[0].lineup.bustCount ?? 0) === (sortedLineups[1].lineup.bustCount ?? 0);
+    const tiedOnUnique = tiedOnBusts && lineupUniquePickCount(sortedLineups[0].lineup, allSortedLineups) === lineupUniquePickCount(sortedLineups[1].lineup, allSortedLineups);
     const tiebreakerUsed = tiedOnScore;
 
     return (
@@ -1204,7 +1224,13 @@ export function MultiplayerCapCrunchPage() {
             {tiebreakerUsed && (
               <div className="mb-4 p-3 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded text-center">
                 <p className="sports-font text-[10px] text-[#d4af37] tracking-widest uppercase">
-                  {tiedOnBusts ? 'Tied score & busts — older avg lineup year wins' : 'Tied score — fewest busts wins'}
+                  {tiedOnUnique
+                    ? 'Tied score, hit round, busts & unique picks — older avg year wins'
+                    : tiedOnBusts
+                      ? 'Tied score, hit round & busts — most unique picks wins'
+                      : tiedOnHitRound
+                        ? 'Tied score & hit round — fewest busts wins'
+                        : 'Tied score — earliest round hit wins'}
                 </p>
               </div>
             )}
@@ -1219,11 +1245,13 @@ export function MultiplayerCapCrunchPage() {
                   isWinner={idx === 0}
                   tiebreakerUsed={tiebreakerUsed}
                   tiedOnBusts={tiedOnBusts}
+                  tiedOnUnique={tiedOnUnique}
                   targetCap={targetCap}
                   optimalPicks={optimalPicks}
                   statCategory={statCategory!}
                   isCareerStatRound={isCareerStatRound}
-                  avgPickYear={avgPickYear}
+                  avgPickYear={lineupAvgPickYear}
+                  uniquePickCount={(lineup) => lineupUniquePickCount(lineup, allSortedLineups)}
                   sport={selectedSport as 'nba' | 'nfl'}
                 />
               ))}
