@@ -11,6 +11,7 @@ import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
 export function getPickBadgeLabel(pick: SelectedPlayer): string {
   if (pick.isBust) return 'BUST';
   if (pick.neverOnTeam) {
+    if (pick.actualTeammate && pick.nameMatchFailed) return 'WRONG NAME';
     if (pick.actualTeammate)   return 'NEVER PLAYED';
     if (pick.actualDraftRound) return 'WRONG ROUND';
     if (pick.hwFilterFailed)   return pick.hwFilterFailed.startsWith('height') ? 'WRONG HEIGHT' : 'WRONG WEIGHT';
@@ -27,6 +28,16 @@ export function getPickBadgeLabel(pick: SelectedPlayer): string {
  */
 export function getPickErrorMessage(pick: SelectedPlayer): string | null {
   if (!pick.neverOnTeam) return null;
+  if (pick.actualTeammate && pick.nameMatchFailed) {
+    const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+    const parts = pick.actualTeammate.split(' ');
+    const filtered = parts.filter(p => !SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
+    const fullName = pick.nameMatchFailed === 'first'
+      ? parts[0]
+      : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+    const initial = (fullName?.[0] ?? '').toUpperCase();
+    return `${pick.nameMatchFailed} initial isn't ${initial}`;
+  }
   if (pick.actualTeammate) return `never played with ${pick.actualTeammate}`;
   const hwMsg = pick.hwFilterFailed
     ? pick.hwFilterFailed === 'height_above' ? (pick.actualHeight ? `too short — ${pick.actualHeight.replace('-', "'")}\"` : 'too short')

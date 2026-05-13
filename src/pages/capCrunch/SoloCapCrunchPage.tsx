@@ -20,6 +20,7 @@ import { TeamSlotMachine } from '../../components/capCrunch/TeamSlotMachine';
 import { ConferenceRoundCard } from '../../components/capCrunch/ConferenceRoundCard';
 import { DivisionDraftRoundCard } from '../../components/capCrunch/DivisionDraftRoundCard';
 import { TeammateRoundCard } from '../../components/capCrunch/TeammateRoundCard';
+import { NameMatchRoundCard } from '../../components/capCrunch/NameMatchRoundCard';
 import { fmt, getCategoryAbbr, getPickErrorMessage, getPickBadgeLabel } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
@@ -36,6 +37,8 @@ import {
   parseDivisionDraftRound,
   isTeammateRound,
   parseTeammateRound,
+  isNameMatchRound,
+  parseNameRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
   isCareerStat,
@@ -67,6 +70,11 @@ function formatPickTeam(team: string): string {
   if (isTeammateRound(team)) {
     const { pickIndex } = parseTeammateRound(team);
     return `Played with Pick ${pickIndex}`;
+  }
+  if (isNameMatchRound(team)) {
+    const { type, pickIndex, proConf } = parseNameRound(team);
+    const label = type === 'first' ? 'First Initial' : 'Last Initial';
+    return proConf ? `${label}: Pick ${pickIndex} + ${proConf}` : `${label}: Pick ${pickIndex}`;
   }
   return team;
 }
@@ -605,7 +613,10 @@ export function SoloCapCrunchPage() {
                   {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                 </p>
               </motion.div>
-            ) : isTeammateRound(currentTeam) ? (() => {
+            ) : isNameMatchRound(currentTeam) ? (() => {
+              const { type, pickIndex, proConf } = parseNameRound(currentTeam);
+              return <NameMatchRoundCard key={currentTeam} nameType={type} pickIndex={pickIndex} proConf={proConf} size="lg" />;
+            })() : isTeammateRound(currentTeam) ? (() => {
               const { pickIndex } = parseTeammateRound(currentTeam);
               return <TeammateRoundCard key={currentTeam} pickIndex={pickIndex} size="lg" />;
             })() : (
@@ -638,11 +649,11 @@ export function SoloCapCrunchPage() {
         <main className="relative z-10 flex-1 w-full px-2 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">
           {/* Left Column - Stats */}
           <div className="w-full sm:w-1/3 lg:w-40 lg:flex-shrink-0 flex flex-row lg:flex-col gap-2 md:gap-3">
-            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl flex flex-col justify-center">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Target</div>
               <p className="retro-title text-2xl md:text-4xl text-white">{targetCap}</p>
             </div>
-            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl">
+            <div className="flex-1 sm:flex-none bg-[#111] border border-white/5 px-3 md:px-6 py-3 md:py-6 rounded-sm text-center shadow-xl flex flex-col justify-center">
               <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
               <p className="retro-title text-lg md:text-2xl text-white">
                 {isCareerStatRound ? getCategoryAbbr(statCategory!).replace('CAREER ', '') : getCategoryAbbr(statCategory!)}
@@ -735,7 +746,16 @@ export function SoloCapCrunchPage() {
                     <div className="p-2 md:p-4 bg-[#1a1a1a] rounded border border-white/10">
                       <p className="retro-title text-xs md:text-lg text-white truncate">{selectedPlayerName}</p>
                       <p className="text-[10px] md:text-sm text-white/60">
-                        {isCareerStatRound
+                        {isNameMatchRound(currentTeam) ? (() => {
+                          const { type, pickIndex, proConf } = parseNameRound(currentTeam);
+                          const refName = lineup.selectedPlayers[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
+                          const parts = refName.split(' ');
+                          const SUFFIXES = new Set(['Jr', 'Sr', 'II', 'III', 'IV', 'V', 'Jr.', 'Sr.']);
+                          const filtered = parts.filter(p => !SUFFIXES.has(p));
+                          const required = type === 'first' ? parts[0] : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+                          return `${isCareerStatRound ? 'Total career stats' : 'All career GP'} — ${type} initial must be "${(required[0] ?? '').toUpperCase()}"${proConf ? ` + played for ${proConf}` : ''}`;
+                        })()
+                        : isCareerStatRound
                           ? `Total career stats (all teams) — must have played for ${currentTeam} at some point`
                           : `Will count all career GP with ${currentTeam}`}
                         {isHWFilter(hwFilter) && ` — ${hwFilter === 'height_above' ? `above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'height_below' ? `below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'weight_above' ? `above ${WEIGHT_THRESHOLD} lbs` : `below ${WEIGHT_THRESHOLD} lbs`}`}
@@ -743,7 +763,9 @@ export function SoloCapCrunchPage() {
                     </div>
                     <div className="flex-1 flex items-center justify-center text-center">
                       <p className="text-white/30 sports-font text-xs leading-relaxed">
-                        Games played across every season<br />this player was on the team
+                        {isNameMatchRound(currentTeam)
+                          ? <>Career stats — no team constraint<br />initial match is the only requirement</>
+                          : <>Games played across every season<br />this player was on the team</>}
                       </p>
                     </div>
                     {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
