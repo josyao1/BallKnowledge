@@ -11,7 +11,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { isConferenceRound, isTeammateRound, parseTeammateRound, formatHeightInches } from '../../services/capCrunch';
+import { isConferenceRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, formatHeightInches } from '../../services/capCrunch';
 import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -145,7 +145,16 @@ export function CapCrunchPickPanel({
               <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
                 <p className="retro-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">
-                  {isCareerStatRound
+                  {isNameMatchRound(currentTeam) ? (() => {
+                    const { type, pickIndex, proConf } = parseNameRound(currentTeam);
+                    const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
+                    const parts = refName.split(' ');
+                    const SUFFIXES = new Set(['Jr', 'Sr', 'II', 'III', 'IV', 'V', 'Jr.', 'Sr.']);
+                    const filtered = parts.filter(p => !SUFFIXES.has(p));
+                    const required = type === 'first' ? parts[0] : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+                    return `${isCareerStatRound ? 'Total career stats' : 'All career GP'} — ${type} initial must be "${(required[0] ?? '').toUpperCase()}"${proConf ? ` + played for ${proConf}` : ''}`;
+                  })()
+                  : isCareerStatRound
                     ? isConferenceRound(currentTeam)
                       ? `Total career stats — must have attended a ${currentTeam} school`
                       : isTeammateRound(currentTeam)
@@ -161,7 +170,9 @@ export function CapCrunchPickPanel({
               </div>
               <div className="flex-1 flex items-center justify-center text-center">
                 <p className="text-white/30 sports-font text-xs leading-relaxed">
-                  Games played across every season<br />this player was on the team
+                  {isNameMatchRound(currentTeam)
+                    ? <>Career stats — no team constraint<br />initial match is the only requirement</>
+                    : <>Games played across every season<br />this player was on the team</>}
                 </p>
               </div>
               {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}

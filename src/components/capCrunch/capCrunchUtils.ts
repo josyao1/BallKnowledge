@@ -11,6 +11,7 @@ import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
 export function getPickBadgeLabel(pick: SelectedPlayer): string {
   if (pick.isBust) return 'BUST';
   if (pick.neverOnTeam) {
+    if (pick.actualTeammate && pick.nameMatchFailed) return 'WRONG NAME';
     if (pick.actualTeammate)   return 'NEVER PLAYED';
     if (pick.actualDraftRound) return 'WRONG ROUND';
     if (pick.hwFilterFailed)   return pick.hwFilterFailed.startsWith('height') ? 'WRONG HEIGHT' : 'WRONG WEIGHT';
@@ -25,8 +26,21 @@ export function getPickBadgeLabel(pick: SelectedPlayer): string {
  * Used in the in-game pick list, scores panel, and results card.
  * Returns null when the pick is not a neverOnTeam failure.
  */
+const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+
 export function getPickErrorMessage(pick: SelectedPlayer): string | null {
   if (!pick.neverOnTeam) return null;
+  if (pick.actualTeammate && pick.nameMatchFailed) {
+    // "Pick N" means the referenced pick was missing/skipped — no initial to show
+    if (/^Pick \d+$/.test(pick.actualTeammate)) return `Pick ${pick.actualTeammate.split(' ')[1]} was skipped`;
+    const parts = pick.actualTeammate.split(' ');
+    const filtered = parts.filter(p => !NAME_SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
+    const fullName = pick.nameMatchFailed === 'first'
+      ? parts[0]
+      : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+    const initial = (fullName?.[0] ?? '').toUpperCase();
+    return `${pick.nameMatchFailed} initial isn't ${initial}`;
+  }
   if (pick.actualTeammate) return `never played with ${pick.actualTeammate}`;
   const hwMsg = pick.hwFilterFailed
     ? pick.hwFilterFailed === 'height_above' ? (pick.actualHeight ? `too short — ${pick.actualHeight.replace('-', "'")}\"` : 'too short')

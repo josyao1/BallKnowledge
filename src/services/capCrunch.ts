@@ -148,6 +148,7 @@ export type SpecialRoundType = 'division_draft' | 'division' | 'conference' | 'h
  * Used to track the rotation cycle.
  */
 export function classifySpecialRoundType(team: string, hwFilter: HWFilter | null): SpecialRoundType | null {
+  if (isNameMatchRound(team))     return 'teammate'; // name-match shares the teammate cycle slot
   if (isTeammateRound(team))      return 'teammate';
   if (isDivisionDraftRound(team)) return 'division_draft';
   if (isDivisionRound(team))      return 'division';
@@ -169,6 +170,26 @@ export function advanceSpecialRoundCycle(
   return updated.length >= 5 ? [] : updated; // reset cycle once all 5 seen
 }
 
+const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+
+/** Extract the first name token from a player's full name. */
+function extractFirstName(name: string): string {
+  return normalizeStr(name.trim().split(' ')[0] ?? '');
+}
+
+/** Extract the last name token from a player's full name, stripping common suffixes. */
+function extractLastName(name: string): string {
+  const parts = name.trim().split(' ');
+  const filtered = parts.filter(p => !NAME_SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
+  return normalizeStr(filtered[filtered.length - 1] ?? parts[parts.length - 1] ?? '');
+}
+
+/** Pick a random NFC/AFC (NFL) or East/West (NBA) conference tag. */
+function pickRandomConf(sport: Sport): string {
+  if (sport === 'nfl') return Math.random() < 0.5 ? 'AFC' : 'NFC';
+  return Math.random() < 0.5 ? 'East' : 'West';
+}
+
 /**
  * Randomly pick a height/weight filter to layer onto a round, or null for no filter.
  * Only applicable to plain single-team rounds (not divisions/conferences/draft rounds).
@@ -183,7 +204,7 @@ export function selectRandomHWFilter(
 ): HWFilter | null {
   if (FORCE_HW_FILTER) return FORCE_HW_FILTER;
   // Only applies to plain team rounds (not division, conference, or draft special rounds)
-  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team) || isTeammateRound(team)) return null;
+  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team) || isTeammateRound(team) || isNameMatchRound(team)) return null;
   // Only applies to per-season stats — not career totals or total_gp
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
   // Block if hw_filter already appeared this cycle
@@ -469,6 +490,31 @@ export function parseTeammateRound(s: string): { pickIndex: number } {
   return { pickIndex: parseInt(s.slice(5)) };
 }
 
+/** True when the assignment is a first-name match round (e.g. "FNAME:1" or "FNAME:1|AFC"). */
+export function isFNameRound(s: string): boolean {
+  return s.startsWith('FNAME:');
+}
+
+/** True when the assignment is a last-name match round (e.g. "LNAME:2" or "LNAME:2|NFC"). */
+export function isLNameRound(s: string): boolean {
+  return s.startsWith('LNAME:');
+}
+
+/** True when the assignment is any name-match round (first or last). */
+export function isNameMatchRound(s: string): boolean {
+  return isFNameRound(s) || isLNameRound(s);
+}
+
+/**
+ * Parse "FNAME:1|AFC" → { type: 'first', pickIndex: 1, proConf: 'AFC' }
+ * Parse "LNAME:2"     → { type: 'last',  pickIndex: 2, proConf: undefined }
+ */
+export function parseNameRound(s: string): { type: 'first' | 'last'; pickIndex: number; proConf?: string } {
+  const type: 'first' | 'last' = s.startsWith('FNAME:') ? 'first' : 'last';
+  const [indexStr, proConf] = s.slice(6).split('|');
+  return { type, pickIndex: parseInt(indexStr), proConf };
+}
+
 /** Human-readable label for a draft round code. */
 function draftRoundLabel(code: string): string {
   if (code === 'R1')  return '1st Round';
@@ -572,6 +618,10 @@ const TEST_FORCE_DIVISION_DRAFT = false;
 // ── Test flag — force teammate round every eligible round ─────────────────────
 const TEST_FORCE_TEAMMATE = false;
 
+// ── Test flag — force name-match round type every eligible round (after round 1) ─
+// Set to 'first' or 'last' to test the specific variant. Must be false before merging.
+const TEST_FORCE_NAME_ROUND: 'first' | 'last' | false = false;
+
 export function assignRandomTeam(
   sport: Sport,
   statCategory?: StatCategory,
@@ -600,14 +650,29 @@ export function assignRandomTeam(
     const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
     return `${college}|${nflConf}`;
   }
-  // Teammate round: 10% per round (60% on last round if not yet seen), once per cycle
+  // Teammate / name-match round: 10% per round (60% on last round if not yet seen), once per cycle.
+  // Variants: 65% played-with (MATE:N), 20% first-name (FNAME:N), 15% last-name (LNAME:N).
+  // Name-match rounds optionally carry a conference tag (~50% chance).
   if (prevPicks && prevPicks.length > 0 && !usedSpecialTypes?.includes('teammate')) {
     const validPriorPicks = prevPicks.filter(p => !p.isSkipped && p.playerId != null);
     const teammateOdds = isLastRound ? 0.60 : 0.10;
-    if (validPriorPicks.length > 0 && (TEST_FORCE_TEAMMATE || Math.random() < teammateOdds)) {
+    if (validPriorPicks.length > 0 && (TEST_FORCE_TEAMMATE || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)) {
       const refPick = validPriorPicks[Math.floor(Math.random() * validPriorPicks.length)];
       const refIndex = prevPicks.indexOf(refPick) + 1; // 1-based
-      return `MATE:${refIndex}`;
+
+      // Test override: force a specific name-match type on the last round only
+      if (TEST_FORCE_NAME_ROUND && isLastRound) {
+        const prefix = TEST_FORCE_NAME_ROUND === 'first' ? 'FNAME' : 'LNAME';
+        return `${prefix}:${refIndex}|${pickRandomConf(sport)}`;
+      }
+
+      const nameRoll = Math.random();
+      if (nameRoll < 0.65) {
+        return `MATE:${refIndex}`;
+      } else {
+        const prefix = nameRoll < 0.85 ? 'FNAME' : 'LNAME'; // 20% first, 15% last
+        return `${prefix}:${refIndex}|${pickRandomConf(sport)}`;
+      }
     }
   }
 
@@ -1413,6 +1478,77 @@ export async function resolvePickResult(params: {
   const isCareerStatRound = isCareerStat(statCategory);
   const isNoYearSelect = isTotalGP || isCareerStatRound;
 
+  // ── Name-match round: validate first letter of first/last name, then compute stat with no team constraint ──
+  if (isNameMatchRound(team)) {
+    const { type, pickIndex, proConf } = parseNameRound(team);
+    const refPick = prevPicks?.[pickIndex - 1];
+    const selectedYear = isNoYearSelect ? 'career' : year;
+
+    const failNamePick = (actualTeammate: string, nameMatchFailed: 'first' | 'last'): { selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup } => {
+      const sp: SelectedPlayer = {
+        playerName: stripPositionSuffix(playerName), team, selectedYear,
+        playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true,
+        actualTeammate, nameMatchFailed, playerId,
+      };
+      return {
+        selectedPlayer: sp,
+        updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, sp], bustCount: lineup.bustCount ?? 0 },
+      };
+    };
+
+    if (!refPick || refPick.isSkipped || refPick.playerId == null) {
+      return failNamePick(`Pick ${pickIndex}`, type);
+    }
+
+    const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+    const newPlayer = findPlayer(pool, playerName, playerId);
+
+    if (!newPlayer) return failNamePick(refPick.playerName, type);
+
+    // Name check
+    const extractFn = type === 'first' ? extractFirstName : extractLastName;
+    if (extractFn(refPick.playerName)[0] !== extractFn(stripPositionSuffix(playerName))[0]) {
+      return failNamePick(refPick.playerName, type);
+    }
+
+    // Conference check (career-wide: player must have played for that conf at any point)
+    if (proConf) {
+      const everInConf = newPlayer.seasons.some((s: any) =>
+        sport === 'nfl' ? nflConferenceMatches(s.team, proConf)
+                        : nbaConferenceMatches(s.team, proConf)
+      );
+      if (!everInConf) return failNamePick(refPick.playerName, type);
+    }
+
+    // Name + conf check passed — compute stat with NO team constraint
+    let statValue = 0;
+    if (isTotalGP) {
+      statValue = newPlayer.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+    } else if (isCareerStatRound) {
+      const field = careerStatField(statCategory);
+      statValue = newPlayer.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+    } else {
+      const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
+      const season = newPlayer.seasons.find((s: any) => s.season === seasonKey);
+      statValue = season ? (sport === 'nba' ? computeNbaStat(season, statCategory) : computeNflStat(season, statCategory)) : 0;
+    }
+
+    const wouldBustName = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+    const namePickSp: SelectedPlayer = {
+      playerName: stripPositionSuffix(playerName), team, selectedYear,
+      playerSeason: null, statValue, isBust: wouldBustName, neverOnTeam: false, playerId,
+    };
+    return {
+      selectedPlayer: namePickSp,
+      updatedLineup: {
+        ...lineup,
+        selectedPlayers: [...lineup.selectedPlayers, namePickSp],
+        totalStat: wouldBustName ? lineup.totalStat : parseFloat((lineup.totalStat + statValue).toFixed(1)),
+        bustCount: wouldBustName ? (lineup.bustCount ?? 0) + 1 : (lineup.bustCount ?? 0),
+      },
+    };
+  }
+
   // ── Teammate round: validate teammate relationship, then compute stat with no team constraint ──
   if (isTeammateRound(team)) {
     const { pickIndex } = parseTeammateRound(team);
@@ -1596,8 +1732,9 @@ export interface OptimalPick {
   statValue: number;
   college?: string;    // set for conference rounds — the school that qualified them
   draftRound?: string; // set for division+draft rounds — e.g. "1st Round (pick 5)"
-  teammate?: string;     // set for teammate rounds — the referenced player's name
-  teammateYear?: string; // set for teammate rounds — the season they shared
+  teammate?: string;       // set for teammate/name-match rounds — the referenced player's name
+  teammateYear?: string;   // set for teammate rounds — the season they shared
+  nameMatchType?: 'first' | 'last'; // set for name-match rounds to distinguish from teammate
 }
 
 /**
@@ -1674,6 +1811,60 @@ export async function findOptimalLastPick(
       return best;
     } catch (err) {
       console.error('Error finding optimal last pick (teammate):', err);
+      return null;
+    }
+  }
+
+  // Name-match round: filter pool by first/last name match (+ optional conference)
+  if (isNameMatchRound(team)) {
+    const { type, pickIndex, proConf } = parseNameRound(team);
+    const refPick = prevPicks?.[pickIndex - 1];
+    if (!refPick || refPick.isSkipped || refPick.playerId == null) return null;
+
+    try {
+      const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+      const extractFn = type === 'first' ? extractFirstName : extractLastName;
+      const requiredInitial = extractFn(refPick.playerName)[0] ?? '';
+      const confMatchFn = sport === 'nfl'
+        ? (team: string) => nflConferenceMatches(team, proConf!)
+        : (team: string) => nbaConferenceMatches(team, proConf!);
+
+      let best: OptimalPick | null = null;
+
+      for (const p of pool) {
+        if (excluded?.has(p.player_name)) continue;
+        if (extractFn(p.player_name)[0] !== requiredInitial) continue;
+        if (proConf && !p.seasons.some((s: any) => confMatchFn(s.team))) continue;
+
+        let val = 0;
+        let yr = 'career';
+        let actualTeam = '';
+
+        if (statCategory === 'total_gp') {
+          val = p.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+        } else if (isCareerStat(statCategory)) {
+          const field = careerStatField(statCategory);
+          val = p.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+        } else {
+          for (const s of p.seasons) {
+            const v = sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
+            if (v > val) { val = v; yr = s.season; actualTeam = s.team; }
+          }
+        }
+
+        if (val > actualStatValue && val <= remainingBudget) {
+          if (!best || val > best.statValue) {
+            best = {
+              playerName: p.player_name, playerId: p.player_id, year: yr, team: actualTeam || team,
+              statValue: val, teammate: refPick.playerName, nameMatchType: type,
+            };
+          }
+        }
+      }
+
+      return best;
+    } catch (err) {
+      console.error('Error finding optimal last pick (name match):', err);
       return null;
     }
   }

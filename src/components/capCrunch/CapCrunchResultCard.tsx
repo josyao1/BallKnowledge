@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { RevealingScore } from './RevealingScore';
 import { fmt, getCategoryAbbr, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
-import { isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound } from '../../services/capCrunch';
+import { isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 import type { OptimalPick } from '../../services/capCrunch';
 
@@ -29,6 +29,11 @@ function formatPickTeam(team: string): string {
   if (isTeammateRound(team)) {
     const { pickIndex } = parseTeammateRound(team);
     return `Played with Pick ${pickIndex}`;
+  }
+  if (isNameMatchRound(team)) {
+    const { type, pickIndex, proConf } = parseNameRound(team);
+    const label = type === 'first' ? 'First Initial' : 'Last Initial';
+    return proConf ? `${label}: Pick ${pickIndex} + ${proConf}` : `${label}: Pick ${pickIndex}`;
   }
   return team;
 }
@@ -220,12 +225,14 @@ export function CapCrunchResultCard({
                 <PlayerHeadshot playerId={opt!.playerId} sport={sport} className="w-6 h-6 rounded-full object-cover shrink-0" />
                 <div className="min-w-0">
                 <span className="text-xs text-white/80 font-medium">{opt!.playerName}</span>
-                <span className="text-[10px] text-white/35 ml-2">
-                  {opt!.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory) : 'Career GP') : opt!.year} · {opt!.team}
-                  {opt!.college ? ` · ${opt!.college}` : ''}
-                  {opt!.draftRound ? ` · ${opt!.draftRound}` : ''}
-                  {opt!.teammate ? ` · played with ${opt!.teammate}${opt!.teammateYear ? ` in ${opt!.teammateYear}` : ''}` : ''}
-                </span>
+                {!opt!.nameMatchType && (
+                  <span className="text-[10px] text-white/35 ml-2">
+                    {opt!.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory) : 'Career GP') : opt!.year} · {formatPickTeam(opt!.team)}
+                    {opt!.college ? ` · ${opt!.college}` : ''}
+                    {opt!.draftRound ? ` · ${opt!.draftRound}` : ''}
+                    {opt!.teammate ? ` · played with ${opt!.teammate}${opt!.teammateYear ? ` in ${opt!.teammateYear}` : ''}` : ''}
+                  </span>
+                )}
                 <span className="block text-[10px] text-emerald-400/70 mt-0.5">
                   Would finish: {fmt(wouldFinishAt)} / {targetCap}
                 </span>
