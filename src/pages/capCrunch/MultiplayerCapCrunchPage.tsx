@@ -43,6 +43,7 @@ import {
   lineupHitRound,
   lineupAvgPickYear,
   lineupUniquePickCount,
+  isNameMatchRound,
 } from '../../services/capCrunch';
 import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
@@ -680,7 +681,8 @@ export function MultiplayerCapCrunchPage() {
     setSearchQuery(query);
     setDuplicateError(null);
     setPickError(null);
-    if (!selectedSport || query.trim().length < 2) {
+    const minLen = isNameMatchRound(currentTeam) ? 3 : 2;
+    if (!selectedSport || query.trim().length < minLen) {
       setSearchResults([]);
       return;
     }

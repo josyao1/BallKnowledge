@@ -198,7 +198,8 @@ export function SoloCapCrunchPage() {
   // Search for players
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    if (!selectedSport || query.trim().length < 2) {
+    const minLen = isNameMatchRound(currentTeam) ? 3 : 2;
+    if (!selectedSport || query.trim().length < minLen) {
       setSearchResults([]);
       return;
     }
