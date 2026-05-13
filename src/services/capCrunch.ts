@@ -170,6 +170,8 @@ export function advanceSpecialRoundCycle(
   return updated.length >= 5 ? [] : updated; // reset cycle once all 5 seen
 }
 
+const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+
 /** Extract the first name token from a player's full name. */
 function extractFirstName(name: string): string {
   return normalizeStr(name.trim().split(' ')[0] ?? '');
@@ -177,9 +179,8 @@ function extractFirstName(name: string): string {
 
 /** Extract the last name token from a player's full name, stripping common suffixes. */
 function extractLastName(name: string): string {
-  const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
   const parts = name.trim().split(' ');
-  const filtered = parts.filter(p => !SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
+  const filtered = parts.filter(p => !NAME_SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
   return normalizeStr(filtered[filtered.length - 1] ?? parts[parts.length - 1] ?? '');
 }
 
@@ -1496,7 +1497,7 @@ export async function resolvePickResult(params: {
     };
 
     if (!refPick || refPick.isSkipped || refPick.playerId == null) {
-      return failNamePick(`Pick ${pickIndex}${refPick?.isSkipped ? ' (skipped)' : ''}`, type);
+      return failNamePick(`Pick ${pickIndex}`, type);
     }
 
     const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
@@ -1506,7 +1507,7 @@ export async function resolvePickResult(params: {
 
     // Name check
     const extractFn = type === 'first' ? extractFirstName : extractLastName;
-    if (extractFn(refPick.playerName)[0] !== extractFn(playerName)[0]) {
+    if (extractFn(refPick.playerName)[0] !== extractFn(stripPositionSuffix(playerName))[0]) {
       return failNamePick(refPick.playerName, type);
     }
 

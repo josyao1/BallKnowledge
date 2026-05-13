@@ -26,7 +26,7 @@ Supabase is only needed for multiplayer and leaderboard features.
 
 ## Game Modes
 
-- **Cap Crunch** — Pick 5 players whose combined stat total lands as close as possible to a secret cap without going over. Each round reveals a random team, division, college+pro conference combo, or "Teammate of Pick N" constraint, plus a stat category (PTS, REB, AST, PRA, receiving yards, passing TDs, fg_made, total_gp, etc.). Going over busts that pick (scores 0, total reverts). Includes offensive linemen (GP via snap counts) and kickers (FG/PAT stats) in the NFL pool. Solo and multiplayer — simultaneous picks with masked opponent selections until you submit.
+- **Cap Crunch** — Pick 5 players whose combined stat total lands as close as possible to a secret cap without going over. Each round reveals a random constraint: team, division, college+pro conference combo, "Teammate of Pick N", or "Same first/last initial as Pick N" (plus an NFC/AFC/East/West tag), plus a stat category (PTS, REB, AST, PRA, receiving yards, passing TDs, fg_made, total_gp, etc.). Going over busts that pick (scores 0, total reverts). Includes offensive linemen (GP via snap counts) and kickers (FG/PAT stats) in the NFL pool. Solo and multiplayer — simultaneous picks with masked opponent selections until you submit.
 
 - **Roster Royale** — Name every player on a team's roster for a given season. Solo or multiplayer.
 

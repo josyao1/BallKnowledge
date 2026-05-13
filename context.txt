@@ -1,7 +1,7 @@
 ================================================================================
 BALL KNOWLEDGE — CONTEXT FILE
 ================================================================================
-Last Updated: 2026-05-08
+Last Updated: 2026-05-13
 
 ================================================================================
 PENDING / MONITOR
@@ -114,9 +114,23 @@ Render is fully decommissioned — api_server.py and nfl_api_server.py are archi
 CAP CRUNCH MODE (a.k.a. LINEUP IS RIGHT) — FULLY STATIC
 -------------------------------------
 Price-Is-Right inspired game. Pick players whose stats add up as close as
-possible to a randomly assigned target cap without going over. 5 rounds, same
-team each round (new team per round). Simultaneous multiplayer (all players pick
-at the same time) or solo.
+possible to a randomly assigned target cap without going over. 5 rounds, one
+constraint per round. Simultaneous multiplayer (all players pick at the same
+time) or solo.
+
+Round types:
+  1. Single team (plain abbreviation: "LAL", "KC")
+  2. Division (NFL only): "AFC West", "NFC East"
+  3. Conference: college conf + pro conf pipe-encoded ("SEC|AFC", "Big Ten|East")
+  4. Teammate: "MATE:N" — pick someone who ever played with Pick N
+  5. Name-match (sub-variant of teammate slot):
+       "FNAME:N|AFC" — first initial must match Pick N's, played for AFC
+       "LNAME:N|NFC" — last initial must match Pick N's, played for NFC
+       NBA uses East/West: "FNAME:N|East", "LNAME:N|West"
+     Always carries a conference tag. Distribution when slot rolls:
+       65% played-with, 20% first initial, 15% last initial.
+     Error badge: WRONG NAME. Error message: "first initial isn't L"
+     If reference pick was skipped: "Pick N was skipped"
 
 Stat categories:
   NBA: pts, ast, reb, min, pra (pts+reb+ast), total_gp (career GP with team)
