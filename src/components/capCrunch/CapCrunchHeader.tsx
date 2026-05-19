@@ -11,12 +11,13 @@ import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumb
 import { TeamSlotMachine } from './TeamSlotMachine';
 import { ConferenceRoundCard } from './ConferenceRoundCard';
 import { HomeButton } from '../multiplayer/HomeButton';
-import { isDivisionRound, isConferenceRound, parseConferenceRound, isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, NFL_DIVISIONS, formatHeightInches } from '../../services/capCrunch';
+import { isDivisionRound, isConferenceRound, parseConferenceRound, isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound, NFL_DIVISIONS, formatHeightInches } from '../../services/capCrunch';
 import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import { DivisionDraftRoundCard } from './DivisionDraftRoundCard';
 import { TeammateRoundCard } from './TeammateRoundCard';
 import { NameMatchRoundCard } from './NameMatchRoundCard';
+import { WildcardRoundCard } from './WildcardRoundCard';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
 
@@ -146,7 +147,9 @@ export function CapCrunchHeader({
         })() : isTeammateRound(currentTeam) ? (() => {
           const { pickIndex } = parseTeammateRound(currentTeam);
           return <TeammateRoundCard key={currentTeam + currentRound} pickIndex={pickIndex} size="sm" />;
-        })() : (
+        })() : isWildcardRound(currentTeam) ? (
+          <WildcardRoundCard key={currentTeam + currentRound} size="sm" />
+        ) : (
           <div className="flex flex-col items-center gap-1">
             <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
             {hwFilter && (

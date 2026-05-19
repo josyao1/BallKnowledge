@@ -21,6 +21,7 @@ import { ConferenceRoundCard } from '../../components/capCrunch/ConferenceRoundC
 import { DivisionDraftRoundCard } from '../../components/capCrunch/DivisionDraftRoundCard';
 import { TeammateRoundCard } from '../../components/capCrunch/TeammateRoundCard';
 import { NameMatchRoundCard } from '../../components/capCrunch/NameMatchRoundCard';
+import { WildcardRoundCard } from '../../components/capCrunch/WildcardRoundCard';
 import { fmt, getCategoryAbbr, getPickErrorMessage, getPickBadgeLabel } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
@@ -39,6 +40,7 @@ import {
   parseTeammateRound,
   isNameMatchRound,
   parseNameRound,
+  isWildcardRound,
   NFL_DIVISIONS,
   findOptimalLastPick,
   isCareerStat,
@@ -614,6 +616,8 @@ export function SoloCapCrunchPage() {
                   {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                 </p>
               </motion.div>
+            ) : isWildcardRound(currentTeam) ? (
+              <WildcardRoundCard key={currentTeam} size="lg" />
             ) : isNameMatchRound(currentTeam) ? (() => {
               const { type, pickIndex, proConf } = parseNameRound(currentTeam);
               return <NameMatchRoundCard key={currentTeam} nameType={type} pickIndex={pickIndex} proConf={proConf} size="lg" />;

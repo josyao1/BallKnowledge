@@ -11,7 +11,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { isConferenceRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, formatHeightInches } from '../../services/capCrunch';
+import { isConferenceRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound, formatHeightInches } from '../../services/capCrunch';
 import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -62,11 +62,15 @@ interface Props {
   selectedSport: 'nba' | 'nfl' | null;
   statCategory: StatCategory | null;
   hwFilter?: HWFilter | null;
+  /** Whether the current user is the host (enables force-skip controls) */
+  isHost?: boolean;
   onSearch: (query: string) => void;
   onSelectPlayer: (player: SearchResult) => void;
   onSelectYear: (year: string) => void;
   onConfirm: () => void;
   onBack: () => void;
+  /** Host-only: forcibly skip a stuck player's turn */
+  onHostSkipPlayer?: (playerId: string) => void;
 }
 
 export function CapCrunchPickPanel({
@@ -74,7 +78,7 @@ export function CapCrunchPickPanel({
   selectedPlayerName, isNoYearSelect, isCareerStatRound, currentTeam,
   searchQuery, searchResults, loading, loadingYears, availableYears, selectedYear,
   duplicateError, pickError, addingPlayer, usedPlayerNames, lockedPlayerNames,
-  waitingFor, selectedSport, statCategory: _statCategory, hwFilter, onSearch, onSelectPlayer, onSelectYear, onConfirm, onBack,
+  waitingFor, selectedSport, statCategory: _statCategory, hwFilter, isHost, onSearch, onSelectPlayer, onSelectYear, onConfirm, onBack, onHostSkipPlayer,
 }: Props) {
   return (
     <motion.div
@@ -145,7 +149,9 @@ export function CapCrunchPickPanel({
               <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
                 <p className="retro-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">
-                  {isNameMatchRound(currentTeam) ? (() => {
+                  {isWildcardRound(currentTeam)
+                    ? (isCareerStatRound ? 'Total career stats — no restrictions' : 'All career GP — no restrictions')
+                    : isNameMatchRound(currentTeam) ? (() => {
                     const { type, pickIndex, proConf } = parseNameRound(currentTeam);
                     const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
                     const parts = refName.split(' ');
@@ -170,7 +176,9 @@ export function CapCrunchPickPanel({
               </div>
               <div className="flex-1 flex items-center justify-center text-center">
                 <p className="text-white/30 sports-font text-xs leading-relaxed">
-                  {isNameMatchRound(currentTeam)
+                  {isWildcardRound(currentTeam)
+                    ? <>No constraints — pick any player freely</>
+                    : isNameMatchRound(currentTeam)
                     ? <>Career stats — no team constraint<br />initial match is the only requirement</>
                     : <>Games played across every season<br />this player was on the team</>}
                 </p>
@@ -247,11 +255,19 @@ export function CapCrunchPickPanel({
         // ── Submitted / waiting ──────────────────────────────────────────────
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
           {hardMode && !myLineup?.hasPickedThisRound ? (
-            <div>
+            <div className="flex flex-col items-center gap-2">
               <p className="text-lg text-yellow-400 retro-title mb-1">Waiting for your turn</p>
               <p className="text-white/50 sports-font text-sm">
                 {players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'} is picking
               </p>
+              {isHost && currentPickerId && onHostSkipPlayer && (
+                <button
+                  onClick={() => onHostSkipPlayer(currentPickerId)}
+                  className="mt-1 px-3 py-1 text-[11px] sports-font tracking-wider uppercase text-orange-400/70 border border-orange-400/30 rounded hover:text-orange-400 hover:border-orange-400/60 transition-colors"
+                >
+                  Skip {players.find(p => p.player_id === currentPickerId)?.player_name ?? 'Player'}'s turn
+                </button>
+              )}
             </div>
           ) : (
             <div>
@@ -259,13 +275,23 @@ export function CapCrunchPickPanel({
               <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
             </div>
           )}
-          {!hardMode && waitingFor.length > 0 && (
+          {waitingFor.length > 0 && (hardMode ? myLineup?.hasPickedThisRound : true) && (
             <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
               <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
               {waitingFor.map(p => (
-                <div key={p.player_id} className="flex items-center gap-2 py-1">
-                  <span className="text-yellow-400 text-xs">⏳</span>
-                  <span className="text-white/70 text-sm">{p.player_name}</span>
+                <div key={p.player_id} className="flex items-center justify-between gap-2 py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400 text-xs">⏳</span>
+                    <span className="text-white/70 text-sm">{p.player_name}</span>
+                  </div>
+                  {isHost && onHostSkipPlayer && (
+                    <button
+                      onClick={() => onHostSkipPlayer(p.player_id)}
+                      className="text-[10px] sports-font tracking-wider text-orange-400/60 hover:text-orange-400 transition-colors shrink-0"
+                    >
+                      skip
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

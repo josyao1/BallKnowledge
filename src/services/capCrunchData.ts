@@ -52,9 +52,10 @@ export const NFL_FRANCHISE_ALIASES: Record<string, string[]> = {
 // The raw career data contains old/alternate abbreviations from earlier eras.
 // Maps every known abbreviation → the full set of abbreviations for that franchise.
 export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
-  // Utah Jazz (UTH was used pre-~1994)
-  UTA: ['UTA', 'UTH'],
-  UTH: ['UTA', 'UTH'],
+  // Utah Jazz (UTH was used pre-~1994; NOJ = New Orleans Jazz 1974–79 before relocation)
+  UTA: ['UTA', 'UTH', 'NOJ'],
+  UTH: ['UTA', 'UTH', 'NOJ'],
+  NOJ: ['UTA', 'UTH', 'NOJ'],
 
   // Golden State Warriors (GOS older data; PHW = Philadelphia Warriors; SFW = San Francisco Warriors)
   GSW: ['GSW', 'GOS', 'PHW', 'SFW'],
@@ -64,9 +65,10 @@ export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
   CHA: ['CHA', 'CHH'],
   CHH: ['CHA', 'CHH'],
 
-  // Sacramento Kings (formerly Kansas City Kings KCK, Cincinnati Royals CIN)
-  SAC: ['SAC', 'KCK', 'CIN'],
-  KCK: ['SAC', 'KCK', 'CIN'],
+  // Sacramento Kings (formerly Kansas City Kings KCK, Kansas City-Omaha Kings KCO, Cincinnati Royals CIN)
+  SAC: ['SAC', 'KCK', 'KCO', 'CIN'],
+  KCK: ['SAC', 'KCK', 'KCO', 'CIN'],
+  KCO: ['SAC', 'KCK', 'KCO', 'CIN'],
 
   // Philadelphia 76ers (PHL was an older abbreviation)
   PHI: ['PHI', 'PHL'],
@@ -102,7 +104,7 @@ export const NBA_FRANCHISE_ALIASES: Record<string, string[]> = {
   MNL: ['LAL', 'MNL'],
 
   // Sacramento Kings historical — Cincinnati Royals (CIN)
-  CIN: ['SAC', 'KCK', 'CIN'],
+  CIN: ['SAC', 'KCK', 'KCO', 'CIN'],
 
   // Washington Wizards historical — Washington Bullets (WSB)
   WAS: ['WAS', 'WSB'],
