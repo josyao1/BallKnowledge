@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { fmt, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
-import { isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound } from '../../services/capCrunch';
+import { isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound } from '../../services/capCrunch';
 import type { PlayerLineup } from '../../types/capCrunch';
 
 function draftLabel(code: string): string {
@@ -35,6 +35,7 @@ function formatPickTeam(team: string): string {
     const label = type === 'first' ? 'First Initial' : 'Last Initial';
     return proConf ? `${label}: Pick ${pickIndex} + ${proConf}` : `${label}: Pick ${pickIndex}`;
   }
+  if (isWildcardRound(team)) return 'Wildcard';
   return team;
 }
 

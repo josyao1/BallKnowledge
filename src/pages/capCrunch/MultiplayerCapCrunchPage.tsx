@@ -133,6 +133,7 @@ export function MultiplayerCapCrunchPage() {
   const lastAdvancedRoundRef = useRef(0);
   // Prevent double-click on blind finish from inflating win counts
   const blindFinishingRef = useRef(false);
+  const hostSkipInFlightRef = useRef(false);
   // Detect round changes to reset ephemeral search UI
   const prevRoundRef = useRef(0);
   // Saved pick for race-condition recovery
@@ -643,6 +644,71 @@ export function MultiplayerCapCrunchPage() {
     setAllLineups(prev => ({ ...prev, [currentPlayerId]: withSkip }));
   };
 
+  // Host-only: force-skip any player who is stuck and hasn't picked this round.
+  const handleHostForceSkip = async (targetPlayerId: string) => {
+    if (!isHost || !lobby || hostSkipInFlightRef.current) return;
+    const latestCS = (lobby.career_state as any) || {};
+    const targetLineup: any = latestCS.allLineups?.[targetPlayerId] || {
+      playerId: targetPlayerId,
+      playerName: players.find(p => p.player_id === targetPlayerId)?.player_name || '',
+      selectedPlayers: [],
+      totalStat: 0,
+      bustCount: 0,
+      isFinished: false,
+      hasPickedThisRound: false,
+    };
+    if (targetLineup.hasPickedThisRound || targetLineup.isFinished) return;
+
+    const skipPick: SelectedPlayer = {
+      playerName: 'SKIPPED',
+      team: latestCS.currentTeam || currentTeam,
+      selectedYear: 'career',
+      playerSeason: null,
+      statValue: 0,
+      isBust: false,
+      neverOnTeam: false,
+      isSkipped: true,
+    };
+
+    const withSkip = addPlayerToLineup(targetLineup as PlayerLineup, skipPick);
+    withSkip.totalStat = targetLineup.totalStat;
+    withSkip.bustCount = targetLineup.bustCount ?? 0;
+    (withSkip as any).hasPickedThisRound = true;
+    if (withSkip.selectedPlayers.length >= totalRoundsRef.current) {
+      withSkip.isFinished = true;
+    }
+
+    let hardModeUpdates: Record<string, any> = {};
+    if (latestCS.hardMode) {
+      const allLineupsAfterSkip = { ...latestCS.allLineups, [targetPlayerId]: withSkip };
+      const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+      const currentIdx = order.indexOf(targetPlayerId);
+      let nextPickerId: string | null = null;
+      for (let i = 1; i <= order.length; i++) {
+        const pid = order[(currentIdx + i) % order.length];
+        if (!((allLineupsAfterSkip[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterSkip[pid] as any)?.isFinished)) {
+          nextPickerId = pid;
+          break;
+        }
+      }
+      hardModeUpdates = { currentPickerId: nextPickerId };
+    }
+
+    hostSkipInFlightRef.current = true;
+    try {
+      await updateCareerState(lobby.id, {
+        ...latestCS,
+        allLineups: { ...latestCS.allLineups, [targetPlayerId]: withSkip },
+        ...hardModeUpdates,
+      });
+    } catch (err) {
+      console.error('[handleHostForceSkip] Failed to skip player:', err);
+      setPickError('Failed to skip player. Please check your connection and try again.');
+    } finally {
+      hostSkipInFlightRef.current = false;
+    }
+  };
+
   const handleBlindReveal = async () => {
     if (!isHost || !lobby) return;
     const cs = (lobby.career_state as any) || {};
@@ -667,14 +733,25 @@ export function MultiplayerCapCrunchPage() {
     const dist = (pid: string) => Math.abs(cap - rawTotal(pid));
     const sorted = [...playerIds].sort((a, b) => dist(a) - dist(b));
 
-    if (sorted.length > 0) {
-      const topDist = dist(sorted[0]);
-      for (const pid of sorted) {
-        if (dist(pid) === topDist) await incrementPlayerWins(lobby.id, pid);
-        else break;
+    try {
+      if (sorted.length > 0) {
+        const topDist = dist(sorted[0]);
+        for (const pid of sorted) {
+          if (dist(pid) === topDist) {
+            try {
+              await incrementPlayerWins(lobby.id, pid);
+            } catch (err) {
+              console.error(`[handleBlindFinish] Failed to increment wins for ${pid}:`, err);
+            }
+          } else break;
+        }
       }
+      await updateCareerState(lobby.id, { ...cs, phase: 'results' });
+    } catch (err) {
+      console.error('[handleBlindFinish] Failed to transition to results:', err);
+    } finally {
+      blindFinishingRef.current = false;
     }
-    await updateCareerState(lobby.id, { ...cs, phase: 'results' });
   };
 
   const handleSearch = async (query: string) => {
@@ -1027,11 +1104,13 @@ export function MultiplayerCapCrunchPage() {
                 selectedSport={selectedSport as 'nba' | 'nfl' | null}
                 statCategory={statCategory}
                 hwFilter={hwFilter}
+                isHost={isHost}
                 onSearch={handleSearch}
                 onSelectPlayer={handleSelectPlayer}
                 onSelectYear={setSelectedYear}
                 onConfirm={handleConfirmYear}
                 onBack={handleBackFromPlayer}
+                onHostSkipPlayer={handleHostForceSkip}
               />
             </div>
             <div className={mobileTab !== 'scores' ? 'hidden' : 'flex-1 min-h-0 flex flex-col'}>
@@ -1118,11 +1197,13 @@ export function MultiplayerCapCrunchPage() {
                 selectedSport={selectedSport as 'nba' | 'nfl' | null}
                 statCategory={statCategory}
                 hwFilter={hwFilter}
+                isHost={isHost}
                 onSearch={handleSearch}
                 onSelectPlayer={handleSelectPlayer}
                 onSelectYear={setSelectedYear}
                 onConfirm={handleConfirmYear}
                 onBack={handleBackFromPlayer}
+                onHostSkipPlayer={handleHostForceSkip}
               />
             </div>
             <div className="w-96 flex flex-col">

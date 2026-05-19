@@ -204,7 +204,7 @@ export function selectRandomHWFilter(
 ): HWFilter | null {
   if (FORCE_HW_FILTER) return FORCE_HW_FILTER;
   // Only applies to plain team rounds (not division, conference, or draft special rounds)
-  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team) || isTeammateRound(team) || isNameMatchRound(team)) return null;
+  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team) || isTeammateRound(team) || isNameMatchRound(team) || isWildcardRound(team)) return null;
   // Only applies to per-season stats — not career totals or total_gp
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
   // Block if hw_filter already appeared this cycle
@@ -270,11 +270,11 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory, tota
       case 'total_pts': return r(3500, 10000); // 5× season totals; good scorer ~1200 pts/yr (15 PPG × 80), elite ~2400 (LeBron, Kobe)
       case 'total_reb': return r(2000, 4000); // 5× season totals; good big ~700 reb/yr (9 RPG × 78), elite ~1100 (Dwight, Gobert)
       case 'total_ast': return r(900,  3000); // 5× season totals; good PG ~500 ast/yr (7 APG × 72), elite ~1164 (Stockton '90-91)
-      case 'total_blk': return r(200,  700);  // 5× season totals; good blocker ~120 blk/yr (1.5 BPG × 80), elite ~456 (Mark Eaton '85)
+      case 'total_blk': return r(200, 1500);  // 5× season totals; good blocker ~120 blk/yr (1.5 BPG × 80), elite ~456 (Mark Eaton '85)
       // total_3pm: elite shooter ~200/yr (Curry '15-16: 402); good shooter ~100/yr; role player ~30
-      case 'total_3pm': return r(250,  1400);  // 5 picks avg ~100-200 each; Curry '15-16: 402 alone
+      case 'total_3pm': return r(100, 2000);  // 5 picks avg ~100-200 each; Curry '15-16: 402 alone
       // total_ftm: elite FT shooter ~700/yr (Harden '18-19: 702); good player ~300/yr; role ~100
-      case 'total_ftm': return r(500,  2100); // 5 picks avg ~300 each = 1500 mid-range
+      case 'total_ftm': return r(200, 2100); // 5 picks avg ~300 each = 1500 mid-range
       // total_pf: heavy fouler ~300/yr (3.8 PF/G × 80); guard ~150/yr; 5 picks avg ~220 = 1100
       case 'total_pf':  return r(600,  1500); // 5 picks avg ~220 each = 1100 mid-range
       case 'total_gp': return r(700, 2000); // 5 picks of career GP with one team; franchise guy ~300-500+ GP
@@ -505,6 +505,11 @@ export function isNameMatchRound(s: string): boolean {
   return isFNameRound(s) || isLNameRound(s);
 }
 
+/** True when the assignment is a wildcard round. */
+export function isWildcardRound(s: string): boolean {
+  return s === 'WILDCARD';
+}
+
 /**
  * Parse "FNAME:1|AFC" → { type: 'first', pickIndex: 1, proConf: 'AFC' }
  * Parse "LNAME:2"     → { type: 'last',  pickIndex: 2, proConf: undefined }
@@ -650,12 +655,15 @@ export function assignRandomTeam(
     const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
     return `${college}|${nflConf}`;
   }
+  // 1% wildcard — pick anything, no team/conf constraint; outside the special cycle
+  if (Math.random() < 0.01) return 'WILDCARD';
+
   // Teammate / name-match round: 10% per round (60% on last round if not yet seen), once per cycle.
   // Variants: 65% played-with (MATE:N), 20% first-name (FNAME:N), 15% last-name (LNAME:N).
-  // Name-match rounds optionally carry a conference tag (~50% chance).
-  if (prevPicks && prevPicks.length > 0 && !usedSpecialTypes?.includes('teammate')) {
+  // Name-match rounds optionally carry a conference tag (~50% chance). Skipped for total_gp.
+  if (prevPicks && prevPicks.length > 0 && !usedSpecialTypes?.includes('teammate') && statCategory !== 'total_gp') {
     const validPriorPicks = prevPicks.filter(p => !p.isSkipped && p.playerId != null);
-    const teammateOdds = isLastRound ? 0.60 : 0.10;
+    const teammateOdds = isLastRound ? 0.33 : 0.10;
     if (validPriorPicks.length > 0 && (TEST_FORCE_TEAMMATE || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)) {
       const refPick = validPriorPicks[Math.floor(Math.random() * validPriorPicks.length)];
       const refIndex = prevPicks.indexOf(refPick) + 1; // 1-based
@@ -671,7 +679,8 @@ export function assignRandomTeam(
         return `MATE:${refIndex}`;
       } else {
         const prefix = nameRoll < 0.85 ? 'FNAME' : 'LNAME'; // 20% first, 15% last
-        return `${prefix}:${refIndex}|${pickRandomConf(sport)}`;
+        const confTag = Math.random() < 0.5 ? `|${pickRandomConf(sport)}` : '';
+        return `${prefix}:${refIndex}${confTag}`;
       }
     }
   }
@@ -1478,6 +1487,49 @@ export async function resolvePickResult(params: {
   const isCareerStatRound = isCareerStat(statCategory);
   const isNoYearSelect = isTotalGP || isCareerStatRound;
 
+  // ── Wildcard round: no constraints — compute stat freely for any player/year ──
+  if (isWildcardRound(team)) {
+    const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+    const player = findPlayer(pool, playerName, playerId);
+    const selectedYear = isNoYearSelect ? 'career' : year;
+
+    let statValue = 0;
+    if (player) {
+      if (isTotalGP) {
+        statValue = player.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+      } else if (isCareerStatRound) {
+        const field = careerStatField(statCategory);
+        statValue = player.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+      } else {
+        const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
+        const season = player.seasons.find((s: any) => s.season === seasonKey);
+        statValue = season ? (sport === 'nba' ? computeNbaStat(season, statCategory) : computeNflStat(season, statCategory)) : 0;
+      }
+    }
+
+    if (!player) {
+      const notFoundSp: SelectedPlayer = {
+        playerName: stripPositionSuffix(playerName), team, selectedYear,
+        playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true, playerId,
+      };
+      return { selectedPlayer: notFoundSp, updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, notFoundSp] } };
+    }
+    const wouldBust = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+    const wildcardSp: SelectedPlayer = {
+      playerName: stripPositionSuffix(playerName), team, selectedYear,
+      playerSeason: null, statValue, isBust: wouldBust, neverOnTeam: false, playerId,
+    };
+    return {
+      selectedPlayer: wildcardSp,
+      updatedLineup: {
+        ...lineup,
+        selectedPlayers: [...lineup.selectedPlayers, wildcardSp],
+        totalStat: wouldBust ? lineup.totalStat : parseFloat((lineup.totalStat + statValue).toFixed(1)),
+        bustCount: wouldBust ? (lineup.bustCount ?? 0) + 1 : (lineup.bustCount ?? 0),
+      },
+    };
+  }
+
   // ── Name-match round: validate first letter of first/last name, then compute stat with no team constraint ──
   if (isNameMatchRound(team)) {
     const { type, pickIndex, proConf } = parseNameRound(team);
@@ -1763,6 +1815,42 @@ export async function findOptimalLastPick(
   const excluded = excludePlayerNames && excludePlayerNames.length > 0
     ? new Set(excludePlayerNames)
     : null;
+
+  // Wildcard round: scan all players with no constraints
+  if (isWildcardRound(team)) {
+    try {
+      const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+      let best: OptimalPick | null = null;
+
+      for (const p of pool) {
+        if (excluded?.has(p.player_name)) continue;
+
+        let val = 0, yr = 'career', actualTeam = '';
+        if (statCategory === 'total_gp') {
+          val = p.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+        } else if (isCareerStat(statCategory)) {
+          const field = careerStatField(statCategory);
+          val = p.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+        } else {
+          for (const s of p.seasons) {
+            const v = sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
+            if (v > val) { val = v; yr = s.season; actualTeam = s.team; }
+          }
+        }
+
+        if (val > actualStatValue && val <= remainingBudget) {
+          if (!best || val > best.statValue) {
+            best = { playerName: p.player_name, playerId: p.player_id, year: yr, team: actualTeam, statValue: val };
+          }
+        }
+      }
+
+      return best;
+    } catch (err) {
+      console.error('Error finding optimal last pick (wildcard):', err);
+      return null;
+    }
+  }
 
   // Teammate round: filter to players who were ever teammates of the referenced pick
   if (isTeammateRound(team)) {
