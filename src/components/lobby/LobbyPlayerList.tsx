@@ -62,8 +62,8 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
     setPlayerScoreMultiplier(lobby.id, playerId, next);
   };
 
-  // Games that don't use team assignment or multipliers
-  const isTeamlessMode = ['career', 'scramble', 'box-score', 'starting-lineup', 'face-reveal'].includes(lobby.game_type);
+  // Only Roster Royale uses team assignment
+  const isTeamlessMode = lobby.game_type !== 'roster';
   const isMultiplierlessMode = ['career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal'].includes(lobby.game_type);
 
   return (
