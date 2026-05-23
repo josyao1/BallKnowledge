@@ -168,54 +168,82 @@ export async function joinLobby(
     return { player: null, error: 'Lobby not found' };
   }
 
-  if (lobby.status !== 'waiting') {
-    return { player: null, error: 'Game already started' };
-  }
-
-  // Check player count
-  const { count } = await supabase
-    .from('lobby_players')
-    .select('*', { count: 'exact', head: true })
-    .eq('lobby_id', lobbyId);
-
-  if (count && count >= lobby.max_players) {
-    return { player: null, error: 'Lobby is full' };
-  }
-
-  // Check if already in lobby
-  const { data: existingPlayer } = await supabase
+  // Fetch all current players once — used for count check, existing-player check, and username rejoin
+  const { data: currentPlayers } = await supabase
     .from('lobby_players')
     .select()
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId)
-    .single();
+    .eq('lobby_id', lobbyId);
+  const existingPlayers = currentPlayers || [];
 
-  if (existingPlayer) {
-    // Reset round state on rejoin so stale mid-game values don't desync
-    // with the current game state. wins and points are session-persistent and preserved.
-    const { data: updated, error: updateError } = await supabase
-      .from('lobby_players')
-      .update({
-        is_connected: true,
-        player_name: playerName,
-        score: 0,
-        guessed_count: 0,
-        finished_at: null,
-        guessed_players: [],
-        incorrect_guesses: [],
-        is_ready: false,
-      })
-      .eq('id', existingPlayer.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      return { player: null, error: updateError.message };
+  if (lobby.status !== 'waiting') {
+    // Case A: same device reconnect — player_id already in lobby
+    const existingByPlayerId = existingPlayers.find(p => p.player_id === playerId);
+    if (existingByPlayerId) {
+      const { data: updated, error: updateError } = await supabase
+        .from('lobby_players')
+        .update({ is_connected: true, player_name: playerName })
+        .eq('id', existingByPlayerId.id)
+        .select()
+        .single();
+      if (updateError) return { player: null, error: updateError.message };
+      return { player: updated as LobbyPlayer, error: null };
     }
-    return { player: updated as LobbyPlayer, error: null };
+
+    // Case B: different device — same username, adopt old player_id so career_state lineup is found
+    const existingByName = existingPlayers.find(
+      p => p.player_name.toLowerCase() === playerName.trim().toLowerCase()
+    );
+    if (existingByName) {
+      localStorage.setItem('ballknowledge_player_id', existingByName.player_id);
+      const { data: updated, error: updateError } = await supabase
+        .from('lobby_players')
+        .update({ is_connected: true, player_name: playerName })
+        .eq('id', existingByName.id)
+        .select()
+        .single();
+      if (updateError) return { player: null, error: updateError.message };
+      return { player: updated as LobbyPlayer, error: null };
+    }
+
+    // Case C: brand-new player — only Cap Crunch (non-hard-mode) supports mid-game joins
+    if (lobby.game_type !== 'lineup-is-right') {
+      return { player: null, error: 'Game already started' };
+    }
+    if ((lobby.career_state as any)?.hardMode) {
+      return { player: null, error: 'Can\'t join a hard-mode game in progress' };
+    }
+    // Fall through to insert for Cap Crunch mid-game join
+  } else {
+    // Waiting lobby: enforce player count limit for new players
+    const existingByPlayerId = existingPlayers.find(p => p.player_id === playerId);
+    if (!existingByPlayerId && existingPlayers.length >= lobby.max_players) {
+      return { player: null, error: 'Lobby is full' };
+    }
+
+    if (existingByPlayerId) {
+      // Reset round state on rejoin so stale mid-game values don't desync
+      // with the current game state. wins and points are session-persistent and preserved.
+      const { data: updated, error: updateError } = await supabase
+        .from('lobby_players')
+        .update({
+          is_connected: true,
+          player_name: playerName,
+          score: 0,
+          guessed_count: 0,
+          finished_at: null,
+          guessed_players: [],
+          incorrect_guesses: [],
+          is_ready: false,
+        })
+        .eq('id', existingByPlayerId.id)
+        .select()
+        .single();
+      if (updateError) return { player: null, error: updateError.message };
+      return { player: updated as LobbyPlayer, error: null };
+    }
   }
 
-  // Add new player
+  // Add new player (waiting lobby new join, or Cap Crunch mid-game join)
   const playerData: LobbyPlayerInsert = {
     lobby_id: lobbyId,
     player_id: playerId,

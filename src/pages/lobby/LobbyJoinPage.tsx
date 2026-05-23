@@ -117,6 +117,16 @@ export function LobbyJoinPage() {
           </p>
         </motion.div>
 
+        {/* Rejoin hint */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          className="text-center text-white/30 text-[11px] sports-font tracking-wide"
+        >
+          Glitched out of a game? Re-enter the same code with your name as it shows in the lobby to pick up where you left off.
+        </motion.p>
+
         {/* Error message */}
         {error && (
           <motion.div
