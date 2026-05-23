@@ -1733,11 +1733,9 @@ export function lineupHitRound(lineup: PlayerLineup): number {
   return picks.length;
 }
 
-/** Average selected year across all picks; 'career' picks count as 2025. */
-// Intentionally averages ALL picks (including busts) — a bust is still a year-choice the player made.
-// lineupUniquePickCount below uses only valid picks; this asymmetry is deliberate.
+/** Average selected year across qualifying picks (excludes invalid/skipped; busts count since the year choice was real). */
 export function lineupAvgPickYear(lineup: PlayerLineup): number {
-  const picks = lineup.selectedPlayers;
+  const picks = lineup.selectedPlayers.filter(p => !p.neverOnTeam && !p.isSkipped);
   if (picks.length === 0) return 2025;
   return picks.reduce((sum, p) => sum + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
 }
@@ -1761,13 +1759,15 @@ export function lineupUniquePickCount(lineup: PlayerLineup, allLineups: PlayerLi
 
 /**
  * Sort lineups by the full tiebreak cascade:
- * score → hit round → fewest busts → most unique picks → oldest avg year
+ * score → (hit round, only when both hit exact cap) → fewest busts → most unique picks → oldest avg year
  */
-export function calculateWinners(lineups: PlayerLineup[]): PlayerLineup[] {
+export function calculateWinners(lineups: PlayerLineup[], targetCap: number): PlayerLineup[] {
   return [...lineups].sort((a, b) => {
     if (b.totalStat !== a.totalStat) return b.totalStat - a.totalStat;
-    const aHit = lineupHitRound(a), bHit = lineupHitRound(b);
-    if (aHit !== bHit) return aHit - bHit;
+    if (a.totalStat === targetCap && b.totalStat === targetCap) {
+      const aHit = lineupHitRound(a), bHit = lineupHitRound(b);
+      if (aHit !== bHit) return aHit - bHit;
+    }
     const aBusts = a.bustCount ?? 0, bBusts = b.bustCount ?? 0;
     if (aBusts !== bBusts) return aBusts - bBusts;
     const aUniq = lineupUniquePickCount(a, lineups), bUniq = lineupUniquePickCount(b, lineups);

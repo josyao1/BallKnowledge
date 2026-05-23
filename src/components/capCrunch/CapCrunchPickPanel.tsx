@@ -94,6 +94,25 @@ export function CapCrunchPickPanel({
           {(myLineup.bustCount ?? 0) > 0 && (
             <p className="text-red-400/70 sports-font text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
           )}
+          {waitingFor.length > 0 && isHost && onHostSkipPlayer && (
+            <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs mt-2">
+              <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
+              {waitingFor.map(p => (
+                <div key={p.player_id} className="flex items-center justify-between gap-2 py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400 text-xs">⏳</span>
+                    <span className="text-white/70 text-sm">{p.player_name}</span>
+                  </div>
+                  <button
+                    onClick={() => onHostSkipPlayer(p.player_id)}
+                    className="text-[10px] sports-font tracking-wider text-orange-400/60 hover:text-orange-400 transition-colors shrink-0"
+                  >
+                    skip
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : canPickThisRound ? (
         // ── Picking ─────────────────────────────────────────────────────────
