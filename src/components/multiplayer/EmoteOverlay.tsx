@@ -4,9 +4,8 @@
  * Emotes: Players send one of 5 emojis via Supabase Realtime broadcast. They fly
  * in from a screen edge, land at a predefined zone, show sender name, then exit.
  *
- * Chat: A ✍️ button opens a text input (100-char max). Sent messages float up as
- * rounded rectangles from the bottom center and fade out after 4s. Own messages
- * are shown locally with a lighter border for confirmation.
+ * Chat: A ✍️ button opens a text input (100-char max). Sent messages float up
+ * diagonally from a random bottom position (Instagram-heart style), fading out.
  *
  * Both use the same broadcast-only channel `emotes:{lobbyId}` with different event
  * names ('emote' and 'chat') so it never interferes with useLobbySubscription.
@@ -18,20 +17,21 @@ import { supabase } from '../../lib/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 const EMOTES = ['💩', '👅', '🍆', '😰', '💀'];
-const EMOTE_COOLDOWN_MS = 10_000;
-const CHAT_COOLDOWN_MS  = 5_000;
-const EMOTE_DISPLAY_MS  = 2_500;
+const EMOTE_COOLDOWN_MS  = 10_000;
+const CHAT_COOLDOWN_MS   = 5_000;
+const EMOTE_DISPLAY_MS   = 2_500;
+const CHAT_ANIM_DURATION = 3_200;
 const MAX_CHAT_ON_SCREEN = 4;
 
 const randBetween = (min: number, max: number) => Math.random() * (max - min) + min;
 
 const ZONES = [
-  { left: '5%',  top: '8%',  initX: -180, initY: 0    }, // TL  — from left
-  { left: '38%', top: '4%',  initX: 0,    initY: -180 }, // TC  — from top
-  { left: '68%', top: '8%',  initX: 180,  initY: 0    }, // TR  — from right
-  { left: '4%',  top: '33%', initX: -180, initY: 0    }, // ML  — from left
-  { left: '70%', top: '33%', initX: 180,  initY: 0    }, // MR  — from right
-  { left: '36%', top: '20%', initX: 0,    initY: -180 }, // UC  — from top
+  { left: '5%',  top: '8%',  initX: -180, initY: 0    },
+  { left: '38%', top: '4%',  initX: 0,    initY: -180 },
+  { left: '68%', top: '8%',  initX: 180,  initY: 0    },
+  { left: '4%',  top: '33%', initX: -180, initY: 0    },
+  { left: '70%', top: '33%', initX: 180,  initY: 0    },
+  { left: '36%', top: '20%', initX: 0,    initY: -180 },
 ] as const;
 
 interface ActiveEmote {
@@ -46,8 +46,8 @@ interface ActiveChat {
   text: string;
   senderName: string;
   isOwn: boolean;
-  startX: number;  // vw percentage from left edge
-  driftX: number;  // horizontal drift in px (positive = right)
+  startX: number;  // left position as vw %
+  driftX: number;  // total horizontal drift in px
 }
 
 interface EmoteOverlayProps {
@@ -56,17 +56,26 @@ interface EmoteOverlayProps {
   currentPlayerName: string | null | undefined;
 }
 
+function makeChatEntry(fields: Omit<ActiveChat, 'startX' | 'driftX'>): ActiveChat {
+  return { ...fields, startX: randBetween(10, 68), driftX: randBetween(-60, 60) };
+}
+
 export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: EmoteOverlayProps) {
   const [activeEmotes, setActiveEmotes] = useState<ActiveEmote[]>([]);
   const [activeChats, setActiveChats]   = useState<ActiveChat[]>([]);
   const [emoteCooldown, setEmoteCooldown] = useState(false);
   const [chatCooldown, setChatCooldown]   = useState(false);
-  const [expanded, setExpanded]   = useState(false);
-  const [chatOpen, setChatOpen]   = useState(false);
-  const [chatText, setChatText]   = useState('');
+  const [expanded, setExpanded] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatText, setChatText] = useState('');
+
   const channelRef  = useRef<RealtimeChannel | null>(null);
   const nextZoneRef = useRef(0);
-  const inputRef    = useRef<HTMLInputElement>(null);
+  const sendingRef  = useRef(false); // Bug 3 fix: guard against Enter-repeat double-send
+
+  const removeChat = useCallback((id: string) => {
+    setActiveChats(prev => prev.filter(c => c.id !== id));
+  }, []);
 
   useEffect(() => {
     if (!supabase || !lobbyId) return;
@@ -84,10 +93,9 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
         setTimeout(() => setActiveEmotes(prev => prev.filter(e => e.id !== id)), EMOTE_DISPLAY_MS + 600);
       })
       .on('broadcast', { event: 'chat' }, ({ payload }) => {
-        // Suppress incoming echo of own messages (shown locally already)
         if (payload.senderId === currentPlayerId) return;
 
-        // Sanitize at the boundary — coerce to string and enforce length cap
+        // Sanitize untrusted broadcast payload at the boundary
         const rawText = typeof payload.text === 'string' ? payload.text : String(payload.text ?? '');
         const text = rawText.slice(0, 100).trim();
         if (!text) return;
@@ -97,22 +105,19 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
           : 'Someone';
 
         const id = Math.random().toString(36).slice(2);
-        setActiveChats(prev => [...prev, {
-          id, text, senderName, isOwn: false,
-          startX: randBetween(10, 68),
-          driftX: randBetween(-60, 60),
-        }].slice(-MAX_CHAT_ON_SCREEN));
+        setActiveChats(prev => [...prev, makeChatEntry({ id, text, senderName, isOwn: false })].slice(-MAX_CHAT_ON_SCREEN));
+        // Bug 2 fix: backstop removal in case onAnimationComplete doesn't fire (e.g. mid-unmount)
+        setTimeout(() => removeChat(id), CHAT_ANIM_DURATION + 500);
       })
       .subscribe();
 
     channelRef.current = channel;
-    return () => { supabase?.removeChannel(channel); };
-  }, [lobbyId, currentPlayerId]);
-
-  // Focus input when chat panel opens
-  useEffect(() => {
-    if (chatOpen) setTimeout(() => inputRef.current?.focus(), 50);
-  }, [chatOpen]);
+    return () => {
+      supabase?.removeChannel(channel);
+      // Bug 2 fix: clear in-flight messages when lobby/channel changes
+      setActiveChats([]);
+    };
+  }, [lobbyId, currentPlayerId, removeChat]);
 
   const sendEmote = useCallback((emoji: string) => {
     if (!supabase || !lobbyId || !channelRef.current || emoteCooldown) return;
@@ -127,7 +132,9 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
 
   const sendChat = useCallback(() => {
     const text = chatText.trim();
-    if (!supabase || !lobbyId || !channelRef.current || chatCooldown || !text) return;
+    // Bug 3 fix: synchronous re-entry guard prevents Enter-repeat double-send
+    if (!supabase || !lobbyId || !channelRef.current || chatCooldown || !text || sendingRef.current) return;
+    sendingRef.current = true;
 
     channelRef.current.send({
       type: 'broadcast',
@@ -135,20 +142,19 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
       payload: { text, senderName: currentPlayerName ?? 'Someone', senderId: currentPlayerId },
     });
 
-    // Show own message locally
     const id = Math.random().toString(36).slice(2);
-    setActiveChats(prev => [...prev, {
-      id, text, senderName: currentPlayerName ?? 'You', isOwn: true,
-      startX: randBetween(10, 68),
-      driftX: randBetween(-60, 60),
-    }].slice(-MAX_CHAT_ON_SCREEN));
+    setActiveChats(prev => [...prev, makeChatEntry({ id, text, senderName: currentPlayerName ?? 'You', isOwn: true })].slice(-MAX_CHAT_ON_SCREEN));
+    setTimeout(() => removeChat(id), CHAT_ANIM_DURATION + 500);
 
     setChatText('');
     setChatOpen(false);
     setExpanded(false);
     setChatCooldown(true);
     setTimeout(() => setChatCooldown(false), CHAT_COOLDOWN_MS);
-  }, [lobbyId, currentPlayerId, currentPlayerName, chatCooldown, chatText]);
+
+    // Release the re-entry guard after React has committed the state changes
+    setTimeout(() => { sendingRef.current = false; }, 0);
+  }, [lobbyId, currentPlayerId, currentPlayerName, chatCooldown, chatText, removeChat]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') sendChat();
@@ -188,7 +194,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
         })}
       </AnimatePresence>
 
-      {/* ── Floating chat messages — Instagram-style: random bottom origin, diagonal drift up, fade ── */}
+      {/* ── Floating chat messages — diagonal drift from random bottom position, fade out ── */}
       {activeChats.map(msg => (
         <motion.div
           key={msg.id}
@@ -198,8 +204,8 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
             x: [0, msg.driftX * 0.4, msg.driftX * 0.75, msg.driftX],
             y: [0, -40, -95, -150],
           }}
-          transition={{ duration: 3.2, ease: 'easeOut', times: [0, 0.08, 0.55, 1] }}
-          onAnimationComplete={() => setActiveChats(prev => prev.filter(c => c.id !== msg.id))}
+          transition={{ duration: CHAT_ANIM_DURATION / 1000, ease: 'easeOut', times: [0, 0.08, 0.55, 1] }}
+          onAnimationComplete={() => removeChat(msg.id)}
           className={`fixed z-50 pointer-events-none px-3.5 py-2.5 rounded-xl shadow-lg ${
             msg.isOwn
               ? 'bg-black/70 border border-white/25'
@@ -243,7 +249,6 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
                   {emoji}
                 </button>
               ))}
-              {/* Chat toggle button */}
               <button
                 onClick={() => setChatOpen(true)}
                 disabled={chatCooldown}
@@ -264,8 +269,9 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               transition={{ duration: 0.18 }}
               className="flex items-center gap-1.5 overflow-hidden"
             >
+              {/* Bug 1 fix: autoFocus mounts exactly when the input does, immune to mode="wait" timing */}
               <input
-                ref={inputRef}
+                autoFocus
                 type="text"
                 value={chatText}
                 onChange={e => setChatText(e.target.value)}
@@ -285,7 +291,6 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
           )}
         </AnimatePresence>
 
-        {/* Toggle — always visible */}
         <button
           onClick={expanded ? handleClose : () => setExpanded(true)}
           className="w-11 h-11 flex items-center justify-center rounded-lg transition-all active:bg-white/10 hover:bg-white/10 text-white/50 active:text-white hover:text-white"
