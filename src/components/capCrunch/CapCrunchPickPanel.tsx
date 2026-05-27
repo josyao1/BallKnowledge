@@ -11,7 +11,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { isConferenceRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound, formatHeightInches } from '../../services/capCrunch';
+import { isConferenceRound, parseConferenceRound, isDivisionRound, isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound, formatHeightInches } from '../../services/capCrunch';
 import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -120,9 +120,45 @@ export function CapCrunchPickPanel({
           {!selectedPlayerName ? (
             // Search view
             <div>
-              <label className="block sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase mb-3 font-semibold">
+              <label className="block sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase mb-2 font-semibold">
                 Search for a player
               </label>
+              {(() => {
+                if (isNameMatchRound(currentTeam)) {
+                  const { type, pickIndex, proConf } = parseNameRound(currentTeam);
+                  const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName;
+                  const parts = refName ? refName.split(' ') : [];
+                  const SUFFIXES = new Set(['Jr', 'Sr', 'II', 'III', 'IV', 'V', 'Jr.', 'Sr.']);
+                  const filtered = parts.filter(p => !SUFFIXES.has(p));
+                  const required = type === 'first' ? parts[0] : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+                  const initial = (required?.[0] ?? '?').toUpperCase();
+                  const CONF_COLORS: Record<string, string> = { AFC: '#ef4444', NFC: '#3b82f6', East: '#34d399', West: '#fb923c' };
+                  const color = proConf ? (CONF_COLORS[proConf] ?? '#06b6d4') : '#06b6d4';
+                  return (
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-sm border text-[10px] retro-title" style={{ borderColor: color, color }}>{type === 'first' ? 'First' : 'Last'} initial: {initial}</span>
+                      {proConf && <span className="px-2 py-0.5 rounded-sm border text-[10px] retro-title" style={{ borderColor: color, color }}>{proConf}</span>}
+                    </div>
+                  );
+                }
+                if (isTeammateRound(currentTeam)) {
+                  const { pickIndex } = parseTeammateRound(currentTeam);
+                  const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
+                  return <p className="text-[10px] text-[#a78bfa] retro-title mb-2">Played with {refName}</p>;
+                }
+                if (isConferenceRound(currentTeam)) {
+                  const { college, nflConf } = parseConferenceRound(currentTeam);
+                  return <p className="text-[10px] text-[#fbbf24] retro-title mb-2">{college}{nflConf ? ` + ${nflConf}` : ''}</p>;
+                }
+                if (isDivisionRound(currentTeam)) {
+                  return <p className="text-[10px] text-[#d4af37] retro-title mb-2">Division: {currentTeam}</p>;
+                }
+                if (isDivisionDraftRound(currentTeam)) {
+                  const { division, draftRound } = parseDivisionDraftRound(currentTeam);
+                  return <p className="text-[10px] text-[#d4af37] retro-title mb-2">{division} · {draftRound}</p>;
+                }
+                return null;
+              })()}
               <input
                 type="text"
                 value={searchQuery}

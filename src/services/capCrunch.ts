@@ -1569,7 +1569,21 @@ export async function resolvePickResult(params: {
         sport === 'nfl' ? nflConferenceMatches(s.team, proConf)
                         : nbaConferenceMatches(s.team, proConf)
       );
-      if (!everInConf) return failNamePick(refPick.playerName, type);
+      if (!everInConf) {
+        // Name initial matched but conference didn't — show WRONG CONF, not WRONG NAME
+        const oppConf = sport === 'nfl'
+          ? (proConf === 'AFC' ? 'NFC' : 'AFC')
+          : (proConf === 'East' ? 'West' : 'East');
+        const sp: SelectedPlayer = {
+          playerName: stripPositionSuffix(playerName), team, selectedYear,
+          playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true,
+          actualNflConf: oppConf, playerId,
+        };
+        return {
+          selectedPlayer: sp,
+          updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, sp], bustCount: lineup.bustCount ?? 0 },
+        };
+      }
     }
 
     // Name + conf check passed — compute stat with NO team constraint

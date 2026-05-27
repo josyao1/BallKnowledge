@@ -630,7 +630,7 @@ export function LobbyWaitingPage() {
 
   const handleCopyCode = () => {
     if (lobby?.join_code) {
-      navigator.clipboard.writeText(lobby.join_code);
+      navigator.clipboard.writeText(`${window.location.origin}/lobby/join/${lobby.join_code}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
