@@ -56,16 +56,16 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
       <p style={{ color: textColor }} className={`sports-font tracking-widest uppercase leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}>
         Same
       </p>
-      <p style={{ color: textColor }} className={`retro-title font-bold leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
-        {label}: Pick {pickIndex}
-      </p>
-      {proConf && (
-        <div className="mt-0.5">
-          <div className={`inline-flex px-2 py-0.5 rounded-sm ${CONF_PILL[proConf] ?? 'bg-white/10 border border-white/20'}`}>
-            <span className="retro-title text-[9px] leading-none text-white tracking-wider">{proConf}</span>
+      <div className="flex items-center gap-2">
+        <p style={{ color: textColor }} className={`retro-title font-bold leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+          {label}: Pick {pickIndex}
+        </p>
+        {proConf && (
+          <div className={`inline-flex px-2.5 py-1 rounded-sm ${CONF_PILL[proConf] ?? 'bg-white/10 border border-white/20'}`}>
+            <span className="retro-title text-[11px] leading-none text-white tracking-wider">{proConf}</span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <button
         onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
