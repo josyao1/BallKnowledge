@@ -119,11 +119,16 @@ export function LobbyActionButtons({
           disabled={isLoadingRoster || lobby.status === 'countdown'}
           className={`w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all disabled:opacity-50 ${
             currentPlayer.is_ready
-              ? 'bg-emerald-900/50 text-emerald-300 border-2 border-emerald-700/60'
+              ? 'bg-emerald-900/50 text-emerald-300 border-2 border-emerald-600/80 hover:bg-red-900/40 hover:border-red-600/60 hover:text-red-300 active:translate-y-px'
               : 'bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 hover:from-[#fdf0d5] hover:to-[#e0ceaa]'
           }`}
         >
-          {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? '✓ Ready' : 'Ready Up'}
+          {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? (
+            <span className="flex flex-col items-center gap-0.5">
+              <span>✓ Ready</span>
+              <span className="text-[10px] tracking-widest opacity-50 font-normal" style={{ fontFamily: 'inherit' }}>click to unready</span>
+            </span>
+          ) : 'Ready Up'}
         </button>
       )}
 

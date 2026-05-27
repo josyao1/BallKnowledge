@@ -620,7 +620,7 @@ const TEST_FORCE_COLLEGE: string | null = null;
 // Must be false before merging to production.
 const TEST_FORCE_DIVISION_DRAFT = false;
 
-// ── Test flag — force teammate round every eligible round ─────────────────────
+// ── Test flag — force MATE round on every round past round 2; bypasses once-per-cycle ─
 const TEST_FORCE_TEAMMATE = false;
 
 // ── Test flag — force name-match round type every eligible round (after round 1) ─
@@ -661,10 +661,11 @@ export function assignRandomTeam(
   // Teammate / name-match round: 10% per round (60% on last round if not yet seen), once per cycle.
   // Variants: 65% played-with (MATE:N), 20% first-name (FNAME:N), 15% last-name (LNAME:N).
   // Name-match rounds optionally carry a conference tag (~50% chance). Skipped for total_gp.
-  if (prevPicks && prevPicks.length > 0 && !usedSpecialTypes?.includes('teammate') && statCategory !== 'total_gp') {
+  const bypassCycle = TEST_FORCE_TEAMMATE && prevPicks && prevPicks.length >= 2;
+  if (prevPicks && prevPicks.length > 0 && (!usedSpecialTypes?.includes('teammate') || bypassCycle) && statCategory !== 'total_gp') {
     const validPriorPicks = prevPicks.filter(p => !p.isSkipped && p.playerId != null);
     const teammateOdds = isLastRound ? 0.33 : 0.10;
-    if (validPriorPicks.length > 0 && (TEST_FORCE_TEAMMATE || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)) {
+    if (validPriorPicks.length > 0 && (bypassCycle || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)) {
       const refPick = validPriorPicks[Math.floor(Math.random() * validPriorPicks.length)];
       const refIndex = prevPicks.indexOf(refPick) + 1; // 1-based
 
@@ -1569,7 +1570,21 @@ export async function resolvePickResult(params: {
         sport === 'nfl' ? nflConferenceMatches(s.team, proConf)
                         : nbaConferenceMatches(s.team, proConf)
       );
-      if (!everInConf) return failNamePick(refPick.playerName, type);
+      if (!everInConf) {
+        // Name initial matched but conference didn't — show WRONG CONF, not WRONG NAME
+        const oppConf = sport === 'nfl'
+          ? (proConf === 'AFC' ? 'NFC' : 'AFC')
+          : (proConf === 'East' ? 'West' : 'East');
+        const sp: SelectedPlayer = {
+          playerName: stripPositionSuffix(playerName), team, selectedYear,
+          playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true,
+          actualNflConf: oppConf, playerId,
+        };
+        return {
+          selectedPlayer: sp,
+          updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, sp], bustCount: lineup.bustCount ?? 0 },
+        };
+      }
     }
 
     // Name + conf check passed — compute stat with NO team constraint
