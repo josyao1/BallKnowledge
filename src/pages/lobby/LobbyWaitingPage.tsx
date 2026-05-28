@@ -104,6 +104,25 @@ export function LobbyWaitingPage() {
     loadLobby();
   }, [code, navigate, setLobby, setPlayers]);
 
+  // Re-sync when the tab comes back to the foreground. Mobile browsers suspend
+  // WebSocket connections when backgrounded, so subscription events fired while
+  // the tab was hidden are silently dropped. A fresh fetch on visibility restores
+  // the correct lobby status and lets the existing status-change effect navigate
+  // the player into the game if it already started.
+  useEffect(() => {
+    if (!code) return;
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible' || hasStartedGame.current) return;
+      const result = await findLobbyByCode(code);
+      if (!result.lobby) return;
+      setLobby(result.lobby);
+      const playersResult = await getLobbyPlayers(result.lobby.id);
+      if (playersResult.players) setPlayers(playersResult.players);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [code, setLobby, setPlayers]);
+
   // ── Roster dealing complete ───────────────────────────────────────────────
   // Defined early because the lobby-status effect references it.
   const handleDealingComplete = useCallback(async () => {
@@ -149,7 +168,20 @@ export function LobbyWaitingPage() {
       }
 
       setGameConfig(lobbySport, lobbyTeam, freshLobby.season, 'manual', freshLobby.timer_duration, rosterPlayers, leaguePlayers, false);
-      navigate('/game', { state: { multiplayer: true, lobbyId: freshLobby.id } });
+      // Persist game config so a mid-game reload can reconstruct state instead
+      // of dropping the player to the home screen.
+      sessionStorage.setItem('bk_roster_mp', JSON.stringify({
+        code: freshLobby.join_code,
+        sport: lobbySport,
+        team: lobbyTeam.abbreviation,
+        season: freshLobby.season,
+        timerDuration: freshLobby.timer_duration,
+        startedAt: freshLobby.started_at,
+        scope: freshLobby.selection_scope,
+        divConf: freshLobby.division_conference || null,
+        divName: freshLobby.division_name || null,
+      }));
+      navigate('/game', { state: { multiplayer: true, lobbyId: freshLobby.id, startedAt: freshLobby.started_at } });
     } catch (err) {
       console.error('Error loading roster:', err);
     } finally {

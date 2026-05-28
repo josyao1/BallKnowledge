@@ -254,11 +254,12 @@ function HowToPlay({ gameType }: { gameType: string }) {
 
   if (gameType === 'lineup-is-right') return (
     <div className={prose}>
-      <p>Each round everyone sees the same random team and a stat category. Teams can be a single franchise, a division, or a college + pro conference combo (e.g. SEC players who played in the AFC).</p>
-      <p>Search for any player and pick a season — their stat for that year adds to your running total.</p>
-      <p>If the stat is <span className="text-white/70">Total GP</span>, pick any player and their entire career GP with that team counts — no year needed.</p>
-      <p>A pick that pushes you over the cap <span className="text-red-400">busts</span> — it scores 0 and your total reverts. You still play all 5 rounds.</p>
-      <p>You <span className="text-white/70">cannot repeat a player</span> across rounds.</p>
+      <p>Each round everyone sees the same filter and a stat category. Filters can be a single franchise, a division, a college + pro conference combo (e.g. SEC + AFC), a teammate round, and more.</p>
+      <p><span className="text-white/70">Single-season stat:</span> Search any player and pick a year — their stat for that season counts.</p>
+      <p><span className="text-white/70">Total GP (NBA):</span> No year needed — their career games played with that specific team counts.</p>
+      <p><span className="text-white/70">Career stats (NFL):</span> No year needed — the team shown is just a qualifier (must have played there). Their full career total across all teams counts.</p>
+      <p>A pick that pushes you over the cap <span className="text-red-400">busts</span> — it scores 0 and your total reverts. You still play all 5 rounds. You <span className="text-white/70">cannot repeat a player</span> across rounds.</p>
+      <p>Tap the filter card if you need more info on a special round — conference filters show a "see schools" link.</p>
       <p className="text-[#d4af37]/60">🏆 Closest to the target without busting wins. Tiebreaker: fewest busts, then oldest average pick year.</p>
     </div>
   );

@@ -60,6 +60,7 @@ interface GameState {
   status: GameStatus;
   timeRemaining: number;
   startTime: number | null;
+  roundDeadline: number | null; // epoch ms; when set, tick() computes from this instead of decrementing
 
   // Roster data
   currentRoster: GenericPlayer[];
@@ -94,6 +95,7 @@ interface GameState {
   resetGame: () => void;
   resetForRematch: () => void;
   tick: () => void;
+  setRoundDeadline: (deadline: number | null) => void;
 }
 
 /**
@@ -122,6 +124,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   status: 'idle',
   timeRemaining: 90,
   startTime: null,
+  roundDeadline: null,
   currentRoster: [],
   pendingGuesses: [],
   guessedPlayers: [],
@@ -149,6 +152,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       incorrectGuesses: [],
       score: 0,
       startTime: null,
+      roundDeadline: null,
     });
   },
 
@@ -320,6 +324,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       status: 'idle',
       timeRemaining: get().timerDuration,
       startTime: null,
+      roundDeadline: null,
       currentRoster: [],
       pendingGuesses: [],
       guessedPlayers: [],
@@ -338,6 +343,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       status: 'idle',
       timeRemaining: state.timerDuration,
       startTime: null,
+      roundDeadline: null,
       pendingGuesses: [],
       guessedPlayers: [],
       incorrectGuesses: [],
@@ -346,9 +352,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tick: () => {
-    const state = get();
-    if (state.status === 'playing' && state.timeRemaining > 0) {
-      set({ timeRemaining: state.timeRemaining - 1 });
+    const { status, timeRemaining, roundDeadline } = get();
+    if (status === 'playing' && timeRemaining > 0) {
+      const next = roundDeadline
+        ? Math.max(0, Math.ceil((roundDeadline - Date.now()) / 1000))
+        : timeRemaining - 1;
+      set({ timeRemaining: next });
     }
   },
+
+  setRoundDeadline: (deadline) => set({ roundDeadline: deadline }),
 }));

@@ -1,5 +1,5 @@
 /**
- * MultiplayerLineupIsRightResultsPage.tsx — Results and standings for "Lineup Is Right".
+ * MultiplayerCapCrunchResultsPage.tsx — Results and standings for Cap Crunch.
  *
  * Displays final match results showing winner(s) and final standings.
  */

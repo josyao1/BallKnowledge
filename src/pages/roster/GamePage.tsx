@@ -6,7 +6,7 @@
  * the lobby via debounced updates. Navigates to results when the timer ends.
  */
 
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpinningNumber } from '../../components/capCrunch/SpinningNumber';
@@ -19,13 +19,17 @@ import { GuessedPlayersList } from '../../components/game/GuessedPlayersList';
 import { TeamDisplay } from '../../components/game/TeamDisplay';
 import { LiveScoreboard } from '../../components/multiplayer/LiveScoreboard';
 import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../../services/roster';
+import { findLobbyByCode, getLobbyPlayers } from '../../services/lobby';
+import { teams } from '../../data/teams';
+import { nflTeams } from '../../data/nfl-teams';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 import { getTeammateGuessedPlayers, TEAM_COLORS } from '../../utils/teamUtils';
 
 export function GamePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const isMultiplayer = location.state?.multiplayer || false;
+  const [isMultiplayer, setIsMultiplayer] = useState<boolean>(location.state?.multiplayer || false);
+  const [startedAt, setStartedAt] = useState<string | undefined>(location.state?.startedAt);
   const lobbyCode = useLobbyStore((state) => state.lobby?.join_code);
   const lobbyId = useLobbyStore((state) => state.lobby?.id);
 
@@ -57,6 +61,7 @@ export function GamePage() {
     processGuesses,
     tick,
     setGameConfig,
+    setRoundDeadline,
   } = useGameStore();
 
   const lobbyDivisionConference = useLobbyStore((state) => state.lobby?.division_conference);
@@ -117,8 +122,73 @@ export function GamePage() {
     }
   }, [score, guessedPlayers, incorrectGuesses, isMultiplayer, lobby, syncScore]);
 
-  useEffect(() => { if (!selectedTeam || !selectedSeason) navigate('/'); }, [selectedTeam, selectedSeason, navigate]);
+  // On a mid-game reload all Zustand + router state is wiped. Reconstruct from
+  // sessionStorage so the player can continue without losing their spot.
+  const hasAttemptedRecoveryRef = useRef(false);
+  useEffect(() => {
+    if (selectedTeam && selectedSeason) return;
+    if (hasAttemptedRecoveryRef.current) return;
+    hasAttemptedRecoveryRef.current = true;
+
+    const raw = sessionStorage.getItem('bk_roster_mp');
+    if (!raw) { navigate('/'); return; }
+
+    const saved = JSON.parse(raw) as {
+      code: string; sport: string; team: string; season: string;
+      timerDuration: number; startedAt: string;
+      scope: string; divConf: string | null; divName: string | null;
+    };
+
+    (async () => {
+      try {
+        const { lobby: freshLobby } = await findLobbyByCode(saved.code);
+        if (!freshLobby || freshLobby.status !== 'playing') {
+          sessionStorage.removeItem('bk_roster_mp');
+          navigate(freshLobby ? `/lobby/${saved.code}` : '/');
+          return;
+        }
+
+        const { players: freshPlayers } = await getLobbyPlayers(freshLobby.id);
+        const teamList = saved.sport === 'nba' ? teams : nflTeams;
+        const team = teamList.find(t => t.abbreviation === saved.team);
+        if (!team) { navigate('/'); return; }
+
+        let rosterPlayers: any[] = [];
+        let leaguePlayers: any[] = [];
+        if (saved.sport === 'nba') {
+          const result = await fetchTeamRoster(team.abbreviation, saved.season);
+          rosterPlayers = result.players;
+          leaguePlayers = await fetchStaticSeasonPlayers(saved.season) ?? [];
+        } else {
+          rosterPlayers = await fetchStaticNFLRoster(team.abbreviation, parseInt(saved.season)) ?? [];
+          leaguePlayers = await fetchStaticNFLSeasonPlayers(parseInt(saved.season)) ?? [];
+        }
+
+        useLobbyStore.getState().setLobby(freshLobby);
+        useLobbyStore.getState().setPlayers(freshPlayers || []);
+        setGameConfig(saved.sport as any, team, saved.season, 'manual', saved.timerDuration, rosterPlayers, leaguePlayers, false);
+        // Correct the timer immediately so the display shows remaining time, not full duration.
+        const deadline = new Date(saved.startedAt).getTime() + saved.timerDuration * 1000;
+        const remaining = Math.max(1, Math.ceil((deadline - Date.now()) / 1000));
+        useGameStore.getState().setRoundDeadline(deadline);
+        useGameStore.setState({ timeRemaining: remaining });
+        setIsMultiplayer(true);
+        setStartedAt(saved.startedAt);
+      } catch {
+        sessionStorage.removeItem('bk_roster_mp');
+        navigate('/');
+      }
+    })();
+  }, [selectedTeam, selectedSeason, navigate]);
   useEffect(() => { if (status === 'idle' && selectedTeam) startGame(); }, [status, selectedTeam, startGame]);
+
+  // Anchor timer to server-issued started_at so all clients share the same deadline.
+  // Only applies in multiplayer; solo play uses the local tick countdown.
+  useEffect(() => {
+    if (!isMultiplayer || !startedAt || status !== 'playing') return;
+    const deadline = new Date(startedAt).getTime() + timerDuration * 1000;
+    setRoundDeadline(deadline);
+  }, [isMultiplayer, startedAt, status, timerDuration, setRoundDeadline]);
   
   useEffect(() => {
     if (status !== 'playing') return;
@@ -168,6 +238,7 @@ export function GamePage() {
   useEffect(() => {
     if (status === 'ended') {
       if (hideResultsDuringGame) processGuesses();
+      sessionStorage.removeItem('bk_roster_mp');
       if (isMultiplayer && lobbyCode) {
         const finishGame = async () => {
           const guessedNames = guessedPlayers.map(p => p.name);

@@ -1,5 +1,5 @@
 /**
- * lineupIsRight.ts — Game logic and utilities for "Lineup Is Right".
+ * capCrunch.ts — Game logic and utilities for Cap Crunch.
  *
  * Handles stat selection, target cap generation, team assignment,
  * eligible player lookup, stat aggregation, and bust detection.
@@ -627,6 +627,17 @@ const TEST_FORCE_TEAMMATE = false;
 // Set to 'first' or 'last' to test the specific variant. Must be false before merging.
 const TEST_FORCE_NAME_ROUND: 'first' | 'last' | false = false;
 
+// Returns a random element from `all`, excluding entries in `exclude`.
+// If all entries are excluded, falls back to the full list.
+// Set `prefixFilter` when excluding by prefix (e.g. "SEC|AFC" excludes conf "SEC").
+function selectFromPool(all: string[], exclude?: string[] | null, prefixFilter = false): string {
+  const available = exclude
+    ? all.filter(i => prefixFilter ? !exclude.some(e => e.startsWith(i)) : !exclude.includes(i))
+    : all;
+  const pool = available.length > 0 ? available : all;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 export function assignRandomTeam(
   sport: Sport,
   statCategory?: StatCategory,
@@ -649,9 +660,7 @@ export function assignRandomTeam(
   }
   if (sport === 'nfl' && TEST_FORCE_CONFERENCE) {
     const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
-    const available = excludeTeams ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c))) : confs;
-    const pool = available.length > 0 ? available : confs;
-    const college = pool[Math.floor(Math.random() * pool.length)];
+    const college = selectFromPool(confs, excludeTeams, true);
     const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
     return `${college}|${nflConf}`;
   }
@@ -691,11 +700,7 @@ export function assignRandomTeam(
     const conferenceUsed = usedSpecialTypes?.includes('conference');
     if (TEST_FORCE_CONFERENCE || (!conferenceUsed && Math.random() < 0.15)) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
-      const available = excludeTeams
-        ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
-        : confs;
-      const pool = available.length > 0 ? available : confs;
-      const college = pool[Math.floor(Math.random() * pool.length)];
+      const college = selectFromPool(confs, excludeTeams, true);
       const nbaConf = Math.random() < 0.5 ? 'East' : 'West';
       return `${college}|${nbaConf}`;
     }
@@ -707,9 +712,7 @@ export function assignRandomTeam(
       // ~10% → division + draft round; skip if already used this cycle
       if (!usedSpecialTypes?.includes('division_draft')) {
         const divs = Object.keys(NFL_DIVISIONS);
-        const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
-        const pool = available.length > 0 ? available : divs;
-        const div = pool[Math.floor(Math.random() * pool.length)];
+        const div = selectFromPool(divs, excludeTeams);
         const rounds = ['R1', 'R23', 'R47'] as const;
         return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
       }
@@ -717,28 +720,20 @@ export function assignRandomTeam(
       // ~10% → division only; skip if already used this cycle
       if (!usedSpecialTypes?.includes('division')) {
         const divs = Object.keys(NFL_DIVISIONS);
-        const available = excludeTeams ? divs.filter(d => !excludeTeams.includes(d)) : divs;
-        const pool = available.length > 0 ? available : divs;
-        return pool[Math.floor(Math.random() * pool.length)];
+        return selectFromPool(divs, excludeTeams);
       }
     } else if (roll < 0.30) {
       // ~10% → conference round; skip if already used this cycle
       if (!usedSpecialTypes?.includes('conference')) {
         const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
-        const available = excludeTeams
-          ? confs.filter(c => !excludeTeams.some(e => e.startsWith(c)))
-          : confs;
-        const pool = available.length > 0 ? available : confs;
-        const college = pool[Math.floor(Math.random() * pool.length)];
+        const college = selectFromPool(confs, excludeTeams, true);
         const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
         return `${college}|${nflConf}`;
       }
     }
   }
   const allTeams = sport === 'nba' ? (TEST_NBA_TEAMS ?? NBA_TEAMS) : (TEST_NFL_TEAMS ?? NFL_TEAMS);
-  const available = excludeTeams ? allTeams.filter(t => !excludeTeams.includes(t)) : allTeams;
-  const pool = available.length > 0 ? available : allTeams;
-  return pool[Math.floor(Math.random() * pool.length)];
+  return selectFromPool(allTeams, excludeTeams);
 }
 
 /**

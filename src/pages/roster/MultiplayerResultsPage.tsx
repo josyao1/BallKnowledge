@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useGameStore } from '../../stores/gameStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
-import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins } from '../../services/lobby';
+import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins, markPlayerFinished } from '../../services/lobby';
 import {
   buildScoringEntities,
   computeEntityBonuses,
@@ -45,6 +45,7 @@ export function MultiplayerResultsPage() {
   const { lobby, players, currentPlayerId, isHost, reset: resetLobby, setLobby, setPlayers } = useLobbyStore();
   const { currentRoster, divisionRosters, divisionTeams, resetGame } = useGameStore();
   const [isResetting, setIsResetting] = useState(false);
+  const [isForcingEnd, setIsForcingEnd] = useState(false);
   const [showRosterBreakdown, setShowRosterBreakdown] = useState(false);
   const [activeRosterTab, setActiveRosterTab] = useState<string | null>(null);
 
@@ -116,6 +117,15 @@ export function MultiplayerResultsPage() {
       navigateToLobby();
     }
   }, [lobby?.status, navigateToLobby]);
+
+  // Host: mark all still-playing players as finished and let the polling close the game.
+  const handleForceEnd = useCallback(async () => {
+    if (!lobby || isForcingEnd) return;
+    setIsForcingEnd(true);
+    const unfinished = players.filter(p => p.finished_at === null);
+    await Promise.all(unfinished.map(p => markPlayerFinished(lobby.id, p.player_id)));
+    setIsForcingEnd(false);
+  }, [lobby, players, isForcingEnd]);
 
   // Polling fallback for non-host players
   useEffect(() => {
@@ -361,6 +371,15 @@ export function MultiplayerResultsPage() {
               </div>
             ))}
           </div>
+          {isHost && (
+            <button
+              onClick={handleForceEnd}
+              disabled={isForcingEnd}
+              className="mt-2 sports-font text-xs text-white/30 hover:text-white/60 tracking-widest transition-colors disabled:opacity-40"
+            >
+              {isForcingEnd ? 'Ending...' : 'End game for everyone'}
+            </button>
+          )}
         </div>
       </div>
     );
