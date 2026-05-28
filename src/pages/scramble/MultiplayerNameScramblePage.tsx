@@ -21,6 +21,7 @@ import {
   addCareerPoints,
   incrementPlayerWins,
   startCareerRound,
+  updateCareerState,
 } from '../../services/lobby';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../../services/careerData';
 import { scrambleName } from '../../utils/scramble';
@@ -37,6 +38,7 @@ interface ScrambleState {
   round: number;
   win_target: number;
   career_to: number;
+  firstCorrectAt?: string; // ISO timestamp written by host when first player answers correctly
 }
 
 interface RoundSummary {
@@ -64,15 +66,14 @@ export function MultiplayerNameScramblePage() {
   const [localStatus, setLocalStatus] = useState<'playing' | 'done'>('playing');
   const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } = useGuessInput();
   const [pressureTimer, setPressureTimer] = useState(30);
-  const [pressureActive, setPressureActive] = useState(false);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
 
   // ── Refs ──
   const hasSubmittedRef = useRef(false);
   const hasAdvancedRef = useRef(false);
+  const hasWrittenFirstCorrectAtRef = useRef(false);
   const atLeastOnePlayerWasActiveRef = useRef(false);
-  const firstCorrectTimerStartedRef = useRef(false);
   const pressureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevRoundRef = useRef(-1);
   const prevStatusRef = useRef<string | null>(null);
@@ -81,30 +82,33 @@ export function MultiplayerNameScramblePage() {
   // Prevents post-round realtime events from corrupting the interstitial ptsMap.
   const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
 
-  // ── Pressure timer: start when first correct answer arrives ──
-  useEffect(() => {
-    const firstCorrect = players.some(p => p.finished_at !== null && (p.score || 0) > 0);
-    // atLeastOnePlayerWasActiveRef guards against stale player data from the previous round
-    // triggering the timer at the start of a new round before player resets have propagated.
-    if (firstCorrect && !firstCorrectTimerStartedRef.current && localStatus === 'playing'
-        && atLeastOnePlayerWasActiveRef.current) {
-      firstCorrectTimerStartedRef.current = true;
-      setPressureActive(true);
-      setPressureTimer(30);
+  // pressureActive is derived from the shared timestamp so all clients agree on when it's running
+  const pressureActive = !!careerState?.firstCorrectAt && pressureTimer > 0 && localStatus === 'playing';
 
-      pressureIntervalRef.current = setInterval(() => {
-        setPressureTimer(prev => {
-          if (prev <= 1) {
-            // Auto give-up at 0
-            clearInterval(pressureIntervalRef.current!);
-            setPressureActive(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  }, [players, localStatus]);
+  // ── HOST: write firstCorrectAt to career_state when the first answer arrives ──
+  // Capture stable values so the closure doesn't go stale between renders.
+  const lobbyIdForFirstCorrect = lobby?.id;
+  const careerStateForFirstCorrect = careerState;
+  useEffect(() => {
+    if (!isHost || !lobbyIdForFirstCorrect || !careerStateForFirstCorrect) return;
+    if (careerStateForFirstCorrect.firstCorrectAt || hasWrittenFirstCorrectAtRef.current) return;
+    if (!atLeastOnePlayerWasActiveRef.current) return;
+    const firstCorrect = players.some(p => p.finished_at !== null && (p.score || 0) > 0);
+    if (!firstCorrect) return;
+    hasWrittenFirstCorrectAtRef.current = true;
+    updateCareerState(lobbyIdForFirstCorrect, { ...careerStateForFirstCorrect, firstCorrectAt: new Date().toISOString() });
+  }, [players.map(p => p.finished_at).join(','), isHost, lobbyIdForFirstCorrect, careerStateForFirstCorrect]);
+
+  // ── ALL CLIENTS: compute pressure countdown from the shared firstCorrectAt timestamp ──
+  useEffect(() => {
+    if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current);
+    if (!careerState?.firstCorrectAt) return;
+    const anchor = new Date(careerState.firstCorrectAt).getTime();
+    const tick = () => setPressureTimer(Math.max(0, 30 - Math.floor((Date.now() - anchor) / 1000)));
+    tick();
+    pressureIntervalRef.current = setInterval(tick, 500);
+    return () => { if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current); };
+  }, [careerState?.firstCorrectAt]);
 
   // ── Auto give-up when timer hits 0 ──
   useEffect(() => {
@@ -185,15 +189,10 @@ export function MultiplayerNameScramblePage() {
       setFeedbackMsg('');
       setFeedbackType('');
       setPressureTimer(30);
-      setPressureActive(false);
       hasSubmittedRef.current = false;
+      hasWrittenFirstCorrectAtRef.current = false;
       atLeastOnePlayerWasActiveRef.current = false;
-      firstCorrectTimerStartedRef.current = false;
       roundScoresSnapshotRef.current = {};
-      if (pressureIntervalRef.current) {
-        clearInterval(pressureIntervalRef.current);
-        pressureIntervalRef.current = null;
-      }
     }
   }, [currentRound]);
 

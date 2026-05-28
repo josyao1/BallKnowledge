@@ -363,6 +363,18 @@ export async function updatePlayerScore(
   return { error: error?.message || null };
 }
 
+// Host-only: mark a specific player as finished (used to force-end a stuck session).
+// Skips players already finished to avoid overwriting their finish time.
+export async function markPlayerFinished(lobbyId: string, playerId: string): Promise<void> {
+  if (!supabase) return;
+  await supabase
+    .from('lobby_players')
+    .update({ finished_at: new Date().toISOString() })
+    .eq('lobby_id', lobbyId)
+    .eq('player_id', playerId)
+    .is('finished_at', null);
+}
+
 // Check if all players have finished
 export async function checkAllPlayersFinished(lobbyId: string): Promise<boolean> {
   if (!supabase) return false;

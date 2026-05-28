@@ -1,5 +1,5 @@
 /**
- * SoloLineupIsRightPage.tsx — Solo "Lineup Is Right" gameplay.
+ * SoloCapCrunchPage.tsx — Solo Cap Crunch gameplay.
  *
  * Single-player mode where each turn:
  * 1. A random team is assigned
@@ -477,11 +477,13 @@ export function SoloCapCrunchPage() {
           >
             <h3 className="retro-title text-lg text-[#d4af37] mb-3">How to Play</h3>
             <ul className="text-sm text-white/80 space-y-2.5 text-left">
-              <li><span className="text-[#d4af37] font-bold">Goal:</span> Build a lineup whose combined stat reaches — but doesn't exceed — the target cap</li>
-              <li><span className="text-[#d4af37] font-bold">Each pick:</span> A random team is shown. Search <em>any</em> player by name and choose a year they were active</li>
-              <li><span className="text-emerald-400 font-bold">Hit:</span> Player was on that team that year → their stat adds to your total</li>
-              <li><span className="text-red-400 font-bold">Miss:</span> Player wasn't on that team that year → you get 0 for that pick</li>
-              <li><span className="text-white font-bold">{totalRounds} picks max.</span> If a pick pushes you over the cap it <span className="text-red-400 font-bold">busts</span> — that pick counts as 0 and your score reverts. You always play all {totalRounds} picks!</li>
+              <li><span className="text-[#d4af37] font-bold">Goal:</span> Build a {totalRounds}-pick lineup whose combined stat reaches — but doesn't exceed — the target cap</li>
+              <li><span className="text-[#d4af37] font-bold">Each pick:</span> A filter is shown (team, division, or special round). Search any player — if they qualify, their stat adds to your total</li>
+              <li><span className="text-emerald-400 font-bold">Single-season stat:</span> Choose a year — that season's stat for the shown team counts</li>
+              <li><span className="text-emerald-400 font-bold">Total GP (NBA):</span> No year needed — their career games played with that specific team counts</li>
+              <li><span className="text-emerald-400 font-bold">Career stats (NFL):</span> No year needed — the team shown is just a qualifier (player must have played there at some point). Their <em>full career total</em> across all teams counts</li>
+              <li><span className="text-red-400 font-bold">Bust:</span> A pick that pushes you over the cap scores 0 and your total reverts. You always play all {totalRounds} picks!</li>
+              <li><span className="text-white/60 font-bold">Special rounds:</span> Filters can be a division, a college + pro conference combo (e.g. SEC players who played in the AFC), a teammate round, or more. <span className="text-[#d4af37]">Tap the filter card for more details</span> — conference rounds show a "see schools" link</li>
               <li><span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts wins; then oldest average pick year</li>
             </ul>
           </motion.div>
