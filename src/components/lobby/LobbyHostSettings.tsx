@@ -176,7 +176,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
     setEditTopTenSport((cs.top_ten_sport as 'nba' | 'nfl') || lobbySport as 'nba' | 'nfl');
     setEditTopTenRoundType((cs.top_ten_round_type as 'league' | 'division') || 'league');
-    setEditTopTenMinYear((cs.top_ten_min_year as number) || (lobbySport === 'nba' ? 2010 : 2010));
+    setEditTopTenMinYear((cs.top_ten_min_year as number) || (lobbySport === 'nba' ? 1996 : 1999));
     setEditTopTenMaxYear((cs.top_ten_max_year as number) || (lobbySport === 'nba' ? 2025 : 2024));
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
     setEditTopTenMaxStrikes((cs.max_strikes as number) || 2);
@@ -216,6 +216,14 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditBoxMinYear(s === 'nba' ? 2014 : 2015);
     setEditBoxMaxYear(s === 'nba' ? 2025 : 2024);
     setEditGameType(s === 'nba' ? 'nba-box-score' : 'box-score');
+  }
+
+  function handleTopTenSportChange(s: 'nba' | 'nfl') {
+    setEditTopTenSport(s);
+    const minBound = s === 'nba' ? 1996 : 1999;
+    const maxBound = s === 'nba' ? 2025 : 2024;
+    setEditTopTenMinYear(prev => Math.max(minBound, Math.min(prev, maxBound)));
+    setEditTopTenMaxYear(prev => Math.max(minBound, Math.min(prev, maxBound)));
   }
 
   const handleApply = () => {
@@ -353,7 +361,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
 
           {editGameType === 'top-ten' && (
             <TopTenSettings
-              sport={editTopTenSport} onSportChange={setEditTopTenSport}
+              sport={editTopTenSport} onSportChange={handleTopTenSportChange}
               roundType={editTopTenRoundType} onRoundTypeChange={setEditTopTenRoundType}
               minYear={editTopTenMinYear} onMinYearChange={setEditTopTenMinYear}
               maxYear={editTopTenMaxYear} onMaxYearChange={setEditTopTenMaxYear}

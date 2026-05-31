@@ -9,6 +9,9 @@ interface Options {
   defaultWinTarget?: number;
   // Career mode passes career_from; all other modes pass 0.
   includeCareerFrom?: boolean;
+  // Extra career_state fields to preserve through the Play Again reset.
+  // Receives the current cs object so values can be read at click time.
+  extraPlayAgainState?: (cs: any) => Record<string, unknown>;
 }
 
 /**
@@ -18,7 +21,7 @@ interface Options {
  * effect, Play Again, and Leave. Returns everything the results page needs to
  * render standings and drive the action buttons.
  */
-export function useMultiplayerResults({ code, defaultWinTarget = 3, includeCareerFrom = false }: Options) {
+export function useMultiplayerResults({ code, defaultWinTarget = 3, includeCareerFrom = false, extraPlayAgainState }: Options) {
   const navigate = useNavigate();
   const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } = useLobbyStore();
   const [isLeaving, setIsLeaving] = useState(false);
@@ -58,6 +61,7 @@ export function useMultiplayerResults({ code, defaultWinTarget = 3, includeCaree
       cs.win_target || defaultWinTarget,
       includeCareerFrom ? (cs.career_from || 0) : 0,
       cs.career_to || 0,
+      extraPlayAgainState ? extraPlayAgainState(cs) : undefined,
     );
     setLobby({ ...lobby, status: 'waiting' });
     navigate(`/lobby/${code}`);

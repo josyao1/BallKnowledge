@@ -12,7 +12,19 @@ export function MultiplayerTopTenResultsPage() {
     lobby, players, isHost, currentPlayerId,
     isLeaving, isResetting,
     handlePlayAgain, handleLeave,
-  } = useMultiplayerResults({ code, defaultWinTarget: 1 });
+  } = useMultiplayerResults({
+    code,
+    defaultWinTarget: 1,
+    extraPlayAgainState: (c) => ({
+      top_ten_sport: c.top_ten_sport,
+      top_ten_round_type: c.top_ten_round_type,
+      top_ten_min_year: c.top_ten_min_year,
+      top_ten_max_year: c.top_ten_max_year,
+      top_ten_window_years: c.top_ten_window_years,
+      max_strikes: c.max_strikes,
+      turn_timer: c.turn_timer,
+    }),
+  });
 
   const cs = (lobby?.career_state as any) || {};
   const entries: TopTenEntry[]  = cs.top10_entries || [];

@@ -52,6 +52,12 @@ export function SoloTopTenPage() {
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Clean up debounce timers on unmount
+  useEffect(() => () => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    if (suggestTimer.current)  clearTimeout(suggestTimer.current);
+  }, []);
+
   // Capture active settings in a ref so playAgain doesn't drift
   const activeConfig = useRef({ sport: 'nba' as 'nba' | 'nfl', roundType: 'league' as 'league' | 'division', minYear: NBA_MIN, maxYear: NBA_MAX, windowYears: 10 });
 
@@ -67,12 +73,12 @@ export function SoloTopTenPage() {
     activeConfig.current = { sport: setupSport, roundType, minYear, maxYear, windowYears };
     setSport(setupSport);
     setStatus('loading');
-    await loadRound();
+    try { await loadRound(); } catch { setStatus('setup'); }
   }
 
   async function playAgain() {
     setStatus('loading');
-    await loadRound();
+    try { await loadRound(); } catch { setStatus('setup'); }
   }
 
   async function loadRound() {
@@ -92,6 +98,12 @@ export function SoloTopTenPage() {
       const fromYear = currentYear - wy;
       result = await getTopTenDivision(s, cat.key, div.conference, div.division, fromYear, currentYear);
       info = `${div.conference} ${div.division} · last ${wy} yrs`;
+      // Division fallback: if too few results, drop to a league-wide league round
+      if (result.length < 5) {
+        const fallbackYear = years[years.length - 1];
+        result = await getTopTen(s, cat.key, fallbackYear);
+        info = s === 'nba' ? `${fallbackYear}-${String(fallbackYear + 1).slice(-2)} season` : `${fallbackYear} season`;
+      }
     } else {
       const filtered = years.filter(y => y >= mn && y <= mx);
       const pool = filtered.length > 0 ? filtered : years;
@@ -150,9 +162,10 @@ export function SoloTopTenPage() {
     setGuess(val);
     if (suggestTimer.current) clearTimeout(suggestTimer.current);
     if (val.length < 4) { setSuggestions([]); return; }
-    suggestTimer.current = setTimeout(async () => {
-      const s = await getPlayerSuggestions(sport, val);
-      setSuggestions(s);
+    suggestTimer.current = setTimeout(() => {
+      getPlayerSuggestions(sport, val)
+        .then(s => setSuggestions(s))
+        .catch(() => {});
     }, 120);
   }
 

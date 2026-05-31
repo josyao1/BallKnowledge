@@ -120,13 +120,13 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
             ) : lobby.game_type === 'top-ten' ? (
               <>
                 <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
-                  {(cs?.sport || 'nba').toUpperCase()} Top Ten
+                  {(cs?.top_ten_sport || 'nba').toUpperCase()} Top Ten
                 </div>
                 <div className="retro-title text-xl text-[#22c55e]">Top Ten</div>
                 <div className="sports-font text-[9px] text-white/40 tracking-widest">
-                  {cs?.round_type === 'division' ? 'Division Mode' : 'League Mode'}
-                  {cs?.sport === 'nba' || cs?.sport === 'nfl'
-                    ? ` · ${cs?.min_year ?? ''}–${cs?.max_year ?? ''}`
+                  {cs?.top_ten_round_type === 'division' ? 'Division Mode' : 'League Mode'}
+                  {cs?.top_ten_sport === 'nba' || cs?.top_ten_sport === 'nfl'
+                    ? ` · ${cs?.top_ten_min_year ?? ''}–${cs?.top_ten_max_year ?? ''}`
                     : ''}
                   {cs?.max_strikes ? ` · ${cs.max_strikes} strike${cs.max_strikes > 1 ? 's' : ''}` : ''}
                 </div>

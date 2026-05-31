@@ -246,7 +246,7 @@ export function getCategoryDef(sport: 'nba' | 'nfl', key: string): StatCategoryD
 }
 
 export function formatStat(stat: number, categoryKey: string): string {
-  const perGame = ['pts', 'reb', 'ast', 'stl', 'blk', 'fg3m'];
+  const perGame = ['pts', 'reb', 'ast', 'stl', 'blk'];
   return perGame.includes(categoryKey) ? stat.toFixed(1) : stat.toString();
 }
 

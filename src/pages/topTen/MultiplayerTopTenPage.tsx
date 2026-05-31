@@ -37,7 +37,10 @@ export function MultiplayerTopTenPage() {
       setLobby(result.lobby);
       getLobbyPlayers(result.lobby.id).then(pr => {
         if (pr.players) setPlayers(pr.players);
-      });
+      }).catch(err => console.error('[TopTen] getLobbyPlayers failed:', err));
+    }).catch(err => {
+      console.error('[TopTen] findLobbyByCode failed:', err);
+      navigate('/');
     });
   }, []);
 
@@ -107,64 +110,74 @@ export function MultiplayerTopTenPage() {
     if (!lobby || isWritingRef.current) return;
     isWritingRef.current = true;
 
-    const currentStrikes    = { ...playerStrikes };
-    const currentEliminated = [...eliminated];
+    try {
+      const currentStrikes    = { ...playerStrikes };
+      const currentEliminated = [...eliminated];
 
-    if (!correct) {
-      const n = (currentStrikes[currentTurnId] || 0) + 1;
-      currentStrikes[currentTurnId] = n;
-      if (n >= maxStrikes && !currentEliminated.includes(currentTurnId)) {
-        currentEliminated.push(currentTurnId);
+      if (!correct) {
+        const n = (currentStrikes[currentTurnId] || 0) + 1;
+        currentStrikes[currentTurnId] = n;
+        if (n >= maxStrikes && !currentEliminated.includes(currentTurnId)) {
+          currentEliminated.push(currentTurnId);
+        }
       }
+
+      const newActivePlayers  = turnOrder.filter(id => !currentEliminated.includes(id));
+      const finalGuessed      = newGuessedIndices ?? guessedIndices;
+      const allSlotsFilled    = finalGuessed.length >= entries.length;
+      const lastStanding      = newActivePlayers.length === 1;
+      const allOut            = newActivePlayers.length === 0;
+      const roundOver         = allSlotsFilled || lastStanding || allOut;
+
+      const newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+      // If the current player was just eliminated their slot disappears from newActivePlayers,
+      // so the existing currentTurnIndex already points at the next player — don't add 1.
+      const currentWasEliminated = !eliminated.includes(currentTurnId) && currentEliminated.includes(currentTurnId);
+      const nextIndex   = newActivePlayers.length > 0
+        ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
+        : 0;
+
+      if (roundOver) {
+        const mergedAttribution: Record<string, number> =
+          (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
+        // When all players are out with no correct guesses, no winner
+        const sorted = Object.entries(mergedAttribution).sort((a, b) => b[1] - a[1]);
+        const winnerId = lastStanding
+          ? newActivePlayers[0]
+          : (sorted[0]?.[1] > 0 ? sorted[0][0] : '');
+
+        const newState = {
+          ...cs,
+          ...extras,
+          guessed_indices: finalGuessed,
+          player_strikes: currentStrikes,
+          eliminated: currentEliminated,
+          winner_id: winnerId,
+          guess_attribution: mergedAttribution,
+        };
+        await updateCareerState(lobby.id, newState);
+        await updateLobbyStatus(lobby.id, 'finished');
+        setLobby({ ...lobby, career_state: newState, status: 'finished' });
+      } else {
+        const newState = {
+          ...cs,
+          ...extras,
+          guessed_indices: finalGuessed,
+          player_strikes: currentStrikes,
+          eliminated: currentEliminated,
+          current_turn_index: nextIndex,
+          turn_deadline: newDeadline,
+        };
+        await updateCareerState(lobby.id, newState);
+        setLobby({ ...lobby, career_state: newState });
+      }
+    } catch (err) {
+      console.error('[TopTen] advanceTurn failed:', err);
+      setFeedback({ msg: 'Connection error — try again', type: 'wrong' });
+      hasAdvancedRef.current = false;
+    } finally {
+      isWritingRef.current = false;
     }
-
-    const newActivePlayers  = turnOrder.filter(id => !currentEliminated.includes(id));
-    const finalGuessed      = newGuessedIndices ?? guessedIndices;
-    const allSlotsFilled    = finalGuessed.length >= entries.length;
-    const lastStanding      = newActivePlayers.length === 1;
-    const allOut            = newActivePlayers.length === 0;
-    const roundOver         = allSlotsFilled || lastStanding || allOut;
-
-    const newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
-    const nextIndex   = newActivePlayers.length > 0
-      ? (currentTurnIndex + 1) % newActivePlayers.length
-      : 0;
-
-    if (roundOver) {
-      // Use merged attribution (extras may carry the just-updated value)
-      const mergedAttribution: Record<string, number> =
-        (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
-      const winnerId = lastStanding
-        ? newActivePlayers[0]
-        : (Object.entries(mergedAttribution).sort((a, b) => b[1] - a[1])[0]?.[0] ?? turnOrder[0]);
-
-      const newState = {
-        ...cs,
-        ...extras,
-        guessed_indices: finalGuessed,
-        player_strikes: currentStrikes,
-        eliminated: currentEliminated,
-        winner_id: winnerId,
-        guess_attribution: mergedAttribution,
-      };
-      await updateCareerState(lobby.id, newState);
-      await updateLobbyStatus(lobby.id, 'finished');
-      setLobby({ ...lobby, career_state: newState, status: 'finished' });
-    } else {
-      const newState = {
-        ...cs,
-        ...extras,
-        guessed_indices: finalGuessed,
-        player_strikes: currentStrikes,
-        eliminated: currentEliminated,
-        current_turn_index: nextIndex,
-        turn_deadline: newDeadline,
-      };
-      await updateCareerState(lobby.id, newState);
-      setLobby({ ...lobby, career_state: newState });
-    }
-
-    isWritingRef.current = false;
   }, [lobby, cs, currentTurnId, currentTurnIndex, guessedIndices, entries.length,
       playerStrikes, eliminated, maxStrikes, turnOrder, turnTimerSecs]);
 
@@ -203,30 +216,45 @@ export function MultiplayerTopTenPage() {
   // Host: send everyone to results immediately (force end)
   async function handleForceEnd() {
     if (!lobby || !isHost) return;
-    const guessAttribution: Record<string, number> = cs.guess_attribution || {};
-    const winnerId = activePlayers.length === 1
-      ? activePlayers[0]
-      : (Object.entries(guessAttribution).sort((a, b) => b[1] - a[1])[0]?.[0] ?? turnOrder[0]);
-    const newState = { ...cs, winner_id: winnerId };
-    await updateCareerState(lobby.id, newState);
-    await updateLobbyStatus(lobby.id, 'finished');
+    try {
+      const guessAttribution: Record<string, number> = cs.guess_attribution || {};
+      const sorted = Object.entries(guessAttribution).sort((a, b) => b[1] - a[1]);
+      const winnerId = activePlayers.length === 1
+        ? activePlayers[0]
+        : (sorted[0]?.[1] > 0 ? sorted[0][0] : '');
+      const newState = { ...cs, winner_id: winnerId };
+      await updateCareerState(lobby.id, newState);
+      await updateLobbyStatus(lobby.id, 'finished');
+    } catch (err) {
+      console.error('[TopTen] handleForceEnd failed:', err);
+    }
   }
 
   // Host: toggle team logo hints for everyone
   async function handleToggleHint() {
     if (!lobby || !isHost) return;
-    const newState = { ...cs, hint_mode: !hintMode };
-    await updateCareerState(lobby.id, newState);
-    setLobby({ ...lobby, career_state: newState });
+    try {
+      const newState = { ...cs, hint_mode: !hintMode };
+      await updateCareerState(lobby.id, newState);
+      setLobby({ ...lobby, career_state: newState });
+    } catch (err) {
+      console.error('[TopTen] handleToggleHint failed:', err);
+    }
   }
 
   // Host: send everyone back to lobby
   async function handleSendToLobby() {
     if (!lobby || !isHost) return;
-    const newState = { ...cs, abandoned: true };
-    await updateCareerState(lobby.id, newState);
-    await updateLobbyStatus(lobby.id, 'waiting');
-    window.location.href = `/lobby/${code}`;
+    try {
+      const newState = { ...cs, abandoned: true };
+      await updateCareerState(lobby.id, newState);
+      await updateLobbyStatus(lobby.id, 'waiting');
+      window.location.href = `/lobby/${code}`;
+    } catch (err) {
+      console.error('[TopTen] handleSendToLobby failed:', err);
+      // Still attempt redirect so host isn't stranded
+      window.location.href = `/lobby/${code}`;
+    }
   }
 
   if (!lobby || entries.length === 0) {
