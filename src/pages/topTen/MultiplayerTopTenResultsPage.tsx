@@ -39,7 +39,8 @@ export function MultiplayerTopTenResultsPage() {
   const winnerIds: string[]     = cs.winner_ids || (cs.winner_id ? [cs.winner_id] : []);
   const catDef = getCategoryDef(sport, categoryKey);
   const isDivisionRound: boolean = cs.is_division_round || false;
-  const statShortLabel = (isDivisionRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
+  const isTeamRound: boolean = cs.is_team_round || cs.top_ten_round_type === 'team' || false;
+  const statShortLabel = ((isDivisionRound || isTeamRound) && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
 
   // Sort: correct guesses desc → strikes left desc (same tiebreaker as in-game)
   const sortedPlayers = [...players].sort((a, b) => {

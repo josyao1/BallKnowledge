@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, updateCareerState } from '../../services/lobby';
-import { isValidGuess, getCategoryDef, formatStat, getTopTen, getTopTenDivision, pickRandomCategory, getAvailableYears } from '../../services/topTen';
+import { isValidGuess, getCategoryDef, formatStat, getTopTen, getTopTenDivision, getTopTenTeam, pickRandomCategory, getAvailableYears } from '../../services/topTen';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
-import { getNFLDivisions } from '../../data/nfl-teams';
-import { getNBADivisions } from '../../data/teams';
-import { nflTeams } from '../../data/nfl-teams';
+import { getNFLDivisions, nflTeams } from '../../data/nfl-teams';
+import { getNBADivisions, teams as nbaTeams } from '../../data/teams';
 import { TeamLogo } from '../../components/TeamLogo';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
@@ -92,8 +91,10 @@ export function MultiplayerTopTenPage() {
   const maxStrikes: number                        = cs.max_strikes || 2;
   const turnTimerSecs: number                     = cs.turn_timer || 45;
   const isDivisionRound: boolean                  = cs.is_division_round || false;
+  const isTeamRound: boolean                      = cs.is_team_round || cs.top_ten_round_type === 'team' || false;
   const hintMode: boolean                         = cs.hint_mode || false;
-  const showTeamHint: boolean                     = isDivisionRound || hintMode;
+  // Division round shows team logos as hints; team round doesn't (team is already known)
+  const showTeamHint: boolean                     = isDivisionRound || (hintMode && !isTeamRound);
   const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
   const turnDeadline: string | null               = cs.turn_deadline || null;
   const categoryKey: string                       = cs.category || '';
@@ -106,7 +107,8 @@ export function MultiplayerTopTenPage() {
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
   const isMyTurn        = currentTurnId === currentPlayerId;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
-  const statShortLabel = (isDivisionRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
+  const isCumulativeRound = isDivisionRound || isTeamRound;
+  const statShortLabel = (isCumulativeRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
 
   // Timer — active player fires immediately; host fallback after 500ms grace
   useEffect(() => {
@@ -322,14 +324,26 @@ export function MultiplayerTopTenPage() {
   // Generate a fresh round using the same settings currently in career_state
   async function generateRound() {
     const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
-    const roundType: 'league' | 'division' = cs.top_ten_round_type || 'league';
-    const cat = pickRandomCategory(roundSport);
+    const roundType: 'league' | 'division' | 'team' = cs.top_ten_round_type || 'league';
+    const cat = pickRandomCategory(roundSport, roundType);
 
     let newEntries: TopTenEntry[] = [];
     let newRoundInfo = '';
     let usedDivision = false;
+    let newTeamAbbr = '';
 
-    if (roundType === 'division') {
+    if (roundType === 'team') {
+      const windowYears: number = cs.top_ten_window_years || 10;
+      const currentYear = roundSport === 'nba' ? 2025 : 2025;
+      const fromYear = roundSport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
+      const allTeams = roundSport === 'nba' ? nbaTeams : nflTeams;
+      const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
+      newTeamAbbr = picked.abbreviation;
+      const limit = cat.key === 'fantasy_pts' ? 10 : 5 + windowYears / 5;
+      newEntries = await getTopTenTeam(roundSport, cat.key, newTeamAbbr, fromYear, currentYear, limit);
+      newRoundInfo = `${picked.name} · last ${windowYears} years`;
+      usedDivision = roundSport === 'nba';
+    } else if (roundType === 'division') {
       const windowYears: number = cs.top_ten_window_years || 10;
       const currentYear = roundSport === 'nba' ? 2025 : 2025;
       const fromYear = roundSport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
@@ -362,14 +376,14 @@ export function MultiplayerTopTenPage() {
       ? (cat.divisionLabel ?? cat.label)
       : cat.label;
 
-    return { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo };
+    return { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, teamAbbr: newTeamAbbr };
   }
 
   async function handleSkipCategory() {
     if (!lobby || !isHost || isWritingRef.current) return;
     isWritingRef.current = true;
     try {
-      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo } = await generateRound();
+      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, teamAbbr: newTeamAbbr } = await generateRound();
       if (newEntries.length === 0) return;
       const deadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
       const newState = {
@@ -378,6 +392,9 @@ export function MultiplayerTopTenPage() {
         category_label:     catLabel,
         round_info:         newRoundInfo,
         top10_entries:      newEntries,
+        is_division_round:  cs.top_ten_round_type === 'division',
+        is_team_round:      cs.top_ten_round_type === 'team',
+        top_ten_team:       newTeamAbbr,
         guessed_indices:    [],
         wrong_guesses:      [],
         hint_mode:          false,
@@ -441,7 +458,7 @@ export function MultiplayerTopTenPage() {
               Teams
             </button>
           )}
-          {isHost && !isDivisionRound && (
+          {isHost && !isDivisionRound && !isTeamRound && (
             <button
               onClick={handleToggleHint}
               className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
