@@ -95,7 +95,7 @@ export function SoloTopTenPage() {
       const divisions = s === 'nba' ? getNBADivisions() : getNFLDivisions();
       const div = divisions[Math.floor(Math.random() * divisions.length)];
       const currentYear = s === 'nba' ? NBA_MAX : NFL_MAX;
-      const fromYear = currentYear - wy;
+      const fromYear = s === 'nba' ? currentYear - wy : currentYear - wy + 1;
       result = await getTopTenDivision(s, cat.key, div.conference, div.division, fromYear, currentYear);
       info = `${div.conference} ${div.division} · last ${wy} yrs`;
       // Division fallback: if too few results, drop to a league-wide league round

@@ -33,10 +33,10 @@ YEARS = list(range(1999, 2025))
 CAREER_POSITIONS = {"QB", "RB", "WR", "TE"}
 
 # Minimum career production thresholds (same as the old dynamic server)
-MIN_RUSH_YDS  = 1000
-MIN_REC_YDS   = 1000
-MIN_PASS_YDS  = 3000
-MIN_SEASONS   = 5
+MIN_RUSH_YDS  = 400
+MIN_REC_YDS   = 400
+MIN_PASS_YDS  = 1500
+MIN_SEASONS   = 2
 
 OUT_PATH = os.path.join(os.path.dirname(__file__), "data", "nfl_careers.json")
 

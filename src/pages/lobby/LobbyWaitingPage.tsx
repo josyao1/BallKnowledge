@@ -566,7 +566,9 @@ export function LobbyWaitingPage() {
       if (roundType === 'division') {
         const windowYears: number = cs.top_ten_window_years || 10;
         const currentYear = sport === 'nba' ? 2025 : 2024;
-        const fromYear = currentYear - windowYears;
+        // NBA: currentYear=2025 is phantom (no 2025-26 season yet), so -windowYears gives correct count
+        // NFL: seasons are single calendar years, so need +1 to get exactly windowYears seasons
+        const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
         const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
         const div = divs[Math.floor(Math.random() * divs.length)];
         entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear);

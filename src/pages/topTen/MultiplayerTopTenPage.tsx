@@ -9,6 +9,7 @@ import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
 import { TeamLogo } from '../../components/TeamLogo';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
+import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 
 export function MultiplayerTopTenPage() {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ export function MultiplayerTopTenPage() {
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAdvancedRef  = useRef(false);
   const isWritingRef    = useRef(false);
+  // Tracks when the timer first hit zero so the host can fall back after a grace period
+  const zeroSinceRef    = useRef<number | null>(null);
 
   useLobbySubscription(lobby?.id || null);
 
@@ -68,21 +71,37 @@ export function MultiplayerTopTenPage() {
   const isMyTurn        = currentTurnId === currentPlayerId;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
 
-  // Timer
+  // Timer — active player advances immediately on expiry;
+  // host acts as fallback after 2s grace in case the active player is disconnected
   useEffect(() => {
     if (!turnDeadline) return;
     const tick = () => {
       const secs = Math.max(0, Math.round((new Date(turnDeadline).getTime() - Date.now()) / 1000));
       setTimeLeft(secs);
-      if (secs === 0 && isMyTurn && !hasAdvancedRef.current && !isWritingRef.current) {
-        hasAdvancedRef.current = true;
-        advanceTurn(false);
+
+      if (secs === 0) {
+        if (zeroSinceRef.current === null) zeroSinceRef.current = Date.now();
+
+        if (!hasAdvancedRef.current && !isWritingRef.current) {
+          if (isMyTurn) {
+            hasAdvancedRef.current = true;
+            zeroSinceRef.current = null;
+            advanceTurn(false);
+          } else if (isHost && Date.now() - zeroSinceRef.current >= 2000) {
+            // Active player didn't respond — host steps in
+            hasAdvancedRef.current = true;
+            zeroSinceRef.current = null;
+            advanceTurn(false);
+          }
+        }
+      } else {
+        zeroSinceRef.current = null;
       }
     };
     tick();
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
-  }, [turnDeadline, isMyTurn]);
+  }, [turnDeadline, isMyTurn, isHost]);
 
   // Reset advance guard + focus input on turn change
   useEffect(() => {
@@ -242,6 +261,13 @@ export function MultiplayerTopTenPage() {
     }
   }
 
+  // Host: manually skip the current player's turn (e.g., disconnected player)
+  async function handleSkipTurn() {
+    if (!lobby || !isHost || hasAdvancedRef.current || isWritingRef.current) return;
+    hasAdvancedRef.current = true;
+    await advanceTurn(false);
+  }
+
   // Host: send everyone back to lobby
   async function handleSendToLobby() {
     if (!lobby || !isHost) return;
@@ -287,6 +313,14 @@ export function MultiplayerTopTenPage() {
               }`}
             >
               Hint {hintMode ? 'On' : 'Off'}
+            </button>
+          )}
+          {isHost && !isMyTurn && (
+            <button
+              onClick={handleSkipTurn}
+              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-yellow-500/50 hover:text-yellow-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+            >
+              Skip
             </button>
           )}
           {isHost && (
@@ -467,6 +501,7 @@ export function MultiplayerTopTenPage() {
           </div>
         </div>
       </main>
+      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={players.find(p => p.player_id === currentPlayerId)?.player_name ?? ''} />
     </div>
   );
 }

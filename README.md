@@ -39,6 +39,8 @@ Supabase is only needed for multiplayer and leaderboard features.
 
 - **Box Score** — Given only jersey numbers from a real NFL game's box score, name the players.
 
+- **Top Ten** — Name the top 10 players in a stat category for a given season. Wrong guesses cost strikes (3 strikes = game over in solo; host-configurable 1–3 in multiplayer). Multiplayer is turn-based with a 45-second timer — accumulate max strikes and you're eliminated, last one standing wins. Two round types: **League** (best in the whole league that season) and **Division** (cumulative leaders from a division over a 5/10/15/20-year window). Available categories: NBA (PPG, RPG, APG, SPG, BPG, 3PM, GP) and NFL (passing yards/TDs, INTs, rushing yards/TDs, receiving yards/TDs, receptions, plus PPR fantasy points by position — QB/RB/WR/TE).
+
 - **Roll Call** — Open-ended multiplayer: name anyone who ever played for a franchise. Names are validated and deduped after the session ends.
 
 ## Tech Stack
