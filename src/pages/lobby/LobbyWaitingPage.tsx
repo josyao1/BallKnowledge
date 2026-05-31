@@ -29,7 +29,7 @@ import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { longestTenuredTeam } from '../faceReveal/faceRevealUtils';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../../services/boxScoreData';
-import { getTopTen, getTopTenDivision, getTopTenTeam, pickRandomCategory, getAvailableYears } from '../../services/topTen';
+import { generateTopTenRound } from '../../services/topTen';
 import { getRandomNBABoxScoreGame, ALL_NBA_BOX_SCORE_YEARS } from '../../services/nbaBoxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
@@ -555,69 +555,19 @@ export function LobbyWaitingPage() {
       const maxStrikes: number = cs.max_strikes || 2;
       const turnTimer: number = cs.turn_timer || 45;
 
-      const cat = pickRandomCategory(sport, roundType);
       const playersResult = await getLobbyPlayers(lobby.id);
       const lobbyPlayers = playersResult.players || [];
       const turnOrder = lobbyPlayers.map((p: any) => p.player_id);
 
-      let entries: any[] = [];
-      let roundInfo = '';
-      let usedDivision = false;
-      let teamAbbr = '';
-
-      if (roundType === 'team') {
-        const windowYears: number = cs.top_ten_window_years || 10;
-        const currentYear = sport === 'nba' ? 2025 : 2025;
-        const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
-        const allTeams = sport === 'nba' ? teams : nflTeams;
-        const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
-        teamAbbr = picked.abbreviation;
-        const windowStep = (windowYears - 5) / 5;
-        const passingKeys = ['passing_yards', 'passing_tds', 'interceptions'];
-        const rushingKeys = ['rushing_yards', 'rushing_tds'];
-        const receivingKeys = ['receiving_yards', 'receiving_tds', 'receptions'];
-        const baseLimit = cat.key === 'fantasy_pts' ? 10
-          : passingKeys.includes(cat.key) ? 4 + windowStep
-          : rushingKeys.includes(cat.key) ? 6 + windowStep
-          : receivingKeys.includes(cat.key) ? 8 + windowStep
-          : 6 + windowStep; // NBA stats
-        const limit = Math.min(10, baseLimit);
-        entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, limit);
-        roundInfo = `${picked.name} · last ${windowYears} years`;
-        usedDivision = sport === 'nba'; // team mode is also cumulative → use division labels for NBA
-      } else if (roundType === 'division') {
-        const windowYears: number = cs.top_ten_window_years || 10;
-        const currentYear = sport === 'nba' ? 2025 : 2025;
-        // NBA: currentYear=2025 is phantom (no 2025-26 season yet), so -windowYears gives correct count
-        // NFL: seasons are single calendar years, so need +1 to get exactly windowYears seasons
-        const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
-        const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
-        const div = divs[Math.floor(Math.random() * divs.length)];
-        entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear);
-        roundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
-        if (entries.length >= 5) {
-          usedDivision = true;
-        } else {
-          // Retry with league round if too few entries
-          const years = getAvailableYears(sport, cat.key);
-          const year = years[Math.floor(Math.random() * years.length)];
-          entries = await getTopTen(sport, cat.key, year);
-          roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-        }
-      } else {
-        const minYear: number = cs.top_ten_min_year || (sport === 'nba' ? 1996 : 1999);
-        const maxYear: number = cs.top_ten_max_year || (sport === 'nba' ? 2025 : 2025);
-        const years = getAvailableYears(sport, cat.key).filter(y => y >= minYear && y <= maxYear);
-        const year = years[Math.floor(Math.random() * Math.max(years.length, 1))];
-        entries = await getTopTen(sport, cat.key, year);
-        roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-      }
+      const { entries, cat, catLabel: categoryLabel, roundInfo, isDivisionRound, isTeamRound, teamAbbr } =
+        await generateTopTenRound({
+          sport, roundType,
+          minYear: cs.top_ten_min_year,
+          maxYear: cs.top_ten_max_year,
+          windowYears: cs.top_ten_window_years || 10,
+        });
 
       if (entries.length === 0) { setIsLoadingRoster(false); return; }
-
-      const categoryLabel = usedDivision && sport === 'nba'
-        ? (cat.divisionLabel ?? cat.label)
-        : cat.label;
 
       const deadline = new Date(Date.now() + turnTimer * 1000).toISOString();
       const newState = {
@@ -636,8 +586,8 @@ export function LobbyWaitingPage() {
         turn_deadline: deadline,
         max_strikes: maxStrikes,
         turn_timer: turnTimer,
-        is_division_round: roundType === 'division',
-        is_team_round: roundType === 'team',
+        is_division_round: isDivisionRound,
+        is_team_round: isTeamRound,
         top_ten_team: teamAbbr,
         hint_mode: false,
         top_ten_sport: sport,

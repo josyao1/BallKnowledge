@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, updateCareerState } from '../../services/lobby';
-import { isValidGuess, getCategoryDef, formatStat, getTopTen, getTopTenDivision, getTopTenTeam, pickRandomCategory, getAvailableYears } from '../../services/topTen';
+import { isValidGuess, getCategoryDef, generateTopTenRound, parseRoundFlags, getStatShortLabel } from '../../services/topTen';
+import { nflTeams } from '../../data/nfl-teams';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
-import { getNFLDivisions, nflTeams } from '../../data/nfl-teams';
-import { getNBADivisions, teams as nbaTeams } from '../../data/teams';
+import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
+import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
 import { TeamLogo } from '../../components/TeamLogo';
-import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 
@@ -220,8 +220,7 @@ export function MultiplayerTopTenPage() {
   const playerStrikes: Record<string, number>     = cs.player_strikes || {};
   const maxStrikes: number                        = cs.max_strikes || 2;
   const turnTimerSecs: number                     = cs.turn_timer || 45;
-  const isDivisionRound: boolean                  = cs.is_division_round || false;
-  const isTeamRound: boolean                      = cs.is_team_round || cs.top_ten_round_type === 'team' || false;
+  const { isDivisionRound, isTeamRound, isCumulativeRound } = parseRoundFlags(cs);
   const hintMode: boolean                         = cs.hint_mode || false;
   // Division round shows team logos as hints; team round doesn't (team is already known)
   const showTeamHint: boolean                     = isDivisionRound || (hintMode && !isTeamRound);
@@ -237,8 +236,7 @@ export function MultiplayerTopTenPage() {
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
   const isMyTurn        = currentTurnId === currentPlayerId;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
-  const isCumulativeRound = isDivisionRound || isTeamRound;
-  const statShortLabel = (isCumulativeRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
+  const statShortLabel  = getStatShortLabel(catDef, isCumulativeRound, sport);
 
   // Timer — active player fires immediately; host fallback after 500ms grace
   useEffect(() => {
@@ -465,66 +463,20 @@ export function MultiplayerTopTenPage() {
   // Generate a fresh round using the same settings currently in career_state
   async function generateRound() {
     const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
-    const roundType: 'league' | 'division' | 'team' = cs.top_ten_round_type || 'league';
-    const cat = pickRandomCategory(roundSport, roundType);
-
-    let newEntries: TopTenEntry[] = [];
-    let newRoundInfo = '';
-    let usedDivision = false;
-    let newTeamAbbr = '';
-
-    if (roundType === 'team') {
-      const windowYears: number = cs.top_ten_window_years || 10;
-      const currentYear = roundSport === 'nba' ? 2025 : 2025;
-      const fromYear = roundSport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
-      const allTeams = roundSport === 'nba' ? nbaTeams : nflTeams;
-      const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
-      newTeamAbbr = picked.abbreviation;
-      const limit = cat.key === 'fantasy_pts' ? 10 : 5 + windowYears / 5;
-      newEntries = await getTopTenTeam(roundSport, cat.key, newTeamAbbr, fromYear, currentYear, limit);
-      newRoundInfo = `${picked.name} · last ${windowYears} years`;
-      usedDivision = roundSport === 'nba';
-    } else if (roundType === 'division') {
-      const windowYears: number = cs.top_ten_window_years || 10;
-      const currentYear = roundSport === 'nba' ? 2025 : 2025;
-      const fromYear = roundSport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
-      const divs = roundSport === 'nba' ? getNBADivisions() : getNFLDivisions();
-      const div = divs[Math.floor(Math.random() * divs.length)];
-      newEntries = await getTopTenDivision(roundSport, cat.key, div.conference, div.division, fromYear, currentYear);
-      newRoundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
-      if (newEntries.length >= 5) {
-        usedDivision = true;
-      } else {
-        const years = getAvailableYears(roundSport, cat.key);
-        const year = years[Math.floor(Math.random() * years.length)];
-        newEntries = await getTopTen(roundSport, cat.key, year);
-        newRoundInfo = roundSport === 'nba'
-          ? `${year}-${String(year + 1).slice(-2)} season`
-          : `${year} season`;
-      }
-    } else {
-      const minYear: number = cs.top_ten_min_year || (roundSport === 'nba' ? 1996 : 1999);
-      const maxYear: number = cs.top_ten_max_year || (roundSport === 'nba' ? 2025 : 2025);
-      const years = getAvailableYears(roundSport, cat.key).filter(y => y >= minYear && y <= maxYear);
-      const year = years[Math.floor(Math.random() * Math.max(years.length, 1))];
-      newEntries = await getTopTen(roundSport, cat.key, year);
-      newRoundInfo = roundSport === 'nba'
-        ? `${year}-${String(year + 1).slice(-2)} season`
-        : `${year} season`;
-    }
-
-    const catLabel = usedDivision && roundSport === 'nba'
-      ? (cat.divisionLabel ?? cat.label)
-      : cat.label;
-
-    return { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, teamAbbr: newTeamAbbr };
+    return generateTopTenRound({
+      sport:       roundSport,
+      roundType:   cs.top_ten_round_type || 'league',
+      minYear:     cs.top_ten_min_year   || (roundSport === 'nba' ? 1996 : 1999),
+      maxYear:     cs.top_ten_max_year   || 2025,
+      windowYears: cs.top_ten_window_years || 10,
+    });
   }
 
   async function handleSkipCategory() {
     if (!lobby || !isHost || isWritingRef.current) return;
     isWritingRef.current = true;
     try {
-      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, teamAbbr: newTeamAbbr } = await generateRound();
+      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, isDivisionRound: newDiv, isTeamRound: newTeam, teamAbbr: newTeamAbbr } = await generateRound();
       if (newEntries.length === 0) return;
       const deadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
       const newState = {
@@ -533,8 +485,8 @@ export function MultiplayerTopTenPage() {
         category_label:     catLabel,
         round_info:         newRoundInfo,
         top10_entries:      newEntries,
-        is_division_round:  cs.top_ten_round_type === 'division',
-        is_team_round:      cs.top_ten_round_type === 'team',
+        is_division_round:  newDiv,
+        is_team_round:      newTeam,
         top_ten_team:       newTeamAbbr,
         guessed_indices:    [],
         wrong_guesses:      [],
@@ -740,69 +692,23 @@ export function MultiplayerTopTenPage() {
 
         {/* Board */}
         <div className="space-y-1.5">
-          {entries.map((entry, i) => {
-            const isRevealed = guessedIndices.includes(i);
-            return (
-              <motion.div
-                key={i}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
-                  isRevealed
-                    ? 'bg-emerald-950/40 border-emerald-700/35'
-                    : 'bg-[#0b0b0b] border-white/4'
-                }`}
-              >
-                <span className="sports-font text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">#{i + 1}</span>
-                <div
-                  className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
-                    isRevealed ? 'ring-emerald-500/40' : 'ring-white/5'
-                  }`}
-                  style={{
-                    filter: isRevealed ? 'none' : 'blur(14px) saturate(0) brightness(0.45)',
-                    opacity: isRevealed ? 1 : 0.6,
-                  }}
-                >
-                  <PlayerHeadshot playerId={entry.playerId} sport={sport as 'nba' | 'nfl'} className="w-9 h-9 object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {isRevealed ? (
-                    <>
-                      <p className="retro-title text-sm text-emerald-300 leading-tight truncate">{entry.playerName}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <TeamLogo abbr={entry.team} sport={sport as 'nba' | 'nfl'} size={18} />
-                        <p className="sports-font text-[9px] text-white/40">{entry.year}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {showTeamHint && <TeamLogo abbr={entry.team} sport={sport as 'nba' | 'nfl'} size={20} />}
-                      <p className="sports-font text-[10px] text-white/20 tracking-[0.2em]">???</p>
-                    </div>
-                  )}
-                </div>
-                {isRevealed && catDef && (
-                  <span className="sports-font text-xs text-[#22c55e] shrink-0 tabular-nums">
-                    {formatStat(entry.stat, categoryKey)}{' '}
-                    <span className="text-[9px] opacity-60">{statShortLabel}</span>
-                  </span>
-                )}
-              </motion.div>
-            );
-          })}
+          {entries.map((entry, i) => (
+            <TopTenEntryRow
+              key={i}
+              entry={entry}
+              index={i}
+              wasGuessed={guessedIndices.includes(i)}
+              showTeamHint={showTeamHint}
+              sport={sport as 'nba' | 'nfl'}
+              categoryKey={categoryKey}
+              catDef={catDef}
+              statShortLabel={statShortLabel}
+            />
+          ))}
         </div>
 
         {/* Wrong guesses */}
-        {wrongGuesses.length > 0 && (
-          <div>
-            <p className="sports-font text-[9px] text-white/20 tracking-widest uppercase mb-2">Not in top 10</p>
-            <div className="flex flex-wrap gap-1.5">
-              {wrongGuesses.map((name, i) => (
-                <span key={i} className="sports-font text-[10px] text-red-400/50 bg-red-950/20 border border-red-900/30 px-2 py-0.5 rounded-sm">
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Player scoreboard */}
         <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-3">

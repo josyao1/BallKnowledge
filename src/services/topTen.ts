@@ -1,7 +1,7 @@
 import { loadNBACareers, loadNFLLineupPool } from './careerData';
 import { NBA_FRANCHISE_ALIASES, NFL_FRANCHISE_ALIASES } from './capCrunchData';
-import { teams } from '../data/teams';
-import { nflTeams } from '../data/nfl-teams';
+import { teams, getNBADivisions } from '../data/teams';
+import { nflTeams, getNFLDivisions } from '../data/nfl-teams';
 import { areSimilarNames, normalize } from '../utils/fuzzyDedup';
 import { getAwardEntries, getAwardYears, AWARD_CATEGORY_KEYS } from '../data/nflAwards';
 
@@ -527,4 +527,121 @@ export function isValidGuess(
     }
   }
   return [];
+}
+
+// ─── Shared round utilities ────────────────────────────────────────────────────
+
+/** Board size for team mode — varies by stat group and window length. */
+export function calcTeamBoardLimit(categoryKey: string, windowYears: number): number {
+  if (categoryKey === 'fantasy_pts') return 10;
+  const step = (windowYears - 5) / 5;
+  if (['passing_yards', 'passing_tds', 'interceptions'].includes(categoryKey)) return Math.min(10, 4 + step);
+  if (['rushing_yards', 'rushing_tds'].includes(categoryKey))                   return Math.min(10, 6 + step);
+  if (['receiving_yards', 'receiving_tds', 'receptions'].includes(categoryKey)) return Math.min(10, 8 + step);
+  return Math.min(10, 6 + step); // NBA stats
+}
+
+/** Selects the correct short label for cumulative NBA rounds vs normal. */
+export function getStatShortLabel(
+  catDef: StatCategoryDef | undefined,
+  isCumulative: boolean,
+  sport: string,
+): string | undefined {
+  if (isCumulative && sport === 'nba' && catDef?.divisionShortLabel) return catDef.divisionShortLabel;
+  return catDef?.shortLabel;
+}
+
+/** Extracts round-type flags from a career_state object. */
+export function parseRoundFlags(cs: Record<string, any>): {
+  isDivisionRound: boolean;
+  isTeamRound: boolean;
+  isCumulativeRound: boolean;
+} {
+  const isDivisionRound = Boolean(cs.is_division_round);
+  const isTeamRound = Boolean(cs.is_team_round) || cs.top_ten_round_type === 'team';
+  return { isDivisionRound, isTeamRound, isCumulativeRound: isDivisionRound || isTeamRound };
+}
+
+// ─── generateTopTenRound ──────────────────────────────────────────────────────
+
+export interface GenerateRoundConfig {
+  sport: 'nba' | 'nfl';
+  roundType: 'league' | 'division' | 'team';
+  minYear?: number;
+  maxYear?: number;
+  windowYears?: number;
+}
+
+export interface GenerateRoundResult {
+  entries: TopTenEntry[];
+  cat: StatCategoryDef;
+  catLabel: string;
+  roundInfo: string;
+  isDivisionRound: boolean;
+  isTeamRound: boolean;
+  teamAbbr: string;
+}
+
+/** Picks a random category + generates the top-10 list for the given round config. */
+export async function generateTopTenRound(config: GenerateRoundConfig): Promise<GenerateRoundResult> {
+  const { sport, roundType } = config;
+  const windowYears = config.windowYears ?? 10;
+  const currentYear = 2025;
+  const defaultMinYear = sport === 'nba' ? 1996 : 1999;
+  const minYear = config.minYear ?? defaultMinYear;
+  const maxYear = config.maxYear ?? currentYear;
+
+  const cat = pickRandomCategory(sport, roundType);
+  const years = getAvailableYears(sport, cat.key);
+
+  let entries: TopTenEntry[] = [];
+  let roundInfo = '';
+  let isDivisionRound = false;
+  let isTeamRound = false;
+  let teamAbbr = '';
+
+  if (roundType === 'team') {
+    const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
+    const allTeams = sport === 'nba' ? teams : nflTeams;
+    const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
+    teamAbbr = picked.abbreviation;
+    entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, calcTeamBoardLimit(cat.key, windowYears));
+    roundInfo = `${picked.name} · last ${windowYears} years`;
+    isTeamRound = true;
+    isDivisionRound = sport === 'nba'; // cumulative NBA uses division labels
+  } else if (roundType === 'division') {
+    const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
+    const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
+    const div = divs[Math.floor(Math.random() * divs.length)];
+    entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear);
+    roundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
+    if (entries.length >= 5) {
+      isDivisionRound = true;
+    } else {
+      const year = years[Math.floor(Math.random() * years.length)];
+      entries = await getTopTen(sport, cat.key, year);
+      roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+    }
+  } else {
+    const filtered = years.filter(y => y >= minYear && y <= maxYear);
+    const pool = filtered.length > 0 ? filtered : years;
+    const year = pool[Math.floor(Math.random() * pool.length)];
+    entries = await getTopTen(sport, cat.key, year);
+    roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+  }
+
+  // Final safety fallback
+  if (entries.length < 5) {
+    const year = years[Math.floor(Math.random() * years.length)];
+    entries = await getTopTen(sport, cat.key, year);
+    roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+    isDivisionRound = false;
+    isTeamRound = false;
+    teamAbbr = '';
+  }
+
+  const isCumulative = isDivisionRound || isTeamRound;
+  const catLabel = isCumulative && sport === 'nba' ? (cat.divisionLabel ?? cat.label) : cat.label;
+
+  return { entries, cat, catLabel, roundInfo, isDivisionRound, isTeamRound, teamAbbr };
 }

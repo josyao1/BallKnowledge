@@ -3,15 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
-  getTopTen, getTopTenDivision, getTopTenTeam, pickRandomCategory,
-  getAvailableYears, isValidGuess, getCategoryDef, formatStat,
-  getPlayerSuggestions,
+  isValidGuess, getCategoryDef, getPlayerSuggestions,
+  generateTopTenRound, getStatShortLabel,
 } from '../../services/topTen';
-import { getNBADivisions, teams as nbaTeams } from '../../data/teams';
-import { getNFLDivisions, nflTeams } from '../../data/nfl-teams';
 import type { TopTenEntry } from '../../services/topTen';
-import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
-import { TeamLogo } from '../../components/TeamLogo';
+import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
+import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
 
 const MAX_STRIKES = 3;
 const NBA_MIN = 1996; const NBA_MAX = 2025;
@@ -85,70 +82,14 @@ export function SoloTopTenPage() {
 
   async function loadRound() {
     const { sport: s, roundType: rt, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
-    const cat = pickRandomCategory(s, rt);
-    const years = getAvailableYears(s, cat.key);
-    let result: TopTenEntry[] = [];
-    let info = '';
-    let usedDivision = false;
-    let usedTeam = false;
-
-    if (rt === 'team') {
-      const currentYear = s === 'nba' ? NBA_MAX : NFL_MAX;
-      const fromYear = s === 'nba' ? currentYear - wy : currentYear - wy + 1;
-      const allTeams = s === 'nba' ? nbaTeams : nflTeams;
-      const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
-      const windowStep = (wy - 5) / 5;
-      const passingKeys = ['passing_yards', 'passing_tds', 'interceptions'];
-      const rushingKeys = ['rushing_yards', 'rushing_tds'];
-      const receivingKeys = ['receiving_yards', 'receiving_tds', 'receptions'];
-      const baseLimit = cat.key === 'fantasy_pts' ? 10
-        : passingKeys.includes(cat.key) ? 4 + windowStep
-        : rushingKeys.includes(cat.key) ? 6 + windowStep
-        : receivingKeys.includes(cat.key) ? 8 + windowStep
-        : 6 + windowStep;
-      const limit = Math.min(10, baseLimit);
-      result = await getTopTenTeam(s, cat.key, picked.abbreviation, fromYear, currentYear, limit);
-      info = `${picked.name} · last ${wy} years`;
-      usedTeam = true;
-      usedDivision = s === 'nba';
-    } else if (rt === 'division') {
-      const currentYear = s === 'nba' ? NBA_MAX : NFL_MAX;
-      const fromYear = s === 'nba' ? currentYear - wy : currentYear - wy + 1;
-      const divisions = s === 'nba' ? getNBADivisions() : getNFLDivisions();
-      const div = divisions[Math.floor(Math.random() * divisions.length)];
-      result = await getTopTenDivision(s, cat.key, div.conference, div.division, fromYear, currentYear);
-      info = `${div.conference} ${div.division} · last ${wy} yrs`;
-      if (result.length >= 5) {
-        usedDivision = true;
-      } else {
-        const year = years[Math.floor(Math.random() * years.length)];
-        result = await getTopTen(s, cat.key, year);
-        info = s === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-      }
-    } else {
-      const filtered = years.filter(y => y >= mn && y <= mx);
-      const pool = filtered.length > 0 ? filtered : years;
-      const year = pool[Math.floor(Math.random() * pool.length)];
-      result = await getTopTen(s, cat.key, year);
-      info = s === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-    }
-
-    if (result.length < 5) {
-      const year = years[years.length - 3 + Math.floor(Math.random() * 3)];
-      result = await getTopTen(s, cat.key, year);
-      info = s === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-      usedDivision = false;
-      usedTeam = false;
-    }
-
-    const catLabel = usedDivision && s === 'nba' ? (cat.divisionLabel ?? cat.label) : cat.label;
-
+    const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team } =
+      await generateTopTenRound({ sport: s, roundType: rt, minYear: mn, maxYear: mx, windowYears: wy });
     setCategory(cat.key);
     setCategoryLabel(catLabel);
     setEntries(result);
     setRoundInfo(info);
-    setIsDivisionRound(usedDivision && !usedTeam);
-    setIsTeamRound(usedTeam);
+    setIsDivisionRound(div);
+    setIsTeamRound(team);
     setGuessedIndices([]);
     setStrikes(0);
     setGuess('');
@@ -203,10 +144,10 @@ export function SoloTopTenPage() {
     submitGuess(guess);
   }
 
-  const isDone           = status === 'done';
-  const catDef           = getCategoryDef(sport, category);
+  const isDone            = status === 'done';
+  const catDef            = getCategoryDef(sport, category);
   const isCumulativeRound = isDivisionRound || isTeamRound;
-  const statShortLabel   = (isCumulativeRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
+  const statShortLabel    = getStatShortLabel(catDef, isCumulativeRound, sport);
   const sportMin         = setupSport === 'nba' ? NBA_MIN : NFL_MIN;
   const sportMax         = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
   const showTeamHint     = isDivisionRound || (hintMode && !isTeamRound);
@@ -427,84 +368,25 @@ export function SoloTopTenPage() {
 
         {/* Board */}
         <div className="space-y-1.5">
-          {entries.map((entry, i) => {
-            const isRevealed = guessedIndices.includes(i) || isDone;
-            const wasGuessed = guessedIndices.includes(i);
-            const justGuessed = wasGuessed && guessedIndices[guessedIndices.length - 1] === i;
-
-            return (
-              <motion.div
-                key={i}
-                initial={false}
-                animate={justGuessed ? { x: [0, -3, 3, -2, 2, 0] } : {}}
-                transition={{ duration: 0.35 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors duration-400 ${
-                  isRevealed
-                    ? wasGuessed
-                      ? 'bg-emerald-950/40 border-emerald-700/35'
-                      : 'bg-[#0f0f0f] border-white/6'
-                    : 'bg-[#0b0b0b] border-white/4'
-                }`}
-              >
-                {/* Rank */}
-                <span className="sports-font text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">#{i + 1}</span>
-
-                {/* Headshot — blurred + dim when unrevealed */}
-                <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
-                  isRevealed
-                    ? wasGuessed ? 'ring-emerald-500/40' : 'ring-white/8'
-                    : 'ring-white/5'
-                }`}
-                  style={{ filter: isRevealed ? 'none' : 'blur(14px) saturate(0) brightness(0.45)', opacity: isRevealed ? 1 : 0.6 }}
-                >
-                  <PlayerHeadshot playerId={entry.playerId} sport={sport} className="w-9 h-9 object-cover" />
-                </div>
-
-                {/* Name / info */}
-                <div className="flex-1 min-w-0">
-                  {isRevealed ? (
-                    <>
-                      <p className={`retro-title text-sm leading-tight truncate ${wasGuessed ? 'text-emerald-300' : 'text-white/45'}`}>
-                        {entry.playerName}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <TeamLogo abbr={entry.team} sport={sport} size={18} />
-                        <p className="sports-font text-[9px] text-white/40">{entry.year}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {showTeamHint && <TeamLogo abbr={entry.team} sport={sport} size={16} />}
-                      <p className="sports-font text-[10px] text-white/20 tracking-[0.2em]">???</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Stat */}
-                {isRevealed && catDef && (
-                  <span className={`sports-font text-xs tabular-nums shrink-0 ${wasGuessed ? 'text-[#22c55e]' : 'text-white/25'}`}>
-                    {formatStat(entry.stat, category)}{' '}
-                    <span className="text-[9px] opacity-60">{statShortLabel}</span>
-                  </span>
-                )}
-              </motion.div>
-            );
-          })}
+          {entries.map((entry, i) => (
+            <TopTenEntryRow
+              key={i}
+              entry={entry}
+              index={i}
+              wasGuessed={guessedIndices.includes(i)}
+              gameOver={isDone}
+              showTeamHint={showTeamHint}
+              sport={sport}
+              categoryKey={category}
+              catDef={catDef}
+              statShortLabel={statShortLabel}
+              justGuessed={guessedIndices.includes(i) && guessedIndices[guessedIndices.length - 1] === i}
+            />
+          ))}
         </div>
 
         {/* Wrong guesses */}
-        {wrongGuesses.length > 0 && (
-          <div className="pt-1">
-            <p className="sports-font text-[9px] text-white/20 tracking-widest uppercase mb-2">Not in top 10</p>
-            <div className="flex flex-wrap gap-1.5">
-              {wrongGuesses.map((name, i) => (
-                <span key={i} className="sports-font text-[10px] text-red-400/50 bg-red-950/20 border border-red-900/30 px-2 py-0.5 rounded-sm">
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Done state */}
         {isDone && (
