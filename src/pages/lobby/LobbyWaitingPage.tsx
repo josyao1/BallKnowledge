@@ -572,7 +572,16 @@ export function LobbyWaitingPage() {
         const allTeams = sport === 'nba' ? teams : nflTeams;
         const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
         teamAbbr = picked.abbreviation;
-        const limit = cat.key === 'fantasy_pts' ? 10 : Math.min(10, 8 + (windowYears - 5) / 5);
+        const windowStep = (windowYears - 5) / 5;
+        const passingKeys = ['passing_yards', 'passing_tds', 'interceptions'];
+        const rushingKeys = ['rushing_yards', 'rushing_tds'];
+        const receivingKeys = ['receiving_yards', 'receiving_tds', 'receptions'];
+        const baseLimit = cat.key === 'fantasy_pts' ? 10
+          : passingKeys.includes(cat.key) ? 4 + windowStep
+          : rushingKeys.includes(cat.key) ? 6 + windowStep
+          : receivingKeys.includes(cat.key) ? 8 + windowStep
+          : 6 + windowStep; // NBA stats
+        const limit = Math.min(10, baseLimit);
         entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, limit);
         roundInfo = `${picked.name} · last ${windowYears} years`;
         usedDivision = sport === 'nba'; // team mode is also cumulative → use division labels for NBA
