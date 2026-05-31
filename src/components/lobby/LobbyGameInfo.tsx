@@ -34,7 +34,7 @@ interface Props {
   lobby: Lobby;
   players: Player[];
   isHost: boolean;
-  onToggleSettings: () => void;
+  onToggleSettings?: () => void;
 }
 
 export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Props) {
@@ -43,7 +43,8 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
     && lobby.game_type !== 'scramble'
     && lobby.game_type !== 'lineup-is-right'
     && lobby.game_type !== 'starting-lineup'
-    && lobby.game_type !== 'face-reveal';
+    && lobby.game_type !== 'face-reveal'
+    && lobby.game_type !== 'top-ten';
   const hasWins = players.some(p => (p.wins ?? 0) > 0);
 
   return (
@@ -116,6 +117,20 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
                   First to {cs?.win_target ?? '?'} pts
                 </div>
               </>
+            ) : lobby.game_type === 'top-ten' ? (
+              <>
+                <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                  {(cs?.top_ten_sport || 'nba').toUpperCase()} Top Ten
+                </div>
+                <div className="retro-title text-xl text-[#22c55e]">Top Ten</div>
+                <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                  {cs?.top_ten_round_type === 'division' ? 'Division Mode' : 'League Mode'}
+                  {cs?.top_ten_sport === 'nba' || cs?.top_ten_sport === 'nfl'
+                    ? ` · ${cs?.top_ten_min_year ?? ''}–${cs?.top_ten_max_year ?? ''}`
+                    : ''}
+                  {cs?.max_strikes ? ` · ${cs.max_strikes} strike${cs.max_strikes > 1 ? 's' : ''}` : ''}
+                </div>
+              </>
             ) : (
               /* Roster mode */
               <>
@@ -149,7 +164,7 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
                 </div>
               </div>
             )}
-            {isHost && (
+            {isHost && onToggleSettings && (
               <button
                 onClick={onToggleSettings}
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"

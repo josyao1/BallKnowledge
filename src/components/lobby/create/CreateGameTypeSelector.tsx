@@ -3,7 +3,7 @@
  * Shows all available modes with popular indicators and a legend.
  */
 
-type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal';
+type LobbyMode = 'roster' | 'career' | 'scramble' | 'lineup-is-right' | 'box-score' | 'starting-lineup' | 'face-reveal' | 'top-ten';
 
 const MODES: { value: LobbyMode; label: React.ReactNode; activeClass: string }[] = [
   {
@@ -21,6 +21,7 @@ const MODES: { value: LobbyMode; label: React.ReactNode; activeClass: string }[]
   },
   { value: 'box-score',      label: 'Box Score',    activeClass: 'bg-[#f59e0b] text-black' },
   { value: 'starting-lineup', label: 'Starters',   activeClass: 'bg-[#16a34a] text-white' },
+  { value: 'top-ten',         label: 'Top Ten',    activeClass: 'bg-[#22c55e] text-black' },
 ];
 
 interface Props {

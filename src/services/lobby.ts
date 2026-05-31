@@ -727,7 +727,8 @@ export async function resetMatchForPlayAgain(
   lobbyId: string,
   winTarget: number,
   careerFrom?: number,
-  careerTo?: number
+  careerTo?: number,
+  extraState?: Record<string, unknown>
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
@@ -754,6 +755,7 @@ export async function resetMatchForPlayAgain(
         round: 0,
         career_from: careerFrom || 0,
         career_to: careerTo || 0,
+        ...extraState,
       },
       status: 'waiting',
       finished_at: null,

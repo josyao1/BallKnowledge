@@ -35,7 +35,7 @@ type GenericTeam = {
   colors: { primary: string; secondary: string };
 };
 
-const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal'] as const;
+const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal', 'top-ten'] as const;
 type LobbyMode = typeof VALID_LOBBY_MODES[number];
 
 export function LobbyCreatePage() {
@@ -80,6 +80,7 @@ export function LobbyCreatePage() {
     lobbyMode === 'box-score' ||
     lobbyMode === 'starting-lineup' ||
     lobbyMode === 'face-reveal' ||
+    lobbyMode === 'top-ten' ||
     gameMode === 'random' ||
     (selectedTeam && selectedYear)
   );
@@ -143,6 +144,16 @@ export function LobbyCreatePage() {
       const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'face-reveal', 'team', null, null);
       if (lobby) {
         await updateCareerState(lobby.id, { win_target: 30, career_to: 0, timer: 60, min_yards: 0, min_mpg: 0, defense_mode: 'known', round: 0 });
+        navigate(`/lobby/${lobby.join_code}`);
+      }
+      return;
+    }
+
+    if (lobbyMode === 'top-ten') {
+      const dummyTeamAbbr = sport === 'nba' ? 'LAL' : 'KC';
+      const dummySeason   = sport === 'nba' ? '2024-25' : '2024';
+      const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'top-ten', 'team', null, null);
+      if (lobby) {
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
