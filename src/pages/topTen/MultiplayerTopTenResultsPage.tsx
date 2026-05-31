@@ -119,15 +119,13 @@ export function MultiplayerTopTenResultsPage() {
                     <PlayerHeadshot playerId={entry.playerId} sport={sport} className="w-8 h-8 object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`retro-title text-sm truncate ${isRevealed ? 'text-emerald-300' : 'text-white/35'}`}>
+                    <p className={`retro-title text-sm truncate ${isRevealed ? 'text-emerald-300' : 'text-white/40'}`}>
                       {entry.playerName}
                     </p>
-                    {isRevealed && (
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <TeamLogo abbr={entry.team} sport={sport} size={14} />
-                        <span className="sports-font text-[9px] text-white/30">{entry.year}</span>
-                      </div>
-                    )}
+                    <div className={`flex items-center gap-1.5 mt-0.5 ${isRevealed ? '' : 'opacity-40'}`}>
+                      <TeamLogo abbr={entry.team} sport={sport} size={14} />
+                      <span className="sports-font text-[9px] text-white/30">{entry.year}</span>
+                    </div>
                   </div>
                   {catDef && (
                     <span className={`sports-font text-xs shrink-0 tabular-nums ${isRevealed ? 'text-[#22c55e]' : 'text-white/20'}`}>
