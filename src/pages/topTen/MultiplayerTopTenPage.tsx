@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
@@ -12,6 +12,136 @@ import { TeamLogo } from '../../components/TeamLogo';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
+
+const ANIM_MS = 2500;
+const SUSPENSE_MS = 1200;
+
+function RevealOverlay({ guessedName, isCorrect }: { guessedName: string; isCorrect: boolean }) {
+  const [phase, setPhase] = useState<'suspense' | 'reveal'>('suspense');
+
+  // Deterministic confetti particles — avoids re-generating on each render
+  const particles = useMemo(() =>
+    Array.from({ length: 32 }, (_, i) => ({
+      id: i,
+      color: ['#22c55e', '#d4af37', '#60a5fa', '#a78bfa', '#fb923c', '#f472b6', '#34d399', '#fbbf24'][i % 8],
+      xStart: ((i * 37) % 80) - 40,
+      xDrift: ((i * 53) % 160) - 80,
+      yHeight: 100 + (i * 17) % 120,
+      rotation: (i * 97) % 720 - 360,
+      delay: i * 0.018,
+      w: 5 + (i % 5) * 2,
+      h: 5 + (i % 4) * 2,
+    })), []
+  );
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase('reveal'), SUSPENSE_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#050505]/98"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+    >
+      <AnimatePresence mode="wait">
+        {phase === 'suspense' ? (
+          <motion.div
+            key="suspense"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="text-center px-8 py-10 bg-[#111] border border-white/10 rounded-sm max-w-xs w-full mx-6"
+          >
+            <motion.p
+              className="retro-title text-3xl text-white leading-tight"
+              animate={{ textShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 24px rgba(255,255,255,0.7)', '0 0 0px rgba(255,255,255,0)'] }}
+              transition={{ duration: 0.9, repeat: Infinity }}
+            >
+              {guessedName}
+            </motion.p>
+            <div className="flex justify-center gap-2 mt-5">
+              {[0, 1, 2].map(i => (
+                <motion.span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-white/40"
+                  animate={{ opacity: [0.15, 1, 0.15] }}
+                  transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.3 }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        ) : isCorrect ? (
+          // Correct — confetti burst + bounce
+          <motion.div key="correct" className="relative flex items-center justify-center">
+            {/* Confetti particles */}
+            {particles.map(p => (
+              <motion.div
+                key={p.id}
+                className="absolute rounded-sm pointer-events-none"
+                style={{ backgroundColor: p.color, width: p.w, height: p.h }}
+                initial={{ x: p.xStart, y: 0, opacity: 1, rotate: 0 }}
+                animate={{ x: p.xStart + p.xDrift, y: -p.yHeight, opacity: [1, 1, 0], rotate: p.rotation }}
+                transition={{ duration: 1.1 + p.delay * 3, delay: p.delay, ease: 'easeOut' }}
+              />
+            ))}
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0 }}
+              animate={{ scale: [0.88, 1.08, 0.97, 1.02, 1], opacity: 1 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              className="text-center px-8 py-10 bg-emerald-950/60 border border-emerald-500/60 rounded-sm max-w-xs w-full mx-6 relative z-10"
+              style={{ boxShadow: '0 0 40px rgba(34,197,94,0.25)' }}
+            >
+              <p className="retro-title text-3xl text-emerald-300 leading-tight">{guessedName}</p>
+              <motion.p
+                className="retro-title text-5xl mt-4 text-emerald-400"
+                initial={{ opacity: 0, scale: 0.3, rotate: -20 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 14 }}
+                style={{ textShadow: '0 0 24px rgba(34,197,94,0.7)' }}
+              >✓</motion.p>
+            </motion.div>
+          </motion.div>
+        ) : (
+          // Wrong — heavy thud shake, name droops, big ✗ stamps in
+          <motion.div
+            key="wrong"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, x: [0, -14, 12, -10, 8, -5, 3, 0] }}
+            transition={{ duration: 0.55, times: [0, 0.12, 0.26, 0.4, 0.54, 0.68, 0.84, 1] }}
+            className="text-center px-8 py-10 bg-red-950/60 border border-red-800/50 rounded-sm max-w-xs w-full mx-6"
+            style={{ boxShadow: '0 0 40px rgba(185,28,28,0.3)' }}
+          >
+            <motion.p
+              className="retro-title text-3xl text-red-400 leading-tight"
+              animate={{ y: [0, 0, 2, 5, 8], opacity: [1, 1, 1, 0.85, 0.7] }}
+              transition={{ duration: 1.1, delay: 0.4, ease: 'easeIn' }}
+            >
+              {guessedName}
+            </motion.p>
+            <motion.p
+              className="retro-title text-6xl mt-3 text-red-600"
+              initial={{ opacity: 0, scale: 3, rotate: 15 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ delay: 0.18, duration: 0.35, ease: 'easeOut' }}
+              style={{ textShadow: '0 0 28px rgba(239,68,68,0.7)' }}
+            >✗</motion.p>
+            <motion.p
+              className="sports-font text-[10px] text-red-500/55 tracking-[0.3em] uppercase mt-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >Not in top 10</motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
 
 // Returns winner IDs: primary = most correct guesses, tiebreaker = most strikes left
 function determineWinners(
@@ -57,6 +187,7 @@ export function MultiplayerTopTenPage() {
   const [feedback, setFeedback]       = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
   const [timeLeft, setTimeLeft]       = useState(45);
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
+  const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean } | null>(null);
   const inputRef          = useRef<HTMLInputElement>(null);
   const feedbackTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAdvancedRef    = useRef(false);
@@ -174,10 +305,21 @@ export function MultiplayerTopTenPage() {
     if (cs.abandoned) window.location.href = `/lobby/${code}`;
   }, [cs.abandoned]);
 
+  useEffect(() => {
+    const anim = cs.reveal_anim as { guessedName: string; isCorrect: boolean; endsAt: string } | null | undefined;
+    if (!anim?.endsAt) { setRevealOverlay(null); return; }
+    const msLeft = new Date(anim.endsAt).getTime() - Date.now();
+    if (msLeft <= 0) { setRevealOverlay(null); return; }
+    setRevealOverlay({ guessedName: anim.guessedName, isCorrect: anim.isCorrect });
+    const t = setTimeout(() => setRevealOverlay(null), msLeft);
+    return () => clearTimeout(t);
+  }, [cs.reveal_anim?.endsAt]);
+
   const advanceTurn = useCallback(async (
     correct: boolean,
     newGuessedIndices?: number[],
     extras: Record<string, unknown> = {},
+    guessedName?: string,
   ) => {
     if (!lobby || isWritingRef.current) return;
     isWritingRef.current = true;
@@ -198,15 +340,12 @@ export function MultiplayerTopTenPage() {
       const finalGuessed      = newGuessedIndices ?? guessedIndices;
       const allSlotsFilled    = finalGuessed.length >= entries.length;
       const allOut            = newActivePlayers.length === 0;
-      // Only "last standing" if the survivor has strikes to spare. If they're also on their
-      // last strike, give them their final turn — allOut will end it if they miss.
       const allRemainingOnLastStrike = newActivePlayers.length > 0
         && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
       const lastStanding      = newActivePlayers.length === 1 && !allRemainingOnLastStrike;
 
       const roundOver = allSlotsFilled || lastStanding || allOut;
 
-      const newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
       const currentWasEliminated = !eliminated.includes(currentTurnId) && currentEliminated.includes(currentTurnId);
       const nextIndex = newActivePlayers.length > 0
         ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
@@ -228,11 +367,22 @@ export function MultiplayerTopTenPage() {
           winner_ids:         winnerIds,
           winner_id:          winnerIds[0] || '',
           guess_attribution:  mergedAttribution,
+          reveal_anim:        null,
         };
         await updateCareerState(lobby.id, newState);
         await updateLobbyStatus(lobby.id, 'finished');
         setLobby({ ...lobby, career_state: newState, status: 'finished' });
       } else {
+        // If a player submitted a guess, show animation and push deadline past it
+        let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string } | null = null;
+        let newDeadline: string;
+        if (guessedName) {
+          const animEndsAt = new Date(Date.now() + ANIM_MS).toISOString();
+          newDeadline = new Date(new Date(animEndsAt).getTime() + turnTimerSecs * 1000).toISOString();
+          revealAnim = { guessedName, isCorrect: correct, endsAt: animEndsAt };
+        } else {
+          newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+        }
         const newState = {
           ...cs, ...extras,
           guessed_indices:    finalGuessed,
@@ -240,6 +390,7 @@ export function MultiplayerTopTenPage() {
           eliminated:         currentEliminated,
           current_turn_index: nextIndex,
           turn_deadline:      newDeadline,
+          reveal_anim:        revealAnim,
         };
         await updateCareerState(lobby.id, newState);
         setLobby({ ...lobby, career_state: newState });
@@ -278,12 +429,12 @@ export function MultiplayerTopTenPage() {
         [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
       };
       hasAdvancedRef.current = true;
-      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution });
+      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, trimmed);
     } else {
       setFeedback({ msg: '✗ Not in the top 10', type: 'wrong' });
       clearFeedback();
       hasAdvancedRef.current = true;
-      await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] });
+      await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] }, trimmed);
     }
     inputRef.current?.focus();
   }
@@ -433,9 +584,10 @@ export function MultiplayerTopTenPage() {
     );
   }
 
-  const currentTurnPlayer = players.find(p => p.player_id === currentTurnId);
-  const timerFraction     = timeLeft / turnTimerSecs;
-  const timerColor        = timerFraction > 0.5 ? '#22c55e' : timerFraction > 0.25 ? '#f59e0b' : '#ef4444';
+  const currentTurnPlayer   = players.find(p => p.player_id === currentTurnId);
+  const displayTimeLeft     = revealOverlay ? turnTimerSecs : timeLeft;
+  const displayTimerFraction = revealOverlay ? 1 : displayTimeLeft / turnTimerSecs;
+  const timerColor          = displayTimerFraction > 0.5 ? '#22c55e' : displayTimerFraction > 0.25 ? '#f59e0b' : '#ef4444';
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
@@ -551,12 +703,12 @@ export function MultiplayerTopTenPage() {
               <motion.div
                 className="h-full rounded-full"
                 style={{ backgroundColor: timerColor }}
-                animate={{ width: `${timerFraction * 100}%` }}
+                animate={{ width: `${displayTimerFraction * 100}%` }}
                 transition={{ duration: 0.4 }}
               />
             </div>
           </div>
-          <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{timeLeft}</span>
+          <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
         </div>
 
         {/* Feedback */}
@@ -577,7 +729,7 @@ export function MultiplayerTopTenPage() {
         </div>
 
         {/* Guess input */}
-        {isMyTurn && (
+        {isMyTurn && !revealOverlay && (
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
               ref={inputRef}
@@ -689,6 +841,15 @@ export function MultiplayerTopTenPage() {
           </div>
         </div>
       </main>
+
+      <AnimatePresence>
+        {revealOverlay && (
+          <RevealOverlay
+            guessedName={revealOverlay.guessedName}
+            isCorrect={revealOverlay.isCorrect}
+          />
+        )}
+      </AnimatePresence>
 
       <EmoteOverlay
         lobbyId={lobby?.id}
