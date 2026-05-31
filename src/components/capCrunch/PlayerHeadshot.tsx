@@ -23,10 +23,10 @@ function loadNflHeadshots(): Promise<Record<string, string>> {
 /** Generic silhouette shown when no headshot exists for the player. */
 function Silhouette({ className }: { className: string }) {
   return (
-    <div className={`${className} bg-white/8 flex items-center justify-center overflow-hidden`}>
+    <div className={`${className} bg-[#1c1c1c] flex items-center justify-center overflow-hidden`}>
       <svg viewBox="0 0 40 40" fill="none" className="w-full h-full">
-        <circle cx="20" cy="14" r="7" fill="rgba(255,255,255,0.18)" />
-        <ellipse cx="20" cy="34" rx="13" ry="10" fill="rgba(255,255,255,0.18)" />
+        <circle cx="20" cy="14" r="7" fill="rgba(255,255,255,0.28)" />
+        <ellipse cx="20" cy="34" rx="13" ry="10" fill="rgba(255,255,255,0.28)" />
       </svg>
     </div>
   );

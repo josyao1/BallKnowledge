@@ -15,8 +15,8 @@ interface Props {
   onWindowYearsChange: (n: number) => void;
   maxStrikes: number;
   onMaxStrikesChange: (n: number) => void;
-  winTarget: number;
-  onWinTargetChange: (n: number) => void;
+  turnTimer: number;
+  onTurnTimerChange: (n: number) => void;
 }
 
 export function TopTenSettings({
@@ -26,7 +26,7 @@ export function TopTenSettings({
   maxYear, onMaxYearChange,
   windowYears, onWindowYearsChange,
   maxStrikes, onMaxStrikesChange,
-  winTarget, onWinTargetChange,
+  turnTimer, onTurnTimerChange,
 }: Props) {
   const nbaDivisions = getNBADivisions();
   const nflDivisions = getNFLDivisions();
@@ -132,21 +132,22 @@ export function TopTenSettings({
         <p className="sports-font text-[9px] text-[#555] mt-1.5">Wrong guesses + timeouts before elimination</p>
       </div>
 
-      {/* Win target */}
+      {/* Turn timer */}
       <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">First To</div>
+        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Turn Timer</div>
         <div className="flex gap-1.5">
-          {[2, 3, 5].map(n => (
+          {[30, 45, 60, 90].map(n => (
             <button
               key={n}
-              onClick={() => onWinTargetChange(n)}
-              className={`${btnBase} ${winTarget === n ? btnActive : btnInactive}`}
+              onClick={() => onTurnTimerChange(n)}
+              className={`${btnBase} ${turnTimer === n ? btnActive : btnInactive}`}
             >
-              {n}
+              {n}s
             </button>
           ))}
         </div>
       </div>
+
     </>
   );
 }

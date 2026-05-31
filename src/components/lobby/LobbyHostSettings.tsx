@@ -90,7 +90,7 @@ export interface HostFormValues {
   topTenMaxYear: number;
   topTenWindowYears: number;
   topTenMaxStrikes: number;
-  topTenWinTarget: number;
+  topTenTimer: number;
 }
 
 interface Props {
@@ -137,7 +137,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editTopTenMaxYear,     setEditTopTenMaxYear]     = useState(2025);
   const [editTopTenWindowYears, setEditTopTenWindowYears] = useState(10);
   const [editTopTenMaxStrikes,  setEditTopTenMaxStrikes]  = useState(2);
-  const [editTopTenWinTarget,   setEditTopTenWinTarget]   = useState(3);
+  const [editTopTenTimer,       setEditTopTenTimer]       = useState(45);
 
   // Sync form state from lobby whenever the settings panel mounts / lobby changes.
   useEffect(() => {
@@ -180,7 +180,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditTopTenMaxYear((cs.top_ten_max_year as number) || (lobbySport === 'nba' ? 2025 : 2024));
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
     setEditTopTenMaxStrikes((cs.max_strikes as number) || 2);
-    setEditTopTenWinTarget((cs.win_target as number) || 3);
+    setEditTopTenTimer((cs.turn_timer as number) || 45);
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
     setEditTeam(teamList.find(t => t.abbreviation === lobby.team_abbreviation) || null);
@@ -240,7 +240,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       topTenMaxYear: editTopTenMaxYear,
       topTenWindowYears: editTopTenWindowYears,
       topTenMaxStrikes: editTopTenMaxStrikes,
-      topTenWinTarget: editTopTenWinTarget,
+      topTenTimer: editTopTenTimer,
     });
   };
 
@@ -359,7 +359,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
               maxYear={editTopTenMaxYear} onMaxYearChange={setEditTopTenMaxYear}
               windowYears={editTopTenWindowYears} onWindowYearsChange={setEditTopTenWindowYears}
               maxStrikes={editTopTenMaxStrikes} onMaxStrikesChange={setEditTopTenMaxStrikes}
-              winTarget={editTopTenWinTarget} onWinTargetChange={setEditTopTenWinTarget}
+              turnTimer={editTopTenTimer} onTurnTimerChange={setEditTopTenTimer}
             />
           )}
 

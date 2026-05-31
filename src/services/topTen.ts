@@ -2,7 +2,7 @@ import { loadNBACareers, loadNFLCareers } from './careerData';
 import { NBA_FRANCHISE_ALIASES, NFL_FRANCHISE_ALIASES } from './capCrunchData';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import { areSimilarNames } from '../utils/fuzzyDedup';
+import { areSimilarNames, normalize } from '../utils/fuzzyDedup';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -248,6 +248,36 @@ export function getCategoryDef(sport: 'nba' | 'nfl', key: string): StatCategoryD
 export function formatStat(stat: number, categoryKey: string): string {
   const perGame = ['pts', 'reb', 'ast', 'stl', 'blk', 'fg3m'];
   return perGame.includes(categoryKey) ? stat.toFixed(1) : stat.toString();
+}
+
+/**
+ * Returns up to `limit` player name suggestions for the given input.
+ * Requires ≥4 characters. Only prefix matches on the full name or any word —
+ * no fuzzy/substring matching — to keep the autocomplete restrictive.
+ */
+export async function getPlayerSuggestions(
+  sport: 'nba' | 'nfl',
+  input: string,
+  limit = 3,
+): Promise<string[]> {
+  if (input.length < 4) return [];
+  const players = sport === 'nba' ? await loadNBACareers() : await loadNFLCareers();
+  const norm = normalize(input);
+  const results: string[] = [];
+  const seen = new Set<string>();
+
+  for (const player of players) {
+    const name: string = player.player_name;
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    const nameNorm = normalize(name);
+    const words = nameNorm.split(' ');
+    if (nameNorm.startsWith(norm) || words.some(w => w.length >= 2 && w.startsWith(norm))) {
+      results.push(name);
+      if (results.length >= limit) break;
+    }
+  }
+  return results;
 }
 
 /**

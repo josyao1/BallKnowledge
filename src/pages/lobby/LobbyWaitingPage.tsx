@@ -553,7 +553,7 @@ export function LobbyWaitingPage() {
       const sport = (cs.top_ten_sport || lobby.sport) as 'nba' | 'nfl';
       const roundType: 'league' | 'division' = cs.top_ten_round_type || 'league';
       const maxStrikes: number = cs.max_strikes || 2;
-      const winTarget: number = cs.win_target || 3;
+      const turnTimer: number = cs.turn_timer || 45;
 
       const cat = pickRandomCategory(sport);
       const playersResult = await getLobbyPlayers(lobby.id);
@@ -589,7 +589,7 @@ export function LobbyWaitingPage() {
 
       if (entries.length === 0) { setIsLoadingRoster(false); return; }
 
-      const deadline = new Date(Date.now() + 45000).toISOString();
+      const deadline = new Date(Date.now() + turnTimer * 1000).toISOString();
       const newState = {
         type: 'top-ten',
         sport,
@@ -605,9 +605,9 @@ export function LobbyWaitingPage() {
         current_turn_index: 0,
         turn_deadline: deadline,
         max_strikes: maxStrikes,
-        win_target: winTarget,
-        round_wins: {},
-        round: 1,
+        turn_timer: turnTimer,
+        is_division_round: roundType === 'division',
+        hint_mode: false,
         top_ten_sport: sport,
         top_ten_round_type: roundType,
         top_ten_min_year: cs.top_ten_min_year || (sport === 'nba' ? 1996 : 1999),
@@ -698,7 +698,7 @@ export function LobbyWaitingPage() {
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'top-ten') {
-      const newState = { ...baseState, top_ten_sport: v.topTenSport, top_ten_round_type: v.topTenRoundType, top_ten_min_year: v.topTenMinYear, top_ten_max_year: v.topTenMaxYear, top_ten_window_years: v.topTenWindowYears, max_strikes: v.topTenMaxStrikes, win_target: v.topTenWinTarget };
+      const newState = { ...baseState, top_ten_sport: v.topTenSport, top_ten_round_type: v.topTenRoundType, top_ten_min_year: v.topTenMinYear, top_ten_max_year: v.topTenMaxYear, top_ten_window_years: v.topTenWindowYears, max_strikes: v.topTenMaxStrikes, turn_timer: v.topTenTimer };
       await updateCareerState(newState);
       await updateSettings({ sport: v.topTenSport });
       setLobby({ ...fresh(), career_state: newState, sport: v.topTenSport });
