@@ -253,8 +253,7 @@ function careerStatField(cat: StatCategory): string {
  * Generate a reasonable target cap based on the stat category and sport.
  */
 export function generateTargetCap(sport: Sport, statCategory: StatCategory, totalRounds: number = 5): number {
-  const scale = totalRounds / 5;
-  const r = (min: number, max: number) => Math.round((min + Math.floor(Math.random() * (max - min + 1))) * scale);
+  const r = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 
   if (sport === 'nba') {
     // NBA stats are per-game averages (e.g. LeBron: 22 pts, 7 ast, 6 reb, 33 min).
