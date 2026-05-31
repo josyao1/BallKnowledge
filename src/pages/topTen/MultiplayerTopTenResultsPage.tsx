@@ -30,17 +30,26 @@ export function MultiplayerTopTenResultsPage() {
   const entries: TopTenEntry[]  = cs.top10_entries || [];
   const guessedIndices: number[] = cs.guessed_indices || [];
   const guessAttribution: Record<string, number> = cs.guess_attribution || {};
+  const playerStrikes: Record<string, number>    = cs.player_strikes || {};
+  const maxStrikes: number                       = cs.max_strikes || 2;
   const sport: 'nba' | 'nfl'   = (cs.sport as 'nba' | 'nfl') || 'nba';
   const categoryKey: string     = cs.category || '';
   const categoryLabel: string   = cs.category_label || '';
   const roundInfo: string       = cs.round_info || '';
-  const winnerId: string        = cs.winner_id || '';
+  const winnerIds: string[]     = cs.winner_ids || (cs.winner_id ? [cs.winner_id] : []);
   const catDef = getCategoryDef(sport, categoryKey);
+  const isDivisionRound: boolean = cs.is_division_round || false;
+  const statShortLabel = (isDivisionRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
 
-  // Sort players by correct guesses descending
-  const sortedPlayers = [...players].sort((a, b) =>
-    (guessAttribution[b.player_id] || 0) - (guessAttribution[a.player_id] || 0)
-  );
+  // Sort: correct guesses desc → strikes left desc (same tiebreaker as in-game)
+  const sortedPlayers = [...players].sort((a, b) => {
+    const ga = guessAttribution[a.player_id] || 0;
+    const gb = guessAttribution[b.player_id] || 0;
+    if (gb !== ga) return gb - ga;
+    const slA = maxStrikes - (playerStrikes[a.player_id] || 0);
+    const slB = maxStrikes - (playerStrikes[b.player_id] || 0);
+    return slB - slA;
+  });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
@@ -57,7 +66,7 @@ export function MultiplayerTopTenResultsPage() {
           <p className="sports-font text-[9px] text-white/30 tracking-widest uppercase">Final Standings</p>
           {sortedPlayers.map((p, i) => {
             const guesses = guessAttribution[p.player_id] || 0;
-            const isWinner = p.player_id === winnerId;
+            const isWinner = winnerIds.includes(p.player_id);
             const isMe = p.player_id === currentPlayerId;
             return (
               <motion.div
@@ -77,9 +86,12 @@ export function MultiplayerTopTenResultsPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className={`retro-title text-base ${isWinner ? 'text-[#d4af37]' : 'text-white/80'}`}>{p.player_name}</p>
-                    {isWinner && <span className="sports-font text-[9px] text-[#d4af37] tracking-widest uppercase">Winner</span>}
+                    {isWinner && <span className="sports-font text-[9px] text-[#d4af37] tracking-widest uppercase">{winnerIds.length > 1 ? 'Tied' : 'Winner'}</span>}
                   </div>
-                  <p className="sports-font text-[10px] text-white/35">{guesses} correct {guesses === 1 ? 'guess' : 'guesses'}</p>
+                  <p className="sports-font text-[10px] text-white/35">
+                    {guesses} correct {guesses === 1 ? 'guess' : 'guesses'}
+                    {' · '}{maxStrikes - (playerStrikes[p.player_id] || 0)} strikes left
+                  </p>
                 </div>
               </motion.div>
             );
@@ -118,7 +130,7 @@ export function MultiplayerTopTenResultsPage() {
                   </div>
                   {catDef && (
                     <span className={`sports-font text-xs shrink-0 tabular-nums ${isRevealed ? 'text-[#22c55e]' : 'text-white/20'}`}>
-                      {formatStat(entry.stat, categoryKey)} <span className="text-[9px] opacity-60">{catDef.shortLabel}</span>
+                      {formatStat(entry.stat, categoryKey)} <span className="text-[9px] opacity-60">{statShortLabel}</span>
                     </span>
                   )}
                 </div>

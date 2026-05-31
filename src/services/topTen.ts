@@ -20,18 +20,21 @@ export interface StatCategoryDef {
   label: string;
   shortLabel: string;
   sport: 'nba' | 'nfl';
+  /** Overrides label/shortLabel when used in division cumulative mode (totals, not per-game). */
+  divisionLabel?: string;
+  divisionShortLabel?: string;
 }
 
 // ─── Category definitions ─────────────────────────────────────────────────────
 
 export const NBA_STAT_CATEGORIES: StatCategoryDef[] = [
-  { key: 'pts',       label: 'Points Per Game',      shortLabel: 'PPG',      sport: 'nba' },
-  { key: 'reb',       label: 'Rebounds Per Game',     shortLabel: 'RPG',      sport: 'nba' },
-  { key: 'ast',       label: 'Assists Per Game',      shortLabel: 'APG',      sport: 'nba' },
-  { key: 'stl',       label: 'Steals Per Game',       shortLabel: 'SPG',      sport: 'nba' },
-  { key: 'blk',       label: 'Blocks Per Game',       shortLabel: 'BPG',      sport: 'nba' },
-  { key: 'total_3pm', label: '3-Pointers Made',       shortLabel: '3PM',      sport: 'nba' },
-  { key: 'gp',        label: 'Games Played',          shortLabel: 'GP',       sport: 'nba' },
+  { key: 'pts',       label: 'Points Per Game',      shortLabel: 'PPG', sport: 'nba', divisionLabel: 'Total Points',    divisionShortLabel: 'PTS' },
+  { key: 'reb',       label: 'Rebounds Per Game',     shortLabel: 'RPG', sport: 'nba', divisionLabel: 'Total Rebounds',  divisionShortLabel: 'REB' },
+  { key: 'ast',       label: 'Assists Per Game',      shortLabel: 'APG', sport: 'nba', divisionLabel: 'Total Assists',   divisionShortLabel: 'AST' },
+  { key: 'stl',       label: 'Steals Per Game',       shortLabel: 'SPG', sport: 'nba', divisionLabel: 'Total Steals',    divisionShortLabel: 'STL' },
+  { key: 'blk',       label: 'Blocks Per Game',       shortLabel: 'BPG', sport: 'nba', divisionLabel: 'Total Blocks',    divisionShortLabel: 'BLK' },
+  { key: 'total_3pm', label: '3-Pointers Made',       shortLabel: '3PM', sport: 'nba' },
+  { key: 'gp',        label: 'Games Played',          shortLabel: 'GP',  sport: 'nba' },
 ];
 
 export const NFL_STAT_CATEGORIES: StatCategoryDef[] = [

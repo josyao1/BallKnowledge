@@ -4,12 +4,47 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, updateCareerState } from '../../services/lobby';
-import { isValidGuess, getCategoryDef, formatStat } from '../../services/topTen';
+import { isValidGuess, getCategoryDef, formatStat, getTopTen, getTopTenDivision, pickRandomCategory, getAvailableYears } from '../../services/topTen';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
+import { getNFLDivisions } from '../../data/nfl-teams';
+import { getNBADivisions } from '../../data/teams';
+import { nflTeams } from '../../data/nfl-teams';
 import { TeamLogo } from '../../components/TeamLogo';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
+
+// Returns winner IDs: primary = most correct guesses, tiebreaker = most strikes left
+function determineWinners(
+  allIds: string[],
+  attribution: Record<string, number>,
+  strikes: Record<string, number>,
+  maxStrikes: number,
+  lastStanding: boolean,
+  lastActiveId: string,
+): string[] {
+  if (lastStanding) return [lastActiveId];
+  const sorted = [...allIds].sort((a, b) => {
+    const ga = attribution[a] || 0, gb = attribution[b] || 0;
+    if (gb !== ga) return gb - ga;
+    return (maxStrikes - (strikes[b] || 0)) - (maxStrikes - (strikes[a] || 0));
+  });
+  if (!sorted.length) return [];
+  const topG  = attribution[sorted[0]] || 0;
+  const topSL = maxStrikes - (strikes[sorted[0]] || 0);
+  return sorted.filter(id =>
+    (attribution[id] || 0) === topG &&
+    (maxStrikes - (strikes[id]  || 0)) === topSL
+  );
+}
+
+// NFL teams grouped for the reference panel
+const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
+  (['East', 'North', 'South', 'West'] as const).map(div => ({
+    label: `${conf} ${div}`,
+    teams: nflTeams.filter(t => t.conference === conf && t.division === div),
+  }))
+);
 
 export function MultiplayerTopTenPage() {
   const navigate = useNavigate();
@@ -19,19 +54,20 @@ export function MultiplayerTopTenPage() {
     setLobby, setPlayers,
   } = useLobbyStore();
 
-  const [guess, setGuess]       = useState('');
-  const [feedback, setFeedback] = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
-  const [timeLeft, setTimeLeft] = useState(45);
-  const inputRef      = useRef<HTMLInputElement>(null);
-  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasAdvancedRef  = useRef(false);
-  const isWritingRef    = useRef(false);
-  // Tracks when the timer first hit zero so the host can fall back after a grace period
-  const zeroSinceRef    = useRef<number | null>(null);
+  const [guess, setGuess]             = useState('');
+  const [feedback, setFeedback]       = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
+  const [timeLeft, setTimeLeft]       = useState(45);
+  const [showTeamsPanel, setShowTeamsPanel] = useState(false);
+  const inputRef          = useRef<HTMLInputElement>(null);
+  const feedbackTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasAdvancedRef    = useRef(false);
+  const isWritingRef      = useRef(false);
+  const zeroSinceRef      = useRef<number | null>(null);
+  // Always-current reference so the timer effect never captures a stale advanceTurn
+  const advanceTurnRef    = useRef<typeof advanceTurn>(() => Promise.resolve());
 
   useLobbySubscription(lobby?.id || null);
 
-  // Load lobby on mount
   useEffect(() => {
     if (!code) { navigate('/'); return; }
     if (lobby) return;
@@ -48,74 +84,89 @@ export function MultiplayerTopTenPage() {
   }, []);
 
   const cs = (lobby?.career_state as any) || {};
-  const entries: TopTenEntry[]            = cs.top10_entries || [];
-  const guessedIndices: number[]          = cs.guessed_indices || [];
-  const turnOrder: string[]               = cs.turn_order || [];
-  const eliminated: string[]              = cs.eliminated || [];
-  const playerStrikes: Record<string, number> = cs.player_strikes || {};
-  const maxStrikes: number                = cs.max_strikes || 2;
-  const turnTimerSecs: number             = cs.turn_timer || 45;
-  const isDivisionRound: boolean          = cs.is_division_round || false;
-  const hintMode: boolean                 = cs.hint_mode || false;
-  const showTeamHint: boolean             = isDivisionRound || hintMode;
-  const currentTurnIndex: number          = cs.current_turn_index ?? 0;
-  const turnDeadline: string | null       = cs.turn_deadline || null;
-  const categoryKey: string               = cs.category || '';
-  const categoryLabel: string             = cs.category_label || '';
-  const roundInfo: string                 = cs.round_info || '';
-  const wrongGuesses: string[]            = cs.wrong_guesses || [];
-  const sport: string                     = cs.sport || 'nba';
+  const entries: TopTenEntry[]                    = cs.top10_entries || [];
+  const guessedIndices: number[]                  = cs.guessed_indices || [];
+  const turnOrder: string[]                       = cs.turn_order || [];
+  const eliminated: string[]                      = cs.eliminated || [];
+  const playerStrikes: Record<string, number>     = cs.player_strikes || {};
+  const maxStrikes: number                        = cs.max_strikes || 2;
+  const turnTimerSecs: number                     = cs.turn_timer || 45;
+  const isDivisionRound: boolean                  = cs.is_division_round || false;
+  const hintMode: boolean                         = cs.hint_mode || false;
+  const showTeamHint: boolean                     = isDivisionRound || hintMode;
+  const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
+  const turnDeadline: string | null               = cs.turn_deadline || null;
+  const categoryKey: string                       = cs.category || '';
+  const categoryLabel: string                     = cs.category_label || '';
+  const roundInfo: string                         = cs.round_info || '';
+  const wrongGuesses: string[]                    = cs.wrong_guesses || [];
+  const sport: string                             = cs.sport || 'nba';
 
   const activePlayers   = turnOrder.filter(id => !eliminated.includes(id));
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
   const isMyTurn        = currentTurnId === currentPlayerId;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
+  const statShortLabel = (isDivisionRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
 
-  // Timer — active player advances immediately on expiry;
-  // host acts as fallback after 2s grace in case the active player is disconnected
+  // Timer — active player fires immediately; host fallback after 500ms grace
   useEffect(() => {
     if (!turnDeadline) return;
+
+    function tryAdvance() {
+      if (hasAdvancedRef.current || isWritingRef.current) return;
+      if (isMyTurn || isHost) {
+        hasAdvancedRef.current = true;
+        zeroSinceRef.current = null;
+        advanceTurnRef.current(false);
+      }
+    }
+
     const tick = () => {
       const secs = Math.max(0, Math.round((new Date(turnDeadline).getTime() - Date.now()) / 1000));
       setTimeLeft(secs);
-
       if (secs === 0) {
         if (zeroSinceRef.current === null) zeroSinceRef.current = Date.now();
-
         if (!hasAdvancedRef.current && !isWritingRef.current) {
           if (isMyTurn) {
             hasAdvancedRef.current = true;
             zeroSinceRef.current = null;
-            advanceTurn(false);
-          } else if (isHost && Date.now() - zeroSinceRef.current >= 2000) {
-            // Active player didn't respond — host steps in
+            advanceTurnRef.current(false);
+          } else if (isHost && Date.now() - (zeroSinceRef.current ?? Date.now()) >= 500) {
             hasAdvancedRef.current = true;
             zeroSinceRef.current = null;
-            advanceTurn(false);
+            advanceTurnRef.current(false);
           }
         }
       } else {
         zeroSinceRef.current = null;
       }
     };
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const secs = Math.round((new Date(turnDeadline).getTime() - Date.now()) / 1000);
+      if (secs <= 0) tryAdvance();
+    };
+
     tick();
     const id = setInterval(tick, 500);
-    return () => clearInterval(id);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [turnDeadline, isMyTurn, isHost]);
 
-  // Reset advance guard + focus input on turn change
   useEffect(() => {
     hasAdvancedRef.current = false;
     if (isMyTurn) setTimeout(() => inputRef.current?.focus(), 100);
   }, [currentTurnId]);
 
-  // Navigate when game ends or host sends back to lobby
   useEffect(() => {
     if (lobby?.status === 'finished') navigate(`/lobby/${code}/top-ten/results`);
     if (lobby?.status === 'waiting')  window.location.href = `/lobby/${code}`;
   }, [lobby?.status]);
 
-  // Non-host: detect abandoned flag
   useEffect(() => {
     if (isHost) return;
     if (cs.abandoned) window.location.href = `/lobby/${code}`;
@@ -144,48 +195,49 @@ export function MultiplayerTopTenPage() {
       const newActivePlayers  = turnOrder.filter(id => !currentEliminated.includes(id));
       const finalGuessed      = newGuessedIndices ?? guessedIndices;
       const allSlotsFilled    = finalGuessed.length >= entries.length;
-      const lastStanding      = newActivePlayers.length === 1;
       const allOut            = newActivePlayers.length === 0;
-      const roundOver         = allSlotsFilled || lastStanding || allOut;
+      // Only "last standing" if the survivor has strikes to spare. If they're also on their
+      // last strike, give them their final turn — allOut will end it if they miss.
+      const allRemainingOnLastStrike = newActivePlayers.length > 0
+        && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
+      const lastStanding      = newActivePlayers.length === 1 && !allRemainingOnLastStrike;
+
+      const roundOver = allSlotsFilled || lastStanding || allOut;
 
       const newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
-      // If the current player was just eliminated their slot disappears from newActivePlayers,
-      // so the existing currentTurnIndex already points at the next player — don't add 1.
       const currentWasEliminated = !eliminated.includes(currentTurnId) && currentEliminated.includes(currentTurnId);
-      const nextIndex   = newActivePlayers.length > 0
+      const nextIndex = newActivePlayers.length > 0
         ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
         : 0;
 
       if (roundOver) {
         const mergedAttribution: Record<string, number> =
           (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
-        // When all players are out with no correct guesses, no winner
-        const sorted = Object.entries(mergedAttribution).sort((a, b) => b[1] - a[1]);
-        const winnerId = lastStanding
-          ? newActivePlayers[0]
-          : (sorted[0]?.[1] > 0 ? sorted[0][0] : '');
-
+        const winnerIds = determineWinners(
+          turnOrder, mergedAttribution, currentStrikes, maxStrikes,
+          lastStanding && !allOut, newActivePlayers[0] || '',
+        );
         const newState = {
-          ...cs,
-          ...extras,
-          guessed_indices: finalGuessed,
-          player_strikes: currentStrikes,
-          eliminated: currentEliminated,
-          winner_id: winnerId,
-          guess_attribution: mergedAttribution,
+          ...cs, ...extras,
+          guessed_indices:    finalGuessed,
+          player_strikes:     currentStrikes,
+          eliminated:         currentEliminated,
+          missed_in_rotation: [],
+          winner_ids:         winnerIds,
+          winner_id:          winnerIds[0] || '',
+          guess_attribution:  mergedAttribution,
         };
         await updateCareerState(lobby.id, newState);
         await updateLobbyStatus(lobby.id, 'finished');
         setLobby({ ...lobby, career_state: newState, status: 'finished' });
       } else {
         const newState = {
-          ...cs,
-          ...extras,
-          guessed_indices: finalGuessed,
-          player_strikes: currentStrikes,
-          eliminated: currentEliminated,
+          ...cs, ...extras,
+          guessed_indices:    finalGuessed,
+          player_strikes:     currentStrikes,
+          eliminated:         currentEliminated,
           current_turn_index: nextIndex,
-          turn_deadline: newDeadline,
+          turn_deadline:      newDeadline,
         };
         await updateCareerState(lobby.id, newState);
         setLobby({ ...lobby, career_state: newState });
@@ -199,6 +251,8 @@ export function MultiplayerTopTenPage() {
     }
   }, [lobby, cs, currentTurnId, currentTurnIndex, guessedIndices, entries.length,
       playerStrikes, eliminated, maxStrikes, turnOrder, turnTimerSecs]);
+
+  useEffect(() => { advanceTurnRef.current = advanceTurn; }, [advanceTurn]);
 
   function clearFeedback() {
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
@@ -232,16 +286,15 @@ export function MultiplayerTopTenPage() {
     inputRef.current?.focus();
   }
 
-  // Host: send everyone to results immediately (force end)
   async function handleForceEnd() {
     if (!lobby || !isHost) return;
     try {
-      const guessAttribution: Record<string, number> = cs.guess_attribution || {};
-      const sorted = Object.entries(guessAttribution).sort((a, b) => b[1] - a[1]);
-      const winnerId = activePlayers.length === 1
-        ? activePlayers[0]
-        : (sorted[0]?.[1] > 0 ? sorted[0][0] : '');
-      const newState = { ...cs, winner_id: winnerId };
+      const attribution: Record<string, number> = cs.guess_attribution || {};
+      const winnerIds = determineWinners(
+        turnOrder, attribution, playerStrikes, maxStrikes,
+        activePlayers.length === 1, activePlayers[0] || '',
+      );
+      const newState = { ...cs, winner_ids: winnerIds, winner_id: winnerIds[0] || '' };
       await updateCareerState(lobby.id, newState);
       await updateLobbyStatus(lobby.id, 'finished');
     } catch (err) {
@@ -249,7 +302,6 @@ export function MultiplayerTopTenPage() {
     }
   }
 
-  // Host: toggle team logo hints for everyone
   async function handleToggleHint() {
     if (!lobby || !isHost) return;
     try {
@@ -261,14 +313,88 @@ export function MultiplayerTopTenPage() {
     }
   }
 
-  // Host: manually skip the current player's turn (e.g., disconnected player)
   async function handleSkipTurn() {
     if (!lobby || !isHost || hasAdvancedRef.current || isWritingRef.current) return;
     hasAdvancedRef.current = true;
     await advanceTurn(false);
   }
 
-  // Host: send everyone back to lobby
+  // Generate a fresh round using the same settings currently in career_state
+  async function generateRound() {
+    const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
+    const roundType: 'league' | 'division' = cs.top_ten_round_type || 'league';
+    const cat = pickRandomCategory(roundSport);
+
+    let newEntries: TopTenEntry[] = [];
+    let newRoundInfo = '';
+    let usedDivision = false;
+
+    if (roundType === 'division') {
+      const windowYears: number = cs.top_ten_window_years || 10;
+      const currentYear = roundSport === 'nba' ? 2025 : 2025;
+      const fromYear = roundSport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
+      const divs = roundSport === 'nba' ? getNBADivisions() : getNFLDivisions();
+      const div = divs[Math.floor(Math.random() * divs.length)];
+      newEntries = await getTopTenDivision(roundSport, cat.key, div.conference, div.division, fromYear, currentYear);
+      newRoundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
+      if (newEntries.length >= 5) {
+        usedDivision = true;
+      } else {
+        const years = getAvailableYears(roundSport, cat.key);
+        const year = years[Math.floor(Math.random() * years.length)];
+        newEntries = await getTopTen(roundSport, cat.key, year);
+        newRoundInfo = roundSport === 'nba'
+          ? `${year}-${String(year + 1).slice(-2)} season`
+          : `${year} season`;
+      }
+    } else {
+      const minYear: number = cs.top_ten_min_year || (roundSport === 'nba' ? 1996 : 1999);
+      const maxYear: number = cs.top_ten_max_year || (roundSport === 'nba' ? 2025 : 2025);
+      const years = getAvailableYears(roundSport, cat.key).filter(y => y >= minYear && y <= maxYear);
+      const year = years[Math.floor(Math.random() * Math.max(years.length, 1))];
+      newEntries = await getTopTen(roundSport, cat.key, year);
+      newRoundInfo = roundSport === 'nba'
+        ? `${year}-${String(year + 1).slice(-2)} season`
+        : `${year} season`;
+    }
+
+    const catLabel = usedDivision && roundSport === 'nba'
+      ? (cat.divisionLabel ?? cat.label)
+      : cat.label;
+
+    return { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo };
+  }
+
+  async function handleSkipCategory() {
+    if (!lobby || !isHost || isWritingRef.current) return;
+    isWritingRef.current = true;
+    try {
+      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo } = await generateRound();
+      if (newEntries.length === 0) return;
+      const deadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+      const newState = {
+        ...cs,
+        category:           cat.key,
+        category_label:     catLabel,
+        round_info:         newRoundInfo,
+        top10_entries:      newEntries,
+        guessed_indices:    [],
+        wrong_guesses:      [],
+        hint_mode:          false,
+        guess_attribution:  {},
+        current_turn_index: 0,
+        turn_deadline:      deadline,
+      };
+      await updateCareerState(lobby.id, newState);
+      setLobby({ ...lobby, career_state: newState });
+      hasAdvancedRef.current = false;
+    } catch (err) {
+      console.error('[TopTen] handleSkipCategory failed:', err);
+    } finally {
+      isWritingRef.current = false;
+    }
+  }
+
   async function handleSendToLobby() {
     if (!lobby || !isHost) return;
     try {
@@ -278,7 +404,6 @@ export function MultiplayerTopTenPage() {
       window.location.href = `/lobby/${code}`;
     } catch (err) {
       console.error('[TopTen] handleSendToLobby failed:', err);
-      // Still attempt redirect so host isn't stranded
       window.location.href = `/lobby/${code}`;
     }
   }
@@ -298,11 +423,24 @@ export function MultiplayerTopTenPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3 bg-black/60">
+      <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3 bg-black/60 relative z-20">
         <HomeButton isHost={isHost} onEndGame={handleSendToLobby} />
         <h1 className="retro-title text-base text-[#22c55e]">Top Ten</h1>
         <span className="sports-font text-[9px] text-white/25 tracking-[0.25em] uppercase">{sport.toUpperCase()}</span>
         <div className="ml-auto flex items-center gap-2">
+          {/* Teams reference panel — NFL only, visible to all */}
+          {sport === 'nfl' && (
+            <button
+              onClick={() => setShowTeamsPanel(v => !v)}
+              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+                showTeamsPanel
+                  ? 'border-[#22c55e]/60 text-[#22c55e] bg-[#22c55e]/8'
+                  : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
+              }`}
+            >
+              Teams
+            </button>
+          )}
           {isHost && !isDivisionRound && (
             <button
               onClick={handleToggleHint}
@@ -325,6 +463,14 @@ export function MultiplayerTopTenPage() {
           )}
           {isHost && (
             <button
+              onClick={handleSkipCategory}
+              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-blue-500/50 hover:text-blue-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+            >
+              Skip Cat
+            </button>
+          )}
+          {isHost && (
+            <button
               onClick={handleForceEnd}
               className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
             >
@@ -333,6 +479,36 @@ export function MultiplayerTopTenPage() {
           )}
         </div>
       </header>
+
+      {/* NFL Teams reference panel */}
+      <AnimatePresence>
+        {showTeamsPanel && sport === 'nfl' && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="border-b border-white/8 bg-[#0a0a0a]/98 z-10 px-4 py-3"
+            onClick={() => setShowTeamsPanel(false)}
+          >
+            <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
+              {NFL_BY_DIVISION.map(({ label, teams }) => (
+                <div key={label}>
+                  <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
+                  <div className="flex gap-2">
+                    {teams.map(t => (
+                      <div key={t.abbreviation} className="flex items-center gap-1">
+                        <TeamLogo abbr={t.abbreviation} sport="nfl" size={18} />
+                        <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-8 flex flex-col gap-4">
         {/* Category + round info */}
@@ -417,8 +593,6 @@ export function MultiplayerTopTenPage() {
                 }`}
               >
                 <span className="sports-font text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">#{i + 1}</span>
-
-                {/* Headshot — blurred pre-reveal, clear on reveal */}
                 <div
                   className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
                     isRevealed ? 'ring-emerald-500/40' : 'ring-white/5'
@@ -430,8 +604,6 @@ export function MultiplayerTopTenPage() {
                 >
                   <PlayerHeadshot playerId={entry.playerId} sport={sport as 'nba' | 'nfl'} className="w-9 h-9 object-cover" />
                 </div>
-
-                {/* Name / info */}
                 <div className="flex-1 min-w-0">
                   {isRevealed ? (
                     <>
@@ -448,11 +620,10 @@ export function MultiplayerTopTenPage() {
                     </div>
                   )}
                 </div>
-
                 {isRevealed && catDef && (
                   <span className="sports-font text-xs text-[#22c55e] shrink-0 tabular-nums">
                     {formatStat(entry.stat, categoryKey)}{' '}
-                    <span className="text-[9px] opacity-60">{catDef.shortLabel}</span>
+                    <span className="text-[9px] opacity-60">{statShortLabel}</span>
                   </span>
                 )}
               </motion.div>
@@ -479,9 +650,9 @@ export function MultiplayerTopTenPage() {
           <p className="sports-font text-[9px] text-white/25 tracking-widest uppercase mb-2">Players</p>
           <div className="space-y-1.5">
             {players.map(p => {
-              const strikes = playerStrikes[p.player_id] || 0;
-              const isElim  = eliminated.includes(p.player_id);
-              const guesses = (cs.guess_attribution || {})[p.player_id] || 0;
+              const strikes   = playerStrikes[p.player_id] || 0;
+              const isElim    = eliminated.includes(p.player_id);
+              const guesses   = (cs.guess_attribution || {})[p.player_id] || 0;
               const isCurrent = p.player_id === currentTurnId;
               return (
                 <div key={p.player_id} className={`flex items-center gap-2 ${isElim ? 'opacity-30' : ''}`}>
@@ -501,7 +672,12 @@ export function MultiplayerTopTenPage() {
           </div>
         </div>
       </main>
-      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={players.find(p => p.player_id === currentPlayerId)?.player_name ?? ''} />
+
+      <EmoteOverlay
+        lobbyId={lobby?.id}
+        currentPlayerId={currentPlayerId}
+        currentPlayerName={players.find(p => p.player_id === currentPlayerId)?.player_name ?? ''}
+      />
     </div>
   );
 }
