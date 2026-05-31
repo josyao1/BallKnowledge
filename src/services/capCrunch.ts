@@ -252,7 +252,7 @@ function careerStatField(cat: StatCategory): string {
 /**
  * Generate a reasonable target cap based on the stat category and sport.
  */
-export function generateTargetCap(sport: Sport, statCategory: StatCategory, totalRounds: number = 5): number {
+export function generateTargetCap(sport: Sport, statCategory: StatCategory, _totalRounds: number = 5): number {
   const r = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 
   if (sport === 'nba') {

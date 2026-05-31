@@ -24,12 +24,13 @@ import { BoxScoreSettings }       from './settings/BoxScoreSettings';
 import { StartingLineupSettings } from './settings/StartingLineupSettings';
 import { RosterSettings }         from './settings/RosterSettings';
 import { FaceRevealSettings }     from './settings/FaceRevealSettings';
+import { TopTenSettings }         from './settings/TopTenSettings';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type GameTypeValue =
   | 'roster' | 'career' | 'scramble'
-  | 'lineup-is-right' | 'box-score' | 'nba-box-score' | 'starting-lineup' | 'face-reveal';
+  | 'lineup-is-right' | 'box-score' | 'nba-box-score' | 'starting-lineup' | 'face-reveal' | 'top-ten';
 
 /** All current form values, passed to onApply so the parent can write to Supabase. */
 export interface HostFormValues {
@@ -83,6 +84,13 @@ export interface HostFormValues {
   faceRevealMinMpg: number;
   /** Face Reveal (NFL): 'known' = curated allowlist only; 'all' = all positions */
   faceRevealDefenseMode: 'known' | 'all';
+  topTenSport: 'nba' | 'nfl';
+  topTenRoundType: 'league' | 'division';
+  topTenMinYear: number;
+  topTenMaxYear: number;
+  topTenWindowYears: number;
+  topTenMaxStrikes: number;
+  topTenWinTarget: number;
 }
 
 interface Props {
@@ -123,6 +131,13 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editFaceRevealMinYards,    setEditFaceRevealMinYards]    = useState(0);
   const [editFaceRevealMinMpg,      setEditFaceRevealMinMpg]      = useState(0);
   const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>('known');
+  const [editTopTenSport,       setEditTopTenSport]       = useState<'nba' | 'nfl'>('nba');
+  const [editTopTenRoundType,   setEditTopTenRoundType]   = useState<'league' | 'division'>('league');
+  const [editTopTenMinYear,     setEditTopTenMinYear]     = useState(2015);
+  const [editTopTenMaxYear,     setEditTopTenMaxYear]     = useState(2025);
+  const [editTopTenWindowYears, setEditTopTenWindowYears] = useState(10);
+  const [editTopTenMaxStrikes,  setEditTopTenMaxStrikes]  = useState(2);
+  const [editTopTenWinTarget,   setEditTopTenWinTarget]   = useState(3);
 
   // Sync form state from lobby whenever the settings panel mounts / lobby changes.
   useEffect(() => {
@@ -159,6 +174,13 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditFaceRevealMinYards((cs.min_yards as number) || 0);
     setEditFaceRevealMinMpg((cs.min_mpg as number) || 0);
     setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
+    setEditTopTenSport((cs.top_ten_sport as 'nba' | 'nfl') || lobbySport as 'nba' | 'nfl');
+    setEditTopTenRoundType((cs.top_ten_round_type as 'league' | 'division') || 'league');
+    setEditTopTenMinYear((cs.top_ten_min_year as number) || (lobbySport === 'nba' ? 2010 : 2010));
+    setEditTopTenMaxYear((cs.top_ten_max_year as number) || (lobbySport === 'nba' ? 2025 : 2024));
+    setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
+    setEditTopTenMaxStrikes((cs.max_strikes as number) || 2);
+    setEditTopTenWinTarget((cs.win_target as number) || 3);
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
     setEditTeam(teamList.find(t => t.abbreviation === lobby.team_abbreviation) || null);
@@ -212,6 +234,13 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       faceRevealMinYards: editFaceRevealMinYards,
       faceRevealMinMpg: editFaceRevealMinMpg,
       faceRevealDefenseMode: editFaceRevealDefenseMode,
+      topTenSport: editTopTenSport,
+      topTenRoundType: editTopTenRoundType,
+      topTenMinYear: editTopTenMinYear,
+      topTenMaxYear: editTopTenMaxYear,
+      topTenWindowYears: editTopTenWindowYears,
+      topTenMaxStrikes: editTopTenMaxStrikes,
+      topTenWinTarget: editTopTenWinTarget,
     });
   };
 
@@ -255,6 +284,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
               <option value="lineup-is-right">★ Cap Crunch</option>
               <option value="box-score">Box Score</option>
               <option value="starting-lineup">Starters</option>
+              <option value="top-ten">Top Ten</option>
             </select>
           </div>
 
@@ -318,6 +348,18 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
             <StartingLineupSettings
               startingSport={editStartingSport} onStartingSportChange={setEditStartingSport}
               winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
+            />
+          )}
+
+          {editGameType === 'top-ten' && (
+            <TopTenSettings
+              sport={editTopTenSport} onSportChange={setEditTopTenSport}
+              roundType={editTopTenRoundType} onRoundTypeChange={setEditTopTenRoundType}
+              minYear={editTopTenMinYear} onMinYearChange={setEditTopTenMinYear}
+              maxYear={editTopTenMaxYear} onMaxYearChange={setEditTopTenMaxYear}
+              windowYears={editTopTenWindowYears} onWindowYearsChange={setEditTopTenWindowYears}
+              maxStrikes={editTopTenMaxStrikes} onMaxStrikesChange={setEditTopTenMaxStrikes}
+              winTarget={editTopTenWinTarget} onWinTargetChange={setEditTopTenWinTarget}
             />
           )}
 

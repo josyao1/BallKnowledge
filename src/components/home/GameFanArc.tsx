@@ -96,14 +96,26 @@ export function GameFanArc({
                 className="w-full h-full rounded-xl border-2 overflow-hidden relative shadow-xl bg-[#0e0e0e]"
                 style={{ borderColor: game.color }}
               >
-                <img
-                  src={game.imageBySport?.[sport] ?? game.image}
-                  alt=""
-                  className="absolute inset-0 w-full h-full"
-                  style={{ objectFit: 'cover', objectPosition: 'center', opacity: 0.8 }}
-                />
+                {game.id !== 'top-ten' && (
+                  <img
+                    src={game.imageBySport?.[sport] ?? game.image}
+                    alt=""
+                    className="absolute inset-0 w-full h-full"
+                    style={{ objectFit: 'cover', objectPosition: 'center', opacity: 0.8 }}
+                  />
+                )}
                 {/* Subtle dark overlay so corners are readable */}
                 <div className="absolute inset-0 bg-black/20" />
+
+                {/* Top Ten: large centered ? */}
+                {game.id === 'top-ten' && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+                    style={{ fontSize: Math.max(48, Math.round(80 * fanScale)), color: game.color, opacity: 0.55, fontWeight: 900, fontFamily: 'inherit', textShadow: `0 0 20px ${game.color}60, 0 2px 8px rgba(0,0,0,0.9)` }}
+                  >
+                    ?
+                  </div>
+                )}
 
                 {/* Top-left abbreviation */}
                 <div
@@ -189,6 +201,7 @@ export function GameFanArc({
                                 roster: 'roster',
                                 lineup: 'lineup-is-right',
                                 'starting-lineup': 'starting-lineup',
+                                'top-ten': 'top-ten',
                               };
                               navigate('/lobby/create', { state: { gameType: modeMap[game.id] ?? 'roster' } });
                             }

@@ -39,12 +39,13 @@ interface Props {
   onNBABoxScoreStart: () => void;
   onStartingLineupStart: () => void;
   onFaceRevealStart: () => void;
+  onTopTenStart: () => void;
 }
 
 export function LobbyActionButtons({
   lobby, players, currentPlayer, isHost, isLoadingRoster, allReady,
   onReadyToggle, onManualStart, onCareerStart, onScrambleStart,
-  onLineupStart, onBoxScoreStart, onNBABoxScoreStart, onStartingLineupStart, onFaceRevealStart,
+  onLineupStart, onBoxScoreStart, onNBABoxScoreStart, onStartingLineupStart, onFaceRevealStart, onTopTenStart,
 }: Props) {
   const readyCount = players.filter(p => p.is_ready).length;
   const allPlayersReady = players.every(p => p.is_ready);
@@ -100,6 +101,13 @@ export function LobbyActionButtons({
       loadingLabel: 'Loading...',
       btnClass: 'bg-gradient-to-b from-[#06b6d4] to-[#0891b2] text-[#111] shadow-[0_4px_0_#0e7490]',
       forceHoverClass: 'hover:border-[#06b6d4] hover:text-[#06b6d4]',
+    },
+    'top-ten': {
+      onStart: onTopTenStart,
+      label: 'Start Top Ten',
+      loadingLabel: 'Loading...',
+      btnClass: 'bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_4px_0_#166534]',
+      forceHoverClass: 'hover:border-[#22c55e] hover:text-[#22c55e]',
     },
   };
 
@@ -279,6 +287,16 @@ function HowToPlay({ gameType }: { gameType: string }) {
       <p>Guess the player at any time. The first correct guess scores 3 pts; everyone else who gets it scores 1 pt.</p>
       <p>Guess wrong? Keep trying — there's no penalty for wrong guesses.</p>
       <p className="text-[#06b6d4]/70">🏆 First to the win target takes the match.</p>
+    </div>
+  );
+
+  if (gameType === 'top-ten') return (
+    <div className={prose}>
+      <p>A random stat category and season (or division window) is revealed. Name the top 10 players in that stat.</p>
+      <p>Players take turns — you have 45 seconds to name one player from the list. The team logo is shown as a hint.</p>
+      <p>Wrong guess or timeout = a strike. Reach max strikes and you're eliminated.</p>
+      <p>A round ends when all 10 slots are filled or everyone is eliminated. Most correct guesses wins the round.</p>
+      <p className="text-[#22c55e]/70">🏆 First to the win target takes the match.</p>
     </div>
   );
 

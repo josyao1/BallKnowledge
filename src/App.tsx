@@ -40,6 +40,9 @@ import { MultiplayerStartingLineupResultsPage }     from './pages/startingLineup
 import { SoloFaceRevealPage }                   from './pages/faceReveal/SoloFaceRevealPage';
 import { MultiplayerFaceRevealPage }            from './pages/faceReveal/MultiplayerFaceRevealPage';
 import { MultiplayerFaceRevealResultsPage }     from './pages/faceReveal/MultiplayerFaceRevealResultsPage';
+import { SoloTopTenPage }                       from './pages/topTen/SoloTopTenPage';
+import { MultiplayerTopTenPage }                from './pages/topTen/MultiplayerTopTenPage';
+import { MultiplayerTopTenResultsPage }         from './pages/topTen/MultiplayerTopTenResultsPage';
 
 function App() {
   return (
@@ -93,6 +96,10 @@ function App() {
         <Route path="/face-reveal" element={<SoloFaceRevealPage />} />
         <Route path="/lobby/:code/face-reveal" element={<MultiplayerFaceRevealPage />} />
         <Route path="/lobby/:code/face-reveal/results" element={<MultiplayerFaceRevealResultsPage />} />
+        {/* Top Ten routes */}
+        <Route path="/top-ten" element={<SoloTopTenPage />} />
+        <Route path="/lobby/:code/top-ten" element={<MultiplayerTopTenPage />} />
+        <Route path="/lobby/:code/top-ten/results" element={<MultiplayerTopTenResultsPage />} />
       </Routes>
     </BrowserRouter>
   );

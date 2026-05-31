@@ -29,6 +29,7 @@ import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { longestTenuredTeam } from '../faceReveal/faceRevealUtils';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../../services/boxScoreData';
+import { getTopTen, getTopTenDivision, pickRandomCategory, getAvailableYears } from '../../services/topTen';
 import { getRandomNBABoxScoreGame, ALL_NBA_BOX_SCORE_YEARS } from '../../services/nbaBoxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
@@ -216,6 +217,8 @@ export function LobbyWaitingPage() {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/starting-lineup`); }
       } else if (lobby.game_type === 'face-reveal') {
         if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/face-reveal`); }
+      } else if (lobby.game_type === 'top-ten') {
+        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/top-ten`); }
       } else {
         // Roster mode: trigger dealing animation; non-hosts jump straight to game load
         if (!hasStartedGame.current) {
@@ -232,6 +235,7 @@ export function LobbyWaitingPage() {
         'nba-box-score': `/lobby/${code}/nba-box-score/results`,
         'starting-lineup': `/lobby/${code}/starting-lineup/results`,
         'face-reveal': `/lobby/${code}/face-reveal/results`,
+        'top-ten': `/lobby/${code}/top-ten/results`,
       };
       navigate(routes[lobby.game_type] ?? `/lobby/${code}/results`);
     }
@@ -541,6 +545,86 @@ export function LobbyWaitingPage() {
     }
   };
 
+  const handleTopTenStart = async () => {
+    if (!isHost || !lobby) return;
+    setIsLoadingRoster(true);
+    try {
+      const cs = (lobby.career_state as any) || {};
+      const sport = (cs.top_ten_sport || lobby.sport) as 'nba' | 'nfl';
+      const roundType: 'league' | 'division' = cs.top_ten_round_type || 'league';
+      const maxStrikes: number = cs.max_strikes || 2;
+      const winTarget: number = cs.win_target || 3;
+
+      const cat = pickRandomCategory(sport);
+      const playersResult = await getLobbyPlayers(lobby.id);
+      const lobbyPlayers = playersResult.players || [];
+      const turnOrder = lobbyPlayers.map((p: any) => p.player_id);
+
+      let entries: any[] = [];
+      let roundInfo = '';
+
+      if (roundType === 'division') {
+        const windowYears: number = cs.top_ten_window_years || 10;
+        const currentYear = sport === 'nba' ? 2025 : 2024;
+        const fromYear = currentYear - windowYears;
+        const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
+        const div = divs[Math.floor(Math.random() * divs.length)];
+        entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear);
+        roundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
+        // Retry with league round if too few entries
+        if (entries.length < 5) {
+          const years = getAvailableYears(sport);
+          const year = years[Math.floor(Math.random() * years.length)];
+          entries = await getTopTen(sport, cat.key, year);
+          roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+        }
+      } else {
+        const minYear: number = cs.top_ten_min_year || (sport === 'nba' ? 1996 : 1999);
+        const maxYear: number = cs.top_ten_max_year || (sport === 'nba' ? 2025 : 2024);
+        const years = getAvailableYears(sport).filter(y => y >= minYear && y <= maxYear);
+        const year = years[Math.floor(Math.random() * Math.max(years.length, 1))];
+        entries = await getTopTen(sport, cat.key, year);
+        roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+      }
+
+      if (entries.length === 0) { setIsLoadingRoster(false); return; }
+
+      const deadline = new Date(Date.now() + 45000).toISOString();
+      const newState = {
+        type: 'top-ten',
+        sport,
+        category: cat.key,
+        category_label: cat.label,
+        round_info: roundInfo,
+        top10_entries: entries,
+        guessed_indices: [],
+        player_strikes: {},
+        eliminated: [],
+        guess_attribution: {},
+        turn_order: turnOrder,
+        current_turn_index: 0,
+        turn_deadline: deadline,
+        max_strikes: maxStrikes,
+        win_target: winTarget,
+        round_wins: {},
+        round: 1,
+        top_ten_sport: sport,
+        top_ten_round_type: roundType,
+        top_ten_min_year: cs.top_ten_min_year || (sport === 'nba' ? 1996 : 1999),
+        top_ten_max_year: cs.top_ten_max_year || (sport === 'nba' ? 2025 : 2024),
+        top_ten_window_years: cs.top_ten_window_years || 10,
+      };
+
+      await startCareerRound(lobby.id, newState);
+      hasStartedGame.current = true;
+      setLobby({ ...lobby, career_state: newState, status: 'playing' });
+      navigate(`/lobby/${code}/top-ten`);
+    } catch (err) {
+      console.error('[handleTopTenStart] Failed to start game:', err);
+      setIsLoadingRoster(false);
+    }
+  };
+
   const handleReroll = useCallback(async () => {
     if (!isHost || !lobby) return;
     const currentSport = lobby.sport as Sport;
@@ -613,6 +697,11 @@ export function LobbyWaitingPage() {
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
+    } else if (v.gameType === 'top-ten') {
+      const newState = { ...baseState, top_ten_sport: v.topTenSport, top_ten_round_type: v.topTenRoundType, top_ten_min_year: v.topTenMinYear, top_ten_max_year: v.topTenMaxYear, top_ten_window_years: v.topTenWindowYears, max_strikes: v.topTenMaxStrikes, win_target: v.topTenWinTarget };
+      await updateCareerState(newState);
+      await updateSettings({ sport: v.topTenSport });
+      setLobby({ ...fresh(), career_state: newState, sport: v.topTenSport });
     } else {
       // Roster mode
       const finalSport: Sport = v.randomSport ? (Math.random() < 0.5 ? 'nba' : 'nfl') : v.sport;
@@ -828,6 +917,7 @@ export function LobbyWaitingPage() {
           onNBABoxScoreStart={handleNBABoxScoreStart}
           onStartingLineupStart={handleStartingLineupStart}
           onFaceRevealStart={handleFaceRevealStart}
+          onTopTenStart={handleTopTenStart}
         />
       </main>
     </div>
