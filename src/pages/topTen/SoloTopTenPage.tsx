@@ -117,6 +117,11 @@ export function SoloTopTenPage() {
       clearFeedback();
       if (newGuessed.length === entries.length) setStatus('done');
     } else {
+      if (wrongGuesses.includes(value.trim())) {
+        setGuess('');
+        inputRef.current?.focus();
+        return;
+      }
       const n = strikes + 1;
       setStrikes(n);
       setWrongGuesses(prev => [...prev, value.trim()]);

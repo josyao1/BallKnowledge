@@ -337,7 +337,8 @@ export function MultiplayerTopTenPage() {
       const finalGuessed      = newGuessedIndices ?? guessedIndices;
       const allSlotsFilled    = finalGuessed.length >= entries.length;
       const allOut            = newActivePlayers.length === 0;
-      const allRemainingOnLastStrike = newActivePlayers.length > 0
+      const allRemainingOnLastStrike = maxStrikes > 1
+        && newActivePlayers.length > 0
         && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
       const lastStanding      = newActivePlayers.length === 1 && !allRemainingOnLastStrike;
 
@@ -395,7 +396,6 @@ export function MultiplayerTopTenPage() {
     } catch (err) {
       console.error('[TopTen] advanceTurn failed:', err);
       setFeedback({ msg: 'Connection error — try again', type: 'wrong' });
-      hasAdvancedRef.current = false;
     } finally {
       isWritingRef.current = false;
     }
@@ -421,6 +421,11 @@ export function MultiplayerTopTenPage() {
       hasAdvancedRef.current = true;
       await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, trimmed);
     } else {
+      if (wrongGuesses.includes(trimmed)) {
+        setGuess('');
+        inputRef.current?.focus();
+        return;
+      }
       hasAdvancedRef.current = true;
       await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] }, trimmed);
     }
@@ -494,6 +499,7 @@ export function MultiplayerTopTenPage() {
         guess_attribution:  {},
         current_turn_index: 0,
         turn_deadline:      deadline,
+        reveal_anim:        null,
       };
       await updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });
@@ -508,7 +514,7 @@ export function MultiplayerTopTenPage() {
   async function handleSendToLobby() {
     if (!lobby || !isHost) return;
     try {
-      const newState = { ...cs, abandoned: true };
+      const newState = { ...cs, abandoned: true, reveal_anim: null };
       await updateCareerState(lobby.id, newState);
       await updateLobbyStatus(lobby.id, 'waiting');
       window.location.href = `/lobby/${code}`;

@@ -451,6 +451,7 @@ export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'divis
   let cats: StatCategoryDef[];
   if (sport === 'nba') cats = NBA_STAT_CATEGORIES;
   else if (mode === 'team') cats = NFL_TEAM_STAT_CATEGORIES;
+  else if (mode === 'division') cats = NFL_STAT_CATEGORIES.filter(c => !c.key.startsWith('award_'));
   else cats = NFL_STAT_CATEGORIES;
   return cats[Math.floor(Math.random() * cats.length)];
 }
@@ -591,7 +592,7 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
   const minYear = config.minYear ?? defaultMinYear;
   const maxYear = config.maxYear ?? currentYear;
 
-  const cat = pickRandomCategory(sport, roundType);
+  let cat = pickRandomCategory(sport, roundType);
   const years = getAvailableYears(sport, cat.key);
 
   let entries: TopTenEntry[] = [];
@@ -608,7 +609,7 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
     entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, calcTeamBoardLimit(cat.key, windowYears));
     roundInfo = `${picked.name} · last ${windowYears} years`;
     isTeamRound = true;
-    isDivisionRound = sport === 'nba'; // cumulative NBA uses division labels
+    isDivisionRound = false;
   } else if (roundType === 'division') {
     const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
     const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
@@ -630,9 +631,11 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
     roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
   }
 
-  // Final safety fallback
+  // Final safety fallback — ensure cat is league-compatible (e.g. bare 'fantasy_pts' doesn't work in getTopTen)
   if (entries.length < 5) {
-    const year = years[Math.floor(Math.random() * years.length)];
+    if (cat.key === 'fantasy_pts') cat = pickRandomCategory(sport, 'league');
+    const safeYears = getAvailableYears(sport, cat.key);
+    const year = safeYears[Math.floor(Math.random() * safeYears.length)];
     entries = await getTopTen(sport, cat.key, year);
     roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
     isDivisionRound = false;

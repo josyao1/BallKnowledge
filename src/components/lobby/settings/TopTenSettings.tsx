@@ -66,7 +66,7 @@ export function TopTenSettings({
         )}
         {roundType === 'team' && (
           <p className="sports-font text-[9px] text-[#555] mt-1.5">
-            Random team · top 6 cumulative leaders (top 10 for fantasy pts)
+            Random team · cumulative leaders (4–10 slots by category &amp; window)
           </p>
         )}
       </div>
