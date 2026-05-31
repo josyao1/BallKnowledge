@@ -3,19 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
-  getTopTen, getTopTenDivision, pickRandomCategory,
+  getTopTen, getTopTenDivision, getTopTenTeam, pickRandomCategory,
   getAvailableYears, isValidGuess, getCategoryDef, formatStat,
   getPlayerSuggestions,
 } from '../../services/topTen';
-import { getNBADivisions } from '../../data/teams';
-import { getNFLDivisions } from '../../data/nfl-teams';
+import { getNBADivisions, teams as nbaTeams } from '../../data/teams';
+import { getNFLDivisions, nflTeams } from '../../data/nfl-teams';
 import type { TopTenEntry } from '../../services/topTen';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { TeamLogo } from '../../components/TeamLogo';
 
 const MAX_STRIKES = 3;
 const NBA_MIN = 1996; const NBA_MAX = 2025;
-const NFL_MIN = 1999; const NFL_MAX = 2024;
+const NFL_MIN = 1999; const NFL_MAX = 2025;
 
 type Status = 'setup' | 'loading' | 'playing' | 'done';
 
@@ -27,7 +27,7 @@ export function SoloTopTenPage() {
   const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(
     (storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba'
   );
-  const [roundType, setRoundType] = useState<'league' | 'division'>('league');
+  const [roundType, setRoundType] = useState<'league' | 'division' | 'team'>('league');
   const [minYear, setMinYear]     = useState(NBA_MIN);
   const [maxYear, setMaxYear]     = useState(NBA_MAX);
   const [windowYears, setWindowYears] = useState(10);
@@ -45,6 +45,8 @@ export function SoloTopTenPage() {
   const [status, setStatus]         = useState<Status>('setup');
   const [hintMode, setHintMode]     = useState(false);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
+  const [isDivisionRound, setIsDivisionRound] = useState(false);
+  const [isTeamRound, setIsTeamRound]         = useState(false);
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -59,7 +61,7 @@ export function SoloTopTenPage() {
   }, []);
 
   // Capture active settings in a ref so playAgain doesn't drift
-  const activeConfig = useRef({ sport: 'nba' as 'nba' | 'nfl', roundType: 'league' as 'league' | 'division', minYear: NBA_MIN, maxYear: NBA_MAX, windowYears: 10 });
+  const activeConfig = useRef({ sport: 'nba' as 'nba' | 'nfl', roundType: 'league' as 'league' | 'division' | 'team', minYear: NBA_MIN, maxYear: NBA_MAX, windowYears: 10 });
 
   // Reset year bounds when sport changes in setup
   useEffect(() => {
@@ -83,26 +85,45 @@ export function SoloTopTenPage() {
 
   async function loadRound() {
     const { sport: s, roundType: rt, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
-    const cat = pickRandomCategory(s);
-    setCategory(cat.key);
-    setCategoryLabel(cat.label);
-
-    const years = getAvailableYears(s);
+    const cat = pickRandomCategory(s, rt);
+    const years = getAvailableYears(s, cat.key);
     let result: TopTenEntry[] = [];
     let info = '';
+    let usedDivision = false;
+    let usedTeam = false;
 
-    if (rt === 'division') {
-      const divisions = s === 'nba' ? getNBADivisions() : getNFLDivisions();
-      const div = divisions[Math.floor(Math.random() * divisions.length)];
+    if (rt === 'team') {
       const currentYear = s === 'nba' ? NBA_MAX : NFL_MAX;
       const fromYear = s === 'nba' ? currentYear - wy : currentYear - wy + 1;
+      const allTeams = s === 'nba' ? nbaTeams : nflTeams;
+      const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
+      const windowStep = (wy - 5) / 5;
+      const passingKeys = ['passing_yards', 'passing_tds', 'interceptions'];
+      const rushingKeys = ['rushing_yards', 'rushing_tds'];
+      const receivingKeys = ['receiving_yards', 'receiving_tds', 'receptions'];
+      const baseLimit = cat.key === 'fantasy_pts' ? 10
+        : passingKeys.includes(cat.key) ? 4 + windowStep
+        : rushingKeys.includes(cat.key) ? 6 + windowStep
+        : receivingKeys.includes(cat.key) ? 8 + windowStep
+        : 6 + windowStep;
+      const limit = Math.min(10, baseLimit);
+      result = await getTopTenTeam(s, cat.key, picked.abbreviation, fromYear, currentYear, limit);
+      info = `${picked.name} · last ${wy} years`;
+      usedTeam = true;
+      usedDivision = s === 'nba';
+    } else if (rt === 'division') {
+      const currentYear = s === 'nba' ? NBA_MAX : NFL_MAX;
+      const fromYear = s === 'nba' ? currentYear - wy : currentYear - wy + 1;
+      const divisions = s === 'nba' ? getNBADivisions() : getNFLDivisions();
+      const div = divisions[Math.floor(Math.random() * divisions.length)];
       result = await getTopTenDivision(s, cat.key, div.conference, div.division, fromYear, currentYear);
       info = `${div.conference} ${div.division} · last ${wy} yrs`;
-      // Division fallback: if too few results, drop to a league-wide league round
-      if (result.length < 5) {
-        const fallbackYear = years[years.length - 1];
-        result = await getTopTen(s, cat.key, fallbackYear);
-        info = s === 'nba' ? `${fallbackYear}-${String(fallbackYear + 1).slice(-2)} season` : `${fallbackYear} season`;
+      if (result.length >= 5) {
+        usedDivision = true;
+      } else {
+        const year = years[Math.floor(Math.random() * years.length)];
+        result = await getTopTen(s, cat.key, year);
+        info = s === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
       }
     } else {
       const filtered = years.filter(y => y >= mn && y <= mx);
@@ -116,10 +137,18 @@ export function SoloTopTenPage() {
       const year = years[years.length - 3 + Math.floor(Math.random() * 3)];
       result = await getTopTen(s, cat.key, year);
       info = s === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+      usedDivision = false;
+      usedTeam = false;
     }
 
+    const catLabel = usedDivision && s === 'nba' ? (cat.divisionLabel ?? cat.label) : cat.label;
+
+    setCategory(cat.key);
+    setCategoryLabel(catLabel);
     setEntries(result);
     setRoundInfo(info);
+    setIsDivisionRound(usedDivision && !usedTeam);
+    setIsTeamRound(usedTeam);
     setGuessedIndices([]);
     setStrikes(0);
     setGuess('');
@@ -174,11 +203,13 @@ export function SoloTopTenPage() {
     submitGuess(guess);
   }
 
-  const isDone         = status === 'done';
-  const catDef         = getCategoryDef(sport, category);
-  const sportMin       = setupSport === 'nba' ? NBA_MIN : NFL_MIN;
-  const sportMax       = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
-  const showTeamHint   = hintMode || activeConfig.current.roundType === 'division';
+  const isDone           = status === 'done';
+  const catDef           = getCategoryDef(sport, category);
+  const isCumulativeRound = isDivisionRound || isTeamRound;
+  const statShortLabel   = (isCumulativeRound && sport === 'nba' && catDef?.divisionShortLabel) ? catDef.divisionShortLabel : catDef?.shortLabel;
+  const sportMin         = setupSport === 'nba' ? NBA_MIN : NFL_MIN;
+  const sportMax         = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
+  const showTeamHint     = isDivisionRound || (hintMode && !isTeamRound);
 
   const btnActive   = 'bg-[#22c55e] text-black';
   const btnInactive = 'bg-[#0d0d0d] text-[#444] border border-[#1e1e1e] hover:border-[#333] hover:text-[#777]';
@@ -220,10 +251,10 @@ export function SoloTopTenPage() {
             <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-4 space-y-2.5">
               <p className="sports-font text-[9px] text-[#444] tracking-[0.25em] uppercase">Round Type</p>
               <div className="flex gap-1.5">
-                {(['league', 'division'] as const).map(t => (
+                {(['league', 'division', 'team'] as const).map(t => (
                   <button key={t} onClick={() => setRoundType(t)}
                     className={`${btnBase} ${roundType === t ? 'bg-[#d4af37] text-black' : btnInactive}`}>
-                    {t === 'league' ? 'League-Wide' : 'Division'}
+                    {t === 'league' ? 'League' : t === 'division' ? 'Division' : 'Team'}
                   </button>
                 ))}
               </div>
@@ -292,9 +323,9 @@ export function SoloTopTenPage() {
         </button>
         <h1 className="retro-title text-base text-[#22c55e]">Top Ten</h1>
         <span className="sports-font text-[9px] text-white/20 tracking-[0.25em] uppercase">
-          {sport.toUpperCase()} · {activeConfig.current.roundType === 'division' ? 'Division' : 'League'}
+          {sport.toUpperCase()} · {isTeamRound ? 'Team' : isDivisionRound ? 'Division' : 'League'}
         </span>
-        {!isDone && activeConfig.current.roundType !== 'division' && (
+        {!isDone && !isDivisionRound && !isTeamRound && (
           <button
             onClick={() => setHintMode(h => !h)}
             className={`ml-auto px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
@@ -453,7 +484,7 @@ export function SoloTopTenPage() {
                 {isRevealed && catDef && (
                   <span className={`sports-font text-xs tabular-nums shrink-0 ${wasGuessed ? 'text-[#22c55e]' : 'text-white/25'}`}>
                     {formatStat(entry.stat, category)}{' '}
-                    <span className="text-[9px] opacity-60">{catDef.shortLabel}</span>
+                    <span className="text-[9px] opacity-60">{statShortLabel}</span>
                   </span>
                 )}
               </motion.div>

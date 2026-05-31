@@ -189,7 +189,6 @@ export function MultiplayerTopTenPage() {
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
   const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean } | null>(null);
   const inputRef          = useRef<HTMLInputElement>(null);
-  const feedbackTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAdvancedRef    = useRef(false);
   const isWritingRef      = useRef(false);
   const zeroSinceRef      = useRef<number | null>(null);
@@ -407,11 +406,6 @@ export function MultiplayerTopTenPage() {
 
   useEffect(() => { advanceTurnRef.current = advanceTurn; }, [advanceTurn]);
 
-  function clearFeedback() {
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    feedbackTimer.current = setTimeout(() => setFeedback({ msg: '', type: '' }), 1800);
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = guess.trim();
@@ -422,8 +416,6 @@ export function MultiplayerTopTenPage() {
 
     if (matched.length > 0) {
       const newGuessedIndices = [...guessedIndices, ...matched];
-      setFeedback({ msg: `✓ ${entries[matched[0]].playerName}`, type: 'correct' });
-      clearFeedback();
       const newAttribution = {
         ...(cs.guess_attribution || {}),
         [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
@@ -431,8 +423,6 @@ export function MultiplayerTopTenPage() {
       hasAdvancedRef.current = true;
       await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, trimmed);
     } else {
-      setFeedback({ msg: '✗ Not in the top 10', type: 'wrong' });
-      clearFeedback();
       hasAdvancedRef.current = true;
       await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] }, trimmed);
     }

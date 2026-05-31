@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useMultiplayerResults } from '../../hooks/useMultiplayerResults';
 import { getCategoryDef, formatStat } from '../../services/topTen';
@@ -8,6 +9,7 @@ import type { TopTenEntry } from '../../services/topTen';
 
 export function MultiplayerTopTenResultsPage() {
   const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
   const {
     lobby, players, isHost, currentPlayerId,
     isLeaving, isResetting,
@@ -25,6 +27,12 @@ export function MultiplayerTopTenResultsPage() {
       turn_timer: c.turn_timer,
     }),
   });
+
+  useEffect(() => {
+    if (lobby && lobby.status !== 'finished') {
+      navigate(`/top-ten/${code}`, { replace: true });
+    }
+  }, [lobby?.status]);
 
   const cs = (lobby?.career_state as any) || {};
   const entries: TopTenEntry[]  = cs.top10_entries || [];
