@@ -1,14 +1,179 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, updateCareerState } from '../../services/lobby';
-import { isValidGuess, getCategoryDef, formatStat } from '../../services/topTen';
+import { isValidGuess, getCategoryDef, generateTopTenRound, parseRoundFlags, getStatShortLabel } from '../../services/topTen';
+import { nflTeams } from '../../data/nfl-teams';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
+import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
+import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
 import { TeamLogo } from '../../components/TeamLogo';
-import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
+import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
+
+const ANIM_MS = 2500;
+const SUSPENSE_MS = 1200;
+
+function RevealOverlay({ guessedName, isCorrect }: { guessedName: string; isCorrect: boolean }) {
+  const [phase, setPhase] = useState<'suspense' | 'reveal'>('suspense');
+
+  // Deterministic confetti particles — avoids re-generating on each render
+  const particles = useMemo(() =>
+    Array.from({ length: 32 }, (_, i) => ({
+      id: i,
+      color: ['#22c55e', '#d4af37', '#60a5fa', '#a78bfa', '#fb923c', '#f472b6', '#34d399', '#fbbf24'][i % 8],
+      xStart: ((i * 37) % 80) - 40,
+      xDrift: ((i * 53) % 160) - 80,
+      yHeight: 100 + (i * 17) % 120,
+      rotation: (i * 97) % 720 - 360,
+      delay: i * 0.018,
+      w: 5 + (i % 5) * 2,
+      h: 5 + (i % 4) * 2,
+    })), []
+  );
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase('reveal'), SUSPENSE_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#050505]/98"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+    >
+      <AnimatePresence mode="wait">
+        {phase === 'suspense' ? (
+          <motion.div
+            key="suspense"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="text-center px-8 py-10 bg-[#111] border border-white/10 rounded-sm max-w-xs w-full mx-6"
+          >
+            <motion.p
+              className="retro-title text-3xl text-white leading-tight"
+              animate={{ textShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 24px rgba(255,255,255,0.7)', '0 0 0px rgba(255,255,255,0)'] }}
+              transition={{ duration: 0.9, repeat: Infinity }}
+            >
+              {guessedName}
+            </motion.p>
+            <div className="flex justify-center gap-2 mt-5">
+              {[0, 1, 2].map(i => (
+                <motion.span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-white/40"
+                  animate={{ opacity: [0.15, 1, 0.15] }}
+                  transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.3 }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        ) : isCorrect ? (
+          // Correct — confetti burst + bounce
+          <motion.div key="correct" className="relative flex items-center justify-center">
+            {/* Confetti particles */}
+            {particles.map(p => (
+              <motion.div
+                key={p.id}
+                className="absolute rounded-sm pointer-events-none"
+                style={{ backgroundColor: p.color, width: p.w, height: p.h }}
+                initial={{ x: p.xStart, y: 0, opacity: 1, rotate: 0 }}
+                animate={{ x: p.xStart + p.xDrift, y: -p.yHeight, opacity: [1, 1, 0], rotate: p.rotation }}
+                transition={{ duration: 1.1 + p.delay * 3, delay: p.delay, ease: 'easeOut' }}
+              />
+            ))}
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0 }}
+              animate={{ scale: [0.88, 1.08, 0.97, 1.02, 1], opacity: 1 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              className="text-center px-8 py-10 bg-emerald-950/60 border border-emerald-500/60 rounded-sm max-w-xs w-full mx-6 relative z-10"
+              style={{ boxShadow: '0 0 40px rgba(34,197,94,0.25)' }}
+            >
+              <p className="retro-title text-3xl text-emerald-300 leading-tight">{guessedName}</p>
+              <motion.p
+                className="retro-title text-5xl mt-4 text-emerald-400"
+                initial={{ opacity: 0, scale: 0.3, rotate: -20 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 14 }}
+                style={{ textShadow: '0 0 24px rgba(34,197,94,0.7)' }}
+              >✓</motion.p>
+            </motion.div>
+          </motion.div>
+        ) : (
+          // Wrong — heavy thud shake, name droops, big ✗ stamps in
+          <motion.div
+            key="wrong"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, x: [0, -14, 12, -10, 8, -5, 3, 0] }}
+            transition={{ duration: 0.55, times: [0, 0.12, 0.26, 0.4, 0.54, 0.68, 0.84, 1] }}
+            className="text-center px-8 py-10 bg-red-950/60 border border-red-800/50 rounded-sm max-w-xs w-full mx-6"
+            style={{ boxShadow: '0 0 40px rgba(185,28,28,0.3)' }}
+          >
+            <motion.p
+              className="retro-title text-3xl text-red-400 leading-tight"
+              animate={{ y: [0, 0, 2, 5, 8], opacity: [1, 1, 1, 0.85, 0.7] }}
+              transition={{ duration: 1.1, delay: 0.4, ease: 'easeIn' }}
+            >
+              {guessedName}
+            </motion.p>
+            <motion.p
+              className="retro-title text-6xl mt-3 text-red-600"
+              initial={{ opacity: 0, scale: 3, rotate: 15 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ delay: 0.18, duration: 0.35, ease: 'easeOut' }}
+              style={{ textShadow: '0 0 28px rgba(239,68,68,0.7)' }}
+            >✗</motion.p>
+            <motion.p
+              className="sports-font text-[10px] text-red-500/55 tracking-[0.3em] uppercase mt-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >Not in top 10</motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// Returns winner IDs: primary = most correct guesses, tiebreaker = most strikes left
+function determineWinners(
+  allIds: string[],
+  attribution: Record<string, number>,
+  strikes: Record<string, number>,
+  maxStrikes: number,
+  lastStanding: boolean,
+  lastActiveId: string,
+): string[] {
+  if (lastStanding) return [lastActiveId];
+  const sorted = [...allIds].sort((a, b) => {
+    const ga = attribution[a] || 0, gb = attribution[b] || 0;
+    if (gb !== ga) return gb - ga;
+    return (maxStrikes - (strikes[b] || 0)) - (maxStrikes - (strikes[a] || 0));
+  });
+  if (!sorted.length) return [];
+  const topG  = attribution[sorted[0]] || 0;
+  const topSL = maxStrikes - (strikes[sorted[0]] || 0);
+  return sorted.filter(id =>
+    (attribution[id] || 0) === topG &&
+    (maxStrikes - (strikes[id]  || 0)) === topSL
+  );
+}
+
+// NFL teams grouped for the reference panel
+const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
+  (['East', 'North', 'South', 'West'] as const).map(div => ({
+    label: `${conf} ${div}`,
+    teams: nflTeams.filter(t => t.conference === conf && t.division === div),
+  }))
+);
 
 export function MultiplayerTopTenPage() {
   const navigate = useNavigate();
@@ -18,17 +183,20 @@ export function MultiplayerTopTenPage() {
     setLobby, setPlayers,
   } = useLobbyStore();
 
-  const [guess, setGuess]       = useState('');
-  const [feedback, setFeedback] = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
-  const [timeLeft, setTimeLeft] = useState(45);
-  const inputRef      = useRef<HTMLInputElement>(null);
-  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasAdvancedRef  = useRef(false);
-  const isWritingRef    = useRef(false);
+  const [guess, setGuess]             = useState('');
+  const [feedback, setFeedback]       = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
+  const [timeLeft, setTimeLeft]       = useState(45);
+  const [showTeamsPanel, setShowTeamsPanel] = useState(false);
+  const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean } | null>(null);
+  const inputRef          = useRef<HTMLInputElement>(null);
+  const hasAdvancedRef    = useRef(false);
+  const isWritingRef      = useRef(false);
+  const zeroSinceRef      = useRef<number | null>(null);
+  // Always-current reference so the timer effect never captures a stale advanceTurn
+  const advanceTurnRef    = useRef<typeof advanceTurn>(() => Promise.resolve());
 
   useLobbySubscription(lobby?.id || null);
 
-  // Load lobby on mount
   useEffect(() => {
     if (!code) { navigate('/'); return; }
     if (lobby) return;
@@ -45,67 +213,110 @@ export function MultiplayerTopTenPage() {
   }, []);
 
   const cs = (lobby?.career_state as any) || {};
-  const entries: TopTenEntry[]            = cs.top10_entries || [];
-  const guessedIndices: number[]          = cs.guessed_indices || [];
-  const turnOrder: string[]               = cs.turn_order || [];
-  const eliminated: string[]              = cs.eliminated || [];
-  const playerStrikes: Record<string, number> = cs.player_strikes || {};
-  const maxStrikes: number                = cs.max_strikes || 2;
-  const turnTimerSecs: number             = cs.turn_timer || 45;
-  const isDivisionRound: boolean          = cs.is_division_round || false;
-  const hintMode: boolean                 = cs.hint_mode || false;
-  const showTeamHint: boolean             = isDivisionRound || hintMode;
-  const currentTurnIndex: number          = cs.current_turn_index ?? 0;
-  const turnDeadline: string | null       = cs.turn_deadline || null;
-  const categoryKey: string               = cs.category || '';
-  const categoryLabel: string             = cs.category_label || '';
-  const roundInfo: string                 = cs.round_info || '';
-  const wrongGuesses: string[]            = cs.wrong_guesses || [];
-  const sport: string                     = cs.sport || 'nba';
+  const entries: TopTenEntry[]                    = cs.top10_entries || [];
+  const guessedIndices: number[]                  = cs.guessed_indices || [];
+  const turnOrder: string[]                       = cs.turn_order || [];
+  const eliminated: string[]                      = cs.eliminated || [];
+  const playerStrikes: Record<string, number>     = cs.player_strikes || {};
+  const maxStrikes: number                        = cs.max_strikes || 2;
+  const turnTimerSecs: number                     = cs.turn_timer || 45;
+  const { isDivisionRound, isTeamRound, isCumulativeRound } = parseRoundFlags(cs);
+  const hintMode: boolean                         = cs.hint_mode || false;
+  // Division round shows team logos as hints; team round doesn't (team is already known)
+  const showTeamHint: boolean                     = isDivisionRound || (hintMode && !isTeamRound);
+  const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
+  const turnDeadline: string | null               = cs.turn_deadline || null;
+  const categoryKey: string                       = cs.category || '';
+  const categoryLabel: string                     = cs.category_label || '';
+  const roundInfo: string                         = cs.round_info || '';
+  const wrongGuesses: string[]                    = cs.wrong_guesses || [];
+  const sport: string                             = cs.sport || 'nba';
 
   const activePlayers   = turnOrder.filter(id => !eliminated.includes(id));
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
   const isMyTurn        = currentTurnId === currentPlayerId;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
+  const statShortLabel  = getStatShortLabel(catDef, isCumulativeRound, sport);
 
-  // Timer
+  // Timer — active player fires immediately; host fallback after 500ms grace
   useEffect(() => {
     if (!turnDeadline) return;
+
+    function tryAdvance() {
+      if (hasAdvancedRef.current || isWritingRef.current) return;
+      if (isMyTurn || isHost) {
+        hasAdvancedRef.current = true;
+        zeroSinceRef.current = null;
+        advanceTurnRef.current(false);
+      }
+    }
+
     const tick = () => {
       const secs = Math.max(0, Math.round((new Date(turnDeadline).getTime() - Date.now()) / 1000));
       setTimeLeft(secs);
-      if (secs === 0 && isMyTurn && !hasAdvancedRef.current && !isWritingRef.current) {
-        hasAdvancedRef.current = true;
-        advanceTurn(false);
+      if (secs === 0) {
+        if (zeroSinceRef.current === null) zeroSinceRef.current = Date.now();
+        if (!hasAdvancedRef.current && !isWritingRef.current) {
+          if (isMyTurn) {
+            hasAdvancedRef.current = true;
+            zeroSinceRef.current = null;
+            advanceTurnRef.current(false);
+          } else if (isHost && Date.now() - (zeroSinceRef.current ?? Date.now()) >= 500) {
+            hasAdvancedRef.current = true;
+            zeroSinceRef.current = null;
+            advanceTurnRef.current(false);
+          }
+        }
+      } else {
+        zeroSinceRef.current = null;
       }
     };
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const secs = Math.round((new Date(turnDeadline).getTime() - Date.now()) / 1000);
+      if (secs <= 0) tryAdvance();
+    };
+
     tick();
     const id = setInterval(tick, 500);
-    return () => clearInterval(id);
-  }, [turnDeadline, isMyTurn]);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [turnDeadline, isMyTurn, isHost]);
 
-  // Reset advance guard + focus input on turn change
   useEffect(() => {
     hasAdvancedRef.current = false;
     if (isMyTurn) setTimeout(() => inputRef.current?.focus(), 100);
   }, [currentTurnId]);
 
-  // Navigate when game ends or host sends back to lobby
   useEffect(() => {
     if (lobby?.status === 'finished') navigate(`/lobby/${code}/top-ten/results`);
     if (lobby?.status === 'waiting')  window.location.href = `/lobby/${code}`;
   }, [lobby?.status]);
 
-  // Non-host: detect abandoned flag
   useEffect(() => {
     if (isHost) return;
     if (cs.abandoned) window.location.href = `/lobby/${code}`;
   }, [cs.abandoned]);
 
+  useEffect(() => {
+    const anim = cs.reveal_anim as { guessedName: string; isCorrect: boolean; endsAt: string } | null | undefined;
+    if (!anim?.endsAt) { setRevealOverlay(null); return; }
+    const msLeft = new Date(anim.endsAt).getTime() - Date.now();
+    if (msLeft <= 0) { setRevealOverlay(null); return; }
+    setRevealOverlay({ guessedName: anim.guessedName, isCorrect: anim.isCorrect });
+    const t = setTimeout(() => setRevealOverlay(null), msLeft);
+    return () => clearTimeout(t);
+  }, [cs.reveal_anim?.endsAt]);
+
   const advanceTurn = useCallback(async (
     correct: boolean,
     newGuessedIndices?: number[],
     extras: Record<string, unknown> = {},
+    guessedName?: string,
   ) => {
     if (!lobby || isWritingRef.current) return;
     isWritingRef.current = true;
@@ -125,48 +336,59 @@ export function MultiplayerTopTenPage() {
       const newActivePlayers  = turnOrder.filter(id => !currentEliminated.includes(id));
       const finalGuessed      = newGuessedIndices ?? guessedIndices;
       const allSlotsFilled    = finalGuessed.length >= entries.length;
-      const lastStanding      = newActivePlayers.length === 1;
       const allOut            = newActivePlayers.length === 0;
-      const roundOver         = allSlotsFilled || lastStanding || allOut;
+      const allRemainingOnLastStrike = maxStrikes > 1
+        && newActivePlayers.length > 0
+        && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
+      const lastStanding      = newActivePlayers.length === 1 && !allRemainingOnLastStrike;
 
-      const newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
-      // If the current player was just eliminated their slot disappears from newActivePlayers,
-      // so the existing currentTurnIndex already points at the next player — don't add 1.
+      const roundOver = allSlotsFilled || lastStanding || allOut;
+
       const currentWasEliminated = !eliminated.includes(currentTurnId) && currentEliminated.includes(currentTurnId);
-      const nextIndex   = newActivePlayers.length > 0
+      const nextIndex = newActivePlayers.length > 0
         ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
         : 0;
 
       if (roundOver) {
         const mergedAttribution: Record<string, number> =
           (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
-        // When all players are out with no correct guesses, no winner
-        const sorted = Object.entries(mergedAttribution).sort((a, b) => b[1] - a[1]);
-        const winnerId = lastStanding
-          ? newActivePlayers[0]
-          : (sorted[0]?.[1] > 0 ? sorted[0][0] : '');
-
+        const winnerIds = determineWinners(
+          turnOrder, mergedAttribution, currentStrikes, maxStrikes,
+          lastStanding && !allOut, newActivePlayers[0] || '',
+        );
         const newState = {
-          ...cs,
-          ...extras,
-          guessed_indices: finalGuessed,
-          player_strikes: currentStrikes,
-          eliminated: currentEliminated,
-          winner_id: winnerId,
-          guess_attribution: mergedAttribution,
+          ...cs, ...extras,
+          guessed_indices:    finalGuessed,
+          player_strikes:     currentStrikes,
+          eliminated:         currentEliminated,
+          missed_in_rotation: [],
+          winner_ids:         winnerIds,
+          winner_id:          winnerIds[0] || '',
+          guess_attribution:  mergedAttribution,
+          reveal_anim:        null,
         };
         await updateCareerState(lobby.id, newState);
         await updateLobbyStatus(lobby.id, 'finished');
         setLobby({ ...lobby, career_state: newState, status: 'finished' });
       } else {
+        // If a player submitted a guess, show animation and push deadline past it
+        let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string } | null = null;
+        let newDeadline: string;
+        if (guessedName) {
+          const animEndsAt = new Date(Date.now() + ANIM_MS).toISOString();
+          newDeadline = new Date(new Date(animEndsAt).getTime() + turnTimerSecs * 1000).toISOString();
+          revealAnim = { guessedName, isCorrect: correct, endsAt: animEndsAt };
+        } else {
+          newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+        }
         const newState = {
-          ...cs,
-          ...extras,
-          guessed_indices: finalGuessed,
-          player_strikes: currentStrikes,
-          eliminated: currentEliminated,
+          ...cs, ...extras,
+          guessed_indices:    finalGuessed,
+          player_strikes:     currentStrikes,
+          eliminated:         currentEliminated,
           current_turn_index: nextIndex,
-          turn_deadline: newDeadline,
+          turn_deadline:      newDeadline,
+          reveal_anim:        revealAnim,
         };
         await updateCareerState(lobby.id, newState);
         setLobby({ ...lobby, career_state: newState });
@@ -174,17 +396,13 @@ export function MultiplayerTopTenPage() {
     } catch (err) {
       console.error('[TopTen] advanceTurn failed:', err);
       setFeedback({ msg: 'Connection error — try again', type: 'wrong' });
-      hasAdvancedRef.current = false;
     } finally {
       isWritingRef.current = false;
     }
   }, [lobby, cs, currentTurnId, currentTurnIndex, guessedIndices, entries.length,
       playerStrikes, eliminated, maxStrikes, turnOrder, turnTimerSecs]);
 
-  function clearFeedback() {
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    feedbackTimer.current = setTimeout(() => setFeedback({ msg: '', type: '' }), 1800);
-  }
+  useEffect(() => { advanceTurnRef.current = advanceTurn; }, [advanceTurn]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -196,33 +414,33 @@ export function MultiplayerTopTenPage() {
 
     if (matched.length > 0) {
       const newGuessedIndices = [...guessedIndices, ...matched];
-      setFeedback({ msg: `✓ ${entries[matched[0]].playerName}`, type: 'correct' });
-      clearFeedback();
       const newAttribution = {
         ...(cs.guess_attribution || {}),
         [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
       };
       hasAdvancedRef.current = true;
-      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution });
+      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, trimmed);
     } else {
-      setFeedback({ msg: '✗ Not in the top 10', type: 'wrong' });
-      clearFeedback();
+      if (wrongGuesses.includes(trimmed)) {
+        setGuess('');
+        inputRef.current?.focus();
+        return;
+      }
       hasAdvancedRef.current = true;
-      await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] });
+      await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] }, trimmed);
     }
     inputRef.current?.focus();
   }
 
-  // Host: send everyone to results immediately (force end)
   async function handleForceEnd() {
     if (!lobby || !isHost) return;
     try {
-      const guessAttribution: Record<string, number> = cs.guess_attribution || {};
-      const sorted = Object.entries(guessAttribution).sort((a, b) => b[1] - a[1]);
-      const winnerId = activePlayers.length === 1
-        ? activePlayers[0]
-        : (sorted[0]?.[1] > 0 ? sorted[0][0] : '');
-      const newState = { ...cs, winner_id: winnerId };
+      const attribution: Record<string, number> = cs.guess_attribution || {};
+      const winnerIds = determineWinners(
+        turnOrder, attribution, playerStrikes, maxStrikes,
+        activePlayers.length === 1, activePlayers[0] || '',
+      );
+      const newState = { ...cs, winner_ids: winnerIds, winner_id: winnerIds[0] || '' };
       await updateCareerState(lobby.id, newState);
       await updateLobbyStatus(lobby.id, 'finished');
     } catch (err) {
@@ -230,7 +448,6 @@ export function MultiplayerTopTenPage() {
     }
   }
 
-  // Host: toggle team logo hints for everyone
   async function handleToggleHint() {
     if (!lobby || !isHost) return;
     try {
@@ -242,17 +459,67 @@ export function MultiplayerTopTenPage() {
     }
   }
 
-  // Host: send everyone back to lobby
+  async function handleSkipTurn() {
+    if (!lobby || !isHost || hasAdvancedRef.current || isWritingRef.current) return;
+    hasAdvancedRef.current = true;
+    await advanceTurn(false);
+  }
+
+  // Generate a fresh round using the same settings currently in career_state
+  async function generateRound() {
+    const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
+    return generateTopTenRound({
+      sport:       roundSport,
+      roundType:   cs.top_ten_round_type || 'league',
+      minYear:     cs.top_ten_min_year   || (roundSport === 'nba' ? 1996 : 1999),
+      maxYear:     cs.top_ten_max_year   || 2025,
+      windowYears: cs.top_ten_window_years || 10,
+    });
+  }
+
+  async function handleSkipCategory() {
+    if (!lobby || !isHost || isWritingRef.current) return;
+    isWritingRef.current = true;
+    try {
+      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, isDivisionRound: newDiv, isTeamRound: newTeam, teamAbbr: newTeamAbbr } = await generateRound();
+      if (newEntries.length === 0) return;
+      const deadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+      const newState = {
+        ...cs,
+        category:           cat.key,
+        category_label:     catLabel,
+        round_info:         newRoundInfo,
+        top10_entries:      newEntries,
+        is_division_round:  newDiv,
+        is_team_round:      newTeam,
+        top_ten_team:       newTeamAbbr,
+        guessed_indices:    [],
+        wrong_guesses:      [],
+        hint_mode:          false,
+        guess_attribution:  {},
+        current_turn_index: 0,
+        turn_deadline:      deadline,
+        reveal_anim:        null,
+      };
+      await updateCareerState(lobby.id, newState);
+      setLobby({ ...lobby, career_state: newState });
+      hasAdvancedRef.current = false;
+    } catch (err) {
+      console.error('[TopTen] handleSkipCategory failed:', err);
+    } finally {
+      isWritingRef.current = false;
+    }
+  }
+
   async function handleSendToLobby() {
     if (!lobby || !isHost) return;
     try {
-      const newState = { ...cs, abandoned: true };
+      const newState = { ...cs, abandoned: true, reveal_anim: null };
       await updateCareerState(lobby.id, newState);
       await updateLobbyStatus(lobby.id, 'waiting');
       window.location.href = `/lobby/${code}`;
     } catch (err) {
       console.error('[TopTen] handleSendToLobby failed:', err);
-      // Still attempt redirect so host isn't stranded
       window.location.href = `/lobby/${code}`;
     }
   }
@@ -265,19 +532,33 @@ export function MultiplayerTopTenPage() {
     );
   }
 
-  const currentTurnPlayer = players.find(p => p.player_id === currentTurnId);
-  const timerFraction     = timeLeft / turnTimerSecs;
-  const timerColor        = timerFraction > 0.5 ? '#22c55e' : timerFraction > 0.25 ? '#f59e0b' : '#ef4444';
+  const currentTurnPlayer   = players.find(p => p.player_id === currentTurnId);
+  const displayTimeLeft     = revealOverlay ? turnTimerSecs : timeLeft;
+  const displayTimerFraction = revealOverlay ? 1 : displayTimeLeft / turnTimerSecs;
+  const timerColor          = displayTimerFraction > 0.5 ? '#22c55e' : displayTimerFraction > 0.25 ? '#f59e0b' : '#ef4444';
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3 bg-black/60">
+      <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3 bg-black/60 relative z-20">
         <HomeButton isHost={isHost} onEndGame={handleSendToLobby} />
         <h1 className="retro-title text-base text-[#22c55e]">Top Ten</h1>
         <span className="sports-font text-[9px] text-white/25 tracking-[0.25em] uppercase">{sport.toUpperCase()}</span>
         <div className="ml-auto flex items-center gap-2">
-          {isHost && !isDivisionRound && (
+          {/* Teams reference panel — NFL only, visible to all */}
+          {sport === 'nfl' && (
+            <button
+              onClick={() => setShowTeamsPanel(v => !v)}
+              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+                showTeamsPanel
+                  ? 'border-[#22c55e]/60 text-[#22c55e] bg-[#22c55e]/8'
+                  : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
+              }`}
+            >
+              Teams
+            </button>
+          )}
+          {isHost && !isDivisionRound && !isTeamRound && (
             <button
               onClick={handleToggleHint}
               className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
@@ -287,6 +568,22 @@ export function MultiplayerTopTenPage() {
               }`}
             >
               Hint {hintMode ? 'On' : 'Off'}
+            </button>
+          )}
+          {isHost && !isMyTurn && (
+            <button
+              onClick={handleSkipTurn}
+              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-yellow-500/50 hover:text-yellow-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+            >
+              Skip
+            </button>
+          )}
+          {isHost && (
+            <button
+              onClick={handleSkipCategory}
+              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-blue-500/50 hover:text-blue-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+            >
+              Skip Cat
             </button>
           )}
           {isHost && (
@@ -299,6 +596,36 @@ export function MultiplayerTopTenPage() {
           )}
         </div>
       </header>
+
+      {/* NFL Teams reference panel */}
+      <AnimatePresence>
+        {showTeamsPanel && sport === 'nfl' && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="border-b border-white/8 bg-[#0a0a0a]/98 z-10 px-4 py-3"
+            onClick={() => setShowTeamsPanel(false)}
+          >
+            <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
+              {NFL_BY_DIVISION.map(({ label, teams }) => (
+                <div key={label}>
+                  <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
+                  <div className="flex gap-2">
+                    {teams.map(t => (
+                      <div key={t.abbreviation} className="flex items-center gap-1">
+                        <TeamLogo abbr={t.abbreviation} sport="nfl" size={18} />
+                        <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-8 flex flex-col gap-4">
         {/* Category + round info */}
@@ -324,12 +651,12 @@ export function MultiplayerTopTenPage() {
               <motion.div
                 className="h-full rounded-full"
                 style={{ backgroundColor: timerColor }}
-                animate={{ width: `${timerFraction * 100}%` }}
+                animate={{ width: `${displayTimerFraction * 100}%` }}
                 transition={{ duration: 0.4 }}
               />
             </div>
           </div>
-          <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{timeLeft}</span>
+          <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
         </div>
 
         {/* Feedback */}
@@ -350,7 +677,7 @@ export function MultiplayerTopTenPage() {
         </div>
 
         {/* Guess input */}
-        {isMyTurn && (
+        {isMyTurn && !revealOverlay && (
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
               ref={inputRef}
@@ -371,83 +698,32 @@ export function MultiplayerTopTenPage() {
 
         {/* Board */}
         <div className="space-y-1.5">
-          {entries.map((entry, i) => {
-            const isRevealed = guessedIndices.includes(i);
-            return (
-              <motion.div
-                key={i}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
-                  isRevealed
-                    ? 'bg-emerald-950/40 border-emerald-700/35'
-                    : 'bg-[#0b0b0b] border-white/4'
-                }`}
-              >
-                <span className="sports-font text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">#{i + 1}</span>
-
-                {/* Headshot — blurred pre-reveal, clear on reveal */}
-                <div
-                  className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
-                    isRevealed ? 'ring-emerald-500/40' : 'ring-white/5'
-                  }`}
-                  style={{
-                    filter: isRevealed ? 'none' : 'blur(14px) saturate(0) brightness(0.45)',
-                    opacity: isRevealed ? 1 : 0.6,
-                  }}
-                >
-                  <PlayerHeadshot playerId={entry.playerId} sport={sport as 'nba' | 'nfl'} className="w-9 h-9 object-cover" />
-                </div>
-
-                {/* Name / info */}
-                <div className="flex-1 min-w-0">
-                  {isRevealed ? (
-                    <>
-                      <p className="retro-title text-sm text-emerald-300 leading-tight truncate">{entry.playerName}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <TeamLogo abbr={entry.team} sport={sport as 'nba' | 'nfl'} size={18} />
-                        <p className="sports-font text-[9px] text-white/40">{entry.year}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {showTeamHint && <TeamLogo abbr={entry.team} sport={sport as 'nba' | 'nfl'} size={20} />}
-                      <p className="sports-font text-[10px] text-white/20 tracking-[0.2em]">???</p>
-                    </div>
-                  )}
-                </div>
-
-                {isRevealed && catDef && (
-                  <span className="sports-font text-xs text-[#22c55e] shrink-0 tabular-nums">
-                    {formatStat(entry.stat, categoryKey)}{' '}
-                    <span className="text-[9px] opacity-60">{catDef.shortLabel}</span>
-                  </span>
-                )}
-              </motion.div>
-            );
-          })}
+          {entries.map((entry, i) => (
+            <TopTenEntryRow
+              key={i}
+              entry={entry}
+              index={i}
+              wasGuessed={guessedIndices.includes(i)}
+              showTeamHint={showTeamHint}
+              sport={sport as 'nba' | 'nfl'}
+              categoryKey={categoryKey}
+              catDef={catDef}
+              statShortLabel={statShortLabel}
+            />
+          ))}
         </div>
 
         {/* Wrong guesses */}
-        {wrongGuesses.length > 0 && (
-          <div>
-            <p className="sports-font text-[9px] text-white/20 tracking-widest uppercase mb-2">Not in top 10</p>
-            <div className="flex flex-wrap gap-1.5">
-              {wrongGuesses.map((name, i) => (
-                <span key={i} className="sports-font text-[10px] text-red-400/50 bg-red-950/20 border border-red-900/30 px-2 py-0.5 rounded-sm">
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Player scoreboard */}
         <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-3">
           <p className="sports-font text-[9px] text-white/25 tracking-widest uppercase mb-2">Players</p>
           <div className="space-y-1.5">
             {players.map(p => {
-              const strikes = playerStrikes[p.player_id] || 0;
-              const isElim  = eliminated.includes(p.player_id);
-              const guesses = (cs.guess_attribution || {})[p.player_id] || 0;
+              const strikes   = playerStrikes[p.player_id] || 0;
+              const isElim    = eliminated.includes(p.player_id);
+              const guesses   = (cs.guess_attribution || {})[p.player_id] || 0;
               const isCurrent = p.player_id === currentTurnId;
               return (
                 <div key={p.player_id} className={`flex items-center gap-2 ${isElim ? 'opacity-30' : ''}`}>
@@ -467,6 +743,21 @@ export function MultiplayerTopTenPage() {
           </div>
         </div>
       </main>
+
+      <AnimatePresence>
+        {revealOverlay && (
+          <RevealOverlay
+            guessedName={revealOverlay.guessedName}
+            isCorrect={revealOverlay.isCorrect}
+          />
+        )}
+      </AnimatePresence>
+
+      <EmoteOverlay
+        lobbyId={lobby?.id}
+        currentPlayerId={currentPlayerId}
+        currentPlayerName={players.find(p => p.player_id === currentPlayerId)?.player_name ?? ''}
+      />
     </div>
   );
 }

@@ -29,7 +29,7 @@ import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { longestTenuredTeam } from '../faceReveal/faceRevealUtils';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../../services/boxScoreData';
-import { getTopTen, getTopTenDivision, pickRandomCategory, getAvailableYears } from '../../services/topTen';
+import { generateTopTenRound } from '../../services/topTen';
 import { getRandomNBABoxScoreGame, ALL_NBA_BOX_SCORE_YEARS } from '../../services/nbaBoxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
@@ -551,41 +551,21 @@ export function LobbyWaitingPage() {
     try {
       const cs = (lobby.career_state as any) || {};
       const sport = (cs.top_ten_sport || lobby.sport) as 'nba' | 'nfl';
-      const roundType: 'league' | 'division' = cs.top_ten_round_type || 'league';
+      const roundType: 'league' | 'division' | 'team' = cs.top_ten_round_type || 'league';
       const maxStrikes: number = cs.max_strikes || 2;
       const turnTimer: number = cs.turn_timer || 45;
 
-      const cat = pickRandomCategory(sport);
       const playersResult = await getLobbyPlayers(lobby.id);
       const lobbyPlayers = playersResult.players || [];
       const turnOrder = lobbyPlayers.map((p: any) => p.player_id);
 
-      let entries: any[] = [];
-      let roundInfo = '';
-
-      if (roundType === 'division') {
-        const windowYears: number = cs.top_ten_window_years || 10;
-        const currentYear = sport === 'nba' ? 2025 : 2024;
-        const fromYear = currentYear - windowYears;
-        const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
-        const div = divs[Math.floor(Math.random() * divs.length)];
-        entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear);
-        roundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
-        // Retry with league round if too few entries
-        if (entries.length < 5) {
-          const years = getAvailableYears(sport);
-          const year = years[Math.floor(Math.random() * years.length)];
-          entries = await getTopTen(sport, cat.key, year);
-          roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-        }
-      } else {
-        const minYear: number = cs.top_ten_min_year || (sport === 'nba' ? 1996 : 1999);
-        const maxYear: number = cs.top_ten_max_year || (sport === 'nba' ? 2025 : 2024);
-        const years = getAvailableYears(sport).filter(y => y >= minYear && y <= maxYear);
-        const year = years[Math.floor(Math.random() * Math.max(years.length, 1))];
-        entries = await getTopTen(sport, cat.key, year);
-        roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
-      }
+      const { entries, cat, catLabel: categoryLabel, roundInfo, isDivisionRound, isTeamRound, teamAbbr } =
+        await generateTopTenRound({
+          sport, roundType,
+          minYear: cs.top_ten_min_year,
+          maxYear: cs.top_ten_max_year,
+          windowYears: cs.top_ten_window_years || 10,
+        });
 
       if (entries.length === 0) { setIsLoadingRoster(false); return; }
 
@@ -594,7 +574,7 @@ export function LobbyWaitingPage() {
         type: 'top-ten',
         sport,
         category: cat.key,
-        category_label: cat.label,
+        category_label: categoryLabel,
         round_info: roundInfo,
         top10_entries: entries,
         guessed_indices: [],
@@ -606,12 +586,14 @@ export function LobbyWaitingPage() {
         turn_deadline: deadline,
         max_strikes: maxStrikes,
         turn_timer: turnTimer,
-        is_division_round: roundType === 'division',
+        is_division_round: isDivisionRound,
+        is_team_round: isTeamRound,
+        top_ten_team: teamAbbr,
         hint_mode: false,
         top_ten_sport: sport,
         top_ten_round_type: roundType,
         top_ten_min_year: cs.top_ten_min_year || (sport === 'nba' ? 1996 : 1999),
-        top_ten_max_year: cs.top_ten_max_year || (sport === 'nba' ? 2025 : 2024),
+        top_ten_max_year: cs.top_ten_max_year || (sport === 'nba' ? 2025 : 2025),
         top_ten_window_years: cs.top_ten_window_years || 10,
       };
 

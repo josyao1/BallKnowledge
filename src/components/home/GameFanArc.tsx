@@ -107,14 +107,33 @@ export function GameFanArc({
                 {/* Subtle dark overlay so corners are readable */}
                 <div className="absolute inset-0 bg-black/20" />
 
-                {/* Top Ten: large centered ? */}
+                {/* Top Ten: inner outline + ranked number art */}
                 {game.id === 'top-ten' && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
-                    style={{ fontSize: Math.max(48, Math.round(80 * fanScale)), color: game.color, opacity: 0.55, fontWeight: 900, fontFamily: 'inherit', textShadow: `0 0 20px ${game.color}60, 0 2px 8px rgba(0,0,0,0.9)` }}
-                  >
-                    ?
-                  </div>
+                  <>
+                    <div
+                      className="absolute pointer-events-none z-10"
+                      style={{ inset: Math.max(4, Math.round(5 * fanScale)), borderRadius: Math.max(8, Math.round(10 * fanScale)), border: `1.5px solid ${game.color}70` }}
+                    />
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none gap-0"
+                      style={{ padding: `${Math.max(6, Math.round(10 * fanScale))}px` }}
+                    >
+                      {['1', '2', '3', '4', '5'].map((n, idx) => (
+                        <div
+                          key={n}
+                          className="sports-font font-black leading-none w-full text-center"
+                          style={{
+                            fontSize: Math.max(8, Math.round((14 - idx) * fanScale)),
+                            color: game.color,
+                            opacity: 0.18 + (4 - idx) * 0.12,
+                            letterSpacing: '0.05em',
+                          }}
+                        >
+                          #{n}
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
 
                 {/* Top-left abbreviation */}

@@ -85,7 +85,7 @@ export interface HostFormValues {
   /** Face Reveal (NFL): 'known' = curated allowlist only; 'all' = all positions */
   faceRevealDefenseMode: 'known' | 'all';
   topTenSport: 'nba' | 'nfl';
-  topTenRoundType: 'league' | 'division';
+  topTenRoundType: 'league' | 'division' | 'team';
   topTenMinYear: number;
   topTenMaxYear: number;
   topTenWindowYears: number;
@@ -132,7 +132,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editFaceRevealMinMpg,      setEditFaceRevealMinMpg]      = useState(0);
   const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>('known');
   const [editTopTenSport,       setEditTopTenSport]       = useState<'nba' | 'nfl'>('nba');
-  const [editTopTenRoundType,   setEditTopTenRoundType]   = useState<'league' | 'division'>('league');
+  const [editTopTenRoundType,   setEditTopTenRoundType]   = useState<'league' | 'division' | 'team'>('league');
   const [editTopTenMinYear,     setEditTopTenMinYear]     = useState(2015);
   const [editTopTenMaxYear,     setEditTopTenMaxYear]     = useState(2025);
   const [editTopTenWindowYears, setEditTopTenWindowYears] = useState(10);
@@ -175,7 +175,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditFaceRevealMinMpg((cs.min_mpg as number) || 0);
     setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
     setEditTopTenSport((cs.top_ten_sport as 'nba' | 'nfl') || lobbySport as 'nba' | 'nfl');
-    setEditTopTenRoundType((cs.top_ten_round_type as 'league' | 'division') || 'league');
+    setEditTopTenRoundType((cs.top_ten_round_type as 'league' | 'division' | 'team') || 'league');
     setEditTopTenMinYear((cs.top_ten_min_year as number) || (lobbySport === 'nba' ? 1996 : 1999));
     setEditTopTenMaxYear((cs.top_ten_max_year as number) || (lobbySport === 'nba' ? 2025 : 2024));
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);

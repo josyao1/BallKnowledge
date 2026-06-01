@@ -5,8 +5,8 @@ import { getNFLDivisions } from '../../../data/nfl-teams';
 interface Props {
   sport: 'nba' | 'nfl';
   onSportChange: (s: 'nba' | 'nfl') => void;
-  roundType: 'league' | 'division';
-  onRoundTypeChange: (t: 'league' | 'division') => void;
+  roundType: 'league' | 'division' | 'team';
+  onRoundTypeChange: (t: 'league' | 'division' | 'team') => void;
   minYear: number;
   onMinYearChange: (n: number) => void;
   maxYear: number;
@@ -49,19 +49,24 @@ export function TopTenSettings({
       <div>
         <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Round Type</div>
         <div className="flex gap-1.5">
-          {(['league', 'division'] as const).map(t => (
+          {(['league', 'division', 'team'] as const).map(t => (
             <button
               key={t}
               onClick={() => onRoundTypeChange(t)}
               className={`${btnBase} ${roundType === t ? btnActive : btnInactive}`}
             >
-              {t === 'league' ? 'League-Wide' : 'Division'}
+              {t === 'league' ? 'League' : t === 'division' ? 'Division' : 'Team'}
             </button>
           ))}
         </div>
         {roundType === 'division' && (
           <p className="sports-font text-[9px] text-[#555] mt-1.5">
-            {divisionCount} divisions · best season per player while on a division team
+            {divisionCount} divisions · cumulative totals while on a division team
+          </p>
+        )}
+        {roundType === 'team' && (
+          <p className="sports-font text-[9px] text-[#555] mt-1.5">
+            Random team · cumulative leaders (4–10 slots by category &amp; window)
           </p>
         )}
       </div>
