@@ -112,7 +112,7 @@ export function GameFanArc({
                   <>
                     <div
                       className="absolute pointer-events-none z-10"
-                      style={{ inset: Math.max(3, Math.round(4 * fanScale)), borderRadius: Math.max(6, Math.round(8 * fanScale)), border: `1px solid ${game.color}40` }}
+                      style={{ inset: Math.max(4, Math.round(5 * fanScale)), borderRadius: Math.max(8, Math.round(10 * fanScale)), border: `1.5px solid ${game.color}70` }}
                     />
                     <div
                       className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none gap-0"

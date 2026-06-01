@@ -157,12 +157,12 @@ export function SoloTopTenPage() {
   const sportMax         = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
   const showTeamHint     = isDivisionRound || (hintMode && !isTeamRound);
 
-  const btnActive   = 'bg-[#22c55e] text-black';
-  const btnInactive = 'bg-[#0d0d0d] text-[#444] border border-[#1e1e1e] hover:border-[#333] hover:text-[#777]';
-  const btnBase     = 'flex-1 py-2.5 rounded-sm retro-title text-base transition-all';
+  const btnBase     = 'flex-1 py-2.5 rounded-sm retro-title text-base transition-all bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#333]';
 
   // ── Setup screen ─────────────────────────────────────────────────────────────
   if (status === 'setup') {
+    const PURPLE = '#8b5cf6';
+    const GOLD   = '#d4af37';
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
         <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3">
@@ -171,36 +171,72 @@ export function SoloTopTenPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 className="retro-title text-xl text-[#22c55e]">Top Ten</h1>
+          <h1 className="retro-title text-xl" style={{ color: PURPLE }}>Top Ten</h1>
           <span className="ml-auto sports-font text-[9px] text-white/20 tracking-[0.25em] uppercase">Solo</span>
         </header>
 
-        <div className="flex-1 flex flex-col items-center px-4 pt-8 pb-12">
-          <div className="w-full max-w-sm space-y-3">
-            <p className="sports-font text-[9px] text-white/20 tracking-[0.35em] uppercase text-center mb-5">
-              Choose your round
-            </p>
+        {/* Hero */}
+        <div className="flex flex-col items-center pt-10 pb-6 px-4">
+          <div className="flex items-end gap-px mb-3" aria-hidden>
+            {['1','2','3','4','5'].map((n, i) => (
+              <span
+                key={n}
+                className="retro-title font-black leading-none"
+                style={{ fontSize: 28 - i * 3, color: PURPLE, opacity: 1 - i * 0.15 }}
+              >
+                {n}
+              </span>
+            ))}
+          </div>
+          <p className="sports-font text-[9px] tracking-[0.35em] uppercase" style={{ color: PURPLE, opacity: 0.5 }}>
+            Choose your round
+          </p>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center px-4 pb-12">
+          <div className="w-full max-w-sm space-y-2.5">
 
             {/* Sport */}
-            <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-4 space-y-2.5">
-              <p className="sports-font text-[9px] text-[#444] tracking-[0.25em] uppercase">Sport</p>
+            <div
+              className="rounded-sm p-4 space-y-2.5 border"
+              style={{ background: '#0d0d0d', borderColor: `${PURPLE}22` }}
+            >
+              <p className="sports-font text-[9px] tracking-[0.25em] uppercase" style={{ color: PURPLE, opacity: 0.5 }}>Sport</p>
               <div className="flex gap-1.5">
                 {(['nba', 'nfl'] as const).map(s => (
-                  <button key={s} onClick={() => setSetupSport(s)} className={`${btnBase} ${setupSport === s ? btnActive : btnInactive}`}>
-                    {s.toUpperCase()}
+                  <button
+                    key={s}
+                    onClick={() => setSetupSport(s)}
+                    className={`${btnBase} transition-all`}
+                    style={setupSport === s
+                      ? { background: PURPLE, color: '#000', boxShadow: `0 0 12px ${PURPLE}55` }
+                      : undefined}
+                  >
+                    <span className={setupSport === s ? '' : 'text-[#444]'}>{s.toUpperCase()}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Round type */}
-            <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-4 space-y-2.5">
-              <p className="sports-font text-[9px] text-[#444] tracking-[0.25em] uppercase">Round Type</p>
+            <div
+              className="rounded-sm p-4 space-y-2.5 border"
+              style={{ background: '#0d0d0d', borderColor: `${PURPLE}22` }}
+            >
+              <p className="sports-font text-[9px] tracking-[0.25em] uppercase" style={{ color: PURPLE, opacity: 0.5 }}>Round Type</p>
               <div className="flex gap-1.5">
                 {(['league', 'division', 'team'] as const).map(t => (
-                  <button key={t} onClick={() => setRoundType(t)}
-                    className={`${btnBase} ${roundType === t ? 'bg-[#d4af37] text-black' : btnInactive}`}>
-                    {t === 'league' ? 'League' : t === 'division' ? 'Division' : 'Team'}
+                  <button
+                    key={t}
+                    onClick={() => setRoundType(t)}
+                    className={`${btnBase} transition-all`}
+                    style={roundType === t
+                      ? { background: GOLD, color: '#000', boxShadow: `0 0 12px ${GOLD}55` }
+                      : undefined}
+                  >
+                    <span className={roundType === t ? '' : 'text-[#444]'}>
+                      {t === 'league' ? 'League' : t === 'division' ? 'Division' : 'Team'}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -227,9 +263,15 @@ export function SoloTopTenPage() {
                   <p className="sports-font text-[9px] text-[#444] mb-1.5">Year Window</p>
                   <div className="flex gap-1.5">
                     {[5, 10, 15, 20].map(n => (
-                      <button key={n} onClick={() => setWindowYears(n)}
-                        className={`flex-1 py-2 rounded-sm retro-title text-sm transition-all ${windowYears === n ? 'bg-[#d4af37] text-black' : btnInactive}`}>
-                        {n}y
+                      <button
+                        key={n}
+                        onClick={() => setWindowYears(n)}
+                        className={`flex-1 py-2 rounded-sm retro-title text-sm transition-all`}
+                        style={windowYears === n
+                          ? { background: GOLD, color: '#000', boxShadow: `0 0 10px ${GOLD}44` }
+                          : undefined}
+                      >
+                        <span className={windowYears === n ? '' : 'text-[#444]'}>{n}y</span>
                       </button>
                     ))}
                   </div>
@@ -239,7 +281,12 @@ export function SoloTopTenPage() {
 
             <button
               onClick={startGame}
-              className="w-full py-4 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1 rounded-sm retro-title text-lg transition-all"
+              className="w-full py-4 rounded-sm retro-title text-lg transition-all active:translate-y-0.5"
+              style={{
+                background: `linear-gradient(180deg, ${PURPLE} 0%, #7c3aed 100%)`,
+                color: '#fff',
+                boxShadow: `0 4px 0 #5b21b6, 0 0 20px ${PURPLE}44`,
+              }}
             >
               Play
             </button>

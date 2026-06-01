@@ -167,6 +167,22 @@ function nflDisplayTeam(teamStr: string, conference?: string, division?: string)
   return resolveNFLTeam(teamStr.split('/')[0]);
 }
 
+// ─── Award player-id lookup ───────────────────────────────────────────────────
+// Award entries only carry player name; resolve to GSIS ID via the lineup pool
+// so PlayerHeadshot can render the real headshot.
+let _nflAwardIdCache: Map<string, string> | null = null;
+async function nflIdByName(name: string): Promise<string> {
+  if (!_nflAwardIdCache) {
+    const pool = await loadNFLLineupPool();
+    _nflAwardIdCache = new Map();
+    for (const p of pool) {
+      if (p.player_name && p.player_id)
+        _nflAwardIdCache.set(normalize(p.player_name).toLowerCase(), String(p.player_id));
+    }
+  }
+  return _nflAwardIdCache.get(normalize(name).toLowerCase()) ?? name;
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /** League-wide top 10 for a given stat category and season start year. */
@@ -177,13 +193,14 @@ export async function getTopTen(
 ): Promise<TopTenEntry[]> {
   // Award voting — hardcoded, not derived from career stats
   if (category in AWARD_CATEGORY_KEYS) {
-    return getAwardEntries(category, year).map(e => ({
+    const raw = getAwardEntries(category, year);
+    return Promise.all(raw.map(async e => ({
       playerName: e.name,
-      playerId:   e.name, // name is unique enough within each award list
+      playerId:   await nflIdByName(e.name),
       stat:       e.rank,
       team:       e.team,
       year:       String(year),
-    }));
+    })));
   }
 
   if (sport === 'nba') {
@@ -261,7 +278,11 @@ const NBA_PER_GAME_TO_TOTAL: Record<string, string> = {
   blk: 'total_blk',
 };
 
-type DivSumEntry = { playerName: string; playerId: number | string; total: number; team: string; latestYr: number; earliestYr: number };
+type DivSumEntry = { playerName: string; playerId: number | string; total: number; team: string; latestYr: number; earliestYr: number; teamTotals?: Record<string, number> };
+
+function bestTeam(teamTotals: Record<string, number>): string {
+  return Object.entries(teamTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+}
 
 /** Division-window top 10: cumulative stats across all qualifying seasons in the window. */
 export async function getTopTenDivision(
@@ -276,17 +297,15 @@ export async function getTopTenDivision(
   if (category in AWARD_CATEGORY_KEYS) {
     const awardYears = getAwardYears().filter(y => y >= yearFrom && y <= yearTo);
     const targetYear = awardYears.length ? Math.max(...awardYears) : yearTo;
-    return getAwardEntries(category, targetYear).map(e => ({
+    const raw = getAwardEntries(category, targetYear);
+    return Promise.all(raw.map(async e => ({
       playerName: e.name,
-      playerId:   e.name,
+      playerId:   await nflIdByName(e.name),
       stat:       e.rank,
       team:       e.team,
       year:       String(targetYear),
-    }));
+    })));
   }
-
-  // For display: "YYYY–YYYY" range string stored in the year field of each entry
-  const yearRangeStr = `${yearFrom}–${sport === 'nba' ? yearTo - 1 : yearTo}`;
 
   if (sport === 'nba') {
     // Use total-season field for per-game categories so we're summing actual totals
@@ -304,20 +323,43 @@ export async function getTopTenDivision(
         if (!stat || stat <= 0) continue;
         const team = nbaDisplayTeam(season.team, conference, division);
         const existing = sums.get(player.player_id);
-        sums.set(player.player_id, existing
-          ? { ...existing, total: existing.total + stat, ...(yr > existing.latestYr ? { team, latestYr: yr } : {}), ...(yr < existing.earliestYr ? { earliestYr: yr } : {}) }
-          : { playerName: player.player_name, playerId: player.player_id, total: stat, team, latestYr: yr, earliestYr: yr }
-        );
+        if (existing) {
+          const teamTotals = { ...(existing.teamTotals ?? {}), [team]: ((existing.teamTotals ?? {})[team] ?? 0) + stat };
+          sums.set(player.player_id, { ...existing, total: existing.total + stat, teamTotals,
+            ...(yr > existing.latestYr ? { latestYr: yr } : {}),
+            ...(yr < existing.earliestYr ? { earliestYr: yr } : {}),
+          });
+        } else {
+          sums.set(player.player_id, { playerName: player.player_name, playerId: player.player_id, total: stat, team, latestYr: yr, earliestYr: yr, teamTotals: { [team]: stat } });
+        }
       }
     }
 
     return Array.from(sums.values())
       .sort((a, b) => b.total - a.total)
       .slice(0, 10)
-      .map(({ playerName, playerId, total, team }) => ({ playerName, playerId, stat: total, team, year: yearRangeStr }));
+      .map(({ playerName, playerId, total, teamTotals, earliestYr, latestYr }) => ({
+        playerName, playerId, stat: total,
+        team: bestTeam(teamTotals ?? {}),
+        year: earliestYr === latestYr ? String(earliestYr) : `${earliestYr}–${latestYr}`,
+      }));
   } else {
     const players = await loadNFLLineupPool();
     const sums = new Map<string, DivSumEntry>();
+
+    function accumulate(id: string, name: string, stat: number, team: string, yr: number, round = false) {
+      const existing = sums.get(id);
+      if (existing) {
+        const newTotal = round ? Math.round((existing.total + stat) * 10) / 10 : existing.total + stat;
+        const teamTotals = { ...(existing.teamTotals ?? {}), [team]: ((existing.teamTotals ?? {})[team] ?? 0) + stat };
+        sums.set(id, { ...existing, total: newTotal, teamTotals,
+          ...(yr > existing.latestYr ? { latestYr: yr } : {}),
+          ...(yr < existing.earliestYr ? { earliestYr: yr } : {}),
+        });
+      } else {
+        sums.set(id, { playerName: name, playerId: id, total: stat, team, latestYr: yr, earliestYr: yr, teamTotals: { [team]: stat } });
+      }
+    }
 
     if (category.startsWith('fantasy_pts_')) {
       const posFilter = category.split('_')[2].toUpperCase();
@@ -329,12 +371,7 @@ export async function getTopTenDivision(
           if (!nflTeamInDivision(season.team, conference, division)) continue;
           const stat = calcFantasyPts(season);
           if (stat <= 0) continue;
-          const team = nflDisplayTeam(season.team, conference, division);
-          const existing = sums.get(player.player_id);
-          sums.set(player.player_id, existing
-            ? { ...existing, total: Math.round((existing.total + stat) * 10) / 10, ...(yr > existing.latestYr ? { team, latestYr: yr } : {}), ...(yr < existing.earliestYr ? { earliestYr: yr } : {}) }
-            : { playerName: player.player_name, playerId: player.player_id, total: stat, team, latestYr: yr, earliestYr: yr }
-          );
+          accumulate(player.player_id, player.player_name, stat, nflDisplayTeam(season.team, conference, division), yr, true);
         }
       }
     } else {
@@ -346,12 +383,7 @@ export async function getTopTenDivision(
           if (!nflTeamInDivision(season.team, conference, division)) continue;
           const stat = (season as any)[category] as number | undefined;
           if (!stat || stat < minQual) continue;
-          const team = nflDisplayTeam(season.team, conference, division);
-          const existing = sums.get(player.player_id);
-          sums.set(player.player_id, existing
-            ? { ...existing, total: existing.total + stat, ...(yr > existing.latestYr ? { team, latestYr: yr } : {}), ...(yr < existing.earliestYr ? { earliestYr: yr } : {}) }
-            : { playerName: player.player_name, playerId: player.player_id, total: stat, team, latestYr: yr, earliestYr: yr }
-          );
+          accumulate(player.player_id, player.player_name, stat, nflDisplayTeam(season.team, conference, division), yr);
         }
       }
     }
@@ -359,7 +391,11 @@ export async function getTopTenDivision(
     return Array.from(sums.values())
       .sort((a, b) => b.total - a.total)
       .slice(0, 10)
-      .map(({ playerName, playerId, total, team }) => ({ playerName, playerId, stat: total, team, year: yearRangeStr }));
+      .map(({ playerName, playerId, total, teamTotals, earliestYr, latestYr }) => ({
+        playerName, playerId, stat: total,
+        team: bestTeam(teamTotals ?? {}),
+        year: earliestYr === latestYr ? String(earliestYr) : `${earliestYr}–${latestYr}`,
+      }));
   }
 }
 
