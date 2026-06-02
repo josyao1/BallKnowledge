@@ -869,7 +869,7 @@ export function SoloCapCrunchPage() {
                 <div className="space-y-1 md:space-y-2 flex-1 overflow-y-auto">
                   {Array.from({ length: totalRounds }).map((_, idx) => {
                     const pick = idx < lineup.selectedPlayers.length ? lineup.selectedPlayers[idx] : null;
-                    const isBad = pick ? (pick.isBust || pick.neverOnTeam || pick.statValue === 0) : false;
+                    const isBad = pick ? (pick.isBust || pick.neverOnTeam) : false;
                     return (
                       <motion.div
                         key={idx}
@@ -908,7 +908,7 @@ export function SoloCapCrunchPage() {
                                   <span className="text-orange-400/80 ml-1">({getPickErrorMessage(pick)})</span>
                                 )}
                               </p>
-                              <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                              <p className={`font-semibold text-[9px] md:text-xs ${isBad ? 'text-red-400' : pick?.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
                                 {pick.isBust ? `${fmt(pick.statValue)} → 0` : `${fmt(pick.statValue)}`} {getCategoryAbbr(statCategory!)}
                               </p>
                             </motion.div>
@@ -1084,8 +1084,7 @@ export function SoloCapCrunchPage() {
                     if (!player.isBust && !player.neverOnTeam) running += player.statValue;
                   const isBust = player.isBust;
                   const isNotOnTeam = !isBust && player.neverOnTeam;
-                  const isMiss = !isBust && !isNotOnTeam && player.statValue === 0;
-                  const isInvalid = isBust || isMiss || isNotOnTeam;
+                  const isInvalid = isBust || isNotOnTeam;
                   return (
                     <motion.div
                       key={idx}
@@ -1128,10 +1127,10 @@ export function SoloCapCrunchPage() {
                         </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className={`retro-title text-lg md:text-xl ${isInvalid ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                          <p className={`retro-title text-lg md:text-xl ${isInvalid ? 'text-red-400' : player.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
                             {isBust ? `${fmt(player.statValue)}→0` : fmt(player.statValue)}
                           </p>
-                          {(isBust || isNotOnTeam || isMiss) && <div className="bg-red-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1 text-center">{getPickBadgeLabel(player)}</div>}
+                          {(isBust || isNotOnTeam) && <div className="bg-red-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1 text-center">{getPickBadgeLabel(player)}</div>}
                         </div>
                       </div>
                     </motion.div>

@@ -293,10 +293,12 @@ export function MultiplayerTopTenPage() {
     hasAdvancedRef.current = false;
     if (isMyTurn) {
       setTimeout(() => inputRef.current?.focus(), 100);
-      // Show "YOUR TURN" flash only when turn switches to me (not on initial mount)
-      if (prevTurnIdRef.current && prevTurnIdRef.current !== currentPlayerId) {
+      // Flash whenever the turn switches to me — guard against initial mount (prevTurnIdRef empty)
+      // and against the same player getting consecutive turns without the ID changing.
+      if (prevTurnIdRef.current && prevTurnIdRef.current !== currentTurnId) {
         setShowMyTurnFlash(true);
         const t = setTimeout(() => setShowMyTurnFlash(false), 1400);
+        prevTurnIdRef.current = currentTurnId;
         return () => clearTimeout(t);
       }
     }
