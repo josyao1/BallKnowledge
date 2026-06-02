@@ -128,8 +128,7 @@ export function CapCrunchResultCard({
             if (!selected.isBust && !selected.neverOnTeam) running += selected.statValue;
           const isBust = selected.isBust;
           const isNotOnTeam = !isBust && selected.neverOnTeam;
-          const isMiss = !isBust && !isNotOnTeam && selected.statValue === 0;
-          const isBad = isBust || isMiss || isNotOnTeam;
+          const isBad = isBust || isNotOnTeam;
           const badLabel = getPickBadgeLabel(selected);
           return (
             <motion.div
@@ -161,7 +160,7 @@ export function CapCrunchResultCard({
                   )}
                 </div>
               </div>
-              <span className={`font-semibold ml-2 shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+              <span className={`font-semibold ml-2 shrink-0 ${isBad ? 'text-red-400' : selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
                 {isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
               </span>
             </motion.div>

@@ -178,8 +178,34 @@ export function HomePage() {
   const deckArt   = sport === 'nba' ? '/images/Group 29 (2).svg'  : '/images/Group 29 (1).svg';
 
   // ── Render ────────────────────────────────────────────────────────────────
+  // June 2 2026 in New York time — uses Intl to extract date parts reliably
+  const _nyParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const _ny = Object.fromEntries(_nyParts.filter(p => p.type !== 'literal').map(p => [p.type, +p.value]));
+  const isDhruvBday = _ny.year === 2026 && _ny.month === 6 && _ny.day === 2;
+
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-[#111]">
+      {/* Happy Birthday Dhruv — June 2 2026 only */}
+      {isDhruvBday && (
+        <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute whitespace-nowrap retro-title text-[13px] tracking-[0.2em] select-none"
+              style={{
+                color: ['#f59e0b','#ec4899','#60a5fa','#34d399','#a78bfa','#fb923c','#f87171','#a3e635'][i],
+                opacity: 0.28,
+                top: `${i * 14}%`,
+                left: '50%',
+                transform: `translateX(-50%) rotate(-22deg)`,
+              }}
+            >
+              {'★ HAPPY BIRTHDAY DHRUV ★ '.repeat(12)}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* SVG filter used by the title text for the white outline effect */}
       <svg style={{ height: 0, width: 0, position: 'absolute' }}>
         <filter id="whiteOutline">

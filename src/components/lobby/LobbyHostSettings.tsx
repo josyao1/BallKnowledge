@@ -11,7 +11,8 @@
  *   BoxScoreSettings, StartingLineupSettings, RosterSettings
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import type { SpecialRoundType } from '../../services/capCrunch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { nflTeams } from '../../data/nfl-teams';
 import { teams } from '../../data/teams';
@@ -91,6 +92,12 @@ export interface HostFormValues {
   topTenWindowYears: number;
   topTenMaxStrikes: number;
   topTenTimer: number;
+  /** Cap Crunch: special round types the host has disabled */
+  disabledRoundTypes: SpecialRoundType[];
+}
+
+export interface SettingsRef {
+  getValues: () => HostFormValues;
 }
 
 interface Props {
@@ -99,7 +106,7 @@ interface Props {
   onApply: (values: HostFormValues) => Promise<void>;
 }
 
-export function LobbyHostSettings({ lobby, players, onApply }: Props) {
+export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHostSettings({ lobby, players, onApply }, ref) {
   // ── Edit state ─────────────────────────────────────────────────────────────
   const [editGameType,       setEditGameType]       = useState<GameTypeValue>('roster');
   const [editSport,          setEditSport]          = useState<Sport>('nba');
@@ -138,6 +145,28 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
   const [editTopTenWindowYears, setEditTopTenWindowYears] = useState(10);
   const [editTopTenMaxStrikes,  setEditTopTenMaxStrikes]  = useState(2);
   const [editTopTenTimer,       setEditTopTenTimer]       = useState(45);
+  const [editDisabledRoundTypes, setEditDisabledRoundTypes] = useState<SpecialRoundType[]>([]);
+
+  useImperativeHandle(ref, () => ({
+    getValues: (): HostFormValues => ({
+      gameType: editGameType, sport: editSport, randomSport: editRandomSport,
+      gameMode: editGameMode, selectionScope: editSelectionScope,
+      team: editTeam, year: editYear, timer: editTimer,
+      minYear: editMinYear, maxYear: editMaxYear, winTarget: editWinTarget,
+      careerFrom: editCareerFrom, careerTo: editCareerTo,
+      lineupStat: editLineupStat, totalRounds: editTotalRounds,
+      customCap: editCustomCap, hardMode: editHardMode, blindMode: editBlindMode,
+      pickTimer: editPickTimer, firstPickerId: editFirstPickerId,
+      boxMinYear: editBoxMinYear, boxMaxYear: editBoxMaxYear, boxTeam: editBoxTeam,
+      startingSport: editStartingSport,
+      faceRevealTimer: editFaceRevealTimer, faceRevealMinYards: editFaceRevealMinYards,
+      faceRevealMinMpg: editFaceRevealMinMpg, faceRevealDefenseMode: editFaceRevealDefenseMode,
+      topTenSport: editTopTenSport, topTenRoundType: editTopTenRoundType,
+      topTenMinYear: editTopTenMinYear, topTenMaxYear: editTopTenMaxYear,
+      topTenWindowYears: editTopTenWindowYears, topTenMaxStrikes: editTopTenMaxStrikes,
+      topTenTimer: editTopTenTimer, disabledRoundTypes: editDisabledRoundTypes,
+    }),
+  }));
 
   // Sync form state from lobby whenever the settings panel mounts / lobby changes.
   useEffect(() => {
@@ -181,6 +210,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
     setEditTopTenMaxStrikes((cs.max_strikes as number) || 2);
     setEditTopTenTimer((cs.turn_timer as number) || 45);
+    setEditDisabledRoundTypes((cs.disabledRoundTypes as SpecialRoundType[]) || []);
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
     setEditTeam(teamList.find(t => t.abbreviation === lobby.team_abbreviation) || null);
@@ -249,6 +279,7 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       topTenWindowYears: editTopTenWindowYears,
       topTenMaxStrikes: editTopTenMaxStrikes,
       topTenTimer: editTopTenTimer,
+      disabledRoundTypes: editDisabledRoundTypes,
     });
   };
 
@@ -337,6 +368,8 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
               firstPickerId={editFirstPickerId} onFirstPickerIdChange={setEditFirstPickerId}
               totalRounds={editTotalRounds} onTotalRoundsChange={setEditTotalRounds}
               players={players}
+              disabledRoundTypes={editDisabledRoundTypes}
+              onDisabledRoundTypesChange={setEditDisabledRoundTypes}
             />
           )}
 
@@ -397,4 +430,4 @@ export function LobbyHostSettings({ lobby, players, onApply }: Props) {
       </motion.div>
     </AnimatePresence>
   );
-}
+});

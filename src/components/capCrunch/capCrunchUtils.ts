@@ -6,19 +6,16 @@ import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
 
 /**
  * Short badge label shown on an invalid pick — more specific than "NOT ON TEAM".
- * Priority: bust → draft round → HW filter → conference/college → team → stat miss.
+ * Priority: bust → draft round → HW filter → conference/college → team.
  */
 export function getPickBadgeLabel(pick: SelectedPlayer): string {
   if (pick.isBust) return 'BUST';
-  if (pick.neverOnTeam) {
-    if (pick.actualTeammate && pick.nameMatchFailed) return 'WRONG NAME';
-    if (pick.actualTeammate)   return 'NEVER PLAYED';
-    if (pick.actualDraftRound) return 'WRONG ROUND';
-    if (pick.hwFilterFailed)   return pick.hwFilterFailed.startsWith('height') ? 'WRONG HEIGHT' : 'WRONG WEIGHT';
-    if (pick.actualCollege || pick.actualNflConf) return 'WRONG CONF';
-    return 'NOT ON TEAM';
-  }
-  return '0 STAT';
+  if (pick.actualTeammate && pick.nameMatchFailed) return 'WRONG NAME';
+  if (pick.actualTeammate)   return 'NEVER PLAYED';
+  if (pick.actualDraftRound) return 'WRONG ROUND';
+  if (pick.hwFilterFailed)   return pick.hwFilterFailed.startsWith('height') ? 'WRONG HEIGHT' : 'WRONG WEIGHT';
+  if (pick.actualCollege || pick.actualNflConf) return 'WRONG CONF';
+  return 'NOT ON TEAM';
 }
 
 /**

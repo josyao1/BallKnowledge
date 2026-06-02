@@ -201,13 +201,15 @@ export function selectRandomHWFilter(
   team: string,
   statCategory: StatCategory,
   usedSpecialTypes?: SpecialRoundType[],
+  disabledRoundTypes?: SpecialRoundType[],
 ): HWFilter | null {
   if (FORCE_HW_FILTER) return FORCE_HW_FILTER;
   // Only applies to plain team rounds (not division, conference, or draft special rounds)
   if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team) || isTeammateRound(team) || isNameMatchRound(team) || isWildcardRound(team)) return null;
   // Only applies to per-season stats — not career totals or total_gp
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
-  // Block if hw_filter already appeared this cycle
+  // Block if disabled by host settings or already appeared this cycle
+  if (disabledRoundTypes?.includes('hw_filter')) return null;
   if (usedSpecialTypes?.includes('hw_filter')) return null;
   if (Math.random() > 0.15) return null;
   const filters: HWFilter[] = ['height_above', 'height_below', 'weight_above', 'weight_below'];
@@ -644,6 +646,7 @@ export function assignRandomTeam(
   usedSpecialTypes?: SpecialRoundType[],
   prevPicks?: SelectedPlayer[],
   isLastRound?: boolean,
+  disabledRoundTypes?: SpecialRoundType[],
 ): string {
   // ── Test overrides ──
   if (TEST_FORCE_DIVISION_DRAFT && sport === 'nfl') {
@@ -670,7 +673,7 @@ export function assignRandomTeam(
   // Variants: 65% played-with (MATE:N), 20% first-name (FNAME:N), 15% last-name (LNAME:N).
   // Name-match rounds optionally carry a conference tag (~50% chance). Skipped for total_gp.
   const bypassCycle = TEST_FORCE_TEAMMATE && prevPicks && prevPicks.length >= 2;
-  if (prevPicks && prevPicks.length > 0 && (!usedSpecialTypes?.includes('teammate') || bypassCycle) && statCategory !== 'total_gp') {
+  if (!disabledRoundTypes?.includes('teammate') && prevPicks && prevPicks.length > 0 && (!usedSpecialTypes?.includes('teammate') || bypassCycle) && statCategory !== 'total_gp') {
     const validPriorPicks = prevPicks.filter(p => !p.isSkipped && p.playerId != null);
     const teammateOdds = isLastRound ? 0.33 : 0.10;
     if (validPriorPicks.length > 0 && (bypassCycle || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)) {
@@ -694,10 +697,11 @@ export function assignRandomTeam(
     }
   }
 
-  // NBA conference round — skip if 'conference' already used this cycle
+  // NBA conference round — skip if 'conference' already used this cycle or disabled
   if (sport === 'nba' && (TEST_FORCE_CONFERENCE || statCategory !== 'total_gp')) {
     const conferenceUsed = usedSpecialTypes?.includes('conference');
-    if (TEST_FORCE_CONFERENCE || (!conferenceUsed && Math.random() < 0.15)) {
+    const conferenceDisabled = disabledRoundTypes?.includes('conference');
+    if (!conferenceDisabled && (TEST_FORCE_CONFERENCE || (!conferenceUsed && Math.random() < 0.15))) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
       const college = selectFromPool(confs, excludeTeams, true);
       const nbaConf = Math.random() < 0.5 ? 'East' : 'West';
@@ -708,22 +712,22 @@ export function assignRandomTeam(
     const roll = Math.random();
     // Each band is exclusive — a blocked type falls to plain team, not the next special type.
     if (roll < 0.10) {
-      // ~10% → division + draft round; skip if already used this cycle
-      if (!usedSpecialTypes?.includes('division_draft')) {
+      // ~10% → division + draft round; skip if already used this cycle or disabled
+      if (!disabledRoundTypes?.includes('division_draft') && !usedSpecialTypes?.includes('division_draft')) {
         const divs = Object.keys(NFL_DIVISIONS);
         const div = selectFromPool(divs, excludeTeams);
         const rounds = ['R1', 'R23', 'R47'] as const;
         return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
       }
     } else if (roll < 0.20) {
-      // ~10% → division only; skip if already used this cycle
-      if (!usedSpecialTypes?.includes('division')) {
+      // ~10% → division only; skip if already used this cycle or disabled
+      if (!disabledRoundTypes?.includes('division') && !usedSpecialTypes?.includes('division')) {
         const divs = Object.keys(NFL_DIVISIONS);
         return selectFromPool(divs, excludeTeams);
       }
     } else if (roll < 0.30) {
-      // ~10% → conference round; skip if already used this cycle
-      if (!usedSpecialTypes?.includes('conference')) {
+      // ~10% → conference round; skip if already used this cycle or disabled
+      if (!disabledRoundTypes?.includes('conference') && !usedSpecialTypes?.includes('conference')) {
         const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
         const college = selectFromPool(confs, excludeTeams, true);
         const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';

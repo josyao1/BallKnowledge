@@ -4,6 +4,17 @@ import { TeamLogo } from '../TeamLogo';
 import { formatStat } from '../../services/topTen';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
 
+const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(w => !SUFFIXES.has(w.toLowerCase().replace(/\./g, '')))
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .filter(Boolean)
+    .join('.');
+}
+
 interface Props {
   entry: TopTenEntry;
   index: number;
@@ -13,6 +24,8 @@ interface Props {
   gameOver?: boolean;
   /** Show team logo hint before the slot is guessed (division mode). */
   showTeamHint?: boolean;
+  /** Show player initials as hint (division/team rounds where team is already known). */
+  showInitialsHint?: boolean;
   sport: 'nba' | 'nfl';
   categoryKey: string;
   catDef?: StatCategoryDef;
@@ -23,10 +36,12 @@ interface Props {
 
 export function TopTenEntryRow({
   entry, index, wasGuessed, gameOver = false, showTeamHint = false,
-  sport, categoryKey, catDef, statShortLabel, justGuessed = false,
+  showInitialsHint = false, sport, categoryKey, catDef, statShortLabel,
+  justGuessed = false,
 }: Props) {
   const showInfo = wasGuessed || gameOver;
   const dimmed   = gameOver && !wasGuessed;
+  const initials = showInitialsHint && !showInfo ? getInitials(entry.playerName) : '';
 
   return (
     <motion.div
@@ -73,7 +88,11 @@ export function TopTenEntryRow({
         ) : (
           <div className="flex items-center gap-2">
             {showTeamHint && <TeamLogo abbr={entry.team} sport={sport} size={18} />}
-            <p className="sports-font text-[10px] text-white/20 tracking-[0.2em]">???</p>
+            {initials ? (
+              <p className="retro-title text-sm text-white/28 tracking-wider">{initials}</p>
+            ) : (
+              <p className="sports-font text-[10px] text-white/20 tracking-[0.2em]">???</p>
+            )}
           </div>
         )}
       </div>
