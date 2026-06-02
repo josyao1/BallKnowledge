@@ -188,10 +188,12 @@ export function MultiplayerTopTenPage() {
   const [timeLeft, setTimeLeft]       = useState(45);
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
   const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean } | null>(null);
+  const [showMyTurnFlash, setShowMyTurnFlash] = useState(false);
   const inputRef          = useRef<HTMLInputElement>(null);
   const hasAdvancedRef    = useRef(false);
   const isWritingRef      = useRef(false);
   const zeroSinceRef      = useRef<number | null>(null);
+  const prevTurnIdRef     = useRef<string>('');
   // Always-current reference so the timer effect never captures a stale advanceTurn
   const advanceTurnRef    = useRef<typeof advanceTurn>(() => Promise.resolve());
 
@@ -289,7 +291,16 @@ export function MultiplayerTopTenPage() {
 
   useEffect(() => {
     hasAdvancedRef.current = false;
-    if (isMyTurn) setTimeout(() => inputRef.current?.focus(), 100);
+    if (isMyTurn) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+      // Show "YOUR TURN" flash only when turn switches to me (not on initial mount)
+      if (prevTurnIdRef.current && prevTurnIdRef.current !== currentPlayerId) {
+        setShowMyTurnFlash(true);
+        const t = setTimeout(() => setShowMyTurnFlash(false), 1400);
+        return () => clearTimeout(t);
+      }
+    }
+    prevTurnIdRef.current = currentTurnId;
   }, [currentTurnId]);
 
   useEffect(() => {
@@ -558,7 +569,7 @@ export function MultiplayerTopTenPage() {
               Teams
             </button>
           )}
-          {isHost && !isDivisionRound && !isTeamRound && (
+          {isHost && (
             <button
               onClick={handleToggleHint}
               className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
@@ -639,12 +650,58 @@ export function MultiplayerTopTenPage() {
           <p className="sports-font text-[10px] text-white/30 tracking-[0.35em] uppercase mt-1.5">{roundInfo}</p>
         </div>
 
+        {/* Compact player strikes strip */}
+        <div className="flex flex-wrap gap-1.5 justify-center">
+          {players.map(p => {
+            const pStrikes  = playerStrikes[p.player_id] || 0;
+            const isElim    = eliminated.includes(p.player_id);
+            const isMe      = p.player_id === currentPlayerId;
+            const isCurrent = p.player_id === currentTurnId && !isElim;
+            return (
+              <div
+                key={p.player_id}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-sm border transition-colors ${
+                  isElim   ? 'opacity-20 border-white/5 bg-transparent' :
+                  isMe     ? 'border-white/25 bg-white/5' :
+                             'border-white/8 bg-transparent'
+                }`}
+              >
+                {isCurrent && !isElim && (
+                  <motion.span
+                    className="block w-1.5 h-1.5 rounded-full bg-[#22c55e] shrink-0"
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
+                )}
+                <span className={`sports-font text-[9px] max-w-[56px] truncate ${
+                  isMe ? 'text-white' : 'text-white/40'
+                }`}>
+                  {p.player_name.split(' ')[0]}
+                </span>
+                <span className="sports-font text-[10px] tracking-tight">
+                  {Array.from({ length: maxStrikes }).map((_, i) => (
+                    <span key={i} className={i < pStrikes ? 'text-red-400' : 'text-white/12'}>✕</span>
+                  ))}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         {/* Turn indicator + timer */}
-        <div className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
-          isMyTurn ? 'border-[#22c55e]/50 bg-[#22c55e]/8' : 'border-white/8 bg-[#0d0d0d]'
-        }`}>
+        <motion.div
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
+            isMyTurn ? 'border-[#22c55e]/60 bg-[#22c55e]/10' : 'border-white/8 bg-[#0d0d0d]'
+          }`}
+          animate={isMyTurn ? {
+            boxShadow: ['0 0 0px rgba(34,197,94,0)', '0 0 18px rgba(34,197,94,0.22)', '0 0 0px rgba(34,197,94,0)'],
+          } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
+          transition={isMyTurn ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
+        >
           <div className="flex-1">
-            <p className="sports-font text-[10px] text-white/35 tracking-widest uppercase mb-1">
+            <p className={`sports-font tracking-widest uppercase mb-1 transition-all ${
+              isMyTurn ? 'text-[#22c55e] text-sm' : 'text-white/35 text-[10px]'
+            }`}>
               {isMyTurn ? 'Your turn' : `${currentTurnPlayer?.player_name ?? '...'}'s turn`}
             </p>
             <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
@@ -657,7 +714,7 @@ export function MultiplayerTopTenPage() {
             </div>
           </div>
           <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
-        </div>
+        </motion.div>
 
         {/* Feedback */}
         <div className="h-5 flex items-center justify-center">
@@ -705,6 +762,7 @@ export function MultiplayerTopTenPage() {
               index={i}
               wasGuessed={guessedIndices.includes(i)}
               showTeamHint={showTeamHint}
+              showInitialsHint={(isDivisionRound || isTeamRound) && hintMode}
               sport={sport as 'nba' | 'nfl'}
               categoryKey={categoryKey}
               catDef={catDef}
@@ -719,16 +777,34 @@ export function MultiplayerTopTenPage() {
         {/* Player scoreboard */}
         <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-3">
           <p className="sports-font text-[9px] text-white/25 tracking-widest uppercase mb-2">Players</p>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {players.map(p => {
               const strikes   = playerStrikes[p.player_id] || 0;
               const isElim    = eliminated.includes(p.player_id);
               const guesses   = (cs.guess_attribution || {})[p.player_id] || 0;
-              const isCurrent = p.player_id === currentTurnId;
+              const isCurrent = p.player_id === currentTurnId && !isElim;
+              const isMe      = p.player_id === currentPlayerId;
               return (
-                <div key={p.player_id} className={`flex items-center gap-2 ${isElim ? 'opacity-30' : ''}`}>
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${isCurrent && !isElim ? 'bg-[#22c55e]' : 'bg-white/10'}`} />
-                  <span className={`sports-font text-sm flex-1 truncate ${p.player_id === currentPlayerId ? 'text-white' : 'text-white/55'}`}>
+                <div
+                  key={p.player_id}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-sm transition-colors ${
+                    isElim ? 'opacity-25' : isCurrent ? 'bg-[#22c55e]/10' : ''
+                  }`}
+                >
+                  <div className="w-3 h-3 shrink-0 flex items-center justify-center">
+                    {isCurrent ? (
+                      <motion.span
+                        className="block w-2.5 h-2.5 rounded-full bg-[#22c55e]"
+                        animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+                    ) : (
+                      <span className="block w-1.5 h-1.5 rounded-full bg-white/10" />
+                    )}
+                  </div>
+                  <span className={`sports-font text-sm flex-1 truncate ${
+                    isCurrent ? 'text-[#22c55e]' : isMe ? 'text-white' : 'text-white/50'
+                  }`}>
                     {p.player_name}{isElim ? ' ✕' : ''}
                   </span>
                   <span className="sports-font text-[10px] text-white/25">
@@ -750,6 +826,29 @@ export function MultiplayerTopTenPage() {
             guessedName={revealOverlay.guessedName}
             isCorrect={revealOverlay.isCorrect}
           />
+        )}
+      </AnimatePresence>
+
+      {/* "YOUR TURN" flash toast */}
+      <AnimatePresence>
+        {showMyTurnFlash && (
+          <motion.div
+            className="fixed top-16 inset-x-0 flex justify-center z-40 pointer-events-none"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22 }}
+          >
+            <div
+              className="px-5 py-2 rounded-sm retro-title text-base text-black"
+              style={{
+                background: '#22c55e',
+                boxShadow: '0 0 24px rgba(34,197,94,0.55), 0 3px 0 #166534',
+              }}
+            >
+              YOUR TURN
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

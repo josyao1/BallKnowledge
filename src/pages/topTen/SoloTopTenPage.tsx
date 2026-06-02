@@ -318,18 +318,28 @@ export function SoloTopTenPage() {
         <span className="sports-font text-[9px] text-white/20 tracking-[0.25em] uppercase">
           {sport.toUpperCase()} · {isTeamRound ? 'Team' : isDivisionRound ? 'Division' : 'League'}
         </span>
-        {!isDone && !isDivisionRound && !isTeamRound && (
-          <button
-            onClick={() => setHintMode(h => !h)}
-            className={`ml-auto px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
-              hintMode
-                ? 'border-[#d4af37]/60 text-[#d4af37] bg-[#d4af37]/8'
-                : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
-            }`}
-          >
-            Hint {hintMode ? 'On' : 'Off'}
-          </button>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {!isDone && (
+            <button
+              onClick={() => setHintMode(h => !h)}
+              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+                hintMode
+                  ? 'border-[#d4af37]/60 text-[#d4af37] bg-[#d4af37]/8'
+                  : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
+              }`}
+            >
+              Hint {hintMode ? 'On' : 'Off'}
+            </button>
+          )}
+          {!isDone && (
+            <button
+              onClick={() => { setStatus('loading'); loadRound().catch(() => setStatus('setup')); }}
+              className="px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border border-white/12 text-white/25 hover:border-blue-500/50 hover:text-blue-400 transition-colors"
+            >
+              Skip
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-10 flex flex-col gap-4">
@@ -428,6 +438,7 @@ export function SoloTopTenPage() {
               wasGuessed={guessedIndices.includes(i)}
               gameOver={isDone}
               showTeamHint={showTeamHint}
+              showInitialsHint={(isDivisionRound || isTeamRound) && hintMode}
               sport={sport}
               categoryKey={category}
               catDef={catDef}
