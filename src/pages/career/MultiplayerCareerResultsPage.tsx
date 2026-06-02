@@ -32,14 +32,17 @@ export function MultiplayerCareerResultsPage() {
 
   if (!lobby) {
     return (
-      <div className="min-h-screen bg-[#111] flex items-center justify-center">
-        <div className="text-white/50 sports-font">Loading results...</div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="sports-font text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-4 md:p-6 relative overflow-hidden">
       {/* Header */}
       <header className="text-center mb-8 mt-4">
         <div className="sports-font text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
@@ -52,24 +55,22 @@ export function MultiplayerCareerResultsPage() {
       {/* Winner announcement */}
       {matchWinner && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md mx-auto w-full mb-8"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md mx-auto w-full mb-6 text-center"
         >
-          <div className={`p-6 rounded-lg text-center border-2 ${
-            isWinner
-              ? 'bg-[#d4af37]/10 border-[#d4af37]'
-              : 'bg-[#1a1a1a] border-[#333]'
-          }`}>
-            <div className="text-4xl mb-2">{isWinner ? '🏆' : '🎯'}</div>
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-1">
-              {isWinner ? 'You won the match!' : 'Match Winner'}
-            </div>
-            <div className="retro-title text-3xl text-[#d4af37]">{matchWinner.player_name}</div>
-            <div className="sports-font text-sm text-[#888] mt-1">
-              {matchWinner.points ?? 0} rounds won
-            </div>
-          </div>
+          <p className="sports-font text-[9px] text-[#d4af37]/50 tracking-[0.4em] uppercase mb-1">
+            {isWinner ? 'You won' : 'Match Winner'}
+          </p>
+          <h2
+            className="retro-title text-5xl text-[#d4af37]"
+            style={{ textShadow: '0 0 28px rgba(212,175,55,0.35)' }}
+          >
+            {matchWinner.player_name}
+          </h2>
+          <p className="sports-font text-[10px] text-[#666] mt-1 tracking-wider">
+            {matchWinner.points ?? 0} rounds won
+          </p>
         </motion.div>
       )}
 
@@ -80,7 +81,7 @@ export function MultiplayerCareerResultsPage() {
         transition={{ delay: 0.1 }}
         className="max-w-md mx-auto w-full mb-8"
       >
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
+        <div className="bg-[#0d0d0d] border border-white/10 rounded-sm p-4">
           <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
             Final Standings
           </div>
@@ -94,7 +95,7 @@ export function MultiplayerCareerResultsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + rank * 0.05 }}
-                  className={`flex items-center justify-between p-3 rounded-lg ${
+                  className={`flex items-center justify-between p-3 rounded-sm ${
                     rank === 0
                       ? 'bg-[#d4af37]/15 border border-[#d4af37]/40'
                       : isMe
@@ -143,7 +144,7 @@ export function MultiplayerCareerResultsPage() {
           transition={{ delay: 0.2 }}
           className="max-w-md mx-auto w-full mb-8"
         >
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
+          <div className="bg-[#0d0d0d] border border-white/10 rounded-sm p-4">
             <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
               Round History
             </div>
@@ -166,7 +167,7 @@ export function MultiplayerCareerResultsPage() {
                 const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
-                  <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
+                  <div key={round.round} className="border border-[#2a2a2a] rounded-sm overflow-hidden">
                     {/* Round header */}
                     <div className="flex items-center justify-between px-3 py-2 bg-[#111]">
                       <span className="sports-font text-[10px] text-[#666] tracking-wider uppercase">Round {round.round}</span>
@@ -232,7 +233,7 @@ export function MultiplayerCareerResultsPage() {
           <button
             onClick={handlePlayAgain}
             disabled={isResetting}
-            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1 disabled:opacity-50"
           >
             {isResetting ? 'Starting...' : 'Play Again'}
           </button>
@@ -245,7 +246,7 @@ export function MultiplayerCareerResultsPage() {
         <button
           onClick={handleLeave}
           disabled={isLeaving}
-          className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+          className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
         >
           {isLeaving ? 'Leaving...' : 'Back to Home'}
         </button>

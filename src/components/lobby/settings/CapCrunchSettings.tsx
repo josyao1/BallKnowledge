@@ -1,11 +1,6 @@
-/**
- * CapCrunchSettings.tsx — Host settings for the Cap Crunch (lineup-is-right) game mode.
- * Sport, stat category (including NFL career totals), custom cap, hard mode,
- * first-picker assignment, and round count.
- */
-
 import type { Sport } from '../../../types';
 import type { SpecialRoundType } from '../../../services/capCrunch';
+import { Row, Chips, ScrollStrip, Chip, Stepper } from './SettingsHelpers';
 
 const LINEUP_STAT_ABBR: Record<string, string> = {
   random: 'RANDOM',
@@ -25,24 +20,31 @@ const LINEUP_STAT_ABBR: Record<string, string> = {
   career_receiving_tds:   'CAREER REC TD',
 };
 
+const NBA_SEASON_CATS = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'];
+const NFL_SEASON_CATS = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'];
 const NFL_CAREER_CATS = [
   'career_passing_yards', 'career_passing_tds',
   'career_rushing_yards', 'career_rushing_tds',
   'career_receiving_yards', 'career_receiving_tds',
 ] as const;
 
-interface Player {
-  player_id: string;
-  player_name: string;
-}
-
 const FILTER_LABELS: { type: SpecialRoundType; label: string; tooltip?: string }[] = [
-  { type: 'hw_filter',     label: 'H/W' },
-  { type: 'division',      label: 'Division' },
+  { type: 'hw_filter',      label: 'H/W' },
+  { type: 'division',       label: 'Division' },
   { type: 'division_draft', label: 'Draft' },
-  { type: 'conference',    label: 'College' },
-  { type: 'teammate',      label: 'Special', tooltip: 'Covers Teammate (played-with) and Name Match (first/last initial) rounds' },
+  { type: 'conference',     label: 'College' },
+  { type: 'teammate',       label: 'Special ?', tooltip: 'Covers Teammate (played-with) and Name Match (first/last initial) rounds' },
 ];
+
+const PICK_TIMER_OPTIONS: Array<{ label: string; value: number | null }> = [
+  { label: 'Off', value: null },
+  { label: '15s', value: 15 },
+  { label: '30s', value: 30 },
+  { label: '45s', value: 45 },
+  { label: '60s', value: 60 },
+];
+
+interface Player { player_id: string; player_name: string; }
 
 interface Props {
   sport: Sport;
@@ -55,7 +57,6 @@ interface Props {
   onHardModeChange: (on: boolean) => void;
   blindMode: boolean;
   onBlindModeChange: (on: boolean) => void;
-  /** Seconds per turn (hard mode) or for the last player (normal). null = no timer. */
   pickTimer: number | null;
   onPickTimerChange: (n: number | null) => void;
   firstPickerId: string | null;
@@ -66,14 +67,6 @@ interface Props {
   disabledRoundTypes: SpecialRoundType[];
   onDisabledRoundTypesChange: (types: SpecialRoundType[]) => void;
 }
-
-const PICK_TIMER_OPTIONS: Array<{ label: string; value: number | null }> = [
-  { label: 'Off', value: null },
-  { label: '15s', value: 15 },
-  { label: '30s', value: 30 },
-  { label: '45s', value: 45 },
-  { label: '60s', value: 60 },
-];
 
 export function CapCrunchSettings({
   sport, onSportChange, lineupStat, onLineupStatChange,
@@ -89,240 +82,73 @@ export function CapCrunchSettings({
       onDisabledRoundTypesChange([...disabledRoundTypes, type]);
     }
   }
-  const nbaCats = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'];
-  const nflCats = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'];
+
+  const seasonCats = ['random', ...(sport === 'nba' ? NBA_SEASON_CATS : NFL_SEASON_CATS)];
 
   return (
-    <>
+    <div className="space-y-2.5">
+
       {/* Sport */}
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Sport</div>
-        <div className="flex gap-1.5">
-          {(['nba', 'nfl'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => { onSportChange(s); onLineupStatChange('random'); onCustomCapChange(null); }}
-              className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                sport === s
-                  ? s === 'nba' ? 'bg-[#f15a29] text-white' : 'bg-[#013369] text-white'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-            >
-              {s.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Row label="Sport">
+        <Chips>
+          <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff"
+            onClick={() => { onSportChange('nba'); onLineupStatChange('random'); onCustomCapChange(null); }}>
+            NBA
+          </Chip>
+          <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff"
+            onClick={() => { onSportChange('nfl'); onLineupStatChange('random'); onCustomCapChange(null); }}>
+            NFL
+          </Chip>
+        </Chips>
+      </Row>
 
-      {/* Stat category */}
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Stat Category</div>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {(['random', ...(sport === 'nba' ? nbaCats : nflCats)] as string[]).map(cat => (
-            <button
-              key={cat}
-              onClick={() => { onLineupStatChange(cat); if (cat === 'random') onCustomCapChange(null); }}
-              className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
-                lineupStat === cat
-                  ? cat === 'random' ? 'bg-[#d4af37] text-black' : 'bg-[#ec4899] text-white'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-            >
-              {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
-            </button>
-          ))}
-        </div>
+      {/* Stat — scrollable season + career rows */}
+      <div className="border-t border-[#2a2a2a] pt-2.5 space-y-2">
+        <Row label="Season">
+          <ScrollStrip>
+            {seasonCats.map(cat => (
+              <Chip
+                key={cat}
+                active={lineupStat === cat}
+                activeBg={cat === 'random' ? '#d4af37' : '#ec4899'}
+                onClick={() => { onLineupStatChange(cat); if (cat === 'random') onCustomCapChange(null); }}
+              >
+                {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
+              </Chip>
+            ))}
+          </ScrollStrip>
+        </Row>
 
-        {/* NFL career totals sub-section */}
         {sport === 'nfl' && (
-          <div>
-            <div className="flex items-center gap-2 my-2">
-              <div className="flex-1 h-px bg-[#1e1e1e]" />
-              <span className="sports-font text-[8px] text-[#444] tracking-[0.3em] uppercase">Career Totals</span>
-              <div className="flex-1 h-px bg-[#1e1e1e]" />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              <button
+          <Row label="Career">
+            <ScrollStrip>
+              <Chip
+                active={false}
                 onClick={() => {
                   const pick = NFL_CAREER_CATS[Math.floor(Math.random() * NFL_CAREER_CATS.length)];
-                  onLineupStatChange(pick);
-                  onCustomCapChange(null);
+                  onLineupStatChange(pick); onCustomCapChange(null);
                 }}
-                className="px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]"
               >
-                RANDOM
-              </button>
+                RND
+              </Chip>
               {NFL_CAREER_CATS.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => { onLineupStatChange(cat); onCustomCapChange(null); }}
-                  className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
-                    lineupStat === cat
-                      ? 'bg-[#ec4899] text-white'
-                      : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-                  }`}
-                >
+                <Chip key={cat} active={lineupStat === cat} activeBg="#ec4899"
+                  onClick={() => { onLineupStatChange(cat); onCustomCapChange(null); }}>
                   {LINEUP_STAT_ABBR[cat]}
-                </button>
+                </Chip>
               ))}
-            </div>
-          </div>
+            </ScrollStrip>
+          </Row>
         )}
       </div>
 
-      {/* Round count */}
-      <div className="flex items-center justify-between border-t border-[#1a1a1a] pt-4">
-        <div>
-          <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Rounds</div>
-          <div className="sports-font text-[9px] text-[#444] mt-0.5">Picks per player</div>
-        </div>
-        <div className="flex gap-1">
-          {[3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-            <button
-              key={n}
-              onClick={() => onTotalRoundsChange(n)}
-              className={`w-6 h-6 rounded-sm sports-font text-[10px] transition ${
-                totalRounds === n
-                  ? 'bg-[#d4af37] text-black font-bold'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Game controls */}
+      <div className="border-t border-[#2a2a2a] pt-2.5 space-y-2">
+        <Row label="Rounds">
+          <Stepper value={totalRounds} min={3} max={10} onChange={onTotalRoundsChange} />
+        </Row>
 
-      {/* Hard mode + Blind mode — merged into one row */}
-      <div className="border-t border-[#1a1a1a] pt-4 flex gap-3">
-        {/* Hard mode */}
-        <div className="flex-1 flex items-center justify-between bg-[#0a0a0a] border border-[#1e1e1e] rounded-sm px-3 py-2">
-          <div>
-            <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Hard</div>
-            <div className="sports-font text-[9px] text-[#444] mt-0.5 leading-tight">Turn-based</div>
-          </div>
-          <button
-            onClick={() => { onHardModeChange(!hardMode); onFirstPickerIdChange(null); }}
-            className={`px-3 py-1 rounded-sm retro-title text-sm tracking-wider transition-all ${
-              hardMode ? 'bg-[#c8102e] text-white' : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a]'
-            }`}
-          >
-            {hardMode ? 'ON' : 'OFF'}
-          </button>
-        </div>
-        {/* Blind mode */}
-        <div className="flex-1 flex items-center justify-between bg-[#0a0a0a] border border-[#1e1e1e] rounded-sm px-3 py-2">
-          <div>
-            <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Blind</div>
-            <div className="sports-font text-[9px] text-[#444] mt-0.5 leading-tight">Hidden scores</div>
-          </div>
-          <button
-            onClick={() => onBlindModeChange(!blindMode)}
-            className={`px-3 py-1 rounded-sm retro-title text-sm tracking-wider transition-all ${
-              blindMode ? 'bg-[#7c3aed] text-white' : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a]'
-            }`}
-          >
-            {blindMode ? 'ON' : 'OFF'}
-          </button>
-        </div>
-      </div>
-
-      {/* Round filter toggles */}
-      <div className="border-t border-[#1a1a1a] pt-4">
-        <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase mb-2">Round Filters</div>
-        <div className="flex flex-wrap gap-1.5">
-          {FILTER_LABELS.map(({ type, label, tooltip }) => {
-            const isDisabled = disabledRoundTypes.includes(type);
-            return (
-              <div key={type} className="relative group">
-                <button
-                  onClick={() => toggleFilter(type)}
-                  className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
-                    isDisabled
-                      ? 'bg-[#111] text-[#333] border border-[#222] line-through'
-                      : 'bg-[#1a1a1a] text-[#888] border border-[#2a2a2a] hover:border-[#3a3a3a] hover:text-[#aaa]'
-                  }`}
-                >
-                  {label}{tooltip ? ' ?' : ''}
-                </button>
-                {tooltip && (
-                  <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-[#1a1a1a] border border-[#333] rounded-sm px-2.5 py-2 sports-font text-[9px] text-[#888] leading-relaxed z-20 whitespace-normal">
-                    {tooltip}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <p className="sports-font text-[9px] text-[#3a3a3a] mt-1.5">Strikethrough = disabled for this game</p>
-      </div>
-
-      {/* Pick timer */}
-      <div className="flex items-center justify-between border-t border-[#1a1a1a] pt-4">
-        <div>
-          <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Pick Timer</div>
-          <div className="sports-font text-[9px] text-[#444] mt-0.5">
-            {hardMode ? 'Per-turn countdown' : 'Last-player countdown'}
-          </div>
-        </div>
-        <div className="flex gap-1">
-          {PICK_TIMER_OPTIONS.map(opt => (
-            <button
-              key={String(opt.value)}
-              onClick={() => onPickTimerChange(opt.value)}
-              className={`px-2 py-1 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
-                pickTimer === opt.value
-                  ? 'bg-[#d4af37] text-black font-bold'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* First picker — hard mode only */}
-      {hardMode && players.length > 1 && (
-        <div className="border-t border-[#1a1a1a] pt-4">
-          <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase mb-2">First Pick</div>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              onClick={() => onFirstPickerIdChange(null)}
-              className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
-                firstPickerId === null
-                  ? 'bg-[#d4af37] text-black'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-            >
-              AUTO
-            </button>
-            {players.map(p => (
-              <button
-                key={p.player_id}
-                onClick={() => onFirstPickerIdChange(p.player_id)}
-                className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
-                  firstPickerId === p.player_id
-                    ? 'bg-[#c8102e] text-white'
-                    : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-                }`}
-              >
-                {p.player_name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Target cap — bottom of settings */}
-      <div className="border-t border-[#1a1a1a] pt-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase">Target Cap</div>
-            <div className="sports-font text-[9px] text-[#444] mt-0.5">
-              {lineupStat === 'random' ? 'Select a stat to set a cap' : 'Players must stay under this number'}
-            </div>
-          </div>
+        <Row label="Cap">
           <input
             type="number" min={1}
             disabled={lineupStat === 'random'}
@@ -332,14 +158,79 @@ export function CapCrunchSettings({
               const v = e.target.value === '' ? null : parseInt(e.target.value);
               onCustomCapChange(v && !isNaN(v) && v > 0 ? v : null);
             }}
-            className={`w-24 text-center bg-[#111] border rounded-sm retro-title text-base py-1.5 focus:outline-none transition-all ${
+            className={`w-20 text-center bg-[#111] border rounded-sm retro-title text-sm py-1 focus:outline-none transition-all ${
               lineupStat === 'random'
-                ? 'border-[#1a1a1a] text-[#333] cursor-not-allowed placeholder-[#222]'
+                ? 'border-[#1a1a1a] text-[#2a2a2a] cursor-not-allowed placeholder-[#222]'
                 : 'border-[#2a2a2a] text-[#d4af37] focus:border-[#d4af37] placeholder-[#444]'
             }`}
           />
-        </div>
+        </Row>
+
+        <Row label="Modes">
+          <Chips>
+            <Chip active={hardMode} activeBg="#c8102e" activeText="#fff"
+              onClick={() => { onHardModeChange(!hardMode); onFirstPickerIdChange(null); }}>
+              Hard
+            </Chip>
+            <Chip active={blindMode} activeBg="#7c3aed" activeText="#fff"
+              onClick={() => onBlindModeChange(!blindMode)}>
+              Blind
+            </Chip>
+          </Chips>
+        </Row>
+
+        <Row label="Timer">
+          <Chips>
+            {PICK_TIMER_OPTIONS.map(opt => (
+              <Chip key={String(opt.value)} active={pickTimer === opt.value}
+                onClick={() => onPickTimerChange(opt.value)}>
+                {opt.label}
+              </Chip>
+            ))}
+          </Chips>
+        </Row>
       </div>
-    </>
+
+      {/* Filters + first pick */}
+      <div className="border-t border-[#2a2a2a] pt-2.5 space-y-2">
+        <Row label="Filters">
+          <Chips>
+            {FILTER_LABELS.map(({ type, label, tooltip }) => {
+              const isOff = disabledRoundTypes.includes(type);
+              return (
+                <div key={type} className="relative group">
+                  <Chip active={false} dim={isOff} onClick={() => toggleFilter(type)}>
+                    {label}
+                  </Chip>
+                  {tooltip && (
+                    <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-[#1a1a1a] border border-[#333] rounded-sm px-2.5 py-2 sports-font text-[9px] text-[#888] leading-relaxed z-20 whitespace-normal">
+                      {tooltip}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </Chips>
+        </Row>
+
+        {hardMode && players.length > 1 && (
+          <Row label="First">
+            <ScrollStrip>
+              <Chip active={firstPickerId === null} onClick={() => onFirstPickerIdChange(null)}>
+                AUTO
+              </Chip>
+              {players.map(p => (
+                <Chip key={p.player_id} active={firstPickerId === p.player_id}
+                  activeBg="#c8102e" activeText="#fff"
+                  onClick={() => onFirstPickerIdChange(p.player_id)}>
+                  {p.player_name}
+                </Chip>
+              ))}
+            </ScrollStrip>
+          </Row>
+        )}
+      </div>
+
+    </div>
   );
 }

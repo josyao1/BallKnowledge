@@ -57,10 +57,10 @@ export function MultiplayerCapCrunchResultsPage() {
 
   if (!lobby || rankings.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4" />
-          <p className="text-white">Loading results...</p>
+      <div className="min-h-screen bg-[#0d2a0b] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="sports-font text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
         </div>
       </div>
     );
