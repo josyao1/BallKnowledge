@@ -5,6 +5,7 @@
  */
 
 import type { Sport } from '../../../types';
+import type { SpecialRoundType } from '../../../services/capCrunch';
 
 const LINEUP_STAT_ABBR: Record<string, string> = {
   random: 'RANDOM',
@@ -35,6 +36,14 @@ interface Player {
   player_name: string;
 }
 
+const FILTER_LABELS: { type: SpecialRoundType; label: string; tooltip?: string }[] = [
+  { type: 'hw_filter',     label: 'H/W' },
+  { type: 'division',      label: 'Division' },
+  { type: 'division_draft', label: 'Draft' },
+  { type: 'conference',    label: 'College' },
+  { type: 'teammate',      label: 'Special', tooltip: 'Covers Teammate (played-with) and Name Match (first/last initial) rounds' },
+];
+
 interface Props {
   sport: Sport;
   onSportChange: (s: Sport) => void;
@@ -54,6 +63,8 @@ interface Props {
   totalRounds: number;
   onTotalRoundsChange: (n: number) => void;
   players: Player[];
+  disabledRoundTypes: SpecialRoundType[];
+  onDisabledRoundTypesChange: (types: SpecialRoundType[]) => void;
 }
 
 const PICK_TIMER_OPTIONS: Array<{ label: string; value: number | null }> = [
@@ -69,7 +80,15 @@ export function CapCrunchSettings({
   customCap, onCustomCapChange, hardMode, onHardModeChange,
   blindMode, onBlindModeChange, pickTimer, onPickTimerChange,
   firstPickerId, onFirstPickerIdChange, totalRounds, onTotalRoundsChange, players,
+  disabledRoundTypes, onDisabledRoundTypesChange,
 }: Props) {
+  function toggleFilter(type: SpecialRoundType) {
+    if (disabledRoundTypes.includes(type)) {
+      onDisabledRoundTypesChange(disabledRoundTypes.filter(t => t !== type));
+    } else {
+      onDisabledRoundTypesChange([...disabledRoundTypes, type]);
+    }
+  }
   const nbaCats = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'];
   const nflCats = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'];
 
@@ -206,6 +225,36 @@ export function CapCrunchSettings({
             {blindMode ? 'ON' : 'OFF'}
           </button>
         </div>
+      </div>
+
+      {/* Round filter toggles */}
+      <div className="border-t border-[#1a1a1a] pt-4">
+        <div className="sports-font text-[10px] text-[#777] tracking-widest uppercase mb-2">Round Filters</div>
+        <div className="flex flex-wrap gap-1.5">
+          {FILTER_LABELS.map(({ type, label, tooltip }) => {
+            const isDisabled = disabledRoundTypes.includes(type);
+            return (
+              <div key={type} className="relative group">
+                <button
+                  onClick={() => toggleFilter(type)}
+                  className={`px-2.5 py-1.5 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+                    isDisabled
+                      ? 'bg-[#111] text-[#333] border border-[#222] line-through'
+                      : 'bg-[#1a1a1a] text-[#888] border border-[#2a2a2a] hover:border-[#3a3a3a] hover:text-[#aaa]'
+                  }`}
+                >
+                  {label}{tooltip ? ' ?' : ''}
+                </button>
+                {tooltip && (
+                  <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-[#1a1a1a] border border-[#333] rounded-sm px-2.5 py-2 sports-font text-[9px] text-[#888] leading-relaxed z-20 whitespace-normal">
+                    {tooltip}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="sports-font text-[9px] text-[#3a3a3a] mt-1.5">Strikethrough = disabled for this game</p>
       </div>
 
       {/* Pick timer */}

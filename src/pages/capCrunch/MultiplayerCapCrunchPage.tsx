@@ -492,9 +492,10 @@ export function MultiplayerCapCrunchPage() {
       } else {
         // Next round: new team, reset hasPickedThisRound for active players
         const usedSpecial: SpecialRoundType[] = cs.usedSpecialTypes || [];
+        const disabledRoundTypes: SpecialRoundType[] = cs.disabledRoundTypes || [];
         const hostLineup = lineups[currentPlayerId] as PlayerLineup | undefined;
-        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial, hostLineup?.selectedPlayers, nextRound >= totalRds);
-        const newHwFilter = selectRandomHWFilter(cs.sport || 'nba', newTeam, cs.statCategory, usedSpecial);
+        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial, hostLineup?.selectedPlayers, nextRound >= totalRds, disabledRoundTypes);
+        const newHwFilter = selectRandomHWFilter(cs.sport || 'nba', newTeam, cs.statCategory, usedSpecial, disabledRoundTypes);
         const nextUsedSpecial = advanceSpecialRoundCycle(usedSpecial, classifySpecialRoundType(newTeam, newHwFilter));
         const resetLineups: Record<string, any> = {};
         // Rebuild from all allLineups keys (not just original playerIds) so mid-game joiners aren't wiped
@@ -505,14 +506,17 @@ export function MultiplayerCapCrunchPage() {
           };
         });
 
-        // Hard mode: rotate first picker each round
+        // Hard mode: rotate first picker each round.
+        // Must index into cs.playerOrder (which may be reordered for firstPickerId),
+        // not activePlayerIds (which is always join order).
         let hardModeUpdates: Record<string, any> = {};
         if (cs.hardMode) {
-          const newRoundStartIndex = ((cs.roundStartPickerIndex ?? 0) + 1) % activePlayerIds.length;
+          const orderedIds: string[] = (cs.playerOrder as string[] | undefined) || activePlayerIds;
+          const newRoundStartIndex = ((cs.roundStartPickerIndex ?? 0) + 1) % orderedIds.length;
           let firstPicker: string | null = null;
-          for (let i = 0; i < activePlayerIds.length; i++) {
-            const idx = (newRoundStartIndex + i) % activePlayerIds.length;
-            const pid = activePlayerIds[idx];
+          for (let i = 0; i < orderedIds.length; i++) {
+            const idx = (newRoundStartIndex + i) % orderedIds.length;
+            const pid = orderedIds[idx];
             if (!resetLineups[pid]?.isFinished) {
               firstPicker = pid;
               break;
@@ -529,6 +533,7 @@ export function MultiplayerCapCrunchPage() {
           hwFilter: newHwFilter,
           usedTeams: [...(cs.usedTeams || []), newTeam],
           usedSpecialTypes: nextUsedSpecial,
+          disabledRoundTypes,
           ...hardModeUpdates,
         });
       }

@@ -39,7 +39,7 @@ import { LobbyGameInfo }      from '../../components/lobby/LobbyGameInfo';
 import { LobbyHostSettings }  from '../../components/lobby/LobbyHostSettings';
 import { LobbyPlayerList }    from '../../components/lobby/LobbyPlayerList';
 import { LobbyActionButtons } from '../../components/lobby/LobbyActionButtons';
-import type { HostFormValues } from '../../components/lobby/LobbyHostSettings';
+import type { HostFormValues, SettingsRef } from '../../components/lobby/LobbyHostSettings';
 import type { Sport } from '../../types';
 
 export function LobbyWaitingPage() {
@@ -71,6 +71,7 @@ export function LobbyWaitingPage() {
   const hasAutoStarted  = useRef(false);
   const prevTeamRef     = useRef<string | null>(null);
   const prevSeasonRef   = useRef<string | null>(null);
+  const settingsRef     = useRef<SettingsRef>(null);
 
   useLobbySubscription(lobby?.id || null);
 
@@ -315,8 +316,13 @@ export function LobbyWaitingPage() {
     if (!isHost || !lobby) return;
     setIsLoadingRoster(true);
     try {
-      // Read the freshest lobby from the store — avoids stale settings if the
-      // host clicked Start immediately after Apply before real-time arrived.
+      // Apply the host's current settings form state before reading career_state,
+      // so Start always reflects whatever is showing in the settings panel — even
+      // if the host never clicked Apply separately.
+      const currentFormValues = settingsRef.current?.getValues();
+      if (currentFormValues) await handleApplySettings(currentFormValues);
+
+      // Read the freshest lobby from the store after apply has written to Supabase.
       const currentLobby = useLobbyStore.getState().lobby ?? lobby;
       const cs = (currentLobby.career_state as any) || {};
       const sport = currentLobby.sport as Sport;
@@ -324,6 +330,7 @@ export function LobbyWaitingPage() {
       const statCategory = (forcedStat && forcedStat !== 'random') ? forcedStat as any : selectRandomStatCategory(sport);
       const forcedCap = cs.forcedTargetCap as number | null;
       const targetCap = (forcedCap && forcedCap > 0) ? forcedCap : generateTargetCap(sport, statCategory, cs.totalRounds || 5);
+      const disabledRoundTypes = (cs.disabledRoundTypes as import('../../services/capCrunch').SpecialRoundType[]) || [];
 
       const playersResult = await getLobbyPlayers(currentLobby.id);
       const lobbyPlayers = playersResult.players || [];
@@ -341,8 +348,8 @@ export function LobbyWaitingPage() {
         if (idx > 0) playerOrder = [...playerOrder.slice(idx), ...playerOrder.slice(0, idx)];
       }
 
-      const firstTeam = assignRandomTeam(sport, statCategory, undefined, []);
-      const hwFilter = selectRandomHWFilter(sport, firstTeam, statCategory, []);
+      const firstTeam = assignRandomTeam(sport, statCategory, undefined, [], undefined, undefined, disabledRoundTypes);
+      const hwFilter = selectRandomHWFilter(sport, firstTeam, statCategory, [], disabledRoundTypes);
       const initialUsedSpecial = advanceSpecialRoundCycle([], classifySpecialRoundType(firstTeam, hwFilter));
       const newState = {
         sport, win_target: cs.win_target || 3, statCategory, targetCap, hwFilter,
@@ -350,7 +357,7 @@ export function LobbyWaitingPage() {
         currentTeam: firstTeam, usedTeams: [firstTeam], usedSpecialTypes: initialUsedSpecial,
         phase: 'picking', hardMode, blindMode, pickTimer,
         currentPickerId: hardMode && playerOrder.length > 0 ? playerOrder[0] : null,
-        roundStartPickerIndex: 0, playerOrder, pickedPlayerSeasons: [],
+        roundStartPickerIndex: 0, playerOrder, pickedPlayerSeasons: [], disabledRoundTypes,
       };
       await startCareerRound(currentLobby.id, newState);
       hasStartedGame.current = true;
@@ -656,7 +663,7 @@ export function LobbyWaitingPage() {
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'lineup-is-right') {
-      const newState = { ...baseState, sport: v.sport, forcedStatCategory: v.lineupStat === 'random' ? null : v.lineupStat, forcedTargetCap: (v.lineupStat !== 'random' && v.customCap) ? v.customCap : null, hardMode: v.hardMode, blindMode: v.blindMode, pickTimer: v.pickTimer ?? null, firstPickerId: v.hardMode ? v.firstPickerId : null, totalRounds: v.totalRounds };
+      const newState = { ...baseState, sport: v.sport, forcedStatCategory: v.lineupStat === 'random' ? null : v.lineupStat, forcedTargetCap: (v.lineupStat !== 'random' && v.customCap) ? v.customCap : null, hardMode: v.hardMode, blindMode: v.blindMode, pickTimer: v.pickTimer ?? null, firstPickerId: v.hardMode ? v.firstPickerId : null, totalRounds: v.totalRounds, disabledRoundTypes: v.disabledRoundTypes || [] };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
@@ -868,6 +875,7 @@ export function LobbyWaitingPage() {
 
         {isHost && showSettings && lobby.status === 'waiting' && (
           <LobbyHostSettings
+            ref={settingsRef}
             lobby={lobby}
             players={players}
             onApply={handleApplySettings}

@@ -131,7 +131,7 @@ export function CapCrunchScoresPanel({
                   return visiblePicks.map((selected, idx) => {
                   const totalBefore = running;
                   if (!selected.isBust && !selected.neverOnTeam) running += selected.statValue;
-                  const isBad = isMe && !blindMode && (selected.isBust || selected.neverOnTeam || selected.statValue === 0);
+                  const isBad = isMe && !blindMode && (selected.isBust || selected.neverOnTeam);
                   return (
                   <motion.div
                     key={`${selected.playerName}-${selected.team}-${selected.selectedYear}`}
@@ -171,7 +171,7 @@ export function CapCrunchScoresPanel({
                           </div>
                         </div>
                         {isMe && !blindMode && (
-                          <span className={`font-semibold ml-1 flex-shrink-0 ${isBad ? 'text-red-400' : 'text-[#d4af37]'}`}>
+                          <span className={`font-semibold ml-1 flex-shrink-0 ${isBad ? 'text-red-400' : selected.statValue === 0 ? 'text-red-400' : 'text-[#d4af37]'}`}>
                             {selected.isBust ? `${fmt(selected.statValue)}→0` : fmt(selected.statValue)}
                           </span>
                         )}
