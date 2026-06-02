@@ -1,9 +1,4 @@
-/**
- * FaceRevealSettings.tsx — Host settings for the Face Reveal game mode.
- * Sport toggle, win target, era filter, and timer per zoom level.
- */
-
-import { SportToggle } from './SettingsHelpers';
+import { SportToggle, Row, Chips, Chip, selectCls } from './SettingsHelpers';
 import type { Sport } from '../../../types';
 
 interface Props {
@@ -23,18 +18,8 @@ interface Props {
   onDefenseModeChange: (m: 'known' | 'all') => void;
 }
 
-const TIMER_OPTIONS = [30, 45, 60, 90];
-const MIN_YARDS_OPTIONS = [
-  { label: 'Any',   value: 0    },
-  { label: '500+',  value: 500  },
-  { label: '1000+', value: 1000 },
-];
-const MIN_MPG_OPTIONS = [
-  { label: 'Any', value: 0  },
-  { label: '15+', value: 15 },
-  { label: '20+', value: 20 },
-  { label: '25+', value: 25 },
-];
+const TO_YEARS = Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i);
+const CYAN = '#06b6d4';
 
 export function FaceRevealSettings({
   sport, onSportChange,
@@ -46,128 +31,76 @@ export function FaceRevealSettings({
   defenseMode, onDefenseModeChange,
 }: Props) {
   return (
-    <>
+    <div className="space-y-2.5">
       <SportToggle sport={sport} onChange={s => onSportChange(s as Sport)} />
 
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Points Target</div>
-        <div className="flex gap-1.5">
+      <Row label="Target">
+        <Chips>
           {[20, 25, 30, 40, 50].map(n => (
-            <button
-              key={n}
-              onClick={() => onWinTargetChange(n)}
-              className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                winTarget === n
-                  ? 'text-[#111]'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-              style={winTarget === n ? { backgroundColor: '#06b6d4' } : {}}
-            >
+            <Chip key={n} active={winTarget === n} activeBg={CYAN} activeText="#111"
+              onClick={() => onWinTargetChange(n)}>
               {n}
-            </button>
+            </Chip>
           ))}
-        </div>
-      </div>
+        </Chips>
+      </Row>
 
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Career Era</div>
-        <select
-          value={careerTo}
-          onChange={e => onCareerToChange(parseInt(e.target.value))}
-          className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
-        >
+      <Row label="Era">
+        <select value={careerTo} onChange={e => onCareerToChange(+e.target.value)} className={selectCls}>
           <option value={0}>Any Era</option>
-          {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map(y => (
-            <option key={y} value={y}>Active into {y}+</option>
-          ))}
+          {TO_YEARS.map(y => <option key={y} value={y}>Into {y}+</option>)}
         </select>
-      </div>
+      </Row>
 
       {sport === 'nfl' && (
-        <div>
-          <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Defense Pool</div>
-          <div className="flex gap-1.5">
-            {(['known', 'all'] as const).map(mode => (
-              <button
-                key={mode}
-                onClick={() => onDefenseModeChange(mode)}
-                className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                  defenseMode === mode
-                    ? 'text-[#111]'
-                    : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-                }`}
-                style={defenseMode === mode ? { backgroundColor: '#06b6d4' } : {}}
-              >
-                {mode === 'known' ? 'Well Known' : 'All'}
-              </button>
+        <Row label="Defense">
+          <Chips>
+            {(['known', 'all'] as const).map(m => (
+              <Chip key={m} active={defenseMode === m} activeBg={CYAN} activeText="#111"
+                onClick={() => onDefenseModeChange(m)}>
+                {m === 'known' ? 'Well Known' : 'All'}
+              </Chip>
             ))}
-          </div>
-        </div>
+          </Chips>
+        </Row>
       )}
 
       {sport === 'nfl' && (
-        <div>
-          <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Min Season Yards (NFL)</div>
-          <div className="flex gap-1.5">
-            {MIN_YARDS_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => onMinYardsChange(opt.value)}
-                className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                  minYards === opt.value
-                    ? 'text-[#111]'
-                    : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-                }`}
-                style={minYards === opt.value ? { backgroundColor: '#06b6d4' } : {}}
-              >
+        <Row label="Yards">
+          <Chips>
+            {([{ label: 'Any', value: 0 }, { label: '500+', value: 500 }, { label: '1000+', value: 1000 }]).map(opt => (
+              <Chip key={opt.value} active={minYards === opt.value} activeBg={CYAN} activeText="#111"
+                onClick={() => onMinYardsChange(opt.value)}>
                 {opt.label}
-              </button>
+              </Chip>
             ))}
-          </div>
-        </div>
+          </Chips>
+        </Row>
       )}
 
       {sport === 'nba' && (
-        <div>
-          <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Min Season MPG (NBA)</div>
-          <div className="flex gap-1.5">
-            {MIN_MPG_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => onMinMpgChange(opt.value)}
-                className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                  minMpg === opt.value
-                    ? 'text-[#111]'
-                    : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-                }`}
-                style={minMpg === opt.value ? { backgroundColor: '#06b6d4' } : {}}
-              >
+        <Row label="MPG">
+          <Chips>
+            {([{ label: 'Any', value: 0 }, { label: '15+', value: 15 }, { label: '20+', value: 20 }, { label: '25+', value: 25 }]).map(opt => (
+              <Chip key={opt.value} active={minMpg === opt.value} activeBg={CYAN} activeText="#111"
+                onClick={() => onMinMpgChange(opt.value)}>
                 {opt.label}
-              </button>
+              </Chip>
             ))}
-          </div>
-        </div>
+          </Chips>
+        </Row>
       )}
 
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Timer Per Zoom Level</div>
-        <div className="flex gap-1.5">
-          {TIMER_OPTIONS.map(n => (
-            <button
-              key={n}
-              onClick={() => onFaceRevealTimerChange(n)}
-              className={`flex-1 py-2 rounded-sm retro-title text-base transition-all ${
-                faceRevealTimer === n
-                  ? 'text-[#111]'
-                  : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]'
-              }`}
-              style={faceRevealTimer === n ? { backgroundColor: '#06b6d4' } : {}}
-            >
+      <Row label="Timer">
+        <Chips>
+          {[30, 45, 60, 90].map(n => (
+            <Chip key={n} active={faceRevealTimer === n} activeBg={CYAN} activeText="#111"
+              onClick={() => onFaceRevealTimerChange(n)}>
               {n}s
-            </button>
+            </Chip>
           ))}
-        </div>
-      </div>
-    </>
+        </Chips>
+      </Row>
+    </div>
   );
 }

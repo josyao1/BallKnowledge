@@ -1,9 +1,4 @@
-/**
- * BoxScoreSettings.tsx — Host settings for the Box Score game mode.
- * Year range, team filter, and timer.
- */
-
-import { TimerPicker } from './SettingsHelpers';
+import { Row, Chips, Chip, selectCls, TimerPicker } from './SettingsHelpers';
 import { ALL_BOX_SCORE_YEARS } from '../../../services/boxScoreData';
 import { ALL_NBA_BOX_SCORE_YEARS } from '../../../services/nbaBoxScoreData';
 import { nflTeams } from '../../../data/nfl-teams';
@@ -24,62 +19,59 @@ interface Props {
   onCustomTimerChange: (raw: string, clamped: number) => void;
 }
 
+const AMBER = '#f59e0b';
+
 export function BoxScoreSettings({
   sport, onSportChange,
   boxMinYear, onBoxMinYearChange, boxMaxYear, onBoxMaxYearChange,
   boxTeam, onBoxTeamChange, timer, customTimer, onTimerSelect, onCustomTimerChange,
 }: Props) {
-  const years = sport === 'nba' ? ALL_NBA_BOX_SCORE_YEARS : ALL_BOX_SCORE_YEARS;
+  const years    = sport === 'nba' ? ALL_NBA_BOX_SCORE_YEARS : ALL_BOX_SCORE_YEARS;
   const teamList = sport === 'nba' ? nbaTeams : nflTeams;
 
   return (
-    <>
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">League</div>
-        <div className="flex gap-2">
+    <div className="space-y-2.5">
+      <Row label="League">
+        <Chips>
           {(['nfl', 'nba'] as const).map(s => (
-            <button key={s} onClick={() => { onSportChange(s); onBoxTeamChange(null); }}
-              className={`px-5 py-1.5 rounded-sm sports-font text-xs transition-all ${
-                sport === s ? 'bg-[#f59e0b] text-black font-bold' : 'bg-[#111] text-[#666] border border-[#2a2a2a] hover:border-[#444]'
-              }`}>
+            <Chip key={s} active={sport === s} activeBg={AMBER} activeText="#000"
+              onClick={() => { onSportChange(s); onBoxTeamChange(null); }}>
               {s.toUpperCase()}
-            </button>
+            </Chip>
           ))}
-        </div>
-      </div>
+        </Chips>
+      </Row>
 
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Year Range</div>
-        <div className="flex items-center gap-2">
+      <Row label="Years">
+        <div className="flex items-center gap-1.5">
           <select
             value={boxMinYear}
-            onChange={e => { const v = parseInt(e.target.value); onBoxMinYearChange(v); if (v > boxMaxYear) onBoxMaxYearChange(v); }}
-            className="flex-1 bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
+            onChange={e => { const v = +e.target.value; onBoxMinYearChange(v); if (v > boxMaxYear) onBoxMaxYearChange(v); }}
+            className={selectCls}
           >
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <span className="text-[#444] sports-font text-xs">to</span>
+          <span className="sports-font text-[9px] text-[#333]">→</span>
           <select
             value={boxMaxYear}
-            onChange={e => { const v = parseInt(e.target.value); onBoxMaxYearChange(v); if (v < boxMinYear) onBoxMinYearChange(v); }}
-            className="flex-1 bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
+            onChange={e => { const v = +e.target.value; onBoxMaxYearChange(v); if (v < boxMinYear) onBoxMinYearChange(v); }}
+            className={selectCls}
           >
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
-      </div>
+      </Row>
 
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Team Filter</div>
+      <Row label="Team">
         <select
           value={boxTeam || ''}
           onChange={e => onBoxTeamChange(e.target.value || null)}
-          className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
+          className={selectCls}
         >
           <option value="">Any Team</option>
           {teamList.map(t => <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>)}
         </select>
-      </div>
+      </Row>
 
       <TimerPicker
         timer={timer} customTimer={customTimer}
@@ -88,6 +80,6 @@ export function BoxScoreSettings({
         onSelect={onTimerSelect}
         onCustomChange={onCustomTimerChange}
       />
-    </>
+    </div>
   );
 }

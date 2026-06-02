@@ -297,34 +297,42 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
         exit={{ opacity: 0, height: 0 }}
         className="overflow-hidden"
       >
-        <div className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-sm p-4 space-y-5">
+        <div
+          className="rounded-sm p-4 space-y-4 border border-[#d4af37]/15"
+          style={{ background: 'linear-gradient(180deg, #121212 0%, #0c0c0c 100%)' }}
+        >
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-[#1f1f1f]" />
-            <span className="sports-font text-[9px] text-[#555] tracking-[0.35em] uppercase">Host Settings</span>
-            <div className="h-px flex-1 bg-[#1f1f1f]" />
+            <div className="h-px flex-1 bg-[#d4af37]/12" />
+            <span className="sports-font text-[9px] text-[#d4af37]/55 tracking-[0.35em] uppercase">Host Settings</span>
+            <div className="h-px flex-1 bg-[#d4af37]/12" />
           </div>
 
           {/* Mode selector */}
           <div>
-            <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Mode</div>
-            <select
-              value={editGameType === 'nba-box-score' ? 'box-score' : editGameType}
-              onChange={e => {
-                const v = e.target.value as GameTypeValue;
-                setEditGameType(v);
-                if (v === 'box-score') { setEditBoxSport('nfl'); setEditBoxMinYear(2015); setEditBoxMaxYear(2024); setEditBoxTeam(null); }
-              }}
-              className="w-full bg-[#111] text-[#ccc] px-3 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
-            >
-              <option value="roster">★ Roster Challenge</option>
-              <option value="career">Career Arc</option>
-              <option value="scramble">Name Scramble</option>
-              <option value="face-reveal">Face Reveal</option>
-              <option value="lineup-is-right">★ Cap Crunch</option>
-              <option value="box-score">Box Score</option>
-              <option value="starting-lineup">Starters</option>
-              <option value="top-ten">Top Ten</option>
-            </select>
+            <div className="sports-font text-[9px] text-[#666] tracking-[0.25em] uppercase mb-1.5">Mode</div>
+            <div className="relative">
+              <select
+                value={editGameType === 'nba-box-score' ? 'box-score' : editGameType}
+                onChange={e => {
+                  const v = e.target.value as GameTypeValue;
+                  setEditGameType(v);
+                  if (v === 'box-score') { setEditBoxSport('nfl'); setEditBoxMinYear(2015); setEditBoxMaxYear(2024); setEditBoxTeam(null); }
+                }}
+                className="w-full bg-[#0d0d0d] text-[#d4af37] px-3 py-2 pr-8 rounded-sm border border-[#d4af37]/20 sports-font text-sm focus:outline-none focus:border-[#d4af37]/40 appearance-none cursor-pointer transition-colors hover:border-[#d4af37]/30"
+              >
+                <option value="roster">★ Roster Challenge</option>
+                <option value="career">Career Arc</option>
+                <option value="scramble">Name Scramble</option>
+                <option value="face-reveal">Face Reveal</option>
+                <option value="lineup-is-right">★ Cap Crunch</option>
+                <option value="box-score">Box Score</option>
+                <option value="starting-lineup">Starters</option>
+                <option value="top-ten">Top Ten</option>
+              </select>
+              <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#d4af37]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
 
           {/* Game-type-specific settings */}
@@ -422,7 +430,10 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
           <button
             onClick={handleApply}
             disabled={applyDisabled}
-            className="w-full py-2.5 rounded-sm retro-title text-base tracking-wider transition-all disabled:opacity-40 bg-[#d4af37] text-black hover:bg-[#e0be4a] active:scale-[0.98]"
+            className="w-full py-2.5 rounded-sm retro-title text-base tracking-wider transition-all disabled:opacity-30
+              bg-gradient-to-b from-[#e5c940] to-[#c4a020] text-black
+              shadow-[0_3px_0_#8b7018] hover:from-[#ecd44a] hover:to-[#cfaa28]
+              active:shadow-none active:translate-y-0.5"
           >
             Apply
           </button>

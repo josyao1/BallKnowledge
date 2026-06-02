@@ -57,9 +57,14 @@ export function MultiplayerTopTenResultsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      <header className="p-4 border-b border-white/10">
-        <h1 className="retro-title text-xl text-[#22c55e] text-center">Top Ten · Results</h1>
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col relative overflow-hidden">
+      {/* Subtle green atmosphere at top */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% -10%, rgba(34,197,94,0.08) 0%, transparent 55%)' }} />
+
+      <header className="relative z-10 p-4 border-b border-white/8">
+        <div className="sports-font text-[9px] text-white/25 tracking-[0.4em] uppercase text-center mb-1">Match Complete</div>
+        <h1 className="retro-title text-2xl text-[#22c55e] text-center">Top Ten</h1>
         {categoryLabel && (
           <p className="sports-font text-[9px] text-white/30 tracking-widest uppercase text-center mt-1">
             {categoryLabel} · {roundInfo}
@@ -67,10 +72,33 @@ export function MultiplayerTopTenResultsPage() {
         )}
       </header>
 
-      <main className="flex-1 max-w-lg mx-auto w-full p-4 space-y-6">
+      <main className="relative z-10 flex-1 max-w-lg mx-auto w-full p-4 space-y-5">
+        {/* Winner banner */}
+        {winnerIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-center pt-2 pb-1"
+          >
+            <p className="sports-font text-[9px] text-[#d4af37]/50 tracking-[0.4em] uppercase mb-1">
+              {winnerIds.length > 1 ? 'Tied' : 'Winner'}
+            </p>
+            <h2
+              className="retro-title text-5xl text-[#d4af37]"
+              style={{ textShadow: '0 0 28px rgba(212,175,55,0.35)' }}
+            >
+              {winnerIds.length === 1
+                ? (sortedPlayers.find(p => winnerIds.includes(p.player_id))?.player_name ?? '')
+                : sortedPlayers.filter(p => winnerIds.includes(p.player_id)).map(p => p.player_name).join(' · ')
+              }
+            </h2>
+          </motion.div>
+        )}
+
         {/* Standings */}
-        <div className="space-y-2">
-          <p className="sports-font text-[9px] text-white/30 tracking-widest uppercase">Final Standings</p>
+        <div className="space-y-1.5">
+          <p className="sports-font text-[9px] text-white/25 tracking-widest uppercase">Final Standings</p>
           {sortedPlayers.map((p, i) => {
             const guesses  = guessAttribution[p.player_id] || 0;
             const isWinner = winnerIds.includes(p.player_id);

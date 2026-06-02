@@ -1,6 +1,4 @@
-import { SportToggle } from './SettingsHelpers';
-import { getNBADivisions } from '../../../data/teams';
-import { getNFLDivisions } from '../../../data/nfl-teams';
+import { Row, Chips, Chip, selectCls } from './SettingsHelpers';
 
 interface Props {
   sport: 'nba' | 'nfl';
@@ -28,131 +26,66 @@ export function TopTenSettings({
   maxStrikes, onMaxStrikesChange,
   turnTimer, onTurnTimerChange,
 }: Props) {
-  const nbaDivisions = getNBADivisions();
-  const nflDivisions = getNFLDivisions();
-  const divisionCount = sport === 'nba' ? nbaDivisions.length : nflDivisions.length;
-
-  const nbaMinYear = 1996;
-  const nflMinYear = 1999;
-  const sportMin = sport === 'nba' ? nbaMinYear : nflMinYear;
+  const sportMin = sport === 'nba' ? 1996 : 1999;
   const sportMax = sport === 'nba' ? 2025 : 2024;
-
-  const btnBase = 'flex-1 py-2 rounded-sm retro-title text-base transition-all';
-  const btnActive = 'bg-[#d4af37] text-black';
-  const btnInactive = 'bg-[#111] text-[#444] border border-[#222] hover:border-[#3a3a3a] hover:text-[#888]';
+  const yearRange = Array.from({ length: sportMax - sportMin + 1 }, (_, i) => sportMin + i);
 
   return (
-    <>
-      <SportToggle sport={sport} onChange={s => onSportChange(s as 'nba' | 'nfl')} />
+    <div className="space-y-2.5">
+      <Row label="Sport">
+        <Chips>
+          <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff" onClick={() => onSportChange('nba')}>NBA</Chip>
+          <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff" onClick={() => onSportChange('nfl')}>NFL</Chip>
+        </Chips>
+      </Row>
 
-      {/* Round type */}
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Round Type</div>
-        <div className="flex gap-1.5">
+      <Row label="Round">
+        <Chips>
           {(['league', 'division', 'team'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => onRoundTypeChange(t)}
-              className={`${btnBase} ${roundType === t ? btnActive : btnInactive}`}
-            >
-              {t === 'league' ? 'League' : t === 'division' ? 'Division' : 'Team'}
-            </button>
+            <Chip key={t} active={roundType === t} onClick={() => onRoundTypeChange(t)}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </Chip>
           ))}
-        </div>
-        {roundType === 'division' && (
-          <p className="sports-font text-[9px] text-[#555] mt-1.5">
-            {divisionCount} divisions · cumulative totals while on a division team
-          </p>
-        )}
-        {roundType === 'team' && (
-          <p className="sports-font text-[9px] text-[#555] mt-1.5">
-            Random team · cumulative leaders (4–10 slots by category &amp; window)
-          </p>
-        )}
-      </div>
+        </Chips>
+      </Row>
 
-      {/* Year range (league) or window size (division) */}
       {roundType === 'league' ? (
-        <div>
-          <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Year Range</div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="sports-font text-[9px] text-[#444] block mb-1">From</label>
-              <select
-                value={minYear}
-                onChange={e => onMinYearChange(parseInt(e.target.value))}
-                className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
-              >
-                {Array.from({ length: sportMax - sportMin + 1 }, (_, i) => sportMin + i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="sports-font text-[9px] text-[#444] block mb-1">To</label>
-              <select
-                value={maxYear}
-                onChange={e => onMaxYearChange(parseInt(e.target.value))}
-                className="w-full bg-[#111] text-[#ccc] px-2 py-2 rounded-sm border border-[#2a2a2a] sports-font text-sm focus:outline-none focus:border-[#444] appearance-none"
-              >
-                {Array.from({ length: sportMax - sportMin + 1 }, (_, i) => sportMin + i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+        <Row label="Years">
+          <div className="flex items-center gap-1.5">
+            <select value={minYear} onChange={e => onMinYearChange(+e.target.value)} className={selectCls}>
+              {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <span className="sports-font text-[9px] text-[#333]">→</span>
+            <select value={maxYear} onChange={e => onMaxYearChange(+e.target.value)} className={selectCls}>
+              {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
           </div>
-        </div>
+        </Row>
       ) : (
-        <div>
-          <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Year Window</div>
-          <div className="flex gap-1.5">
+        <Row label="Window">
+          <Chips>
             {[5, 10, 15, 20].map(n => (
-              <button
-                key={n}
-                onClick={() => onWindowYearsChange(n)}
-                className={`${btnBase} ${windowYears === n ? btnActive : btnInactive}`}
-              >
-                {n}y
-              </button>
+              <Chip key={n} active={windowYears === n} onClick={() => onWindowYearsChange(n)}>{n}y</Chip>
             ))}
-          </div>
-          <p className="sports-font text-[9px] text-[#555] mt-1.5">Last {windowYears} seasons from current year</p>
-        </div>
+          </Chips>
+        </Row>
       )}
 
-      {/* Max strikes */}
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Max Strikes</div>
-        <div className="flex gap-1.5">
+      <Row label="Strikes">
+        <Chips>
           {[1, 2, 3].map(n => (
-            <button
-              key={n}
-              onClick={() => onMaxStrikesChange(n)}
-              className={`${btnBase} ${maxStrikes === n ? btnActive : btnInactive}`}
-            >
-              {n}
-            </button>
+            <Chip key={n} active={maxStrikes === n} onClick={() => onMaxStrikesChange(n)}>{n}</Chip>
           ))}
-        </div>
-        <p className="sports-font text-[9px] text-[#555] mt-1.5">Wrong guesses + timeouts before elimination</p>
-      </div>
+        </Chips>
+      </Row>
 
-      {/* Turn timer */}
-      <div>
-        <div className="sports-font text-[9px] text-[#555] tracking-[0.25em] uppercase mb-2">Turn Timer</div>
-        <div className="flex gap-1.5">
+      <Row label="Timer">
+        <Chips>
           {[30, 45, 60, 90].map(n => (
-            <button
-              key={n}
-              onClick={() => onTurnTimerChange(n)}
-              className={`${btnBase} ${turnTimer === n ? btnActive : btnInactive}`}
-            >
-              {n}s
-            </button>
+            <Chip key={n} active={turnTimer === n} onClick={() => onTurnTimerChange(n)}>{n}s</Chip>
           ))}
-        </div>
-      </div>
-
-    </>
+        </Chips>
+      </Row>
+    </div>
   );
 }
