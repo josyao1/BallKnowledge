@@ -29,7 +29,7 @@ export function MultiplayerTopTenResultsPage() {
 
   useEffect(() => {
     if (lobby && lobby.status !== 'finished') {
-      navigate(`/top-ten/${code}`, { replace: true });
+      navigate(`/lobby/${code}/top-ten`, { replace: true });
     }
   }, [lobby?.status]);
 
