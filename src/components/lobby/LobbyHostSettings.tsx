@@ -87,6 +87,7 @@ export interface HostFormValues {
   faceRevealDefenseMode: 'known' | 'all';
   topTenSport: 'nba' | 'nfl';
   topTenRoundType: 'league' | 'division' | 'team';
+  topTenDivisionMode: 'cumulative' | 'single_season';
   topTenMinYear: number;
   topTenMaxYear: number;
   topTenWindowYears: number;
@@ -138,13 +139,14 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
   const [editFaceRevealMinYards,    setEditFaceRevealMinYards]    = useState(0);
   const [editFaceRevealMinMpg,      setEditFaceRevealMinMpg]      = useState(0);
   const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>('known');
-  const [editTopTenSport,       setEditTopTenSport]       = useState<'nba' | 'nfl'>('nba');
-  const [editTopTenRoundType,   setEditTopTenRoundType]   = useState<'league' | 'division' | 'team'>('league');
-  const [editTopTenMinYear,     setEditTopTenMinYear]     = useState(2015);
-  const [editTopTenMaxYear,     setEditTopTenMaxYear]     = useState(2025);
-  const [editTopTenWindowYears, setEditTopTenWindowYears] = useState(10);
-  const [editTopTenMaxStrikes,  setEditTopTenMaxStrikes]  = useState(2);
-  const [editTopTenTimer,       setEditTopTenTimer]       = useState(45);
+  const [editTopTenSport,        setEditTopTenSport]        = useState<'nba' | 'nfl'>('nba');
+  const [editTopTenRoundType,    setEditTopTenRoundType]    = useState<'league' | 'division' | 'team'>('league');
+  const [editTopTenDivisionMode, setEditTopTenDivisionMode] = useState<'cumulative' | 'single_season'>('cumulative');
+  const [editTopTenMinYear,      setEditTopTenMinYear]      = useState(2015);
+  const [editTopTenMaxYear,      setEditTopTenMaxYear]      = useState(2025);
+  const [editTopTenWindowYears,  setEditTopTenWindowYears]  = useState(10);
+  const [editTopTenMaxStrikes,   setEditTopTenMaxStrikes]   = useState(2);
+  const [editTopTenTimer,        setEditTopTenTimer]        = useState(45);
   const [editDisabledRoundTypes, setEditDisabledRoundTypes] = useState<SpecialRoundType[]>([]);
 
   useImperativeHandle(ref, () => ({
@@ -162,6 +164,7 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       faceRevealTimer: editFaceRevealTimer, faceRevealMinYards: editFaceRevealMinYards,
       faceRevealMinMpg: editFaceRevealMinMpg, faceRevealDefenseMode: editFaceRevealDefenseMode,
       topTenSport: editTopTenSport, topTenRoundType: editTopTenRoundType,
+      topTenDivisionMode: editTopTenDivisionMode,
       topTenMinYear: editTopTenMinYear, topTenMaxYear: editTopTenMaxYear,
       topTenWindowYears: editTopTenWindowYears, topTenMaxStrikes: editTopTenMaxStrikes,
       topTenTimer: editTopTenTimer, disabledRoundTypes: editDisabledRoundTypes,
@@ -205,6 +208,7 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
     setEditTopTenSport((cs.top_ten_sport as 'nba' | 'nfl') || lobbySport as 'nba' | 'nfl');
     setEditTopTenRoundType((cs.top_ten_round_type as 'league' | 'division' | 'team') || 'league');
+    setEditTopTenDivisionMode((cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative');
     setEditTopTenMinYear((cs.top_ten_min_year as number) || (lobbySport === 'nba' ? 1996 : 1999));
     setEditTopTenMaxYear((cs.top_ten_max_year as number) || (lobbySport === 'nba' ? 2025 : 2024));
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
@@ -274,6 +278,7 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       faceRevealDefenseMode: editFaceRevealDefenseMode,
       topTenSport: editTopTenSport,
       topTenRoundType: editTopTenRoundType,
+      topTenDivisionMode: editTopTenDivisionMode,
       topTenMinYear: editTopTenMinYear,
       topTenMaxYear: editTopTenMaxYear,
       topTenWindowYears: editTopTenWindowYears,
@@ -404,6 +409,7 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
             <TopTenSettings
               sport={editTopTenSport} onSportChange={handleTopTenSportChange}
               roundType={editTopTenRoundType} onRoundTypeChange={setEditTopTenRoundType}
+              divisionMode={editTopTenDivisionMode} onDivisionModeChange={setEditTopTenDivisionMode}
               minYear={editTopTenMinYear} onMinYearChange={setEditTopTenMinYear}
               maxYear={editTopTenMaxYear} onMaxYearChange={setEditTopTenMaxYear}
               windowYears={editTopTenWindowYears} onWindowYearsChange={setEditTopTenWindowYears}

@@ -5,6 +5,8 @@ interface Props {
   onSportChange: (s: 'nba' | 'nfl') => void;
   roundType: 'league' | 'division' | 'team';
   onRoundTypeChange: (t: 'league' | 'division' | 'team') => void;
+  divisionMode: 'cumulative' | 'single_season';
+  onDivisionModeChange: (m: 'cumulative' | 'single_season') => void;
   minYear: number;
   onMinYearChange: (n: number) => void;
   maxYear: number;
@@ -20,6 +22,7 @@ interface Props {
 export function TopTenSettings({
   sport, onSportChange,
   roundType, onRoundTypeChange,
+  divisionMode, onDivisionModeChange,
   minYear, onMinYearChange,
   maxYear, onMaxYearChange,
   windowYears, onWindowYearsChange,
@@ -48,6 +51,15 @@ export function TopTenSettings({
           ))}
         </Chips>
       </Row>
+
+      {roundType !== 'league' && (
+        <Row label="Mode">
+          <Chips>
+            <Chip active={divisionMode === 'cumulative'} onClick={() => onDivisionModeChange('cumulative')}>Cumulative</Chip>
+            <Chip active={divisionMode === 'single_season'} onClick={() => onDivisionModeChange('single_season')}>Single Season</Chip>
+          </Chips>
+        </Row>
+      )}
 
       {roundType === 'league' ? (
         <Row label="Years">

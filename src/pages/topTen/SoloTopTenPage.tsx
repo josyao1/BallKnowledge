@@ -9,10 +9,25 @@ import {
 import type { TopTenEntry } from '../../services/topTen';
 import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
 import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
+import { TeamLogo } from '../../components/TeamLogo';
+import { teams } from '../../data/teams';
+import { nflTeams } from '../../data/nfl-teams';
 
 const MAX_STRIKES = 3;
 const NBA_MIN = 1996; const NBA_MAX = 2025;
 const NFL_MIN = 1999; const NFL_MAX = 2025;
+
+const NBA_BY_DIVISION = (['Eastern', 'Western'] as const).flatMap(conf =>
+  (['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest'] as const)
+    .map(div => ({ label: `${conf === 'Eastern' ? 'East' : 'West'} · ${div}`, divTeams: teams.filter(t => t.conference === conf && t.division === div) }))
+    .filter(g => g.divTeams.length > 0)
+);
+const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
+  (['East', 'North', 'South', 'West'] as const).map(div => ({
+    label: `${conf} ${div}`,
+    divTeams: nflTeams.filter(t => t.conference === conf && t.division === div),
+  }))
+);
 
 type Status = 'setup' | 'loading' | 'playing' | 'done';
 
@@ -24,10 +39,11 @@ export function SoloTopTenPage() {
   const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(
     (storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba'
   );
-  const [roundType, setRoundType] = useState<'league' | 'division' | 'team'>('league');
-  const [minYear, setMinYear]     = useState(NBA_MIN);
-  const [maxYear, setMaxYear]     = useState(NBA_MAX);
-  const [windowYears, setWindowYears] = useState(10);
+  const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>('league');
+  const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>('cumulative');
+  const [minYear, setMinYear]           = useState(NBA_MIN);
+  const [maxYear, setMaxYear]           = useState(NBA_MAX);
+  const [windowYears, setWindowYears]   = useState(10);
 
   // Active game state
   const [sport, setSport]           = useState<'nba' | 'nfl'>('nba');
@@ -44,8 +60,10 @@ export function SoloTopTenPage() {
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
   const [isDivisionRound, setIsDivisionRound] = useState(false);
   const [isTeamRound, setIsTeamRound]         = useState(false);
+  const [isSingleSeason, setIsSingleSeason]   = useState(false);
 
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions]   = useState<string[]>([]);
+  const [showTeamsPanel, setShowTeamsPanel] = useState(false);
 
   const inputRef      = useRef<HTMLInputElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,7 +76,7 @@ export function SoloTopTenPage() {
   }, []);
 
   // Capture active settings in a ref so playAgain doesn't drift
-  const activeConfig = useRef({ sport: 'nba' as 'nba' | 'nfl', roundType: 'league' as 'league' | 'division' | 'team', minYear: NBA_MIN, maxYear: NBA_MAX, windowYears: 10 });
+  const activeConfig = useRef({ sport: 'nba' as 'nba' | 'nfl', roundType: 'league' as 'league' | 'division' | 'team', divisionMode: 'cumulative' as 'cumulative' | 'single_season', minYear: NBA_MIN, maxYear: NBA_MAX, windowYears: 10 });
 
   // Reset year bounds when sport changes in setup
   useEffect(() => {
@@ -69,7 +87,7 @@ export function SoloTopTenPage() {
   }, [setupSport]);
 
   async function startGame() {
-    activeConfig.current = { sport: setupSport, roundType, minYear, maxYear, windowYears };
+    activeConfig.current = { sport: setupSport, roundType, divisionMode, minYear, maxYear, windowYears };
     setSport(setupSport);
     setStatus('loading');
     try { await loadRound(); } catch { setStatus('setup'); }
@@ -81,15 +99,16 @@ export function SoloTopTenPage() {
   }
 
   async function loadRound() {
-    const { sport: s, roundType: rt, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
-    const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team } =
-      await generateTopTenRound({ sport: s, roundType: rt, minYear: mn, maxYear: mx, windowYears: wy });
+    const { sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
+    const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team, isSingleSeason: ss } =
+      await generateTopTenRound({ sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy });
     setCategory(cat.key);
     setCategoryLabel(catLabel);
     setEntries(result);
     setRoundInfo(info);
     setIsDivisionRound(div);
     setIsTeamRound(team);
+    setIsSingleSeason(ss);
     setGuessedIndices([]);
     setStrikes(0);
     setGuess('');
@@ -155,7 +174,7 @@ export function SoloTopTenPage() {
   const statShortLabel    = getStatShortLabel(catDef, isCumulativeRound, sport);
   const sportMin         = setupSport === 'nba' ? NBA_MIN : NFL_MIN;
   const sportMax         = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
-  const showTeamHint     = isDivisionRound || (hintMode && !isTeamRound);
+  const showTeamHint     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
 
   const btnBase     = 'flex-1 py-2.5 rounded-sm retro-title text-base transition-all bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#333]';
 
@@ -241,6 +260,28 @@ export function SoloTopTenPage() {
                 ))}
               </div>
 
+              {roundType !== 'league' && (
+                <div className="pt-0.5">
+                  <p className="sports-font text-[9px] text-[#444] mb-1.5">Mode</p>
+                  <div className="flex gap-1.5">
+                    {(['cumulative', 'single_season'] as const).map(m => (
+                      <button
+                        key={m}
+                        onClick={() => setDivisionMode(m)}
+                        className="flex-1 py-2 rounded-sm retro-title text-sm transition-all"
+                        style={divisionMode === m
+                          ? { background: GOLD, color: '#000', boxShadow: `0 0 10px ${GOLD}44` }
+                          : undefined}
+                      >
+                        <span className={divisionMode === m ? '' : 'text-[#444]'}>
+                          {m === 'cumulative' ? 'Cumulative' : 'Single Season'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {roundType === 'league' ? (
                 <div className="grid grid-cols-2 gap-2 pt-0.5">
                   {(['From', 'To'] as const).map((label, idx) => (
@@ -321,6 +362,18 @@ export function SoloTopTenPage() {
         <div className="ml-auto flex items-center gap-2">
           {!isDone && (
             <button
+              onClick={() => setShowTeamsPanel(v => !v)}
+              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+                showTeamsPanel
+                  ? 'border-[#22c55e]/60 text-[#22c55e] bg-[#22c55e]/8'
+                  : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
+              }`}
+            >
+              Teams
+            </button>
+          )}
+          {!isDone && (
+            <button
               onClick={() => setHintMode(h => !h)}
               className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
                 hintMode
@@ -342,6 +395,35 @@ export function SoloTopTenPage() {
         </div>
       </header>
 
+      <AnimatePresence>
+        {showTeamsPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="border-b border-white/8 bg-[#0a0a0a]/98 z-10 px-4 py-3"
+            onClick={() => setShowTeamsPanel(false)}
+          >
+            <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
+              {(sport === 'nfl' ? NFL_BY_DIVISION : NBA_BY_DIVISION).map(({ label, divTeams }) => (
+                <div key={label}>
+                  <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {divTeams.map(t => (
+                      <div key={t.abbreviation} className="flex items-center gap-1">
+                        <TeamLogo abbr={t.abbreviation} sport={sport as 'nba' | 'nfl'} size={18} />
+                        <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-10 flex flex-col gap-4">
         {/* Category hero */}
         <div className="text-center pt-5 pb-1">
@@ -352,6 +434,11 @@ export function SoloTopTenPage() {
             {categoryLabel}
           </h2>
           <p className="sports-font text-[10px] text-white/30 tracking-[0.35em] uppercase mt-1.5">{roundInfo}</p>
+          {isCumulativeRound && (
+            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/10 text-white/20">
+              {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
+            </p>
+          )}
         </div>
 
         {/* Strikes */}
