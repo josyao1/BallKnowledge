@@ -64,7 +64,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
 
   // Only Roster Royale uses team assignment
   const isTeamlessMode = lobby.game_type !== 'roster';
-  const isMultiplierlessMode = ['career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal'].includes(lobby.game_type);
+  const isMultiplierlessMode = ['career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal', 'top-ten'].includes(lobby.game_type);
 
   return (
     <motion.div

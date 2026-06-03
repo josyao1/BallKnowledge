@@ -4,19 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, updateCareerState } from '../../services/lobby';
-import { isValidGuess, getCategoryDef, generateTopTenRound, parseRoundFlags, getStatShortLabel } from '../../services/topTen';
+import { isValidGuess, findPlayerInPool, getCategoryDef, generateTopTenRound, parseRoundFlags, getStatShortLabel } from '../../services/topTen';
 import { nflTeams } from '../../data/nfl-teams';
+import { teams } from '../../data/teams';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
 import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
 import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
 import { TeamLogo } from '../../components/TeamLogo';
+import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
 
 const ANIM_MS = 2500;
 const SUSPENSE_MS = 1200;
 
-function RevealOverlay({ guessedName, isCorrect }: { guessedName: string; isCorrect: boolean }) {
+function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedName: string; isCorrect: boolean; playerId?: string; sport: 'nba' | 'nfl' }) {
   const [phase, setPhase] = useState<'suspense' | 'reveal'>('suspense');
 
   // Deterministic confetti particles — avoids re-generating on each render
@@ -96,6 +98,13 @@ function RevealOverlay({ guessedName, isCorrect }: { guessedName: string; isCorr
               className="text-center px-8 py-10 bg-emerald-950/60 border border-emerald-500/60 rounded-sm max-w-xs w-full mx-6 relative z-10"
               style={{ boxShadow: '0 0 40px rgba(34,197,94,0.25)' }}
             >
+              <div className="flex justify-center mb-4">
+                <PlayerHeadshot
+                  playerId={playerId}
+                  sport={sport}
+                  className="w-20 h-20 rounded-full object-cover ring-2 ring-emerald-500/50"
+                />
+              </div>
               <p className="retro-title text-3xl text-emerald-300 leading-tight">{guessedName}</p>
               <motion.p
                 className="retro-title text-5xl mt-4 text-emerald-400"
@@ -116,6 +125,16 @@ function RevealOverlay({ guessedName, isCorrect }: { guessedName: string; isCorr
             className="text-center px-8 py-10 bg-red-950/60 border border-red-800/50 rounded-sm max-w-xs w-full mx-6"
             style={{ boxShadow: '0 0 40px rgba(185,28,28,0.3)' }}
           >
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <PlayerHeadshot
+                  playerId={playerId}
+                  sport={sport}
+                  className="w-20 h-20 rounded-full object-cover ring-2 ring-red-700/60"
+                />
+                <div className="absolute inset-0 rounded-full bg-red-900/50" />
+              </div>
+            </div>
             <motion.p
               className="retro-title text-3xl text-red-400 leading-tight"
               animate={{ y: [0, 0, 2, 5, 8], opacity: [1, 1, 1, 0.85, 0.7] }}
@@ -167,6 +186,13 @@ function determineWinners(
   );
 }
 
+// NBA teams grouped for the reference panel
+const NBA_BY_DIVISION = (['Eastern', 'Western'] as const).flatMap(conf =>
+  (['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest'] as const)
+    .map(div => ({ label: `${conf === 'Eastern' ? 'East' : 'West'} · ${div}`, divTeams: teams.filter(t => t.conference === conf && t.division === div) }))
+    .filter(g => g.divTeams.length > 0)
+);
+
 // NFL teams grouped for the reference panel
 const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
   (['East', 'North', 'South', 'West'] as const).map(div => ({
@@ -187,7 +213,7 @@ export function MultiplayerTopTenPage() {
   const [feedback, setFeedback]       = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
   const [timeLeft, setTimeLeft]       = useState(45);
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
-  const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean } | null>(null);
+  const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean; playerId?: string; sport: 'nba' | 'nfl' } | null>(null);
   const [showMyTurnFlash, setShowMyTurnFlash] = useState(false);
   const inputRef          = useRef<HTMLInputElement>(null);
   const hasAdvancedRef    = useRef(false);
@@ -222,10 +248,10 @@ export function MultiplayerTopTenPage() {
   const playerStrikes: Record<string, number>     = cs.player_strikes || {};
   const maxStrikes: number                        = cs.max_strikes || 2;
   const turnTimerSecs: number                     = cs.turn_timer || 45;
-  const { isDivisionRound, isTeamRound, isCumulativeRound } = parseRoundFlags(cs);
+  const { isDivisionRound, isTeamRound, isCumulativeRound, isSingleSeason } = parseRoundFlags(cs);
   const hintMode: boolean                         = cs.hint_mode || false;
   // Division round shows team logos as hints; team round doesn't (team is already known)
-  const showTeamHint: boolean                     = isDivisionRound || (hintMode && !isTeamRound);
+  const showTeamHint: boolean                     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
   const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
   const turnDeadline: string | null               = cs.turn_deadline || null;
   const categoryKey: string                       = cs.category || '';
@@ -316,11 +342,11 @@ export function MultiplayerTopTenPage() {
   }, [cs.abandoned]);
 
   useEffect(() => {
-    const anim = cs.reveal_anim as { guessedName: string; isCorrect: boolean; endsAt: string } | null | undefined;
+    const anim = cs.reveal_anim as { guessedName: string; isCorrect: boolean; endsAt: string; playerId?: string } | null | undefined;
     if (!anim?.endsAt) { setRevealOverlay(null); return; }
     const msLeft = new Date(anim.endsAt).getTime() - Date.now();
     if (msLeft <= 0) { setRevealOverlay(null); return; }
-    setRevealOverlay({ guessedName: anim.guessedName, isCorrect: anim.isCorrect });
+    setRevealOverlay({ guessedName: anim.guessedName, isCorrect: anim.isCorrect, playerId: anim.playerId, sport: (cs.sport || 'nba') as 'nba' | 'nfl' });
     const t = setTimeout(() => setRevealOverlay(null), msLeft);
     return () => clearTimeout(t);
   }, [cs.reveal_anim?.endsAt]);
@@ -330,6 +356,7 @@ export function MultiplayerTopTenPage() {
     newGuessedIndices?: number[],
     extras: Record<string, unknown> = {},
     guessedName?: string,
+    playerId?: string,
   ) => {
     if (!lobby || isWritingRef.current) return;
     isWritingRef.current = true;
@@ -385,12 +412,12 @@ export function MultiplayerTopTenPage() {
         setLobby({ ...lobby, career_state: newState, status: 'finished' });
       } else {
         // If a player submitted a guess, show animation and push deadline past it
-        let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string } | null = null;
+        let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string; playerId?: string } | null = null;
         let newDeadline: string;
         if (guessedName) {
           const animEndsAt = new Date(Date.now() + ANIM_MS).toISOString();
           newDeadline = new Date(new Date(animEndsAt).getTime() + turnTimerSecs * 1000).toISOString();
-          revealAnim = { guessedName, isCorrect: correct, endsAt: animEndsAt };
+          revealAnim = { guessedName, isCorrect: correct, endsAt: animEndsAt, playerId };
         } else {
           newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
         }
@@ -432,7 +459,7 @@ export function MultiplayerTopTenPage() {
         [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
       };
       hasAdvancedRef.current = true;
-      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, trimmed);
+      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, entries[matched[0]].playerName, String(entries[matched[0]].playerId));
     } else {
       if (wrongGuesses.includes(trimmed)) {
         setGuess('');
@@ -440,7 +467,14 @@ export function MultiplayerTopTenPage() {
         return;
       }
       hasAdvancedRef.current = true;
-      await advanceTurn(false, undefined, { wrong_guesses: [...wrongGuesses, trimmed] }, trimmed);
+      const playerMatch = await findPlayerInPool(trimmed, sport as 'nba' | 'nfl');
+      await advanceTurn(
+        false,
+        undefined,
+        { wrong_guesses: [...wrongGuesses, trimmed] },
+        playerMatch?.playerName,
+        playerMatch ? String(playerMatch.playerId) : undefined,
+      );
     }
     inputRef.current?.focus();
   }
@@ -482,11 +516,12 @@ export function MultiplayerTopTenPage() {
   async function generateRound() {
     const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
     return generateTopTenRound({
-      sport:       roundSport,
-      roundType:   cs.top_ten_round_type || 'league',
-      minYear:     cs.top_ten_min_year   || (roundSport === 'nba' ? 1996 : 1999),
-      maxYear:     cs.top_ten_max_year   || 2025,
-      windowYears: cs.top_ten_window_years || 10,
+      sport:        roundSport,
+      roundType:    cs.top_ten_round_type || 'league',
+      minYear:      cs.top_ten_min_year   || (roundSport === 'nba' ? 1996 : 1999),
+      maxYear:      cs.top_ten_max_year   || 2025,
+      windowYears:  cs.top_ten_window_years || 10,
+      divisionMode: (cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative',
     });
   }
 
@@ -494,7 +529,7 @@ export function MultiplayerTopTenPage() {
     if (!lobby || !isHost || isWritingRef.current) return;
     isWritingRef.current = true;
     try {
-      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, isDivisionRound: newDiv, isTeamRound: newTeam, teamAbbr: newTeamAbbr } = await generateRound();
+      const { entries: newEntries, cat, catLabel, roundInfo: newRoundInfo, isDivisionRound: newDiv, isTeamRound: newTeam, isSingleSeason: newSingleSeason, teamAbbr: newTeamAbbr } = await generateRound();
       if (newEntries.length === 0) return;
       const deadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
       const newState = {
@@ -505,6 +540,7 @@ export function MultiplayerTopTenPage() {
         top10_entries:      newEntries,
         is_division_round:  newDiv,
         is_team_round:      newTeam,
+        is_single_season:   newSingleSeason,
         top_ten_team:       newTeamAbbr,
         guessed_indices:    [],
         wrong_guesses:      [],
@@ -558,8 +594,8 @@ export function MultiplayerTopTenPage() {
         <h1 className="retro-title text-base text-[#22c55e]">Top Ten</h1>
         <span className="sports-font text-[9px] text-white/25 tracking-[0.25em] uppercase">{sport.toUpperCase()}</span>
         <div className="ml-auto flex items-center gap-2">
-          {/* Teams reference panel — NFL only, visible to all */}
-          {sport === 'nfl' && (
+          {/* Teams reference panel — visible to all */}
+          {(sport === 'nfl' || sport === 'nba') && (
             <button
               onClick={() => setShowTeamsPanel(v => !v)}
               className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
@@ -612,7 +648,7 @@ export function MultiplayerTopTenPage() {
 
       {/* NFL Teams reference panel */}
       <AnimatePresence>
-        {showTeamsPanel && sport === 'nfl' && (
+        {showTeamsPanel && (sport === 'nfl' || sport === 'nba') && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -621,21 +657,39 @@ export function MultiplayerTopTenPage() {
             className="border-b border-white/8 bg-[#0a0a0a]/98 z-10 px-4 py-3"
             onClick={() => setShowTeamsPanel(false)}
           >
-            <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
-              {NFL_BY_DIVISION.map(({ label, teams }) => (
+            {sport === 'nfl' ? (
+              <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
+                {NFL_BY_DIVISION.map(({ label, teams: divTeams }) => (
                 <div key={label}>
                   <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
                   <div className="flex gap-2">
-                    {teams.map(t => (
-                      <div key={t.abbreviation} className="flex items-center gap-1">
-                        <TeamLogo abbr={t.abbreviation} sport="nfl" size={18} />
-                        <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
-                      </div>
-                    ))}
+                    {divTeams.map(t => (
+                        <div key={t.abbreviation} className="flex items-center gap-1">
+                          <TeamLogo abbr={t.abbreviation} sport="nfl" size={18} />
+                          <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
+                {NBA_BY_DIVISION.map(({ label, divTeams }) => (
+                  <div key={label}>
+                    <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {divTeams.map(t => (
+                        <div key={t.abbreviation} className="flex items-center gap-1">
+                          <TeamLogo abbr={t.abbreviation} sport="nba" size={18} />
+                          <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -650,6 +704,11 @@ export function MultiplayerTopTenPage() {
             {categoryLabel}
           </h2>
           <p className="sports-font text-[10px] text-white/30 tracking-[0.35em] uppercase mt-1.5">{roundInfo}</p>
+          {isCumulativeRound && (
+            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/10 text-white/20">
+              {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
+            </p>
+          )}
         </div>
 
         {/* Compact player strikes strip */}
@@ -827,6 +886,8 @@ export function MultiplayerTopTenPage() {
           <RevealOverlay
             guessedName={revealOverlay.guessedName}
             isCorrect={revealOverlay.isCorrect}
+            playerId={revealOverlay.playerId}
+            sport={revealOverlay.sport}
           />
         )}
       </AnimatePresence>
