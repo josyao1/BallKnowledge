@@ -61,6 +61,7 @@ export function SoloTopTenPage() {
   const [isDivisionRound, setIsDivisionRound] = useState(false);
   const [isTeamRound, setIsTeamRound]         = useState(false);
   const [isSingleSeason, setIsSingleSeason]   = useState(false);
+  const [teamAbbr, setTeamAbbr]               = useState('');
 
   const [suggestions, setSuggestions]   = useState<string[]>([]);
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
@@ -100,7 +101,7 @@ export function SoloTopTenPage() {
 
   async function loadRound() {
     const { sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
-    const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team, isSingleSeason: ss } =
+    const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team, isSingleSeason: ss, teamAbbr: ta } =
       await generateTopTenRound({ sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy });
     setCategory(cat.key);
     setCategoryLabel(catLabel);
@@ -109,6 +110,7 @@ export function SoloTopTenPage() {
     setIsDivisionRound(div);
     setIsTeamRound(team);
     setIsSingleSeason(ss);
+    setTeamAbbr(ta);
     setGuessedIndices([]);
     setStrikes(0);
     setGuess('');
@@ -433,9 +435,14 @@ export function SoloTopTenPage() {
           >
             {categoryLabel}
           </h2>
-          <p className="sports-font text-[10px] text-white/30 tracking-[0.35em] uppercase mt-1.5">{roundInfo}</p>
+          <div className="flex items-center justify-center gap-1.5 mt-1.5">
+            {isTeamRound && teamAbbr && (
+              <TeamLogo abbr={teamAbbr} sport={sport} size={16} />
+            )}
+            <p className="sports-font text-[11px] text-white/60 tracking-[0.35em] uppercase">{roundInfo}</p>
+          </div>
           {isCumulativeRound && (
-            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/10 text-white/20">
+            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/25 text-white/50">
               {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
             </p>
           )}

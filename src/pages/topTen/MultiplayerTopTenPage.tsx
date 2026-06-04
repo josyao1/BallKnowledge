@@ -257,6 +257,7 @@ export function MultiplayerTopTenPage() {
   const categoryKey: string                       = cs.category || '';
   const categoryLabel: string                     = cs.category_label || '';
   const roundInfo: string                         = cs.round_info || '';
+  const teamAbbr: string                          = cs.top_ten_team || '';
   const wrongGuesses: string[]                    = cs.wrong_guesses || [];
   const sport: string                             = cs.sport || 'nba';
 
@@ -709,9 +710,14 @@ export function MultiplayerTopTenPage() {
           >
             {categoryLabel}
           </h2>
-          <p className="sports-font text-[10px] text-white/30 tracking-[0.35em] uppercase mt-1.5">{roundInfo}</p>
+          <div className="flex items-center justify-center gap-1.5 mt-1.5">
+            {isTeamRound && teamAbbr && (
+              <TeamLogo abbr={teamAbbr} sport={sport as 'nba' | 'nfl'} size={16} />
+            )}
+            <p className="sports-font text-[11px] text-white/60 tracking-[0.35em] uppercase">{roundInfo}</p>
+          </div>
           {isCumulativeRound && (
-            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/10 text-white/20">
+            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/25 text-white/50">
               {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
             </p>
           )}
