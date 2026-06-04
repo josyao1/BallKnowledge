@@ -263,6 +263,12 @@ export function MultiplayerTopTenPage() {
   const activePlayers   = turnOrder.filter(id => !eliminated.includes(id));
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
   const isMyTurn        = currentTurnId === currentPlayerId;
+
+  // Players sorted by turn order (active first in turn sequence, eliminated appended)
+  const playersInTurnOrder = [
+    ...turnOrder.map(id => players.find(p => p.player_id === id)).filter(Boolean),
+    ...players.filter(p => !turnOrder.includes(p.player_id)),
+  ] as typeof players;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
   const statShortLabel  = getStatShortLabel(catDef, isCumulativeRound, sport);
 
@@ -713,7 +719,7 @@ export function MultiplayerTopTenPage() {
 
         {/* Compact player strikes strip */}
         <div className="flex flex-wrap gap-1.5 justify-center">
-          {players.map(p => {
+          {playersInTurnOrder.map(p => {
             const pStrikes  = playerStrikes[p.player_id] || 0;
             const isElim    = eliminated.includes(p.player_id);
             const isMe      = p.player_id === currentPlayerId;
@@ -839,7 +845,7 @@ export function MultiplayerTopTenPage() {
         <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-3">
           <p className="sports-font text-[9px] text-white/25 tracking-widest uppercase mb-2">Players</p>
           <div className="space-y-1">
-            {players.map(p => {
+            {playersInTurnOrder.map(p => {
               const strikes   = playerStrikes[p.player_id] || 0;
               const isElim    = eliminated.includes(p.player_id);
               const guesses   = (cs.guess_attribution || {})[p.player_id] || 0;
