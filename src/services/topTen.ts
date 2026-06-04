@@ -1,4 +1,4 @@
-import { loadNBACareers, loadNFLLineupPool } from './careerData';
+import { loadNBALineupPool, loadNFLLineupPool } from './careerData';
 import { NBA_FRANCHISE_ALIASES, NFL_FRANCHISE_ALIASES } from './capCrunchData';
 import { teams, getNBADivisions } from '../data/teams';
 import { nflTeams, getNFLDivisions } from '../data/nfl-teams';
@@ -204,7 +204,7 @@ export async function getTopTen(
   }
 
   if (sport === 'nba') {
-    const players = await loadNBACareers();
+    const players = await loadNBALineupPool();
     const entries: TopTenEntry[] = [];
 
     for (const player of players) {
@@ -311,7 +311,7 @@ export async function getTopTenDivision(
   if (sport === 'nba') {
     // Use total-season field for per-game categories so we're summing actual totals
     const statField = NBA_PER_GAME_TO_TOTAL[category] || category;
-    const players = await loadNBACareers();
+    const players = await loadNBALineupPool();
     const sums = new Map<number, DivSumEntry>();
 
     for (const player of players) {
@@ -423,7 +423,7 @@ export async function getTopTenTeam(
 
   if (sport === 'nba') {
     const statField = NBA_PER_GAME_TO_TOTAL[category] || category;
-    const players = await loadNBACareers();
+    const players = await loadNBALineupPool();
     const sums = new Map<number, DivSumEntry>();
 
     for (const player of players) {
@@ -551,7 +551,7 @@ export async function getPlayerSuggestions(
   limit = 3,
 ): Promise<string[]> {
   if (input.length < 4) return [];
-  const players = sport === 'nba' ? await loadNBACareers() : await loadNFLLineupPool();
+  const players = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
   const norm = normalize(input);
   const results: string[] = [];
   const seen = new Set<string>();
@@ -604,7 +604,7 @@ export async function findPlayerInPool(
   guess: string,
   sport: 'nba' | 'nfl',
 ): Promise<{ playerName: string; playerId: string | number } | null> {
-  const players = sport === 'nba' ? await loadNBACareers() : await loadNFLLineupPool();
+  const players = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
   for (const p of players) {
     if (areSimilarNames(guess, p.player_name)) {
       return { playerName: p.player_name, playerId: p.player_id };
