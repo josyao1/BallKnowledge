@@ -565,6 +565,10 @@ export function LobbyWaitingPage() {
       const playersResult = await getLobbyPlayers(lobby.id);
       const lobbyPlayers = playersResult.players || [];
       const turnOrder = lobbyPlayers.map((p: any) => p.player_id);
+      for (let i = turnOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [turnOrder[i], turnOrder[j]] = [turnOrder[j], turnOrder[i]];
+      }
 
       const { entries, cat, catLabel: categoryLabel, roundInfo, isDivisionRound, isTeamRound, isSingleSeason, teamAbbr } =
         await generateTopTenRound({
