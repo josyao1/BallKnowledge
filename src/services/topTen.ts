@@ -514,7 +514,7 @@ export async function getTopTenTeam(
 
 export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'division' | 'team' = 'league'): StatCategoryDef {
   let cats: StatCategoryDef[];
-  if (sport === 'nba') cats = NBA_STAT_CATEGORIES;
+  if (sport === 'nba') cats = mode === 'league' ? NBA_STAT_CATEGORIES.filter(c => c.key !== 'gp') : NBA_STAT_CATEGORIES;
   else if (mode === 'team') cats = NFL_TEAM_STAT_CATEGORIES;
   else if (mode === 'division') cats = NFL_STAT_CATEGORIES.filter(c => !c.key.startsWith('award_'));
   else cats = NFL_STAT_CATEGORIES;
