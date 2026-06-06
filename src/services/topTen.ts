@@ -28,13 +28,13 @@ export interface StatCategoryDef {
 // ─── Category definitions ─────────────────────────────────────────────────────
 
 export const NBA_STAT_CATEGORIES: StatCategoryDef[] = [
-  { key: 'pts',       label: 'Points Per Game',      shortLabel: 'PPG', sport: 'nba', divisionLabel: 'Total Points',    divisionShortLabel: 'PTS' },
-  { key: 'reb',       label: 'Rebounds Per Game',     shortLabel: 'RPG', sport: 'nba', divisionLabel: 'Total Rebounds',  divisionShortLabel: 'REB' },
-  { key: 'ast',       label: 'Assists Per Game',      shortLabel: 'APG', sport: 'nba', divisionLabel: 'Total Assists',   divisionShortLabel: 'AST' },
-  { key: 'stl',       label: 'Steals Per Game',       shortLabel: 'SPG', sport: 'nba', divisionLabel: 'Total Steals',    divisionShortLabel: 'STL' },
-  { key: 'blk',       label: 'Blocks Per Game',       shortLabel: 'BPG', sport: 'nba', divisionLabel: 'Total Blocks',    divisionShortLabel: 'BLK' },
-  { key: 'total_3pm', label: '3-Pointers Made',       shortLabel: '3PM', sport: 'nba' },
-  { key: 'gp',        label: 'Games Played',          shortLabel: 'GP',  sport: 'nba' },
+  { key: 'total_pts', label: 'Total Points',      shortLabel: 'PTS', sport: 'nba' },
+  { key: 'total_reb', label: 'Total Rebounds',    shortLabel: 'REB', sport: 'nba' },
+  { key: 'total_ast', label: 'Total Assists',     shortLabel: 'AST', sport: 'nba' },
+  { key: 'total_stl', label: 'Total Steals',      shortLabel: 'STL', sport: 'nba' },
+  { key: 'total_blk', label: 'Total Blocks',      shortLabel: 'BLK', sport: 'nba' },
+  { key: 'total_3pm', label: '3-Pointers Made',   shortLabel: '3PM', sport: 'nba' },
+  { key: 'total_ftm', label: 'Free Throws Made',  shortLabel: 'FTM', sport: 'nba' },
 ];
 
 /** NFL categories for team-cumulative mode: combined fantasy_pts instead of per-position. */
@@ -269,14 +269,6 @@ export async function getTopTen(
   }
 }
 
-// NBA per-game fields → season-total equivalents for cumulative division mode
-const NBA_PER_GAME_TO_TOTAL: Record<string, string> = {
-  pts: 'total_pts',
-  reb: 'total_reb',
-  ast: 'total_ast',
-  stl: 'total_stl',
-  blk: 'total_blk',
-};
 
 type DivSumEntry = { playerName: string; playerId: number | string; total: number; team: string; latestYr: number; earliestYr: number; teamTotals?: Record<string, number> };
 
@@ -309,8 +301,6 @@ export async function getTopTenDivision(
   }
 
   if (sport === 'nba') {
-    // Use total-season field for per-game categories so we're summing actual totals
-    const statField = NBA_PER_GAME_TO_TOTAL[category] || category;
     const players = await loadNBALineupPool();
     const sums = new Map<number, DivSumEntry>();
 
@@ -320,7 +310,7 @@ export async function getTopTenDivision(
         // yearTo for NBA is one past the last season start year (e.g., 2025 for 2024-25)
         if (yr < yearFrom || yr >= yearTo) continue;
         if (!nbaTeamInDivision(season.team, conference, division)) continue;
-        const stat = (season as any)[statField] as number | undefined;
+        const stat = (season as any)[category] as number | undefined;
         if (!stat || stat <= 0) continue;
         const team = nbaDisplayTeam(season.team, conference, division);
         const existing = sums.get(player.player_id);
@@ -422,7 +412,6 @@ export async function getTopTenTeam(
 ): Promise<TopTenEntry[]> {
 
   if (sport === 'nba') {
-    const statField = NBA_PER_GAME_TO_TOTAL[category] || category;
     const players = await loadNBALineupPool();
     const sums = new Map<number, DivSumEntry>();
 
@@ -431,7 +420,7 @@ export async function getTopTenTeam(
         const yr = parseInt(season.season.split('-')[0]);
         if (yr < yearFrom || yr >= yearTo) continue;
         if (!nbaTeamMatches(season.team, teamAbbr)) continue;
-        const stat = (season as any)[statField] as number | undefined;
+        const stat = (season as any)[category] as number | undefined;
         if (!stat || stat <= 0) continue;
         const existing = sums.get(player.player_id);
         if (singleSeason) {
@@ -512,12 +501,32 @@ export async function getTopTenTeam(
   }
 }
 
+const PASSING_KEYS = new Set(['passing_yards', 'passing_tds', 'interceptions']);
+
+function weightedRandom(cats: StatCategoryDef[], weights: number[]): StatCategoryDef {
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < cats.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return cats[i];
+  }
+  return cats[cats.length - 1];
+}
+
 export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'division' | 'team' = 'league'): StatCategoryDef {
   let cats: StatCategoryDef[];
-  if (sport === 'nba') cats = mode === 'league' ? NBA_STAT_CATEGORIES.filter(c => c.key !== 'gp') : NBA_STAT_CATEGORIES;
+  if (sport === 'nba') cats = NBA_STAT_CATEGORIES;
   else if (mode === 'team') cats = NFL_TEAM_STAT_CATEGORIES;
   else if (mode === 'division') cats = NFL_STAT_CATEGORIES.filter(c => !c.key.startsWith('award_'));
   else cats = NFL_STAT_CATEGORIES;
+
+  // Passing stats are QB-only so they repeat in restricted pools — down-weight them.
+  // Team mode: heavy reduction (0.3×). Division mode: mild reduction (0.6×).
+  if (sport === 'nfl' && (mode === 'team' || mode === 'division')) {
+    const passingWeight = mode === 'team' ? 0.3 : 0.6;
+    return weightedRandom(cats, cats.map(c => PASSING_KEYS.has(c.key) ? passingWeight : 1));
+  }
+
   return cats[Math.floor(Math.random() * cats.length)];
 }
 
@@ -534,8 +543,6 @@ export function getCategoryDef(sport: 'nba' | 'nfl', key: string): StatCategoryD
 
 export function formatStat(stat: number, categoryKey: string): string {
   if (categoryKey in AWARD_CATEGORY_KEYS) return `#${stat}`;
-  const perGame = ['pts', 'reb', 'ast', 'stl', 'blk'];
-  if (perGame.includes(categoryKey) && !Number.isInteger(stat)) return stat.toFixed(1);
   if (categoryKey.startsWith('fantasy_pts')) return stat.toFixed(1);
   return stat.toString();
 }
@@ -625,13 +632,7 @@ export function calcTeamBoardLimit(categoryKey: string, windowYears: number): nu
   return Math.min(10, 6 + step); // NBA stats
 }
 
-/** Selects the correct short label for cumulative NBA rounds vs normal. */
-export function getStatShortLabel(
-  catDef: StatCategoryDef | undefined,
-  isCumulative: boolean,
-  sport: string,
-): string | undefined {
-  if (isCumulative && sport === 'nba' && catDef?.divisionShortLabel) return catDef.divisionShortLabel;
+export function getStatShortLabel(catDef: StatCategoryDef | undefined): string | undefined {
   return catDef?.shortLabel;
 }
 
@@ -657,6 +658,8 @@ export interface GenerateRoundConfig {
   maxYear?: number;
   windowYears?: number;
   divisionMode?: 'cumulative' | 'single_season';
+  pinnedDivision?: { conference: string; division: string };
+  pinnedTeam?: string;
 }
 
 export interface GenerateRoundResult {
@@ -693,7 +696,9 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
   if (roundType === 'team') {
     const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
     const allTeams = sport === 'nba' ? teams : nflTeams;
-    const picked = allTeams[Math.floor(Math.random() * allTeams.length)];
+    const picked = config.pinnedTeam
+      ? (allTeams.find((t: any) => t.abbreviation === config.pinnedTeam) ?? allTeams[Math.floor(Math.random() * allTeams.length)])
+      : allTeams[Math.floor(Math.random() * allTeams.length)];
     teamAbbr = picked.abbreviation;
     entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, calcTeamBoardLimit(cat.key, windowYears), singleSeason);
     roundInfo = `${picked.name} · last ${windowYears} years`;
@@ -703,7 +708,7 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
   } else if (roundType === 'division') {
     const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
     const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
-    const div = divs[Math.floor(Math.random() * divs.length)];
+    const div = config.pinnedDivision ?? divs[Math.floor(Math.random() * divs.length)];
     entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear, singleSeason);
     roundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
     if (entries.length >= 5) {
@@ -735,8 +740,7 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
     teamAbbr = '';
   }
 
-  const isCumulative = isDivisionRound || isTeamRound;
-  const catLabel = isCumulative && sport === 'nba' ? (cat.divisionLabel ?? cat.label) : cat.label;
+  const catLabel = cat.label;
 
   return { entries, cat, catLabel, roundInfo, isDivisionRound, isTeamRound, isSingleSeason, teamAbbr };
 }

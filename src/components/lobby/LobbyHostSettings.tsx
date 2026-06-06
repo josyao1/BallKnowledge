@@ -93,6 +93,8 @@ export interface HostFormValues {
   topTenWindowYears: number;
   topTenMaxStrikes: number;
   topTenTimer: number;
+  topTenPinnedDivision: string | null;
+  topTenPinnedTeam: string | null;
   /** Cap Crunch: special round types the host has disabled */
   disabledRoundTypes: SpecialRoundType[];
 }
@@ -145,9 +147,11 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
   const [editTopTenMinYear,      setEditTopTenMinYear]      = useState(2015);
   const [editTopTenMaxYear,      setEditTopTenMaxYear]      = useState(2025);
   const [editTopTenWindowYears,  setEditTopTenWindowYears]  = useState(10);
-  const [editTopTenMaxStrikes,   setEditTopTenMaxStrikes]   = useState(2);
-  const [editTopTenTimer,        setEditTopTenTimer]        = useState(45);
-  const [editDisabledRoundTypes, setEditDisabledRoundTypes] = useState<SpecialRoundType[]>([]);
+  const [editTopTenMaxStrikes,      setEditTopTenMaxStrikes]      = useState(2);
+  const [editTopTenTimer,           setEditTopTenTimer]           = useState(45);
+  const [editTopTenPinnedDivision,  setEditTopTenPinnedDivision]  = useState<string | null>(null);
+  const [editTopTenPinnedTeam,      setEditTopTenPinnedTeam]      = useState<string | null>(null);
+  const [editDisabledRoundTypes,    setEditDisabledRoundTypes]    = useState<SpecialRoundType[]>([]);
 
   useImperativeHandle(ref, () => ({
     getValues: (): HostFormValues => ({
@@ -167,7 +171,10 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       topTenDivisionMode: editTopTenDivisionMode,
       topTenMinYear: editTopTenMinYear, topTenMaxYear: editTopTenMaxYear,
       topTenWindowYears: editTopTenWindowYears, topTenMaxStrikes: editTopTenMaxStrikes,
-      topTenTimer: editTopTenTimer, disabledRoundTypes: editDisabledRoundTypes,
+      topTenTimer: editTopTenTimer,
+      topTenPinnedDivision: editTopTenPinnedDivision,
+      topTenPinnedTeam: editTopTenPinnedTeam,
+      disabledRoundTypes: editDisabledRoundTypes,
     }),
   }));
 
@@ -214,6 +221,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
     setEditTopTenMaxStrikes((cs.max_strikes as number) || 2);
     setEditTopTenTimer((cs.turn_timer as number) || 45);
+    setEditTopTenPinnedDivision((cs.top_ten_pinned_division as string | null) || null);
+    setEditTopTenPinnedTeam((cs.top_ten_pinned_team as string | null) || null);
     setEditDisabledRoundTypes((cs.disabledRoundTypes as SpecialRoundType[]) || []);
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -284,6 +293,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       topTenWindowYears: editTopTenWindowYears,
       topTenMaxStrikes: editTopTenMaxStrikes,
       topTenTimer: editTopTenTimer,
+      topTenPinnedDivision: editTopTenPinnedDivision,
+      topTenPinnedTeam: editTopTenPinnedTeam,
       disabledRoundTypes: editDisabledRoundTypes,
     });
   };
@@ -415,6 +426,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
               windowYears={editTopTenWindowYears} onWindowYearsChange={setEditTopTenWindowYears}
               maxStrikes={editTopTenMaxStrikes} onMaxStrikesChange={setEditTopTenMaxStrikes}
               turnTimer={editTopTenTimer} onTurnTimerChange={setEditTopTenTimer}
+              pinnedDivision={editTopTenPinnedDivision} onPinnedDivisionChange={setEditTopTenPinnedDivision}
+              pinnedTeam={editTopTenPinnedTeam} onPinnedTeamChange={setEditTopTenPinnedTeam}
             />
           )}
 
