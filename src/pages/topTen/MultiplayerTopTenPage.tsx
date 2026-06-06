@@ -5,12 +5,12 @@ import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, updateCareerState } from '../../services/lobby';
 import { isValidGuess, findPlayerInPool, getCategoryDef, generateTopTenRound, parseRoundFlags, getStatShortLabel } from '../../services/topTen';
-import { nflTeams } from '../../data/nfl-teams';
-import { teams } from '../../data/teams';
 import type { TopTenEntry, StatCategoryDef } from '../../services/topTen';
 import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
 import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
-import { TeamLogo } from '../../components/TeamLogo';
+import { TeamsReferencePanel } from '../../components/topTen/TeamsReferencePanel';
+import { TopTenCategoryHeader } from '../../components/topTen/TopTenCategoryHeader';
+import { FeedbackMessage } from '../../components/topTen/FeedbackMessage';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import { HomeButton } from '../../components/multiplayer/HomeButton';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
@@ -186,20 +186,6 @@ function determineWinners(
   );
 }
 
-// NBA teams grouped for the reference panel
-const NBA_BY_DIVISION = (['Eastern', 'Western'] as const).flatMap(conf =>
-  (['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest'] as const)
-    .map(div => ({ label: `${conf === 'Eastern' ? 'East' : 'West'} · ${div}`, divTeams: teams.filter(t => t.conference === conf && t.division === div) }))
-    .filter(g => g.divTeams.length > 0)
-);
-
-// NFL teams grouped for the reference panel
-const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
-  (['East', 'North', 'South', 'West'] as const).map(div => ({
-    label: `${conf} ${div}`,
-    teams: nflTeams.filter(t => t.conference === conf && t.division === div),
-  }))
-);
 
 export function MultiplayerTopTenPage() {
   const navigate = useNavigate();
@@ -271,7 +257,7 @@ export function MultiplayerTopTenPage() {
     ...players.filter(p => !turnOrder.includes(p.player_id)),
   ] as typeof players;
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
-  const statShortLabel  = getStatShortLabel(catDef, isCumulativeRound, sport);
+  const statShortLabel  = getStatShortLabel(catDef);
 
   // Timer — active player fires immediately; host fallback after 500ms grace
   useEffect(() => {
@@ -653,75 +639,18 @@ export function MultiplayerTopTenPage() {
         </div>
       </header>
 
-      {/* NFL Teams reference panel */}
-      <AnimatePresence>
-        {showTeamsPanel && (sport === 'nfl' || sport === 'nba') && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-            className="border-b border-white/8 bg-[#0a0a0a]/98 z-10 px-4 py-3"
-            onClick={() => setShowTeamsPanel(false)}
-          >
-            {sport === 'nfl' ? (
-              <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
-                {NFL_BY_DIVISION.map(({ label, teams: divTeams }) => (
-                <div key={label}>
-                  <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
-                  <div className="flex gap-2">
-                    {divTeams.map(t => (
-                        <div key={t.abbreviation} className="flex items-center gap-1">
-                          <TeamLogo abbr={t.abbreviation} sport="nfl" size={18} />
-                          <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
-                {NBA_BY_DIVISION.map(({ label, divTeams }) => (
-                  <div key={label}>
-                    <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {divTeams.map(t => (
-                        <div key={t.abbreviation} className="flex items-center gap-1">
-                          <TeamLogo abbr={t.abbreviation} sport="nba" size={18} />
-                          <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <TeamsReferencePanel sport={sport as 'nba' | 'nfl'} show={showTeamsPanel} onClose={() => setShowTeamsPanel(false)} />
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-8 flex flex-col gap-4">
-        {/* Category + round info */}
-        <div className="text-center pt-5 pb-1">
-          <h2
-            className="retro-title text-3xl md:text-4xl"
-            style={{ color: '#22c55e', textShadow: '0 0 28px rgba(34,197,94,0.3)' }}
-          >
-            {categoryLabel}
-          </h2>
-          <div className="flex items-center justify-center gap-1.5 mt-1.5">
-            {isTeamRound && teamAbbr && (
-              <TeamLogo abbr={teamAbbr} sport={sport as 'nba' | 'nfl'} size={16} />
-            )}
-            <p className="sports-font text-[11px] text-white/60 tracking-[0.35em] uppercase">{roundInfo}</p>
-          </div>
-          {isCumulativeRound && (
-            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/25 text-white/50">
-              {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
-            </p>
-          )}
-        </div>
+        <TopTenCategoryHeader
+          categoryLabel={categoryLabel}
+          roundInfo={roundInfo}
+          isTeamRound={isTeamRound}
+          teamAbbr={teamAbbr}
+          isCumulativeRound={isCumulativeRound}
+          isSingleSeason={isSingleSeason}
+          sport={sport as 'nba' | 'nfl'}
+        />
 
         {/* Compact player strikes strip */}
         <div className="flex flex-wrap gap-1.5 justify-center">
@@ -789,22 +718,7 @@ export function MultiplayerTopTenPage() {
           <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
         </motion.div>
 
-        {/* Feedback */}
-        <div className="h-5 flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {feedback.type && (
-              <motion.p
-                key={feedback.msg}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={`sports-font text-xs tracking-wider ${feedback.type === 'correct' ? 'text-emerald-400' : 'text-red-400'}`}
-              >
-                {feedback.msg}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
+        <FeedbackMessage feedback={feedback} />
 
         {/* Guess input */}
         {isMyTurn && !revealOverlay && (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
   isValidGuess, getCategoryDef, getPlayerSuggestions,
@@ -9,27 +9,21 @@ import {
 import type { TopTenEntry } from '../../services/topTen';
 import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
 import { WrongGuessesList } from '../../components/topTen/WrongGuessesList';
-import { TeamLogo } from '../../components/TeamLogo';
-import { teams } from '../../data/teams';
-import { nflTeams } from '../../data/nfl-teams';
+import { TeamsReferencePanel } from '../../components/topTen/TeamsReferencePanel';
+import { TopTenCategoryHeader } from '../../components/topTen/TopTenCategoryHeader';
+import { FeedbackMessage } from '../../components/topTen/FeedbackMessage';
+import { TopTenSettings } from '../../components/lobby/settings/TopTenSettings';
 
 const MAX_STRIKES = 3;
 const NBA_MIN = 1996; const NBA_MAX = 2025;
 const NFL_MIN = 1999; const NFL_MAX = 2025;
 
-const NBA_BY_DIVISION = (['Eastern', 'Western'] as const).flatMap(conf =>
-  (['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest'] as const)
-    .map(div => ({ label: `${conf === 'Eastern' ? 'East' : 'West'} · ${div}`, divTeams: teams.filter(t => t.conference === conf && t.division === div) }))
-    .filter(g => g.divTeams.length > 0)
-);
-const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
-  (['East', 'North', 'South', 'West'] as const).map(div => ({
-    label: `${conf} ${div}`,
-    divTeams: nflTeams.filter(t => t.conference === conf && t.division === div),
-  }))
-);
-
 type Status = 'setup' | 'loading' | 'playing' | 'done';
+
+function decodeDivision(encoded: string): { conference: string; division: string } {
+  const [conference, division] = encoded.split('|');
+  return { conference, division };
+}
 
 export function SoloTopTenPage() {
   const navigate = useNavigate();
@@ -44,6 +38,8 @@ export function SoloTopTenPage() {
   const [minYear, setMinYear]           = useState(NBA_MIN);
   const [maxYear, setMaxYear]           = useState(NBA_MAX);
   const [windowYears, setWindowYears]   = useState(10);
+  const [pinnedDivision, setPinnedDivision] = useState<string | null>(null);
+  const [pinnedTeam, setPinnedTeam]         = useState<string | null>(null);
 
   // Active game state
   const [sport, setSport]           = useState<'nba' | 'nfl'>('nba');
@@ -91,7 +87,11 @@ export function SoloTopTenPage() {
     activeConfig.current = { sport: setupSport, roundType, divisionMode, minYear, maxYear, windowYears };
     setSport(setupSport);
     setStatus('loading');
-    try { await loadRound(); } catch { setStatus('setup'); }
+    const pinned = {
+      division: pinnedDivision ? decodeDivision(pinnedDivision) : undefined,
+      team: pinnedTeam ?? undefined,
+    };
+    try { await loadRound(pinned); } catch { setStatus('setup'); }
   }
 
   async function playAgain() {
@@ -99,10 +99,10 @@ export function SoloTopTenPage() {
     try { await loadRound(); } catch { setStatus('setup'); }
   }
 
-  async function loadRound() {
+  async function loadRound(pinned?: { division?: { conference: string; division: string }; team?: string }) {
     const { sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
     const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team, isSingleSeason: ss, teamAbbr: ta } =
-      await generateTopTenRound({ sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy });
+      await generateTopTenRound({ sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy, pinnedDivision: pinned?.division, pinnedTeam: pinned?.team });
     setCategory(cat.key);
     setCategoryLabel(catLabel);
     setEntries(result);
@@ -173,17 +173,12 @@ export function SoloTopTenPage() {
   const isDone            = status === 'done';
   const catDef            = getCategoryDef(sport, category);
   const isCumulativeRound = isDivisionRound || isTeamRound;
-  const statShortLabel    = getStatShortLabel(catDef, isCumulativeRound, sport);
-  const sportMin         = setupSport === 'nba' ? NBA_MIN : NFL_MIN;
-  const sportMax         = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
+  const statShortLabel    = getStatShortLabel(catDef);
   const showTeamHint     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
-
-  const btnBase     = 'flex-1 py-2.5 rounded-sm retro-title text-base transition-all bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#333]';
 
   // ── Setup screen ─────────────────────────────────────────────────────────────
   if (status === 'setup') {
     const PURPLE = '#8b5cf6';
-    const GOLD   = '#d4af37';
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
         <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3">
@@ -196,15 +191,10 @@ export function SoloTopTenPage() {
           <span className="ml-auto sports-font text-[9px] text-white/20 tracking-[0.25em] uppercase">Solo</span>
         </header>
 
-        {/* Hero */}
         <div className="flex flex-col items-center pt-10 pb-6 px-4">
           <div className="flex items-end gap-px mb-3" aria-hidden>
             {['1','2','3','4','5'].map((n, i) => (
-              <span
-                key={n}
-                className="retro-title font-black leading-none"
-                style={{ fontSize: 28 - i * 3, color: PURPLE, opacity: 1 - i * 0.15 }}
-              >
+              <span key={n} className="retro-title font-black leading-none" style={{ fontSize: 28 - i * 3, color: PURPLE, opacity: 1 - i * 0.15 }}>
                 {n}
               </span>
             ))}
@@ -216,110 +206,17 @@ export function SoloTopTenPage() {
 
         <div className="flex-1 flex flex-col items-center px-4 pb-12">
           <div className="w-full max-w-sm space-y-2.5">
-
-            {/* Sport */}
-            <div
-              className="rounded-sm p-4 space-y-2.5 border"
-              style={{ background: '#0d0d0d', borderColor: `${PURPLE}22` }}
-            >
-              <p className="sports-font text-[9px] tracking-[0.25em] uppercase" style={{ color: PURPLE, opacity: 0.5 }}>Sport</p>
-              <div className="flex gap-1.5">
-                {(['nba', 'nfl'] as const).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setSetupSport(s)}
-                    className={`${btnBase} transition-all`}
-                    style={setupSport === s
-                      ? { background: PURPLE, color: '#000', boxShadow: `0 0 12px ${PURPLE}55` }
-                      : undefined}
-                  >
-                    <span className={setupSport === s ? '' : 'text-[#444]'}>{s.toUpperCase()}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Round type */}
-            <div
-              className="rounded-sm p-4 space-y-2.5 border"
-              style={{ background: '#0d0d0d', borderColor: `${PURPLE}22` }}
-            >
-              <p className="sports-font text-[9px] tracking-[0.25em] uppercase" style={{ color: PURPLE, opacity: 0.5 }}>Round Type</p>
-              <div className="flex gap-1.5">
-                {(['league', 'division', 'team'] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setRoundType(t)}
-                    className={`${btnBase} transition-all`}
-                    style={roundType === t
-                      ? { background: GOLD, color: '#000', boxShadow: `0 0 12px ${GOLD}55` }
-                      : undefined}
-                  >
-                    <span className={roundType === t ? '' : 'text-[#444]'}>
-                      {t === 'league' ? 'League' : t === 'division' ? 'Division' : 'Team'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {roundType !== 'league' && (
-                <div className="pt-0.5">
-                  <p className="sports-font text-[9px] text-[#444] mb-1.5">Mode</p>
-                  <div className="flex gap-1.5">
-                    {(['cumulative', 'single_season'] as const).map(m => (
-                      <button
-                        key={m}
-                        onClick={() => setDivisionMode(m)}
-                        className="flex-1 py-2 rounded-sm retro-title text-sm transition-all"
-                        style={divisionMode === m
-                          ? { background: GOLD, color: '#000', boxShadow: `0 0 10px ${GOLD}44` }
-                          : undefined}
-                      >
-                        <span className={divisionMode === m ? '' : 'text-[#444]'}>
-                          {m === 'cumulative' ? 'Cumulative' : 'Single Season'}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {roundType === 'league' ? (
-                <div className="grid grid-cols-2 gap-2 pt-0.5">
-                  {(['From', 'To'] as const).map((label, idx) => (
-                    <div key={label}>
-                      <p className="sports-font text-[9px] text-[#444] mb-1">{label}</p>
-                      <select
-                        value={idx === 0 ? minYear : maxYear}
-                        onChange={e => idx === 0 ? setMinYear(+e.target.value) : setMaxYear(+e.target.value)}
-                        className="w-full bg-[#0a0a0a] text-[#bbb] px-2 py-1.5 rounded-sm border border-[#1e1e1e] sports-font text-sm focus:outline-none focus:border-[#333] appearance-none"
-                      >
-                        {Array.from({ length: sportMax - sportMin + 1 }, (_, i) => sportMin + i).map(y => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="pt-0.5">
-                  <p className="sports-font text-[9px] text-[#444] mb-1.5">Year Window</p>
-                  <div className="flex gap-1.5">
-                    {[5, 10, 15, 20].map(n => (
-                      <button
-                        key={n}
-                        onClick={() => setWindowYears(n)}
-                        className={`flex-1 py-2 rounded-sm retro-title text-sm transition-all`}
-                        style={windowYears === n
-                          ? { background: GOLD, color: '#000', boxShadow: `0 0 10px ${GOLD}44` }
-                          : undefined}
-                      >
-                        <span className={windowYears === n ? '' : 'text-[#444]'}>{n}y</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="rounded-sm p-4 border" style={{ background: '#0d0d0d', borderColor: `${PURPLE}22` }}>
+              <TopTenSettings
+                sport={setupSport} onSportChange={setSetupSport}
+                roundType={roundType} onRoundTypeChange={setRoundType}
+                divisionMode={divisionMode} onDivisionModeChange={setDivisionMode}
+                minYear={minYear} onMinYearChange={setMinYear}
+                maxYear={maxYear} onMaxYearChange={setMaxYear}
+                windowYears={windowYears} onWindowYearsChange={setWindowYears}
+                pinnedDivision={pinnedDivision} onPinnedDivisionChange={setPinnedDivision}
+                pinnedTeam={pinnedTeam} onPinnedTeamChange={setPinnedTeam}
+              />
             </div>
 
             <button
@@ -397,56 +294,18 @@ export function SoloTopTenPage() {
         </div>
       </header>
 
-      <AnimatePresence>
-        {showTeamsPanel && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-            className="border-b border-white/8 bg-[#0a0a0a]/98 z-10 px-4 py-3"
-            onClick={() => setShowTeamsPanel(false)}
-          >
-            <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
-              {(sport === 'nfl' ? NFL_BY_DIVISION : NBA_BY_DIVISION).map(({ label, divTeams }) => (
-                <div key={label}>
-                  <p className="sports-font text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {divTeams.map(t => (
-                      <div key={t.abbreviation} className="flex items-center gap-1">
-                        <TeamLogo abbr={t.abbreviation} sport={sport as 'nba' | 'nfl'} size={18} />
-                        <span className="sports-font text-[9px] text-white/40">{t.abbreviation}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <TeamsReferencePanel sport={sport} show={showTeamsPanel} onClose={() => setShowTeamsPanel(false)} />
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-10 flex flex-col gap-4">
-        {/* Category hero */}
-        <div className="text-center pt-5 pb-1">
-          <h2
-            className="retro-title text-3xl md:text-4xl"
-            style={{ color: '#22c55e', textShadow: '0 0 28px rgba(34,197,94,0.3)' }}
-          >
-            {categoryLabel}
-          </h2>
-          <div className="flex items-center justify-center gap-1.5 mt-1.5">
-            {isTeamRound && teamAbbr && (
-              <TeamLogo abbr={teamAbbr} sport={sport} size={16} />
-            )}
-            <p className="sports-font text-[11px] text-white/60 tracking-[0.35em] uppercase">{roundInfo}</p>
-          </div>
-          {isCumulativeRound && (
-            <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/25 text-white/50">
-              {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
-            </p>
-          )}
-        </div>
+        <TopTenCategoryHeader
+          categoryLabel={categoryLabel}
+          roundInfo={roundInfo}
+          isTeamRound={isTeamRound}
+          teamAbbr={teamAbbr}
+          isCumulativeRound={isCumulativeRound}
+          isSingleSeason={isSingleSeason}
+          sport={sport}
+        />
 
         {/* Strikes */}
         <div className="flex justify-center gap-2.5">
@@ -466,22 +325,7 @@ export function SoloTopTenPage() {
           ))}
         </div>
 
-        {/* Feedback */}
-        <div className="h-5 flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {feedback.type && (
-              <motion.p
-                key={feedback.msg}
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={`sports-font text-xs tracking-wider ${feedback.type === 'correct' ? 'text-emerald-400' : 'text-red-400'}`}
-              >
-                {feedback.msg}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
+        <FeedbackMessage feedback={feedback} />
 
         {/* Guess input */}
         {!isDone && (

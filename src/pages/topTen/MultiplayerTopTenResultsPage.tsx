@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useMultiplayerResults } from '../../hooks/useMultiplayerResults';
-import { getCategoryDef, parseRoundFlags, getStatShortLabel } from '../../services/topTen';
+import { getCategoryDef, getStatShortLabel } from '../../services/topTen';
 import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
 import type { TopTenEntry } from '../../services/topTen';
 
@@ -46,8 +46,7 @@ export function MultiplayerTopTenResultsPage() {
   const winnerIds: string[]                       = cs.winner_ids || (cs.winner_id ? [cs.winner_id] : []);
 
   const catDef                                    = getCategoryDef(sport, categoryKey);
-  const { isCumulativeRound }                     = parseRoundFlags(cs);
-  const statShortLabel                            = getStatShortLabel(catDef, isCumulativeRound, sport);
+  const statShortLabel                            = getStatShortLabel(catDef);
 
   const sortedPlayers = [...players].sort((a, b) => {
     const ga = guessAttribution[a.player_id] || 0;
