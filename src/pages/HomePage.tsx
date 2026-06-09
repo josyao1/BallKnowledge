@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SettingsModal } from '../components/home/SettingsModal';
 import { AboutModal } from '../components/home/AboutModal';
 import { GuessPlayerSetup } from '../components/home/GuessPlayerSetup';
@@ -45,6 +45,7 @@ const getCapCrunchLabel = (category: string) => {
 
 export function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
   const { sport, timerDuration, hideResultsDuringGame, setTimerDuration } = useSettingsStore();
 
@@ -80,6 +81,16 @@ export function HomePage() {
   useEffect(() => {
     warmCareerCache(sport);
   }, [sport]);
+
+  // Re-open Top Ten modal when navigating back from a solo game
+  useEffect(() => {
+    const s = location.state as { openTopTen?: boolean; topTenSport?: Sport } | null;
+    if (s?.openTopTen && s.topTenSport) {
+      setTopTenSport(s.topTenSport);
+      setTopTenStep('settings');
+      window.history.replaceState({}, ''); // clear state so refresh doesn't re-open
+    }
+  }, []);
 
   const handleStartGame = async () => {
     setLoadingStatus('checking');

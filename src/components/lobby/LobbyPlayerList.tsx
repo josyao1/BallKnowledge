@@ -91,7 +91,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ delay: index * 0.05 }}
-                className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 border transition-all ${
+                className={`flex items-center gap-2 p-3 border transition-all ${
                   isCurrentPlayer
                     ? 'border-[#FDF100]/40 bg-[#FDF100]/5'
                     : multiplier > 1
@@ -100,128 +100,114 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 }`}
                 style={teamColor ? { borderLeftWidth: '4px', borderLeftColor: teamColor.bg } : undefined}
               >
-                {/* Left: name + badges */}
-                <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-                  {teamColor && (
-                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor.bg }} />
-                  )}
-                  {player.is_host && (
-                    <span className="text-[#FDF100] flex-shrink-0" title="Host">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                {/* Host star */}
+                {player.is_host && (
+                  <span className="text-[#FDF100] flex-shrink-0" title="Host">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </span>
+                )}
+
+                {/* Name / rename input — takes remaining space */}
+                {renamingPlayerId === player.player_id ? (
+                  <>
+                    <input
+                      type="text" value={renameValue} maxLength={20} autoFocus
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleConfirmRename();
+                        if (e.key === 'Escape') { setRenamingPlayerId(null); setRenameValue(''); }
+                      }}
+                      className="flex-1 min-w-0 w-28 px-2 py-0.5 bg-black/40 border border-[#FDF100]/60 text-white text-sm sports-font focus:outline-none"
+                    />
+                    <button onClick={handleConfirmRename} className="text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0" title="Confirm">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                    </span>
-                  )}
+                    </button>
+                    <button onClick={() => { setRenamingPlayerId(null); setRenameValue(''); }} className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0" title="Cancel">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                ) : (
+                  <span className="capcrunch-title text-sm text-white truncate flex-1 min-w-0">
+                    {player.player_name}
+                    {isCurrentPlayer && <span className="capcrunch-kicker text-[9px] text-white/30 ml-1.5">(you)</span>}
+                  </span>
+                )}
 
-                  {renamingPlayerId === player.player_id ? (
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <input
-                        type="text" value={renameValue} maxLength={20} autoFocus
-                        onChange={e => setRenameValue(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') handleConfirmRename();
-                          if (e.key === 'Escape') { setRenamingPlayerId(null); setRenameValue(''); }
-                        }}
-                        className="w-28 px-2 py-0.5 bg-black/40 border border-[#FDF100]/60 text-white text-sm sports-font focus:outline-none"
-                      />
-                      <button onClick={handleConfirmRename} className="text-emerald-400 hover:text-emerald-300 transition-colors" title="Confirm">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
-                      <button onClick={() => { setRenamingPlayerId(null); setRenameValue(''); }} className="text-red-400 hover:text-red-300 transition-colors" title="Cancel">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="font-medium text-white/90 sports-font truncate">{player.player_name}</span>
-                      {isCurrentPlayer && (
-                        <span className="text-[10px] text-white/40 sports-font flex-shrink-0">(you)</span>
-                      )}
-                      {isHost && !player.is_host && lobby.status === 'waiting' && (
-                        <button
-                          onClick={() => { setRenamingPlayerId(player.player_id); setRenameValue(player.player_name); }}
-                          className="text-white/20 hover:text-[#FDF100] transition-colors flex-shrink-0"
-                          title="Rename player"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  {multiplier > 1 && !isMultiplierlessMode && (
-                    <span className="text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded flex-shrink-0">
-                      {multiplier}x
-                    </span>
-                  )}
-                </div>
-
-                {/* Right: host controls + ready badge */}
-                <div className="flex w-full sm:w-auto flex-wrap items-center gap-2 sm:justify-end">
-                  {isHost && !player.is_host && lobby.status === 'waiting' && (
+                {/* Host controls — inline, right of name */}
+                {isHost && lobby.status === 'waiting' && !player.is_host && (
+                  <>
                     <button
                       onClick={() => handleKick(player.player_id)}
-                      className="px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider transition-all bg-black/40 text-red-400/60 border border-white/10 hover:border-red-500 hover:text-red-400"
+                      className="flex-shrink-0 px-2 py-0.5 capcrunch-kicker text-[9px] text-red-400/60 border border-white/10 hover:border-red-500 hover:text-red-400 transition-all"
                     >
                       Kick
                     </button>
-                  )}
-
-                  {/* Team assignment — host only, non-teamless modes */}
-                  {isHost && lobby.status === 'waiting' && !isTeamlessMode && (
                     <button
-                      onClick={() => onCycleTeam(player.player_id, player.team_number)}
-                      className={`px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
-                        player.team_number ? 'text-white border' : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
-                      }`}
-                      style={player.team_number ? {
-                        backgroundColor: teamColor!.bg + '40',
-                        borderColor: teamColor!.bg,
-                        color: teamColor!.bg,
-                      } : undefined}
+                      onClick={() => { setRenamingPlayerId(player.player_id); setRenameValue(player.player_name); }}
+                      className="flex-shrink-0 text-white/20 hover:text-[#FDF100] transition-colors"
+                      title="Rename player"
                     >
-                      {player.team_number ? `T${player.team_number}` : 'Team'}
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
                     </button>
-                  )}
+                  </>
+                )}
 
-                  {/* Team label for non-host when teams are assigned */}
-                  {!isHost && player.team_number && !isTeamlessMode && (
-                    <span
-                      className="px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider border"
-                      style={{ backgroundColor: teamColor!.bg + '40', borderColor: teamColor!.bg, color: teamColor!.bg }}
-                    >
-                      T{player.team_number}
-                    </span>
-                  )}
+                {/* Team assignment */}
+                {isHost && lobby.status === 'waiting' && !isTeamlessMode && (
+                  <button
+                    onClick={() => onCycleTeam(player.player_id, player.team_number)}
+                    className={`flex-shrink-0 px-2 py-0.5 capcrunch-kicker text-[9px] transition-all ${
+                      player.team_number ? 'text-white border' : 'text-white/40 border border-white/10 hover:border-white/30'
+                    }`}
+                    style={player.team_number ? { backgroundColor: teamColor!.bg + '40', borderColor: teamColor!.bg, color: teamColor!.bg } : undefined}
+                  >
+                    {player.team_number ? `T${player.team_number}` : 'Team'}
+                  </button>
+                )}
+                {!isHost && player.team_number && !isTeamlessMode && (
+                  <span
+                    className="flex-shrink-0 capcrunch-kicker text-[9px] px-2 py-0.5 border"
+                    style={{ backgroundColor: teamColor!.bg + '40', borderColor: teamColor!.bg, color: teamColor!.bg }}
+                  >
+                    T{player.team_number}
+                  </span>
+                )}
 
-                  {/* Score multiplier cycle — host only, non-multiplierless modes */}
-                  {isHost && !player.is_host && lobby.status === 'waiting' && !isMultiplierlessMode && (
-                    <button
-                      onClick={() => handleCycleMultiplier(player.player_id, multiplier)}
-                      className={`px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
-                        multiplier > 1
-                          ? 'bg-purple-600 text-white border border-purple-400'
-                          : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
-                      }`}
-                      title="Click to cycle score multiplier (1x → 1.5x → 2x → 3x → 4x)"
-                    >
-                      {multiplier > 1 ? `${multiplier}x` : '1x'}
-                    </button>
-                  )}
+                {/* Score multiplier */}
+                {isHost && !player.is_host && lobby.status === 'waiting' && !isMultiplierlessMode && (
+                  <button
+                    onClick={() => handleCycleMultiplier(player.player_id, multiplier)}
+                    className={`flex-shrink-0 px-2 py-0.5 capcrunch-kicker text-[9px] transition-all ${
+                      multiplier > 1
+                        ? 'bg-purple-600 text-white border border-purple-400'
+                        : 'text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
+                    }`}
+                    title="Click to cycle score multiplier"
+                  >
+                    {multiplier > 1 ? `${multiplier}x` : '1x'}
+                  </button>
+                )}
+                {multiplier > 1 && !isMultiplierlessMode && !isHost && (
+                  <span className="flex-shrink-0 text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded">
+                    {multiplier}x
+                  </span>
+                )}
 
-                  <div className={`ml-auto sm:ml-0 px-3 py-1 text-[10px] font-bold sports-font uppercase tracking-wider ${
-                    player.is_ready
-                      ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
-                      : 'bg-black/40 text-white/40 border border-white/10'
-                  }`}>
-                    {player.is_ready ? 'Ready' : 'Waiting'}
-                  </div>
+                {/* Ready badge */}
+                <div className={`flex-shrink-0 px-2.5 py-0.5 capcrunch-kicker text-[9px] ${
+                  player.is_ready
+                    ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
+                    : 'bg-black/40 text-white/30 border border-white/10'
+                }`}>
+                  {player.is_ready ? 'Ready' : 'Waiting'}
                 </div>
               </motion.div>
             );

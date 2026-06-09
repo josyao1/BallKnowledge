@@ -147,6 +147,11 @@ export function SoloTopTenPage() {
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
+  function handleBackToSetup() {
+    if (locState) navigate('/', { state: { openTopTen: true, topTenSport: sport } });
+    else setStatus('setup');
+  }
+
   function clearFeedback() {
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     feedbackTimer.current = setTimeout(() => setFeedback({ msg: '', type: '' }), 1800);
@@ -264,7 +269,7 @@ export function SoloTopTenPage() {
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col">
       <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
-        <button onClick={() => setStatus('setup')} className="text-white/30 hover:text-white/70 transition-colors">
+        <button onClick={handleBackToSetup} className="text-white/30 hover:text-white/70 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -423,10 +428,10 @@ export function SoloTopTenPage() {
                 Play Again
               </button>
               <button
-                onClick={() => setStatus('setup')}
+                onClick={handleBackToSetup}
                 className="capcrunch-btn-secondary capcrunch-kicker px-6 py-3"
               >
-                Settings
+                {locState ? 'Home' : 'Settings'}
               </button>
             </div>
           </motion.div>

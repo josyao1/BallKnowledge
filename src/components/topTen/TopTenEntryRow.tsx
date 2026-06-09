@@ -93,11 +93,11 @@ export function TopTenEntryRow({
       </div>
 
       {showInfo && catDef && (
-        <span className={`capcrunch-title text-sm shrink-0 tabular-nums ${
-          wasGuessed ? 'text-[#70BE5B]' : 'text-white/20'
-        }`}>
-          {formatStat(entry.stat, categoryKey)}{' '}
-          <span className="capcrunch-kicker text-[9px] opacity-60">{statShortLabel}</span>
+        <span className="flex items-baseline gap-1 shrink-0">
+          <span className={`capcrunch-title text-sm tabular-nums ${wasGuessed ? 'text-[#70BE5B]' : 'text-white/20'}`}>
+            {formatStat(entry.stat, categoryKey)}
+          </span>
+          <span className="capcrunch-kicker text-[9px] text-white/30">{statShortLabel}</span>
         </span>
       )}
     </motion.div>

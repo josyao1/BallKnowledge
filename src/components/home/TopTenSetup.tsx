@@ -91,6 +91,7 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
             <TopTenSettings
               sport={sport}
               onSportChange={s => setSport(s)}
+              showSportToggle={false}
               roundType={roundType}
               onRoundTypeChange={setRoundType}
               divisionMode={divisionMode}
