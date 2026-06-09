@@ -847,39 +847,39 @@ export function LobbyWaitingPage() {
       )}
 
       {/* Header */}
-      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="relative z-10 px-4 py-4 sm:px-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3 sm:items-center sm:gap-4 min-w-0">
             <button
               onClick={handleLeave}
-              className="flex items-center gap-1.5 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors border border-white/10 hover:border-white/30"
+              className="flex items-center gap-1.5 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors border border-white/10 hover:border-white/30 shrink-0"
             >
               <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               <span className="sports-font text-[11px] text-white/50 tracking-widest uppercase">Leave</span>
             </button>
-            <div>
-              <h1 className="retro-title text-2xl text-[#d4af37]">Private Table</h1>
-              <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase">Waiting for Players</p>
+            <div className="min-w-0">
+              <h1 className="retro-title text-xl sm:text-2xl text-[#d4af37] leading-none">Private Table</h1>
+              <p className="sports-font text-[8px] sm:text-[9px] text-white/30 tracking-[0.3em] sm:tracking-[0.4em] uppercase">Waiting for Players</p>
             </div>
           </div>
 
           {/* Join code copy button */}
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-2 px-4 py-2 bg-black/50 rounded-sm border border-white/20 hover:border-[#d4af37] transition-colors"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-black/50 rounded-sm border border-white/20 hover:border-[#d4af37] transition-colors min-w-0"
           >
-            <span className="font-mono text-xl tracking-widest text-[#d4af37]">{lobby.join_code}</span>
+            <span className="font-mono text-lg sm:text-xl tracking-[0.2em] sm:tracking-widest text-[#d4af37] truncate">{lobby.join_code}</span>
             <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            {copied && <span className="text-emerald-400 text-sm sports-font">Copied!</span>}
+            {copied && <span className="text-emerald-400 text-xs sm:text-sm sports-font shrink-0">Copied!</span>}
           </button>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
+      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full px-4 py-4 sm:p-6 space-y-4 sm:space-y-6">
         <LobbyGameInfo
           lobby={lobby}
           players={players}

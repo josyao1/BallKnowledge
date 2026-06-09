@@ -1,6 +1,6 @@
 
-/* Import retro-style font */
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&family=Roboto+Condensed:wght@400;700&display=swap');
+/* Import app fonts */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&family=Roboto+Condensed:wght@400;700&family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
 @media screen and (max-width: 767px) {
@@ -70,6 +70,145 @@ body {
     );
   min-height: 100vh;
   margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.home-chalkboard {
+  background:
+    radial-gradient(circle at 22% 28%, rgba(104, 187, 229, 0.28) 0, rgba(104, 187, 229, 0.14) 12%, transparent 30%),
+    radial-gradient(circle at 72% 22%, rgba(226, 0, 138, 0.18) 0, transparent 24%),
+    radial-gradient(circle at 68% 70%, rgba(78, 83, 165, 0.22) 0, transparent 22%),
+    linear-gradient(155deg, rgba(253, 241, 0, 0.08), transparent 24%),
+    linear-gradient(24deg, rgba(112, 190, 91, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.38)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 2px, rgba(0,0,0,0.012) 2px 4px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.008) 0 3px, rgba(0,0,0,0.012) 3px 6px),
+    linear-gradient(180deg, #111111 0%, #060606 52%, #000000 100%);
+  position: relative;
+}
+
+.home-grid-shell {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.capcrunch-shell {
+  background: #030303;
+  position: relative;
+  isolation: isolate;
+}
+
+.capcrunch-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(253, 241, 0, 0.12) 0, transparent 18%),
+    radial-gradient(circle at 78% 24%, rgba(226, 0, 138, 0.18) 0, transparent 20%),
+    radial-gradient(circle at 64% 72%, rgba(78, 83, 165, 0.18) 0, transparent 22%),
+    radial-gradient(circle at 28% 76%, rgba(104, 187, 229, 0.16) 0, transparent 20%),
+    linear-gradient(180deg, #090909 0%, #030303 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.capcrunch-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+  border-radius: 0;
+}
+
+.capcrunch-panel-soft {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+}
+
+.capcrunch-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.capcrunch-kicker {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.capcrunch-body {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.capcrunch-btn-primary {
+  background: linear-gradient(135deg, rgba(253, 241, 0, 0.95), rgba(253, 241, 0, 0.78));
+  border: 1px solid rgba(253, 241, 0, 0.65);
+  color: #050505;
+}
+
+.capcrunch-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(104, 187, 229, 0.35);
+  color: #d7efff;
+}
+
+.capcrunch-metric {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02)),
+    rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left-width: 4px;
+}
+
+.capcrunch-grid-connected {
+  display: grid;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.capcrunch-grid-connected > * {
+  margin: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.home-display {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.home-tile-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.home-kicker {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.home-body {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* Court wood texture background */
@@ -413,4 +552,3 @@ body {
 .row-gold-flash {
   animation: goldFlash 0.9s ease-out;
 }
-

@@ -84,19 +84,19 @@ export function CapCrunchPickPanel({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="bg-black/60 border-2 border-white/10 rounded p-4 flex-1 flex flex-col"
+      className="capcrunch-panel p-4 flex-1 flex flex-col"
     >
       {myLineup?.isFinished ? (
         // ── All picks made ──────────────────────────────────────────────────
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
-          <p className="text-2xl text-emerald-400 retro-title">All Picks In!</p>
-          <p className="text-white/50 sports-font text-sm">You've made all {totalRounds} picks. Sit tight while others finish.</p>
+          <p className="text-2xl text-[#70BE5B] capcrunch-title">All Picks In!</p>
+          <p className="text-white/50 capcrunch-body text-sm">You've made all {totalRounds} picks. Sit tight while others finish.</p>
           {(myLineup.bustCount ?? 0) > 0 && (
             <p className="text-red-400/70 sports-font text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
           )}
           {waitingFor.length > 0 && isHost && onHostSkipPlayer && (
             <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs mt-2">
-              <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
+              <p className="capcrunch-kicker text-[10px] text-white/30 mb-2">Still picking</p>
               {waitingFor.map(p => (
                 <div key={p.player_id} className="flex items-center justify-between gap-2 py-1">
                   <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function CapCrunchPickPanel({
           {!selectedPlayerName ? (
             // Search view
             <div>
-              <label className="block sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase mb-2 font-semibold">
+              <label className="block capcrunch-kicker text-[9px] text-white/60 mb-2">
                 Search for a player
               </label>
               {(() => {
@@ -136,26 +136,26 @@ export function CapCrunchPickPanel({
                   const color = proConf ? (CONF_COLORS[proConf] ?? '#06b6d4') : '#06b6d4';
                   return (
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-sm border text-[10px] retro-title" style={{ borderColor: color, color }}>{type === 'first' ? 'First' : 'Last'} initial: {initial}</span>
-                      {proConf && <span className="px-2 py-0.5 rounded-sm border text-[10px] retro-title" style={{ borderColor: color, color }}>{proConf}</span>}
+                      <span className="px-2 py-0.5 border text-[10px] capcrunch-kicker" style={{ borderColor: color, color }}>{type === 'first' ? 'First' : 'Last'} initial: {initial}</span>
+                      {proConf && <span className="px-2 py-0.5 border text-[10px] capcrunch-kicker" style={{ borderColor: color, color }}>{proConf}</span>}
                     </div>
                   );
                 }
                 if (isTeammateRound(currentTeam)) {
                   const { pickIndex } = parseTeammateRound(currentTeam);
                   const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
-                  return <p className="text-[10px] text-[#a78bfa] retro-title mb-2">Played with {refName}</p>;
+                  return <p className="text-[10px] text-[#68BBE5] capcrunch-kicker mb-2">Played with {refName}</p>;
                 }
                 if (isConferenceRound(currentTeam)) {
                   const { college, nflConf } = parseConferenceRound(currentTeam);
-                  return <p className="text-[10px] text-[#fbbf24] retro-title mb-2">{college}{nflConf ? ` + ${nflConf}` : ''}</p>;
+                  return <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">{college}{nflConf ? ` + ${nflConf}` : ''}</p>;
                 }
                 if (isDivisionRound(currentTeam)) {
-                  return <p className="text-[10px] text-[#d4af37] retro-title mb-2">Division: {currentTeam}</p>;
+                  return <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">Division: {currentTeam}</p>;
                 }
                 if (isDivisionDraftRound(currentTeam)) {
                   const { division, draftRound } = parseDivisionDraftRound(currentTeam);
-                  return <p className="text-[10px] text-[#d4af37] retro-title mb-2">{division} · {draftRound}</p>;
+                  return <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">{division} · {draftRound}</p>;
                 }
                 return null;
               })()}
@@ -164,7 +164,7 @@ export function CapCrunchPickPanel({
                 value={searchQuery}
                 onChange={(e) => onSearch(e.target.value)}
                 placeholder="Enter player name..."
-                className="w-full px-4 py-3 bg-[#222] text-white rounded border border-white/10 focus:outline-none focus:border-white/30 mb-3 text-base"
+                className="w-full px-4 py-3 bg-black/35 text-white border border-[#68BBE5]/25 focus:outline-none focus:border-[#68BBE5]/60 mb-3 text-base capcrunch-body"
               />
               {loading && <p className="text-white/60 text-sm">Loading...</p>}
               {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
@@ -186,7 +186,7 @@ export function CapCrunchPickPanel({
                         className={`w-full text-left px-4 py-3 rounded border transition text-sm font-semibold ${
                           disabled
                             ? 'bg-[#111] border-white/5 text-white/25 cursor-not-allowed line-through'
-                            : 'bg-[#1a1a1a] hover:bg-[#2a2a2a] border-white/10 text-white'
+                            : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 text-white'
                         }`}
                       >
                         {result.playerName}
@@ -201,8 +201,8 @@ export function CapCrunchPickPanel({
           ) : isNoYearSelect ? (
             // ── Total GP / career stat: no year needed, just confirm ──────
             <div className="flex flex-col gap-3 h-full">
-              <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
-                <p className="retro-title text-base text-white truncate">{selectedPlayerName}</p>
+              <div className="p-3 capcrunch-panel-soft">
+                <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">
                   {isWildcardRound(currentTeam)
                     ? (isCareerStatRound ? 'Total career stats — no restrictions' : 'All career GP — no restrictions')
@@ -230,7 +230,7 @@ export function CapCrunchPickPanel({
                 </p>
               </div>
               <div className="flex-1 flex items-center justify-center text-center">
-                <p className="text-white/30 sports-font text-xs leading-relaxed">
+                <p className="text-white/30 capcrunch-body text-xs leading-relaxed">
                   {isWildcardRound(currentTeam)
                     ? <>No constraints — pick any player freely</>
                     : isNameMatchRound(currentTeam)
@@ -242,14 +242,14 @@ export function CapCrunchPickPanel({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={onBack}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] shadow-[0_2px_0_#1a1a1a] active:translate-y-1 active:shadow-none text-white/80 font-semibold rounded-sm transition text-sm retro-title"
+                  className="flex-1 px-4 py-2.5 capcrunch-btn-secondary text-sm capcrunch-title"
                 >
                   Back
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={addingPlayer}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm retro-title"
+                  className="flex-1 px-4 py-2.5 capcrunch-btn-primary disabled:opacity-50 text-sm capcrunch-title"
                 >
                   {addingPlayer ? 'Adding...' : 'Confirm'}
                 </button>
@@ -258,12 +258,12 @@ export function CapCrunchPickPanel({
           ) : (
             // ── Normal mode: pick a year ──────────────────────────────────
             <div className="flex flex-col gap-3 h-full">
-              <div className="p-3 bg-[#1a1a1a] rounded border border-white/10">
-                <p className="retro-title text-base text-white truncate">{selectedPlayerName}</p>
+              <div className="p-3 capcrunch-panel-soft">
+                <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
               </div>
               <div className="flex items-baseline justify-between">
-                <label className="sports-font text-[9px] tracking-[0.4em] text-white/60 uppercase font-semibold">Select a year</label>
+                <label className="capcrunch-kicker text-[9px] text-white/60">Select a year</label>
                 {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] sports-font">through 2025</span>}
               </div>
               {loadingYears ? (
@@ -276,8 +276,8 @@ export function CapCrunchPickPanel({
                       onClick={() => onSelectYear(year)}
                       className={`w-full px-4 py-2.5 rounded border transition text-white font-semibold text-sm ${
                         selectedYear === year
-                          ? 'bg-[#d4af37] text-black border-[#d4af37]'
-                          : 'bg-[#1a1a1a] border-white/10 hover:border-white/20'
+                          ? 'bg-[#FDF100] text-black border-[#FDF100]'
+                          : 'bg-white/[0.03] border-white/10 hover:border-[#68BBE5]/40'
                       }`}
                     >
                       {year}
@@ -291,14 +291,14 @@ export function CapCrunchPickPanel({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={onBack}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] shadow-[0_2px_0_#1a1a1a] active:translate-y-1 active:shadow-none text-white/80 font-semibold rounded-sm transition text-sm retro-title"
+                  className="flex-1 px-4 py-2.5 capcrunch-btn-secondary text-sm capcrunch-title"
                 >
                   Back
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={!selectedYear || addingPlayer}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] shadow-[0_2px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50 text-black font-semibold rounded-sm transition text-sm retro-title"
+                  className="flex-1 px-4 py-2.5 capcrunch-btn-primary disabled:opacity-50 text-sm capcrunch-title"
                 >
                   {addingPlayer ? 'Adding...' : 'Confirm'}
                 </button>
@@ -311,8 +311,8 @@ export function CapCrunchPickPanel({
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
           {hardMode && !myLineup?.hasPickedThisRound ? (
             <div className="flex flex-col items-center gap-2">
-              <p className="text-lg text-yellow-400 retro-title mb-1">Waiting for your turn</p>
-              <p className="text-white/50 sports-font text-sm">
+              <p className="text-lg text-[#FDF100] capcrunch-title mb-1">Waiting for your turn</p>
+              <p className="text-white/50 capcrunch-body text-sm">
                 {players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'} is picking
               </p>
               {isHost && currentPickerId && onHostSkipPlayer && (
@@ -326,13 +326,13 @@ export function CapCrunchPickPanel({
             </div>
           ) : (
             <div>
-              <p className="text-lg text-emerald-400 retro-title mb-1">Pick submitted!</p>
-              <p className="text-white/50 sports-font text-sm">Waiting for other players...</p>
+              <p className="text-lg text-[#70BE5B] capcrunch-title mb-1">Pick submitted!</p>
+              <p className="text-white/50 capcrunch-body text-sm">Waiting for other players...</p>
             </div>
           )}
           {waitingFor.length > 0 && (hardMode ? myLineup?.hasPickedThisRound : true) && (
-            <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs">
-              <p className="sports-font text-[10px] text-white/30 tracking-widest uppercase mb-2">Still picking</p>
+            <div className="bg-black/20 border border-white/10 p-3 w-full max-w-xs">
+              <p className="capcrunch-kicker text-[10px] text-white/30 mb-2">Still picking</p>
               {waitingFor.map(p => (
                 <div key={p.player_id} className="flex items-center justify-between gap-2 py-1">
                   <div className="flex items-center gap-2">

@@ -91,7 +91,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ delay: index * 0.05 }}
-                className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
+                className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 rounded-sm border transition-all ${
                   isCurrentPlayer
                     ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
                     : multiplier > 1
@@ -101,7 +101,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 style={teamColor ? { borderLeftWidth: '4px', borderLeftColor: teamColor.bg } : undefined}
               >
                 {/* Left: name + badges */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                   {teamColor && (
                     <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor.bg }} />
                   )}
@@ -114,7 +114,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   )}
 
                   {renamingPlayerId === player.player_id ? (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <input
                         type="text" value={renameValue} maxLength={20} autoFocus
                         onChange={e => setRenameValue(e.target.value)}
@@ -163,7 +163,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 </div>
 
                 {/* Right: host controls + ready badge */}
-                <div className="flex items-center gap-2">
+                <div className="flex w-full sm:w-auto flex-wrap items-center gap-2 sm:justify-end">
                   {isHost && !player.is_host && lobby.status === 'waiting' && (
                     <button
                       onClick={() => handleKick(player.player_id)}
@@ -215,7 +215,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                     </button>
                   )}
 
-                  <div className={`px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
+                  <div className={`ml-auto sm:ml-0 px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
                     player.is_ready
                       ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
                       : 'bg-black/40 text-white/40 border border-white/10'

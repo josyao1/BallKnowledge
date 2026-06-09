@@ -83,14 +83,14 @@ export function CapCrunchResultCard({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: reverseDelay, type: 'spring', stiffness: 300, damping: 26 }}
-      className={`bg-black/60 rounded p-4 border-2 ${isWinner ? 'border-[#d4af37]/70 shadow-[0_0_24px_rgba(212,175,55,0.2)]' : 'border-white/10'}`}
+      className={`capcrunch-panel p-4 ${isWinner ? 'border-[#FDF100]/70 shadow-[0_0_24px_rgba(253,241,0,0.18)]' : 'border-white/10'}`}
     >
       {/* Header row */}
       <div className="flex justify-between items-start mb-3 gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             {isWinner && (
-              <span className="sports-font text-[8px] bg-[#d4af37] text-black px-1.5 py-0.5 rounded-sm font-bold tracking-widest uppercase shrink-0">Winner</span>
+              <span className="capcrunch-kicker text-[8px] bg-[#FDF100] text-black px-1.5 py-0.5 font-bold shrink-0">Winner</span>
             )}
             <p className="font-semibold text-white text-lg truncate">
               {idx + 1}. {item.player_name}
@@ -110,8 +110,8 @@ export function CapCrunchResultCard({
           <RevealingScore
             value={fmt(item.lineup.totalStat)}
             delay={scoreDelay}
-            className="retro-title text-3xl"
-            color={isWinner ? '#d4af37' : '#ffffff'}
+            className="capcrunch-title text-3xl"
+            color={isWinner ? '#FDF100' : '#ffffff'}
           />
           <p className="text-xs text-white/40">
             {fmt(Math.abs(item.lineup.totalStat - targetCap))} away

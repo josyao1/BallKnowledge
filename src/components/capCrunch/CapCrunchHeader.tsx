@@ -63,24 +63,24 @@ export function CapCrunchHeader({
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
   return (
     <motion.header
-      className="relative z-10 flex-shrink-0 bg-black/60 border-b-2 border-white/10 backdrop-blur-sm"
+      className="relative z-10 flex-shrink-0 capcrunch-panel border-b border-white/12"
       animate={{ boxShadow: `0 4px 24px -4px ${pressureColor}44` }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="px-4 py-2 flex items-center justify-between border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <h1 className="retro-title text-xl text-[#d4af37]">Cap Crunch</h1>
+      <div className="px-3 sm:px-4 py-2 flex flex-col gap-2 border-b border-white/5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between gap-3 min-w-0 sm:justify-start">
+          <h1 className="capcrunch-title text-lg sm:text-xl text-[#FDF100] truncate">Cap Crunch</h1>
           <HomeButton isHost={isHost} onEndGame={onEndGame} />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {hardMode && (
-            <div className={`px-3 py-1 rounded-sm border ${
+            <div className={`px-2.5 py-1 border max-w-full ${
               currentPickerId === currentPlayerId
-                ? 'bg-yellow-400/20 border-yellow-400/60'
+                ? 'bg-[#FDF100]/14 border-[#FDF100]/60'
                 : 'bg-black/40 border-white/20'
             }`}>
-              <span className={`retro-title text-xs ${
-                currentPickerId === currentPlayerId ? 'text-yellow-400' : 'text-white/50'
+              <span className={`capcrunch-kicker text-[10px] sm:text-xs ${
+                currentPickerId === currentPlayerId ? 'text-[#FDF100]' : 'text-white/50'
               }`}>
                 {currentPickerId === currentPlayerId
                   ? 'Your Turn'
@@ -88,15 +88,15 @@ export function CapCrunchHeader({
               </span>
             </div>
           )}
-          <div className="px-3 py-1 bg-[#ec4899]/20 border border-[#ec4899]/50 rounded-sm">
-            <span className="retro-title text-sm text-[#ec4899]">Round {currentRound} / {totalRounds}</span>
+          <div className="px-2.5 py-1 bg-[#E2008A]/18 border border-[#E2008A]/50">
+            <span className="capcrunch-kicker text-[10px] sm:text-sm text-[#E2008A]">Round {currentRound} / {totalRounds}</span>
           </div>
         </div>
       </div>
 
 
       {/* Team + compact stats row */}
-      <div className="flex items-center gap-3 px-4 py-2">
+      <div className="flex flex-col gap-3 px-3 sm:px-4 py-2 lg:flex-row lg:items-center">
         {isDivisionDraftRound(currentTeam) ? (() => {
           const { division, draftRound } = parseDivisionDraftRound(currentTeam);
           return (
@@ -131,10 +131,10 @@ export function CapCrunchHeader({
             exit={{ opacity: 0, rotateY: 90 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             style={{ perspective: 600 }}
-            className="px-5 py-2 rounded border-2 bg-black border-[#d4af37]/80 shadow-[0_0_12px_rgba(212,175,55,0.25)]"
+            className="px-5 py-2 border bg-black/40 border-[#FDF100]/70 shadow-[0_0_16px_rgba(253,241,0,0.18)]"
           >
             <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
-            <p className="retro-title text-2xl md:text-3xl font-bold text-[#d4af37] leading-tight">
+            <p className="capcrunch-title text-2xl md:text-3xl text-[#FDF100] leading-tight">
               {currentTeam}
             </p>
             <p className="sports-font text-[8px] text-white/40 leading-none mt-0.5">
@@ -150,10 +150,10 @@ export function CapCrunchHeader({
         })() : isWildcardRound(currentTeam) ? (
           <WildcardRoundCard key={currentTeam + currentRound} size="sm" />
         ) : (
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1 self-center lg:self-auto">
             <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
             {hwFilter && (
-              <div className="px-2 py-0.5 rounded border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] sports-font text-[8px] tracking-widest uppercase whitespace-nowrap">
+              <div className="px-2 py-0.5 border border-[#68BBE5]/40 bg-[#68BBE5]/10 text-[#68BBE5] capcrunch-kicker text-[8px] text-center">
                 {hwFilter === 'height_above' ? `Above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
                 : hwFilter === 'height_below' ? `Below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
                 : hwFilter === 'weight_above' ? `Above ${WEIGHT_THRESHOLD} lbs`
@@ -163,33 +163,33 @@ export function CapCrunchHeader({
           </div>
         )}
 
-        <div className="flex gap-1.5 md:gap-2 ml-auto">
-          <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-            <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Target</div>
-            <p className="retro-title text-sm md:text-lg text-white leading-none">{targetCap}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 md:gap-2 w-full lg:w-auto lg:ml-auto">
+          <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
+            <div className="capcrunch-kicker text-[7px] text-white/35">Target</div>
+            <p className="capcrunch-title text-sm md:text-lg text-white leading-none">{targetCap}</p>
           </div>
-          <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-            <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">{isCareerStatRound ? 'Career' : 'Stat'}</div>
-            <p className="retro-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory)}</p>
+          <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
+            <div className="capcrunch-kicker text-[7px] text-white/35">{isCareerStatRound ? 'Career' : 'Stat'}</div>
+            <p className="capcrunch-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory)}</p>
           </div>
           {/* My running total — hidden in blind mode */}
           {!blindMode && (
             <>
-              <div className="bg-[#d4af37]/10 border border-[#d4af37]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">You</div>
+              <div className="px-2 md:px-3 py-1 md:py-1.5 text-center bg-[#70BE5B]/10 border border-[#70BE5B]/35">
+                <div className="capcrunch-kicker text-[7px] text-white/35">You</div>
                 <SpinningNumber
                   value={fmt(myLineup?.totalStat ?? 0)}
-                  className="retro-title text-sm md:text-lg leading-none"
+                  className="capcrunch-title text-sm md:text-lg leading-none"
                   color={getTotalColor(myLineup?.totalStat ?? 0, targetCap)}
                   flashKey={badFlashKey}
                 />
               </div>
               {/* Remaining to cap */}
-              <div className="bg-[#111] border border-white/10 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-                <div className="sports-font text-[7px] text-white/30 tracking-widest uppercase">Left</div>
+              <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
+                <div className="capcrunch-kicker text-[7px] text-white/35">Left</div>
                 <SpinningNumber
                   value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
-                  className="retro-title text-sm md:text-lg leading-none"
+                  className="capcrunch-title text-sm md:text-lg leading-none"
                   color={getRemainingColor(myLineup?.totalStat ?? 0, targetCap)}
                   flashKey={badFlashKey}
                 />
@@ -197,9 +197,9 @@ export function CapCrunchHeader({
             </>
           )}
           {blindMode && (
-            <div className="bg-[#7c3aed]/10 border border-[#7c3aed]/40 px-2 md:px-3 py-1 md:py-1.5 rounded-sm text-center">
-              <div className="sports-font text-[7px] text-[#7c3aed]/70 tracking-widest uppercase">Blind</div>
-              <p className="retro-title text-sm md:text-lg leading-none text-[#7c3aed]/70">?</p>
+            <div className="bg-[#4E53A5]/10 border border-[#4E53A5]/40 px-2 md:px-3 py-1 md:py-1.5 text-center col-span-2 sm:col-span-1">
+              <div className="capcrunch-kicker text-[7px] text-[#68BBE5]">Blind</div>
+              <p className="capcrunch-title text-sm md:text-lg leading-none text-[#68BBE5]">?</p>
             </div>
           )}
         </div>

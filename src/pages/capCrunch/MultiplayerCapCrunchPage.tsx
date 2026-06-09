@@ -994,11 +994,7 @@ export function MultiplayerCapCrunchPage() {
   // ── Loading screen ───────────────────────────────────────────────────────────
   if (phase === 'loading') {
     return (
-      <div className="min-h-screen bg-[#0d2a0b] text-white flex items-center justify-center relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-        />
+      <div className="min-h-screen capcrunch-shell text-white flex items-center justify-center relative overflow-hidden">
         <div className="relative z-10 text-center">
           <p className="text-xl text-white/80">Loading game...</p>
         </div>
@@ -1009,11 +1005,7 @@ export function MultiplayerCapCrunchPage() {
   // Mid-game joiner: game loaded but host hasn't initialized our lineup yet
   if (phase === 'picking' && currentPlayerId && Object.keys(allLineups).length > 0 && !allLineups[currentPlayerId]) {
     return (
-      <div className="min-h-screen bg-[#0d2a0b] text-white flex items-center justify-center relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-        />
+      <div className="min-h-screen capcrunch-shell text-white flex items-center justify-center relative overflow-hidden">
         <div className="relative z-10 text-center">
           <p className="text-xl text-white/80">Joining game...</p>
         </div>
@@ -1033,14 +1025,9 @@ export function MultiplayerCapCrunchPage() {
       <motion.div
         animate={showExactHit ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : {}}
         transition={{ duration: 0.45, ease: 'easeInOut' }}
-        className="h-[100dvh] bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden"
+        className="h-[100dvh] capcrunch-shell text-white flex flex-col relative overflow-hidden"
       >
         <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
-        <div
-          className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-        />
-
         {/* Exact hit celebration overlay */}
         {showExactHit && (
           <motion.div
@@ -1068,13 +1055,13 @@ export function MultiplayerCapCrunchPage() {
               <motion.div
                 animate={{ scale: [1, 1.06, 1] }}
                 transition={{ duration: 0.6, delay: 0.5, repeat: 2, ease: 'easeInOut' }}
-                className="retro-title text-6xl md:text-8xl text-[#d4af37] mb-2"
+              className="capcrunch-title text-6xl md:text-8xl text-[#FDF100] mb-2"
                 style={{ textShadow: '0 0 40px #d4af37, 0 0 100px #d4af37bb' }}
               >
                 EXACT!
               </motion.div>
               <div className="sports-font text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
-              <div className="retro-title text-3xl md:text-4xl text-[#d4af37]">{targetCap}</div>
+              <div className="capcrunch-title text-3xl md:text-4xl text-[#FDF100]">{targetCap}</div>
             </motion.div>
           </motion.div>
         )}
@@ -1088,13 +1075,13 @@ export function MultiplayerCapCrunchPage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               transition={{ duration: 0.18 }}
-              className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-black/90 border border-white/20 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-none max-w-[88vw]"
+              className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 capcrunch-panel px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-none max-w-[88vw]"
             >
               <span className="text-white/50 text-[11px] sports-font truncate shrink-0">{opponentPickToast.name}:</span>
               {opponentPickToast.isSkipped ? (
-                <span className="text-white/30 text-[11px] retro-title italic">skipped</span>
+                <span className="text-white/30 text-[11px] capcrunch-title italic">skipped</span>
               ) : (
-                <span className="text-white text-[11px] retro-title truncate">{opponentPickToast.pick}</span>
+                <span className="text-white text-[11px] capcrunch-title truncate">{opponentPickToast.pick}</span>
               )}
             </motion.div>
           )}
@@ -1135,14 +1122,14 @@ export function MultiplayerCapCrunchPage() {
         )}
 
         {/* Mobile tab bar */}
-        <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/40">
+        <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/30">
           {(['pick', 'scores'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setMobileTab(tab)}
-              className={`flex-1 py-2.5 sports-font text-[11px] uppercase tracking-widest transition-all ${
+              className={`flex-1 py-3 capcrunch-kicker text-[11px] transition-all ${
                 mobileTab === tab
-                  ? 'text-[#d4af37] border-b-2 border-[#d4af37]'
+                  ? 'text-[#FDF100] border-b-2 border-[#FDF100] bg-white/[0.03]'
                   : 'text-white/40'
               }`}
             >
@@ -1156,8 +1143,8 @@ export function MultiplayerCapCrunchPage() {
           <div className="md:hidden h-full p-3 flex flex-col">
             {/* Countdown banner — shown to the player whose turn it is */}
             {countdown !== null && mobileTab === 'pick' && (
-              <div className={`flex-shrink-0 mb-2 py-2 rounded-sm text-center retro-title text-lg tracking-wider transition-colors ${
-                countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
+              <div className={`flex-shrink-0 mb-2 py-2 text-center capcrunch-title text-lg transition-colors ${
+                countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#4E53A5]/20 text-[#68BBE5] border border-[#68BBE5]/30'
               }`}>
                 {hardMode ? 'Your turn — ' : 'Last to pick — '}{countdown}s
               </div>
@@ -1217,18 +1204,18 @@ export function MultiplayerCapCrunchPage() {
           {/* Desktop: 3-column layout */}
           <div className="hidden md:flex h-full px-6 py-4 gap-4">
             <div className="w-52 flex flex-col gap-4">
-              <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
+              <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#FDF100' }}>
                 <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
-                <p className="retro-title text-4xl text-white">{targetCap}</p>
+                <p className="capcrunch-title text-4xl text-white">{targetCap}</p>
               </div>
-              <div className="bg-[#111] border border-white/5 px-6 py-6 rounded-sm text-center shadow-xl">
+              <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#68BBE5' }}>
                 <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
-                <p className="retro-title text-2xl text-white">
+                <p className="capcrunch-title text-2xl text-white">
                   {statCategory ? (isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)) : '—'}
                 </p>
               </div>
               {!blindMode && (
-              <div className="bg-[#111] border border-white/5 px-3 py-2 rounded-sm shadow-xl">
+              <div className="capcrunch-metric px-3 py-2 shadow-xl" style={{ borderLeftColor: '#70BE5B' }}>
                 <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
@@ -1250,8 +1237,8 @@ export function MultiplayerCapCrunchPage() {
             <div className="flex-1 flex flex-col">
               {/* Countdown banner — desktop */}
               {countdown !== null && (
-                <div className={`flex-shrink-0 mb-3 py-2.5 rounded-sm text-center retro-title text-xl tracking-wider transition-colors ${
-                  countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
+                <div className={`flex-shrink-0 mb-3 py-2.5 text-center capcrunch-title text-xl transition-colors ${
+                  countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#4E53A5]/20 text-[#68BBE5] border border-[#68BBE5]/30'
                 }`}>
                   {hardMode ? 'Your turn — ' : 'Last to pick — '}{countdown}s
                 </div>
@@ -1375,15 +1362,11 @@ export function MultiplayerCapCrunchPage() {
     const tiebreakerUsed = tiedOnScore;
 
     return (
-      <div className="min-h-screen bg-[#111] text-white flex flex-col relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-        />
+      <div className="min-h-screen capcrunch-shell text-white flex flex-col relative overflow-hidden">
 
-        <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+        <header className="relative z-10 p-6 border-b border-white/10 capcrunch-panel">
           <div className="max-w-7xl mx-auto">
-            <h1 className="retro-title text-2xl text-[#d4af37]">Final Results</h1>
+            <h1 className="capcrunch-title text-2xl text-[#FDF100]">Final Results</h1>
           </div>
         </header>
 
@@ -1393,13 +1376,13 @@ export function MultiplayerCapCrunchPage() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-2xl"
           >
-            <div className="mb-4 p-4 bg-black/60 border border-white/10 rounded text-center">
+            <div className="mb-4 p-4 capcrunch-panel text-center">
               <p className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Target Cap</p>
-              <p className="retro-title text-3xl text-[#d4af37]">{targetCap}</p>
+              <p className="capcrunch-title text-3xl text-[#FDF100]">{targetCap}</p>
             </div>
             {tiebreakerUsed && (
-              <div className="mb-4 p-3 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded text-center">
-                <p className="sports-font text-[10px] text-[#d4af37] tracking-widest uppercase">
+              <div className="mb-4 p-3 bg-[#FDF100]/10 border border-[#FDF100]/30 text-center">
+                <p className="sports-font text-[10px] text-[#FDF100] tracking-widest uppercase">
                   {tiedOnUnique
                     ? (bothHitExactCap ? 'Tied score, hit round, busts & unique — older avg year wins' : 'Tied score, busts & unique — older avg year wins')
                     : tiedOnBusts

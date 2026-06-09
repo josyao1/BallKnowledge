@@ -55,9 +55,9 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
         animate={{ opacity: 1, y: 0 }}
         className="bg-black/50 border border-white/10 rounded-sm p-4"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Left: game type label + relevant details */}
-          <div>
+          <div className="min-w-0">
             {lobby.game_type === 'scramble' ? (
               <>
                 <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
@@ -155,9 +155,9 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
           </div>
 
           {/* Right: timer + settings gear */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-start gap-3 sm:items-end sm:text-right">
             {showTimer && (
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Timer</div>
                 <div className="retro-title text-2xl text-white">
                   {Math.floor(lobby.timer_duration / 60)}:{String(lobby.timer_duration % 60).padStart(2, '0')}
@@ -167,7 +167,7 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
             {isHost && onToggleSettings && (
               <button
                 onClick={onToggleSettings}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
+                className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-2 border border-white/20 rounded-sm hover:border-[#d4af37] hover:text-[#d4af37] transition-colors"
                 title="Game Settings"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,15 +191,15 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
           <div className="sports-font text-[10px] text-[#d4af37] mb-3 tracking-[0.3em] uppercase text-center">
             Session Wins
           </div>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
             {[...players]
               .sort((a, b) => (b.wins ?? 0) - (a.wins ?? 0))
               .map(player => (
                 <div
                   key={player.player_id}
-                  className="flex items-center gap-2 px-3 py-2 bg-black/30 rounded-sm border border-white/10"
+                  className="flex items-center gap-2 px-3 py-2 bg-black/30 rounded-sm border border-white/10 min-w-0"
                 >
-                  <span className="sports-font text-sm text-white/80">{player.player_name}</span>
+                  <span className="sports-font text-sm text-white/80 truncate">{player.player_name}</span>
                   <span className="retro-title text-lg text-[#d4af37]">{player.wins ?? 0}</span>
                 </div>
               ))}

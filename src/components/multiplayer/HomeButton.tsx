@@ -35,20 +35,20 @@ export function HomeButton({ isHost = false, onEndGame }: Props) {
           {isHost && onEndGame && (
             <button
               onClick={() => { setConfirming(false); onEndGame(); }}
-              className="px-2.5 py-1 rounded-sm retro-title text-xs text-white bg-orange-700/80 hover:bg-orange-600 border border-orange-500 transition-colors whitespace-nowrap"
+              className="px-2.5 py-1 capcrunch-title text-xs text-white bg-orange-700/80 hover:bg-orange-600 border border-orange-500 transition-colors whitespace-nowrap"
             >
               Send to Lobby
             </button>
           )}
           <button
             onClick={() => navigate('/')}
-            className="px-2.5 py-1 rounded-sm retro-title text-xs text-white bg-red-600/80 hover:bg-red-500 border border-red-500 transition-colors"
+            className="px-2.5 py-1 capcrunch-title text-xs text-white bg-red-600/80 hover:bg-red-500 border border-red-500 transition-colors"
           >
             Leave
           </button>
           <button
             onClick={() => setConfirming(false)}
-            className="px-2.5 py-1 rounded-sm retro-title text-xs text-white/60 bg-black/40 hover:text-white border border-white/20 transition-colors"
+            className="px-2.5 py-1 capcrunch-title text-xs text-white/60 bg-black/40 hover:text-white border border-white/20 transition-colors"
           >
             No
           </button>
@@ -60,7 +60,7 @@ export function HomeButton({ isHost = false, onEndGame }: Props) {
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="px-2.5 py-1 rounded-sm sports-font text-[10px] tracking-widest text-white/30 hover:text-white/70 border border-white/10 hover:border-white/30 transition-colors"
+      className="px-2.5 py-1 capcrunch-kicker text-[10px] text-white/40 hover:text-white/80 border border-[#68BBE5]/30 hover:border-[#68BBE5]/60 transition-colors"
       title="Go home"
     >
       ⌂ Home
