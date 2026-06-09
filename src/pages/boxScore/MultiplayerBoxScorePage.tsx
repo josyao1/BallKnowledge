@@ -302,16 +302,16 @@ export function MultiplayerBoxScorePage() {
   const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
   const doneCount = players.filter(p => p.finished_at !== null).length;
 
-  const timerColor = timeLeft === null ? '#f59e0b'
+  const timerColor = timeLeft === null ? '#FDF100'
     : timeLeft > 60 ? '#4ade80'
-    : timeLeft > 30 ? '#f59e0b'
+    : timeLeft > 30 ? '#FDF100'
     : '#ef4444';
 
   if (!game) {
     return (
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#f59e0b] border-t-transparent rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
           <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
@@ -325,25 +325,25 @@ export function MultiplayerBoxScorePage() {
       )}
 
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-30 border-b border-white/6" style={{ background: 'rgba(8,8,8,0.96)', backdropFilter: 'blur(16px)' }}>
+      <header className="sticky top-0 z-30 capcrunch-panel border-b border-white/10">
         <div className="max-w-5xl mx-auto px-3 py-2.5 flex items-center gap-2">
           {/* Timer */}
           <div className="shrink-0 min-w-[56px] text-center">
-            <div className="retro-title text-2xl tabular-nums leading-none" style={{ color: timerColor }}>
+            <div className="capcrunch-title text-2xl tabular-nums leading-none" style={{ color: timerColor }}>
               {timeLeft === null ? '--'
                 : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
             </div>
           </div>
 
           <div className="flex-1 text-center">
-            <span className="retro-title text-lg tracking-widest" style={{ color: '#f59e0b' }}>BOX SCORE</span>
+            <span className="capcrunch-title text-lg" style={{ color: '#FDF100' }}>BOX SCORE</span>
           </div>
 
           {/* Score pill */}
           <div className="flex items-center gap-2 shrink-0">
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/10">
-              <span className="retro-title text-xl tabular-nums" style={{ color: '#f59e0b' }}>{correctCount}</span>
+            <div className="flex items-center gap-1 px-2.5 py-1 border border-white/10">
+              <span className="capcrunch-title text-xl tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
               <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
               {finished && spreadOk && <span className="sports-font text-[10px] text-green-400 ml-0.5">+S</span>}
             </div>
@@ -388,10 +388,10 @@ export function MultiplayerBoxScorePage() {
         {!finished && (
           <div className="border-t border-white/4 px-3 py-2 relative">
             <div
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2"
-              style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)' }}
+              className="flex items-center gap-2.5 px-3 py-2"
+              style={{ background: '#0a0a0a', border: '1px solid rgba(253,241,0,0.2)' }}
             >
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#f59e0b" strokeWidth={2} viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#FDF100" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -424,7 +424,7 @@ export function MultiplayerBoxScorePage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.97 }}
                   transition={{ duration: 0.14 }}
-                  className="absolute left-3 right-3 top-full mt-0.5 rounded-xl overflow-hidden shadow-2xl z-50"
+                  className="absolute left-3 right-3 top-full mt-0.5 overflow-hidden shadow-2xl z-50"
                   style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}
                 >
                   {candidates.map((c, i) => (
@@ -450,7 +450,7 @@ export function MultiplayerBoxScorePage() {
 
         {/* ── Scoreboard ── */}
         <div
-          className="relative overflow-hidden rounded-2xl"
+          className="relative overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${awayColor}28 0%, #111 40%, #111 60%, ${homeColor}28 100%)`,
             border: '1px solid rgba(255,255,255,0.08)',
@@ -461,14 +461,14 @@ export function MultiplayerBoxScorePage() {
           <div className="relative flex items-center justify-between px-4 sm:px-8 py-5">
             <div className="flex flex-col items-center gap-1.5 flex-1">
               <TeamLogo abbr={game.away_team} className="w-14 h-14 sm:w-20 sm:h-20 object-contain" />
-              <span className="retro-title text-xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</span>
-              <span className="retro-title text-5xl sm:text-6xl text-white leading-none tabular-nums">{game.away_score}</span>
+              <span className="capcrunch-title text-xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</span>
+              <span className="capcrunch-title text-5xl sm:text-6xl text-white leading-none tabular-nums">{game.away_score}</span>
               <span className="sports-font text-[9px] text-[#666] tracking-widest uppercase">Away</span>
             </div>
             <div className="flex flex-col items-center gap-1.5 px-2">
               {game.overtime && (
                 <span className="px-2 py-0.5 rounded-full sports-font text-[10px]"
-                  style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b' }}>OT</span>
+                  style={{ background: 'rgba(253,241,0,0.15)', border: '1px solid rgba(253,241,0,0.4)', color: '#FDF100' }}>OT</span>
               )}
               <div className="sports-font text-[11px] text-[#444] tracking-[0.4em]">FINAL</div>
               <div className="sports-font text-[10px] text-[#555] text-center leading-snug">
@@ -478,8 +478,8 @@ export function MultiplayerBoxScorePage() {
             </div>
             <div className="flex flex-col items-center gap-1.5 flex-1">
               <TeamLogo abbr={game.home_team} className="w-14 h-14 sm:w-20 sm:h-20 object-contain" />
-              <span className="retro-title text-xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</span>
-              <span className="retro-title text-5xl sm:text-6xl text-white leading-none tabular-nums">{game.home_score}</span>
+              <span className="capcrunch-title text-xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</span>
+              <span className="capcrunch-title text-5xl sm:text-6xl text-white leading-none tabular-nums">{game.home_score}</span>
               <span className="sports-font text-[9px] text-[#666] tracking-widest uppercase">Home</span>
             </div>
           </div>
@@ -491,7 +491,7 @@ export function MultiplayerBoxScorePage() {
           {notInGame && (
             <motion.div
               initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-900/40 bg-red-950/25"
+              className="flex items-center gap-3 px-4 py-3 border border-red-900/40 bg-red-950/25"
             >
               <span className="sports-font text-sm text-red-400">
                 <span className="font-semibold">{notInGame}</span> didn't play in this game
@@ -503,8 +503,8 @@ export function MultiplayerBoxScorePage() {
         {/* ── Hints bar ── */}
         {!finished && (
           <div
-            className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl"
-            style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.06)' }}
+            className="flex items-center justify-between gap-3 px-4 py-2.5"
+            style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             {hintsGranted ? (
               <span className="sports-font text-xs text-amber-400 font-semibold">
@@ -518,7 +518,7 @@ export function MultiplayerBoxScorePage() {
                 <button
                   onClick={requestHints}
                   disabled={myHintRequested}
-                  className={`px-4 py-1.5 rounded-lg sports-font text-xs transition-all ${
+                  className={`px-4 py-1.5 sports-font text-xs transition-all ${
                     myHintRequested
                       ? 'bg-amber-900/20 border border-amber-700/30 text-amber-400/60 cursor-default'
                       : 'border border-amber-600/40 text-amber-500 hover:bg-amber-900/20 hover:border-amber-500/60'
@@ -535,7 +535,7 @@ export function MultiplayerBoxScorePage() {
         {finished && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-700/40 bg-amber-900/15"
+            className="flex items-center gap-3 px-4 py-3 border border-amber-700/40 bg-amber-900/15"
           >
             <span className="sports-font text-sm text-amber-400 font-semibold">
               ⏱ Time's up! Score: {correctCount + (spreadOk ? 3 : 0)} — waiting for others...
@@ -553,7 +553,7 @@ export function MultiplayerBoxScorePage() {
             return (
               <div
                 key={side}
-                className="rounded-2xl overflow-hidden"
+                className="overflow-hidden"
                 style={{ background: `linear-gradient(160deg, ${color}12 0%, #111 30%)`, border: `1px solid ${color}30` }}
               >
                 {/* Team header */}
@@ -563,7 +563,7 @@ export function MultiplayerBoxScorePage() {
                 >
                   <TeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
-                    <div className="retro-title text-xl leading-none" style={{ color }}>{abbr}</div>
+                    <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
                     <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   {/* Mini progress */}
@@ -603,7 +603,7 @@ export function MultiplayerBoxScorePage() {
                             >
                               {/* Jersey badge with teammate indicator */}
                               <div
-                                className="relative shrink-0 w-9 h-7 flex items-center justify-center rounded-md sports-font text-[11px] font-bold tabular-nums"
+                                className="relative shrink-0 w-9 h-7 flex items-center justify-center sports-font text-[11px] font-bold tabular-nums"
                                 style={{ background: `${color}30`, color, border: `1px solid ${color}50` }}
                               >
                                 {jersey ? `#${jersey}` : '–'}
@@ -622,7 +622,7 @@ export function MultiplayerBoxScorePage() {
                                       key="correct"
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
-                                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg truncate"
+                                      className="flex items-center gap-1.5 px-2.5 py-1.5 truncate"
                                       style={{
                                         background: 'linear-gradient(90deg, rgba(22,163,74,0.25) 0%, rgba(22,163,74,0.08) 100%)',
                                         border: '1px solid rgba(22,163,74,0.5)',
@@ -641,13 +641,13 @@ export function MultiplayerBoxScorePage() {
                                       key="revealed"
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
-                                      className="px-2.5 py-1.5 rounded-lg border border-red-900/40 bg-red-950/20 truncate"
+                                      className="px-2.5 py-1.5 border border-red-900/40 bg-red-950/20 truncate"
                                     >
                                       <span className="sports-font text-sm text-red-400/80">{p.name}</span>
                                     </motion.div>
                                   ) : (
                                     <div className="flex flex-col gap-0.5">
-                                      <div className="px-2.5 py-1.5 rounded-lg border border-white/6 bg-black/30">
+                                      <div className="px-2.5 py-1.5 border border-white/8 bg-black/30">
                                         <span className="sports-font text-sm text-[#2a2a2a] select-none">████████</span>
                                       </div>
                                       {hintsGranted && (
@@ -696,8 +696,8 @@ export function MultiplayerBoxScorePage() {
 
         {/* ── Spread ── */}
         {game.spread_line != null && (
-          <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)' }}>
-            <SectionHeader label="Vegas Spread" color="#f59e0b" />
+          <div className="p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(253,241,0,0.2)' }}>
+            <SectionHeader label="Vegas Spread" color="#FDF100" />
             <div className="flex items-center gap-3 flex-wrap mt-2">
               <input
                 type="number" step="0.5"
@@ -717,7 +717,7 @@ export function MultiplayerBoxScorePage() {
                 }}
                 disabled={finished}
                 placeholder="e.g. 3 or −3"
-                className="w-32 bg-[#0d0d0d] border border-white/10 rounded-xl px-3 py-2 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#f59e0b]/40 disabled:opacity-40 transition-colors"
+                className="w-32 bg-black/40 border border-white/15 px-3 py-2 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#FDF100]/40 disabled:opacity-40 transition-colors"
               />
               <span className="sports-font text-xs text-[#555]">+ = home favored</span>
               {finished && spreadOk && <span className="sports-font text-xs text-green-400 font-semibold">✓ correct!</span>}
@@ -730,7 +730,7 @@ export function MultiplayerBoxScorePage() {
           {!finished ? (
             <button
               onClick={handleFinish}
-              className="w-full py-4 rounded-2xl retro-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
+              className="w-full py-4 capcrunch-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
               style={{
                 background: `linear-gradient(135deg, ${homeColor}, ${homeColor}88)`,
                 boxShadow: `0 4px 24px ${homeColor}50, 0 0 0 1px ${homeColor}30`,

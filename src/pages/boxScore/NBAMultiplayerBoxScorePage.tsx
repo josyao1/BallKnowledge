@@ -205,13 +205,13 @@ export function NBAMultiplayerBoxScorePage() {
   const awayColor = game ? getNBATeamColor(game.away_team) : '#4a4a4a';
   const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
   const doneCount = players.filter(p => p.finished_at !== null).length;
-  const timerColor = timeLeft === null ? '#f59e0b' : timeLeft > 60 ? '#4ade80' : timeLeft > 30 ? '#f59e0b' : '#ef4444';
+  const timerColor = timeLeft === null ? '#FDF100' : timeLeft > 60 ? '#4ade80' : timeLeft > 30 ? '#FDF100' : '#ef4444';
 
   if (!game) {
     return (
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#f59e0b] border-t-transparent rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
           <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
@@ -222,20 +222,20 @@ export function NBAMultiplayerBoxScorePage() {
     <div className="min-h-screen text-white" style={{ background: '#080808' }}>
       {lobby && <EmoteOverlay lobbyId={lobby.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />}
 
-      <header className="sticky top-0 z-30 border-b border-white/6" style={{ background: 'rgba(8,8,8,0.96)', backdropFilter: 'blur(16px)' }}>
+      <header className="sticky top-0 z-30 capcrunch-panel border-b border-white/10">
         <div className="max-w-5xl mx-auto px-3 py-2.5 flex items-center gap-2">
           <div className="shrink-0 min-w-[56px] text-center">
-            <div className="retro-title text-2xl tabular-nums leading-none" style={{ color: timerColor }}>
+            <div className="capcrunch-title text-2xl tabular-nums leading-none" style={{ color: timerColor }}>
               {timeLeft === null ? '--' : `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
             </div>
           </div>
           <div className="flex-1 text-center">
-            <span className="retro-title text-lg tracking-widest" style={{ color: '#f59e0b' }}>BOX SCORE</span>
+            <span className="capcrunch-title text-lg" style={{ color: '#FDF100' }}>BOX SCORE</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/10">
-              <span className="retro-title text-xl tabular-nums" style={{ color: '#f59e0b' }}>{correctCount}</span>
+              <span className="capcrunch-title text-xl tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
               <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
             </div>
           </div>
@@ -265,8 +265,8 @@ export function NBAMultiplayerBoxScorePage() {
         {/* Search bar */}
         {!finished && (
           <div className="border-t border-white/4 px-3 py-2 relative">
-            <div className="flex items-center gap-2.5 rounded-xl px-3 py-2" style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)' }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#f59e0b" strokeWidth={2} viewBox="0 0 24 24">
+            <div className="flex items-center gap-2.5 px-3 py-2" style={{ background: '#0a0a0a', border: '1px solid rgba(253,241,0,0.2)' }}>
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#FDF100" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input ref={searchRef} type="text" value={globalInput}
@@ -290,7 +290,7 @@ export function NBAMultiplayerBoxScorePage() {
                 <motion.div
                   initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.97 }} transition={{ duration: 0.14 }}
-                  className="absolute left-3 right-3 top-full mt-0.5 rounded-xl overflow-hidden shadow-2xl z-50"
+                  className="absolute left-3 right-3 top-full mt-0.5 overflow-hidden shadow-2xl z-50"
                   style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}
                 >
                   {candidates.map((c, i) => (
@@ -313,7 +313,7 @@ export function NBAMultiplayerBoxScorePage() {
         <AnimatePresence>
           {notInGame && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-900/40 bg-red-950/25">
+              className="flex items-center gap-3 px-4 py-3 border border-red-900/40 bg-red-950/25">
               <span className="sports-font text-sm text-red-400"><span className="font-semibold">{notInGame}</span> didn't play in this game</span>
             </motion.div>
           )}
@@ -321,7 +321,7 @@ export function NBAMultiplayerBoxScorePage() {
 
         {/* Hints bar */}
         {!finished && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl" style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)' }}>
             {hintsGranted ? (
               <span className="sports-font text-xs text-amber-400 font-semibold">💡 Hints active — player initials shown</span>
             ) : (
@@ -338,7 +338,7 @@ export function NBAMultiplayerBoxScorePage() {
 
         {finished && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-700/40 bg-amber-900/15">
+            className="flex items-center gap-3 px-4 py-3 border border-amber-700/40 bg-amber-900/15">
             <span className="sports-font text-sm text-amber-400 font-semibold">⏱ Time's up! Score: {correctCount} — waiting for others...</span>
           </motion.div>
         )}
@@ -353,13 +353,13 @@ export function NBAMultiplayerBoxScorePage() {
             const leaders      = computeLeaders(players_list);
 
             return (
-              <div key={side} className="rounded-2xl overflow-hidden"
+              <div key={side} className="overflow-hidden"
                 style={{ background: `linear-gradient(160deg, ${color}12 0%, #111 30%)`, border: `1px solid ${color}30` }}>
                 <div className="flex items-center gap-3 px-4 py-3 border-b"
                   style={{ background: `linear-gradient(90deg, ${color}25 0%, transparent 80%)`, borderColor: `${color}20` }}>
                   <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
-                    <div className="retro-title text-xl leading-none" style={{ color }}>{abbr}</div>
+                    <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
                     <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   <div className="ml-auto">
@@ -429,7 +429,7 @@ export function NBAMultiplayerBoxScorePage() {
         <div className="pb-14">
           {!finished ? (
             <button onClick={handleFinish}
-              className="w-full py-4 rounded-2xl retro-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
+              className="w-full py-4 capcrunch-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
               style={{ background: `linear-gradient(135deg, ${homeColor}, ${homeColor}88)`, boxShadow: `0 4px 24px ${homeColor}50, 0 0 0 1px ${homeColor}30` }}>
               Submit Early
             </button>

@@ -12,7 +12,7 @@ import { nflTeams } from '../data/nfl-teams';
 import { HOME_TILES, type GenericTeam, type LoadingStatus } from '../data/homeGames';
 import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { warmCareerCache } from '../services/careerData';
-import { RouletteOverlay } from '../components/home/RouletteOverlay';
+import { TeamRevealOverlay } from '../components/home/TeamRevealOverlay';
 import type { GameMode } from '../types';
 import type { Sport } from '../types';
 
@@ -43,7 +43,7 @@ const getCapCrunchLabel = (category: string) => {
 export function HomePage() {
   const navigate = useNavigate();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
-  const { sport, timerDuration, hideResultsDuringGame } = useSettingsStore();
+  const { sport, timerDuration, hideResultsDuringGame, setTimerDuration } = useSettingsStore();
 
   const [showSettings, setShowSettings] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -108,6 +108,7 @@ export function HomePage() {
         setLoadingStatus('success');
         await new Promise((resolve) => setTimeout(resolve, 500));
         setPreparedGameData({ sport, team, season, gameMode, timerDuration, players, leaguePlayers: league, hideResultsDuringGame });
+        setActivePanel(null);
         setShowRoulette(true);
         return true;
       } catch {
@@ -136,6 +137,10 @@ export function HomePage() {
     if (tileId === 'coming-soon') return;
 
     if (tileId === 'roster') {
+      if (mode === 'lobby') {
+        navigate('/lobby/create', { state: { gameType: 'roster' } });
+        return;
+      }
       setActivePanel('roster');
       return;
     }
@@ -207,12 +212,7 @@ export function HomePage() {
             >
               Join Lobby
             </button>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="border border-[#68BBE5]/40 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.18em] text-[#bfe8ff] transition hover:border-[#68BBE5] hover:bg-[#68BBE5]/10 hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.25em]"
-            >
-              Settings
-            </button>
+
             <button
               onClick={() => setShowAbout(true)}
               className="border border-[#E2008A]/40 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.18em] text-[#ffc2ea] transition hover:border-[#E2008A] hover:bg-[#E2008A]/10 hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.25em]"
@@ -375,50 +375,6 @@ export function HomePage() {
           </div>
 
           <AnimatePresence mode="wait">
-            {activePanel === 'roster' && (
-              <motion.div
-                key="roster-panel"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.24 }}
-                className="mt-8"
-              >
-                <RosterRoyaleSetup
-                  sport={sport}
-                  deckArt="/images/home/roster-royale.svg"
-                  rosterSubMode={rosterSubMode}
-                  setRosterSubMode={setRosterSubMode}
-                  boxScoreMinYear={boxScoreMinYear}
-                  setBoxScoreMinYear={setBoxScoreMinYear}
-                  boxScoreMaxYear={boxScoreMaxYear}
-                  setBoxScoreMaxYear={setBoxScoreMaxYear}
-                  boxScoreTeam={boxScoreTeam}
-                  setBoxScoreTeam={setBoxScoreTeam}
-                  gameMode={gameMode}
-                  setGameMode={setGameMode}
-                  selectedTeam={selectedTeam}
-                  setSelectedTeam={setSelectedTeam}
-                  selectedYear={selectedYear}
-                  setSelectedYear={setSelectedYear}
-                  randomMinYear={randomMinYear}
-                  setRandomMinYear={setRandomMinYear}
-                  randomMaxYear={randomMaxYear}
-                  setRandomMaxYear={setRandomMaxYear}
-                  timerDuration={timerDuration}
-                  loadingStatus={loadingStatus}
-                  setLoadingStatus={setLoadingStatus}
-                  statusMessage={statusMessage}
-                  onBack={() => {
-                    setActivePanel(null);
-                    setLoadingStatus('idle');
-                  }}
-                  onStartGame={handleStartGame}
-                  onOpenSettings={() => setShowSettings(true)}
-                />
-              </motion.div>
-            )}
-
             {(activePanel === 'guess-player' || activePanel === 'guess-player-lobby') && (
               <motion.div
                 key="guess-player-panel"
@@ -440,32 +396,70 @@ export function HomePage() {
       </div>
 
       {showRoulette && preparedGameData && (
-        <section className="fixed inset-0 z-50 flex items-center justify-center bg-black">
-          <RouletteOverlay
-            winningTeam={preparedGameData.team.name}
-            winningYear={preparedGameData.season}
-            sport={sport}
-            winningTeamData={preparedGameData.team}
-            skipAnimation={skipAnimation}
-            onComplete={() => {
-              setGameConfig(
-                preparedGameData.sport,
-                preparedGameData.team,
-                preparedGameData.season,
-                preparedGameData.gameMode,
-                preparedGameData.timerDuration,
-                preparedGameData.players,
-                preparedGameData.leaguePlayers,
-                preparedGameData.hideResultsDuringGame,
-              );
-              navigate('/game');
-            }}
-          />
-        </section>
+        <TeamRevealOverlay
+          winningTeam={preparedGameData.team.name}
+          winningYear={preparedGameData.season}
+          sport={sport}
+          winningTeamData={preparedGameData.team}
+          skipAnimation={skipAnimation}
+          onComplete={() => {
+            setGameConfig(
+              preparedGameData.sport,
+              preparedGameData.team,
+              preparedGameData.season,
+              preparedGameData.gameMode,
+              preparedGameData.timerDuration,
+              preparedGameData.players,
+              preparedGameData.leaguePlayers,
+              preparedGameData.hideResultsDuringGame,
+            );
+            navigate('/game');
+          }}
+        />
       )}
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
+      <AnimatePresence>
+        {activePanel === 'roster' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <RosterRoyaleSetup
+              sport={sport}
+              deckArt="/images/home/roster-royale.svg"
+              rosterSubMode={rosterSubMode}
+              setRosterSubMode={setRosterSubMode}
+              boxScoreMinYear={boxScoreMinYear}
+              setBoxScoreMinYear={setBoxScoreMinYear}
+              boxScoreMaxYear={boxScoreMaxYear}
+              setBoxScoreMaxYear={setBoxScoreMaxYear}
+              boxScoreTeam={boxScoreTeam}
+              setBoxScoreTeam={setBoxScoreTeam}
+              gameMode={gameMode}
+              setGameMode={setGameMode}
+              selectedTeam={selectedTeam}
+              setSelectedTeam={setSelectedTeam}
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
+              randomMinYear={randomMinYear}
+              setRandomMinYear={setRandomMinYear}
+              randomMaxYear={randomMaxYear}
+              setRandomMaxYear={setRandomMaxYear}
+              timerDuration={timerDuration}
+              loadingStatus={loadingStatus}
+              setLoadingStatus={setLoadingStatus}
+              statusMessage={statusMessage}
+              onBack={() => {
+                setActivePanel(null);
+                setLoadingStatus('idle');
+              }}
+              onStartGame={handleStartGame}
+              setTimerDuration={setTimerDuration}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+
       {capCrunchStep && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           {capCrunchStep === 'sport' && (

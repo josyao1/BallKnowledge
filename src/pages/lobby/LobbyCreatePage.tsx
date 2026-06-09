@@ -18,22 +18,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { getStoredPlayerName, updateCareerState } from '../../services/lobby';
-import { teams, getNBADivisions, getNBATeamsByDivision } from '../../data/teams';
-import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../../data/nfl-teams';
-import type { GameMode } from '../../types';
+import { teams } from '../../data/teams';
+import { nflTeams } from '../../data/nfl-teams';
 import { CreateGameTypeSelector }        from '../../components/lobby/create/CreateGameTypeSelector';
 import { CreateSportSelector }           from '../../components/lobby/create/CreateSportSelector';
 import { CreateCareerSettings }          from '../../components/lobby/create/CreateCareerSettings';
 import { CreateScrambleSettings }        from '../../components/lobby/create/CreateScrambleSettings';
 import { CreateStartingLineupSettings }  from '../../components/lobby/create/CreateStartingLineupSettings';
-import { CreateRosterSettings }          from '../../components/lobby/create/CreateRosterSettings';
 
-type GenericTeam = {
-  id: number;
-  abbreviation: string;
-  name: string;
-  colors: { primary: string; secondary: string };
-};
 
 const VALID_LOBBY_MODES = ['roster', 'career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal', 'top-ten'] as const;
 type LobbyMode = typeof VALID_LOBBY_MODES[number];
@@ -53,37 +45,13 @@ export function LobbyCreatePage() {
   const [scrambleWinTarget,   setScrambleWinTarget]   = useState<10 | 20 | 30 | 40 | 50>(20);
   const [scrambleCareerTo,    setScrambleCareerTo]    = useState(0);
   const [hostName,            setHostName]            = useState(getStoredPlayerName() || '');
-  const [gameMode,            setGameMode]            = useState<GameMode>('random');
-  const [selectionScope,      setSelectionScope]      = useState<'team' | 'division'>('team');
-  const [selectedTeam,        setSelectedTeam]        = useState<GenericTeam | null>(null);
-  const [selectedYear,        setSelectedYear]        = useState<number | null>(null);
-  const [timerMinutes,        setTimerMinutes]        = useState(1);
-  const [timerSeconds,        setTimerSeconds]        = useState(30);
-  const [customTimerInput,    setCustomTimerInput]    = useState('');
-  const [selectedPreset,      setSelectedPreset]      = useState<number | null>(90);
-  const [randomMinYear,       setRandomMinYear]       = useState(2015);
-  const [randomMaxYear,       setRandomMaxYear]       = useState(2025);
 
   // If arriving from NBA box score home card, pre-select NBA
   useEffect(() => {
     if ((location.state as any)?.gameType === 'nba-box-score') setSport('nba');
   }, []);
 
-  const timerDuration = customTimerInput
-    ? Math.max(10, Math.min(600, parseInt(customTimerInput) || 90))
-    : timerMinutes * 60 + timerSeconds;
-
-  const canCreate = hostName.trim() && (
-    lobbyMode === 'career' ||
-    lobbyMode === 'scramble' ||
-    lobbyMode === 'lineup-is-right' ||
-    lobbyMode === 'box-score' ||
-    lobbyMode === 'starting-lineup' ||
-    lobbyMode === 'face-reveal' ||
-    lobbyMode === 'top-ten' ||
-    gameMode === 'random' ||
-    (selectedTeam && selectedYear)
-  );
+  const canCreate = !!hostName.trim();
 
   const handleCreate = async () => {
     if (!hostName.trim()) return;
@@ -118,9 +86,9 @@ export function LobbyCreatePage() {
           navigate(`/lobby/${lobby.join_code}`);
         }
       } else {
-        const lobby = await createLobby(hostName.trim(), 'nfl', 'KC', '2024', 120, 'random', 2015, 2024, 'box-score', 'team', null, null);
+        const lobby = await createLobby(hostName.trim(), 'nfl', 'KC', '2025', 120, 'random', 2015, 2025, 'box-score', 'team', null, null);
         if (lobby) {
-          await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2024, team: null });
+          await updateCareerState(lobby.id, { type: 'box_score', min_year: 2015, max_year: 2025, team: null });
           navigate(`/lobby/${lobby.join_code}`);
         }
       }
@@ -170,78 +138,33 @@ export function LobbyCreatePage() {
       return;
     }
 
-    // Roster mode
-    const minYear = Math.max(randomMinYear, 2000);
-    const maxYear = Math.min(randomMaxYear, 2025);
-    let teamAbbr: string;
-    let season: string;
-    let divisionConference: string | null = null;
-    let divisionName: string | null = null;
-
-    if (gameMode === 'random') {
-      const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
-      season = sport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
-
-      if (selectionScope === 'division') {
-        const allDivisions = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
-        const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
-        divisionConference = randomDiv.conference;
-        divisionName = randomDiv.division;
-        const divTeams = sport === 'nba'
-          ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
-          : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
-        teamAbbr = divTeams[0]?.abbreviation || (sport === 'nba' ? teams : nflTeams)[0].abbreviation;
-      } else {
-        const teamList = sport === 'nba' ? teams : nflTeams;
-        teamAbbr = teamList[Math.floor(Math.random() * teamList.length)].abbreviation;
-      }
-    } else {
-      if (!selectedTeam || !selectedYear) return;
-      teamAbbr = selectedTeam.abbreviation;
-      season = sport === 'nba' ? `${selectedYear}-${String(selectedYear + 1).slice(-2)}` : `${selectedYear}`;
-    }
-
-    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, timerDuration, gameMode, minYear, maxYear, 'roster', selectionScope, divisionConference, divisionName);
+    // Roster mode — defaults, host configures everything in the waiting room
+    const teamList = sport === 'nba' ? teams : nflTeams;
+    const teamAbbr = teamList[Math.floor(Math.random() * teamList.length)].abbreviation;
+    const season = sport === 'nba' ? '2024-25' : '2024';
+    const lobby = await createLobby(hostName.trim(), sport, teamAbbr, season, 90, 'random', 2015, 2025, 'roster', 'team', null, null);
     if (lobby) navigate(`/lobby/${lobby.join_code}`);
   };
 
-  const handlePresetSelect = (seconds: number) => {
-    setSelectedPreset(seconds);
-    setCustomTimerInput('');
-    setTimerMinutes(Math.floor(seconds / 60));
-    setTimerSeconds(seconds % 60);
-  };
-
-  const handleCustomTimerChange = (value: string) => {
-    setCustomTimerInput(value);
-    if (value) setSelectedPreset(null);
-  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-40 pointer-events-none"
-        style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-      />
-
-      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+    <div className="min-h-screen flex flex-col home-chalkboard text-white">
+      <header className="capcrunch-panel border-b border-white/10 px-6 py-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/')}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="capcrunch-kicker text-[10px] text-white/40 hover:text-white/70 transition-colors"
           >
-            <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+            ← Back
           </button>
           <div>
-            <h1 className="retro-title text-3xl text-[#d4af37]">Open Table</h1>
-            <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase">Host a Private Game</p>
+            <h1 className="capcrunch-title text-3xl text-white">Open Table</h1>
+            <p className="capcrunch-kicker text-[9px] text-white/30">Host a Private Game</p>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 max-w-md mx-auto w-full p-6 space-y-5 overflow-y-auto">
+      <main className="flex-1 max-w-md mx-auto w-full p-6 space-y-5 overflow-y-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <CreateGameTypeSelector lobbyMode={lobbyMode} onModeChange={setLobbyMode} />
         </motion.div>
@@ -255,10 +178,10 @@ export function LobbyCreatePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-black/50 border border-white/10 rounded-sm p-4"
+          className="capcrunch-panel p-4"
         >
-          <label className="block sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">
-            Dealer Name
+          <label className="block capcrunch-kicker text-[10px] text-white/40 mb-2">
+            Your Name
           </label>
           <input
             type="text"
@@ -266,7 +189,7 @@ export function LobbyCreatePage() {
             onChange={(e) => setHostName(e.target.value)}
             placeholder="Enter your name"
             maxLength={20}
-            className="w-full p-3 bg-[#111] rounded-sm border-2 border-white/20 text-white focus:outline-none focus:border-[#d4af37] transition-colors sports-font"
+            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors sports-font"
           />
         </motion.div>
 
@@ -300,36 +223,11 @@ export function LobbyCreatePage() {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {lobbyMode === 'roster' && (
-            <CreateRosterSettings
-              sport={sport}
-              gameMode={gameMode}
-              onGameModeChange={setGameMode}
-              selectionScope={selectionScope}
-              onSelectionScopeChange={setSelectionScope}
-              selectedTeam={selectedTeam}
-              onTeamSelect={setSelectedTeam}
-              selectedYear={selectedYear}
-              onYearSelect={setSelectedYear}
-              randomMinYear={randomMinYear}
-              onRandomMinYearChange={setRandomMinYear}
-              randomMaxYear={randomMaxYear}
-              onRandomMaxYearChange={setRandomMaxYear}
-              timerDuration={timerDuration}
-              customTimerInput={customTimerInput}
-              selectedPreset={selectedPreset}
-              onPresetSelect={handlePresetSelect}
-              onCustomTimerChange={handleCustomTimerChange}
-            />
-          )}
-        </AnimatePresence>
-
         {error && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="p-3 bg-red-900/30 border border-red-700 rounded-sm text-red-400 text-sm text-center sports-font"
+            className="p-3 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center sports-font"
           >
             {error}
           </motion.div>
@@ -341,7 +239,7 @@ export function LobbyCreatePage() {
           transition={{ delay: 0.2 }}
           onClick={handleCreate}
           disabled={!canCreate || isLoading}
-          className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
+          className="w-full py-4 capcrunch-btn-primary capcrunch-title text-xl disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Opening Table...' : 'Open Table'}
         </motion.button>
@@ -350,7 +248,7 @@ export function LobbyCreatePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25 }}
-          className="text-center text-white/30 text-[10px] pb-4 sports-font tracking-widest uppercase"
+          className="text-center text-white/30 text-[10px] pb-4 capcrunch-kicker"
         >
           <p>You'll get a 6-character code to share</p>
         </motion.div>

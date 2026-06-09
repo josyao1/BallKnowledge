@@ -71,9 +71,9 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="bg-black/50 border border-white/10 rounded-sm p-4"
+      className="capcrunch-panel p-4"
     >
-      <div className="sports-font text-[10px] text-white/40 mb-4 tracking-[0.3em] uppercase">
+      <div className="capcrunch-kicker text-[9px] text-white/40 mb-4">
         Seats ({players.length}/{lobby.max_players})
       </div>
 
@@ -91,9 +91,9 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ delay: index * 0.05 }}
-                className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 rounded-sm border transition-all ${
+                className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 border transition-all ${
                   isCurrentPlayer
-                    ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
+                    ? 'border-[#FDF100]/40 bg-[#FDF100]/5'
                     : multiplier > 1
                       ? 'border-purple-500/50 bg-purple-900/20'
                       : 'border-white/10 bg-black/30'
@@ -106,7 +106,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                     <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor.bg }} />
                   )}
                   {player.is_host && (
-                    <span className="text-[#d4af37] flex-shrink-0" title="Host">
+                    <span className="text-[#FDF100] flex-shrink-0" title="Host">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
@@ -122,7 +122,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                           if (e.key === 'Enter') handleConfirmRename();
                           if (e.key === 'Escape') { setRenamingPlayerId(null); setRenameValue(''); }
                         }}
-                        className="w-28 px-2 py-0.5 bg-[#111] rounded-sm border border-[#d4af37] text-white text-sm sports-font focus:outline-none"
+                        className="w-28 px-2 py-0.5 bg-black/40 border border-[#FDF100]/60 text-white text-sm sports-font focus:outline-none"
                       />
                       <button onClick={handleConfirmRename} className="text-emerald-400 hover:text-emerald-300 transition-colors" title="Confirm">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +144,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                       {isHost && !player.is_host && lobby.status === 'waiting' && (
                         <button
                           onClick={() => { setRenamingPlayerId(player.player_id); setRenameValue(player.player_name); }}
-                          className="text-white/20 hover:text-[#d4af37] transition-colors flex-shrink-0"
+                          className="text-white/20 hover:text-[#FDF100] transition-colors flex-shrink-0"
                           title="Rename player"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +167,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   {isHost && !player.is_host && lobby.status === 'waiting' && (
                     <button
                       onClick={() => handleKick(player.player_id)}
-                      className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all bg-black/40 text-red-400/60 border border-white/10 hover:border-red-500 hover:text-red-400"
+                      className="px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider transition-all bg-black/40 text-red-400/60 border border-white/10 hover:border-red-500 hover:text-red-400"
                     >
                       Kick
                     </button>
@@ -177,7 +177,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   {isHost && lobby.status === 'waiting' && !isTeamlessMode && (
                     <button
                       onClick={() => onCycleTeam(player.player_id, player.team_number)}
-                      className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
+                      className={`px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
                         player.team_number ? 'text-white border' : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
                       }`}
                       style={player.team_number ? {
@@ -193,7 +193,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   {/* Team label for non-host when teams are assigned */}
                   {!isHost && player.team_number && !isTeamlessMode && (
                     <span
-                      className="px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider border"
+                      className="px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider border"
                       style={{ backgroundColor: teamColor!.bg + '40', borderColor: teamColor!.bg, color: teamColor!.bg }}
                     >
                       T{player.team_number}
@@ -204,7 +204,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   {isHost && !player.is_host && lobby.status === 'waiting' && !isMultiplierlessMode && (
                     <button
                       onClick={() => handleCycleMultiplier(player.player_id, multiplier)}
-                      className={`px-2 py-1 rounded-sm text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
+                      className={`px-2 py-1 text-[9px] font-bold sports-font uppercase tracking-wider transition-all ${
                         multiplier > 1
                           ? 'bg-purple-600 text-white border border-purple-400'
                           : 'bg-black/40 text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
@@ -215,7 +215,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                     </button>
                   )}
 
-                  <div className={`ml-auto sm:ml-0 px-3 py-1 rounded-sm text-[10px] font-bold sports-font uppercase tracking-wider ${
+                  <div className={`ml-auto sm:ml-0 px-3 py-1 text-[10px] font-bold sports-font uppercase tracking-wider ${
                     player.is_ready
                       ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
                       : 'bg-black/40 text-white/40 border border-white/10'

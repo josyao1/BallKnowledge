@@ -49,7 +49,7 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
       animate={{ opacity: 1, rotateY: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
       style={{ perspective: 600 }}
-      className={`relative border bg-black/60 ${borderClass} ${
+      className={`border bg-black/60 ${borderClass} ${
         size === 'lg' ? 'px-8 md:px-12 py-2 md:py-3' : 'px-5 py-2'
       }`}
     >
@@ -65,14 +65,13 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
             <span className="capcrunch-kicker text-[11px] leading-none text-white">{proConf}</span>
           </div>
         )}
+        <button
+          onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
+          className="w-4 h-4 shrink-0 border border-[#06b6d4]/40 text-[#06b6d4]/50 text-[8px] flex items-center justify-center hover:border-[#06b6d4]/70 hover:text-[#06b6d4]/80 transition-colors"
+        >
+          ?
+        </button>
       </div>
-
-      <button
-        onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
-        className="absolute bottom-1.5 right-1.5 w-4 h-4 border border-[#06b6d4]/40 text-[#06b6d4]/50 text-[8px] flex items-center justify-center hover:border-[#06b6d4]/70 hover:text-[#06b6d4]/80 transition-colors"
-      >
-        ?
-      </button>
 
       {createPortal(
         <AnimatePresence>

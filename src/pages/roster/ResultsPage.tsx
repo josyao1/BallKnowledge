@@ -113,7 +113,7 @@ export function ResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden font-sans p-4 md:p-6">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col relative overflow-hidden p-4 md:p-6">
       
       {/* 1. DEALER SWEEP OVERLAY */}
       <AnimatePresence>
@@ -139,29 +139,20 @@ export function ResultsPage() {
         )}
       </AnimatePresence>
 
-      {/* 2. BACKGROUND FELT */}
-      <div 
-        className="absolute inset-0 opacity-40 pointer-events-none" 
-        style={{ 
-          backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` 
-        }} 
-      />
-
       {/* 3. MAIN UI INTERFACE */}
       <motion.div 
         animate={isExiting ? { opacity: 0, scale: 0.95, filter: 'blur(10px)' } : { opacity: 1, scale: 1 }}
         className="relative z-10 flex flex-col h-full max-w-7xl mx-auto w-full"
       >
         {/* HEADER - Responsive sizing */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b border-white/10 pb-4 gap-4">
           <div>
-            <div className="sports-font text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.6em] text-white/30 uppercase">Vault Record // Settlement</div>
-            <h1 className="retro-title text-4xl md:text-6xl text-white uppercase leading-none">The Final Tab</h1>
+            <div className="capcrunch-kicker text-[8px] md:text-[10px] text-white/30">Vault Record // Settlement</div>
+            <h1 className="capcrunch-title text-4xl md:text-6xl text-white leading-none">The Final Tab</h1>
           </div>
           <div className="flex flex-col items-start md:items-end w-full md:w-auto">
-             <div className="bg-[#111] border border-white/20 px-4 py-1 mb-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] w-full md:w-auto text-center">
-               <span className="retro-title text-xs md:text-sm tracking-widest text-white/80">
+             <div className="capcrunch-panel border-white/20 px-4 py-1 mb-1 w-full md:w-auto text-center">
+               <span className="capcrunch-kicker text-xs md:text-sm text-white/80">
                  {selectedTeam.abbreviation} • {selectedSeason}
                </span>
              </div>
@@ -182,9 +173,9 @@ export function ResultsPage() {
                 { label: 'COLLECTED', value: `${guessedPlayers.length}/${currentRoster.length}` },
                 { label: 'CLOCK', value: `${Math.floor(timeTaken / 60)}:${String(timeTaken % 60).padStart(2, '0')}` }
               ].map((stat) => (
-                <div key={stat.label} className="bg-[#111] border border-white/5 p-3 md:p-4 rounded-sm shadow-xl relative overflow-hidden">
-                  <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">{stat.label}</div>
-                  <div className="retro-title text-xl md:text-2xl text-white">{stat.value}</div>
+                <div key={stat.label} className="capcrunch-panel p-3 md:p-4 shadow-xl relative overflow-hidden">
+                  <div className="capcrunch-kicker text-[7px] md:text-[8px] text-white/30 mb-1">{stat.label}</div>
+                  <div className="capcrunch-title text-xl md:text-2xl text-white">{stat.value}</div>
                 </div>
               ))}
             </div>
@@ -195,26 +186,24 @@ export function ResultsPage() {
               <button
                 onClick={handleRematch}
                 disabled={isExiting || isLoadingRandom}
-                className="group relative bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] py-4 md:py-6 rounded-sm shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50"
+                className="w-full py-4 md:py-6 capcrunch-btn-primary capcrunch-title text-xl md:text-2xl disabled:opacity-50"
               >
-                <span className="relative z-10 retro-title text-xl md:text-2xl text-black uppercase tracking-widest">
-                  {isLoadingRandom ? 'Shuffling...' : 'Play Again'}
-                </span>
+                {isLoadingRandom ? 'Shuffling...' : 'Play Again'}
               </button>
 
               {/* Exit Game - Back to home */}
               <button
                 onClick={handleExit}
                 disabled={isExiting || isLoadingRandom}
-                className="group relative bg-[#1a1a1a] border border-white/20 py-3 md:py-4 rounded-sm hover:border-white/40 transition-colors disabled:opacity-50"
+                className="w-full py-3 md:py-4 capcrunch-btn-secondary capcrunch-title text-lg md:text-xl disabled:opacity-50"
               >
-                <span className="relative z-10 retro-title text-lg md:text-xl text-white/70 uppercase tracking-widest">Exit Game</span>
+                Exit Game
               </button>
             </div>
 
             {/* DEAD BETS - Collapsible height on mobile */}
-            <div className="h-32 md:h-48 lg:flex-1 bg-black/50 border border-white/5 rounded-sm p-4 flex flex-col overflow-hidden">
-              <h2 className="retro-title text-[9px] text-white/40 mb-3 uppercase flex justify-between">Dead Bets <span>// {incorrectGuesses.length}</span></h2>
+            <div className="h-32 md:h-48 lg:flex-1 capcrunch-panel border-white/5 p-4 flex flex-col overflow-hidden">
+              <h2 className="capcrunch-kicker text-[9px] text-white/40 mb-3 flex justify-between">Dead Bets <span>// {incorrectGuesses.length}</span></h2>
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-wrap content-start gap-2 pb-2">
                 {incorrectGuesses.map((guess, index) => (
                   <span key={index} className="px-2 py-1 bg-[#f0f0f0] text-black sports-font text-[9px] font-bold uppercase border-b-2 border-gray-400">
@@ -226,10 +215,10 @@ export function ResultsPage() {
           </div>
 
           {/* RIGHT COLUMN: PAYOUT TABLE (9/12 Desktop, Full Mobile) */}
-          <div className="lg:col-span-9 bg-black/70 border border-white/10 rounded-sm flex flex-col shadow-2xl overflow-hidden mb-6 lg:mb-0">
+          <div className="lg:col-span-9 capcrunch-panel flex flex-col shadow-2xl overflow-hidden mb-6 lg:mb-0">
             <div className="p-3 md:p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-              <span className="sports-font text-[9px] tracking-widest text-white/40 uppercase">Roster Ledger</span>
-              <span className="retro-title text-[9px] text-white/20 uppercase">Odds: 1:1</span>
+              <span className="capcrunch-kicker text-[9px] text-white/40">Roster Ledger</span>
+              <span className="capcrunch-kicker text-[9px] text-white/20">Odds: 1:1</span>
             </div>
             
             {/* GRID ADJUSTMENT: 1 col mobile, 2 col tablet, 3 col desktop */}
@@ -252,7 +241,7 @@ export function ResultsPage() {
                           <div className={`sports-font text-[7px] md:text-[8px] ${wasGuessed ? 'text-white/50' : 'text-white/20'}`}>
                             #{player.number || '??'} // {player.position}
                           </div>
-                          <div className={`retro-title text-sm md:text-base truncate ${wasGuessed ? 'text-white' : 'text-white/40'}`}>
+                          <div className={`capcrunch-title text-sm md:text-base truncate ${wasGuessed ? 'text-white' : 'text-white/40'}`}>
                             {player.name}
                           </div>
                         </div>

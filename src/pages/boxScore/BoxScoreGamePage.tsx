@@ -57,10 +57,10 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
   const jersey = cleanJersey(number);
 
   return (
-    <div ref={rowRef} className="flex items-center gap-2 py-1 rounded-lg">
+    <div ref={rowRef} className="flex items-center gap-2 py-1">
       {/* Jersey badge */}
       <div
-        className="shrink-0 w-9 h-7 flex items-center justify-center rounded-md sports-font text-[11px] font-bold tabular-nums"
+        className="shrink-0 w-9 h-7 flex items-center justify-center sports-font text-[11px] font-bold tabular-nums"
         style={{ background: `${teamColor}30`, color: teamColor, border: `1px solid ${teamColor}50` }}
       >
         {jersey ? `#${jersey}` : '–'}
@@ -74,7 +74,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
               key="correct"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-2 px-3 py-1.5"
               style={{
                 background: 'linear-gradient(90deg, rgba(22,163,74,0.25) 0%, rgba(22,163,74,0.08) 100%)',
                 border: '1px solid rgba(22,163,74,0.5)',
@@ -93,7 +93,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
               key="revealed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="px-3 py-1.5 rounded-lg border border-red-900/40 bg-red-950/20"
+              className="px-3 py-1.5 border border-red-900/40 bg-red-950/20"
             >
               <span className="sports-font text-sm text-red-400/80">{playerName}</span>
             </motion.div>
@@ -104,7 +104,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
                 value={guess}
                 onChange={e => onGuessChange(e.target.value)}
                 placeholder="Player name..."
-                className="w-full bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
+                className="w-full bg-black/40 border border-white/15 px-3 py-1.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
                 style={{ '--tw-ring-color': teamColor } as React.CSSProperties}
                 onFocus={e => (e.currentTarget.style.borderColor = `${teamColor}60`)}
                 onBlur={e => (e.currentTarget.style.borderColor = '')}
@@ -132,7 +132,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
 export function BoxScoreGamePage() {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const filters: BoxFilters = (location.state as BoxFilters | null) ?? { minYear: 2015, maxYear: 2024, team: null };
+  const filters: BoxFilters = (location.state as BoxFilters | null) ?? { minYear: 2015, maxYear: 2025, team: null };
 
   const [loading,       setLoading]       = useState(true);
   const [game,          setGame]          = useState<BoxScoreGame | null>(null);
@@ -239,7 +239,7 @@ export function BoxScoreGamePage() {
     return (
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#f59e0b] border-t-transparent rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
           <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
@@ -257,7 +257,7 @@ export function BoxScoreGamePage() {
     <div className="min-h-screen text-white" style={{ background: '#080808' }}>
 
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-30 border-b border-white/6" style={{ background: 'rgba(8,8,8,0.96)', backdropFilter: 'blur(16px)' }}>
+      <header className="sticky top-0 z-30 capcrunch-panel border-b border-white/10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate('/')} className="p-2 text-[#555] hover:text-white rounded-lg hover:bg-white/5 transition-all shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,16 +265,16 @@ export function BoxScoreGamePage() {
             </svg>
           </button>
           <div className="flex-1 text-center">
-            <span className="retro-title text-xl tracking-widest" style={{ color: '#f59e0b' }}>BOX SCORE</span>
+            <span className="capcrunch-title text-xl" style={{ color: '#FDF100' }}>BOX SCORE</span>
           </div>
           {/* Live score pill */}
           <div
             className="flex items-center gap-1.5 px-3 py-1 rounded-full border shrink-0"
             style={{ background: `${homeColor}18`, borderColor: `${homeColor}50` }}
           >
-            <span className="retro-title text-lg tabular-nums" style={{ color: '#f59e0b' }}>{correctCount}</span>
+            <span className="capcrunch-title text-lg tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
             <span className="sports-font text-xs text-[#444]">/</span>
-            <span className="retro-title text-lg tabular-nums text-[#555]">{totalRows}</span>
+            <span className="capcrunch-title text-lg tabular-nums text-[#555]">{totalRows}</span>
             {totalRows > 0 && (
               <span className="sports-font text-[10px] ml-1" style={{ color: pct === 100 ? '#4ade80' : '#888' }}>{pct}%</span>
             )}
@@ -286,7 +286,7 @@ export function BoxScoreGamePage() {
 
         {/* ── SCOREBOARD ── */}
         <div
-          className="relative overflow-hidden rounded-2xl"
+          className="relative overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${awayColor}28 0%, #111 40%, #111 60%, ${homeColor}28 100%)`,
             border: `1px solid rgba(255,255,255,0.08)`,
@@ -303,10 +303,10 @@ export function BoxScoreGamePage() {
             {/* Away */}
             <div className="flex flex-col items-center gap-2 flex-1">
               <TeamLogo abbr={game.away_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
-              <span className="retro-title text-2xl sm:text-4xl leading-none" style={{ color: awayColor, textShadow: `0 0 30px ${awayColor}80` }}>
+              <span className="capcrunch-title text-2xl sm:text-4xl leading-none" style={{ color: awayColor, textShadow: `0 0 30px ${awayColor}80` }}>
                 {game.away_team}
               </span>
-              <span className="retro-title text-6xl sm:text-7xl text-white leading-none tabular-nums"
+              <span className="capcrunch-title text-6xl sm:text-7xl text-white leading-none tabular-nums"
                 style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
                 {game.away_score}
               </span>
@@ -317,7 +317,7 @@ export function BoxScoreGamePage() {
             <div className="flex flex-col items-center gap-3 px-2 sm:px-6">
               {game.overtime && (
                 <span className="px-2.5 py-1 rounded-full sports-font text-[10px] tracking-wider"
-                  style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b' }}>
+                  style={{ background: 'rgba(253,241,0,0.15)', border: '1px solid rgba(253,241,0,0.4)', color: '#FDF100' }}>
                   OT
                 </span>
               )}
@@ -334,10 +334,10 @@ export function BoxScoreGamePage() {
             {/* Home */}
             <div className="flex flex-col items-center gap-2 flex-1">
               <TeamLogo abbr={game.home_team} className="w-16 h-16 sm:w-24 sm:h-24 object-contain" imgStyle={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} />
-              <span className="retro-title text-2xl sm:text-4xl leading-none" style={{ color: homeColor, textShadow: `0 0 30px ${homeColor}80` }}>
+              <span className="capcrunch-title text-2xl sm:text-4xl leading-none" style={{ color: homeColor, textShadow: `0 0 30px ${homeColor}80` }}>
                 {game.home_team}
               </span>
-              <span className="retro-title text-6xl sm:text-7xl text-white leading-none tabular-nums"
+              <span className="capcrunch-title text-6xl sm:text-7xl text-white leading-none tabular-nums"
                 style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
                 {game.home_score}
               </span>
@@ -348,37 +348,37 @@ export function BoxScoreGamePage() {
           {/* Game info chips */}
           <div className="relative border-t border-white/6 px-4 py-3 flex flex-wrap justify-center gap-2">
             {/* Season / Date */}
-            <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
+            <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[72px]">
               <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Season</span>
-              <span className="retro-title text-base text-white leading-tight">{game.season}</span>
+              <span className="capcrunch-title text-base text-white leading-tight">{game.season}</span>
               <span className="sports-font text-[9px] text-[#666]">{formatDate(game.gameday)}</span>
             </div>
             {/* Week / Type */}
-            <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[60px]">
+            <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[60px]">
               <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Week</span>
-              <span className="retro-title text-base text-white leading-tight">{game.week}</span>
+              <span className="capcrunch-title text-base text-white leading-tight">{game.week}</span>
               <span className="sports-font text-[9px] text-[#666]">{gameLabel}</span>
             </div>
             {/* Stadium */}
             {game.stadium && (
-              <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 max-w-[140px]">
+              <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 max-w-[140px]">
                 <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Stadium</span>
                 <span className="sports-font text-[10px] text-[#bbb] text-center leading-snug mt-0.5 line-clamp-2">{game.stadium}</span>
               </div>
             )}
             {/* Conditions */}
             {(game.temp != null || game.roof) && (
-              <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[60px]">
+              <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[60px]">
                 <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Conditions</span>
-                {game.temp != null && <span className="retro-title text-base text-white leading-tight">{game.temp}°F</span>}
+                {game.temp != null && <span className="capcrunch-title text-base text-white leading-tight">{game.temp}°F</span>}
                 {game.roof && <span className="sports-font text-[9px] text-[#666] capitalize">{game.roof}</span>}
               </div>
             )}
             {/* Wind */}
             {game.wind != null && (
-              <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[52px]">
+              <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[52px]">
                 <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Wind</span>
-                <span className="retro-title text-base text-white leading-tight">{game.wind}</span>
+                <span className="capcrunch-title text-base text-white leading-tight">{game.wind}</span>
                 <span className="sports-font text-[9px] text-[#666]">mph</span>
               </div>
             )}
@@ -388,14 +388,14 @@ export function BoxScoreGamePage() {
         {/* ── GLOBAL SEARCH ── */}
         <div className="relative z-20">
           <div
-            className="flex items-center gap-3 rounded-2xl px-5 py-4 transition-all"
+            className="flex items-center gap-3 px-5 py-4 transition-all"
             style={{
               background: 'linear-gradient(135deg, #1a1a1a, #141414)',
-              border: '1px solid rgba(245,158,11,0.3)',
-              boxShadow: '0 0 0 1px rgba(245,158,11,0.08), 0 8px 32px rgba(0,0,0,0.4)',
+              border: '1px solid rgba(253,241,0,0.3)',
+              boxShadow: '0 0 0 1px rgba(253,241,0,0.08), 0 8px 32px rgba(0,0,0,0.4)',
             }}
           >
-            <svg className="w-5 h-5 shrink-0" fill="none" stroke="#f59e0b" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="#FDF100" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -429,7 +429,7 @@ export function BoxScoreGamePage() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.97 }}
                 transition={{ duration: 0.14, ease: 'easeOut' }}
-                className="absolute top-full left-0 right-0 mt-2 rounded-2xl overflow-hidden shadow-2xl z-30"
+                className="absolute top-full left-0 right-0 mt-2 overflow-hidden shadow-2xl z-30"
                 style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 {candidates.map((c, i) => (
@@ -459,7 +459,7 @@ export function BoxScoreGamePage() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-900/40 bg-red-950/25"
+              className="flex items-center gap-3 px-4 py-3 border border-red-900/40 bg-red-950/25"
             >
               <svg className="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -481,7 +481,7 @@ export function BoxScoreGamePage() {
             return (
               <div
                 key={side}
-                className="rounded-2xl overflow-hidden"
+                className="overflow-hidden"
                 style={{
                   background: `linear-gradient(160deg, ${color}12 0%, #111 30%)`,
                   border: `1px solid ${color}30`,
@@ -497,7 +497,7 @@ export function BoxScoreGamePage() {
                 >
                   <TeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
-                    <div className="retro-title text-xl leading-none" style={{ color }}>{abbr}</div>
+                    <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
                     <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   {/* Mini progress */}
@@ -622,8 +622,8 @@ export function BoxScoreGamePage() {
 
         {/* ── SPREAD ── */}
         {game.spread_line != null && (
-          <div className="rounded-2xl p-5" style={{ background: '#111', border: '1px solid rgba(245,158,11,0.2)' }}>
-            <SectionHeader label="Vegas Spread" color="#f59e0b" />
+          <div className="p-5" style={{ background: '#0a0a0a', border: '1px solid rgba(253,241,0,0.2)' }}>
+            <SectionHeader label="Vegas Spread" color="#FDF100" />
             <div className="flex items-center gap-4 flex-wrap mt-3">
               <input
                 type="number" step="0.5"
@@ -631,7 +631,7 @@ export function BoxScoreGamePage() {
                 onChange={e => setSpreadGuess(e.target.value)}
                 placeholder="e.g. 3 or −3"
                 disabled={revealed}
-                className="w-36 bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-2.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#f59e0b]/40 disabled:opacity-40 transition-colors"
+                className="w-36 bg-black/40 border border-white/15 px-4 py-2.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#FDF100]/40 disabled:opacity-40 transition-colors"
               />
               <span className="sports-font text-xs text-[#666]">pts · + = home favored · − = away favored</span>
               {revealed && (
@@ -656,7 +656,7 @@ export function BoxScoreGamePage() {
           {!revealed && (
             <button
               onClick={() => setHintsRevealed(h => !h)}
-              className={`px-5 py-4 rounded-2xl sports-font text-sm border transition-all ${
+              className={`px-5 py-4 sports-font text-sm border transition-all ${
                 hintsRevealed
                   ? 'border-amber-500/60 text-amber-400 bg-amber-900/15'
                   : 'border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa]'
@@ -669,14 +669,14 @@ export function BoxScoreGamePage() {
           {!revealed && (
             <button
               onClick={() => setRevealed(true)}
-              className="px-6 py-4 rounded-2xl sports-font text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
+              className="px-6 py-4 sports-font text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
             >
               Reveal All
             </button>
           )}
           <button
             onClick={() => navigate('/box-score/results', { state: { game, guesses, spreadGuess, filters, revealed } })}
-            className="flex-1 py-4 rounded-2xl retro-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
+            className="flex-1 py-4 capcrunch-title text-2xl text-white transition-all hover:brightness-110 active:scale-[0.98]"
             style={{
               background: `linear-gradient(135deg, ${homeColor}, ${homeColor}88)`,
               boxShadow: `0 4px 24px ${homeColor}50, 0 0 0 1px ${homeColor}30`,

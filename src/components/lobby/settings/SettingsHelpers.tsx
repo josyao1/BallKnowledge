@@ -15,7 +15,7 @@ import type { ReactNode } from 'react';
 // ─── Shared select style ──────────────────────────────────────────────────────
 
 export const selectCls =
-  'bg-[#0d0d0d] text-[#999] px-2 py-1 rounded-sm border border-[#2a2a2a] sports-font text-[10px] focus:outline-none focus:border-[#d4af37]/30 hover:border-[#3a3a3a] appearance-none cursor-pointer transition-colors';
+  'bg-black/40 text-white/60 px-2 py-1 border border-white/12 sports-font text-[10px] focus:outline-none focus:border-white/25 hover:border-white/20 appearance-none cursor-pointer transition-colors';
 
 // ─── Layout primitives ────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ export const selectCls =
 export function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center gap-3 min-h-[26px]">
-      <span className="sports-font text-[9px] text-[#777] tracking-[0.2em] uppercase shrink-0 w-14">
+      <span className="sports-font text-[9px] text-white/35 tracking-[0.2em] uppercase shrink-0 w-14">
         {label}
       </span>
       <div className="flex-1 min-w-0">{children}</div>
@@ -51,7 +51,7 @@ export function ScrollStrip({ children }: { children: ReactNode }) {
 /** Single selectable chip. */
 export function Chip({
   active,
-  activeBg = '#d4af37',
+  activeBg = '#FDF100',
   activeText = '#000',
   onClick,
   children,
@@ -71,17 +71,17 @@ export function Chip({
     <button
       onClick={onClick}
       title={title}
-      className={`shrink-0 px-2.5 py-1 rounded-sm sports-font text-[10px] tracking-wider transition-all ${
+      className={`shrink-0 px-2.5 py-1 sports-font text-[10px] tracking-wider transition-all ${
         active
           ? ''
           : dim
-          ? 'bg-[#0d0d0d] text-[#2a2a2a] border border-[#181818] line-through'
-          : 'bg-[#111] text-[#444] border border-[#222] hover:border-[#333] hover:text-[#666]'
+          ? 'bg-black/20 text-white/15 border border-white/6 line-through'
+          : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/22 hover:text-white/60'
       }`}
       style={active ? {
         background: activeBg,
         color: activeText,
-        boxShadow: '0 1px 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
+        boxShadow: '0 1px 0 rgba(0,0,0,0.35)',
       } : undefined}
     >
       {children}
@@ -95,11 +95,11 @@ export function Stepper({
 }: {
   value: number; min: number; max: number; onChange: (n: number) => void;
 }) {
-  const btn = 'w-6 h-6 flex items-center justify-center retro-title text-sm text-[#555] hover:text-white border border-[#222] hover:border-[#444] rounded-sm transition-colors';
+  const btn = 'w-6 h-6 flex items-center justify-center sports-font text-sm text-white/40 hover:text-white border border-white/10 hover:border-white/25 transition-colors';
   return (
     <div className="flex items-center gap-2">
       <button onClick={() => onChange(Math.max(min, value - 1))} className={btn}>−</button>
-      <span className="retro-title text-sm text-white tabular-nums w-5 text-center">{value}</span>
+      <span className="capcrunch-title text-sm text-white tabular-nums w-5 text-center">{value}</span>
       <button onClick={() => onChange(Math.min(max, value + 1))} className={btn}>+</button>
     </div>
   );
@@ -139,7 +139,7 @@ interface TimerPickerProps {
 }
 
 export function TimerPicker({ timer, customTimer, presets, activeColor, onSelect, onCustomChange }: TimerPickerProps) {
-  const activeBg = activeColor.includes('f59e0b') ? '#f59e0b' : '#d4af37';
+  const activeBg = activeColor.includes('f59e0b') ? '#f59e0b' : '#FDF100';
   return (
     <div className="space-y-2">
       <Row label="Timer">
@@ -167,7 +167,7 @@ export function TimerPicker({ timer, customTimer, presets, activeColor, onSelect
               onCustomChange(raw, clamped);
             }}
             placeholder="sec" min={10} max={600}
-            className="w-16 px-2 py-1 bg-[#111] rounded-sm border border-[#222] text-[#888] text-center sports-font text-[10px] focus:outline-none focus:border-[#333]"
+            className="w-16 px-2 py-1 bg-black/40 border border-white/10 text-white/60 text-center sports-font text-[10px] focus:outline-none focus:border-white/25"
           />
           {customTimer && (
             <span className="text-[#555] sports-font text-[10px]">

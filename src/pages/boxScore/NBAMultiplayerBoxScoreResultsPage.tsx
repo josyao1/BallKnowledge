@@ -75,7 +75,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
   const game = state?.game ?? null;
   const myGuesses = state?.myGuesses ?? {};
 
-  const homeColor = game ? getNBATeamColor(game.home_team) : '#f59e0b';
+  const homeColor = game ? getNBATeamColor(game.home_team) : '#FDF100';
   const awayColor = game ? getNBATeamColor(game.away_team) : '#555';
 
   let myCorrect = 0, myTotal = 0;
@@ -103,16 +103,15 @@ export function NBAMultiplayerBoxScoreResultsPage() {
   }
 
   return (
-    <div className="min-h-screen text-white" style={{ background: '#080808' }}>
-      <header className="sticky top-0 z-20 border-b border-white/6 px-4 py-3 flex items-center gap-3"
-        style={{ background: 'rgba(8,8,8,0.96)', backdropFilter: 'blur(16px)' }}>
+    <div className="min-h-screen home-chalkboard text-white">
+      <header className="sticky top-0 z-20 capcrunch-panel border-b border-white/10 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate('/')} className="p-1.5 text-[#555] hover:text-white transition-colors shrink-0">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
         <div className="flex-1 text-center">
-          <span className="retro-title text-xl tracking-widest" style={{ color: '#f59e0b' }}>RESULTS</span>
+          <span className="capcrunch-title text-xl text-[#FDF100]">RESULTS</span>
         </div>
         <div className="w-8 shrink-0" />
       </header>
@@ -124,14 +123,10 @@ export function NBAMultiplayerBoxScoreResultsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative overflow-hidden rounded-2xl p-5 text-center"
-            style={{
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, #141414 50%, rgba(245,158,11,0.08) 100%)',
-              border: '1px solid rgba(245,158,11,0.35)',
-            }}
+            className="relative overflow-hidden capcrunch-panel border-[#FDF100]/30 p-5 text-center"
           >
             <div className="sports-font text-[10px] text-[#555] tracking-[0.4em] uppercase mb-2">Match Winner</div>
-            <div className="retro-title text-4xl text-[#f59e0b]">{winner.player_name}</div>
+            <div className="capcrunch-title text-4xl text-[#FDF100]">{winner.player_name}</div>
             <div className="sports-font text-sm text-[#888] mt-1">{winner.score || 0} correct</div>
           </motion.div>
         )}
@@ -141,10 +136,9 @@ export function NBAMultiplayerBoxScoreResultsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl p-4"
-          style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.06)' }}
+          className="capcrunch-panel p-4"
         >
-          <div className="sports-font text-[10px] text-[#555] tracking-[0.35em] uppercase mb-3 text-center">Standings</div>
+          <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.35em] uppercase mb-3 text-center">Standings</div>
           <div className="space-y-2">
             {sortedPlayers.map((player, rank) => {
               const isMe = player.player_id === currentPlayerId;
@@ -155,22 +149,22 @@ export function NBAMultiplayerBoxScoreResultsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 + rank * 0.04 }}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl ${
+                  className={`flex items-center justify-between px-4 py-3 ${
                     rank === 0
-                      ? 'bg-[#f59e0b]/10 border border-[#f59e0b]/30'
+                      ? 'bg-[#FDF100]/10 border border-[#FDF100]/30'
                       : isMe
                         ? 'bg-white/5 border border-white/10'
                         : 'bg-black/20 border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`retro-title text-lg w-7 text-center ${rank === 0 ? 'text-[#f59e0b]' : 'text-[#444]'}`}>#{rank + 1}</span>
+                    <span className={`capcrunch-title text-lg w-7 text-center ${rank === 0 ? 'text-[#FDF100]' : 'text-[#444]'}`}>#{rank + 1}</span>
                     <span className="sports-font text-sm text-white/90">
                       {player.player_name}
                       {isMe && <span className="text-white/40 ml-1 text-[10px]">(you)</span>}
                     </span>
                   </div>
-                  <span className={`retro-title text-xl tabular-nums ${rank === 0 ? 'text-[#f59e0b]' : 'text-[#666]'}`}>{score}</span>
+                  <span className={`capcrunch-title text-xl tabular-nums ${rank === 0 ? 'text-[#FDF100]' : 'text-[#666]'}`}>{score}</span>
                 </motion.div>
               );
             })}
@@ -180,14 +174,10 @@ export function NBAMultiplayerBoxScoreResultsPage() {
         {/* Your score */}
         {game && (
           <div
-            className="rounded-2xl p-5 flex flex-col items-center gap-1"
-            style={{
-              background: `linear-gradient(135deg, ${awayColor}15 0%, #141414 40%, #141414 60%, ${homeColor}15 100%)`,
-              border: '1px solid rgba(245,158,11,0.15)',
-            }}
+            className="capcrunch-panel p-5 flex flex-col items-center gap-1"
           >
-            <div className="sports-font text-[10px] text-[#555] tracking-[0.35em] uppercase">Your Score</div>
-            <div className="retro-title text-5xl text-[#f59e0b] tabular-nums leading-none">
+            <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.35em] uppercase">Your Score</div>
+            <div className="capcrunch-title text-5xl text-[#FDF100] tabular-nums leading-none">
               {myCorrect}<span className="text-2xl text-[#444]">/{myTotal}</span>
             </div>
           </div>
@@ -207,7 +197,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
               return (
                 <div
                   key={side}
-                  className="rounded-2xl overflow-hidden"
+                  className="overflow-hidden"
                   style={{
                     background: `linear-gradient(160deg, ${color}12 0%, #111 30%)`,
                     border: `1px solid ${color}30`,
@@ -219,7 +209,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
                   >
                     <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                     <div>
-                      <div className="retro-title text-xl leading-none" style={{ color }}>{abbr}</div>
+                      <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
                       <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                     </div>
                   </div>
@@ -245,23 +235,19 @@ export function NBAMultiplayerBoxScoreResultsPage() {
           {isHost && (
             <button
               onClick={handleNewGame}
-              className="flex-1 py-4 rounded-2xl retro-title text-2xl text-black transition-all hover:brightness-110 active:scale-[0.98]"
-              style={{
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                boxShadow: '0 4px 24px rgba(245,158,11,0.4), 0 0 0 1px rgba(245,158,11,0.3)',
-              }}
+              className="flex-1 py-4 capcrunch-btn-primary capcrunch-title text-lg transition-all"
             >
               New Game
             </button>
           )}
           {!isHost && (
-            <div className="flex-1 py-4 rounded-2xl text-center sports-font text-sm text-[#555] border border-white/6">
+            <div className="flex-1 py-4 text-center sports-font text-sm text-[#555] border border-white/6">
               Waiting for host...
             </div>
           )}
           <button
             onClick={handleLeave}
-            className="px-6 py-4 rounded-2xl sports-font text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
+            className="px-6 py-4 capcrunch-btn-secondary capcrunch-kicker"
           >
             Leave
           </button>

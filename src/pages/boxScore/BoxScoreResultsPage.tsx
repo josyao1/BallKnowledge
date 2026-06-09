@@ -160,17 +160,17 @@ export function BoxScoreResultsPage() {
   const pct = totalRows > 0 ? Math.round((correctRows / totalRows) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[#111] text-white">
+    <div className="min-h-screen home-chalkboard text-white">
 
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#0e0e0e]/95 backdrop-blur border-b border-[#1e1e1e] px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-20 capcrunch-panel border-b border-white/10 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate('/')} className="p-1.5 text-[#444] hover:text-white transition-colors shrink-0">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
         <div className="flex-1 text-center">
-          <span className="retro-title text-lg text-[#f59e0b]">Results</span>
+          <span className="capcrunch-title text-lg text-[#FDF100]">Results</span>
         </div>
         <div className="w-8 shrink-0" />
       </header>
@@ -178,9 +178,9 @@ export function BoxScoreResultsPage() {
       <div className="max-w-5xl mx-auto px-3 py-4 space-y-3">
 
         {/* ── Score card ── */}
-        <div className="bg-[#141414] border border-[#1e1e1e] rounded-xl p-5 flex flex-col items-center gap-2">
+        <div className="capcrunch-panel p-5 flex flex-col items-center gap-2">
           <div className="sports-font text-[10px] text-[#444] tracking-[0.35em] uppercase">Final Score</div>
-          <div className="retro-title text-6xl text-[#f59e0b] tabular-nums leading-none">
+          <div className="capcrunch-title text-6xl text-[#FDF100] tabular-nums leading-none">
             {correctRows}<span className="text-3xl text-[#444]">/{totalRows}</span>
           </div>
           <div className="sports-font text-sm text-[#555]">
@@ -199,11 +199,11 @@ export function BoxScoreResultsPage() {
         </div>
 
         {/* ── Game header ── */}
-        <div className="bg-[#141414] border border-[#1e1e1e] rounded-xl overflow-hidden">
+        <div className="capcrunch-panel overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="flex flex-col items-center gap-1">
-              <div className="retro-title text-2xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</div>
-              <div className="retro-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.away_score}</div>
+              <div className="capcrunch-title text-2xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</div>
+              <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.away_score}</div>
               <div className="sports-font text-[9px] text-[#444] tracking-widest mt-0.5">AWAY</div>
             </div>
             <div className="flex flex-col items-center gap-1.5 px-3">
@@ -216,12 +216,12 @@ export function BoxScoreResultsPage() {
               </div>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <div className="retro-title text-2xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</div>
-              <div className="retro-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.home_score}</div>
+              <div className="capcrunch-title text-2xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</div>
+              <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.home_score}</div>
               <div className="sports-font text-[9px] text-[#444] tracking-widest mt-0.5">HOME</div>
             </div>
           </div>
-          <div className="border-t border-[#1a1a1a] px-4 py-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+          <div className="border-t border-white/8 px-4 py-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
             <span className="sports-font text-[10px] text-[#3a3a3a]">{formatDate(game.gameday)}</span>
             {game.stadium && <span className="sports-font text-[10px] text-[#2e2e2e]">· {game.stadium}</span>}
             {game.roof && <span className="sports-font text-[10px] text-[#2e2e2e] capitalize">· {game.roof}</span>}
@@ -238,17 +238,17 @@ export function BoxScoreResultsPage() {
             const data  = game.box_score[side];
 
             return (
-              <div key={side} className="bg-[#141414] border border-[#1e1e1e] rounded-xl overflow-hidden">
-                <div className="px-4 py-2 border-b border-[#1a1a1a] flex items-center gap-2">
+              <div key={side} className="capcrunch-panel overflow-hidden">
+                <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                  <span className="retro-title text-base" style={{ color }}>{abbr}</span>
+                  <span className="capcrunch-title text-base" style={{ color }}>{abbr}</span>
                   <span className="sports-font text-[9px] text-[#333] tracking-widest uppercase ml-1">{side}</span>
                 </div>
 
                 <div className="p-3 space-y-3">
                   {data.passing.length > 0 && (
                     <section>
-                      <div className="sports-font text-[9px] text-[#333] tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-[#181818]">Passing</div>
+                      <div className="sports-font text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Passing</div>
                       {data.passing.map((p, i) => (
                         <PassingResultRow key={`${p.id}-${i}`} player={p} guessed={guesses[bk(side, 'passing', i)] ?? ''} />
                       ))}
@@ -256,7 +256,7 @@ export function BoxScoreResultsPage() {
                   )}
                   {data.rushing.length > 0 && (
                     <section>
-                      <div className="sports-font text-[9px] text-[#333] tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-[#181818]">Rushing</div>
+                      <div className="sports-font text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Rushing</div>
                       {data.rushing.map((p, i) => (
                         <RushingResultRow key={`${p.id}-${i}`} player={p} guessed={guesses[bk(side, 'rushing', i)] ?? ''} />
                       ))}
@@ -264,7 +264,7 @@ export function BoxScoreResultsPage() {
                   )}
                   {data.receiving.length > 0 && (
                     <section>
-                      <div className="sports-font text-[9px] text-[#333] tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-[#181818]">Receiving</div>
+                      <div className="sports-font text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Receiving</div>
                       {data.receiving.map((p, i) => (
                         <ReceivingResultRow key={`${p.id}-${i}`} player={p} guessed={guesses[bk(side, 'receiving', i)] ?? ''} />
                       ))}
@@ -280,7 +280,7 @@ export function BoxScoreResultsPage() {
         <div className="flex gap-3 pb-10">
           <button
             onClick={() => navigate('/box-score', { state: filters })}
-            className="flex-1 py-3 rounded-lg retro-title text-lg text-white transition-all hover:brightness-110"
+            className="flex-1 py-3 capcrunch-title text-lg text-white transition-all hover:brightness-110"
             style={{
               background: `linear-gradient(135deg, ${homeColor}dd, ${homeColor}88)`,
               border: `1px solid ${homeColor}55`,
@@ -290,7 +290,7 @@ export function BoxScoreResultsPage() {
           </button>
           <button
             onClick={() => navigate('/')}
-            className="px-5 py-3 rounded-lg sports-font text-sm border border-[#2a2a2a] text-[#666] hover:border-[#444] hover:text-[#999] transition-all"
+            className="px-5 py-3 capcrunch-btn-secondary capcrunch-kicker"
           >
             Home
           </button>

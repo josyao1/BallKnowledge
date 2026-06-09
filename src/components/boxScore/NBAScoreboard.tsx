@@ -14,7 +14,7 @@ export function NBAScoreboard({ game, compact = false }: Props) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl"
+      className="relative overflow-hidden"
       style={{
         background: `linear-gradient(135deg, ${awayColor}28 0%, #111 40%, #111 60%, ${homeColor}28 100%)`,
         border: '1px solid rgba(255,255,255,0.08)',
@@ -38,13 +38,13 @@ export function NBAScoreboard({ game, compact = false }: Props) {
             imgStyle={compact ? undefined : { filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }}
           />
           <span
-            className={`retro-title leading-none ${compact ? 'text-xl sm:text-3xl' : 'text-2xl sm:text-4xl'}`}
+            className={`capcrunch-title leading-none ${compact ? 'text-xl sm:text-3xl' : 'text-2xl sm:text-4xl'}`}
             style={{ color: awayColor, ...(compact ? {} : { textShadow: `0 0 30px ${awayColor}80` }) }}
           >
             {game.away_team}
           </span>
           <span
-            className={`retro-title text-white leading-none tabular-nums ${compact ? 'text-5xl sm:text-6xl' : 'text-6xl sm:text-7xl'}`}
+            className={`capcrunch-title text-white leading-none tabular-nums ${compact ? 'text-5xl sm:text-6xl' : 'text-6xl sm:text-7xl'}`}
             style={compact ? {} : { textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}
           >
             {game.away_score}
@@ -57,7 +57,7 @@ export function NBAScoreboard({ game, compact = false }: Props) {
           {game.overtime && (
             <span
               className={`rounded-full sports-font ${compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[10px] tracking-wider'}`}
-              style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b' }}
+              style={{ background: 'rgba(253,241,0,0.15)', border: '1px solid rgba(253,241,0,0.4)', color: '#FDF100' }}
             >
               OT
             </span>
@@ -84,13 +84,13 @@ export function NBAScoreboard({ game, compact = false }: Props) {
             imgStyle={compact ? undefined : { filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }}
           />
           <span
-            className={`retro-title leading-none ${compact ? 'text-xl sm:text-3xl' : 'text-2xl sm:text-4xl'}`}
+            className={`capcrunch-title leading-none ${compact ? 'text-xl sm:text-3xl' : 'text-2xl sm:text-4xl'}`}
             style={{ color: homeColor, ...(compact ? {} : { textShadow: `0 0 30px ${homeColor}80` }) }}
           >
             {game.home_team}
           </span>
           <span
-            className={`retro-title text-white leading-none tabular-nums ${compact ? 'text-5xl sm:text-6xl' : 'text-6xl sm:text-7xl'}`}
+            className={`capcrunch-title text-white leading-none tabular-nums ${compact ? 'text-5xl sm:text-6xl' : 'text-6xl sm:text-7xl'}`}
             style={compact ? {} : { textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}
           >
             {game.home_score}
@@ -102,12 +102,12 @@ export function NBAScoreboard({ game, compact = false }: Props) {
       {/* Game info chips — solo (non-compact) only */}
       {!compact && (
         <div className="relative border-t border-white/6 px-4 py-3 flex flex-wrap justify-center gap-2">
-          <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
+          <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[72px]">
             <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Season</span>
-            <span className="retro-title text-base text-white leading-tight">{nbaSeasonStr(game.season)}</span>
+            <span className="capcrunch-title text-base text-white leading-tight">{nbaSeasonStr(game.season)}</span>
             <span className="sports-font text-[9px] text-[#666]">{formatDate(game.game_date)}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-white/4 rounded-lg py-1.5 px-3 min-w-[72px]">
+          <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[72px]">
             <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Type</span>
             <span className="sports-font text-[11px] text-[#ccc] leading-tight text-center mt-0.5">{gameLabel}</span>
           </div>

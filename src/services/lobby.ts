@@ -52,7 +52,7 @@ export async function createLobby(
   timerDuration: number = 90,
   gameMode: 'random' | 'manual' = 'manual',
   minYear: number = 2015,
-  maxYear: number = 2024,
+  maxYear: number = 2025,
   gameType: string = 'roster',
   selectionScope: string = 'team',
   divisionConference?: string | null,
@@ -546,7 +546,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
 
     // Use stored year range, fallback to defaults if not set
     const minYear = currentLobby.min_year || (sport === 'nfl' ? 2000 : 2015);
-    const maxYear = currentLobby.max_year || 2024;
+    const maxYear = currentLobby.max_year || 2025;
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
 
     if (selectionScope === 'division') {

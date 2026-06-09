@@ -46,7 +46,7 @@ export function RosterSettings({
             onClick={() => onSportChange('nba')}>NBA</Chip>
           <Chip active={!randomSport && sport === 'nfl'} activeBg="#013369" activeText="#fff"
             onClick={() => onSportChange('nfl')}>NFL</Chip>
-          <Chip active={randomSport} activeBg="#d4af37" activeText="#000"
+          <Chip active={randomSport} activeBg="#FDF100" activeText="#000"
             onClick={() => onSportChange('random')}>?</Chip>
         </Chips>
       </Row>
