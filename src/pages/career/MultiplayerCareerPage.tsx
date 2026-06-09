@@ -341,8 +341,8 @@ export function MultiplayerCareerPage() {
 
   if (!lobby || !careerState) {
     return (
-      <div className="min-h-screen bg-[#111] flex items-center justify-center">
-        <div className="text-white/50 sports-font">Loading...</div>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <div className="text-white/50 capcrunch-kicker">Loading...</div>
       </div>
     );
   }
@@ -351,22 +351,22 @@ export function MultiplayerCareerPage() {
   if (lobby.status === 'waiting') {
     const summary = roundSummary;
     return (
-      <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+      <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
           <div>
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
-            <h1 className="retro-title text-2xl text-[var(--vintage-cream)]">
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <h1 className="capcrunch-title text-2xl text-white">
               Round {summary?.round ?? careerState.round}
             </h1>
             {careerState.position && (
-              <div className="sports-font text-xs text-[#888] mt-0.5">
+              <div className="capcrunch-kicker text-xs text-[#888] mt-0.5">
                 {sport.toUpperCase()} {POSITION_NAMES[careerState.position] ?? careerState.position}
               </div>
             )}
           </div>
           <div className="text-right">
-            <div className="sports-font text-[8px] text-[#888] tracking-widest">FIRST TO</div>
-            <div className="retro-title text-2xl text-[#d4af37]">{winTarget}</div>
+            <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">FIRST TO</div>
+            <div className="capcrunch-title text-2xl text-[#d4af37]">{winTarget}</div>
           </div>
         </header>
 
@@ -375,10 +375,10 @@ export function MultiplayerCareerPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 p-6 bg-[#1a1a1a] border-2 border-[#d4af37]/50 rounded-lg text-center"
+            className="mb-6 p-6 bg-black/40 border-2 border-[#d4af37]/50 text-center"
           >
-            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-2 uppercase">The Answer Was</div>
-            <div className="retro-title text-3xl text-[#d4af37]">{summary.answer}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">The Answer Was</div>
+            <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.answer}</div>
           </motion.div>
         )}
 
@@ -387,9 +387,9 @@ export function MultiplayerCareerPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+          className="mb-6 bg-black/40 border border-white/10 p-4"
         >
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
             Round Scores
           </div>
           <div className="space-y-2">
@@ -431,29 +431,29 @@ export function MultiplayerCareerPage() {
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="sports-font text-sm text-white/80">{player.player_name}</span>
-                            {isMe && <span className="text-[10px] text-white/40 sports-font">(you)</span>}
+                            <span className="capcrunch-kicker text-sm text-white/80">{player.player_name}</span>
+                            {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker">(you)</span>}
                             {isRoundWinner && topScore > 0 && (
-                              <span className="text-[10px] sports-font text-[#d4af37] tracking-wider">
+                              <span className="text-[10px] capcrunch-kicker text-[#d4af37] tracking-wider">
                                 {isTiebreaker ? '⚡ FASTEST' : '★ WINNER'}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
-                              <div className="sports-font text-[8px] text-[#888] tracking-wider">ROUND</div>
-                              <div className={`retro-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
+                              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">ROUND</div>
+                              <div className={`capcrunch-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
                             </div>
                             <div className="text-right">
-                              <div className="sports-font text-[8px] text-[#888] tracking-wider">WINS</div>
-                              <div className="retro-title text-lg text-[#d4af37]">{player.points ?? 0}</div>
+                              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">WINS</div>
+                              <div className="capcrunch-title text-lg text-[#d4af37]">{player.points ?? 0}</div>
                             </div>
                           </div>
                         </div>
                       );
                     })}
                   {isTiebreaker && timeDiffMs > 0 && (
-                    <div className="mt-2 pt-2 border-t border-[#333] text-center sports-font text-[10px] text-[#888]">
+                    <div className="mt-2 pt-2 border-t border-white/10 text-center capcrunch-kicker text-[10px] text-[#888]">
                       Tiebreaker — {players.find(p => p.player_id === roundWinnerId)?.player_name} was{' '}
                       <span className="text-[#d4af37]">
                         {timeDiffMs < 1000
@@ -477,13 +477,13 @@ export function MultiplayerCareerPage() {
         >
           {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => (
             <div key={player.player_id} className="text-center">
-              <div className="sports-font text-[10px] text-[#888] tracking-wider mb-1">{player.player_name}</div>
+              <div className="capcrunch-kicker text-[10px] text-[#888] tracking-wider mb-1">{player.player_name}</div>
               <div className="flex gap-1 justify-center">
                 {Array.from({ length: winTarget }).map((_, i) => (
                   <div
                     key={i}
                     className={`w-4 h-4 rounded-full border-2 ${
-                      i < (player.points ?? 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-[#333]'
+                      i < (player.points ?? 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-white/10'
                     }`}
                   />
                 ))}
@@ -496,12 +496,12 @@ export function MultiplayerCareerPage() {
           <button
             onClick={handleNextRound}
             disabled={isLoadingNext}
-            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="capcrunch-btn-primary w-full py-4 capcrunch-title text-xl disabled:opacity-50"
           >
             {isLoadingNext ? 'Loading Next Player...' : 'Next Round'}
           </button>
         ) : (
-          <div className="text-center text-white/30 sports-font text-sm tracking-wider">
+          <div className="text-center text-white/30 capcrunch-kicker text-sm tracking-wider">
             Waiting for host to start next round...
           </div>
         )}
@@ -517,21 +517,21 @@ export function MultiplayerCareerPage() {
   const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
 
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
       <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
       {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider text-white" style={{ backgroundColor: accentColor }}>
+            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider text-white" style={{ backgroundColor: accentColor }}>
               {sport.toUpperCase()}
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#1a1a1a] text-[#888]">
+            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider bg-black/40 text-[#888]">
               Round {careerState.round}
             </span>
           </div>
           {careerState.position && (
-            <div className="sports-font text-sm text-white/70 tracking-wider">
+            <div className="capcrunch-kicker text-sm text-white/70 tracking-wider">
               Guess the <span className="text-white font-bold">{POSITION_NAMES[careerState.position] ?? careerState.position}</span>
             </div>
           )}
@@ -539,15 +539,15 @@ export function MultiplayerCareerPage() {
 
         <div className="flex items-center gap-3">
           <HomeButton isHost={isHost} onEndGame={handleEndGame} />
-          <div className="bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-2 text-center">
-            <div className="sports-font text-[8px] text-[#888] tracking-widest">SCORE</div>
-            <div className="retro-title text-2xl" style={{ color: localScore > 10 ? '#22c55e' : localScore > 5 ? '#eab308' : '#ef4444' }}>
+          <div className="bg-black/40 border border-white/10 px-4 py-2 text-center">
+            <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">SCORE</div>
+            <div className="capcrunch-title text-2xl" style={{ color: localScore > 10 ? '#22c55e' : localScore > 5 ? '#eab308' : '#ef4444' }}>
               {localScore}
             </div>
           </div>
-          <div className="bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-2 text-center">
-            <div className="sports-font text-[8px] text-[#888] tracking-widest">DONE</div>
-            <div className="retro-title text-2xl text-white">{doneCount}/{totalCount}</div>
+          <div className="bg-black/40 border border-white/10 px-4 py-2 text-center">
+            <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">DONE</div>
+            <div className="capcrunch-title text-2xl text-white">{doneCount}/{totalCount}</div>
           </div>
         </div>
       </header>
@@ -556,7 +556,7 @@ export function MultiplayerCareerPage() {
       <div className="flex gap-4 mb-4 flex-wrap">
         {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => (
           <div key={player.player_id} className={`flex items-center gap-1.5 px-2 py-1 rounded ${player.player_id === currentPlayerId ? 'bg-[#d4af37]/10' : ''}`}>
-            <span className="sports-font text-[10px] text-white/60">{player.player_name}</span>
+            <span className="capcrunch-kicker text-[10px] text-white/60">{player.player_name}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: winTarget }).map((_, i) => (
                 <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (player.points ?? 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`} />
@@ -576,12 +576,12 @@ export function MultiplayerCareerPage() {
           return (
             <div
               key={player.player_id}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border sports-font text-xs ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border capcrunch-kicker text-xs ${
                 gotIt
                   ? 'bg-green-900/20 border-green-700/40 text-green-300'
                   : finished
                   ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                  : 'bg-[#1a1a1a] border-[#333] text-white/60'
+                  : 'bg-black/40 border-white/10 text-white/60'
               }`}
             >
               <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
@@ -613,9 +613,9 @@ export function MultiplayerCareerPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-4 p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
+            className="mb-4 p-4 text-center bg-black/40 border border-white/10"
           >
-            <div className="sports-font text-sm text-[#888]">
+            <div className="capcrunch-kicker text-sm text-[#888]">
               {localScore > 0
                 ? `Score: ${localScore} — waiting for ${doneCount}/${totalCount} players`
                 : 'No points this round — waiting for others...'}

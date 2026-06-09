@@ -330,8 +330,8 @@ export function MultiplayerNameScramblePage() {
 
   if (!lobby || !careerState) {
     return (
-      <div className="min-h-screen bg-[#111] flex items-center justify-center">
-        <div className="text-white/50 sports-font">Loading...</div>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <div className="text-white/50 capcrunch-kicker">Loading...</div>
       </div>
     );
   }
@@ -346,17 +346,17 @@ export function MultiplayerNameScramblePage() {
     const summary = roundSummary;
 
     return (
-      <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+      <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
           <div>
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
-            <h1 className="retro-title text-2xl text-[var(--vintage-cream)]">
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <h1 className="capcrunch-title text-2xl text-white">
               Round {summary?.round ?? careerState.round}
             </h1>
           </div>
           <div className="text-right">
-            <div className="sports-font text-[8px] text-[#888] tracking-widest">FIRST TO</div>
-            <div className="retro-title text-2xl text-[#3b82f6]">{winTarget} pts</div>
+            <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">FIRST TO</div>
+            <div className="capcrunch-title text-2xl text-[#3b82f6]">{winTarget} pts</div>
           </div>
         </header>
 
@@ -365,12 +365,12 @@ export function MultiplayerNameScramblePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 p-6 bg-[#1a1a1a] border-2 border-[#d4af37]/50 rounded-lg text-center space-y-2"
+            className="mb-6 p-6 bg-black/40 border-2 border-[#d4af37]/50 text-center space-y-2"
           >
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">The Scramble Was</div>
-            <div className="retro-title text-2xl text-[#3b82f6]">{summary.scrambledName}</div>
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mt-1">The Answer Was</div>
-            <div className="retro-title text-3xl text-[#d4af37]">{summary.answer}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">The Scramble Was</div>
+            <div className="capcrunch-title text-2xl text-[#3b82f6]">{summary.scrambledName}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase mt-1">The Answer Was</div>
+            <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.answer}</div>
           </motion.div>
         )}
 
@@ -379,9 +379,9 @@ export function MultiplayerNameScramblePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+          className="mb-6 bg-black/40 border border-white/10 p-4"
         >
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
             This Round
           </div>
           <div className="space-y-2">
@@ -416,20 +416,20 @@ export function MultiplayerNameScramblePage() {
                     <div className="flex items-center gap-3">
                       <span className="text-xl w-8 text-center">{badge}</span>
                       <div>
-                        <span className="sports-font text-sm text-white/80">{player.player_name}</span>
-                        {isMe && <span className="text-[10px] text-white/40 sports-font ml-1">(you)</span>}
+                        <span className="capcrunch-kicker text-sm text-white/80">{player.player_name}</span>
+                        {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">(you)</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="sports-font text-[8px] text-[#888] tracking-wider">PTS</div>
-                        <div className={`retro-title text-lg ${gotIt ? 'text-[#d4af37]' : 'text-[#555]'}`}>
+                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">PTS</div>
+                        <div className={`capcrunch-title text-lg ${gotIt ? 'text-[#d4af37]' : 'text-[#555]'}`}>
                           {ptsLabel}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="sports-font text-[8px] text-[#888] tracking-wider">TOTAL</div>
-                        <div className="retro-title text-lg text-[#3b82f6]">{player.points ?? 0}</div>
+                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">TOTAL</div>
+                        <div className="capcrunch-title text-lg text-[#3b82f6]">{player.points ?? 0}</div>
                       </div>
                     </div>
                   </div>
@@ -444,9 +444,9 @@ export function MultiplayerNameScramblePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+          className="mb-6 bg-black/40 border border-white/10 p-4"
         >
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
             Race to {winTarget} pts
           </div>
           <div className="space-y-3">
@@ -457,10 +457,10 @@ export function MultiplayerNameScramblePage() {
               return (
                 <div key={player.player_id}>
                   <div className="flex justify-between mb-1">
-                    <span className={`sports-font text-xs ${isMe ? 'text-white' : 'text-white/60'}`}>
+                    <span className={`capcrunch-kicker text-xs ${isMe ? 'text-white' : 'text-white/60'}`}>
                       {player.player_name}{isMe ? ' (you)' : ''}
                     </span>
-                    <span className="retro-title text-sm text-[#3b82f6]">{pts}</span>
+                    <span className="capcrunch-title text-sm text-[#3b82f6]">{pts}</span>
                   </div>
                   <div className="h-2 bg-[#222] rounded-full overflow-hidden">
                     <motion.div
@@ -480,12 +480,12 @@ export function MultiplayerNameScramblePage() {
           <button
             onClick={handleNextRound}
             disabled={isLoadingNext}
-            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="capcrunch-btn-primary w-full py-4 capcrunch-title text-xl disabled:opacity-50"
           >
             {isLoadingNext ? 'Loading Next Player...' : 'Next Round'}
           </button>
         ) : (
-          <div className="text-center text-white/30 sports-font text-sm tracking-wider">
+          <div className="text-center text-white/30 capcrunch-kicker text-sm tracking-wider">
             Waiting for host to start next round...
           </div>
         )}
@@ -500,26 +500,26 @@ export function MultiplayerNameScramblePage() {
   const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
 
   return (
-    <div className="fixed inset-0 bg-[#111] text-white flex flex-col overflow-hidden">
+    <div className="fixed inset-0 home-chalkboard text-white flex flex-col overflow-hidden">
       <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
 
       {/* ── PINNED TOP: always visible even when keyboard is open ── */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 bg-[#111]">
+      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 home-chalkboard">
         {/* Round / done badge row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#3b82f6] text-white">
+            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider bg-[#3b82f6] text-white">
               SCRAMBLE
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#1a1a1a] text-[#888]">
+            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider bg-black/40 text-[#888]">
               Round {careerState.round}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
-            <div className="bg-[#1a1a1a] border border-[#3d3d3d] rounded-lg px-3 py-1 text-center">
-              <div className="sports-font text-[8px] text-[#888] tracking-widest">DONE</div>
-              <div className="retro-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
+            <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-1 text-center">
+              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">DONE</div>
+              <div className="capcrunch-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
             </div>
           </div>
         </div>
@@ -531,13 +531,13 @@ export function MultiplayerNameScramblePage() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center py-3"
         >
-          <div className="sports-font text-[9px] text-[#888] tracking-[0.4em] uppercase mb-2">
+          <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.4em] uppercase mb-2">
             Unscramble This Name
           </div>
-          <div className="retro-title text-4xl md:text-5xl text-[#d4af37] tracking-wider leading-tight">
+          <div className="capcrunch-title text-4xl md:text-5xl text-[#3b82f6] tracking-wider leading-tight">
             {careerState.scrambledName}
           </div>
-          <div className="sports-font text-[9px] text-[#555] tracking-widest mt-2 uppercase">
+          <div className="capcrunch-kicker text-[9px] text-white/30 tracking-widest mt-2 uppercase">
             {careerState.sport?.toUpperCase()} Player
           </div>
         </motion.div>
@@ -554,11 +554,11 @@ export function MultiplayerNameScramblePage() {
                   ? 'bg-red-900/30 border-red-500 text-red-400'
                   : pressureTimer <= 20
                   ? 'bg-yellow-900/20 border-yellow-600 text-yellow-400'
-                  : 'bg-[#1a1a1a] border-[#3b82f6] text-[#3b82f6]'
+                  : 'bg-black/40 border-[#3b82f6] text-[#3b82f6]'
               }`}
             >
-              <span className="retro-title text-xl">{pressureTimer}s</span>
-              <span className="sports-font text-xs ml-2 opacity-70">remaining</span>
+              <span className="capcrunch-title text-xl">{pressureTimer}s</span>
+              <span className="capcrunch-kicker text-xs ml-2 opacity-70">remaining</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -574,7 +574,7 @@ export function MultiplayerNameScramblePage() {
             const isMe = player.player_id === currentPlayerId;
             return (
               <div key={player.player_id} className="flex items-center gap-2">
-                <span className={`sports-font text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
+                <span className={`capcrunch-kicker text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
                   {player.player_name}
                 </span>
                 <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
@@ -584,7 +584,7 @@ export function MultiplayerNameScramblePage() {
                     className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
                   />
                 </div>
-                <span className="retro-title text-sm text-[#3b82f6] w-8 text-right flex-shrink-0">{pts}</span>
+                <span className="capcrunch-title text-sm text-[#3b82f6] w-8 text-right flex-shrink-0">{pts}</span>
               </div>
             );
           })}
@@ -599,12 +599,12 @@ export function MultiplayerNameScramblePage() {
             return (
               <div
                 key={player.player_id}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border sports-font text-xs ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border capcrunch-kicker text-xs ${
                   gotIt
                     ? 'bg-green-900/20 border-green-700/40 text-green-300'
                     : finished
                     ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                    : 'bg-[#1a1a1a] border-[#333] text-white/60'
+                    : 'bg-black/40 border-white/10 text-white/60'
                 }`}
               >
                 <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
@@ -625,7 +625,7 @@ export function MultiplayerNameScramblePage() {
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className={`text-center sports-font text-sm ${
+              className={`text-center capcrunch-kicker text-sm ${
                 feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
               }`}
             >
@@ -639,9 +639,9 @@ export function MultiplayerNameScramblePage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
+              className="p-4 text-center bg-black/40 border border-white/10"
             >
-              <div className="sports-font text-sm text-[#888]">
+              <div className="capcrunch-kicker text-sm text-[#888]">
                 {feedbackType === 'correct' || hasSubmittedRef.current
                   ? `Waiting for ${doneCount}/${totalCount} players...`
                   : 'No points this round — waiting for others...'}
@@ -653,7 +653,7 @@ export function MultiplayerNameScramblePage() {
 
       {/* ── PINNED BOTTOM: input always accessible above keyboard ── */}
       {!isDone && (
-        <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 bg-[#111] space-y-2">
+        <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 home-chalkboard space-y-2">
           <div className="flex gap-2">
             <input
               type="text"
@@ -661,19 +661,19 @@ export function MultiplayerNameScramblePage() {
               onChange={e => setGuessInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleGuess()}
               placeholder="Type the player's name..."
-              className="flex-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none focus:border-[#3b82f6]"
+              className="flex-1 bg-black/40 border border-white/10 px-4 py-3 capcrunch-kicker text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#3b82f6]"
             />
             <button
               onClick={handleGuess}
               disabled={!guessInput.trim()}
-              className="px-6 py-3 rounded-lg sports-font text-sm text-white bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 transition-all"
+              className="px-6 py-3 capcrunch-kicker text-sm text-white bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-50 transition-all"
             >
               Guess
             </button>
           </div>
           <button
             onClick={handleGiveUp}
-            className="w-full py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all"
+            className="w-full py-2 capcrunch-kicker text-xs bg-black/40 border border-red-900/50 text-red-400 hover:border-red-700 transition-all"
           >
             Give Up
           </button>

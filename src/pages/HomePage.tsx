@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SettingsModal } from '../components/home/SettingsModal';
 import { AboutModal } from '../components/home/AboutModal';
-import { GuessPlayerSetup } from '../components/home/GuessPlayerSetup';
+import { GuessPlayerSelect } from '../components/home/GuessPlayerSelect';
+import { CareerArcSetup } from '../components/home/CareerArcSetup';
+import { ScrambleSetup } from '../components/home/ScrambleSetup';
+import { FaceRevealSetup } from '../components/home/FaceRevealSetup';
 import { RosterRoyaleSetup } from '../components/home/RosterRoyaleSetup';
 import { TopTenSetup } from '../components/home/TopTenSetup';
 import { useGameStore } from '../stores/gameStore';
@@ -17,7 +20,7 @@ import { TeamRevealOverlay } from '../components/home/TeamRevealOverlay';
 import type { GameMode } from '../types';
 import type { Sport } from '../types';
 
-type ActivePanel = 'guess-player' | 'guess-player-lobby' | null;
+type GuessPlayerStep = 'sport' | 'select' | 'career' | 'scramble' | 'face-reveal' | null;
 type CapCrunchModalStep = 'sport' | 'settings' | null;
 type SportPickStep = 'sport' | 'settings' | null;
 type RulesTileId = (typeof HOME_TILES)[number]['id'] | null;
@@ -51,7 +54,9 @@ export function HomePage() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
+  const [guessPlayerStep,  setGuessPlayerStep]  = useState<GuessPlayerStep>(null);
+  const [guessPlayerMode,  setGuessPlayerMode]  = useState<'solo' | 'lobby'>('solo');
+  const [guessPlayerSport, setGuessPlayerSport] = useState<Sport | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
   const [skipAnimation, setSkipAnimation] = useState(false);
@@ -82,13 +87,34 @@ export function HomePage() {
     warmCareerCache(sport);
   }, [sport]);
 
-  // Re-open Top Ten modal when navigating back from a solo game
+  // Re-open modals when navigating back from a solo game
   useEffect(() => {
-    const s = location.state as { openTopTen?: boolean; topTenSport?: Sport } | null;
+    const s = location.state as {
+      openTopTen?: boolean; topTenSport?: Sport;
+      openCareer?: boolean; openScramble?: boolean; openFaceReveal?: boolean;
+    } | null;
     if (s?.openTopTen && s.topTenSport) {
       setTopTenSport(s.topTenSport);
       setTopTenStep('settings');
-      window.history.replaceState({}, ''); // clear state so refresh doesn't re-open
+      window.history.replaceState({}, '');
+    }
+    if (s?.openCareer) {
+      setGuessPlayerMode('solo');
+      setGuessPlayerSport((s as any).gpSport ?? null);
+      setGuessPlayerStep('career');
+      window.history.replaceState({}, '');
+    }
+    if (s?.openScramble) {
+      setGuessPlayerMode('solo');
+      setGuessPlayerSport((s as any).gpSport ?? null);
+      setGuessPlayerStep('scramble');
+      window.history.replaceState({}, '');
+    }
+    if (s?.openFaceReveal) {
+      setGuessPlayerMode('solo');
+      setGuessPlayerSport((s as any).gpSport ?? null);
+      setGuessPlayerStep('face-reveal');
+      window.history.replaceState({}, '');
     }
   }, []);
 
@@ -128,7 +154,6 @@ export function HomePage() {
         setLoadingStatus('success');
         await new Promise((resolve) => setTimeout(resolve, 500));
         setPreparedGameData({ sport, team, season, gameMode, timerDuration, players, leaguePlayers: league, hideResultsDuringGame });
-        setActivePanel(null);
         setShowRoulette(true);
         return true;
       } catch {
@@ -166,7 +191,9 @@ export function HomePage() {
     }
 
     if (tileId === 'guess-player') {
-      setActivePanel(mode === 'lobby' ? 'guess-player-lobby' : 'guess-player');
+      setGuessPlayerMode(mode);
+      setGuessPlayerSport(null);
+      setGuessPlayerStep('sport');
       return;
     }
 
@@ -484,24 +511,6 @@ export function HomePage() {
             </div>
           </div>
 
-          <AnimatePresence mode="wait">
-            {(activePanel === 'guess-player' || activePanel === 'guess-player-lobby') && (
-              <motion.div
-                key="guess-player-panel"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.24 }}
-                className="mt-8"
-              >
-                <GuessPlayerSetup
-                  sport={sport}
-                  mode={activePanel === 'guess-player-lobby' ? 'lobby' : 'solo'}
-                  onBack={() => setActivePanel(null)}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </main>
       </div>
 
@@ -530,6 +539,82 @@ export function HomePage() {
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
+      {/* Guess the Player modal */}
+      {guessPlayerStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setGuessPlayerStep(null)}>
+          <div onClick={e => e.stopPropagation()}>
+            {guessPlayerStep === 'sport' && (
+              <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10">
+                <div className="mb-8">
+                  <p className="home-kicker text-[#bfbfbf] mb-3">Guess the Player</p>
+                  <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                  <p className="capcrunch-body text-white/60 text-sm">Career Arc, Name Scramble, and Face Reveal — choose your league first.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                  <button
+                    onClick={() => { setGuessPlayerSport('nba'); setGuessPlayerStep('select'); }}
+                    className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
+                    <div className="flex h-full flex-col justify-between">
+                      <div>
+                        <span className="capcrunch-kicker text-[#E2008A]">Basketball</span>
+                        <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                        <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1980 onward, modern era filter available.</p>
+                      </div>
+                      <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { setGuessPlayerSport('nfl'); setGuessPlayerStep('select'); }}
+                    className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
+                    <div className="flex h-full flex-col justify-between">
+                      <div>
+                        <span className="capcrunch-kicker text-[#E2008A]">Football</span>
+                        <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                        <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1999 onward. Face Reveal includes defensive pool.</p>
+                      </div>
+                      <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    </div>
+                  </button>
+                </div>
+                <div className="mt-5 flex justify-end">
+                  <button onClick={() => setGuessPlayerStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+                </div>
+              </div>
+            )}
+            {guessPlayerStep === 'select' && guessPlayerSport && (
+              <GuessPlayerSelect
+                sport={guessPlayerSport}
+                mode={guessPlayerMode}
+                onBack={() => setGuessPlayerStep('sport')}
+                onSelectGame={(id) => setGuessPlayerStep(id)}
+              />
+            )}
+            {guessPlayerStep === 'career' && guessPlayerSport && (
+              <CareerArcSetup
+                sport={guessPlayerSport}
+                onBack={() => setGuessPlayerStep('select')}
+              />
+            )}
+            {guessPlayerStep === 'scramble' && guessPlayerSport && (
+              <ScrambleSetup
+                sport={guessPlayerSport}
+                onBack={() => setGuessPlayerStep('select')}
+              />
+            )}
+            {guessPlayerStep === 'face-reveal' && guessPlayerSport && (
+              <FaceRevealSetup
+                sport={guessPlayerSport}
+                onBack={() => setGuessPlayerStep('select')}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Roster Royale modal — sport picker → settings */}
       {rosterStep && (

@@ -1,18 +1,3 @@
-/**
- * SoloFaceRevealPage.tsx — Solo "Face Reveal" game.
- *
- * Shows a player's headshot heavily zoomed in (level 1). Every `timer` seconds
- * it zooms out one level (2 then 3). Guess the player at any time — correct
- * guesses increment the streak and show a celebration. After level 3 times out
- * the answer is revealed automatically, then the next player loads after 3s.
- * "Skip" reveals the answer immediately and resets the streak.
- *
- * Settings read from location.state: { sport, careerTo, timer, minYards }.
- * minYards (NFL only): offensive positions must have a peak single-season
- * yards total >= minYards; defensive starters (48+ career gp) are kept;
- * K/P/LS are dropped.
- */
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useGuessInput } from '../../hooks/useGuessInput';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -33,55 +18,44 @@ import {
   timerColor,
 } from './faceRevealUtils';
 
+const COLOR = '#06b6d4';
 type GameStatus = 'loading' | 'active' | 'correct' | 'revealed';
-
 
 export function SoloFaceRevealPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Read settings from navigation state (set by FaceRevealSetup).
   const { sport: initSport = 'nba', careerTo = 0, timer: timerSecs = 60, minYards = 0, minMpg = 0, defenseMode = 'known' } =
     (location.state as { sport?: 'nba' | 'nfl'; careerTo?: number; timer?: number; minYards?: number; minMpg?: number; defenseMode?: 'known' | 'all' } | null) ?? {};
 
   const [sport] = useState<'nba' | 'nfl'>(initSport);
-
-  // Player pool (loaded once).
   const [pool, setPool] = useState<PlayerEntry[]>([]);
   const usedIdsRef = useRef<Set<string | number>>(new Set());
 
-  // Game state.
-  const [status, setStatus]         = useState<GameStatus>('loading');
-  const [player, setPlayer]         = useState<PlayerEntry | null>(null);
-  const [zoomLevel, setZoomLevel]   = useState<1 | 2 | 3 | 4>(1);
-  const [countdown, setCountdown]   = useState(timerSecs);
-  const [streak, setStreak]         = useState(0);
+  const [status,     setStatus]     = useState<GameStatus>('loading');
+  const [player,     setPlayer]     = useState<PlayerEntry | null>(null);
+  const [zoomLevel,  setZoomLevel]  = useState<1 | 2 | 3 | 4>(1);
+  const [countdown,  setCountdown]  = useState(timerSecs);
+  const [streak,     setStreak]     = useState(0);
   const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, inputRef } = useGuessInput();
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
-  const [showFlash, setShowFlash]       = useState(false);
-  // Randomised zoom focal point per player so the zoomed-in spot varies each round.
-  const [focalPoint, setFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 28 });
+  const [showFlash,    setShowFlash]    = useState(false);
+  const [focalPoint,   setFocalPoint]   = useState<{ x: number; y: number }>({ x: 50, y: 28 });
+  const [suggestions,  setSuggestions]  = useState<PlayerEntry[]>([]);
 
-  const [suggestions, setSuggestions] = useState<PlayerEntry[]>([]);
-
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Separate ref for the level-1 correct flash so it doesn't overwrite autoAdvanceRef.
+  const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoAdvanceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Debounce guard — prevents two code paths from calling pickNext within 800ms.
   const lastPickTimeRef = useRef<number>(0);
 
-  // ── Pool loading ──────────────────────────────────────────────────────────
-
+  // Pool loading
   useEffect(() => {
     async function loadPool() {
       if (sport === 'nba') {
         const all = await loadNBALineupPool();
         let filtered = all.filter(p => p.player_id != null);
         if (careerTo) filtered = filtered.filter(p => nbaEndYear(p) >= careerTo);
-        if (minMpg) filtered = filtered.filter(p =>
-          p.seasons.some(s => (s.min ?? 0) >= minMpg)
-        );
+        if (minMpg)   filtered = filtered.filter(p => p.seasons.some(s => (s.min ?? 0) >= minMpg));
         setPool(filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, longestTeam: longestTenuredTeam(p.seasons) })));
       } else {
         const all = await loadNFLLineupPool();
@@ -94,32 +68,19 @@ export function SoloFaceRevealPage() {
     loadPool();
   }, [sport, careerTo, minYards, minMpg, defenseMode]);
 
-  // ── Pick next player ──────────────────────────────────────────────────────
-
   const pickNext = useCallback((currentPool: PlayerEntry[]) => {
     if (!currentPool.length) return;
-
-    // Debounce: suppress if called again within 800ms (race-condition guard).
     const now = Date.now();
     if (now - lastPickTimeRef.current < 800) return;
     lastPickTimeRef.current = now;
 
-    // Avoid repeating recently seen players; reset if we've exhausted the pool.
     let candidates = currentPool.filter(p => !usedIdsRef.current.has(p.player_id));
-    if (!candidates.length) {
-      usedIdsRef.current.clear();
-      candidates = currentPool;
-    }
+    if (!candidates.length) { usedIdsRef.current.clear(); candidates = currentPool; }
 
     const chosen = weightedRandom(candidates);
     usedIdsRef.current.add(chosen.player_id);
 
-    // Randomise the zoom focal point so it's not always both eyes.
-    // X: ±12% from center (38–62%). Y: ±8% from face baseline (20–36%).
-    const fx = Math.round(38 + Math.random() * 24);
-    const fy = Math.round(20 + Math.random() * 16);
-    setFocalPoint({ x: fx, y: fy });
-
+    setFocalPoint({ x: Math.round(38 + Math.random() * 24), y: Math.round(20 + Math.random() * 16) });
     setPlayer(chosen);
     setZoomLevel(1 as 1 | 2 | 3 | 4);
     setCountdown(timerSecs);
@@ -128,63 +89,30 @@ export function SoloFaceRevealPage() {
     setFeedbackMsg('');
     setSuggestions([]);
     setStatus('active');
-
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [timerSecs]);
 
-  // Start first player once pool is loaded.
   useEffect(() => {
-    if (pool.length && status === 'loading') {
-      pickNext(pool);
-    }
+    if (pool.length && status === 'loading') pickNext(pool);
   }, [pool]);
 
-  // ── Countdown timer — only ticks; zoom advance is handled separately ─────
-  // Restarted whenever zoomLevel changes (skip or auto-advance) so the old
-  // interval is always cleared before it can double-fire a zoom advance.
-
   useEffect(() => {
-    if (status !== 'active') {
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      setCountdown(c => (c > 0 ? c - 1 : 0));
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    if (status !== 'active') { if (timerRef.current) clearInterval(timerRef.current); return; }
+    timerRef.current = setInterval(() => { setCountdown(c => (c > 0 ? c - 1 : 0)); }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [status, timerSecs, zoomLevel]);
-
-  // ── Zoom advance / reveal when countdown hits 0 ───────────────────────────
-  // Separated from the interval so that handleSkipZoom's setCountdown(timerSecs)
-  // and this effect can't both queue a setZoomLevel update in the same batch.
-  // Levels 1–4: each gets `timer` seconds. After level 4 expires → reveal.
 
   useEffect(() => {
     if (status !== 'active' || countdown > 0) return;
-    if (zoomLevel < 4) {
-      setZoomLevel(z => (z + 1) as 1 | 2 | 3 | 4);
-      setCountdown(timerSecs);
-    } else {
-      setStatus('revealed');
-      setStreak(0);
-    }
+    if (zoomLevel < 4) { setZoomLevel(z => (z + 1) as 1 | 2 | 3 | 4); setCountdown(timerSecs); }
+    else { setStatus('revealed'); setStreak(0); }
   }, [countdown, status]);
-
-  // ── Auto-advance after revealed ───────────────────────────────────────────
 
   useEffect(() => {
     if (status !== 'revealed') return;
     autoAdvanceRef.current = setTimeout(() => pickNext(pool), 3000);
-    return () => {
-      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-    };
+    return () => { if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current); };
   }, [status, pool]);
-
-  // ── Cleanup on unmount ────────────────────────────────────────────────────
 
   useEffect(() => {
     return () => {
@@ -194,31 +122,22 @@ export function SoloFaceRevealPage() {
     };
   }, []);
 
-  // ── Guess submission ──────────────────────────────────────────────────────
-
   function handleGuess() {
     if (status !== 'active' || !guessInput.trim() || !player) return;
     const name = guessInput.trim();
     setGuessInput('');
-
     if (areSimilarNames(name, player.player_name)) {
-      // Correct!
       if (timerRef.current) clearInterval(timerRef.current);
       if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
       setStatus('correct');
       setStreak(s => s + 1);
       setFeedbackMsg('');
       setSuggestions([]);
-
-      // Level 1 correct → big flash; others → smaller celebration via border.
       if (zoomLevel === 1) {
         setShowFlash(true);
-        // Use a dedicated ref so the auto-advance ref isn't clobbered.
         if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
         flashTimeoutRef.current = setTimeout(() => setShowFlash(false), 600);
       }
-
-      // Auto-advance after a short delay (can be cancelled if user clicks Next Player).
       autoAdvanceRef.current = setTimeout(() => pickNext(pool), 2500);
     } else {
       setWrongGuesses(prev => [...prev, name]);
@@ -228,9 +147,6 @@ export function SoloFaceRevealPage() {
     }
   }
 
-  // Advance to the next zoom level immediately and reset the per-level timer.
-  // Only available for levels 1–3; at level 4 (initials/team hint) the next
-  // step is the answer reveal — use "Reveal answer" instead.
   function handleSkipZoom() {
     if (status !== 'active' || zoomLevel >= 4) return;
     setZoomLevel(z => (z + 1) as 1 | 2 | 3 | 4);
@@ -244,13 +160,15 @@ export function SoloFaceRevealPage() {
     setStatus('revealed');
   }
 
+  function handleBack() {
+    navigate('/', { state: { openFaceReveal: true, gpSport: sport } });
+  }
+
   const timerFraction = countdown / timerSecs;
   const color = timerColor(timerFraction);
 
-  const COLOR = '#06b6d4';
-
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col">
       {/* Full-screen correct flash */}
       <AnimatePresence>
         {showFlash && (
@@ -265,60 +183,56 @@ export function SoloFaceRevealPage() {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 pt-4 pb-2">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      <header className="capcrunch-panel m-4 mb-2 p-3 flex items-center gap-3" style={{ borderColor: `${COLOR}33` }}>
+        <button onClick={handleBack} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        <div className="text-center">
-          <h1 className="retro-title text-2xl" style={{ color: COLOR }}>Face Reveal</h1>
-          {streak > 0 && (
-            <div className="sports-font text-[10px] text-[#d4af37] tracking-widest">
-              🔥 {streak} in a row
-            </div>
+        <div className="flex-1 text-center">
+          <h1 className="capcrunch-title text-xl" style={{ color: COLOR }}>Face Reveal</h1>
+          {streak > 0 ? (
+            <p className="capcrunch-kicker text-[9px] text-[#d4af37] mt-0.5">{streak} in a row</p>
+          ) : (
+            <p className="capcrunch-kicker text-[9px] text-white/30 mt-0.5">
+              {sport.toUpperCase()}{careerTo ? ` · ${careerTo}+` : ''}
+            </p>
           )}
         </div>
 
-        <div className="sports-font text-[10px] text-[#555] tracking-widest uppercase">
-          {sport.toUpperCase()}
-          {careerTo ? ` ${careerTo}+` : ''}
+        <div className="capcrunch-kicker text-[9px] text-white/25 flex-shrink-0">
+          Zoom {zoomLevel}/4
         </div>
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-start px-4 pb-6 gap-4 pt-2">
-
-        {/* Loading */}
+      <div className="flex-1 flex flex-col items-center px-4 pb-6 gap-4">
         {status === 'loading' && (
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-white/30 sports-font tracking-widest">Loading...</div>
+            <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: COLOR, borderTopColor: 'transparent' }} />
           </div>
         )}
 
         {status !== 'loading' && (
           <>
             {/* Timer bar */}
-            <div className="w-full max-w-sm h-1 bg-[#222] rounded-full overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: color }}
-                animate={{ width: `${(countdown / timerSecs) * 100}%` }}
-                transition={{ duration: 0.3 }}
-              />
+            <div className="w-full max-w-sm">
+              <div className="w-full h-1 bg-black/30 overflow-hidden">
+                <motion.div
+                  className="h-full"
+                  style={{ backgroundColor: color }}
+                  animate={{ width: `${(countdown / timerSecs) * 100}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="capcrunch-kicker text-[9px] text-white/25">Timer per level</span>
+                <span className="capcrunch-kicker text-[9px]" style={{ color }}>{countdown}s</span>
+              </div>
             </div>
 
-            {/* Zoom level + countdown */}
-            <div className="flex items-center gap-4 sports-font text-[10px] text-[#555] tracking-widest uppercase">
-              <span>Zoom {zoomLevel}/4</span>
-              <span style={{ color: color }}>{countdown}s</span>
-            </div>
-
-            {/* Headshot + optional Level-4 hint strip below */}
+            {/* Headshot + Level-4 hint strip */}
             <div className="flex flex-col items-center gap-2">
               <motion.div
                 key={player?.player_id}
@@ -328,24 +242,15 @@ export function SoloFaceRevealPage() {
                   scale: 1,
                   boxShadow: status === 'correct'
                     ? '0 0 0 4px #22c55e'
-                    : '0 0 0 2px rgba(6,182,212,0.3)',
+                    : `0 0 0 2px ${COLOR}4d`,
                 }}
                 transition={{ duration: 0.3 }}
-                className="rounded-xl overflow-hidden"
+                className="overflow-hidden"
               >
                 {player && (status === 'correct' || status === 'revealed') && (
-                  // Reveal: zoomLevel 0 = scale 1.0 so the full headshot is visible.
-                  <ZoomedHeadshot
-                    playerId={player.player_id}
-                    sport={sport}
-                    zoomLevel={0}
-                    originX={50}
-                    originY={28}
-                  />
+                  <ZoomedHeadshot playerId={player.player_id} sport={sport} zoomLevel={0} originX={50} originY={28} />
                 )}
                 {player && status === 'active' && (
-                  // At zoom 4, still show the face (at level 3, fully zoomed out);
-                  // the initials + team hint appears as a strip below the image.
                   <ZoomedHeadshot
                     playerId={player.player_id}
                     sport={sport}
@@ -356,27 +261,25 @@ export function SoloFaceRevealPage() {
                 )}
               </motion.div>
 
-              {/* Level-4 hint strip: initials + longest-tenured team logo */}
+              {/* Level-4 hint strip */}
               <AnimatePresence>
                 {player && status === 'active' && zoomLevel === 4 && (
                   <motion.div
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-4 px-4 py-2.5 rounded-lg border"
-                    style={{ width: 320, backgroundColor: '#1a1a1a', borderColor: 'rgba(6,182,212,0.3)' }}
+                    className="capcrunch-panel flex items-center justify-center gap-4 px-4 py-2.5"
+                    style={{ width: 320, borderColor: `${COLOR}4d` }}
                   >
-                    <div className="retro-title text-4xl tracking-widest" style={{ color: COLOR }}>
+                    <div className="capcrunch-title text-4xl tracking-widest" style={{ color: COLOR }}>
                       {getInitials(player.player_name)}
                     </div>
                     {player.longestTeam && (
                       <>
-                        <div className="w-px self-stretch bg-[#333]" />
+                        <div className="w-px self-stretch bg-white/10" />
                         <div className="flex flex-col items-center gap-1">
                           <TeamLogo sport={sport} abbr={player.longestTeam} size={48} />
-                          <div className="sports-font text-[8px] text-[#555] tracking-[0.2em] uppercase">
-                            Longest Team
-                          </div>
+                          <div className="capcrunch-kicker text-[8px] text-white/30 tracking-[0.2em]">LONGEST TEAM</div>
                         </div>
                       </>
                     )}
@@ -385,26 +288,24 @@ export function SoloFaceRevealPage() {
               </AnimatePresence>
             </div>
 
-            {/* Answer revealed / correct */}
+            {/* Answer card */}
             <AnimatePresence>
               {(status === 'correct' || status === 'revealed') && player && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`w-full max-w-sm p-4 rounded-xl border-2 text-center ${
-                    status === 'correct'
-                      ? 'bg-green-900/20 border-green-600'
-                      : 'bg-[#1a1a1a] border-[#444]'
-                  }`}
+                  className="w-full max-w-sm capcrunch-panel p-4 text-center"
+                  style={{
+                    borderColor: status === 'correct' ? '#22c55e60' : 'rgba(255,255,255,0.12)',
+                    backgroundColor: status === 'correct' ? '#22c55e10' : 'rgba(0,0,0,0.3)',
+                  }}
                 >
-                  <div className="sports-font text-[9px] text-[#888] tracking-widest uppercase mb-1">
+                  <p className="capcrunch-kicker text-[9px] text-white/40 mb-2">
                     {status === 'correct' ? 'Correct!' : 'The Answer Was'}
-                  </div>
-                  <div className="retro-title text-3xl text-[#d4af37]">{player.player_name}</div>
+                  </p>
+                  <div className="capcrunch-title text-3xl text-[#d4af37]">{player.player_name}</div>
                   {status === 'revealed' && (
-                    <div className="sports-font text-[9px] text-[#555] mt-1 tracking-wider">
-                      Next player in a moment...
-                    </div>
+                    <p className="capcrunch-kicker text-[9px] text-white/30 mt-2">Next player in a moment…</p>
                   )}
                 </motion.div>
               )}
@@ -414,10 +315,7 @@ export function SoloFaceRevealPage() {
             {status === 'active' && wrongGuesses.length > 0 && (
               <div className="w-full max-w-sm flex flex-wrap gap-1">
                 {wrongGuesses.map((g, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-0.5 bg-red-900/20 border border-red-900/40 rounded text-xs sports-font text-red-400"
-                  >
+                  <span key={i} className="capcrunch-kicker text-[9px] px-2 py-0.5 border border-red-900/40 text-red-400 bg-red-900/15">
                     {g}
                   </span>
                 ))}
@@ -427,12 +325,7 @@ export function SoloFaceRevealPage() {
             {/* Feedback */}
             <AnimatePresence>
               {feedbackMsg && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="sports-font text-sm text-red-400"
-                >
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="capcrunch-kicker text-xs text-red-400">
                   {feedbackMsg}
                 </motion.div>
               )}
@@ -443,71 +336,56 @@ export function SoloFaceRevealPage() {
               <div className="w-full max-w-sm flex flex-col gap-3">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={guessInput}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setGuessInput(val);
-                      setSuggestions(getSuggestions(val, pool));
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleGuess();
-                      if (e.key === 'Escape') setSuggestions([]);
-                    }}
-                    placeholder="Type the player's name..."
-                    className="w-full bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none"
-                    style={{ borderColor: `${COLOR}60` }}
-                    onFocus={e => (e.currentTarget.style.borderColor = COLOR)}
-                    onBlur={e => {
-                      e.currentTarget.style.borderColor = `${COLOR}60`;
-                      // Delay so suggestion onMouseDown fires before the dropdown disappears
-                      setTimeout(() => setSuggestions([]), 150);
-                    }}
-                  />
-                  {/* Autocomplete dropdown */}
-                  {suggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-[#1a1a1a] border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
-                      {suggestions.map(s => (
-                        <button
-                          key={s.player_id}
-                          // mouseDown fires before blur; preventDefault keeps input focused
-                          onMouseDown={e => {
-                            e.preventDefault();
-                            setGuessInput(s.player_name);
-                            setSuggestions([]);
-                            // Submit the guess immediately
-                            if (player && areSimilarNames(s.player_name, player.player_name)) {
-                              if (timerRef.current) clearInterval(timerRef.current);
-                              if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-                              setStatus('correct');
-                              setStreak(st => st + 1);
-                              setFeedbackMsg('');
-                              setGuessInput('');
-                              if (zoomLevel === 1) {
-                                setShowFlash(true);
-                                if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-                                flashTimeoutRef.current = setTimeout(() => setShowFlash(false), 600);
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={guessInput}
+                      onChange={e => { setGuessInput(e.target.value); setSuggestions(getSuggestions(e.target.value, pool)); }}
+                      onKeyDown={e => { if (e.key === 'Enter') handleGuess(); if (e.key === 'Escape') setSuggestions([]); }}
+                      placeholder="Type the player's name…"
+                      className="w-full bg-black/40 border border-white/15 px-4 py-3 capcrunch-title text-sm text-white placeholder-white/25 focus:outline-none"
+                      style={{ borderColor: `${COLOR}40` }}
+                      onFocus={e => { e.currentTarget.style.borderColor = `${COLOR}90`; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = `${COLOR}40`; setTimeout(() => setSuggestions([]), 150); }}
+                    />
+                    {suggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-black/95 border overflow-hidden shadow-xl" style={{ borderColor: `${COLOR}40` }}>
+                        {suggestions.map(s => (
+                          <button
+                            key={s.player_id}
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              setGuessInput(s.player_name);
+                              setSuggestions([]);
+                              if (player && areSimilarNames(s.player_name, player.player_name)) {
+                                if (timerRef.current) clearInterval(timerRef.current);
+                                if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+                                setStatus('correct');
+                                setStreak(st => st + 1);
+                                setFeedbackMsg('');
+                                setGuessInput('');
+                                if (zoomLevel === 1) {
+                                  setShowFlash(true);
+                                  if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+                                  flashTimeoutRef.current = setTimeout(() => setShowFlash(false), 600);
+                                }
+                                autoAdvanceRef.current = setTimeout(() => pickNext(pool), 2500);
+                              } else {
+                                setTimeout(() => inputRef.current?.focus(), 10);
                               }
-                              autoAdvanceRef.current = setTimeout(() => pickNext(pool), 2500);
-                            } else {
-                              // Slight delay so the input value settles before focus
-                              setTimeout(() => inputRef.current?.focus(), 10);
-                            }
-                          }}
-                          className="w-full text-left px-4 py-2.5 sports-font text-sm text-[var(--vintage-cream)] hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
-                        >
-                          {s.player_name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                            }}
+                            className="w-full text-left px-4 py-2.5 capcrunch-title text-sm text-white hover:bg-white/5 border-b border-white/5 last:border-0 transition-colors"
+                          >
+                            {s.player_name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={handleGuess}
                     disabled={!guessInput.trim()}
-                    className="px-6 py-3 rounded-lg sports-font text-sm text-[#111] disabled:opacity-50 transition-all"
+                    className="px-6 py-3 capcrunch-title text-sm text-black disabled:opacity-40 transition-all"
                     style={{ backgroundColor: COLOR }}
                   >
                     Guess
@@ -517,14 +395,14 @@ export function SoloFaceRevealPage() {
                   {zoomLevel < 4 && (
                     <button
                       onClick={handleSkipZoom}
-                      className="flex-1 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-[#3a3a3a] text-[#888] hover:border-[#06b6d4]/50 hover:text-[#06b6d4] transition-all"
+                      className="flex-1 py-2 capcrunch-kicker text-xs border border-white/10 text-white/40 hover:border-white/25 hover:text-white/60 transition-all bg-black/20"
                     >
                       Skip zoom →
                     </button>
                   )}
                   <button
                     onClick={handleSkip}
-                    className={`py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all ${zoomLevel < 4 ? 'flex-1' : 'w-full'}`}
+                    className={`py-2 capcrunch-kicker text-xs border border-red-900/40 text-red-400 hover:border-red-700 transition-all bg-black/20 ${zoomLevel < 4 ? 'flex-1' : 'w-full'}`}
                   >
                     Reveal answer
                   </button>
@@ -532,15 +410,11 @@ export function SoloFaceRevealPage() {
               </div>
             )}
 
-            {/* Manual next when correct */}
             {status === 'correct' && (
               <button
-                onClick={() => {
-                  // Cancel the auto-advance timer so it doesn't also fire later.
-                  if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-                  pickNext(pool);
-                }}
-                className="w-full max-w-sm py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#06b6d4] to-[#0891b2] text-[#111] shadow-[0_4px_0_#0e7490] active:shadow-none active:translate-y-1"
+                onClick={() => { if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current); pickNext(pool); }}
+                className="w-full max-w-sm py-4 capcrunch-title text-xl text-black transition-all active:translate-y-px"
+                style={{ backgroundColor: COLOR, boxShadow: '0 3px 0 rgba(5,85,100,0.9)' }}
               >
                 Next Player
               </button>
