@@ -1,20 +1,18 @@
 /**
- * RouletteOverlay.tsx — Card-dealing animation before gameplay starts.
+ * RouletteOverlay.tsx — Pre-game team/year draw animation before gameplay starts.
  *
- * Animation phases (times are cumulative from mount):
- *   0–4s     "shuffling"  — cards fan left/right in a riffle pattern
- *   4–5.5s   "settling"   — cards settle into a neat stack
- *   5.5–6.7s "dealing-1"  — season card slides out and flips face-up
- *   6.7–10.5s "dealing-2" — team card slides out and flips face-up
- *   10.5s+   "countdown"  — 5-second countdown ring before game starts
- *
- * Can be skipped entirely via `skipAnimation` (manual mode) or by host
- * clicking the skip button (multiplayer). Fires `onComplete` when done.
+ * Animation phases:
+ *   0–4.8s  "scrolling"  — team logos and years scroll sideways
+ *   4.8–6s  "landed"     — both lanes settle on the chosen team/year
+ *   6s+     "paused"     — multiplayer host review state, or
+ *   6s+     "countdown"  — solo / auto-advance countdown
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import { TeamLogo } from '../TeamLogo';
+import { teams } from '../../data/teams';
+import { nflTeams } from '../../data/nfl-teams';
 
 interface RouletteOverlayProps {
   winningTeam: string;
@@ -29,9 +27,8 @@ interface RouletteOverlayProps {
 }
 
 export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM', onComplete, sport, winningTeamData, skipAnimation, canSkip = true, onReroll }: RouletteOverlayProps) {
-  const [phase, setPhase] = useState<'shuffling' | 'settling' | 'dealing-1' | 'dealing-2' | 'paused' | 'countdown'>('shuffling');
+  const [phase, setPhase] = useState<'scrolling' | 'landed' | 'paused' | 'countdown'>('scrolling');
   const [count, setCount] = useState(5);
-  const [isMobile, setIsMobile] = useState(false);
   const hasSkipped = useRef(false);
 
   // Skip animation immediately if skipAnimation prop is true
@@ -42,35 +39,39 @@ export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM
     }
   }, [skipAnimation, onComplete]);
 
-  // Check for mobile screen size to adjust card slide distance
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const allTeams = (sport === 'nba' ? teams : nflTeams).map(team => ({
+    abbr: team.abbreviation,
+    label: team.name,
+  }));
+  const yearStart = sport === 'nba' ? 2000 : 2000;
+  const yearEnd = sport === 'nba' ? 2025 : 2025;
+  const allYears = Array.from({ length: yearEnd - yearStart + 1 }, (_, index) => {
+    const year = yearStart + index;
+    return sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : String(year);
+  });
 
-  const cardBackImage = sport === 'nba' ? '/images/Group 29.svg' : '/images/g29.svg';
+  const winningTeamAbbr = winningTeamData?.abbreviation;
+  const teamLoop = [...allTeams, ...allTeams, ...allTeams];
+  const yearLoop = [...allYears, ...allYears, ...allYears];
+  const teamStopIndex = Math.max(
+    allTeams.findIndex(team => team.abbr === winningTeamAbbr || team.label === winningTeam),
+    0,
+  ) + allTeams.length;
+  const yearStopIndex = Math.max(allYears.findIndex(year => year === winningYear), 0) + allYears.length;
 
   useEffect(() => {
     if (skipAnimation) return; // Don't set timers if skipping
 
-    // Phase transition timings (ms from mount) — see header comment for timeline
-    const SHUFFLE_END = 4000;
-    const SETTLE_END = 5500;
-    const DEAL_SECOND_CARD = 6700;
-    const COUNTDOWN_START = 10500;
+    const LANDING_START = 4800;
+    const FINAL_HOLD = 6000;
 
-    const shuffleTimer = setTimeout(() => setPhase('settling'), SHUFFLE_END);
-    const settleTimer = setTimeout(() => setPhase('dealing-1'), SETTLE_END);
-    const secondCardTimer = setTimeout(() => setPhase('dealing-2'), DEAL_SECOND_CARD);
-    const countdownTimer = setTimeout(() => {
-      // In multiplayer (onReroll defined), pause for host to review; in solo, go straight to countdown
+    const landTimer = setTimeout(() => setPhase('landed'), LANDING_START);
+    const nextTimer = setTimeout(() => {
       setPhase(onReroll ? 'paused' : 'countdown');
-    }, COUNTDOWN_START);
+    }, FINAL_HOLD);
 
     return () => {
-      [shuffleTimer, settleTimer, secondCardTimer, countdownTimer].forEach(clearTimeout);
+      [landTimer, nextTimer].forEach(clearTimeout);
     };
   }, [skipAnimation, onReroll]);
 
@@ -125,48 +126,54 @@ export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM
             className="flex flex-col items-center w-full relative z-10 px-4"
           >
             <h2 className="retro-title text-lg md:text-2xl mb-8 md:mb-12 text-white uppercase tracking-[0.4em] text-center opacity-80">
-              {phase === 'shuffling' ? 'Shuffling Deck' : phase === 'settling' ? 'Cutting Deck' : phase === 'paused' ? 'The Draw' : 'The Draw'}
+              {phase === 'scrolling' ? 'Drawing Matchup' : phase === 'paused' ? 'The Draw' : 'The Draw'}
             </h2>
 
-            {/* Responsively sized deck container */}
-            <div className="relative w-28 h-40 md:w-36 md:h-48 [perspective:1500px]">
-               {Array.from({ length: 12 }).map((_, i) => (
-                 <motion.div
-                   key={i}
-                   animate={phase === 'shuffling' ? {
-                     x: i % 2 === 0 ? [0, isMobile ? -30 : -60, 0] : [0, isMobile ? 30 : 60, 0],
-                     rotateZ: i % 2 === 0 ? [0, -8, 0] : [0, 8, 0],
-                   } : {
-                     x: 0, rotateZ: 0, y: -i * 0.4
-                   }}
-                   transition={{ repeat: phase === 'shuffling' ? Infinity : 0, duration: 0.6, delay: i * 0.04 }}
-                   className="absolute inset-0 rounded-lg shadow-xl border border-white/10"
-                   style={{ backgroundImage: `url("${cardBackImage}")`, backgroundSize: 'cover', backgroundColor: '#111' }}
-                 />
-               ))}
+            <div className="w-full max-w-4xl flex flex-col gap-5 md:gap-6">
+              <ScrollLane
+                label={winningLabel}
+                accent="#FDF100"
+                phase={phase}
+                stopIndex={teamStopIndex}
+                itemWidth={136}
+                itemCount={teamLoop.length}
+                renderItem={(index) => {
+                  const team = teamLoop[index];
+                  const isWinner = index === teamStopIndex;
+                  return (
+                    <div
+                      className={`w-[120px] md:w-[136px] h-[108px] md:h-[120px] border bg-black/55 flex flex-col items-center justify-center gap-2 px-2 transition-all ${
+                        isWinner ? 'border-[#FDF100] shadow-[0_0_30px_rgba(253,241,0,0.24)]' : 'border-white/10'
+                      }`}
+                    >
+                      <TeamLogo sport={sport} abbr={team.abbr} size={52} className="md:!w-16 md:!h-16" />
+                      <span className="capcrunch-title text-xs md:text-sm text-white text-center leading-none">{team.abbr}</span>
+                    </div>
+                  );
+                }}
+              />
 
-               {(phase === 'dealing-1' || phase === 'dealing-2' || phase === 'paused') && (
-                 <>
-                   <RevealCard
-                    value={winningYear}
-                    side="left"
-                    label="SEASON"
-                    cardBack={cardBackImage}
-                    isActive={true}
-                    isMobile={isMobile}
-                   />
-                   <RevealCard
-                    value={winningTeam}
-                    side="right"
-                    label={winningLabel}
-                    cardBack={cardBackImage}
-                    isActive={phase === 'dealing-2' || phase === 'paused'}
-                    isMobile={isMobile}
-                    teamAbbr={winningTeamData?.abbreviation}
-                    sport={sport}
-                   />
-                 </>
-               )}
+              <ScrollLane
+                label="Season"
+                accent="#68BBE5"
+                phase={phase}
+                stopIndex={yearStopIndex}
+                itemWidth={160}
+                itemCount={yearLoop.length}
+                renderItem={(index) => {
+                  const year = yearLoop[index];
+                  const isWinner = index === yearStopIndex;
+                  return (
+                    <div
+                      className={`w-[140px] md:w-[160px] h-[84px] md:h-[92px] border bg-black/55 flex items-center justify-center px-3 transition-all ${
+                        isWinner ? 'border-[#68BBE5] shadow-[0_0_30px_rgba(104,187,229,0.24)]' : 'border-white/10'
+                      }`}
+                    >
+                      <span className="capcrunch-title text-xl md:text-2xl text-white text-center leading-none">{year}</span>
+                    </div>
+                  );
+                }}
+              />
             </div>
 
             {/* Paused phase: host sees Reroll + Start, non-host sees waiting message */}
@@ -237,59 +244,52 @@ export function RouletteOverlay({ winningTeam, winningYear, winningLabel = 'TEAM
   );
 }
 
-function RevealCard({ value, side, label, cardBack, isActive, isMobile, teamAbbr, sport }: any) {
+function ScrollLane({
+  label,
+  accent,
+  phase,
+  stopIndex,
+  itemWidth,
+  itemCount,
+  renderItem,
+}: {
+  label: string;
+  accent: string;
+  phase: 'scrolling' | 'landed' | 'paused' | 'countdown';
+  stopIndex: number;
+  itemWidth: number;
+  itemCount: number;
+  renderItem: (index: number) => React.ReactNode;
+}) {
+  const trackWidth = itemWidth * itemCount;
+  const targetX = -(stopIndex * itemWidth) + itemWidth;
   return (
-    <AnimatePresence>
-      {isActive && (
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-2">
+        <span className="sports-font text-[8px] md:text-[10px] tracking-[0.3em] uppercase text-white/40">{label}</span>
+        <span className="w-12 h-px" style={{ backgroundColor: accent, opacity: 0.45 }} />
+      </div>
+      <div className="relative overflow-hidden border border-white/10 bg-black/30 py-3 md:py-4">
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2px]" style={{ backgroundColor: accent, boxShadow: `0 0 20px ${accent}` }} />
+        <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0d2a0b] to-transparent z-10" />
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0d2a0b] to-transparent z-10" />
         <motion.div
-          initial={{ x: 0, y: 0, opacity: 0, zIndex: 50 }}
-          animate={{
-            x: side === 'left' ? (isMobile ? -80 : -200) : (isMobile ? 80 : 200),
-            y: isMobile ? 180 : 240,
-            opacity: 1
-          }}
-          transition={{ type: 'spring', damping: 25, stiffness: 60 }}
-          className="absolute inset-0"
+          className="flex gap-4"
+          animate={{ x: phase === 'scrolling' ? [-itemWidth, -trackWidth + itemWidth * 2] : targetX }}
+          transition={
+            phase === 'scrolling'
+              ? { duration: 2.2, ease: 'linear', repeat: Infinity }
+              : { type: 'spring', stiffness: 80, damping: 18 }
+          }
+          style={{ width: trackWidth + itemCount * 16 }}
         >
-          <motion.div
-            initial={{ rotateY: 180 }}
-            animate={{ rotateY: 0 }}
-            transition={{ duration: 0.7, delay: 0.8 }}
-            className="w-full h-full [transform-style:preserve-3d] relative"
-          >
-            <CardFace side="back" image={cardBack} />
-            <CardFace side="front" label={label} value={value} teamAbbr={teamAbbr} sport={sport} />
-          </motion.div>
+          {Array.from({ length: itemCount }).map((_, index) => (
+            <div key={index} className="shrink-0">
+              {renderItem(index)}
+            </div>
+          ))}
         </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-function CardFace({ side, image, label, value, teamAbbr, sport }: any) {
-  const isBack = side === 'back';
-  const showLogo = !isBack && teamAbbr && sport;
-  return (
-    <div
-      className={`absolute inset-0 rounded-xl overflow-hidden ${isBack ? '' : 'bg-white'}`}
-      style={{
-        backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-        transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
-        backgroundImage: isBack ? `url("${image}")` : 'none',
-        backgroundSize: 'cover',
-        boxShadow: !isBack ? '0 25px 50px rgba(0,0,0,0.2), 0 0 1px rgba(0,0,0,0.1)' : '0 15px 35px rgba(0,0,0,0.3)'
-      }}
-    >
-      {!isBack && (
-        <div className="w-full h-full flex flex-col items-center justify-center p-3 md:p-4 overflow-hidden relative gap-1">
-          <span className="sports-font text-[8px] md:text-[10px] text-amber-600 tracking-[0.3em] uppercase font-semibold text-center flex-shrink-0">{label}</span>
-          {showLogo ? (
-            <TeamLogo sport={sport} abbr={teamAbbr} size={80} className="flex-shrink-0" />
-          ) : (
-            <span className="retro-title text-xs sm:text-sm md:text-xl md:leading-tight text-slate-800 uppercase font-bold text-center leading-snug w-full px-1 md:px-2 flex-shrink-0 line-clamp-3 overflow-hidden break-words hyphens-auto">{value}</span>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

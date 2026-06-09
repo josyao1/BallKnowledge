@@ -6,6 +6,7 @@ import { nflTeams } from '../../../data/nfl-teams';
 interface Props {
   sport: 'nba' | 'nfl';
   onSportChange: (s: 'nba' | 'nfl') => void;
+  showSportToggle?: boolean;
   roundType: 'league' | 'division' | 'team';
   onRoundTypeChange: (t: 'league' | 'division' | 'team') => void;
   divisionMode: 'cumulative' | 'single_season';
@@ -47,6 +48,7 @@ function getDivisionsByConference(sport: 'nba' | 'nfl'): { conference: string; d
 
 export function TopTenSettings({
   sport, onSportChange,
+  showSportToggle = true,
   roundType, onRoundTypeChange,
   divisionMode, onDivisionModeChange,
   minYear, onMinYearChange,
@@ -70,12 +72,14 @@ export function TopTenSettings({
 
   return (
     <div className="space-y-2.5">
-      <Row label="Sport">
-        <Chips>
-          <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff" onClick={() => onSportChange('nba')}>NBA</Chip>
-          <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff" onClick={() => onSportChange('nfl')}>NFL</Chip>
-        </Chips>
-      </Row>
+      {showSportToggle && (
+        <Row label="Sport">
+          <Chips>
+            <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff" onClick={() => onSportChange('nba')}>NBA</Chip>
+            <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff" onClick={() => onSportChange('nfl')}>NFL</Chip>
+          </Chips>
+        </Row>
+      )}
 
       <Row label="Round">
         <Chips>

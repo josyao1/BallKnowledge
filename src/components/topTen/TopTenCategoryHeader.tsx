@@ -14,8 +14,8 @@ export function TopTenCategoryHeader({ categoryLabel, roundInfo, isTeamRound, te
   return (
     <div className="text-center pt-5 pb-1">
       <h2
-        className="retro-title text-3xl md:text-4xl"
-        style={{ color: '#22c55e', textShadow: '0 0 28px rgba(34,197,94,0.3)' }}
+        className="capcrunch-title text-3xl md:text-4xl"
+        style={{ color: '#FDF100', textShadow: '0 0 28px rgba(253,241,0,0.2)' }}
       >
         {categoryLabel}
       </h2>
@@ -23,10 +23,10 @@ export function TopTenCategoryHeader({ categoryLabel, roundInfo, isTeamRound, te
         {isTeamRound && teamAbbr && (
           <TeamLogo abbr={teamAbbr} sport={sport} size={16} />
         )}
-        <p className="sports-font text-[11px] text-white/60 tracking-[0.35em] uppercase">{roundInfo}</p>
+        <p className="capcrunch-kicker text-[11px] text-white/60 tracking-[0.35em] uppercase">{roundInfo}</p>
       </div>
       {isCumulativeRound && (
-        <p className="sports-font text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 rounded-sm border border-white/25 text-white/50">
+        <p className="capcrunch-kicker text-[9px] tracking-[0.2em] uppercase mt-1 inline-block px-2 py-0.5 border border-[#68BBE5]/30 bg-[#68BBE5]/08 text-[#68BBE5]">
           {isSingleSeason ? 'Single Season (No Repeats)' : 'Cumulative'}
         </p>
       )}

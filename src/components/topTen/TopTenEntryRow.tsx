@@ -48,21 +48,21 @@ export function TopTenEntryRow({
       initial={false}
       animate={justGuessed ? { x: [0, -3, 3, -2, 2, 0] } : {}}
       transition={{ duration: 0.35 }}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
+      className={`flex items-center gap-3 px-3 py-2.5 border transition-colors ${
         wasGuessed
-          ? 'bg-emerald-950/40 border-emerald-700/35'
+          ? 'bg-[#70BE5B]/10 border-[#70BE5B]/35'
           : gameOver
-          ? 'bg-[#111] border-white/5'
-          : 'bg-[#0b0b0b] border-white/4'
+          ? 'bg-white/[0.03] border-white/8'
+          : 'bg-black/30 border-white/6'
       }`}
     >
-      <span className="sports-font text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">
+      <span className="capcrunch-kicker text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">
         #{index + 1}
       </span>
 
       <div
         className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
-          wasGuessed ? 'ring-emerald-500/40' : 'ring-white/5'
+          wasGuessed ? 'ring-[#68BBE5]/45' : 'ring-white/5'
         }`}
         style={{
           filter:  showInfo ? 'none' : 'blur(14px) saturate(0) brightness(0.45)',
@@ -75,34 +75,34 @@ export function TopTenEntryRow({
       <div className="flex-1 min-w-0">
         {showInfo ? (
           <>
-            <p className={`retro-title text-sm leading-tight truncate ${
-              wasGuessed ? 'text-emerald-300' : 'text-white/40'
+            <p className={`capcrunch-title text-sm leading-tight truncate ${
+              wasGuessed ? 'text-white' : 'text-white/40'
             }`}>
               {entry.playerName}
             </p>
             <div className={`flex items-center gap-1.5 mt-0.5 ${dimmed ? 'opacity-40' : ''}`}>
               <TeamLogo abbr={entry.team} sport={sport} size={18} />
-              <p className="sports-font text-[9px] text-white/40">{entry.year}</p>
+              <p className="capcrunch-kicker text-[9px] text-white/40">{entry.year}</p>
             </div>
           </>
         ) : (
           <div className="flex items-center gap-2">
             {showTeamHint && <TeamLogo abbr={entry.team} sport={sport} size={18} />}
             {initials ? (
-              <p className="retro-title text-sm text-white/28 tracking-wider">{initials}</p>
+              <p className="capcrunch-title text-sm text-white/28 tracking-wider">{initials}</p>
             ) : (
-              <p className="sports-font text-[10px] text-white/20 tracking-[0.2em]">???</p>
+              <p className="capcrunch-kicker text-[10px] text-white/20 tracking-[0.2em]">???</p>
             )}
           </div>
         )}
       </div>
 
       {showInfo && catDef && (
-        <span className={`sports-font text-xs shrink-0 tabular-nums ${
-          wasGuessed ? 'text-[#22c55e]' : 'text-white/20'
+        <span className={`capcrunch-title text-xs shrink-0 tabular-nums ${
+          wasGuessed ? 'text-[#68BBE5]' : 'text-white/25'
         }`}>
           {formatStat(entry.stat, categoryKey)}{' '}
-          <span className="text-[9px] opacity-60">{statShortLabel}</span>
+          <span className="capcrunch-kicker text-[9px] opacity-60">{statShortLabel}</span>
         </span>
       )}
     </motion.div>
