@@ -88,7 +88,6 @@ body {
     repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 2px, rgba(0,0,0,0.012) 2px 4px),
     repeating-linear-gradient(90deg, rgba(255,255,255,0.008) 0 3px, rgba(0,0,0,0.012) 3px 6px),
     linear-gradient(180deg, #111111 0%, #060606 52%, #000000 100%);
-  position: relative;
 }
 
 .home-grid-shell {
