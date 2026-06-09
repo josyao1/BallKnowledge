@@ -149,7 +149,7 @@ export function CapCrunchResultCard({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1">
                     <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
-                    {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
+                    {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 shrink-0">{badLabel}</span>}
                   </div>
                   <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
                   {isBust && <span className="block text-[10px] text-red-400/60">busted by {fmt(totalBefore + selected.statValue - targetCap)}</span>}
@@ -218,7 +218,7 @@ export function CapCrunchResultCard({
           : parseFloat((item.lineup.totalStat - lastPick.statValue).toFixed(1));
         const wouldFinishAt = parseFloat((totalBeforeLast + opt!.statValue).toFixed(1));
         return (
-          <div className="mt-2 bg-black/40 border border-[#d4af37]/25 rounded px-3 py-2">
+          <div className="mt-2 bg-black/40 border border-[#d4af37]/25 px-3 py-2">
             <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-1">Optimal Last Pick</div>
             <div className="flex justify-between items-center gap-2">
               <div className="flex items-center gap-1.5 min-w-0">

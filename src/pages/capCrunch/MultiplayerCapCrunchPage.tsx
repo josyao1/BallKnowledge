@@ -1422,18 +1422,18 @@ export function MultiplayerCapCrunchPage() {
               {isHost ? (
                 <button
                   onClick={handlePlayAgain}
-                  className="w-full py-4 rounded-sm retro-title text-lg tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 transition-all"
+                  className="w-full py-4 capcrunch-btn-primary capcrunch-title text-lg transition"
                 >
                   Play Again
                 </button>
               ) : (
-                <div className="w-full py-4 rounded-sm text-center sports-font text-sm text-white/40 border border-white/10">
+                <div className="w-full py-4 text-center capcrunch-kicker text-sm text-white/40 border border-white/10">
                   Waiting for host to start next game...
                 </div>
               )}
               <button
                 onClick={() => navigate('/')}
-                className="w-full py-3 rounded-sm sports-font text-sm tracking-widest uppercase text-white/40 border border-white/10 hover:border-white/30 hover:text-white/60 transition-all"
+                className="w-full py-3 capcrunch-btn-secondary capcrunch-kicker text-sm text-white/50 hover:text-white/70 transition"
               >
                 Back to Home
               </button>

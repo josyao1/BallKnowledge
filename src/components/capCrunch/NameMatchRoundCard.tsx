@@ -49,27 +49,27 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
       animate={{ opacity: 1, rotateY: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
       style={{ perspective: 600 }}
-      className={`relative rounded border-2 bg-black ${borderClass} ${
+      className={`relative border bg-black/60 ${borderClass} ${
         size === 'lg' ? 'px-8 md:px-12 py-2 md:py-3' : 'px-5 py-2'
       }`}
     >
-      <p style={{ color: textColor }} className={`sports-font tracking-widest uppercase leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}>
+      <p style={{ color: textColor }} className={`capcrunch-kicker leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}>
         Same
       </p>
       <div className="flex items-center gap-2">
-        <p style={{ color: textColor }} className={`retro-title font-bold leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+        <p style={{ color: textColor }} className={`capcrunch-title leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
           {label}: Pick {pickIndex}
         </p>
         {proConf && (
-          <div className={`inline-flex px-2.5 py-1 rounded-sm ${CONF_PILL[proConf] ?? 'bg-white/10 border border-white/20'}`}>
-            <span className="retro-title text-[11px] leading-none text-white tracking-wider">{proConf}</span>
+          <div className={`inline-flex px-2.5 py-1 ${CONF_PILL[proConf] ?? 'bg-white/10 border border-white/20'}`}>
+            <span className="capcrunch-kicker text-[11px] leading-none text-white">{proConf}</span>
           </div>
         )}
       </div>
 
       <button
         onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
-        className="absolute bottom-1.5 right-1.5 w-4 h-4 rounded-full border border-[#06b6d4]/40 text-[#06b6d4]/50 text-[8px] flex items-center justify-center hover:border-[#06b6d4]/70 hover:text-[#06b6d4]/80 transition-colors"
+        className="absolute bottom-1.5 right-1.5 w-4 h-4 border border-[#06b6d4]/40 text-[#06b6d4]/50 text-[8px] flex items-center justify-center hover:border-[#06b6d4]/70 hover:text-[#06b6d4]/80 transition-colors"
       >
         ?
       </button>
@@ -93,12 +93,12 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(400px,90vw)] bg-[#0d0d0d] border-2 border-[#06b6d4]/50 rounded-lg shadow-[0_0_40px_rgba(6,182,212,0.2)] p-5"
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(400px,90vw)] bg-[#0d0d0d] border border-[#06b6d4]/50 shadow-[0_0_40px_rgba(6,182,212,0.2)] p-5"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Same</p>
-                    <p className="retro-title text-sm text-[#06b6d4]">{label}: Pick {pickIndex}{proConf ? ` + ${proConf}` : ''}</p>
+                    <p className="capcrunch-title text-sm text-[#06b6d4]">{label}: Pick {pickIndex}{proConf ? ` + ${proConf}` : ''}</p>
                   </div>
                   <button
                     onClick={() => setShowPanel(false)}

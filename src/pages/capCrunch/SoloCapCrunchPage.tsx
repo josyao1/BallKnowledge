@@ -148,27 +148,32 @@ export function SoloCapCrunchPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, phase]);
 
-  // Restore game state from sessionStorage on mount
+  // Restore game state from sessionStorage on mount.
+  // Skip if the page was opened with an explicit autoStart — that launch takes priority.
   useEffect(() => {
-    const saved = sessionStorage.getItem('soloCapCrunch');
-    if (saved) {
-      try {
-        const s = JSON.parse(saved);
-        if (s.phase && s.phase !== 'sport-select') {
-          setPhase(s.phase);
-          setSelectedSport(s.selectedSport);
-          setTotalRounds(s.totalRounds ?? 5);
-          setStatCategory(s.statCategory);
-          setHwFilter(s.hwFilter ?? null);
-          setUsedSpecialTypes(s.usedSpecialTypes ?? []);
-          setTargetCap(s.targetCap);
-          setCurrentTeam(s.currentTeam);
-          setLineup(s.lineup);
-          usedTeamsRef.current = s.usedTeams ?? [];
-        }
-      } catch { /* ignore corrupt data */ }
+    const autoStartState = location.state as { autoStart?: boolean } | null;
+    if (!autoStartState?.autoStart) {
+      const saved = sessionStorage.getItem('soloCapCrunch');
+      if (saved) {
+        try {
+          const s = JSON.parse(saved);
+          if (s.phase && s.phase !== 'sport-select') {
+            setPhase(s.phase);
+            setSelectedSport(s.selectedSport);
+            setTotalRounds(s.totalRounds ?? 5);
+            setStatCategory(s.statCategory);
+            setHwFilter(s.hwFilter ?? null);
+            setUsedSpecialTypes(s.usedSpecialTypes ?? []);
+            setTargetCap(s.targetCap);
+            setCurrentTeam(s.currentTeam);
+            setLineup(s.lineup);
+            usedTeamsRef.current = s.usedTeams ?? [];
+          }
+        } catch { /* ignore corrupt data */ }
+      }
     }
     restoredRef.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Persist game state to sessionStorage whenever it changes.
@@ -341,6 +346,28 @@ export function SoloCapCrunchPage() {
     }
   };
 
+  const handleNewGame = () => {
+    sessionStorage.removeItem('soloCapCrunch');
+    setPhase('sport-select');
+    setSelectedSport(null);
+    setTotalRounds(5);
+    setStatCategory(null);
+    setHwFilter(null);
+    setUsedSpecialTypes([]);
+    setTargetCap(0);
+    setCurrentTeam('');
+    setLineup(null);
+    setOptimalPick(undefined);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedPlayerName(null);
+    setSelectedPlayerId(null);
+    setAvailableYears([]);
+    setSelectedYear('');
+    setPickError(null);
+    usedTeamsRef.current = [];
+  };
+
   // Compute optimal last pick hint when results phase is reached
   useEffect(() => {
     if (phase !== 'results' || !lineup || !statCategory || !selectedSport) return;
@@ -404,7 +431,7 @@ export function SoloCapCrunchPage() {
                   <div className="flex flex-wrap gap-2 justify-center">
                     <button
                       onClick={() => handleStartGame(selectedSport as Sport, null, totalRounds)}
-                      className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                      className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                     >
                       RANDOM
                     </button>
@@ -415,7 +442,7 @@ export function SoloCapCrunchPage() {
                       <button
                         key={cat}
                         onClick={() => handleStartGame((selectedSport ?? 'nba') as Sport, cat, totalRounds)}
-                        className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                        className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                       >
                         {getCategoryAbbr(cat)}
                       </button>
@@ -435,7 +462,7 @@ export function SoloCapCrunchPage() {
                             const careerCats = ['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as const;
                             handleStartGame((selectedSport ?? 'nfl') as Sport, careerCats[Math.floor(Math.random() * careerCats.length)], totalRounds);
                           }}
-                          className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                          className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                         >
                           RANDOM
                         </button>
@@ -443,7 +470,7 @@ export function SoloCapCrunchPage() {
                           <button
                             key={cat}
                             onClick={() => handleStartGame((selectedSport ?? 'nfl') as Sport, cat, totalRounds)}
-                            className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                            className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                           >
                             {getCategoryAbbr(cat)}
                           </button>
@@ -460,7 +487,7 @@ export function SoloCapCrunchPage() {
                       <button
                         key={n}
                         onClick={() => setTotalRounds(n)}
-                        className={`w-8 h-8 rounded-sm sports-font text-xs transition ${
+                        className={`w-8 h-8 sports-font text-xs transition ${
                           totalRounds === n
                             ? 'bg-[#d4af37] text-black font-bold'
                             : 'bg-black/50 border border-white/20 text-white/50 hover:text-white hover:border-white/40'
@@ -689,8 +716,44 @@ export function SoloCapCrunchPage() {
               </div>
             )}
           </div>
+          {/* Mobile stat strip — compact 4-across row */}
+          <div className="lg:hidden grid grid-cols-4 border-t border-white/10">
+            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#FDF100' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Target</div>
+              <p className="capcrunch-title text-sm text-white leading-none">{targetCap}</p>
+            </div>
+            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#68BBE5' }}>
+              {isCareerStatRound && (
+                <div className="capcrunch-kicker text-[6px] text-[#68BBE5] mb-0.5">Career</div>
+              )}
+              {!isCareerStatRound && (
+                <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Stat</div>
+              )}
+              <p className="capcrunch-title text-sm text-white leading-none">
+                {isCareerStatRound ? getCategoryAbbr(statCategory!).replace('CAREER ', '') : getCategoryAbbr(statCategory!)}
+              </p>
+            </div>
+            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Total</div>
+              <SpinningNumber
+                value={fmt(lineup.totalStat)}
+                className="capcrunch-title text-sm leading-none"
+                color={getTotalColor(lineup.totalStat, targetCap)}
+                flashKey={badFlashKey}
+              />
+            </div>
+            <div className="px-2 py-2 text-center" style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Left</div>
+              <SpinningNumber
+                value={fmt(targetCap - lineup.totalStat)}
+                className="capcrunch-title text-sm leading-none"
+                color={getRemainingColor(lineup.totalStat, targetCap)}
+                flashKey={badFlashKey}
+              />
+            </div>
+          </div>
           {/* Mobile cap progress strip */}
-          <div className="lg:hidden w-full h-1 bg-white/10">
+          <div className="lg:hidden w-full h-0.5 bg-white/10">
             <motion.div
               className="h-full"
               animate={{
@@ -703,31 +766,36 @@ export function SoloCapCrunchPage() {
         </header>
 
         <main className="relative z-10 flex-1 w-full px-2 sm:px-3 md:px-6 py-2 md:py-4 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden">
-          {/* Left Column - Stats */}
-          <div className="w-full lg:w-44 lg:flex-shrink-0 grid grid-cols-2 gap-2 md:gap-3 lg:flex lg:flex-col">
-            <div className="capcrunch-metric px-3 md:px-6 py-3 md:py-6 text-center shadow-xl flex flex-col justify-center min-w-0" style={{ borderLeftColor: '#FDF100' }}>
-              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">Target</div>
-              <p className="capcrunch-title text-2xl md:text-4xl text-white">{targetCap}</p>
+          {/* Left Column - Stats (desktop only) */}
+          <div className="hidden lg:flex w-44 flex-shrink-0 flex-col gap-3">
+            <div className="capcrunch-metric px-6 py-6 text-center shadow-xl flex flex-col justify-center" style={{ borderLeftColor: '#FDF100' }}>
+              <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
+              <p className="capcrunch-title text-4xl text-white">{targetCap}</p>
             </div>
-            <div className="capcrunch-metric px-3 md:px-6 py-3 md:py-6 text-center shadow-xl flex flex-col justify-center min-w-0" style={{ borderLeftColor: '#68BBE5' }}>
-              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1 md:mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
-              <p className="capcrunch-title text-lg md:text-2xl text-white">
+            <div className="capcrunch-metric px-6 py-6 text-center shadow-xl flex flex-col justify-center" style={{ borderLeftColor: '#68BBE5' }}>
+              {isCareerStatRound && (
+                <div className="capcrunch-kicker text-[8px] text-[#68BBE5] mb-1">Career</div>
+              )}
+              {!isCareerStatRound && (
+                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
+              )}
+              <p className="capcrunch-title text-2xl text-white">
                 {isCareerStatRound ? getCategoryAbbr(statCategory!).replace('CAREER ', '') : getCategoryAbbr(statCategory!)}
               </p>
             </div>
-            <div className="capcrunch-metric px-3 md:px-6 py-3 md:py-6 text-center shadow-xl min-w-0" style={{ borderLeftColor: '#E2008A' }}>
-              <div className="sports-font text-[6px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
+            <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#E2008A' }}>
+              <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
               <SpinningNumber
                 value={fmt(lineup.totalStat)}
-                className="capcrunch-title text-2xl md:text-4xl"
+                className="capcrunch-title text-4xl"
                 color={getTotalColor(lineup.totalStat, targetCap)}
                 flashKey={badFlashKey}
               />
-              <div className="mt-2 md:mt-3 border-t border-white/10 pt-2 md:pt-3">
-                <div className="sports-font text-[6px] md:text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
+              <div className="mt-3 border-t border-white/10 pt-3">
+                <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
                 <SpinningNumber
                   value={fmt(targetCap - lineup.totalStat)}
-                  className="capcrunch-title text-xl md:text-3xl"
+                  className="capcrunch-title text-3xl"
                   color={getRemainingColor(lineup.totalStat, targetCap)}
                   flashKey={badFlashKey}
                 />
@@ -736,13 +804,11 @@ export function SoloCapCrunchPage() {
                 <p className="sports-font text-[7px] text-red-400/70 tracking-wide mt-1 uppercase">{lineup.bustCount} Bust{lineup.bustCount !== 1 ? 's' : ''}</p>
               )}
             </div>
-
-            {/* Cap fill bar — desktop only; mobile uses the strip in the header */}
-            <div className="col-span-2 lg:col-span-1 capcrunch-metric px-3 py-2 shadow-xl" style={{ borderLeftColor: '#70BE5B' }}>
+            <div className="capcrunch-metric px-3 py-2 shadow-xl" style={{ borderLeftColor: '#70BE5B' }}>
               <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
-              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-white/10 overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full"
+                  className="h-full"
                   animate={{
                     width: `${Math.min((lineup.totalStat / targetCap) * 100, 100)}%`,
                     backgroundColor: getTotalColor(lineup.totalStat, targetCap),
@@ -949,7 +1015,7 @@ export function SoloCapCrunchPage() {
                                 <p className="font-semibold truncate text-[9px] md:text-xs">
                                   {idx + 1}. <FlipReveal text={pick.playerName} />
                                 </p>
-                                {isBad && <span className="text-[7px] bg-red-600 text-white px-1 rounded shrink-0">{getPickBadgeLabel(pick)}</span>}
+                                {isBad && <span className="text-[7px] bg-red-600 text-white px-1 shrink-0">{getPickBadgeLabel(pick)}</span>}
                               </div>
                               <p className={isBad ? 'text-red-400/70' : 'text-white/60'} style={{fontSize: '0.5rem'}}>
                                 {formatPickTeam(pick.team)} • {pick.selectedYear}
@@ -978,7 +1044,7 @@ export function SoloCapCrunchPage() {
                 </div>
 
                 {(lineup.bustCount ?? 0) > 0 && (
-                  <div className="mt-3 md:mt-4 p-2 md:p-3 bg-red-900/30 border border-red-500/40 rounded text-red-400 text-[8px] md:text-xs font-semibold text-center">
+                  <div className="mt-3 md:mt-4 p-2 md:p-3 bg-red-900/30 border border-red-500/40 text-red-400 text-[8px] md:text-xs font-semibold text-center">
                     {lineup.bustCount} BUST{lineup.bustCount !== 1 ? 'S' : ''} — each counted as 0
                   </div>
                 )}
@@ -1082,9 +1148,7 @@ export function SoloCapCrunchPage() {
               {/* ACTION BUTTONS */}
               <div className="flex flex-col gap-2 md:gap-3">
                 <button
-                  onClick={() => {
-                    navigate('/');
-                  }}
+                  onClick={handleNewGame}
                   className="group relative capcrunch-btn-primary py-3 md:py-4"
                 >
                   <span className="relative z-10 capcrunch-title text-base md:text-lg text-black tracking-widest">

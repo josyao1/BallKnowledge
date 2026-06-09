@@ -518,7 +518,7 @@ export function HomePage() {
 
           {capCrunchStep === 'settings' && capCrunchSport && (
             <div className="w-full max-w-6xl">
-              <div className="mb-4 flex justify-center lg:hidden">
+              <div className="mb-4 flex items-center justify-between lg:hidden">
                 <div className="inline-flex border border-white/10 bg-black/20">
                   <button
                     onClick={() => setCapCrunchTab('settings')}
@@ -533,6 +533,12 @@ export function HomePage() {
                     Rules
                   </button>
                 </div>
+                <button
+                  onClick={() => setCapCrunchStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">

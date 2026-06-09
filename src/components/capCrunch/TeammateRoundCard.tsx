@@ -16,18 +16,18 @@ export function TeammateRoundCard({ pickIndex, size = 'sm' }: Props) {
       animate={{ opacity: 1, rotateY: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
       style={{ perspective: 600 }}
-      className={`relative rounded border-2 bg-black border-[#22c55e]/80 shadow-[0_0_12px_rgba(34,197,94,0.25)] ${
+      className={`relative border bg-black/60 border-[#70BE5B]/70 shadow-[0_0_16px_rgba(112,190,91,0.18)] ${
         size === 'lg' ? 'px-8 md:px-12 py-2 md:py-3' : 'px-5 py-2'
       }`}
     >
-      <p className={`sports-font text-white/50 tracking-widest uppercase leading-none mb-0.5 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}>Filter</p>
-      <p className={`retro-title font-bold text-[#22c55e] leading-tight ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+      <p className={`capcrunch-kicker text-white/40 leading-none mb-0.5 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}>Filter</p>
+      <p className={`capcrunch-title text-[#70BE5B] leading-tight ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
         Played with Pick {pickIndex}
       </p>
 
       <button
         onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
-        className="absolute bottom-1.5 right-1.5 w-4 h-4 rounded-full border border-[#22c55e]/40 text-[#22c55e]/50 text-[8px] flex items-center justify-center hover:border-[#22c55e]/70 hover:text-[#22c55e]/80 transition-colors"
+        className="absolute bottom-1.5 right-1.5 w-4 h-4 border border-[#70BE5B]/40 text-[#70BE5B]/50 text-[8px] flex items-center justify-center hover:border-[#70BE5B]/70 hover:text-[#70BE5B]/80 transition-colors"
       >
         ?
       </button>
@@ -51,12 +51,12 @@ export function TeammateRoundCard({ pickIndex, size = 'sm' }: Props) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(400px,90vw)] bg-[#0d0d0d] border-2 border-[#22c55e]/50 rounded-lg shadow-[0_0_40px_rgba(34,197,94,0.2)] p-5"
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(400px,90vw)] bg-[#0d0d0d] border border-[#70BE5B]/50 shadow-[0_0_40px_rgba(112,190,91,0.2)] p-5"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Rule</p>
-                    <p className="retro-title text-sm text-[#22c55e]">Played with Pick {pickIndex}</p>
+                    <p className="capcrunch-title text-sm text-[#70BE5B]">Played with Pick {pickIndex}</p>
                   </div>
                   <button
                     onClick={() => setShowPanel(false)}

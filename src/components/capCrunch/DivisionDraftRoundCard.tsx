@@ -41,17 +41,17 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
   const roundSize    = size === 'lg' ? 'text-base md:text-lg' : 'text-sm md:text-base';
 
   return (
-    <div className="px-5 py-2 rounded border-2 bg-black border-[#a855f7]/80 shadow-[0_0_12px_rgba(168,85,247,0.25)]">
+    <div className="px-5 py-2 border bg-black/60 border-[#a855f7]/70 shadow-[0_0_16px_rgba(168,85,247,0.18)]">
       {/* Division name + draft round side by side */}
       <div className="flex items-center gap-3 flex-wrap">
-        <p className={`retro-title font-bold text-[#d4af37] leading-tight ${divisionSize}`}>
+        <p className={`capcrunch-title text-[#FDF100] leading-tight ${divisionSize}`}>
           {division}
         </p>
         <div className="flex items-center gap-1.5">
           <span className="sports-font text-[9px] text-white/30">+</span>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#a855f7]/20 border border-[#a855f7]/50">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#a855f7]/20 border border-[#a855f7]/50">
             <img src="/draftlogo.png" alt="Draft" className={size === 'lg' ? 'h-5 object-contain' : 'h-4 object-contain'} />
-            <span className={`retro-title text-[#a855f7] leading-none tracking-wide ${roundSize}`}>
+            <span className={`capcrunch-title text-[#a855f7] leading-none ${roundSize}`}>
               {draftLabel(draftRound)}
             </span>
           </div>
@@ -89,13 +89,13 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(420px,90vw)] bg-[#0d0d0d] border-2 border-[#a855f7]/50 rounded-lg shadow-[0_0_40px_rgba(168,85,247,0.2)] p-5"
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(420px,90vw)] bg-[#0d0d0d] border border-[#a855f7]/50 shadow-[0_0_40px_rgba(168,85,247,0.2)] p-5"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Division Teams</p>
-                    <p className="retro-title text-sm text-[#d4af37]">{division}</p>
+                    <p className="capcrunch-title text-sm text-[#FDF100]">{division}</p>
                   </div>
                   <button
                     onClick={() => setShowPanel(false)}

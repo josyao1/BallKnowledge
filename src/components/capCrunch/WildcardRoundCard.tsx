@@ -15,21 +15,20 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
       animate={{ opacity: 1, rotateY: 0 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
       style={{ perspective: 600 }}
-      className={`relative rounded border-2 bg-black border-transparent ${
+      className={`relative border-0 bg-black border-transparent ${
         size === 'lg' ? 'px-8 md:px-12 py-2 md:py-3' : 'px-5 py-2'
       }`}
     >
       {/* Rainbow border via gradient outline */}
       <div
-        className="absolute inset-0 rounded"
+        className="absolute inset-0"
         style={{
           background: 'linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444)',
           zIndex: -1,
-          margin: '-2px',
-          borderRadius: 'inherit',
+          margin: '-1px',
         }}
       />
-      <div className="absolute inset-[2px] bg-black rounded" style={{ zIndex: -1 }} />
+      <div className="absolute inset-[1px] bg-black/80" style={{ zIndex: -1 }} />
 
       <p
         className={`sports-font tracking-widest uppercase leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}
@@ -42,7 +41,7 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
         Free Pick
       </p>
       <p
-        className={`retro-title font-bold leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}
+        className={`capcrunch-title leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}
         style={{
           background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
           WebkitBackgroundClip: 'text',
@@ -54,7 +53,7 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
 
       <button
         onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
-        className="absolute bottom-1.5 right-1.5 w-4 h-4 rounded-full border border-white/30 text-white/40 text-[8px] flex items-center justify-center hover:border-white/60 hover:text-white/70 transition-colors"
+        className="absolute bottom-1.5 right-1.5 w-4 h-4 border border-white/30 text-white/40 text-[8px] flex items-center justify-center hover:border-white/60 hover:text-white/70 transition-colors"
       >
         ?
       </button>
@@ -78,24 +77,23 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(400px,90vw)] bg-[#0d0d0d] rounded-lg shadow-[0_0_40px_rgba(168,85,247,0.2)] p-5"
-                style={{ border: '2px solid transparent', backgroundClip: 'padding-box' }}
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(400px,90vw)] bg-[#0d0d0d] shadow-[0_0_40px_rgba(168,85,247,0.2)] p-5"
+                style={{ border: '1px solid transparent', backgroundClip: 'padding-box' }}
               >
                 <div
-                  className="absolute inset-0 rounded-lg"
+                  className="absolute inset-0"
                   style={{
                     background: 'linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
                     zIndex: -1,
-                    margin: '-2px',
-                    borderRadius: 'inherit',
+                    margin: '-1px',
                   }}
                 />
-                <div className="absolute inset-[2px] bg-[#0d0d0d] rounded-lg" style={{ zIndex: -1 }} />
+                <div className="absolute inset-[1px] bg-[#0d0d0d]" style={{ zIndex: -1 }} />
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Free Pick</p>
                     <p
-                      className="retro-title text-sm"
+                      className="capcrunch-title text-sm"
                       style={{
                         background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
                         WebkitBackgroundClip: 'text',
