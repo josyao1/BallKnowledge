@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer } from '../../services/careerData';
 import { scrambleName } from '../../utils/scramble';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
+import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import type { Sport } from '../../types';
 
 const COLOR = '#3b82f6';
@@ -21,6 +22,7 @@ export function SoloScramblePage() {
 
   const [scrambled, setScrambled] = useState('');
   const [answer, setAnswer]       = useState('');
+  const [answerId, setAnswerId]   = useState<string | number | null>(null);
   const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, inputRef } = useGuessInput();
   const [status, setStatus]       = useState<GameStatus>('loading');
   const [streak, setStreak]       = useState(0);
@@ -39,6 +41,7 @@ export function SoloScramblePage() {
     if (!player) { setStatus('loading'); return; }
 
     setAnswer(player.player_name);
+    setAnswerId((player as any).player_id ?? null);
     setScrambled(scrambleName(player.player_name));
     setStatus('playing');
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -160,10 +163,17 @@ export function SoloScramblePage() {
                     backgroundColor: status === 'correct' ? `${COLOR}10` : 'rgba(0,0,0,0.3)',
                   }}
                 >
-                  <p className="capcrunch-kicker text-[9px] text-white/40 mb-2">
+                  <p className="capcrunch-kicker text-[9px] text-white/40 mb-3">
                     {status === 'correct' ? 'Correct!' : 'The Answer Was'}
                   </p>
-                  <div className="capcrunch-title text-3xl text-[#d4af37]">{answer}</div>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <PlayerHeadshot
+                      playerId={answerId ?? undefined}
+                      sport={sport}
+                      className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-white/10"
+                    />
+                    <div className="capcrunch-title text-3xl text-[#d4af37]">{answer}</div>
+                  </div>
                   {wrongGuesses.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1 justify-center">
                       {wrongGuesses.map((g, i) => (

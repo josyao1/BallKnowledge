@@ -11,6 +11,7 @@ import { CareerBioPanel }     from '../../components/career/CareerBioPanel';
 import { CareerWrongGuesses } from '../../components/career/CareerWrongGuesses';
 import { CareerInitialsHint } from '../../components/career/CareerInitialsHint';
 import { CareerControls }     from '../../components/career/CareerControls';
+import { PlayerHeadshot }     from '../../components/capCrunch/PlayerHeadshot';
 import type { Sport } from '../../types';
 
 const COLOR = '#22c55e';
@@ -175,11 +176,20 @@ export function CareerGamePage() {
             className="mb-4 capcrunch-panel p-4 text-center"
             style={{ borderColor: store.status === 'won' ? `${COLOR}60` : '#ef444460', backgroundColor: store.status === 'won' ? `${COLOR}10` : '#ef444410' }}
           >
-            <div className="capcrunch-title text-2xl" style={{ color: store.status === 'won' ? COLOR : '#ef4444' }}>
+            <div className="capcrunch-kicker text-[9px] text-white/40 mb-3">
               {store.status === 'won' ? 'You Got It!' : 'Game Over'}
             </div>
-            <div className="capcrunch-title text-lg text-white mt-1">{store.playerName}</div>
-            <div className="capcrunch-kicker text-xs text-white/50 mt-1">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <PlayerHeadshot
+                playerId={store.playerId ?? undefined}
+                sport={store.sport}
+                className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-white/10"
+              />
+              <div className="capcrunch-title text-2xl" style={{ color: store.status === 'won' ? COLOR : '#ef4444' }}>
+                {store.playerName}
+              </div>
+            </div>
+            <div className="capcrunch-kicker text-xs text-white/50">
               {store.status === 'won' ? `Final Score: ${store.score}` : 'Score: 0'}
             </div>
           </motion.div>

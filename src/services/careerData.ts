@@ -282,16 +282,16 @@ export async function getRandomNBAScramblePlayer(
 /** Pick a random NFL player eligible for Name Scramble (offensive + notable defensive). */
 export async function getRandomNFLScramblePlayer(
   filters?: ScrambleFilters
-): Promise<{ player_name: string } | null> {
+): Promise<{ player_name: string; player_id?: string } | null> {
   const [all, defensiveNames] = await Promise.all([
     loadNFLCareers(),
     loadNFLDefensiveNames().catch(() => [] as string[]),
   ]);
   const mostRecentYear = getMostRecentNFLYear(all);
-  let offensivePool: { player_name: string }[] = all.filter(p => isNFLScrambleEligible(p, mostRecentYear));
-  if (filters?.careerTo) offensivePool = offensivePool.filter(p => nflEndYear(p as NFLCareerPlayer) >= filters.careerTo!);
+  let offensivePool: NFLCareerPlayer[] = all.filter(p => isNFLScrambleEligible(p, mostRecentYear));
+  if (filters?.careerTo) offensivePool = offensivePool.filter(p => nflEndYear(p) >= filters.careerTo!);
   const defensivePool: { player_name: string }[] = defensiveNames.map(name => ({ player_name: name }));
-  const pool = [...offensivePool, ...defensivePool];
+  const pool: { player_name: string; player_id?: string }[] = [...offensivePool, ...defensivePool];
   if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }

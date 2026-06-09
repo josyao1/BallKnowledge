@@ -29,6 +29,7 @@ import { CareerBioPanel }     from '../../components/career/CareerBioPanel';
 import { CareerWrongGuesses } from '../../components/career/CareerWrongGuesses';
 import { CareerInitialsHint } from '../../components/career/CareerInitialsHint';
 import { CareerControls }     from '../../components/career/CareerControls';
+import { PlayerHeadshot }     from '../../components/capCrunch/PlayerHeadshot';
 import type { Sport } from '../../types';
 import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
@@ -377,8 +378,15 @@ export function MultiplayerCareerPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="mb-6 p-6 bg-black/40 border-2 border-[#d4af37]/50 text-center"
           >
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">The Answer Was</div>
-            <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.answer}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase">The Answer Was</div>
+            <div className="flex items-center justify-center gap-3">
+              <PlayerHeadshot
+                playerId={careerState.playerId ?? undefined}
+                sport={sport}
+                className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-white/10"
+              />
+              <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.answer}</div>
+            </div>
           </motion.div>
         )}
 

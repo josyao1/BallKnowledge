@@ -28,12 +28,14 @@ import { scrambleName } from '../../utils/scramble';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
 import type { Sport } from '../../types';
 import { useGameAbandonment } from '../../hooks/useGameAbandonment';
+import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ScrambleState {
   playerName: string;
   scrambledName: string;
+  playerId?: string | number;
   sport: 'nba' | 'nfl';
   round: number;
   win_target: number;
@@ -44,6 +46,7 @@ interface ScrambleState {
 interface RoundSummary {
   scrambledName: string;
   answer: string;
+  playerId?: string | number;
   round: number;
   // Map playerId → pts awarded this round (0 = gave up / missed)
   pts: Record<string, number>;
@@ -158,6 +161,7 @@ export function MultiplayerNameScramblePage() {
       const newSummary: RoundSummary = {
         scrambledName: careerState.scrambledName || '',
         answer: careerState.playerName || '',
+        playerId: careerState.playerId,
         round: careerState.round || 0,
         pts: ptsMap,
         finishedAt,
@@ -313,6 +317,7 @@ export function MultiplayerNameScramblePage() {
       const newState: ScrambleState = {
         playerName,
         scrambledName: scrambled,
+        playerId: (player as any).player_id ?? undefined,
         sport,
         round: (careerState.round || 0) + 1,
         win_target: careerState.win_target || 20,
@@ -369,8 +374,15 @@ export function MultiplayerNameScramblePage() {
           >
             <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">The Scramble Was</div>
             <div className="capcrunch-title text-2xl text-[#3b82f6]">{summary.scrambledName}</div>
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase mt-1">The Answer Was</div>
-            <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.answer}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase mt-2">The Answer Was</div>
+            <div className="flex items-center justify-center gap-3 mt-1">
+              <PlayerHeadshot
+                playerId={summary.playerId ?? undefined}
+                sport={careerState.sport}
+                className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white/10"
+              />
+              <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.answer}</div>
+            </div>
           </motion.div>
         )}
 
