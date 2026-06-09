@@ -87,6 +87,20 @@ export function HomePage() {
     warmCareerCache(sport);
   }, [sport]);
 
+  // Close any open modal on Escape key
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (guessPlayerStep) { setGuessPlayerStep(null); return; }
+      if (rosterStep) { setRosterStep(null); setLoadingStatus('idle'); return; }
+      if (topTenStep) { setTopTenStep(null); return; }
+      if (capCrunchStep) { setCapCrunchStep(null); return; }
+      if (rulesTileId) { setRulesTileId(null); return; }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [guessPlayerStep, rosterStep, topTenStep, capCrunchStep, rulesTileId]);
+
   // Re-open modals when navigating back from a solo game
   useEffect(() => {
     const s = location.state as {
@@ -543,76 +557,82 @@ export function HomePage() {
       {/* Guess the Player modal */}
       {guessPlayerStep && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setGuessPlayerStep(null)}>
-          <div onClick={e => e.stopPropagation()}>
-            {guessPlayerStep === 'sport' && (
-              <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10">
-                <div className="mb-8">
-                  <p className="home-kicker text-[#bfbfbf] mb-3">Guess the Player</p>
-                  <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
-                  <p className="capcrunch-body text-white/60 text-sm">Career Arc, Name Scramble, and Face Reveal — choose your league first.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
-                  <button
-                    onClick={() => { setGuessPlayerSport('nba'); setGuessPlayerStep('select'); }}
-                    className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
-                  >
-                    <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
-                    <div className="flex h-full flex-col justify-between">
-                      <div>
-                        <span className="capcrunch-kicker text-[#E2008A]">Basketball</span>
-                        <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                        <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1980 onward, modern era filter available.</p>
-                      </div>
-                      <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => { setGuessPlayerSport('nfl'); setGuessPlayerStep('select'); }}
-                    className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
-                  >
-                    <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
-                    <div className="flex h-full flex-col justify-between">
-                      <div>
-                        <span className="capcrunch-kicker text-[#E2008A]">Football</span>
-                        <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                        <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1999 onward. Face Reveal includes defensive pool.</p>
-                      </div>
-                      <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
-                    </div>
-                  </button>
-                </div>
-                <div className="mt-5 flex justify-end">
-                  <button onClick={() => setGuessPlayerStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
-                </div>
+          {guessPlayerStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+              <div className="mb-8">
+                <p className="home-kicker text-[#bfbfbf] mb-3">Guess the Player</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm">Career Arc, Name Scramble, and Face Reveal — choose your league first.</p>
               </div>
-            )}
-            {guessPlayerStep === 'select' && guessPlayerSport && (
+              <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                <button
+                  onClick={() => { setGuessPlayerSport('nba'); setGuessPlayerStep('select'); }}
+                  className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#E2008A]">Basketball</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1980 onward, modern era filter available.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setGuessPlayerSport('nfl'); setGuessPlayerStep('select'); }}
+                  className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#E2008A]">Football</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1999 onward. Face Reveal includes defensive pool.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button onClick={() => setGuessPlayerStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+              </div>
+            </div>
+          )}
+          {guessPlayerStep === 'select' && guessPlayerSport && (
+            <div className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
               <GuessPlayerSelect
                 sport={guessPlayerSport}
                 mode={guessPlayerMode}
                 onBack={() => setGuessPlayerStep('sport')}
                 onSelectGame={(id) => setGuessPlayerStep(id)}
               />
-            )}
-            {guessPlayerStep === 'career' && guessPlayerSport && (
+            </div>
+          )}
+          {guessPlayerStep === 'career' && guessPlayerSport && (
+            <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
               <CareerArcSetup
                 sport={guessPlayerSport}
                 onBack={() => setGuessPlayerStep('select')}
               />
-            )}
-            {guessPlayerStep === 'scramble' && guessPlayerSport && (
+            </div>
+          )}
+          {guessPlayerStep === 'scramble' && guessPlayerSport && (
+            <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
               <ScrambleSetup
                 sport={guessPlayerSport}
                 onBack={() => setGuessPlayerStep('select')}
               />
-            )}
-            {guessPlayerStep === 'face-reveal' && guessPlayerSport && (
+            </div>
+          )}
+          {guessPlayerStep === 'face-reveal' && guessPlayerSport && (
+            <div className="w-full max-w-4xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
               <FaceRevealSetup
                 sport={guessPlayerSport}
                 onBack={() => setGuessPlayerStep('select')}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 

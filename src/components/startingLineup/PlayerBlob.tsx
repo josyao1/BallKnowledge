@@ -89,7 +89,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           <div className="text-[8px] md:text-[9px] text-white/90 font-semibold leading-tight truncate">
             {displayLastName(player.name)}
           </div>
-          <div className="text-[7px] md:text-[8px] text-green-400 sports-font">{player.pos_abb}</div>
+          <div className="text-[7px] md:text-[8px] text-green-400 capcrunch-kicker">{player.pos_abb}</div>
         </div>
       </motion.div>
     );
@@ -110,7 +110,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <div className="text-[8px] text-green-400 sports-font text-center max-w-[60px] leading-tight truncate">
+          <div className="text-[8px] text-green-400 capcrunch-kicker text-center max-w-[60px] leading-tight truncate">
             {displayLastName(player.name)}
           </div>
         </motion.div>
@@ -150,9 +150,9 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
         whileTap={{ scale: 0.93 }}
       >
         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#1c2e1c] border-2 border-dashed border-green-600/60 flex items-center justify-center group-hover:border-green-400 group-hover:bg-[#1a3a1a] transition-all shadow">
-          <span className="retro-title text-lg text-green-500/60 group-hover:text-green-400">?</span>
+          <span className="capcrunch-title text-lg text-green-500/60 group-hover:text-green-400">?</span>
         </div>
-        <div className="text-[7px] text-green-600/50 sports-font">{player.pos_abb}</div>
+        <div className="text-[7px] text-green-600/50 capcrunch-kicker">{player.pos_abb}</div>
       </motion.button>
     );
   }
@@ -190,7 +190,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
       }
       case 'number': {
         return (
-          <span className="retro-title text-base md:text-lg text-[#fdb927] leading-none">
+          <span className="capcrunch-title text-base md:text-lg text-[#fdb927] leading-none">
             {player.number ? `#${player.number}` : '?'}
           </span>
         );
@@ -198,13 +198,13 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
       case 'draft': {
         if (!player.draft_pick) {
           return (
-            <span className="text-[8px] text-white/40 sports-font">UDFA</span>
+            <span className="text-[8px] text-white/40 capcrunch-kicker">UDFA</span>
           );
         }
         return (
           <div className="flex flex-col items-center leading-none">
-            <span className="text-[7px] text-white/40 sports-font tracking-wider">#</span>
-            <span className="retro-title text-sm md:text-base text-[#a78bfa] leading-none">
+            <span className="text-[7px] text-white/40 capcrunch-kicker tracking-wider">#</span>
+            <span className="capcrunch-title text-sm md:text-base text-[#a78bfa] leading-none">
               {player.draft_pick}
             </span>
           </div>
@@ -222,19 +222,19 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           {content}
         </div>
         {showCollegeTooltip && (
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-black/90 border border-white/10 rounded text-[9px] text-white/80 sports-font whitespace-nowrap pointer-events-none opacity-0 group-hover/blob:opacity-100 transition-opacity z-50">
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-black/90 border border-white/10 rounded text-[9px] text-white/80 capcrunch-kicker whitespace-nowrap pointer-events-none opacity-0 group-hover/blob:opacity-100 transition-opacity z-50">
             {player.college}
           </div>
         )}
       </div>
-      <div className="text-[7px] md:text-[8px] text-white/30 sports-font">{player.pos_abb}</div>
+      <div className="text-[7px] md:text-[8px] text-white/30 capcrunch-kicker">{player.pos_abb}</div>
       {showHint && player.ppg != null && (
-        <div className="text-[7px] text-[#fdb927]/70 sports-font leading-none">
+        <div className="text-[7px] text-[#fdb927]/70 capcrunch-kicker leading-none">
           {player.ppg.toFixed(1)} PPG
         </div>
       )}
       {showHint && player.ppg == null && (
-        <div className="text-[7px] text-[#fdb927]/70 sports-font leading-none tracking-wider">
+        <div className="text-[7px] text-[#fdb927]/70 capcrunch-kicker leading-none tracking-wider">
           {player.name.split(' ').map(w => w[0]?.toUpperCase() ?? '').join('.')}
         </div>
       )}
