@@ -84,7 +84,7 @@ export function TopTenSettings({
       <Row label="Round">
         <Chips>
           {(['league', 'division', 'team'] as const).map(t => (
-            <Chip key={t} active={roundType === t} onClick={() => onRoundTypeChange(t)}>
+            <Chip key={t} active={roundType === t} activeBg="#70BE5B" activeText="#000" onClick={() => onRoundTypeChange(t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </Chip>
           ))}
@@ -94,8 +94,8 @@ export function TopTenSettings({
       {roundType !== 'league' && (
         <Row label="Mode">
           <Chips>
-            <Chip active={divisionMode === 'cumulative'} onClick={() => onDivisionModeChange('cumulative')}>Cumulative</Chip>
-            <Chip active={divisionMode === 'single_season'} onClick={() => onDivisionModeChange('single_season')}>Single Season</Chip>
+            <Chip active={divisionMode === 'cumulative'} activeBg="#70BE5B" activeText="#000" onClick={() => onDivisionModeChange('cumulative')}>Cumulative</Chip>
+            <Chip active={divisionMode === 'single_season'} activeBg="#70BE5B" activeText="#000" onClick={() => onDivisionModeChange('single_season')}>Single Season</Chip>
           </Chips>
         </Row>
       )}
@@ -116,7 +116,7 @@ export function TopTenSettings({
         <Row label="Window">
           <Chips>
             {[5, 10, 15, 20].map(n => (
-              <Chip key={n} active={windowYears === n} onClick={() => onWindowYearsChange(n)}>{n}y</Chip>
+              <Chip key={n} active={windowYears === n} activeBg="#70BE5B" activeText="#000" onClick={() => onWindowYearsChange(n)}>{n}y</Chip>
             ))}
           </Chips>
         </Row>
@@ -164,7 +164,7 @@ export function TopTenSettings({
         <Row label="Strikes">
           <Chips>
             {[1, 2, 3].map(n => (
-              <Chip key={n} active={maxStrikes === n} onClick={() => onMaxStrikesChange!(n)}>{n}</Chip>
+              <Chip key={n} active={maxStrikes === n} activeBg="#70BE5B" activeText="#000" onClick={() => onMaxStrikesChange!(n)}>{n}</Chip>
             ))}
           </Chips>
         </Row>
@@ -174,7 +174,7 @@ export function TopTenSettings({
         <Row label="Timer">
           <Chips>
             {[30, 45, 60, 90].map(n => (
-              <Chip key={n} active={turnTimer === n} onClick={() => onTurnTimerChange!(n)}>{n}s</Chip>
+              <Chip key={n} active={turnTimer === n} activeBg="#70BE5B" activeText="#000" onClick={() => onTurnTimerChange!(n)}>{n}s</Chip>
             ))}
           </Chips>
         </Row>

@@ -18,19 +18,14 @@ function getInitials(name: string): string {
 interface Props {
   entry: TopTenEntry;
   index: number;
-  /** Was this slot correctly guessed during the game. */
   wasGuessed: boolean;
-  /** Reveal all entries (solo end state, results page). */
   gameOver?: boolean;
-  /** Show team logo hint before the slot is guessed (division mode). */
   showTeamHint?: boolean;
-  /** Show player initials as hint (division/team rounds where team is already known). */
   showInitialsHint?: boolean;
   sport: 'nba' | 'nfl';
   categoryKey: string;
   catDef?: StatCategoryDef;
   statShortLabel?: string;
-  /** Trigger a shake animation on this row (solo: just guessed). */
   justGuessed?: boolean;
 }
 
@@ -50,19 +45,19 @@ export function TopTenEntryRow({
       transition={{ duration: 0.35 }}
       className={`flex items-center gap-3 px-3 py-2.5 border transition-colors ${
         wasGuessed
-          ? 'bg-[#70BE5B]/10 border-[#70BE5B]/35'
+          ? 'bg-[#70BE5B]/10 border-[#70BE5B]/30'
           : gameOver
-          ? 'bg-white/[0.03] border-white/8'
-          : 'bg-black/30 border-white/6'
+          ? 'bg-white/4 border-white/5'
+          : 'bg-black/40 border-white/8'
       }`}
     >
-      <span className="capcrunch-kicker text-[10px] text-white/20 w-4 text-right shrink-0 tabular-nums">
+      <span className="capcrunch-kicker text-[10px] text-white/25 w-4 text-right shrink-0 tabular-nums">
         #{index + 1}
       </span>
 
       <div
-        className={`w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
-          wasGuessed ? 'ring-[#68BBE5]/45' : 'ring-white/5'
+        className={`w-9 h-9 overflow-hidden shrink-0 ring-1 transition-all duration-500 ${
+          wasGuessed ? 'ring-[#70BE5B]/40' : 'ring-white/5'
         }`}
         style={{
           filter:  showInfo ? 'none' : 'blur(14px) saturate(0) brightness(0.45)',
@@ -76,7 +71,7 @@ export function TopTenEntryRow({
         {showInfo ? (
           <>
             <p className={`capcrunch-title text-sm leading-tight truncate ${
-              wasGuessed ? 'text-white' : 'text-white/40'
+              wasGuessed ? 'text-[#70BE5B]' : 'text-white/35'
             }`}>
               {entry.playerName}
             </p>
@@ -98,8 +93,8 @@ export function TopTenEntryRow({
       </div>
 
       {showInfo && catDef && (
-        <span className={`capcrunch-title text-xs shrink-0 tabular-nums ${
-          wasGuessed ? 'text-[#68BBE5]' : 'text-white/25'
+        <span className={`capcrunch-title text-sm shrink-0 tabular-nums ${
+          wasGuessed ? 'text-[#70BE5B]' : 'text-white/20'
         }`}>
           {formatStat(entry.stat, categoryKey)}{' '}
           <span className="capcrunch-kicker text-[9px] opacity-60">{statShortLabel}</span>

@@ -53,6 +53,7 @@ interface Props {
   // Callbacks
   onBack: () => void;
   onStartGame: () => void;
+  soloOnly?: boolean;
 }
 
 
@@ -66,7 +67,7 @@ export function RosterRoyaleSetup({
   selectedYear, setSelectedYear,
   randomMinYear, randomMaxYear, setRandomMinYear, setRandomMaxYear,
   timerDuration, setTimerDuration, loadingStatus, statusMessage, setLoadingStatus,
-  onBack, onStartGame,
+  onBack, onStartGame, soloOnly = false,
 }: Props) {
   const navigate = useNavigate();
   const [showTimerPicker, setShowTimerPicker] = useState(false);
@@ -171,12 +172,14 @@ export function RosterRoyaleSetup({
                         >
                           Start Solo
                         </button>
-                        <button
-                          onClick={() => navigate('/lobby/create', { state: { gameType: sport === 'nba' ? 'nba-box-score' : 'box-score' } })}
-                          className="capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs"
-                        >
-                          Lobby
-                        </button>
+                        {!soloOnly && (
+                          <button
+                            onClick={() => navigate('/lobby/create', { state: { gameType: sport === 'nba' ? 'nba-box-score' : 'box-score' } })}
+                            className="capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs"
+                          >
+                            Lobby
+                          </button>
+                        )}
                       </div>
                     </>
                   );
@@ -300,22 +303,26 @@ export function RosterRoyaleSetup({
                     >
                       Start Solo
                     </button>
-                    <button
-                      onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
-                      className={`capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs ${
-                        sport === 'nba'
-                          ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white'
-                          : 'border-[#4a7fb5] text-[#4a7fb5] hover:bg-[#013369] hover:text-white'
-                      }`}
-                    >
-                      Create Lobby
-                    </button>
-                    <button
-                      onClick={() => navigate('/lobby/join')}
-                      className="capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs"
-                    >
-                      Join Lobby
-                    </button>
+                    {!soloOnly && (
+                      <>
+                        <button
+                          onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
+                          className={`capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs ${
+                            sport === 'nba'
+                              ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white'
+                              : 'border-[#4a7fb5] text-[#4a7fb5] hover:bg-[#013369] hover:text-white'
+                          }`}
+                        >
+                          Create Lobby
+                        </button>
+                        <button
+                          onClick={() => navigate('/lobby/join')}
+                          className="capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs"
+                        >
+                          Join Lobby
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}

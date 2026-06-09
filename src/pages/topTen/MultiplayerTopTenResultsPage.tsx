@@ -55,14 +55,17 @@ export function MultiplayerTopTenResultsPage() {
     return (maxStrikes - (playerStrikes[b.player_id] || 0)) - (maxStrikes - (playerStrikes[a.player_id] || 0));
   });
 
+  const winnerName = winnerIds.length === 1
+    ? (sortedPlayers.find(p => winnerIds.includes(p.player_id))?.player_name ?? '')
+    : sortedPlayers.filter(p => winnerIds.includes(p.player_id)).map(p => p.player_name).join(' · ');
+
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col relative overflow-hidden">
-
-      <header className="relative z-10 capcrunch-panel p-4 border-b border-white/10">
-        <div className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.4em] uppercase text-center mb-1">Match Complete</div>
-        <h1 className="capcrunch-title text-2xl text-[#FDF100] text-center">Top Ten</h1>
+      <header className="relative z-10 px-4 py-3 border-b border-white/10 flex flex-col items-center">
+        <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.4em] mb-1">Match Complete</p>
+        <h1 className="capcrunch-title text-2xl text-[#70BE5B]">Top Ten</h1>
         {categoryLabel && (
-          <p className="capcrunch-kicker text-[9px] text-white/30 tracking-widest uppercase text-center mt-1">
+          <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mt-1">
             {categoryLabel} · {roundInfo}
           </p>
         )}
@@ -75,26 +78,23 @@ export function MultiplayerTopTenResultsPage() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="text-center pt-2 pb-1"
+            className="capcrunch-panel p-5 text-center"
           >
-            <p className="capcrunch-kicker text-[9px] text-[#68BBE5]/60 tracking-[0.4em] uppercase mb-1">
+            <p className="capcrunch-kicker text-[9px] text-[#70BE5B]/50 tracking-[0.4em] mb-1">
               {winnerIds.length > 1 ? 'Tied' : 'Winner'}
             </p>
             <h2
-              className="capcrunch-title text-5xl text-[#FDF100]"
-              style={{ textShadow: '0 0 28px rgba(253,241,0,0.2)' }}
+              className="capcrunch-title text-5xl text-[#70BE5B]"
+              style={{ textShadow: '0 0 28px rgba(112,190,91,0.3)' }}
             >
-              {winnerIds.length === 1
-                ? (sortedPlayers.find(p => winnerIds.includes(p.player_id))?.player_name ?? '')
-                : sortedPlayers.filter(p => winnerIds.includes(p.player_id)).map(p => p.player_name).join(' · ')
-              }
+              {winnerName}
             </h2>
           </motion.div>
         )}
 
         {/* Standings */}
         <div className="space-y-1.5">
-          <p className="capcrunch-kicker text-[9px] text-white/25 tracking-widest uppercase">Final Standings</p>
+          <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em]">Final Standings</p>
           {sortedPlayers.map((p, i) => {
             const guesses  = guessAttribution[p.player_id] || 0;
             const isWinner = winnerIds.includes(p.player_id);
@@ -106,17 +106,17 @@ export function MultiplayerTopTenResultsPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.06 }}
                 className={`flex items-center gap-3 p-3 border ${
-                  isWinner ? 'border-[#FDF100]/50 bg-[#FDF100]/08'
-                  : isMe   ? 'border-[#68BBE5]/30 bg-[#68BBE5]/06'
-                  :          'border-white/8 bg-white/[0.03]'
+                  isWinner ? 'border-[#70BE5B]/40 bg-[#70BE5B]/6'
+                  : isMe   ? 'border-[#70BE5B]/25 bg-[#70BE5B]/4'
+                  :          'border-white/8 bg-black/30'
                 }`}
               >
-                <span className={`capcrunch-title text-xl w-6 ${isWinner ? 'text-[#FDF100]' : 'text-white/20'}`}>{i + 1}</span>
+                <span className={`capcrunch-title text-xl w-6 ${isWinner ? 'text-[#70BE5B]' : 'text-white/20'}`}>{i + 1}</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className={`capcrunch-title text-base ${isWinner ? 'text-[#FDF100]' : 'text-white/80'}`}>{p.player_name}</p>
+                    <p className={`capcrunch-title text-base ${isWinner ? 'text-[#70BE5B]' : 'text-white/80'}`}>{p.player_name}</p>
                     {isWinner && (
-                      <span className="capcrunch-kicker text-[9px] text-[#68BBE5] tracking-widest uppercase">
+                      <span className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 tracking-[0.25em]">
                         {winnerIds.length > 1 ? 'Tied' : 'Winner'}
                       </span>
                     )}
@@ -134,7 +134,7 @@ export function MultiplayerTopTenResultsPage() {
         {/* Board */}
         {entries.length > 0 && (
           <div className="space-y-1.5">
-            <p className="capcrunch-kicker text-[9px] text-white/25 tracking-widest uppercase">The Board</p>
+            <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em]">The Board</p>
             {entries.map((entry, i) => (
               <TopTenEntryRow
                 key={i}
@@ -157,7 +157,7 @@ export function MultiplayerTopTenResultsPage() {
             <button
               onClick={handlePlayAgain}
               disabled={isResetting}
-              className="flex-1 py-4 capcrunch-title text-lg capcrunch-btn-primary text-black shadow-[0_4px_0_rgba(253,241,0,0.16)] active:shadow-none active:translate-y-1 disabled:opacity-50 transition-all"
+              className="flex-1 capcrunch-btn-primary capcrunch-title text-lg py-4 disabled:opacity-50"
             >
               {isResetting ? 'Resetting...' : 'Play Again'}
             </button>
@@ -165,7 +165,7 @@ export function MultiplayerTopTenResultsPage() {
           <button
             onClick={handleLeave}
             disabled={isLeaving}
-            className="flex-1 py-4 capcrunch-title text-lg bg-black/35 border border-white/15 text-white/50 hover:border-[#68BBE5]/35 disabled:opacity-50 transition-all"
+            className="flex-1 capcrunch-btn-secondary capcrunch-kicker py-4 disabled:opacity-50"
           >
             Leave
           </button>

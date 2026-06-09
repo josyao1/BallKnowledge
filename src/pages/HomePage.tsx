@@ -5,6 +5,7 @@ import { SettingsModal } from '../components/home/SettingsModal';
 import { AboutModal } from '../components/home/AboutModal';
 import { GuessPlayerSetup } from '../components/home/GuessPlayerSetup';
 import { RosterRoyaleSetup } from '../components/home/RosterRoyaleSetup';
+import { TopTenSetup } from '../components/home/TopTenSetup';
 import { useGameStore } from '../stores/gameStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { teams } from '../data/teams';
@@ -13,14 +14,12 @@ import { HOME_TILES, type GenericTeam, type LoadingStatus } from '../data/homeGa
 import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { warmCareerCache } from '../services/careerData';
 import { TeamRevealOverlay } from '../components/home/TeamRevealOverlay';
-import { TopTenSettings } from '../components/lobby/settings/TopTenSettings';
 import type { GameMode } from '../types';
 import type { Sport } from '../types';
 
-type ActivePanel = 'roster' | 'guess-player' | 'guess-player-lobby' | null;
+type ActivePanel = 'guess-player' | 'guess-player-lobby' | null;
 type CapCrunchModalStep = 'sport' | 'settings' | null;
-type TopTenModalStep = 'sport' | 'settings' | null;
-type RosterModalStep = 'sport' | 'settings' | null;
+type SportPickStep = 'sport' | 'settings' | null;
 type RulesTileId = (typeof HOME_TILES)[number]['id'] | null;
 
 const CAP_CRUNCH_NBA_CATS = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'] as const;
@@ -61,7 +60,6 @@ export function HomePage() {
   const [boxScoreTeam, setBoxScoreTeam] = useState<string | null>(null);
   const [rosterSubMode, setRosterSubMode] = useState<'roster' | 'box-score'>('roster');
   const [gameMode, setGameMode] = useState<GameMode>('random');
-  const [rosterSport, setRosterSport] = useState<'nba' | 'nfl'>(sport === 'nfl' ? 'nfl' : 'nba');
   const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [randomMinYear, setRandomMinYear] = useState(2015);
@@ -71,17 +69,13 @@ export function HomePage() {
   const [capCrunchStep, setCapCrunchStep] = useState<CapCrunchModalStep>(null);
   const [capCrunchSport, setCapCrunchSport] = useState<Sport | null>(null);
   const [capCrunchRounds, setCapCrunchRounds] = useState(5);
-  const [topTenStep, setTopTenStep] = useState<TopTenModalStep>(null);
-  const [rosterStep, setRosterStep] = useState<RosterModalStep>(null);
-  const [topTenSport, setTopTenSport] = useState<'nba' | 'nfl'>(sport === 'nfl' ? 'nfl' : 'nba');
-  const [topTenRoundType, setTopTenRoundType] = useState<'league' | 'division' | 'team'>('league');
-  const [topTenDivisionMode, setTopTenDivisionMode] = useState<'cumulative' | 'single_season'>('cumulative');
-  const [topTenMinYear, setTopTenMinYear] = useState(2015);
-  const [topTenMaxYear, setTopTenMaxYear] = useState(2025);
-  const [topTenWindowYears, setTopTenWindowYears] = useState(10);
-  const [topTenPinnedDivision, setTopTenPinnedDivision] = useState<string | null>(null);
-  const [topTenPinnedTeam, setTopTenPinnedTeam] = useState<string | null>(null);
+  const [capCrunchTab, setCapCrunchTab] = useState<'settings' | 'rules'>('settings');
   const [rulesTileId, setRulesTileId] = useState<RulesTileId>(null);
+
+  const [rosterStep, setRosterStep] = useState<SportPickStep>(null);
+  const [rosterSport, setRosterSport] = useState<Sport | null>(null);
+  const [topTenStep, setTopTenStep] = useState<SportPickStep>(null);
+  const [topTenSport, setTopTenSport] = useState<Sport | null>(null);
 
   useEffect(() => {
     warmCareerCache(sport);
@@ -93,7 +87,7 @@ export function HomePage() {
     const shouldSkipAnimation = gameMode === 'manual';
     setSkipAnimation(shouldSkipAnimation);
 
-    const currentTeams = rosterSport === 'nba' ? teams : nflTeams;
+    const currentTeams = sport === 'nba' ? teams : nflTeams;
     const currentMinYear = Math.max(randomMinYear, 2000);
     const currentMaxYear = Math.min(randomMaxYear, 2025);
 
@@ -104,12 +98,12 @@ export function HomePage() {
     };
 
     const attemptLoadRoster = async (team: GenericTeam, year: number) => {
-      const season = rosterSport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
+      const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
       setLoadingStatus('fetching');
       try {
         let players;
         let league;
-        if (rosterSport === 'nba') {
+        if (sport === 'nba') {
           const roster = await fetchTeamRoster(team.abbreviation, season);
           if (!roster?.players?.length) return false;
           players = roster.players;
@@ -122,8 +116,8 @@ export function HomePage() {
         }
         setLoadingStatus('success');
         await new Promise((resolve) => setTimeout(resolve, 500));
-        setPreparedGameData({ sport: rosterSport, team, season, gameMode, timerDuration, players, leaguePlayers: league, hideResultsDuringGame });
-        setRosterStep(null);
+        setPreparedGameData({ sport, team, season, gameMode, timerDuration, players, leaguePlayers: league, hideResultsDuringGame });
+        setActivePanel(null);
         setShowRoulette(true);
         return true;
       } catch {
@@ -156,8 +150,6 @@ export function HomePage() {
         navigate('/lobby/create', { state: { gameType: 'roster' } });
         return;
       }
-      const defaultSport = sport === 'nfl' ? 'nfl' : 'nba';
-      setRosterSport(defaultSport);
       setRosterStep('sport');
       return;
     }
@@ -170,13 +162,12 @@ export function HomePage() {
     if (tileId === 'cap-crunch' && mode === 'solo') {
       setCapCrunchSport(null);
       setCapCrunchRounds(5);
+      setCapCrunchTab('settings');
       setCapCrunchStep('sport');
       return;
     }
 
     if (tileId === 'top-ten' && mode === 'solo') {
-      const defaultSport = sport === 'nfl' ? 'nfl' : 'nba';
-      setTopTenSport(defaultSport);
       setTopTenStep('sport');
       return;
     }
@@ -218,22 +209,6 @@ export function HomePage() {
     });
   };
 
-  const launchTopTen = () => {
-    navigate('/top-ten', {
-      state: {
-        autoStart: true,
-        setupSport: topTenSport,
-        roundType: topTenRoundType,
-        divisionMode: topTenDivisionMode,
-        minYear: topTenMinYear,
-        maxYear: topTenMaxYear,
-        windowYears: topTenWindowYears,
-        pinnedDivision: topTenPinnedDivision,
-        pinnedTeam: topTenPinnedTeam,
-      },
-    });
-  };
-
   const RULES_CONTENT: Record<Exclude<RulesTileId, null>, { title: string; accent: string; bullets: string[] }> = {
     'cap-crunch': {
       title: 'Cap Crunch',
@@ -256,7 +231,7 @@ export function HomePage() {
     },
     'top-ten': {
       title: 'Top Ten',
-      accent: '#68BBE5',
+      accent: '#70BE5B',
       bullets: [
         'Guess the top ten players for a stat leaderboard before running out of strikes.',
         'Rounds can be league-wide, division-based, or team-based.',
@@ -363,10 +338,7 @@ export function HomePage() {
                     <button
                       type="button"
                       aria-label={`Open ${tile.name} rules`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setRulesTileId(tile.id);
-                      }}
+                      onClick={(event) => { event.stopPropagation(); setRulesTileId(tile.id); }}
                       className="absolute right-5 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-black/20 text-sm text-white/55 transition hover:bg-black/30 hover:text-white"
                       style={{ borderColor: `${tile.accent}80` }}
                     >
@@ -397,7 +369,7 @@ export function HomePage() {
                         className="border px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-white transition hover:bg-white/8"
                         style={{ borderColor: `${tile.accent}80` }}
                       >
-                        {tile.id === 'roster' || tile.id === 'guess-player' ? 'Open' : 'Solo'}
+                        {tile.id === 'roster' || tile.id === 'guess-player' ? 'Solo' : 'Solo'}
                       </button>
                     )}
                     {tile.disabled ? (
@@ -448,10 +420,7 @@ export function HomePage() {
                       <button
                         type="button"
                         aria-label={`Open ${tile.name} rules`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setRulesTileId(tile.id);
-                        }}
+                        onClick={(event) => { event.stopPropagation(); setRulesTileId(tile.id); }}
                         className="absolute right-4 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-full border bg-black/20 text-sm text-white/55 transition hover:bg-black/30 hover:text-white"
                         style={{ borderColor: `${tile.accent}80` }}
                       >
@@ -482,7 +451,7 @@ export function HomePage() {
                           className="border px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-white transition hover:bg-white/8"
                           style={{ borderColor: `${tile.accent}80` }}
                         >
-                          {tile.id === 'roster' || tile.id === 'guess-player' ? 'Open' : 'Solo'}
+                          {tile.id === 'roster' || tile.id === 'guess-player' ? 'Solo' : 'Solo'}
                         </button>
                       )}
                       {tile.disabled ? (
@@ -529,7 +498,7 @@ export function HomePage() {
         <TeamRevealOverlay
           winningTeam={preparedGameData.team.name}
           winningYear={preparedGameData.season}
-          sport={preparedGameData.sport}
+          sport={sport}
           winningTeamData={preparedGameData.team}
           skipAnimation={skipAnimation}
           onComplete={() => {
@@ -551,59 +520,53 @@ export function HomePage() {
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
 
-      <AnimatePresence>
-        {rosterStep === 'sport' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="capcrunch-panel w-full max-w-4xl p-6 md:p-10">
+      {/* Roster Royale modal — sport picker → settings */}
+      {rosterStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setRosterStep(null); setLoadingStatus('idle'); }}>
+          {rosterStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
               <div className="mb-8">
                 <p className="home-kicker text-[#bfbfbf] mb-3">Roster Royale</p>
-                <h2 className="capcrunch-title text-4xl md:text-6xl text-white mb-3">Pick a Sport</h2>
-                <p className="capcrunch-body text-white/60 text-sm md:text-base">Choose a league, then configure the game without leaving the homepage.</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm">Name every player on a team's roster for a given season.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
                 <button
-                  onClick={() => { setRosterSport('nba'); setRosterSubMode('roster'); setRosterStep('settings'); }}
-                  className="group relative min-h-[220px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/10"
+                  onClick={() => { setRosterSport('nba'); setRosterStep('settings'); setGameMode('random'); setLoadingStatus('idle'); }}
+                  className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
                   <div className="flex h-full flex-col justify-between">
                     <div>
                       <span className="capcrunch-kicker text-[#FDF100]">Basketball</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Classic roster boards plus NBA box score mode.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Seasons from 2000 to present.</p>
                     </div>
-                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
                   </div>
                 </button>
                 <button
-                  onClick={() => { setRosterSport('nfl'); setRosterSubMode('roster'); setRosterStep('settings'); }}
-                  className="group relative min-h-[220px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/10"
+                  onClick={() => { setRosterSport('nfl'); setRosterStep('settings'); setGameMode('random'); setLoadingStatus('idle'); }}
+                  className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
                   <div className="flex h-full flex-col justify-between">
                     <div>
                       <span className="capcrunch-kicker text-[#68BBE5]">Football</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Roster recall and NFL box score mode in the same setup flow.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Seasons from 2000 to present. Includes Box Score mode.</p>
                     </div>
-                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
                   </div>
                 </button>
               </div>
               <div className="mt-5 flex justify-end">
-                <button
-                  onClick={() => setRosterStep(null)}
-                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
-                >
-                  Close
-                </button>
+                <button onClick={() => setRosterStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
               </div>
             </div>
-          </div>
-        )}
-
-        {rosterStep === 'settings' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          )}
+          {rosterStep === 'settings' && rosterSport && (
+            <div onClick={e => e.stopPropagation()}>
             <RosterRoyaleSetup
               sport={rosterSport}
               deckArt="/images/home/roster-royale.svg"
@@ -629,21 +592,77 @@ export function HomePage() {
               loadingStatus={loadingStatus}
               setLoadingStatus={setLoadingStatus}
               statusMessage={statusMessage}
-              onBack={() => {
-                setRosterStep('sport');
-                setLoadingStatus('idle');
-              }}
+              onBack={() => setRosterStep('sport')}
               onStartGame={handleStartGame}
               setTimerDuration={setTimerDuration}
+              soloOnly
             />
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Top Ten modal — sport picker → settings */}
+      {topTenStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setTopTenStep(null)}>
+          {topTenStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+              <div className="mb-8">
+                <p className="home-kicker text-[#bfbfbf] mb-3">Top Ten</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm">Name the top 10 players in a stat category for a given season.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                <button
+                  onClick={() => { setTopTenSport('nba'); setTopTenStep('settings'); }}
+                  className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#70BE5B]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#70BE5B]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#70BE5B]">Basketball</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Points, rebounds, assists, and more from 1996 onward.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setTopTenSport('nfl'); setTopTenStep('settings'); }}
+                  className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#70BE5B]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#70BE5B]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#70BE5B]">Football</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Passing, rushing, receiving, and fantasy from 1999 onward.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button onClick={() => setTopTenStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+              </div>
+            </div>
+          )}
+          {topTenStep === 'settings' && topTenSport && (
+            <div onClick={e => e.stopPropagation()}>
+              <TopTenSetup
+                initialSport={topTenSport}
+                onBack={() => setTopTenStep('sport')}
+                soloOnly
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {capCrunchStep && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setCapCrunchStep(null)}>
           {capCrunchStep === 'sport' && (
-            <div className="capcrunch-panel w-full max-w-4xl p-6 md:p-10">
+            <div className="capcrunch-panel w-full max-w-4xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
               <div className="mb-8">
                 <p className="home-kicker text-[#bfbfbf] mb-3">Cap Crunch</p>
                 <h2 className="capcrunch-title text-4xl md:text-6xl text-white mb-3">Pick a Sport</h2>
@@ -691,8 +710,32 @@ export function HomePage() {
           )}
 
           {capCrunchStep === 'settings' && capCrunchSport && (
-            <div className="w-full max-w-5xl">
-                <section className="capcrunch-panel p-5 md:p-6">
+            <div className="w-full max-w-6xl" onClick={e => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between lg:hidden">
+                <div className="inline-flex border border-white/10 bg-black/20">
+                  <button
+                    onClick={() => setCapCrunchTab('settings')}
+                    className={`px-4 py-2 capcrunch-kicker transition ${capCrunchTab === 'settings' ? 'bg-[#FDF100] text-black' : 'text-white/60'}`}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => setCapCrunchTab('rules')}
+                    className={`px-4 py-2 capcrunch-kicker transition ${capCrunchTab === 'rules' ? 'bg-[#68BBE5] text-black' : 'text-white/60'}`}
+                  >
+                    Rules
+                  </button>
+                </div>
+                <button
+                  onClick={() => setCapCrunchStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                <section className={`${capCrunchTab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
                       <p className="home-kicker text-[#bfbfbf] mb-2">Cap Crunch</p>
@@ -772,141 +815,36 @@ export function HomePage() {
                     </div>
                   </div>
                 </section>
+
+                <aside className={`${capCrunchTab !== 'rules' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h3 className="capcrunch-title text-lg text-[#FDF100]">How to Play</h3>
+                    <button
+                      onClick={() => setCapCrunchStep(null)}
+                      className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <ul className="text-sm text-white/80 space-y-2.5 text-left">
+                    <li><span className="text-[#d4af37] font-bold">Goal:</span> Build a lineup whose combined stat reaches — but does not exceed — the target cap.</li>
+                    <li><span className="text-[#d4af37] font-bold">Each pick:</span> A filter is shown. Search any qualifying player and their value gets added to your total.</li>
+                    <li><span className="text-emerald-400 font-bold">Season stats:</span> Pick a year and that team-season value counts.</li>
+                    <li><span className="text-emerald-400 font-bold">Career variants:</span> Some modes count career totals without needing a year.</li>
+                    <li><span className="text-red-400 font-bold">Busts:</span> A pick that pushes you over the cap scores 0 and your total reverts.</li>
+                    <li><span className="text-white/60 font-bold">Special rounds:</span> Filters can be team, division, conference, draft, teammate, or more.</li>
+                    <li><span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts wins; then oldest average pick year.</li>
+                  </ul>
+                </aside>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {topTenStep === 'settings' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-5xl">
-              <section className="capcrunch-panel p-5 md:p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                  <div>
-                    <p className="home-kicker text-[#bfbfbf] mb-2">Top Ten</p>
-                    <h2 className="capcrunch-title text-4xl md:text-5xl text-white">Choose Your Round</h2>
-                    <p className="capcrunch-body mt-3 max-w-2xl text-sm md:text-base text-white/60">
-                      Configure the pool, then start directly from the homepage.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setTopTenStep(null)}
-                    className="hidden lg:inline-flex px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <TopTenSettings
-                  sport={topTenSport}
-                  showSportToggle={false}
-                  onSportChange={(nextSport) => {
-                    setTopTenSport(nextSport);
-                    setTopTenMinYear(nextSport === 'nba' ? 1996 : 1999);
-                    setTopTenMaxYear(nextSport === 'nba' ? 2025 : 2024);
-                  }}
-                  roundType={topTenRoundType}
-                  onRoundTypeChange={setTopTenRoundType}
-                  divisionMode={topTenDivisionMode}
-                  onDivisionModeChange={setTopTenDivisionMode}
-                  minYear={topTenMinYear}
-                  onMinYearChange={setTopTenMinYear}
-                  maxYear={topTenMaxYear}
-                  onMaxYearChange={setTopTenMaxYear}
-                  windowYears={topTenWindowYears}
-                  onWindowYearsChange={setTopTenWindowYears}
-                  pinnedDivision={topTenPinnedDivision}
-                  onPinnedDivisionChange={setTopTenPinnedDivision}
-                  pinnedTeam={topTenPinnedTeam}
-                  onPinnedTeamChange={setTopTenPinnedTeam}
-                />
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={launchTopTen}
-                    className="px-6 py-3 capcrunch-btn-primary text-black capcrunch-title text-base"
-                  >
-                    Start Top Ten
-                  </button>
-                </div>
-              </section>
-          </div>
-        </div>
-      )}
-
-      {topTenStep === 'sport' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="capcrunch-panel w-full max-w-4xl p-6 md:p-10">
-            <div className="mb-8">
-              <p className="home-kicker text-[#bfbfbf] mb-3">Top Ten</p>
-              <h2 className="capcrunch-title text-4xl md:text-6xl text-white mb-3">Pick a Sport</h2>
-              <p className="capcrunch-body text-white/60 text-sm md:text-base">Choose a league first, then fine-tune the round settings.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
-              <button
-                onClick={() => {
-                  setTopTenSport('nba');
-                  setTopTenRoundType('league');
-                  setTopTenDivisionMode('cumulative');
-                  setTopTenMinYear(1996);
-                  setTopTenMaxYear(2025);
-                  setTopTenWindowYears(10);
-                  setTopTenPinnedDivision(null);
-                  setTopTenPinnedTeam(null);
-                  setTopTenStep('settings');
-                }}
-                className="group relative min-h-[220px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/10"
-              >
-                <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
-                <div className="flex h-full flex-col justify-between">
-                  <div>
-                    <span className="capcrunch-kicker text-[#FDF100]">Basketball</span>
-                    <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                    <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">League, division, and team leaderboard rounds across NBA history.</p>
-                  </div>
-                  <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
-                </div>
-              </button>
-              <button
-                onClick={() => {
-                  setTopTenSport('nfl');
-                  setTopTenRoundType('league');
-                  setTopTenDivisionMode('cumulative');
-                  setTopTenMinYear(1999);
-                  setTopTenMaxYear(2024);
-                  setTopTenWindowYears(10);
-                  setTopTenPinnedDivision(null);
-                  setTopTenPinnedTeam(null);
-                  setTopTenStep('settings');
-                }}
-                className="group relative min-h-[220px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/10"
-              >
-                <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
-                <div className="flex h-full flex-col justify-between">
-                  <div>
-                    <span className="capcrunch-kicker text-[#68BBE5]">Football</span>
-                    <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                    <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Leaderboard rounds built around NFL seasons, divisions, and teams.</p>
-                  </div>
-                  <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
-                </div>
-              </button>
-            </div>
-            <div className="mt-5 flex justify-end">
-              <button
-                onClick={() => setTopTenStep(null)}
-                className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {rulesTileId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="capcrunch-panel w-full max-w-2xl p-5 md:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setRulesTileId(null)}>
+          <div className="capcrunch-panel w-full max-w-2xl p-5 md:p-6" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <p className="home-kicker text-[#bfbfbf] mb-2">Rules</p>
@@ -921,19 +859,11 @@ export function HomePage() {
                 Close
               </button>
             </div>
-
-            <div
-              className="mb-5 h-1 w-28"
-              style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }}
-            />
-
+            <div className="mb-5 h-1 w-28" style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }} />
             <ul className="space-y-3 text-sm text-white/80">
               {RULES_CONTENT[rulesTileId].bullets.map((bullet) => (
                 <li key={bullet} className="flex gap-3">
-                  <span
-                    className="mt-1 h-2 w-2 shrink-0"
-                    style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }}
-                  />
+                  <span className="mt-1 h-2 w-2 shrink-0" style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }} />
                   <span>{bullet}</span>
                 </li>
               ))}

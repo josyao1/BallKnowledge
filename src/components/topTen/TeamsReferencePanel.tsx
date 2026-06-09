@@ -35,18 +35,15 @@ export function TeamsReferencePanel({ sport, show, onClose }: Props) {
           className="border-b border-white/10 bg-black/95 z-10 px-4 py-3"
           onClick={onClose}
         >
-          <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+          <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
             {groups.map(({ label, divTeams }) => (
-              <div key={label} className="min-w-0">
-                <p className="capcrunch-kicker text-[8px] text-white/20 tracking-widest uppercase mb-1">{label}</p>
-                <div
-                  className="grid gap-x-2 gap-y-1"
-                  style={{ gridTemplateColumns: `repeat(${divTeams.length}, minmax(0, 1fr))` }}
-                >
+              <div key={label}>
+                <p className="capcrunch-kicker text-[8px] text-white/20 tracking-[0.3em] mb-1">{label}</p>
+                <div className="flex gap-2 flex-wrap">
                   {divTeams.map(t => (
-                    <div key={t.abbreviation} className="min-w-0 flex items-center justify-center gap-1">
+                    <div key={t.abbreviation} className="flex items-center gap-1">
                       <TeamLogo abbr={t.abbreviation} sport={sport} size={18} />
-                      <span className="capcrunch-kicker text-[9px] text-white/40 whitespace-nowrap">{t.abbreviation}</span>
+                      <span className="capcrunch-kicker text-[9px] text-white/40">{t.abbreviation}</span>
                     </div>
                   ))}
                 </div>
