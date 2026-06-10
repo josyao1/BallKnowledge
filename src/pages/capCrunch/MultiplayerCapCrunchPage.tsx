@@ -300,6 +300,16 @@ export function MultiplayerCapCrunchPage() {
         const result = await findLobbyByCode(code);
         if (!result.lobby) { navigate('/'); return; }
 
+        // Status-aware redirects before touching any game state
+        if (result.lobby.status === 'finished') {
+          navigate(`/lobby/${code}/lineup-is-right/results`);
+          return;
+        }
+        if (result.lobby.status === 'waiting' || result.lobby.status === 'countdown') {
+          navigate(`/lobby/${code}`);
+          return;
+        }
+
         setLobby(result.lobby);
 
         const playersResult = await getLobbyPlayers(result.lobby.id);
@@ -599,11 +609,11 @@ export function MultiplayerCapCrunchPage() {
 
   // ── Navigate back to lobby when host resets or abandons ────────────────────
   useEffect(() => {
-    if ((lobby?.career_state as any)?.abandoned) { navigate(`/lobby/${code}`); return; }
-    if (lobby?.status === 'waiting' && phase !== 'picking' && phase !== 'loading') {
-      navigate(`/lobby/${code}`);
-    }
-  }, [lobby?.career_state, lobby?.status, phase, navigate, code]);
+    if (!lobby) return;
+    if ((lobby.career_state as any)?.abandoned) { navigate(`/lobby/${code}`); return; }
+    if (lobby.status === 'finished') { navigate(`/lobby/${code}/lineup-is-right/results`); return; }
+    if (lobby.status === 'waiting') { navigate(`/lobby/${code}`); return; }
+  }, [lobby?.career_state, lobby?.status, navigate, code]);
 
   // ── Compute optimal last picks once results screen loads ────────────────────
   useEffect(() => {
@@ -995,8 +1005,15 @@ export function MultiplayerCapCrunchPage() {
   if (phase === 'loading') {
     return (
       <div className="min-h-screen capcrunch-shell text-white flex items-center justify-center relative overflow-hidden">
-        <div className="relative z-10 text-center">
-          <p className="text-xl text-white/80">Loading game...</p>
+        <div className="relative z-10 text-center space-y-4">
+          <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="capcrunch-kicker text-sm text-white/50">Loading game...</p>
+          <button
+            onClick={() => navigate(`/lobby/${code}`)}
+            className="capcrunch-kicker text-xs text-white/30 hover:text-white/60 underline transition-colors"
+          >
+            Back to lobby
+          </button>
         </div>
       </div>
     );
@@ -1006,8 +1023,16 @@ export function MultiplayerCapCrunchPage() {
   if (phase === 'picking' && currentPlayerId && Object.keys(allLineups).length > 0 && !allLineups[currentPlayerId]) {
     return (
       <div className="min-h-screen capcrunch-shell text-white flex items-center justify-center relative overflow-hidden">
-        <div className="relative z-10 text-center">
-          <p className="text-xl text-white/80">Joining game...</p>
+        <div className="relative z-10 text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="capcrunch-kicker text-sm text-white/50">Joining game...</p>
+          <p className="capcrunch-kicker text-[10px] text-white/25">Waiting for host to add you</p>
+          <button
+            onClick={() => navigate(`/lobby/${code}`)}
+            className="mt-2 capcrunch-kicker text-xs text-white/30 hover:text-white/60 underline transition-colors"
+          >
+            Back to lobby
+          </button>
         </div>
       </div>
     );

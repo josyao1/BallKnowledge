@@ -142,6 +142,9 @@ export function MultiplayerFaceRevealPage() {
 
     findLobbyByCode(code).then(result => {
       if (!result.lobby) { navigate('/'); return; }
+      // Only redirect for non-playing states when the game hasn't started yet.
+      // 'waiting' between rounds is valid for FaceReveal (interstitial screen).
+      if (result.lobby.status === 'finished') { navigate(`/lobby/${code}/face-reveal/results`); return; }
       setLobby(result.lobby);
       getLobbyPlayers(result.lobby.id).then(pr => {
         if (pr.players) setPlayers(pr.players);

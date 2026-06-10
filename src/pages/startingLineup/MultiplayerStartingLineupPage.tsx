@@ -138,6 +138,7 @@ export function MultiplayerStartingLineupPage() {
 
     findLobbyByCode(code).then(result => {
       if (!result.lobby) { navigate('/'); return; }
+      if (result.lobby.status !== 'playing') { navigate(`/lobby/${code}`); return; }
       setLobby(result.lobby);
       getLobbyPlayers(result.lobby.id).then(pr => {
         if (pr.players) setPlayers(pr.players);
