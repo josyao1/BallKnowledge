@@ -257,7 +257,7 @@ export function CapCrunchPickPanel({
             </div>
           ) : (
             // ── Normal mode: pick a year ──────────────────────────────────
-            <div className="flex flex-col gap-3 h-full min-h-0 overflow-hidden">
+            <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
               <div className="p-3 capcrunch-panel-soft flex-shrink-0">
                 <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
