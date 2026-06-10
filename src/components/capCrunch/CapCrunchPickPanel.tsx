@@ -84,7 +84,7 @@ export function CapCrunchPickPanel({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="capcrunch-panel p-4 flex-1 flex flex-col"
+      className="capcrunch-panel p-4 flex-1 min-h-0 flex flex-col"
     >
       {myLineup?.isFinished ? (
         // ── All picks made ──────────────────────────────────────────────────
