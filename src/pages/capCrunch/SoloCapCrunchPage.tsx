@@ -915,8 +915,8 @@ export function SoloCapCrunchPage() {
                       <p className="text-[10px] md:text-sm text-white/60">Select any year this player played</p>
                     </div>
 
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-baseline justify-between mb-2 md:mb-3">
+                    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                      <div className="flex items-baseline justify-between mb-2 md:mb-3 flex-shrink-0">
                         <label className="block capcrunch-kicker text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
                           Select a year
                         </label>
@@ -927,7 +927,7 @@ export function SoloCapCrunchPage() {
                       {loadingYears ? (
                         <p className="text-white/60 text-xs md:text-sm">Loading years...</p>
                       ) : availableYears.length > 0 ? (
-                        <div className="max-h-40 md:max-h-56 overflow-y-auto space-y-1 md:space-y-2">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-1 md:space-y-2">
                           {availableYears.map((year) => (
                             <button
                               key={year}

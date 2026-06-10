@@ -257,19 +257,19 @@ export function CapCrunchPickPanel({
             </div>
           ) : (
             // ── Normal mode: pick a year ──────────────────────────────────
-            <div className="flex flex-col gap-3 h-full">
-              <div className="p-3 capcrunch-panel-soft">
+            <div className="flex flex-col gap-3 h-full min-h-0 overflow-hidden">
+              <div className="p-3 capcrunch-panel-soft flex-shrink-0">
                 <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
               </div>
-              <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline justify-between flex-shrink-0">
                 <label className="capcrunch-kicker text-[9px] text-white/60">Select a year</label>
                 {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] capcrunch-kicker">through 2025</span>}
               </div>
               {loadingYears ? (
                 <p className="text-white/60 text-sm">Loading years...</p>
               ) : availableYears.length > 0 ? (
-                <div className="max-h-48 md:max-h-64 overflow-y-auto overscroll-contain space-y-1.5">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-1.5">
                   {availableYears.map((year) => (
                     <button
                       key={year}
