@@ -1,0 +1,8 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#050505"/>
+  <circle cx="300" cy="250" r="140" fill="#68BBE5" fill-opacity="0.22"/>
+  <circle cx="820" cy="560" r="180" fill="#E2008A" fill-opacity="0.2"/>
+  <circle cx="950" cy="220" r="90" fill="#FDF100" fill-opacity="0.24"/>
+  <text x="86" y="620" fill="#F6F6F2" font-size="92" font-family="Space Grotesk, Arial, sans-serif" font-weight="700">Coming Soon</text>
+  <text x="90" y="690" fill="#70BE5B" font-size="28" font-family="Space Grotesk, Arial, sans-serif" letter-spacing="8">NEXT MODE IN DEVELOPMENT</text>
+</svg>

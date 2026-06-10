@@ -51,17 +51,17 @@ export function TeamSelector({ selectedTeam, onSelect, sport = 'nba' }: TeamSele
 
   return (
     <div className="relative">
-      <label className="block sports-font text-[9px] text-[#888] mb-2 tracking-widest uppercase">Select Team</label>
+      <label className="block capcrunch-kicker text-[9px] text-[#888] mb-2 tracking-widest uppercase">Select Team</label>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2.5 bg-[#1a1a1a]/60 rounded-lg text-left flex items-center justify-between border border-[#2a2a2a] hover:border-[#444] transition-colors"
+        className="w-full px-3 py-2.5 bg-black/40 text-left flex items-center justify-between border border-white/10 hover:border-white/20 transition-colors"
       >
         {selectedTeam ? (
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-[#111] border border-[#2f2f2f] flex items-center justify-center overflow-hidden">
+            <div className="w-7 h-7 rounded-full bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
               <TeamLogo sport={sport} abbr={selectedTeam.abbreviation} size={24} />
             </div>
-            <span className="text-sm text-[var(--vintage-cream)]">{selectedTeam.name}</span>
+            <span className="text-sm text-white">{selectedTeam.name}</span>
           </div>
         ) : (
           <span className="text-[#666] text-sm">Choose a team...</span>
@@ -77,10 +77,10 @@ export function TeamSelector({ selectedTeam, onSelect, sport = 'nba' }: TeamSele
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[#141414] rounded-lg border border-[#2a2a2a] shadow-xl z-50 max-h-80 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-black/90 border border-white/10 shadow-xl z-50 max-h-80 overflow-y-auto">
           {Object.entries(conferences).map(([conferenceName, conferenceTeams]) => (
             <div key={conferenceName}>
-              <div className="px-3 py-1.5 text-[9px] sports-font tracking-widest uppercase text-[#777] bg-[#111]/95 sticky top-0 border-b border-[#202020]">
+              <div className="px-3 py-1.5 text-[9px] capcrunch-kicker tracking-widest uppercase text-white/40 bg-black/90 sticky top-0 border-b border-white/10">
                 {conferenceName} {sport === 'nba' ? 'Conference' : ''}
               </div>
               {conferenceTeams.map((team) => (
@@ -93,10 +93,10 @@ export function TeamSelector({ selectedTeam, onSelect, sport = 'nba' }: TeamSele
                   className={`w-full px-3 py-2 flex items-center gap-3 transition-colors ${
                     selectedTeam?.id === team.id
                       ? 'bg-[#d4af37]/15 text-[#f2d88a]'
-                      : 'text-[var(--vintage-cream)] hover:bg-[#1f1f1f]'
+                      : 'text-white hover:bg-white/5'
                   }`}
                 >
-                  <div className="w-6 h-6 rounded-full bg-[#111] border border-[#2f2f2f] flex items-center justify-center overflow-hidden">
+                  <div className="w-6 h-6 rounded-full bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
                     <TeamLogo sport={sport} abbr={team.abbreviation} size={20} />
                   </div>
                   <span className="text-sm">{team.name}</span>

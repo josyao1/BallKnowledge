@@ -20,7 +20,7 @@ export function CreateScrambleSettings({ winTarget, onWinTargetChange, careerTo,
       exit={{ opacity: 0, height: 0 }}
       className="bg-black/50 border border-[#3b82f6]/30 rounded-sm p-4 space-y-4"
     >
-      <div className="sports-font text-[10px] text-white/40 text-center tracking-[0.3em] uppercase">
+      <div className="capcrunch-kicker text-[10px] text-white/40 text-center tracking-[0.3em] uppercase">
         Points Target
       </div>
       <div className="flex gap-2 justify-center flex-wrap">
@@ -28,7 +28,7 @@ export function CreateScrambleSettings({ winTarget, onWinTargetChange, careerTo,
           <button
             key={n}
             onClick={() => onWinTargetChange(n)}
-            className={`px-4 py-2 rounded-sm sports-font tracking-wider transition-all ${
+            className={`px-4 py-2 rounded-sm capcrunch-kicker tracking-wider transition-all ${
               winTarget === n
                 ? 'bg-[#3b82f6] text-white shadow-lg font-bold'
                 : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
@@ -38,18 +38,18 @@ export function CreateScrambleSettings({ winTarget, onWinTargetChange, careerTo,
           </button>
         ))}
       </div>
-      <div className="text-center text-white/30 text-[10px] sports-font tracking-wider">
+      <div className="text-center text-white/30 text-[10px] capcrunch-kicker tracking-wider">
         First to {winTarget} pts wins
       </div>
 
       <div>
-        <div className="sports-font text-[10px] text-white/40 text-center mb-2 tracking-[0.3em] uppercase">
+        <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-2 tracking-[0.3em] uppercase">
           Career Era (Optional)
         </div>
         <select
           value={careerTo}
           onChange={(e) => onCareerToChange(parseInt(e.target.value))}
-          className="w-full bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font text-sm focus:outline-none focus:border-[#3b82f6]"
+          className="w-full bg-black/40 text-white px-3 py-2 border border-white/10 capcrunch-kicker text-sm focus:outline-none focus:border-[#3b82f6]"
         >
           <option value={0}>Any Era</option>
           {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map(y => (

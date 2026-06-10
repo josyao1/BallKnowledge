@@ -103,14 +103,14 @@ export function CapCrunchSettings({
       </Row>
 
       {/* Stat — scrollable season + career rows */}
-      <div className="border-t border-[#2a2a2a] pt-2.5 space-y-2">
+      <div className="border-t border-white/8 pt-2.5 space-y-2">
         <Row label="Season">
           <ScrollStrip>
             {seasonCats.map(cat => (
               <Chip
                 key={cat}
                 active={lineupStat === cat}
-                activeBg={cat === 'random' ? '#d4af37' : '#ec4899'}
+                activeBg={cat === 'random' ? '#FDF100' : '#E2008A'}
                 onClick={() => { onLineupStatChange(cat); if (cat === 'random') onCustomCapChange(null); }}
               >
                 {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
@@ -132,7 +132,7 @@ export function CapCrunchSettings({
                 RND
               </Chip>
               {NFL_CAREER_CATS.map(cat => (
-                <Chip key={cat} active={lineupStat === cat} activeBg="#ec4899"
+                <Chip key={cat} active={lineupStat === cat} activeBg="#E2008A"
                   onClick={() => { onLineupStatChange(cat); onCustomCapChange(null); }}>
                   {LINEUP_STAT_ABBR[cat]}
                 </Chip>
@@ -143,7 +143,7 @@ export function CapCrunchSettings({
       </div>
 
       {/* Game controls */}
-      <div className="border-t border-[#2a2a2a] pt-2.5 space-y-2">
+      <div className="border-t border-white/8 pt-2.5 space-y-2">
         <Row label="Rounds">
           <Stepper value={totalRounds} min={3} max={10} onChange={onTotalRoundsChange} />
         </Row>
@@ -158,10 +158,10 @@ export function CapCrunchSettings({
               const v = e.target.value === '' ? null : parseInt(e.target.value);
               onCustomCapChange(v && !isNaN(v) && v > 0 ? v : null);
             }}
-            className={`w-20 text-center bg-[#111] border rounded-sm retro-title text-sm py-1 focus:outline-none transition-all ${
+            className={`w-20 text-center bg-black/40 border capcrunch-kicker text-sm py-1 focus:outline-none transition-all ${
               lineupStat === 'random'
-                ? 'border-[#1a1a1a] text-[#2a2a2a] cursor-not-allowed placeholder-[#222]'
-                : 'border-[#2a2a2a] text-[#d4af37] focus:border-[#d4af37] placeholder-[#444]'
+                ? 'border-white/5 text-white/15 cursor-not-allowed placeholder-white/10'
+                : 'border-white/15 text-[#FDF100]/80 focus:border-[#FDF100]/40 placeholder-white/25'
             }`}
           />
         </Row>
@@ -192,7 +192,7 @@ export function CapCrunchSettings({
       </div>
 
       {/* Filters + first pick */}
-      <div className="border-t border-[#2a2a2a] pt-2.5 space-y-2">
+      <div className="border-t border-white/8 pt-2.5 space-y-2">
         <Row label="Filters">
           <Chips>
             {FILTER_LABELS.map(({ type, label, tooltip }) => {
@@ -203,7 +203,7 @@ export function CapCrunchSettings({
                     {label}
                   </Chip>
                   {tooltip && (
-                    <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-[#1a1a1a] border border-[#333] rounded-sm px-2.5 py-2 sports-font text-[9px] text-[#888] leading-relaxed z-20 whitespace-normal">
+                    <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-black/90 border border-white/15 px-2.5 py-2 capcrunch-kicker text-[9px] text-white/50 leading-relaxed z-20 whitespace-normal">
                       {tooltip}
                     </div>
                   )}

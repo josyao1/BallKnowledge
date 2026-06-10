@@ -120,18 +120,18 @@ export function CareerResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
       {/* Header */}
       <header className="mb-6 text-center">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="sports-font text-[10px] tracking-[0.4em] text-white/30 uppercase mb-2">
+          <div className="capcrunch-kicker text-[10px] tracking-[0.4em] text-white/30 uppercase mb-2">
             Career Mode // {store.sport.toUpperCase()}
           </div>
-          <h1 className="retro-title text-4xl md:text-5xl text-[var(--vintage-cream)] mb-2">
+          <h1 className="capcrunch-title text-4xl md:text-5xl text-white mb-2">
             {store.playerName}
           </h1>
           {store.position && (
-            <span className="px-3 py-1 rounded text-xs sports-font tracking-wider text-white" style={{ backgroundColor: accentColor }}>
+            <span className="px-3 py-1 rounded text-xs capcrunch-kicker tracking-wider text-white" style={{ backgroundColor: accentColor }}>
               {store.position}
             </span>
           )}
@@ -140,57 +140,57 @@ export function CareerResultsPage() {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 max-w-2xl mx-auto w-full">
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-center">
-          <div className="sports-font text-[8px] text-[#666] tracking-widest">RESULT</div>
-          <div className={`retro-title text-xl ${won ? 'text-green-400' : 'text-red-400'}`}>
+        <div className="capcrunch-panel p-3 text-center">
+          <div className="capcrunch-kicker text-[8px] text-[#666] tracking-widest">RESULT</div>
+          <div className={`capcrunch-title text-xl ${won ? 'text-green-400' : 'text-red-400'}`}>
             {won ? 'WIN' : 'LOSS'}
           </div>
         </div>
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-center">
-          <div className="sports-font text-[8px] text-[#666] tracking-widest">SCORE</div>
-          <div className="retro-title text-xl text-[var(--vintage-cream)]">{store.score}</div>
+        <div className="capcrunch-panel p-3 text-center">
+          <div className="capcrunch-kicker text-[8px] text-[#666] tracking-widest">SCORE</div>
+          <div className="capcrunch-title text-xl text-white/90">{store.score}</div>
         </div>
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-center">
-          <div className="sports-font text-[8px] text-[#666] tracking-widest">SEASONS</div>
-          <div className="retro-title text-xl text-[var(--vintage-cream)]">{store.seasons.length}</div>
+        <div className="capcrunch-panel p-3 text-center">
+          <div className="capcrunch-kicker text-[8px] text-[#666] tracking-widest">SEASONS</div>
+          <div className="capcrunch-title text-xl text-white/90">{store.seasons.length}</div>
         </div>
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-center">
-          <div className="sports-font text-[8px] text-[#666] tracking-widest">HINTS / MISSES</div>
-          <div className="retro-title text-xl text-[var(--vintage-cream)]">{hintsUsed} / {store.guesses.length}</div>
+        <div className="capcrunch-panel p-3 text-center">
+          <div className="capcrunch-kicker text-[8px] text-[#666] tracking-widest">HINTS / MISSES</div>
+          <div className="capcrunch-title text-xl text-white/90">{hintsUsed} / {store.guesses.length}</div>
         </div>
       </div>
 
       {/* Bio */}
-      <div className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4 max-w-2xl mx-auto w-full">
-        <div className="sports-font text-[10px] text-[#888] tracking-widest mb-2 uppercase">Player Bio</div>
+      <div className="mb-6 capcrunch-panel p-4 max-w-2xl mx-auto w-full">
+        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">Player Bio</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {store.bio.height && (
             <div>
-              <div className="sports-font text-[8px] text-[#666] tracking-wider">HEIGHT</div>
-              <div className="sports-font text-sm text-[var(--vintage-cream)]">{store.bio.height}</div>
+              <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">HEIGHT</div>
+              <div className="capcrunch-kicker text-sm text-white/80">{store.bio.height}</div>
             </div>
           )}
           {store.bio.weight > 0 && (
             <div>
-              <div className="sports-font text-[8px] text-[#666] tracking-wider">WEIGHT</div>
-              <div className="sports-font text-sm text-[var(--vintage-cream)]">{store.bio.weight} lbs</div>
+              <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">WEIGHT</div>
+              <div className="capcrunch-kicker text-sm text-white/80">{store.bio.weight} lbs</div>
             </div>
           )}
           {(store.bio.school || store.bio.college) && (
             <div>
-              <div className="sports-font text-[8px] text-[#666] tracking-wider">SCHOOL</div>
-              <div className="sports-font text-sm text-[var(--vintage-cream)]">{store.bio.school || store.bio.college}</div>
+              <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">SCHOOL</div>
+              <div className="capcrunch-kicker text-sm text-white/80">{store.bio.school || store.bio.college}</div>
             </div>
           )}
           {store.bio.draftYear ? (
             <div>
-              <div className="sports-font text-[8px] text-[#666] tracking-wider">DRAFT</div>
-              <div className="sports-font text-sm text-[var(--vintage-cream)]">{store.bio.draftYear}</div>
+              <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">DRAFT</div>
+              <div className="capcrunch-kicker text-sm text-white/80">{store.bio.draftYear}</div>
             </div>
           ) : store.bio.draftClub ? (
             <div>
-              <div className="sports-font text-[8px] text-[#666] tracking-wider">DRAFT</div>
-              <div className="sports-font text-sm text-[var(--vintage-cream)]">
+              <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">DRAFT</div>
+              <div className="capcrunch-kicker text-sm text-white/80">
                 {store.bio.draftClub} #{store.bio.draftNumber}
               </div>
             </div>
@@ -202,9 +202,9 @@ export function CareerResultsPage() {
       <div className="flex-1 overflow-x-auto mb-6">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b-2 border-[#333]">
+            <tr className="border-b border-white/10">
               {columns.map(col => (
-                <th key={col.key} className="px-3 py-2 text-left sports-font text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
+                <th key={col.key} className="px-3 py-2 text-left capcrunch-kicker text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
                   {col.label}
                 </th>
               ))}
@@ -212,9 +212,9 @@ export function CareerResultsPage() {
           </thead>
           <tbody>
             {store.seasons.map((season, idx) => (
-              <tr key={season.season + idx} className="border-b border-[#222] hover:bg-[#1a1a1a]">
+              <tr key={season.season + idx} className="border-b border-white/5 hover:bg-white/5">
                 {columns.map(col => (
-                  <td key={col.key} className="px-3 py-2 sports-font text-xs text-[var(--vintage-cream)] whitespace-nowrap">
+                  <td key={col.key} className="px-3 py-2 capcrunch-kicker text-xs text-white/80 whitespace-nowrap">
                     {formatStat(col.key, season[col.key])}
                   </td>
                 ))}
@@ -229,17 +229,17 @@ export function CareerResultsPage() {
         <button
           onClick={handlePlayAgain}
           disabled={isLoadingNew}
-          className="group relative bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] py-4 rounded-lg shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none disabled:opacity-50"
+          className="group relative bg-[#f5f5dc] hover:bg-[#e8e8c4] py-4 disabled:opacity-50 transition-colors"
         >
-          <span className="retro-title text-xl text-black uppercase tracking-widest">
+          <span className="capcrunch-title text-xl text-black uppercase tracking-widest">
             {isLoadingNew ? 'Loading...' : 'Play Again'}
           </span>
         </button>
         <button
           onClick={handleHome}
-          className="group relative bg-[#1a1a1a] border border-white/20 py-3 rounded-lg hover:border-white/40 transition-colors"
+          className="group relative bg-black/40 border border-white/10 py-3 hover:border-white/20 transition-colors"
         >
-          <span className="retro-title text-lg text-white/70 uppercase tracking-widest">Back to Home</span>
+          <span className="capcrunch-title text-lg text-white/70 uppercase tracking-widest">Back to Home</span>
         </button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
@@ -25,24 +25,35 @@ function decodeDivision(encoded: string): { conference: string; division: string
   return { conference, division };
 }
 
+type LocationState = {
+  sport?: 'nba' | 'nfl';
+  roundType?: 'league' | 'division' | 'team';
+  divisionMode?: 'cumulative' | 'single_season';
+  minYear?: number;
+  maxYear?: number;
+  windowYears?: number;
+  pinnedDivision?: string | null;
+  pinnedTeam?: string | null;
+} | null;
+
 export function SoloTopTenPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locState = (location.state as LocationState) ?? null;
   const { sport: storeSport } = useSettingsStore();
 
-  // Setup settings
-  const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(
-    (storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba'
-  );
-  const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>('league');
-  const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>('cumulative');
-  const [minYear, setMinYear]           = useState(NBA_MIN);
-  const [maxYear, setMaxYear]           = useState(NBA_MAX);
-  const [windowYears, setWindowYears]   = useState(10);
-  const [pinnedDivision, setPinnedDivision] = useState<string | null>(null);
-  const [pinnedTeam, setPinnedTeam]         = useState<string | null>(null);
+  const defaultSport: 'nba' | 'nfl' = locState?.sport ?? ((storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba');
 
-  // Active game state
-  const [sport, setSport]           = useState<'nba' | 'nfl'>('nba');
+  const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(defaultSport);
+  const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>(locState?.roundType ?? 'league');
+  const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>(locState?.divisionMode ?? 'cumulative');
+  const [minYear, setMinYear]           = useState(locState?.minYear ?? NBA_MIN);
+  const [maxYear, setMaxYear]           = useState(locState?.maxYear ?? NBA_MAX);
+  const [windowYears, setWindowYears]   = useState(locState?.windowYears ?? 10);
+  const [pinnedDivision, setPinnedDivision] = useState<string | null>(locState?.pinnedDivision ?? null);
+  const [pinnedTeam, setPinnedTeam]         = useState<string | null>(locState?.pinnedTeam ?? null);
+
+  const [sport, setSport]           = useState<'nba' | 'nfl'>(defaultSport);
   const [entries, setEntries]       = useState<TopTenEntry[]>([]);
   const [category, setCategory]     = useState('');
   const [categoryLabel, setCategoryLabel] = useState('');
@@ -51,7 +62,7 @@ export function SoloTopTenPage() {
   const [strikes, setStrikes]       = useState(0);
   const [guess, setGuess]           = useState('');
   const [feedback, setFeedback]     = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
-  const [status, setStatus]         = useState<Status>('setup');
+  const [status, setStatus]         = useState<Status>(locState ? 'loading' : 'setup');
   const [hintMode, setHintMode]     = useState(false);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
   const [isDivisionRound, setIsDivisionRound] = useState(false);
@@ -66,17 +77,32 @@ export function SoloTopTenPage() {
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clean up debounce timers on unmount
   useEffect(() => () => {
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     if (suggestTimer.current)  clearTimeout(suggestTimer.current);
   }, []);
 
-  // Capture active settings in a ref so playAgain doesn't drift
-  const activeConfig = useRef({ sport: 'nba' as 'nba' | 'nfl', roundType: 'league' as 'league' | 'division' | 'team', divisionMode: 'cumulative' as 'cumulative' | 'single_season', minYear: NBA_MIN, maxYear: NBA_MAX, windowYears: 10 });
+  const activeConfig = useRef({
+    sport: defaultSport as 'nba' | 'nfl',
+    roundType: (locState?.roundType ?? 'league') as 'league' | 'division' | 'team',
+    divisionMode: (locState?.divisionMode ?? 'cumulative') as 'cumulative' | 'single_season',
+    minYear: locState?.minYear ?? NBA_MIN,
+    maxYear: locState?.maxYear ?? NBA_MAX,
+    windowYears: locState?.windowYears ?? 10,
+  });
 
-  // Reset year bounds when sport changes in setup
+  // Auto-start when settings arrive from home screen
   useEffect(() => {
+    if (!locState) return;
+    const pinned = {
+      division: locState.pinnedDivision ? decodeDivision(locState.pinnedDivision) : undefined,
+      team: locState.pinnedTeam ?? undefined,
+    };
+    loadRound(pinned).catch(() => setStatus('setup'));
+  }, []);
+
+  useEffect(() => {
+    if (locState) return; // sport synced from locState already
     const sMin = setupSport === 'nba' ? NBA_MIN : NFL_MIN;
     const sMax = setupSport === 'nba' ? NBA_MAX : NFL_MAX;
     setMinYear(sMin);
@@ -119,6 +145,11 @@ export function SoloTopTenPage() {
     setWrongGuesses([]);
     setStatus('playing');
     setTimeout(() => inputRef.current?.focus(), 100);
+  }
+
+  function handleBackToSetup() {
+    if (locState) navigate('/', { state: { openTopTen: true, topTenSport: sport } });
+    else setStatus('setup');
   }
 
   function clearFeedback() {
@@ -176,37 +207,31 @@ export function SoloTopTenPage() {
   const statShortLabel    = getStatShortLabel(catDef);
   const showTeamHint     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
 
-  // ── Setup screen ─────────────────────────────────────────────────────────────
+  // ── Setup screen (modal style) ────────────────────────────────────────────────
   if (status === 'setup') {
-    const PURPLE = '#8b5cf6';
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-        <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3">
+      <div className="min-h-screen home-chalkboard text-white flex flex-col">
+        <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
           <button onClick={() => navigate('/')} className="text-white/30 hover:text-white/70 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 className="retro-title text-xl" style={{ color: PURPLE }}>Top Ten</h1>
-          <span className="ml-auto sports-font text-[9px] text-white/20 tracking-[0.25em] uppercase">Solo</span>
+          <h1 className="capcrunch-title text-xl text-[#70BE5B]">Top Ten</h1>
+          <span className="ml-auto capcrunch-kicker text-[9px] text-white/20 tracking-[0.25em]">Solo</span>
         </header>
 
-        <div className="flex flex-col items-center pt-10 pb-6 px-4">
-          <div className="flex items-end gap-px mb-3" aria-hidden>
-            {['1','2','3','4','5'].map((n, i) => (
-              <span key={n} className="retro-title font-black leading-none" style={{ fontSize: 28 - i * 3, color: PURPLE, opacity: 1 - i * 0.15 }}>
-                {n}
-              </span>
-            ))}
-          </div>
-          <p className="sports-font text-[9px] tracking-[0.35em] uppercase" style={{ color: PURPLE, opacity: 0.5 }}>
-            Choose your round
-          </p>
-        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm">
+            <div className="flex items-end gap-px mb-6 justify-center" aria-hidden>
+              {['1','2','3','4','5'].map((n, i) => (
+                <span key={n} className="capcrunch-title leading-none" style={{ fontSize: 34 - i * 4, color: '#70BE5B', opacity: 1 - i * 0.18 }}>
+                  {n}
+                </span>
+              ))}
+            </div>
 
-        <div className="flex-1 flex flex-col items-center px-4 pb-12">
-          <div className="w-full max-w-sm space-y-2.5">
-            <div className="rounded-sm p-4 border" style={{ background: '#0d0d0d', borderColor: `${PURPLE}22` }}>
+            <div className="capcrunch-panel p-5 space-y-5" style={{ borderColor: 'rgba(112,190,91,0.3)' }}>
               <TopTenSettings
                 sport={setupSport} onSportChange={setSetupSport}
                 roundType={roundType} onRoundTypeChange={setRoundType}
@@ -217,19 +242,14 @@ export function SoloTopTenPage() {
                 pinnedDivision={pinnedDivision} onPinnedDivisionChange={setPinnedDivision}
                 pinnedTeam={pinnedTeam} onPinnedTeamChange={setPinnedTeam}
               />
+              <button
+                onClick={startGame}
+                className="capcrunch-title text-lg w-full py-3 text-black transition-all active:translate-y-px"
+                style={{ background: '#70BE5B', boxShadow: '0 3px 0 rgba(60,130,45,0.9)' }}
+              >
+                Play
+              </button>
             </div>
-
-            <button
-              onClick={startGame}
-              className="w-full py-4 rounded-sm retro-title text-lg transition-all active:translate-y-0.5"
-              style={{
-                background: `linear-gradient(180deg, ${PURPLE} 0%, #7c3aed 100%)`,
-                color: '#fff',
-                boxShadow: `0 4px 0 #5b21b6, 0 0 20px ${PURPLE}44`,
-              }}
-            >
-              Play
-            </button>
           </div>
         </div>
       </div>
@@ -239,32 +259,32 @@ export function SoloTopTenPage() {
   // ── Loading ───────────────────────────────────────────────────────────────────
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="sports-font text-white/25 tracking-widest text-sm">Loading...</p>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <p className="capcrunch-kicker text-white/25 tracking-[0.3em]">Loading...</p>
       </div>
     );
   }
 
   // ── Game board ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3">
-        <button onClick={() => setStatus('setup')} className="text-white/30 hover:text-white/70 transition-colors">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col">
+      <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
+        <button onClick={handleBackToSetup} className="text-white/30 hover:text-white/70 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 className="retro-title text-base text-[#22c55e]">Top Ten</h1>
-        <span className="sports-font text-[9px] text-white/20 tracking-[0.25em] uppercase">
+        <h1 className="capcrunch-title text-base text-[#70BE5B]">Top Ten</h1>
+        <span className="capcrunch-kicker text-[9px] text-white/20 tracking-[0.25em]">
           {sport.toUpperCase()} · {isTeamRound ? 'Team' : isDivisionRound ? 'Division' : 'League'}
         </span>
         <div className="ml-auto flex items-center gap-2">
           {!isDone && (
             <button
               onClick={() => setShowTeamsPanel(v => !v)}
-              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
                 showTeamsPanel
-                  ? 'border-[#22c55e]/60 text-[#22c55e] bg-[#22c55e]/8'
+                  ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
@@ -274,9 +294,9 @@ export function SoloTopTenPage() {
           {!isDone && (
             <button
               onClick={() => setHintMode(h => !h)}
-              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
                 hintMode
-                  ? 'border-[#d4af37]/60 text-[#d4af37] bg-[#d4af37]/8'
+                  ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
@@ -286,7 +306,7 @@ export function SoloTopTenPage() {
           {!isDone && (
             <button
               onClick={() => { setStatus('loading'); loadRound().catch(() => setStatus('setup')); }}
-              className="px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border border-white/12 text-white/25 hover:border-blue-500/50 hover:text-blue-400 transition-colors"
+              className="px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border border-white/12 text-white/25 hover:border-white/30 hover:text-white/50 transition-colors"
             >
               Skip
             </button>
@@ -314,13 +334,13 @@ export function SoloTopTenPage() {
               key={i}
               animate={i === strikes - 1 ? { scale: [1, 1.35, 1] } : {}}
               transition={{ duration: 0.28 }}
-              className={`w-9 h-9 rounded-sm flex items-center justify-center border transition-all ${
+              className={`w-9 h-9 flex items-center justify-center border transition-all ${
                 i < strikes
                   ? 'bg-red-950/70 border-red-600/50'
-                  : 'bg-white/4 border-white/8'
+                  : 'bg-black/40 border-white/8'
               }`}
             >
-              <span className={`retro-title text-sm transition-colors ${i < strikes ? 'text-red-400' : 'text-white/15'}`}>✕</span>
+              <span className={`capcrunch-title text-sm transition-colors ${i < strikes ? 'text-red-400' : 'text-white/15'}`}>✕</span>
             </motion.div>
           ))}
         </div>
@@ -338,25 +358,24 @@ export function SoloTopTenPage() {
                 onKeyDown={e => e.key === 'Escape' && setSuggestions([])}
                 placeholder="Name a player..."
                 autoComplete="off"
-                className="flex-1 bg-[#0d0d0d] border border-[#1e1e1e] rounded-sm px-4 py-2.5 text-white sports-font text-sm focus:outline-none focus:border-[#22c55e]/50 placeholder-white/12 transition-colors"
+                className="flex-1 bg-black/40 border border-white/15 px-4 py-2.5 text-white capcrunch-kicker text-sm focus:outline-none focus:border-[#70BE5B]/50 placeholder-white/20 transition-colors"
               />
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_3px_0_#166534] active:shadow-none active:translate-y-px rounded-sm retro-title text-sm transition-all"
+                className="capcrunch-btn-primary capcrunch-title text-sm px-5"
               >
                 Guess
               </button>
             </form>
 
-            {/* Autocomplete dropdown — max 3, no scroll */}
             {suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-12 mt-0.5 bg-[#111] border border-[#2a2a2a] rounded-sm z-30 overflow-hidden">
+              <div className="absolute top-full left-0 right-[88px] mt-0.5 bg-black/90 border border-white/10 z-30 overflow-hidden">
                 {suggestions.map(name => (
                   <button
                     key={name}
                     type="button"
                     onMouseDown={e => { e.preventDefault(); submitGuess(name); }}
-                    className="w-full text-left px-4 py-2.5 sports-font text-sm text-white/60 hover:bg-[#1a1a1a] hover:text-white border-b border-white/5 last:border-0 transition-colors"
+                    className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white/60 hover:bg-white/5 hover:text-white border-b border-white/5 last:border-0 transition-colors"
                   >
                     {name}
                   </button>
@@ -386,7 +405,6 @@ export function SoloTopTenPage() {
           ))}
         </div>
 
-        {/* Wrong guesses */}
         <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Done state */}
@@ -394,28 +412,26 @@ export function SoloTopTenPage() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-3 pt-3 pb-4"
+            className="capcrunch-panel p-5 text-center space-y-3"
           >
-            <div>
-              <p
-                className="retro-title text-2xl"
-                style={{ color: guessedIndices.length === entries.length ? '#d4af37' : '#22c55e' }}
-              >
-                {guessedIndices.length === entries.length ? '🎉 Perfect!' : `${guessedIndices.length} / ${entries.length} found`}
-              </p>
-            </div>
+            <p
+              className="capcrunch-title text-2xl"
+              style={{ color: guessedIndices.length === entries.length ? '#70BE5B' : '#70BE5B' }}
+            >
+              {guessedIndices.length === entries.length ? 'Perfect!' : `${guessedIndices.length} / ${entries.length} found`}
+            </p>
             <div className="flex gap-2.5 justify-center">
               <button
                 onClick={playAgain}
-                className="px-6 py-3 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_3px_0_#166534] active:shadow-none active:translate-y-px rounded-sm retro-title text-base transition-all"
+                className="capcrunch-btn-primary capcrunch-title text-base px-6 py-3"
               >
                 Play Again
               </button>
               <button
-                onClick={() => setStatus('setup')}
-                className="px-6 py-3 bg-[#0d0d0d] border border-white/12 hover:border-white/25 rounded-sm retro-title text-base transition-colors text-white/40"
+                onClick={handleBackToSetup}
+                className="capcrunch-btn-secondary capcrunch-kicker px-6 py-3"
               >
-                Settings
+                {locState ? 'Home' : 'Settings'}
               </button>
             </div>
           </motion.div>

@@ -1,102 +1,127 @@
-/**
- * CareerArcSetup.tsx — Setup panel for the Career Arc game mode.
- * Lets the player filter by era before starting solo or creating a lobby.
- */
-
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
+const COLOR = '#22c55e';
+const ERA_OPTIONS: (number | null)[] = [null, 2010, 2015, 2018, 2020, 2022];
+
 interface Props {
   sport: 'nba' | 'nfl';
-  careerActiveYear: number | null;
-  setCareerActiveYear: (y: number | null) => void;
   onBack: () => void;
 }
 
-const ERA_OPTIONS: (number | null)[] = [null, 2010, 2015, 2018, 2020, 2022];
-
-export function CareerArcSetup({ sport, careerActiveYear, setCareerActiveYear, onBack }: Props) {
+export function CareerArcSetup({ sport, onBack }: Props) {
   const navigate = useNavigate();
+  const [activeYear, setActiveYear] = useState<number | null>(null);
+  const [tab, setTab] = useState<'settings' | 'rules'>('settings');
 
   return (
     <motion.div
-      key="career-setup"
+      key="career-arc-setup"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.25 }}
-      className="z-10 w-full max-w-sm"
+      className="z-10 w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-120px)]"
     >
-      <div className="relative bg-[#141414] border-2 border-[#22c55e] rounded-2xl overflow-hidden shadow-2xl">
-        {/* Diagonal stripe texture */}
-        <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg, #22c55e 0, #22c55e 1px, transparent 0, transparent 50%)', backgroundSize: '14px 14px' }}
-        />
-
-        <div className="relative z-10 p-5 flex flex-col gap-4">
-          {/* Header */}
-          <div className="flex items-center">
-            <button
-              onClick={onBack}
-              className="sports-font text-[10px] text-[#22c55e]/50 hover:text-[#22c55e]/90 tracking-widest uppercase transition"
-            >
-              ← Back
-            </button>
-            <div className="flex-1 text-center">
-              <div className="sports-font text-[9px] text-[#22c55e]/50 tracking-[0.3em] uppercase">CA</div>
-              <h2 className="retro-title text-2xl text-[#22c55e] leading-tight">Career Arc</h2>
-              <p className="sports-font text-[9px] text-[#888] tracking-widest">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
-            </div>
-            <div className="w-12" />
-          </div>
-          <div className="border-t border-[#22c55e]/20" />
-
-          {/* Era filter */}
-          <div className="flex flex-col gap-2">
-            <div className="sports-font text-[9px] text-[#888] tracking-[0.25em] uppercase text-center">
-              Player must be active into
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {ERA_OPTIONS.map(yr => (
-                <button
-                  key={yr ?? 'any'}
-                  onClick={() => setCareerActiveYear(yr)}
-                  className={`py-1.5 rounded-lg sports-font text-[10px] tracking-wider uppercase border transition-all ${
-                    careerActiveYear === yr
-                      ? 'bg-[#22c55e] text-[#111] border-[#22c55e]'
-                      : 'border-[#2a2a2a] text-[#666] hover:border-[#22c55e]/40 hover:text-[#888]'
-                  }`}
-                >
-                  {yr == null ? 'Any era' : `${yr}+`}
-                </button>
-              ))}
-            </div>
-            {careerActiveYear && (
-              <p className="sports-font text-[9px] text-[#555] text-center">
-                Players who played in {careerActiveYear} or later
-              </p>
-            )}
-          </div>
-
-          <div className="border-t border-[#22c55e]/20" />
-
-          {/* Actions */}
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => navigate('/career', { state: careerActiveYear ? { careerTo: careerActiveYear } : null })}
-              className="px-8 py-2.5 rounded-lg sports-font text-xs tracking-wider uppercase border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-[#111] transition-all"
-            >
-              Start Solo
-            </button>
-            <button
-              onClick={() => navigate('/lobby/create', { state: { gameType: 'career' } })}
-              className="px-4 py-2.5 rounded-lg sports-font border border-[#333] text-[#777] hover:border-[#555] text-xs"
-            >
-              Lobby
-            </button>
-          </div>
+      {/* Narrow tab toggle */}
+      <div className="mb-4 flex items-center justify-between lg:hidden">
+        <div className="inline-flex border border-white/10 bg-black/20">
+          <button
+            onClick={() => setTab('settings')}
+            className={`px-4 py-2 capcrunch-kicker transition ${tab === 'settings' ? 'text-black' : 'text-white/60'}`}
+            style={tab === 'settings' ? { background: COLOR } : {}}
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => setTab('rules')}
+            className={`px-4 py-2 capcrunch-kicker transition ${tab === 'rules' ? 'text-black' : 'text-white/60'}`}
+            style={tab === 'rules' ? { background: '#68BBE5' } : {}}
+          >
+            How to Play
+          </button>
         </div>
+        <button onClick={onBack} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Back</button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+        {/* Settings panel */}
+        <section
+          className={`${tab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel overflow-hidden shadow-2xl`}
+          style={{ borderColor: `${COLOR}4d` }}
+        >
+          <div className="p-5 flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex items-center">
+              <button onClick={onBack} className="capcrunch-kicker text-[10px] text-white/40 hover:text-white/70 transition-colors">
+                ← Back
+              </button>
+              <div className="flex-1 text-center">
+                <div className="capcrunch-kicker text-[9px] mb-0.5" style={{ color: `${COLOR}99` }}>CA</div>
+                <h2 className="capcrunch-title text-2xl leading-tight" style={{ color: COLOR }}>Career Arc</h2>
+                <p className="capcrunch-kicker text-[9px] text-white/40">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
+              </div>
+              <div className="w-12" />
+            </div>
+
+            <div className="border-t border-white/10" />
+
+            {/* Era filter */}
+            <div className="flex flex-col gap-2">
+              <p className="capcrunch-kicker text-[9px] text-white/40 text-center">Player must be active into</p>
+              <div className="grid grid-cols-3 gap-2">
+                {ERA_OPTIONS.map(yr => (
+                  <button
+                    key={yr ?? 'any'}
+                    onClick={() => setActiveYear(yr)}
+                    className={`py-2 capcrunch-kicker text-[10px] border transition-all ${
+                      activeYear === yr
+                        ? 'text-black border-transparent'
+                        : 'border-white/10 text-white/40 hover:border-white/25 hover:text-white/60'
+                    }`}
+                    style={activeYear === yr ? { backgroundColor: COLOR } : {}}
+                  >
+                    {yr == null ? 'Any era' : `${yr}+`}
+                  </button>
+                ))}
+              </div>
+              {activeYear && (
+                <p className="capcrunch-kicker text-[9px] text-white/30 text-center">
+                  Players active in {activeYear} or later
+                </p>
+              )}
+            </div>
+
+            <div className="border-t border-white/10" />
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={() => navigate('/career', { state: activeYear ? { careerTo: activeYear } : null })}
+                className="capcrunch-title px-8 py-2.5 text-base text-black transition-all active:translate-y-px"
+                style={{ background: COLOR, boxShadow: '0 3px 0 rgba(30,100,20,0.9)' }}
+              >
+                Start Solo
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* How to Play aside */}
+        <aside className={`${tab !== 'rules' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
+          <h3 className="capcrunch-title text-lg mb-4" style={{ color: COLOR }}>How to Play</h3>
+          <ul className="text-sm text-white/80 space-y-3 text-left">
+            <li><span className="font-bold" style={{ color: COLOR }}>Goal:</span> Identify a mystery player from their season-by-season stat lines before running out of points.</li>
+            <li><span className="font-bold" style={{ color: COLOR }}>Reveal:</span> Stats appear one season at a time. Team and year are hidden at first — use hints to unlock them.</li>
+            <li><span className="text-white/60 font-bold">Show Years (−3):</span> Reveals the year column across all stat rows shown so far.</li>
+            <li><span className="text-white/60 font-bold">Show Bio (−3):</span> Reveals height, weight, draft info, and college.</li>
+            <li><span className="text-white/60 font-bold">Show Initials (−10):</span> Reveals the first and last initial of the player's name.</li>
+            <li><span className="text-red-400 font-bold">Give Up:</span> Ends the round and reveals the answer — no points awarded.</li>
+            <li><span className="text-white/60 font-bold">Era filter:</span> Limits the player pool to those who were active in the selected year or later.</li>
+            <li><span className="text-white/60 font-bold">Multiplayer:</span> Each player guesses simultaneously — fastest correct guess each round wins.</li>
+          </ul>
+        </aside>
       </div>
     </motion.div>
   );

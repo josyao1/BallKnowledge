@@ -123,46 +123,39 @@ export function RollCallResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d2a0b]">
-        <div className="text-white/50 sports-font">Loading results...</div>
+      <div className="min-h-screen flex items-center justify-center home-chalkboard">
+        <div className="text-white/50 capcrunch-kicker">Loading results...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-40 pointer-events-none"
-        style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-      />
-
+    <div className="min-h-screen flex flex-col home-chalkboard text-white">
       {/* Header */}
-      <header className="relative z-10 p-4 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={handleLeave} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="retro-title text-xl text-[#d4af37]">Roll Call Results</h1>
-              <p className="sports-font text-[8px] text-white/30 tracking-[0.3em] uppercase">Final Tally</p>
-            </div>
+      <header className="p-4 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <button onClick={handleLeave} className="p-2 hover:bg-white/10 transition-colors">
+            <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="capcrunch-title text-xl text-[#d4af37]">Roll Call Results</h1>
+            <p className="capcrunch-kicker text-[8px] text-white/30 tracking-[0.3em] uppercase">Final Tally</p>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-4 space-y-4 overflow-y-auto">
+      <main className="flex-1 max-w-2xl mx-auto w-full p-4 space-y-4 overflow-y-auto">
         {/* Summary stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-black/50 border border-[#d4af37]/30 rounded-sm p-4"
+          className="capcrunch-panel p-4"
         >
           <div className="text-center">
-            <div className="retro-title text-3xl text-[#d4af37]">{groups.length}</div>
-            <div className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Unique Players</div>
+            <div className="capcrunch-title text-3xl text-[#d4af37]">{groups.length}</div>
+            <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">Unique Players</div>
           </div>
         </motion.div>
 
@@ -172,13 +165,13 @@ export function RollCallResultsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             onClick={() => setShowSuggestions(true)}
-            className="w-full p-3 bg-orange-900/20 border border-orange-500/30 rounded-sm flex items-center justify-between hover:bg-orange-900/30 transition-colors"
+            className="w-full p-3 bg-orange-900/20 border border-orange-500/30 flex items-center justify-between hover:bg-orange-900/30 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold sports-font">
+              <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-400 text-xs font-bold capcrunch-kicker">
                 {suggestions.length}
               </span>
-              <span className="sports-font text-sm text-orange-400">possible duplicates to review</span>
+              <span className="capcrunch-kicker text-sm text-orange-400">possible duplicates to review</span>
             </div>
             <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -201,7 +194,7 @@ export function RollCallResultsPage() {
         </div>
 
         {groups.length === 0 && (
-          <div className="text-center py-8 text-white/30 sports-font">
+          <div className="text-center py-8 text-white/30 capcrunch-kicker">
             No entries were submitted.
           </div>
         )}
@@ -211,7 +204,7 @@ export function RollCallResultsPage() {
           {groups.length > 0 && (
             <button
               onClick={handleCopyList}
-              className="w-full py-3 rounded-sm sports-font text-sm tracking-wider bg-black/50 text-white/70 border border-white/20 hover:border-[#d4af37] hover:text-[#d4af37] transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 capcrunch-kicker text-sm tracking-wider bg-black/40 text-white/70 border border-white/20 hover:border-[#d4af37] hover:text-[#d4af37] transition-all flex items-center justify-center gap-2"
             >
               {copiedList ? 'Copied!' : 'Copy Player List'}
             </button>
@@ -219,14 +212,14 @@ export function RollCallResultsPage() {
           {isHost && (
             <button
               onClick={handleNewRound}
-              className="w-full py-4 rounded-sm retro-title text-lg tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1"
+              className="w-full py-4 capcrunch-title text-lg tracking-wider bg-[#d4af37] hover:bg-[#c4a030] text-black transition-all"
             >
               New Round
             </button>
           )}
           <button
             onClick={handleLeave}
-            className="w-full py-3 rounded-sm sports-font text-sm tracking-wider bg-black/50 text-white/50 border border-white/20 hover:border-white/40 transition-all"
+            className="w-full py-3 capcrunch-kicker text-sm tracking-wider bg-black/40 text-white/50 border border-white/20 hover:border-white/40 transition-all"
           >
             Leave
           </button>
@@ -285,18 +278,18 @@ function ResultGroupRow({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.5) }}
-      className="bg-black/50 border border-white/10 rounded-sm overflow-hidden"
+      className="bg-black/40 border border-white/10 overflow-hidden"
     >
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="retro-title text-sm text-white/20 w-6">{index + 1}</span>
-          <span className="sports-font text-sm text-white/90">{group.canonical}</span>
+          <span className="capcrunch-title text-sm text-white/20 w-6">{index + 1}</span>
+          <span className="capcrunch-kicker text-sm text-white/90">{group.canonical}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold sports-font bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/30">
+          <span className="px-2 py-0.5 text-[10px] font-bold capcrunch-kicker bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/30">
             {group.uniqueSubmitters} {group.uniqueSubmitters === 1 ? 'person' : 'people'}
           </span>
           <svg
@@ -314,15 +307,15 @@ function ResultGroupRow({
             <div className="space-y-1 mb-2">
               {group.variants.map((v, vi) => (
                 <div key={vi} className="flex justify-between text-xs py-1">
-                  <span className="text-white/60 sports-font">{v.text}</span>
-                  <span className="text-white/30 sports-font">{v.submitter}</span>
+                  <span className="text-white/60 capcrunch-kicker">{v.text}</span>
+                  <span className="text-white/30 capcrunch-kicker">{v.submitter}</span>
                 </div>
               ))}
             </div>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="w-full py-1.5 rounded-sm sports-font text-xs tracking-wider text-red-400 border border-red-700/40 hover:bg-red-900/20 transition-colors"
+            className="w-full py-1.5 capcrunch-kicker text-xs tracking-wider text-red-400 border border-red-700/40 hover:bg-red-900/20 transition-colors"
           >
             Remove
           </button>
@@ -351,15 +344,15 @@ function MergeSuggestionOverlay({
     >
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
 
-      <div className="relative z-10 bg-[#111] border-t-2 border-[#d4af37]/50 rounded-t-xl max-h-[70vh] flex flex-col">
+      <div className="relative z-10 bg-black/90 border-t border-[#d4af37]/40 max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
           <div>
-            <h2 className="retro-title text-lg text-[#d4af37]">Possible Duplicates</h2>
-            <p className="sports-font text-[9px] text-white/40 tracking-widest uppercase">
+            <h2 className="capcrunch-title text-lg text-[#d4af37]">Possible Duplicates</h2>
+            <p className="capcrunch-kicker text-[9px] text-white/40 tracking-widest uppercase">
               Merge similar entries or dismiss
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-white/10 transition-colors">
             <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -368,36 +361,36 @@ function MergeSuggestionOverlay({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {suggestions.length === 0 ? (
-            <p className="text-center text-white/30 sports-font text-sm py-4">
+            <p className="text-center text-white/30 capcrunch-kicker text-sm py-4">
               All duplicates have been resolved!
             </p>
           ) : (
             suggestions.map((s) => (
-              <div key={s.key} className="bg-black/50 border border-orange-500/30 rounded-sm p-3 space-y-2">
-                <div className="sports-font text-xs text-orange-400 tracking-wider">
+              <div key={s.key} className="bg-black/50 border border-orange-500/30 p-3 space-y-2">
+                <div className="capcrunch-kicker text-xs text-orange-400 tracking-wider">
                   These look like the same player:
                 </div>
                 <div className="space-y-1">
                   {s.entries.map((e) => (
-                    <div key={e.id} className="flex justify-between py-1 px-2 bg-black/30 rounded">
-                      <span className="text-white/80 sports-font text-sm">{e.text}</span>
-                      <span className="text-white/30 sports-font text-[10px]">{e.submitter}</span>
+                    <div key={e.id} className="flex justify-between py-1 px-2 bg-black/30">
+                      <span className="text-white/80 capcrunch-kicker text-sm">{e.text}</span>
+                      <span className="text-white/30 capcrunch-kicker text-[10px]">{e.submitter}</span>
                     </div>
                   ))}
                 </div>
-                <div className="sports-font text-[10px] text-white/40">
+                <div className="capcrunch-kicker text-[10px] text-white/40">
                   Merge as: <span className="text-white/70">{s.canonical}</span>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => onConfirm(s.key, s.entries.map(e => e.id), s.canonical)}
-                    className="flex-1 py-2 rounded-sm sports-font text-xs tracking-wider bg-emerald-900/40 text-emerald-400 border border-emerald-700/50 hover:bg-emerald-800/40 transition-colors"
+                    className="flex-1 py-2 capcrunch-kicker text-xs tracking-wider bg-emerald-900/40 text-emerald-400 border border-emerald-700/50 hover:bg-emerald-800/40 transition-colors"
                   >
                     Merge
                   </button>
                   <button
                     onClick={() => onDismiss(s.key, s.entries.map(e => e.id), s.canonical)}
-                    className="flex-1 py-2 rounded-sm sports-font text-xs tracking-wider bg-black/40 text-white/40 border border-white/10 hover:border-white/30 transition-colors"
+                    className="flex-1 py-2 capcrunch-kicker text-xs tracking-wider bg-black/40 text-white/40 border border-white/10 hover:border-white/30 transition-colors"
                   >
                     Not the same
                   </button>

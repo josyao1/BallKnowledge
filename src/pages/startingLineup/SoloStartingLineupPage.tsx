@@ -294,12 +294,12 @@ export function SoloStartingLineupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#222]">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <button
           onClick={() => navigate('/')}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          className="p-2 hover:bg-white/10 transition-colors"
         >
           <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -307,17 +307,17 @@ export function SoloStartingLineupPage() {
         </button>
 
         <div className="text-center">
-          <h1 className="retro-title text-2xl text-[#ea580c]">Starting Lineup</h1>
+          <h1 className="capcrunch-title text-2xl text-[#ea580c]">Starting Lineup</h1>
           {phase !== 'loading' && phase !== 'results' && (
-            <div className="sports-font text-[10px] text-[#ea580c]/50 tracking-widest">{sportLabel}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#ea580c]/50 tracking-widest">{sportLabel}</div>
           )}
         </div>
 
         <div className="min-w-[40px] text-right">
           {phase !== 'loading' && phase !== 'results' && (
             <div>
-              <div className="retro-title text-xl text-[#fdb927]">{score}</div>
-              <div className="text-[9px] text-white/30 sports-font">PTS</div>
+              <div className="capcrunch-title text-xl text-[#fdb927]">{score}</div>
+              <div className="text-[9px] text-white/30 capcrunch-kicker">PTS</div>
             </div>
           )}
         </div>
@@ -326,7 +326,7 @@ export function SoloStartingLineupPage() {
       {/* Loading */}
       {phase === 'loading' && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-white/30 sports-font tracking-widest text-sm">Loading lineup...</div>
+          <div className="text-white/30 capcrunch-kicker tracking-widest text-sm">Loading lineup...</div>
         </div>
       )}
 
@@ -336,14 +336,14 @@ export function SoloStartingLineupPage() {
           {renderLayout('hidden')}
 
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-white/40 sports-font tracking-wider">
+            <p className="text-[11px] text-white/40 capcrunch-kicker tracking-wider">
               {isNBA
                 ? `Which ${sportLabel} team's starting 5 is this? · ${encodingLabel}`
                 : `Which ${sportLabel} team's ${side} is this? · ${encodingLabel}`}
             </p>
             <button
               onClick={() => setHintEnabled(h => !h)}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sports-font border transition-all ${
+              className={`flex items-center gap-1 px-2 py-0.5 text-[10px] capcrunch-kicker border transition-all ${
                 hintEnabled
                   ? 'border-[#fdb927]/50 text-[#fdb927] bg-[#fdb927]/10'
                   : 'border-white/10 text-white/30 hover:border-white/20 hover:text-white/50'
@@ -356,7 +356,7 @@ export function SoloStartingLineupPage() {
           {wrongGuesses.length > 0 && (
             <div className="flex flex-wrap gap-1.5 justify-center">
               {wrongGuesses.map((g, i) => (
-                <span key={i} className="px-2 py-0.5 bg-red-900/20 border border-red-800/40 rounded text-xs sports-font text-red-400">
+                <span key={i} className="px-2 py-0.5 bg-red-900/20 border border-red-800/40 text-xs capcrunch-kicker text-red-400">
                   ✗ {g}
                 </span>
               ))}
@@ -381,13 +381,13 @@ export function SoloStartingLineupPage() {
                   }}
                   onFocus={() => guessInput.trim().length >= 2 && setShowSuggestions(true)}
                   placeholder="Type team name..."
-                  className="flex-1 bg-[#1a1a1a] border-2 border-[#3d3d3d] rounded-lg px-4 py-3 sports-font text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#ea580c]"
+                  className="flex-1 bg-black/40 border border-white/10 px-4 py-3 capcrunch-kicker text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#ea580c]"
                   autoComplete="off"
                 />
                 <button
                   onClick={() => guessInput.trim() && submitGuess()}
                   disabled={!guessInput.trim()}
-                  className="px-5 py-3 rounded-lg sports-font text-sm font-semibold bg-[#ea580c] hover:bg-[#c2410c] disabled:opacity-40 transition-all text-white"
+                  className="px-5 py-3 capcrunch-kicker text-sm font-semibold bg-[#ea580c] hover:bg-[#c2410c] disabled:opacity-40 transition-all text-white"
                 >
                   Guess
                 </button>
@@ -399,16 +399,16 @@ export function SoloStartingLineupPage() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-[#3d3d3d] rounded-lg overflow-hidden z-20 shadow-xl"
+                    className="absolute top-full left-0 right-0 mt-1 bg-black/90 border border-white/10 overflow-hidden z-20 shadow-xl"
                   >
                     {suggestions.map(t => (
                       <button
                         key={t.abbreviation}
                         onMouseDown={e => { e.preventDefault(); submitGuess(t.abbreviation); }}
-                        className="w-full text-left px-4 py-2.5 sports-font text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3"
+                        className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                       >
                         <span
-                          className="w-8 h-5 rounded text-[9px] font-bold flex items-center justify-center text-white"
+                          className="w-8 h-5 text-[9px] font-bold flex items-center justify-center text-white"
                           style={{ background: t.colors.primary }}
                         >
                           {t.abbreviation}
@@ -423,7 +423,7 @@ export function SoloStartingLineupPage() {
 
             <button
               onClick={handleGiveUp}
-              className="w-full py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all"
+              className="w-full py-2 capcrunch-kicker text-xs bg-black/40 border border-red-900/50 text-red-400 hover:border-red-700 transition-all"
             >
               Give Up
             </button>
@@ -437,23 +437,23 @@ export function SoloStartingLineupPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center justify-between px-4 py-2 bg-[#ea580c]/10 border border-[#ea580c]/40 rounded-lg"
+            className="flex items-center justify-between px-4 py-2 bg-[#ea580c]/10 border border-[#ea580c]/40"
           >
             <div>
-              <div className="text-[9px] text-[#ea580c]/60 sports-font tracking-widest uppercase">Correct!</div>
-              <div className="retro-title text-lg text-[#fdb927]">{correctTeamObj?.name || team}</div>
+              <div className="text-[9px] text-[#ea580c]/60 capcrunch-kicker tracking-widest uppercase">Correct!</div>
+              <div className="capcrunch-title text-lg text-[#fdb927]">{correctTeamObj?.name || team}</div>
             </div>
             <div className="text-right">
-              <div className="retro-title text-xl text-[#ea580c]">+{teamGuessScore}</div>
-              <div className="text-[9px] text-[#ea580c]/50 sports-font">pts</div>
+              <div className="capcrunch-title text-xl text-[#ea580c]">+{teamGuessScore}</div>
+              <div className="text-[9px] text-[#ea580c]/50 capcrunch-kicker">pts</div>
             </div>
           </motion.div>
 
           <div className="flex items-center justify-between px-1">
-            <p className="text-[11px] text-white/40 sports-font tracking-wider">
+            <p className="text-[11px] text-white/40 capcrunch-kicker tracking-wider">
               Tap blobs to name players — +1 pt each
             </p>
-            <div className={`retro-title text-lg ${bonusTimeLeft <= 10 ? 'text-red-400' : 'text-white/60'}`}>
+            <div className={`capcrunch-title text-lg ${bonusTimeLeft <= 10 ? 'text-red-400' : 'text-white/60'}`}>
               {bonusTimeLeft}s
             </div>
           </div>
@@ -461,12 +461,12 @@ export function SoloStartingLineupPage() {
           {renderLayout('bonus-guess')}
 
           <div className="flex items-center justify-between px-1">
-            <div className="text-[11px] text-white/40 sports-font">
+            <div className="text-[11px] text-white/40 capcrunch-kicker">
               {bonusCorrect.size}/{Math.min(players.length, maxBonus)} players named
             </div>
             <button
               onClick={skipBonus}
-              className="text-[11px] text-white/30 sports-font hover:text-white/60 transition-colors underline"
+              className="text-[11px] text-white/30 capcrunch-kicker hover:text-white/60 transition-colors underline"
             >
               Skip →
             </button>
@@ -483,30 +483,30 @@ export function SoloStartingLineupPage() {
             className="flex flex-col gap-4"
           >
             <div className="text-center">
-              <div className="sports-font text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">
+              <div className="capcrunch-kicker text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">
                 {gaveUp ? 'Better luck next time' : 'Round Complete'}
               </div>
-              <div className={`retro-title text-5xl ${gaveUp ? 'text-white/40' : 'text-[#ea580c]'}`}>
+              <div className={`capcrunch-title text-5xl ${gaveUp ? 'text-white/40' : 'text-[#ea580c]'}`}>
                 +{teamGuessScore + bonusCorrect.size}
               </div>
-              <div className="sports-font text-sm text-white/40 mt-1">points this round</div>
+              <div className="capcrunch-kicker text-sm text-white/40 mt-1">points this round</div>
             </div>
 
             {gaveUp && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="px-4 py-3 bg-[#1a1a1a] border-2 border-[#555] rounded-lg text-center"
+                className="px-4 py-3 bg-black/40 border border-white/10 text-center"
               >
-                <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-1">The Answer Was</div>
-                <div className="retro-title text-2xl text-[#fdb927]">{correctTeamObj?.name || team}</div>
+                <div className="capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-1">The Answer Was</div>
+                <div className="capcrunch-title text-2xl text-[#fdb927]">{correctTeamObj?.name || team}</div>
               </motion.div>
             )}
 
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#2a2a2a] flex justify-between items-center">
-                <span className="sports-font text-sm text-white/60">Team guess</span>
-                <span className="retro-title text-lg text-[#fdb927]">
+            <div className="bg-black/40 border border-white/10 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
+                <span className="capcrunch-kicker text-sm text-white/60">Team guess</span>
+                <span className="capcrunch-title text-lg text-[#fdb927]">
                   {teamGuessScore > 0 ? `+${teamGuessScore}` : gaveUp ? 'Gave up' : '0'}
                   {!gaveUp && wrongGuesses.length > 0 && (
                     <span className="text-xs text-white/30 ml-1">({wrongGuesses.length} wrong)</span>
@@ -514,30 +514,30 @@ export function SoloStartingLineupPage() {
                 </span>
               </div>
               <div className="px-4 py-3 flex justify-between items-center">
-                <span className="sports-font text-sm text-white/60">Bonus players</span>
-                <span className="retro-title text-lg text-[#ea580c]">+{bonusCorrect.size}</span>
+                <span className="capcrunch-kicker text-sm text-white/60">Bonus players</span>
+                <span className="capcrunch-title text-lg text-[#ea580c]">+{bonusCorrect.size}</span>
               </div>
             </div>
 
-            <p className="text-center text-[11px] text-white/30 sports-font">{contextLine}</p>
+            <p className="text-center text-[11px] text-white/30 capcrunch-kicker">{contextLine}</p>
 
             {renderLayout('revealed')}
 
             <div className="text-center">
-              <div className="text-[10px] text-white/30 sports-font tracking-widest uppercase">Total Score</div>
-              <div className="retro-title text-3xl text-[#fdb927]">{score}</div>
+              <div className="text-[10px] text-white/30 capcrunch-kicker tracking-widest uppercase">Total Score</div>
+              <div className="capcrunch-title text-3xl text-[#fdb927]">{score}</div>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={playAgain}
-                className="flex-1 py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#ea580c] to-[#c2410c] text-white shadow-[0_4px_0_#9a3412] active:shadow-none active:translate-y-1"
+                className="flex-1 py-4 capcrunch-title text-xl tracking-wider transition-all bg-[#ea580c] hover:bg-[#c2410c] text-white"
               >
                 Play Again
               </button>
               <button
                 onClick={() => navigate('/')}
-                className="px-6 py-4 rounded-lg sports-font text-sm bg-[#1a1a1a] border-2 border-[#333] text-white/60 hover:border-[#555] transition-all"
+                className="px-6 py-4 capcrunch-kicker text-sm bg-black/40 border border-white/10 text-white/60 hover:border-white/25 transition-all"
               >
                 Home
               </button>

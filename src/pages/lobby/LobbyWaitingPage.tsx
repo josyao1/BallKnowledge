@@ -33,7 +33,7 @@ import { generateTopTenRound } from '../../services/topTen';
 import { getRandomNBABoxScoreGame, ALL_NBA_BOX_SCORE_YEARS } from '../../services/nbaBoxScoreData';
 import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
-import { RouletteOverlay } from '../../components/home/RouletteOverlay';
+import { TeamRevealOverlay } from '../../components/home/TeamRevealOverlay';
 import { LobbyJoinPrompt }    from '../../components/lobby/LobbyJoinPrompt';
 import { LobbyGameInfo }      from '../../components/lobby/LobbyGameInfo';
 import { LobbyHostSettings }  from '../../components/lobby/LobbyHostSettings';
@@ -375,7 +375,7 @@ export function LobbyWaitingPage() {
     try {
       const cs = (lobby.career_state as any) || {};
       const minYear = cs.min_year || 2015;
-      const maxYear = cs.max_year || 2024;
+      const maxYear = cs.max_year || 2025;
       const filteredYears = ALL_BOX_SCORE_YEARS.filter(y => y >= minYear && y <= maxYear);
       const game = await getRandomBoxScoreGame({ years: filteredYears.length > 0 ? filteredYears : undefined, team: cs.team || null });
       const newState = { type: 'box_score', game_id: game.game_id, season: game.season, min_year: minYear, max_year: maxYear, team: cs.team || null };
@@ -798,8 +798,8 @@ export function LobbyWaitingPage() {
 
   if (!lobby || isLoadingLobby) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d2a0b]">
-        <div className="text-white/50 sports-font">Loading table...</div>
+      <div className="min-h-screen flex items-center justify-center home-chalkboard">
+        <div className="text-white/50 capcrunch-kicker">Loading table...</div>
       </div>
     );
   }
@@ -820,66 +820,58 @@ export function LobbyWaitingPage() {
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
-      {/* Green felt background */}
-      <div className="absolute inset-0 opacity-40 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)' }} />
+    <div className="min-h-screen flex flex-col home-chalkboard text-white relative overflow-hidden">
 
       {/* Dealing animation overlay */}
       {showDealingAnimation && lobby && team && (
-        <div className="fixed inset-0 z-50">
-          <RouletteOverlay
-            key={rerollCount}
-            winningTeam={
-              lobby.selection_scope === 'division' && lobby.division_conference && lobby.division_name
-                ? `${lobby.division_conference} ${lobby.division_name}`
-                : team.name
-            }
-            winningLabel={lobby.selection_scope === 'division' ? 'DIVISION' : 'TEAM'}
-            winningYear={lobby.season}
-            sport={sport}
-            winningTeamData={lobby.selection_scope === 'division' ? undefined : team}
-            onComplete={handleDealingComplete}
-            canSkip={isHost}
-            onReroll={handleReroll}
-          />
-        </div>
+        <TeamRevealOverlay
+          key={rerollCount}
+          winningTeam={
+            lobby.selection_scope === 'division' && lobby.division_conference && lobby.division_name
+              ? `${lobby.division_conference} ${lobby.division_name}`
+              : team.name
+          }
+          winningLabel={lobby.selection_scope === 'division' ? 'DIVISION' : 'TEAM'}
+          winningYear={lobby.season}
+          sport={sport}
+          winningTeamData={lobby.selection_scope === 'division' ? undefined : team}
+          onComplete={handleDealingComplete}
+          canSkip={isHost}
+          onReroll={handleReroll}
+        />
       )}
 
       {/* Header */}
-      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="relative z-10 capcrunch-panel border-b border-white/10 px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4 sm:items-center min-w-0">
             <button
               onClick={handleLeave}
-              className="flex items-center gap-1.5 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors border border-white/10 hover:border-white/30"
+              className="capcrunch-kicker text-[10px] text-white/40 hover:text-white/70 transition-colors shrink-0"
             >
-              <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span className="sports-font text-[11px] text-white/50 tracking-widest uppercase">Leave</span>
+              ← Leave
             </button>
-            <div>
-              <h1 className="retro-title text-2xl text-[#d4af37]">Private Table</h1>
-              <p className="sports-font text-[9px] text-white/30 tracking-[0.4em] uppercase">Waiting for Players</p>
+            <div className="min-w-0">
+              <h1 className="capcrunch-title text-xl sm:text-2xl text-white leading-none">Private Table</h1>
+              <p className="capcrunch-kicker text-[9px] text-white/30">Waiting for Players</p>
             </div>
           </div>
 
           {/* Join code copy button */}
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-2 px-4 py-2 bg-black/50 rounded-sm border border-white/20 hover:border-[#d4af37] transition-colors"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-black/40 border border-white/20 hover:border-[#FDF100] transition-colors min-w-0"
           >
-            <span className="font-mono text-xl tracking-widest text-[#d4af37]">{lobby.join_code}</span>
+            <span className="font-mono text-lg sm:text-xl tracking-[0.2em] sm:tracking-widest text-[#FDF100] truncate">{lobby.join_code}</span>
             <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            {copied && <span className="text-emerald-400 text-sm sports-font">Copied!</span>}
+            {copied && <span className="text-emerald-400 text-xs sm:text-sm capcrunch-kicker shrink-0">Copied!</span>}
           </button>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-6 space-y-6">
+      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full px-4 py-4 sm:p-6 space-y-4 sm:space-y-6">
         <LobbyGameInfo
           lobby={lobby}
           players={players}

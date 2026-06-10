@@ -57,56 +57,56 @@ export function LobbyActionButtons({
       onStart: onScrambleStart,
       label: 'Start Name Scramble',
       loadingLabel: 'Loading Player...',
-      btnClass: 'bg-gradient-to-b from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_0_#1d4ed8]',
+      btnClass: 'bg-[#3b82f6] hover:bg-[#2563eb] text-white',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     career: {
       onStart: onCareerStart,
       label: 'Start Career Mode',
       loadingLabel: 'Loading Player...',
-      btnClass: 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534]',
+      btnClass: 'bg-emerald-600 hover:bg-emerald-500 text-white',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'lineup-is-right': {
       onStart: onLineupStart,
       label: 'Start Cap Crunch',
       loadingLabel: 'Loading Game...',
-      btnClass: 'bg-gradient-to-b from-[#ec4899] to-[#be185d] text-white shadow-[0_4px_0_#831843]',
+      btnClass: 'bg-[#ec4899] hover:bg-[#be185d] text-white',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'box-score': {
       onStart: onBoxScoreStart,
       label: 'Start Box Score',
       loadingLabel: 'Loading Game...',
-      btnClass: 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e]',
+      btnClass: 'bg-[#f59e0b] hover:bg-[#d97706] text-black',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'nba-box-score': {
       onStart: onNBABoxScoreStart,
       label: 'Start NBA Box Score',
       loadingLabel: 'Loading Game...',
-      btnClass: 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e]',
+      btnClass: 'bg-[#f59e0b] hover:bg-[#d97706] text-black',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'starting-lineup': {
       onStart: onStartingLineupStart,
       label: 'Start Starting Lineup',
       loadingLabel: 'Loading...',
-      btnClass: 'bg-gradient-to-b from-[#ea580c] to-[#c2410c] text-white shadow-[0_4px_0_#9a3412]',
+      btnClass: 'bg-[#ea580c] hover:bg-[#c2410c] text-white',
       forceHoverClass: 'hover:border-[#ea580c] hover:text-orange-400',
     },
     'face-reveal': {
       onStart: onFaceRevealStart,
       label: 'Start Face Reveal',
       loadingLabel: 'Loading...',
-      btnClass: 'bg-gradient-to-b from-[#06b6d4] to-[#0891b2] text-[#111] shadow-[0_4px_0_#0e7490]',
+      btnClass: 'bg-[#06b6d4] hover:bg-[#0891b2] text-black',
       forceHoverClass: 'hover:border-[#06b6d4] hover:text-[#06b6d4]',
     },
     'top-ten': {
       onStart: onTopTenStart,
       label: 'Start Top Ten',
       loadingLabel: 'Loading...',
-      btnClass: 'bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_4px_0_#166534]',
+      btnClass: 'bg-[#22c55e] hover:bg-[#16a34a] text-black',
       forceHoverClass: 'hover:border-[#22c55e] hover:text-[#22c55e]',
     },
   };
@@ -125,10 +125,10 @@ export function LobbyActionButtons({
         <button
           onClick={onReadyToggle}
           disabled={isLoadingRoster || lobby.status === 'countdown'}
-          className={`w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all disabled:opacity-50 ${
+          className={`w-full py-4 capcrunch-title text-lg transition-all disabled:opacity-50 ${
             currentPlayer.is_ready
-              ? 'bg-emerald-900/50 text-emerald-300 border-2 border-emerald-600/80 hover:bg-red-900/40 hover:border-red-600/60 hover:text-red-300 active:translate-y-px'
-              : 'bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 hover:from-[#fdf0d5] hover:to-[#e0ceaa]'
+              ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-600/80 hover:bg-red-900/40 hover:border-red-600/60 hover:text-red-300 active:translate-y-px'
+              : 'capcrunch-btn-primary'
           }`}
         >
           {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? (
@@ -147,7 +147,7 @@ export function LobbyActionButtons({
             <button
               onClick={onManualStart}
               disabled={isLoadingRoster}
-              className="w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1"
+              className="w-full py-4 capcrunch-btn-primary capcrunch-title text-lg"
             >
               Deal Cards
             </button>
@@ -156,7 +156,7 @@ export function LobbyActionButtons({
             <button
               onClick={onManualStart}
               disabled={isLoadingRoster}
-              className="w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400"
+              className="w-full py-3 capcrunch-kicker text-sm bg-black/50 text-white/50 border border-white/20 hover:border-orange-500 hover:text-orange-400 transition-colors"
             >
               Force Start ({readyCount}/{players.length} ready)
             </button>
@@ -171,7 +171,7 @@ export function LobbyActionButtons({
             <button
               onClick={config.onStart}
               disabled={isLoadingRoster}
-              className={`w-full py-4 rounded-sm retro-title text-lg tracking-wider transition-all active:shadow-none active:translate-y-1 disabled:opacity-50 ${config.btnClass}`}
+              className={`w-full py-4 capcrunch-title text-lg transition-all disabled:opacity-50 ${config.btnClass}`}
             >
               {isLoadingRoster ? config.loadingLabel : config.label}
             </button>
@@ -180,7 +180,7 @@ export function LobbyActionButtons({
             <button
               onClick={config.onStart}
               disabled={isLoadingRoster}
-              className={`w-full py-3 rounded-sm sports-font text-sm tracking-wider transition-all bg-black/50 text-white/50 border border-white/20 ${config.forceHoverClass}`}
+              className={`w-full py-3 capcrunch-kicker text-sm bg-black/50 text-white/50 border border-white/20 transition-colors ${config.forceHoverClass}`}
             >
               Force Start ({readyCount}/{players.length} ready)
             </button>
@@ -190,18 +190,18 @@ export function LobbyActionButtons({
 
       {/* Waiting for more players */}
       {players.length < 2 && (
-        <p className="text-center text-white/30 text-sm sports-font tracking-widest">
+        <p className="text-center text-white/30 text-sm capcrunch-kicker tracking-widest">
           Share the code above to invite players
         </p>
       )}
 
       {/* How to Play */}
-      <div className="mt-4 bg-black/40 border border-white/10 rounded-sm p-4">
-        <p className="sports-font text-[9px] text-[#d4af37] tracking-[0.3em] uppercase mb-3">How to Play</p>
+      <div className="mt-4 capcrunch-panel p-4">
+        <p className="capcrunch-kicker text-[9px] text-[#FDF100]/60 mb-3">How to Play</p>
         <HowToPlay gameType={lobby.game_type} />
       </div>
 
-      <p className="text-center text-white/20 text-[10px] sports-font tracking-wider mt-4">
+      <p className="text-center text-white/20 text-[10px] capcrunch-kicker tracking-wider mt-4">
         Tip: If stuck on empty screen, refresh page to rejoin
       </p>
     </motion.div>
@@ -211,14 +211,14 @@ export function LobbyActionButtons({
 // ── How to Play copy per game mode ────────────────────────────────────────────
 
 function HowToPlay({ gameType }: { gameType: string }) {
-  const prose = 'space-y-2 text-white/50 sports-font text-xs leading-relaxed';
+  const prose = 'space-y-2 text-white/50 capcrunch-kicker text-xs leading-relaxed';
 
   if (gameType === 'roster') return (
     <div className={prose}>
       <p>A team and season are randomly selected. Players on that roster are shuffled into a deck of cards.</p>
       <p>Each round a card is revealed — guess the player before the timer runs out to score a point.</p>
       <p>Cards show hints like position, jersey number, and stats. The faster you buzz in, the better.</p>
-      <p className="text-[#d4af37]/60">🏆 Most correct guesses wins.</p>
+      <p className="text-[#FDF100]/50">🏆 Most correct guesses wins.</p>
     </div>
   );
 
@@ -227,7 +227,7 @@ function HowToPlay({ gameType }: { gameType: string }) {
       <p>A mystery player is chosen. Their career stats are revealed year by year — team, stats, season.</p>
       <p>Players race to identify the mystery player. Buzz in early for more points, but a wrong guess costs you.</p>
       <p>The fewer clues revealed when you guess correctly, the higher your score.</p>
-      <p className="text-[#d4af37]/60">🏆 Most points across all rounds wins.</p>
+      <p className="text-[#FDF100]/50">🏆 Most points across all rounds wins.</p>
     </div>
   );
 
@@ -236,7 +236,7 @@ function HowToPlay({ gameType }: { gameType: string }) {
       <p>A player's name is scrambled on screen. Type the correct name to score a point.</p>
       <p>Multiple rounds — first to unscramble each name scores. Speed matters.</p>
       <p>You can pass on a name if you're stuck, but the point goes to whoever gets it first.</p>
-      <p className="text-[#d4af37]/60">🏆 Most unscrambled names wins.</p>
+      <p className="text-[#FDF100]/50">🏆 Most unscrambled names wins.</p>
     </div>
   );
 
@@ -268,7 +268,7 @@ function HowToPlay({ gameType }: { gameType: string }) {
       <p><span className="text-white/70">Career stats (NFL):</span> No year needed — the team shown is just a qualifier (must have played there). Their full career total across all teams counts.</p>
       <p>A pick that pushes you over the cap <span className="text-red-400">busts</span> — it scores 0 and your total reverts. You still play all 5 rounds. You <span className="text-white/70">cannot repeat a player</span> across rounds.</p>
       <p>Tap the filter card if you need more info on a special round — conference filters show a "see schools" link.</p>
-      <p className="text-[#d4af37]/60">🏆 Closest to the target without busting wins. Tiebreaker: fewest busts, then oldest average pick year.</p>
+      <p className="text-[#FDF100]/50">🏆 Closest to the target without busting wins. Tiebreaker: fewest busts, then oldest average pick year.</p>
     </div>
   );
 

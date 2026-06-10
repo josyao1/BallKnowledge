@@ -260,13 +260,10 @@ export function GamePage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} 
-      animate={{ 
-        opacity: 1,
-        backgroundColor: isShotClockActive ? ['#0d2a0b', '#3b0a0a', '#0d2a0b'] : '#0d2a0b',
-      }}
-      transition={isShotClockActive ? { duration: 0.5, repeat: Infinity, ease: "linear" } : { duration: 0.5 }}
-      className="min-h-screen text-white flex flex-col relative overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen home-chalkboard text-white flex flex-col relative overflow-hidden"
     >
       {/* GHOST SHOT CLOCK (Center of Pit) */}
       <AnimatePresence>
@@ -285,7 +282,7 @@ export function GamePage() {
                 animate={{ scale: 1, rotate: 0, opacity: 1 }}
                 exit={{ scale: 0.75, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 480, damping: 24 }}
-                className="retro-title text-[28rem] md:text-[45rem] text-red-600/10 select-none leading-none"
+                className="capcrunch-title text-[28rem] md:text-[45rem] text-red-600/10 select-none leading-none"
               >
                 {timeRemaining}
               </motion.span>
@@ -294,29 +291,20 @@ export function GamePage() {
         )}
       </AnimatePresence>
 
-      {/* GREEN FELT BACKGROUND */}
-      <div
-        className="absolute inset-0 opacity-40 pointer-events-none"
-        style={{
-          backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
-        }}
-      />
-
-      <header className="relative z-10 p-6 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+      <header className={`relative z-10 p-6 capcrunch-panel border-b transition-colors duration-300 ${isShotClockActive ? 'border-red-500/60' : 'border-white/10'}`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-8">
             {divisionTeams.length > 0 && lobbyDivisionConference && lobbyDivisionName ? (
               <div className="flex flex-col">
-                <div className="retro-title text-xl text-[#d4af37]">
+                <div className="capcrunch-title text-xl text-[#FDF100]">
                   {lobbyDivisionConference} {lobbyDivisionName}
                 </div>
-                <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                <div className="capcrunch-kicker text-[9px] text-white/40 tracking-widest">
                   {selectedSeason}
                 </div>
                 <div className="flex gap-1.5 mt-1">
                   {divisionTeams.map(abbr => (
-                    <span key={abbr} className="text-[9px] text-white/50 sports-font px-1.5 py-0.5 bg-white/5 rounded">
+                    <span key={abbr} className="text-[9px] text-white/50 capcrunch-kicker px-1.5 py-0.5 bg-white/5">
                       {abbr}
                     </span>
                   ))}
@@ -329,8 +317,8 @@ export function GamePage() {
 
             {/* RESPONSIVE TIMER DESIGN */}
             <div className="flex flex-col items-center">
-                <span className="sports-font text-[9px] text-white/40 tracking-[0.4em] uppercase mb-1">Clock</span>
-                <div className={`retro-title text-3xl transition-colors duration-300 ${isShotClockActive ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.4em] uppercase mb-1">Clock</span>
+                <div className={`capcrunch-title text-3xl transition-colors duration-300 ${isShotClockActive ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                     {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, '0')}
                 </div>
             </div>
@@ -338,25 +326,25 @@ export function GamePage() {
 
           {/* THREE MECHANICAL SCORE PANELS */}
           <div className="flex gap-4">
-            <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
-              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Banked</div>
+            <div className="capcrunch-panel px-6 py-3 text-center min-w-[100px]">
+              <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Correct</div>
               {hideResultsDuringGame ? (
-                <div className="retro-title text-3xl text-white">?</div>
+                <div className="capcrunch-title text-3xl text-[#FDF100]">?</div>
               ) : (
-                <SpinningNumber value={String(score)} className="retro-title text-3xl" color="#ffffff" />
+                <SpinningNumber value={String(score)} className="capcrunch-title text-3xl" color="#FDF100" />
               )}
             </div>
-            <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
-              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Found</div>
+            <div className="capcrunch-panel px-6 py-3 text-center min-w-[100px]">
+              <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Guessed</div>
               <SpinningNumber
                 value={String(hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length)}
-                className="retro-title text-3xl"
+                className="capcrunch-title text-3xl"
                 color="#ffffff"
               />
             </div>
-            <div className="bg-[#111] border-2 border-[#333] px-6 py-3 rounded-sm text-center min-w-[100px]">
-              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Roster</div>
-              <div className="retro-title text-3xl text-white/40">
+            <div className="capcrunch-panel px-6 py-3 text-center min-w-[100px]">
+              <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Roster</div>
+              <div className="capcrunch-title text-3xl text-white/40">
                 {currentRoster.length}
               </div>
             </div>
@@ -370,10 +358,10 @@ export function GamePage() {
             <PlayerInput teammateGuessedNames={teammateGuessedNames} />
           </div>
 
-          <div className="flex-1 bg-black/60 border-2 border-white/10 rounded-sm flex flex-col overflow-hidden">
+          <div className="flex-1 capcrunch-panel flex flex-col overflow-hidden">
             <div className="p-3 border-b border-white/10 bg-white/5 flex justify-between items-center">
-              <span className="sports-font text-[10px] tracking-[0.4em] text-white/60 uppercase">
-                Active Ledger
+              <span className="capcrunch-kicker text-[10px] tracking-[0.4em] text-white/60 uppercase">
+                Your Picks
               </span>
             </div>
 
@@ -390,13 +378,13 @@ export function GamePage() {
 
           {/* Teammate guesses - visible when on a team */}
           {isMultiplayer && currentPlayerTeamNumber != null && teammateGuessedNames.length > 0 && (
-            <div className="mt-4 bg-black/60 border-2 border-white/10 rounded-sm p-4">
+            <div className="mt-4 capcrunch-panel p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg }}
                 />
-                <span className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                <span className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">
                   Teammate Guesses ({teammateGuessedNames.length})
                 </span>
               </div>
@@ -404,7 +392,7 @@ export function GamePage() {
                 {teammateGuessedNames.map((name, idx) => (
                   <span
                     key={`tm-${idx}`}
-                    className="px-2.5 py-1 rounded-sm sports-font text-[10px] font-bold uppercase tracking-wider border"
+                    className="px-2.5 py-1 capcrunch-kicker text-[10px] font-bold uppercase tracking-wider border"
                     style={{
                       backgroundColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg + '20',
                       borderColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg + '40',
@@ -422,7 +410,7 @@ export function GamePage() {
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => endGame()}
-                className="retro-title text-xs tracking-widest text-white/30 hover:text-white transition-all uppercase"
+                className="capcrunch-kicker text-[9px] text-white/30 hover:text-white transition-all"
               >
                 // Terminate Session
               </button>
@@ -440,8 +428,8 @@ export function GamePage() {
 
         {isMultiplayer && players.length > 0 && (
           <aside className="w-full md:w-72 flex-shrink-0">
-             <div className="bg-black/60 border-2 border-white/10 rounded-sm p-4 h-full">
-                <h3 className="retro-title text-xs text-white/40 tracking-[0.3em] uppercase mb-6 text-center">Live Pit</h3>
+             <div className="capcrunch-panel p-4 h-full">
+                <h3 className="capcrunch-kicker text-[9px] text-white/40 mb-6 text-center">Live Pit</h3>
                 <LiveScoreboard
                   players={players}
                   currentPlayerId={currentPlayerId}

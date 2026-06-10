@@ -86,9 +86,12 @@ export function CapCrunchScoresPanel({
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-black/60 border-2 border-white/10 rounded p-4 h-full overflow-y-auto"
+      className="capcrunch-panel p-4 h-full overflow-y-auto"
     >
-      <h3 className="retro-title text-base text-[#d4af37] mb-3">Lineups</h3>
+      <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
+        <h3 className="capcrunch-title text-base text-[#FDF100]">Lineups</h3>
+        <span className="capcrunch-kicker text-white/35">{players.length} players</span>
+      </div>
       <div className="space-y-3">
         {sortedPlayers.map((player) => {
           const lineup = allLineups[player.player_id] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
@@ -103,17 +106,17 @@ export function CapCrunchScoresPanel({
           return (
             <div
               key={player.id}
-              className={`p-3 rounded border-2 transition ${
-                isMe ? 'border-[#d4af37] bg-[#1a1a1a]' : 'border-white/10 bg-black/40'
+              className={`p-3 border transition ${
+                isMe ? 'border-[#FDF100]/60 bg-white/[0.05] shadow-[inset_0_0_0_1px_rgba(253,241,0,0.12)]' : 'border-white/10 bg-black/30'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <p className={`font-semibold text-sm ${isMe ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                  <p className={`capcrunch-title text-sm ${isMe ? 'text-[#FDF100]' : 'text-white/70'}`}>
                     {player.player_name}
                   </p>
                   {isMe && myBustCount > 0 && (
-                    <p className="text-[9px] text-red-400/70 sports-font">{myBustCount} bust{myBustCount !== 1 ? 's' : ''}</p>
+                    <p className="text-[9px] text-red-400/70 capcrunch-kicker">{myBustCount} bust{myBustCount !== 1 ? 's' : ''}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -145,7 +148,7 @@ export function CapCrunchScoresPanel({
                         <div className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                           <span className="text-[8px] text-white/25">✕</span>
                         </div>
-                        <span className="sports-font text-[10px] text-white/25 italic">Skipped</span>
+                        <span className="capcrunch-kicker text-[10px] text-white/25 italic">Skipped</span>
                       </div>
                     ) : (
                       <>
@@ -182,7 +185,7 @@ export function CapCrunchScoresPanel({
                             value={myGuesses[idx] ?? ''}
                             placeholder="?"
                             onChange={e => setMyGuesses(prev => ({ ...prev, [idx]: e.target.value }))}
-                            className="w-12 text-center bg-[#7c3aed]/10 border border-[#7c3aed]/30 rounded-sm text-[#a78bfa] retro-title text-xs py-0.5 focus:outline-none focus:border-[#7c3aed] placeholder-[#7c3aed]/30 ml-1 flex-shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-12 text-center bg-[#4E53A5]/10 border border-[#4E53A5]/40 text-[#68BBE5] capcrunch-title text-xs py-0.5 focus:outline-none focus:border-[#68BBE5] placeholder-[#68BBE5]/30 ml-1 flex-shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         )}
                       </>
@@ -197,22 +200,22 @@ export function CapCrunchScoresPanel({
               </div>
 
               <div className="flex justify-between text-xs border-t border-white/10 pt-1.5">
-                <span className="text-white/40">{visiblePicks.length}/{totalRounds}</span>
+                <span className="capcrunch-kicker text-white/35">{visiblePicks.length}/{totalRounds}</span>
                 {blindMode && isMe ? (
                   <div className="flex items-baseline gap-1">
-                    <span className="sports-font text-[8px] text-[#7c3aed]/50 tracking-widest uppercase">est</span>
-                    <span className="font-semibold text-[#a78bfa]">
+                    <span className="capcrunch-kicker text-[#4E53A5]/70">est</span>
+                    <span className="capcrunch-title text-[#68BBE5]">
                       {Object.keys(myGuesses).length > 0 ? fmt(myEstimate) : '—'}
                     </span>
                   </div>
                 ) : blindMode ? (
-                  <span className="font-semibold text-white/20">—</span>
+                  <span className="capcrunch-title text-white/20">—</span>
                 ) : isMe ? (
-                  <span className="font-semibold text-white">
+                  <span className="capcrunch-title text-white">
                     {fmt(lineup?.totalStat ?? 0)}
                   </span>
                 ) : (
-                  <span className="font-semibold text-white/20">—</span>
+                  <span className="capcrunch-title text-white/20">—</span>
                 )}
               </div>
             </div>

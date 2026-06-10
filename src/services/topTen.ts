@@ -59,10 +59,10 @@ export const NFL_STAT_CATEGORIES: StatCategoryDef[] = [
   { key: 'receiving_yards',  label: 'Receiving Yards',      shortLabel: 'REC YDS',  sport: 'nfl' },
   { key: 'receiving_tds',    label: 'Receiving TDs',        shortLabel: 'REC TDs',  sport: 'nfl' },
   { key: 'receptions',       label: 'Receptions',           shortLabel: 'REC',      sport: 'nfl' },
-  { key: 'fantasy_pts_qb',   label: 'Fantasy Points (QB)',  shortLabel: 'FPTS QB',  sport: 'nfl' },
-  { key: 'fantasy_pts_rb',   label: 'Fantasy Points (RB)',  shortLabel: 'FPTS RB',  sport: 'nfl' },
-  { key: 'fantasy_pts_wr',   label: 'Fantasy Points (WR)',  shortLabel: 'FPTS WR',  sport: 'nfl' },
-  { key: 'fantasy_pts_te',   label: 'Fantasy Points (TE)',  shortLabel: 'FPTS TE',  sport: 'nfl' },
+  { key: 'fantasy_pts_qb',   label: 'Fantasy Points (QB)',  shortLabel: 'FPTS',  sport: 'nfl' },
+  { key: 'fantasy_pts_rb',   label: 'Fantasy Points (RB)',  shortLabel: 'FPTS',  sport: 'nfl' },
+  { key: 'fantasy_pts_wr',   label: 'Fantasy Points (WR)',  shortLabel: 'FPTS',  sport: 'nfl' },
+  { key: 'fantasy_pts_te',   label: 'Fantasy Points (TE)',  shortLabel: 'FPTS',  sport: 'nfl' },
   { key: 'award_mvp',        label: 'AP MVP Voting',        shortLabel: 'AP MVP',   sport: 'nfl' },
   { key: 'award_opoy',       label: 'AP Off. Player of Year', shortLabel: 'OPOY',   sport: 'nfl' },
   { key: 'award_oroy',       label: 'AP Off. Rookie of Year', shortLabel: 'OROY',   sport: 'nfl' },
@@ -175,9 +175,15 @@ async function nflIdByName(name: string): Promise<string> {
   if (!_nflAwardIdCache) {
     const pool = await loadNFLLineupPool();
     _nflAwardIdCache = new Map();
+    const seasonCounts = new Map<string, number>();
     for (const p of pool) {
-      if (p.player_name && p.player_id)
-        _nflAwardIdCache.set(normalize(p.player_name).toLowerCase(), String(p.player_id));
+      if (!p.player_name || !p.player_id) continue;
+      const key = normalize(p.player_name).toLowerCase();
+      const seasons = p.seasons?.length ?? 0;
+      if (!_nflAwardIdCache.has(key) || seasons > (seasonCounts.get(key) ?? 0)) {
+        _nflAwardIdCache.set(key, String(p.player_id));
+        seasonCounts.set(key, seasons);
+      }
     }
   }
   return _nflAwardIdCache.get(normalize(name).toLowerCase()) ?? name;

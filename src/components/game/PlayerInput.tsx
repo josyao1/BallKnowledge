@@ -190,8 +190,8 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
       return (
         <div
           style={style}
-          className={`px-4 py-2 cursor-pointer transition-colors sports-font text-sm ${
-            isSelected ? 'bg-gradient-to-r from-[#d4af37] to-[#c4a030] text-black font-bold' : 'hover:bg-white/10 text-white/80'
+          className={`px-4 py-2 cursor-pointer transition-colors capcrunch-kicker text-sm ${
+            isSelected ? 'bg-[#FDF100] text-black font-bold' : 'hover:bg-white/10 text-white/80'
           }`}
           onClick={() => handleSelect(player.name)}
           onMouseEnter={() => {
@@ -225,12 +225,12 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
         onKeyDown={handleKeyDown}
         placeholder="Enter player name..."
         autoComplete="off"
-        className="w-full p-4 text-lg bg-[#111] border-2 border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-[#d4af37] transition-colors rounded-sm sports-font"
+        className="w-full p-4 text-lg bg-black/40 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-[#FDF100] transition-colors capcrunch-kicker"
       />
 
       {/* Dropdown */}
       {isOpen && filteredPlayers.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[#111] border border-white/20 overflow-hidden z-50 shadow-xl">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-black/95 border border-white/20 overflow-hidden z-50 shadow-xl">
           <List
             ref={listRef}
             height={Math.min(filteredPlayers.length * 40, 200)}
@@ -244,7 +244,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
       )}
 
       {/* Hint */}
-      <div className="mt-2 text-[10px] text-white/30 text-center sports-font tracking-[0.3em] uppercase">
+      <div className="mt-2 text-[10px] text-white/30 text-center capcrunch-kicker tracking-[0.3em] uppercase">
         Enter to submit • Arrows to navigate
       </div>
     </div>

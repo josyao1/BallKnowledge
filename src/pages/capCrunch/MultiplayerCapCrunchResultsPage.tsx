@@ -45,7 +45,6 @@ export function MultiplayerCapCrunchResultsPage() {
       return;
     }
 
-    // Calculate rankings from player scores/wins
     const sorted = [...players].sort((a, b) => (b.wins ?? 0) - (a.wins ?? 0));
     const ranked = sorted.map((p, idx) => ({
       player: p,
@@ -57,10 +56,10 @@ export function MultiplayerCapCrunchResultsPage() {
 
   if (!lobby || rankings.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0d2a0b] flex items-center justify-center">
+      <div className="min-h-screen capcrunch-shell flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="sports-font text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
+          <div className="w-10 h-10 border-2 border-[#FDF100] border-t-transparent animate-spin mx-auto" />
+          <p className="capcrunch-kicker text-[10px] text-[#FDF100]/50">Loading results</p>
         </div>
       </div>
     );
@@ -69,82 +68,67 @@ export function MultiplayerCapCrunchResultsPage() {
   const champion = rankings[0];
 
   return (
-    <div className="min-h-screen bg-[#0d2a0b] text-white flex flex-col relative overflow-hidden p-4 md:p-6">
-      {/* BACKGROUND FELT */}
-      <div
-        className="absolute inset-0 opacity-40 pointer-events-none"
-        style={{
-          backgroundImage: `url("https://www.transparenttextures.com/patterns/felt.png")`,
-          background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)`
-        }}
-      />
-
-      <motion.div 
+    <div className="min-h-screen capcrunch-shell text-white flex flex-col relative overflow-hidden">
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative z-10 flex flex-col h-full max-w-7xl mx-auto w-full"
+        className="relative z-10 flex flex-col h-full max-w-3xl mx-auto w-full p-4 md:p-6"
       >
         {/* HEADER */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4">
-          <div>
-            <div className="sports-font text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.6em] text-white/30 uppercase">Match Result // Settlement</div>
-            <h1 className="retro-title text-4xl md:text-6xl text-white uppercase leading-none">Final Rankings</h1>
-          </div>
+        <header className="capcrunch-panel px-5 py-4 mb-4">
+          <p className="capcrunch-kicker text-[9px] text-white/30 mb-1">Cap Crunch</p>
+          <h1 className="capcrunch-title text-3xl md:text-5xl text-white leading-none">Final Rankings</h1>
         </header>
 
         {/* CHAMPION DISPLAY */}
         {champion && (
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-6 p-6 md:p-8 bg-gradient-to-br from-yellow-900/40 to-yellow-900/20 rounded-sm border-2 border-yellow-600/40 text-center"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="mb-4 p-5 md:p-7 capcrunch-panel border-[#FDF100]/30 text-center"
+            style={{ borderColor: 'rgba(253,241,0,0.3)' }}
           >
-            <p className="sports-font text-[8px] md:text-[10px] text-yellow-400/60 tracking-widest uppercase mb-2">🏆 Match Champion 🏆</p>
-            <h2 className="retro-title text-3xl md:text-5xl font-bold text-white mb-1">{champion.player.player_name}</h2>
-            <p className="retro-title text-2xl md:text-3xl text-yellow-300">
+            <p className="capcrunch-kicker text-[9px] text-[#FDF100]/60 mb-3">Match Champion</p>
+            <h2 className="capcrunch-title text-3xl md:text-5xl text-white mb-1">{champion.player.player_name}</h2>
+            <p className="capcrunch-title text-xl md:text-2xl text-[#FDF100]">
               {champion.wins} Win{champion.wins !== 1 ? 's' : ''}
             </p>
           </motion.div>
         )}
 
         {/* STANDINGS TABLE */}
-        <div className="bg-black/70 border border-white/10 rounded-sm flex flex-col shadow-2xl overflow-hidden mb-6 flex-1">
-          <div className="p-3 md:p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-            <span className="sports-font text-[9px] tracking-widest text-white/40 uppercase">Final Standings</span>
-            <span className="retro-title text-[9px] text-white/20 uppercase">{rankings.length} Players</span>
+        <div className="capcrunch-panel flex flex-col overflow-hidden mb-4 flex-1">
+          <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
+            <span className="capcrunch-kicker text-[9px] text-white/40">Final Standings</span>
+            <span className="capcrunch-kicker text-[9px] text-white/20">{rankings.length} Players</span>
           </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 max-h-96 lg:max-h-none">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+
+          <div className="flex-1 overflow-y-auto p-4 md:p-5 max-h-96 lg:max-h-none">
+            <div className="flex flex-col gap-2">
               {rankings.map((entry, idx) => (
                 <motion.div
                   key={entry.player.id}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + idx * 0.1 }}
-                  className={`relative p-3 md:p-4 border transition-all ${
-                    idx === 0 ? 'border-yellow-500/40' : 'border-white/10'
+                  transition={{ delay: 0.3 + idx * 0.08 }}
+                  className={`flex items-center justify-between px-4 py-3 border transition-all ${
+                    idx === 0
+                      ? 'border-[#FDF100]/30 bg-[#FDF100]/[0.06]'
+                      : 'border-white/8 bg-white/[0.02]'
                   }`}
-                  style={{
-                    background: idx === 0 
-                      ? 'linear-gradient(135deg, #FFD70033 0%, #FFA50033 100%)'
-                      : 'transparent'
-                  }}
                 >
-                  <div className="flex justify-between items-center relative z-10">
-                    <div className="flex items-center gap-3">
-                      <span className="retro-title text-2xl md:text-3xl text-white">
-                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${entry.rank}.`}
-                      </span>
-                      <div>
-                        <p className={`retro-title text-sm md:text-base ${
-                          idx === 0 ? 'text-yellow-300' : 'text-white'
-                        }`}>{entry.player.player_name}</p>
-                        <p className="sports-font text-[8px] md:text-[9px] text-white/40 uppercase tracking-widest">
-                          {entry.wins} Win{entry.wins !== 1 ? 's' : ''}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <span className="capcrunch-title text-2xl md:text-3xl w-8 text-center text-white/60">
+                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${entry.rank}.`}
+                    </span>
+                    <div>
+                      <p className={`capcrunch-title text-sm md:text-base ${idx === 0 ? 'text-[#FDF100]' : 'text-white'}`}>
+                        {entry.player.player_name}
+                      </p>
+                      <p className="capcrunch-kicker text-[8px] text-white/35">
+                        {entry.wins} Win{entry.wins !== 1 ? 's' : ''}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
@@ -157,20 +141,20 @@ export function MultiplayerCapCrunchResultsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="flex flex-col sm:flex-row gap-3 md:gap-4"
+          transition={{ delay: 0.5 }}
+          className="flex flex-col sm:flex-row gap-3"
         >
           <button
             onClick={() => navigate('/')}
-            className="group relative bg-[#1a1a1a] border border-white/20 py-3 md:py-4 rounded-sm hover:border-white/40 transition-colors flex-1"
+            className="flex-1 py-3 md:py-4 capcrunch-btn-secondary capcrunch-title text-base transition"
           >
-            <span className="relative z-10 retro-title text-lg md:text-xl text-white/70 uppercase tracking-widest">Home</span>
+            Home
           </button>
           <button
             onClick={() => navigate('/lobby/create')}
-            className="group relative bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] py-3 md:py-4 rounded-sm shadow-[0_4px_0_#a89860] active:translate-y-1 active:shadow-none flex-1"
+            className="flex-1 py-3 md:py-4 capcrunch-btn-primary capcrunch-title text-base transition"
           >
-            <span className="relative z-10 retro-title text-lg md:text-xl text-black uppercase tracking-widest">New Game</span>
+            New Game
           </button>
         </motion.div>
       </motion.div>

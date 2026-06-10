@@ -146,46 +146,41 @@ export function RollCallSessionPage() {
 
   if (!lobby || isLoadingLobby) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d2a0b]">
-        <div className="text-white/50 sports-font">Loading session...</div>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <div className="text-white/50 capcrunch-kicker">Loading session...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d2a0b] text-white relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-40 pointer-events-none"
-        style={{ background: `radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)` }}
-      />
-
+    <div className="min-h-screen home-chalkboard flex flex-col text-white">
       {/* Header */}
-      <header className="relative z-10 p-4 border-b-2 border-white/10 bg-black/40 backdrop-blur-sm">
+      <header className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={handleLeave} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+            <button onClick={handleLeave} className="p-2 hover:bg-white/10 transition-colors">
               <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
             <div>
-              <h1 className="retro-title text-xl text-[#d4af37]">Roll Call</h1>
-              <p className="sports-font text-[8px] text-white/30 tracking-[0.3em] uppercase">
+              <h1 className="capcrunch-title text-xl text-[#d4af37]">Roll Call</h1>
+              <p className="capcrunch-kicker text-[8px] text-white/30 tracking-[0.3em] uppercase">
                 {lobby.status === 'waiting' ? 'Waiting for Players' : 'In Progress'}
               </p>
             </div>
           </div>
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-2 px-3 py-1.5 bg-black/50 rounded-sm border border-white/20 hover:border-[#d4af37] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 hover:border-[#d4af37] transition-colors"
           >
             <span className="font-mono text-lg tracking-widest text-[#d4af37]">{lobby.join_code}</span>
-            {copied && <span className="text-emerald-400 text-xs sports-font">Copied!</span>}
+            {copied && <span className="text-emerald-400 text-xs capcrunch-kicker">Copied!</span>}
           </button>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 max-w-2xl mx-auto w-full p-4 space-y-4 overflow-y-auto">
+      <main className="flex-1 max-w-2xl mx-auto w-full p-4 space-y-4 overflow-y-auto">
         {lobby.status === 'waiting' && (
           <WaitingPhase
             players={players}
@@ -269,9 +264,9 @@ function WaitingPhase({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-black/50 border border-white/10 rounded-sm p-4"
+        className="capcrunch-panel p-4"
       >
-        <div className="sports-font text-[10px] text-white/40 mb-3 tracking-[0.3em] uppercase">
+        <div className="capcrunch-kicker text-[10px] text-white/40 mb-3 tracking-[0.3em] uppercase">
           Players ({playerCount})
         </div>
         <div className="space-y-2">
@@ -281,7 +276,7 @@ function WaitingPhase({
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`flex items-center gap-3 p-3 rounded-sm border ${
+              className={`flex items-center gap-3 p-3 border ${
                 player.player_id === currentPlayerId
                   ? 'border-[#d4af37]/50 bg-[#d4af37]/10'
                   : 'border-white/10 bg-black/30'
@@ -292,9 +287,9 @@ function WaitingPhase({
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
               )}
-              <span className="sports-font text-sm text-white/90">{player.player_name}</span>
+              <span className="capcrunch-kicker text-sm text-white/90">{player.player_name}</span>
               {player.player_id === currentPlayerId && (
-                <span className="text-[10px] text-white/40 sports-font">(you)</span>
+                <span className="text-[10px] text-white/40 capcrunch-kicker">(you)</span>
               )}
             </motion.div>
           ))}
@@ -307,19 +302,19 @@ function WaitingPhase({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           onClick={onStart}
-          className="w-full py-4 rounded-sm retro-title text-lg tracking-wider bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1"
+          className="w-full py-4 capcrunch-title text-lg tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-all"
         >
           Start Session
         </motion.button>
       )}
 
       {!isHost && (
-        <p className="text-center text-white/30 text-sm sports-font tracking-widest">
+        <p className="text-center text-white/30 text-sm capcrunch-kicker tracking-widest">
           Waiting for host to start...
         </p>
       )}
 
-      <p className="text-center text-white/20 text-[10px] sports-font tracking-wider">
+      <p className="text-center text-white/20 text-[10px] capcrunch-kicker tracking-wider">
         Share the code above to invite friends
       </p>
     </>
@@ -400,7 +395,7 @@ function PlayingPhase({
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-black/50 border border-white/10 rounded-sm p-3"
+        className="capcrunch-panel p-3"
       >
         <div className="flex gap-2">
           <input
@@ -411,12 +406,12 @@ function PlayingPhase({
             onKeyDown={(e) => e.key === 'Enter' && onSubmit()}
             placeholder="Type a player name..."
             maxLength={60}
-            className="flex-1 p-3 bg-[#111] rounded-sm border-2 border-white/20 text-white focus:outline-none focus:border-[#d4af37] transition-colors sports-font"
+            className="flex-1 p-3 bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[#d4af37] transition-colors capcrunch-kicker"
           />
           <button
             onClick={onSubmit}
             disabled={!inputText.trim() || isSubmitting}
-            className="px-5 py-3 rounded-sm retro-title tracking-wider bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black disabled:opacity-50 active:shadow-none active:translate-y-0.5"
+            className="px-5 py-3 capcrunch-title tracking-wider bg-[#d4af37] hover:bg-[#c4a030] text-black disabled:opacity-50 transition-all"
           >
             Add
           </button>
@@ -427,7 +422,7 @@ function PlayingPhase({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-red-400 sports-font text-xs mt-1.5 tracking-wider"
+              className="text-red-400 capcrunch-kicker text-xs mt-1.5 tracking-wider"
             >
               Already submitted!
             </motion.p>
@@ -437,16 +432,16 @@ function PlayingPhase({
 
       {/* Stats bar */}
       <div className="flex justify-between items-center px-1">
-        <div className="sports-font text-xs text-white/50">
+        <div className="capcrunch-kicker text-xs text-white/50">
           <span className="text-[#d4af37] font-bold">{uniqueCount}</span> unique players
         </div>
         <div className="flex items-center gap-3">
           {suggestionCount > 0 && (
             <button
               onClick={onShowSuggestions}
-              className="sports-font text-xs text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1"
+              className="capcrunch-kicker text-xs text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1"
             >
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-bold">
+              <span className="inline-flex items-center justify-center w-5 h-5 bg-orange-500/20 text-orange-400 text-[10px] font-bold">
                 {suggestionCount}
               </span>
               possible duplicates
@@ -459,9 +454,9 @@ function PlayingPhase({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-black/50 border border-white/10 rounded-sm p-3 flex-1 max-h-[50vh] overflow-y-auto"
+        className="capcrunch-panel p-3 flex-1 max-h-[50vh] overflow-y-auto"
       >
-        <div className="sports-font text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">
+        <div className="capcrunch-kicker text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">
           Live Feed
         </div>
         <div className="space-y-1.5">
@@ -473,10 +468,10 @@ function PlayingPhase({
                     key={item.entry.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between py-1.5 px-2 rounded bg-black/30 border border-white/5"
+                    className="flex items-center justify-between py-1.5 px-2 bg-black/30 border border-white/5"
                   >
-                    <span className="text-white/90 sports-font text-sm">{item.entry.entry_text}</span>
-                    <span className="text-white/30 sports-font text-[10px] tracking-wider">{item.entry.player_name}</span>
+                    <span className="text-white/90 capcrunch-kicker text-sm">{item.entry.entry_text}</span>
+                    <span className="text-white/30 capcrunch-kicker text-[10px] tracking-wider">{item.entry.player_name}</span>
                   </motion.div>
                 );
               }
@@ -486,10 +481,10 @@ function PlayingPhase({
                   key={`merged-${item.group.canonical}`}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between py-1.5 px-2 rounded bg-black/30 border border-white/5"
+                  className="flex items-center justify-between py-1.5 px-2 bg-black/30 border border-white/5"
                 >
-                  <span className="text-white/90 sports-font text-sm">{item.group.canonical}</span>
-                  <span className="text-white/30 sports-font text-[10px] tracking-wider">
+                  <span className="text-white/90 capcrunch-kicker text-sm">{item.group.canonical}</span>
+                  <span className="text-white/30 capcrunch-kicker text-[10px] tracking-wider">
                     {item.group.variants.map(v => v.submitter).join(', ')}
                   </span>
                 </motion.div>
@@ -497,7 +492,7 @@ function PlayingPhase({
             })}
           </AnimatePresence>
           {entries.length === 0 && (
-            <p className="text-center text-white/20 text-sm sports-font py-4">
+            <p className="text-center text-white/20 text-sm capcrunch-kicker py-4">
               No entries yet — start typing!
             </p>
           )}
@@ -508,7 +503,7 @@ function PlayingPhase({
       {isHost && (
         <button
           onClick={onEnd}
-          className="w-full py-3 rounded-sm sports-font text-sm tracking-wider bg-black/50 text-red-400 border border-red-700/50 hover:border-red-500 hover:bg-red-900/20 transition-all"
+          className="w-full py-3 capcrunch-kicker text-sm tracking-wider bg-black/40 text-red-400 border border-red-700/50 hover:border-red-500 hover:bg-red-900/20 transition-all"
         >
           End Session
         </button>
@@ -538,18 +533,18 @@ function MergeSuggestionPanel({
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative z-10 bg-[#111] border-t-2 border-[#d4af37]/50 rounded-t-xl max-h-[70vh] flex flex-col">
+      <div className="relative z-10 bg-black/90 border-t border-[#d4af37]/40 max-h-[70vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
           <div>
-            <h2 className="retro-title text-lg text-[#d4af37]">Possible Duplicates</h2>
-            <p className="sports-font text-[9px] text-white/40 tracking-widest uppercase">
+            <h2 className="capcrunch-title text-lg text-[#d4af37]">Possible Duplicates</h2>
+            <p className="capcrunch-kicker text-[9px] text-white/40 tracking-widest uppercase">
               Merge similar entries or dismiss
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 transition-colors"
           >
             <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -560,7 +555,7 @@ function MergeSuggestionPanel({
         {/* Suggestion list */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {suggestions.length === 0 ? (
-            <p className="text-center text-white/30 sports-font text-sm py-4">
+            <p className="text-center text-white/30 capcrunch-kicker text-sm py-4">
               No duplicate suggestions right now.
             </p>
           ) : (
@@ -587,31 +582,31 @@ function SuggestionCard({
   onDismiss: () => void;
 }) {
   return (
-    <div className="bg-black/50 border border-orange-500/30 rounded-sm p-3 space-y-2">
-      <div className="sports-font text-xs text-orange-400 tracking-wider">
+    <div className="bg-black/50 border border-orange-500/30 p-3 space-y-2">
+      <div className="capcrunch-kicker text-xs text-orange-400 tracking-wider">
         These look like the same player:
       </div>
       <div className="space-y-1">
         {suggestion.entries.map((e) => (
-          <div key={e.id} className="flex justify-between py-1 px-2 bg-black/30 rounded">
-            <span className="text-white/80 sports-font text-sm">{e.text}</span>
-            <span className="text-white/30 sports-font text-[10px]">{e.submitter}</span>
+          <div key={e.id} className="flex justify-between py-1 px-2 bg-black/30">
+            <span className="text-white/80 capcrunch-kicker text-sm">{e.text}</span>
+            <span className="text-white/30 capcrunch-kicker text-[10px]">{e.submitter}</span>
           </div>
         ))}
       </div>
-      <div className="sports-font text-[10px] text-white/40">
+      <div className="capcrunch-kicker text-[10px] text-white/40">
         Merge as: <span className="text-white/70">{suggestion.canonical}</span>
       </div>
       <div className="flex gap-2">
         <button
           onClick={onConfirm}
-          className="flex-1 py-2 rounded-sm sports-font text-xs tracking-wider bg-emerald-900/40 text-emerald-400 border border-emerald-700/50 hover:bg-emerald-800/40 transition-colors"
+          className="flex-1 py-2 capcrunch-kicker text-xs tracking-wider bg-emerald-900/40 text-emerald-400 border border-emerald-700/50 hover:bg-emerald-800/40 transition-colors"
         >
           Merge
         </button>
         <button
           onClick={onDismiss}
-          className="flex-1 py-2 rounded-sm sports-font text-xs tracking-wider bg-black/40 text-white/40 border border-white/10 hover:border-white/30 transition-colors"
+          className="flex-1 py-2 capcrunch-kicker text-xs tracking-wider bg-black/40 text-white/40 border border-white/10 hover:border-white/30 transition-colors"
         >
           Not the same
         </button>

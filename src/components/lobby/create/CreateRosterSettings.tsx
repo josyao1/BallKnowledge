@@ -57,7 +57,7 @@ export function CreateRosterSettings({
     >
       {/* Deck mode: Random vs Manual */}
       <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-        <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+        <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
           Deck Selection
         </div>
         <div className="flex gap-2 justify-center">
@@ -65,7 +65,7 @@ export function CreateRosterSettings({
             <button
               key={m}
               onClick={() => onGameModeChange(m)}
-              className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+              className={`px-6 py-2 rounded-sm capcrunch-kicker tracking-wider transition-all ${
                 gameMode === m
                   ? 'bg-[#d4af37] text-black shadow-lg font-bold'
                   : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
@@ -80,7 +80,7 @@ export function CreateRosterSettings({
       {/* Scope: team vs division (random mode only) */}
       {gameMode === 'random' && (
         <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+          <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
             Scope
           </div>
           <div className="flex gap-2 justify-center">
@@ -88,7 +88,7 @@ export function CreateRosterSettings({
               <button
                 key={sc}
                 onClick={() => onSelectionScopeChange(sc)}
-                className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+                className={`px-6 py-2 rounded-sm capcrunch-kicker tracking-wider transition-all ${
                   selectionScope === sc
                     ? 'bg-[#d4af37] text-black shadow-lg font-bold'
                     : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
@@ -99,7 +99,7 @@ export function CreateRosterSettings({
             ))}
           </div>
           {selectionScope === 'division' && (
-            <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
+            <div className="text-center text-white/30 text-[10px] capcrunch-kicker tracking-wider mt-2">
               Random division — name players from all 4 teams
             </div>
           )}
@@ -109,7 +109,7 @@ export function CreateRosterSettings({
       {/* Year range (random mode) */}
       {gameMode === 'random' && (
         <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-          <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+          <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
             Year Range
           </div>
           <div className="flex items-center justify-center gap-3">
@@ -120,11 +120,11 @@ export function CreateRosterSettings({
                 onRandomMinYearChange(v);
                 if (v > randomMaxYear) onRandomMaxYearChange(v);
               }}
-              className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
+              className="bg-black/40 text-white px-3 py-2 border border-white/10 capcrunch-kicker focus:outline-none focus:border-[#d4af37]"
             >
               {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <span className="text-white/40 sports-font">to</span>
+            <span className="text-white/40 capcrunch-kicker">to</span>
             <select
               value={randomMaxYear}
               onChange={(e) => {
@@ -132,7 +132,7 @@ export function CreateRosterSettings({
                 onRandomMaxYearChange(v);
                 if (v < randomMinYear) onRandomMinYearChange(v);
               }}
-              className="bg-[#111] text-white px-3 py-2 rounded-sm border border-white/20 sports-font focus:outline-none focus:border-[#d4af37]"
+              className="bg-black/40 text-white px-3 py-2 border border-white/10 capcrunch-kicker focus:outline-none focus:border-[#d4af37]"
             >
               {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -150,7 +150,7 @@ export function CreateRosterSettings({
 
       {/* Round timer */}
       <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-        <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+        <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
           Round Timer
         </div>
         <div className="flex flex-wrap justify-center gap-2 mb-3">
@@ -158,7 +158,7 @@ export function CreateRosterSettings({
             <button
               key={seconds}
               onClick={() => onPresetSelect(seconds)}
-              className={`px-3 py-1.5 rounded-sm sports-font text-sm transition-all ${
+              className={`px-3 py-1.5 rounded-sm capcrunch-kicker text-sm transition-all ${
                 selectedPreset === seconds && !customTimerInput
                   ? 'bg-[#d4af37] text-black font-bold'
                   : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
@@ -169,7 +169,7 @@ export function CreateRosterSettings({
           ))}
         </div>
         <div className="flex items-center justify-center gap-2">
-          <span className="text-white/40 text-[10px] sports-font tracking-wider">CUSTOM:</span>
+          <span className="text-white/40 text-[10px] capcrunch-kicker tracking-wider">CUSTOM:</span>
           <input
             type="number"
             value={customTimerInput}
@@ -177,15 +177,15 @@ export function CreateRosterSettings({
             placeholder="sec"
             min={10}
             max={600}
-            className="w-20 px-2 py-1.5 bg-[#111] rounded-sm border border-white/20 text-white text-center sports-font focus:outline-none focus:border-[#d4af37]"
+            className="w-20 px-2 py-1.5 bg-black/40 border border-white/10 text-white text-center capcrunch-kicker focus:outline-none focus:border-[#d4af37]"
           />
           {customTimerInput && (
-            <span className="text-white/50 sports-font text-sm">
+            <span className="text-white/50 capcrunch-kicker text-sm">
               = {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
             </span>
           )}
         </div>
-        <div className="text-center mt-2 retro-title text-2xl text-white">
+        <div className="text-center mt-2 capcrunch-title text-2xl text-white">
           {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
         </div>
       </div>

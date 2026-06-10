@@ -51,7 +51,7 @@ export function BoxScoreSettings({
           >
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <span className="sports-font text-[9px] text-[#333]">→</span>
+          <span className="capcrunch-kicker text-[9px] text-[#333]">→</span>
           <select
             value={boxMaxYear}
             onChange={e => { const v = +e.target.value; onBoxMaxYearChange(v); if (v < boxMinYear) onBoxMinYearChange(v); }}

@@ -1,129 +1,144 @@
-/**
- * HomePage.tsx — Landing page orchestrator.
- *
- * Holds all shared state and async logic. Renders the header, deck/fan/setup
- * panels, roulette transition, and modals. The heavy JSX lives in sub-components:
- *
- *   GameFanArc        — fanned card display after the deck is dealt
- *   RosterRoyaleSetup — setup panel for Roster Royale (and Box Score on NFL)
- *   CareerArcSetup    — setup panel for Career Arc
- *   ScrambleSetup     — setup panel for Name Scramble
- *   AboutModal        — about overlay linked from the header
- */
-
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore } from '../stores/gameStore';
-import { useSettingsStore } from '../stores/settingsStore';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SettingsModal } from '../components/home/SettingsModal';
 import { AboutModal } from '../components/home/AboutModal';
-import { GameFanArc } from '../components/home/GameFanArc';
+import { GuessPlayerSelect } from '../components/home/GuessPlayerSelect';
+import { CareerArcSetup } from '../components/home/CareerArcSetup';
+import { ScrambleSetup } from '../components/home/ScrambleSetup';
+import { FaceRevealSetup } from '../components/home/FaceRevealSetup';
 import { RosterRoyaleSetup } from '../components/home/RosterRoyaleSetup';
-import { GuessPlayerSetup } from '../components/home/GuessPlayerSetup';
-import { RouletteOverlay } from '../components/home/RouletteOverlay';
+import { TopTenSetup } from '../components/home/TopTenSetup';
+import { useGameStore } from '../stores/gameStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
-import { FAN_POSITIONS } from '../data/homeGames';
-import type { GenericTeam, LoadingStatus } from '../data/homeGames';
+import { HOME_TILES, type GenericTeam, type LoadingStatus } from '../data/homeGames';
 import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
 import { warmCareerCache } from '../services/careerData';
+import { TeamRevealOverlay } from '../components/home/TeamRevealOverlay';
 import type { GameMode } from '../types';
+import type { Sport } from '../types';
+
+type GuessPlayerStep = 'sport' | 'select' | 'career' | 'scramble' | 'face-reveal' | null;
+type CapCrunchModalStep = 'sport' | 'settings' | null;
+type SportPickStep = 'sport' | 'settings' | null;
+type RulesTileId = (typeof HOME_TILES)[number]['id'] | null;
+
+const CAP_CRUNCH_NBA_CATS = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'] as const;
+const CAP_CRUNCH_NFL_CATS = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'] as const;
+const CAP_CRUNCH_NFL_CAREER_CATS = ['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as const;
+
+const getCapCrunchLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    random: 'RANDOM',
+    pts: 'PTS/G', ast: 'AST/G', reb: 'REB/G', min: 'MIN/G', pra: 'PRA/G',
+    total_pts: 'TOT PTS', total_reb: 'TOT REB', total_ast: 'TOT AST', total_blk: 'TOT BLK',
+    total_3pm: 'TOT 3PM', total_ftm: 'TOT FTM', total_pf: 'TOT PF',
+    passing_yards: 'PASS YD', passing_tds: 'PASS TD', interceptions: 'INT',
+    rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD', receiving_yards: 'REC YD',
+    receiving_tds: 'REC TD', receptions: 'REC', fpts: 'FPTS', total_gp: 'TOT GP',
+    career_passing_yards: 'CAREER PASS YD', career_passing_tds: 'CAREER PASS TD',
+    career_rushing_yards: 'CAREER RUSH YD', career_rushing_tds: 'CAREER RUSH TD',
+    career_receiving_yards: 'CAREER REC YD', career_receiving_tds: 'CAREER REC TD',
+  };
+
+  return labels[category] ?? category.toUpperCase();
+};
 
 export function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setGameConfig = useGameStore((state) => state.setGameConfig);
-  const { sport, timerDuration, hideResultsDuringGame, setSport } = useSettingsStore();
+  const { sport, timerDuration, hideResultsDuringGame, setTimerDuration } = useSettingsStore();
 
-  // ── Filter state ──────────────────────────────────────────────────────────
-  // Box Score filters (NFL only)
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [guessPlayerStep,  setGuessPlayerStep]  = useState<GuessPlayerStep>(null);
+  const [guessPlayerMode,  setGuessPlayerMode]  = useState<'solo' | 'lobby'>('solo');
+  const [guessPlayerSport, setGuessPlayerSport] = useState<Sport | null>(null);
+  const [showRoulette, setShowRoulette] = useState(false);
+  const [preparedGameData, setPreparedGameData] = useState<any>(null);
+  const [skipAnimation, setSkipAnimation] = useState(false);
+
   const [boxScoreMinYear, setBoxScoreMinYear] = useState<number>(2015);
   const [boxScoreMaxYear, setBoxScoreMaxYear] = useState<number>(2025);
-  const [boxScoreTeam,    setBoxScoreTeam]    = useState<string | null>(null);
+  const [boxScoreTeam, setBoxScoreTeam] = useState<string | null>(null);
+  const [rosterSubMode, setRosterSubMode] = useState<'roster' | 'box-score'>('roster');
+  const [gameMode, setGameMode] = useState<GameMode>('random');
+  const [selectedTeam, setSelectedTeam] = useState<GenericTeam | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [randomMinYear, setRandomMinYear] = useState(2015);
+  const [randomMaxYear, setRandomMaxYear] = useState(2025);
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [capCrunchStep, setCapCrunchStep] = useState<CapCrunchModalStep>(null);
+  const [capCrunchSport, setCapCrunchSport] = useState<Sport | null>(null);
+  const [capCrunchRounds, setCapCrunchRounds] = useState(5);
+  const [capCrunchTab, setCapCrunchTab] = useState<'settings' | 'rules'>('settings');
+  const [rulesTileId, setRulesTileId] = useState<RulesTileId>(null);
 
-  // ── Roster Royale state ───────────────────────────────────────────────────
-  const [rosterSubMode,  setRosterSubMode]  = useState<'roster' | 'box-score'>('roster');
-  const [gameMode,       setGameMode]       = useState<GameMode>('random');
-  const [selectedTeam,   setSelectedTeam]   = useState<GenericTeam | null>(null);
-  const [selectedYear,   setSelectedYear]   = useState<number | null>(null);
-  const [randomMinYear,  setRandomMinYear]  = useState(2015);
-  const [randomMaxYear,  setRandomMaxYear]  = useState(2025);
-  const [loadingStatus,  setLoadingStatus]  = useState<LoadingStatus>('idle');
-  const [statusMessage,  setStatusMessage]  = useState('');
-
-  // ── UI state ──────────────────────────────────────────────────────────────
-  const [showSettings,    setShowSettings]    = useState(false);
-  const [showAbout,       setShowAbout]       = useState(false);
-  const [isDealt,         setIsDealt]         = useState(false);
-  const [selectedCard,    setSelectedCard]    = useState<string | null>(null);
-  const [hoveredCard,     setHoveredCard]     = useState<string | null>(null);
-  const [tappedCard,      setTappedCard]      = useState<string | null>(null);
-  const [showRoulette,    setShowRoulette]    = useState(false);
-  const [preparedGameData, setPreparedGameData] = useState<any>(null);
-  const [skipAnimation,   setSkipAnimation]   = useState(false);
-
-  // ── Responsive fan scaling ────────────────────────────────────────────────
-  // Track viewport width to scale card dimensions down on mobile.
-  // Detect touch-primary devices to skip whileHover entirely (prevents stuck cards).
-  const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [rosterStep, setRosterStep] = useState<SportPickStep>(null);
+  const [rosterSport, setRosterSport] = useState<Sport | null>(null);
+  const [topTenStep, setTopTenStep] = useState<SportPickStep>(null);
+  const [topTenSport, setTopTenSport] = useState<Sport | null>(null);
 
   useEffect(() => {
-    const mq = window.matchMedia('(hover: none) and (pointer: coarse)');
-    setIsTouchDevice(mq.matches);
-    const update = () => setVw(window.innerWidth);
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  // Scale thresholds: <400 → 0.52, <500 → 0.63, <640 → 0.77, else full size
-  const fanScale        = vw < 400 ? 0.52 : vw < 500 ? 0.63 : vw < 640 ? 0.77 : 1;
-  const cardW           = Math.round(165 * fanScale);
-  const cardH           = Math.round(235 * fanScale);
-  const containerH      = Math.round(360 * fanScale);
-  const popDist         = Math.round(100 * fanScale);
-  const fanToJoinGap    = Math.round(42  * fanScale);
-  const deckYOffset     = Math.round(50  * fanScale);
-  const scaledPositions = FAN_POSITIONS.map(fp => ({
-    x: Math.round(fp.x * fanScale),
-    y: Math.round(fp.y * fanScale),
-    rotate: fp.rotate,
-  }));
-
-  // Debounce hover to prevent bounce when the mouse passes between overlapping cards
-  const hoverClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const setHoveredCardDebounced = (id: string | null) => {
-    if (id !== null) {
-      if (hoverClearTimer.current) clearTimeout(hoverClearTimer.current);
-      setHoveredCard(id);
-    } else {
-      // Wait 120 ms before clearing — absorbs inter-card gaps
-      hoverClearTimer.current = setTimeout(() => setHoveredCard(null), 120);
-    }
-  };
-
-  // ── Side-effects ──────────────────────────────────────────────────────────
-  useEffect(() => { warmCareerCache(sport); }, [sport]);
-
-  useEffect(() => {
-    setSelectedTeam(null);
-    setSelectedYear(null);
-    if (sport === 'nfl') {
-      setRandomMinYear(Math.max(randomMinYear, 2000));
-      setRandomMaxYear(Math.min(randomMaxYear, 2025));
-      // NFL box scores start 2015; clamp if user had NBA 2014 selected
-      if (boxScoreMinYear < 2015) setBoxScoreMinYear(2015);
-    }
+    warmCareerCache(sport);
   }, [sport]);
 
-  // ── Roster Royale game start ──────────────────────────────────────────────
+  // Close any open modal on Escape key
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (guessPlayerStep) { setGuessPlayerStep(null); return; }
+      if (rosterStep) { setRosterStep(null); setLoadingStatus('idle'); return; }
+      if (topTenStep) { setTopTenStep(null); return; }
+      if (capCrunchStep) { setCapCrunchStep(null); return; }
+      if (rulesTileId) { setRulesTileId(null); return; }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [guessPlayerStep, rosterStep, topTenStep, capCrunchStep, rulesTileId]);
+
+  // Re-open modals when navigating back from a solo game
+  useEffect(() => {
+    const s = location.state as {
+      openTopTen?: boolean; topTenSport?: Sport;
+      openCareer?: boolean; openScramble?: boolean; openFaceReveal?: boolean;
+    } | null;
+    if (s?.openTopTen && s.topTenSport) {
+      setTopTenSport(s.topTenSport);
+      setTopTenStep('settings');
+      window.history.replaceState({}, '');
+    }
+    if (s?.openCareer) {
+      setGuessPlayerMode('solo');
+      setGuessPlayerSport((s as any).gpSport ?? null);
+      setGuessPlayerStep('career');
+      window.history.replaceState({}, '');
+    }
+    if (s?.openScramble) {
+      setGuessPlayerMode('solo');
+      setGuessPlayerSport((s as any).gpSport ?? null);
+      setGuessPlayerStep('scramble');
+      window.history.replaceState({}, '');
+    }
+    if (s?.openFaceReveal) {
+      setGuessPlayerMode('solo');
+      setGuessPlayerSport((s as any).gpSport ?? null);
+      setGuessPlayerStep('face-reveal');
+      window.history.replaceState({}, '');
+    }
+  }, []);
+
   const handleStartGame = async () => {
     setLoadingStatus('checking');
     setStatusMessage('Selecting team...');
     const shouldSkipAnimation = gameMode === 'manual';
     setSkipAnimation(shouldSkipAnimation);
 
-    const currentTeams  = sport === 'nba' ? teams : nflTeams;
+    const currentTeams = sport === 'nba' ? teams : nflTeams;
     const currentMinYear = Math.max(randomMinYear, 2000);
     const currentMaxYear = Math.min(randomMaxYear, 2025);
 
@@ -137,24 +152,27 @@ export function HomePage() {
       const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
       setLoadingStatus('fetching');
       try {
-        let players, league;
+        let players;
+        let league;
         if (sport === 'nba') {
           const roster = await fetchTeamRoster(team.abbreviation, season);
           if (!roster?.players?.length) return false;
           players = roster.players;
-          league  = await fetchStaticSeasonPlayers(season) ?? [];
+          league = await fetchStaticSeasonPlayers(season) ?? [];
         } else {
           const nflPlayers = await fetchStaticNFLRoster(team.abbreviation, year);
           if (!nflPlayers?.length) return false;
           players = nflPlayers;
-          league  = await fetchStaticNFLSeasonPlayers(year) ?? [];
+          league = await fetchStaticNFLSeasonPlayers(year) ?? [];
         }
         setLoadingStatus('success');
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         setPreparedGameData({ sport, team, season, gameMode, timerDuration, players, leaguePlayers: league, hideResultsDuringGame });
         setShowRoulette(true);
         return true;
-      } catch { return false; }
+      } catch {
+        return false;
+      }
     };
 
     if (gameMode === 'manual' && selectedTeam && selectedYear) {
@@ -162,258 +180,813 @@ export function HomePage() {
         setLoadingStatus('error');
         setStatusMessage('Roster data not found.');
       }
-    } else {
-      for (let i = 0; i < 5; i++) {
-        const pick = pickRandomTeamSeason();
-        if (pick && await attemptLoadRoster(pick.team, pick.year)) return;
-      }
-      setLoadingStatus('error');
-      setStatusMessage('Failed to find roster.');
+      return;
     }
+
+    for (let index = 0; index < 5; index += 1) {
+      const pick = pickRandomTeamSeason();
+      if (pick && await attemptLoadRoster(pick.team, pick.year)) return;
+    }
+
+    setLoadingStatus('error');
+    setStatusMessage('Failed to find roster.');
   };
 
-  // ── Derived values ────────────────────────────────────────────────────────
-  const sportArtA = sport === 'nba' ? '/images/Group 27.svg'      : '/images/group23.svg';
-  const sportArtB = sport === 'nba' ? '/images/Group 28.svg'      : '/images/g28.svg';
-  const deckArt   = sport === 'nba' ? '/images/Group 29 (2).svg'  : '/images/Group 29 (1).svg';
+  const openTile = (tileId: string, mode: 'solo' | 'lobby') => {
+    if (tileId === 'coming-soon') return;
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  // June 2 2026 in New York time — uses Intl to extract date parts reliably
-  const _nyParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-  const _ny = Object.fromEntries(_nyParts.filter(p => p.type !== 'literal').map(p => [p.type, +p.value]));
-  const isDhruvBday = _ny.year === 2026 && _ny.month === 6 && _ny.day === 2;
+    if (tileId === 'roster') {
+      if (mode === 'lobby') {
+        navigate('/lobby/create', { state: { gameType: 'roster' } });
+        return;
+      }
+      setRosterStep('sport');
+      return;
+    }
+
+    if (tileId === 'guess-player') {
+      setGuessPlayerMode(mode);
+      setGuessPlayerSport(null);
+      setGuessPlayerStep('sport');
+      return;
+    }
+
+    if (tileId === 'cap-crunch' && mode === 'solo') {
+      setCapCrunchSport(null);
+      setCapCrunchRounds(5);
+      setCapCrunchTab('settings');
+      setCapCrunchStep('sport');
+      return;
+    }
+
+    if (tileId === 'top-ten' && mode === 'solo') {
+      setTopTenStep('sport');
+      return;
+    }
+
+    const lobbyModeMap: Record<string, string> = {
+      'cap-crunch': 'lineup-is-right',
+      'starting-lineup': 'starting-lineup',
+      'rollcall': 'roll-call',
+      'top-ten': 'top-ten',
+    };
+
+    const soloPathMap: Record<string, string> = {
+      'cap-crunch': '/lineup-is-right',
+      'starting-lineup': '/starting-lineup',
+      'top-ten': '/top-ten',
+    };
+
+    if (mode === 'solo' && soloPathMap[tileId]) {
+      navigate(soloPathMap[tileId]);
+      return;
+    }
+
+    if (tileId === 'rollcall') {
+      navigate('/roll-call/create');
+      return;
+    }
+
+    navigate('/lobby/create', { state: { gameType: lobbyModeMap[tileId] ?? 'roster' } });
+  };
+
+  const launchCapCrunch = (selectedSport: Sport, statCategory: string | null) => {
+    navigate('/lineup-is-right', {
+      state: {
+        autoStart: true,
+        selectedSport,
+        statCategory,
+        totalRounds: capCrunchRounds,
+      },
+    });
+  };
+
+  const RULES_CONTENT: Record<Exclude<RulesTileId, null>, { title: string; accent: string; bullets: string[] }> = {
+    'cap-crunch': {
+      title: 'Cap Crunch',
+      accent: '#FDF100',
+      bullets: [
+        'Build a lineup whose total reaches the target cap without going over.',
+        'Each round gives you a filter or category, then you pick a qualifying player.',
+        'Some modes use a season-year value and others use career totals.',
+        'If a pick busts the cap, it scores zero and your total does not advance.',
+      ],
+    },
+    roster: {
+      title: 'Roster Royale',
+      accent: '#68BBE5',
+      bullets: [
+        'You get a mystery team and season, then try to name every player on that roster.',
+        'Solo and lobby flows can use random or manual team-season selection.',
+        'Correct answers fill the board as you work toward a complete roster.',
+      ],
+    },
+    'top-ten': {
+      title: 'Top Ten',
+      accent: '#70BE5B',
+      bullets: [
+        'Guess the top ten players for a stat leaderboard before running out of strikes.',
+        'Rounds can be league-wide, division-based, or team-based.',
+        'Hints and team references can help narrow the board during play.',
+      ],
+    },
+    'guess-player': {
+      title: 'Guess the Player',
+      accent: '#E2008A',
+      bullets: [
+        'Use clues like career path, scrambled names, or reveal mechanics to identify the player.',
+        'Each variant changes how much information you get up front.',
+        'Faster, more accurate guesses lead to cleaner finishes.',
+      ],
+    },
+    'starting-lineup': {
+      title: 'Starting Lineup',
+      accent: '#4E53A5',
+      bullets: [
+        'Infer the team from its starting lineup or core five.',
+        'Use player combinations, era knowledge, and roster overlap to lock in the answer.',
+      ],
+    },
+    rollcall: {
+      title: 'Roll Call',
+      accent: '#70BE5B',
+      bullets: [
+        'Work with the lobby to name as many athletes as possible.',
+        'This mode is built around group recall rather than solo precision.',
+      ],
+    },
+    'coming-soon': {
+      title: 'Coming Soon',
+      accent: '#E2008A',
+      bullets: [
+        'Another game mode is in development.',
+      ],
+    },
+  };
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-[#111]">
-      {/* Happy Birthday Dhruv — June 2 2026 only */}
-      {isDhruvBday && (
-        <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute whitespace-nowrap retro-title text-[13px] tracking-[0.2em] select-none"
-              style={{
-                color: ['#f59e0b','#ec4899','#60a5fa','#34d399','#a78bfa','#fb923c','#f87171','#a3e635'][i],
-                opacity: 0.28,
-                top: `${i * 14}%`,
-                left: '50%',
-                transform: `translateX(-50%) rotate(-22deg)`,
-              }}
+    <div className="min-h-screen bg-[#000] text-[#f1f1ef] home-chalkboard">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10">
+        <header className="flex items-center justify-between gap-3 border-b border-white/10 pb-6 sm:gap-4 sm:pb-8">
+          <div className="min-w-0 flex-1">
+            <h1 className="home-display truncate text-2xl leading-[0.98] text-white sm:text-4xl lg:text-5xl">
+              Ball Knowledge
+            </h1>
+          </div>
+
+          <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-3">
+            <button
+              onClick={() => navigate('/lobby/join')}
+              className="border border-[#FDF100]/60 bg-[#FDF100]/10 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.18em] text-[#f5f5f2] transition hover:border-[#FDF100] hover:bg-[#FDF100]/18 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.25em]"
             >
-              {'★ HAPPY BIRTHDAY DHRUV ★ '.repeat(12)}
+              Join Lobby
+            </button>
+
+            <button
+              onClick={() => setShowAbout(true)}
+              className="border border-[#E2008A]/40 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.18em] text-[#ffc2ea] transition hover:border-[#E2008A] hover:bg-[#E2008A]/10 hover:text-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.25em]"
+            >
+              About
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 py-8">
+          <div className="mb-8 flex items-center gap-3">
+            <span className="h-px w-10 bg-[#FDF100]/80" />
+            <span className="h-px w-16 bg-[#68BBE5]/70" />
+            <span className="h-px w-8 bg-[#E2008A]/70" />
+            <span className="h-px w-12 bg-[#70BE5B]/70" />
+          </div>
+
+          <div className="home-grid-shell">
+            {HOME_TILES.filter((tile) => tile.id === 'cap-crunch').map((tile) => (
+              <motion.article
+                key={tile.id}
+                layout
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className={`group relative overflow-hidden border-b border-white/12 ${tile.disabled ? 'bg-white/[0.015]' : 'bg-white/[0.03]'}`}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{ background: `radial-gradient(circle at top right, ${tile.accent}33, transparent 35%)` }}
+                />
+                <div
+                  className="absolute inset-x-0 top-0 h-1"
+                  style={{ background: `linear-gradient(90deg, transparent 0%, ${tile.accent} 45%, transparent 100%)` }}
+                />
+                <div className="absolute inset-0" style={{ backgroundColor: tile.accent, opacity: tile.disabled ? 0.08 : 0.2 }} />
+                <img
+                  src={tile.image}
+                  alt={tile.name}
+                  className={`absolute inset-0 h-full w-full object-cover transition duration-500 ${tile.disabled ? 'opacity-20 saturate-50' : 'opacity-40 group-hover:scale-[1.03] group-hover:opacity-48'}`}
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.82)_72%)]" />
+
+                <div className="relative flex h-full min-h-[300px] flex-col justify-between p-5 sm:min-h-[360px] sm:p-7 lg:min-h-[380px]">
+                  {!tile.disabled && (
+                    <button
+                      type="button"
+                      aria-label={`Open ${tile.name} rules`}
+                      onClick={(event) => { event.stopPropagation(); setRulesTileId(tile.id); }}
+                      className="absolute right-5 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-black/20 text-sm text-white/55 transition hover:bg-black/30 hover:text-white"
+                      style={{ borderColor: `${tile.accent}80` }}
+                    >
+                      ?
+                    </button>
+                  )}
+                  <div className="flex items-start gap-3">
+                    <div className="max-w-[75%]">
+                      {tile.popularLabel && (
+                        <span
+                          className="mb-4 inline-flex border px-3 py-1 text-[10px] uppercase tracking-[0.3em]"
+                          style={{ borderColor: `${tile.accent}88`, color: tile.accent, backgroundColor: `${tile.accent}1a` }}
+                        >
+                          {tile.popularLabel}
+                        </span>
+                      )}
+                      <h2 className={`home-tile-title text-3xl sm:text-4xl ${tile.disabled ? 'text-white/72' : 'text-white'}`}>{tile.name}</h2>
+                      <p className={`home-body mt-3 max-w-2xl text-sm leading-6 sm:text-base ${tile.disabled ? 'text-[#d7d7d3]/70' : 'text-[#d7d7d3]'}`}>
+                        {tile.taglineBySport?.[sport] ?? tile.tagline}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {tile.hasSolo && !tile.disabled && (
+                      <button
+                        onClick={() => openTile(tile.id, 'solo')}
+                        className="border px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-white transition hover:bg-white/8"
+                        style={{ borderColor: `${tile.accent}80` }}
+                      >
+                        {tile.id === 'roster' || tile.id === 'guess-player' ? 'Solo' : 'Solo'}
+                      </button>
+                    )}
+                    {tile.disabled ? (
+                        <span className="border border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc]/75">
+                          Coming Soon
+                        </span>
+                    ) : (
+                      <button
+                        onClick={() => openTile(tile.id, 'lobby')}
+                        className="border border-white/14 px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc] transition hover:border-white/35 hover:bg-white/8 hover:text-white"
+                      >
+                        {tile.hasSolo ? 'Lobby' : 'Play'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.article>
+            ))}
+
+            <div className="grid grid-cols-2 lg:grid-cols-3">
+              {HOME_TILES.filter((tile) => tile.id !== 'cap-crunch').map((tile) => (
+                <motion.article
+                  key={tile.id}
+                  layout
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className={`group relative overflow-hidden border-r border-t border-white/12 even:border-r-0 lg:[&:nth-child(3n)]:border-r-0 ${tile.disabled ? 'bg-white/[0.015]' : 'bg-white/[0.03]'}`}
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: `radial-gradient(circle at top right, ${tile.accent}33, transparent 35%)` }}
+                  />
+                  <div
+                    className="absolute inset-x-0 top-0 h-1"
+                    style={{ background: `linear-gradient(90deg, transparent 0%, ${tile.accent} 45%, transparent 100%)` }}
+                  />
+                  <div className="absolute inset-0" style={{ backgroundColor: tile.accent, opacity: tile.disabled ? 0.08 : 0.2 }} />
+                  <img
+                    src={tile.image}
+                    alt={tile.name}
+                    className={`absolute inset-0 h-full w-full object-cover transition duration-500 ${tile.disabled ? 'opacity-20 saturate-50' : 'opacity-40 group-hover:scale-[1.03] group-hover:opacity-48'}`}
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.82)_72%)]" />
+
+                  <div className="relative flex h-full min-h-[240px] flex-col justify-between p-4 sm:min-h-[280px] sm:p-5 lg:min-h-[220px]">
+                    {!tile.disabled && (
+                      <button
+                        type="button"
+                        aria-label={`Open ${tile.name} rules`}
+                        onClick={(event) => { event.stopPropagation(); setRulesTileId(tile.id); }}
+                        className="absolute right-4 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-full border bg-black/20 text-sm text-white/55 transition hover:bg-black/30 hover:text-white"
+                        style={{ borderColor: `${tile.accent}80` }}
+                      >
+                        ?
+                      </button>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <div className="max-w-[70%]">
+                        {tile.popularLabel && (
+                          <span
+                            className="mb-3 inline-flex border px-3 py-1 text-[10px] uppercase tracking-[0.3em]"
+                            style={{ borderColor: `${tile.accent}88`, color: tile.accent, backgroundColor: `${tile.accent}1a` }}
+                          >
+                            {tile.popularLabel}
+                          </span>
+                        )}
+                        <h2 className={`home-tile-title text-xl sm:text-2xl ${tile.disabled ? 'text-white/72' : 'text-white'}`}>{tile.name}</h2>
+                        <p className={`home-body mt-2 text-xs leading-5 sm:text-sm ${tile.disabled ? 'text-[#d7d7d3]/70' : 'text-[#d7d7d3]'}`}>
+                          {tile.taglineBySport?.[sport] ?? tile.tagline}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {tile.hasSolo && !tile.disabled && (
+                        <button
+                          onClick={() => openTile(tile.id, 'solo')}
+                          className="border px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-white transition hover:bg-white/8"
+                          style={{ borderColor: `${tile.accent}80` }}
+                        >
+                          {tile.id === 'roster' || tile.id === 'guess-player' ? 'Solo' : 'Solo'}
+                        </button>
+                      )}
+                      {tile.disabled ? (
+                        <span className="border border-white/10 bg-white/[0.02] px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc]/75">
+                          Coming Soon
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => openTile(tile.id, 'lobby')}
+                          className="border border-white/14 px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc] transition hover:border-white/35 hover:bg-white/8 hover:text-white"
+                        >
+                          {tile.hasSolo ? 'Lobby' : 'Play'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.article>
+              ))}
             </div>
-          ))}
+          </div>
+
+        </main>
+      </div>
+
+      {showRoulette && preparedGameData && (
+        <TeamRevealOverlay
+          winningTeam={preparedGameData.team.name}
+          winningYear={preparedGameData.season}
+          sport={sport}
+          winningTeamData={preparedGameData.team}
+          skipAnimation={skipAnimation}
+          onComplete={() => {
+            setGameConfig(
+              preparedGameData.sport,
+              preparedGameData.team,
+              preparedGameData.season,
+              preparedGameData.gameMode,
+              preparedGameData.timerDuration,
+              preparedGameData.players,
+              preparedGameData.leaguePlayers,
+              preparedGameData.hideResultsDuringGame,
+            );
+            navigate('/game');
+          }}
+        />
+      )}
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
+      {/* Guess the Player modal */}
+      {guessPlayerStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setGuessPlayerStep(null)}>
+          {guessPlayerStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+              <div className="mb-8">
+                <p className="home-kicker text-[#bfbfbf] mb-3">Guess the Player</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm">Career Arc, Name Scramble, and Face Reveal — choose your league first.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                <button
+                  onClick={() => { setGuessPlayerSport('nba'); setGuessPlayerStep('select'); }}
+                  className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#E2008A]">Basketball</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1980 onward, modern era filter available.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setGuessPlayerSport('nfl'); setGuessPlayerStep('select'); }}
+                  className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#E2008A]">Football</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1999 onward. Face Reveal includes defensive pool.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button onClick={() => setGuessPlayerStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+              </div>
+            </div>
+          )}
+          {guessPlayerStep === 'select' && guessPlayerSport && (
+            <div className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
+              <GuessPlayerSelect
+                sport={guessPlayerSport}
+                mode={guessPlayerMode}
+                onBack={() => setGuessPlayerStep('sport')}
+                onSelectGame={(id) => setGuessPlayerStep(id)}
+              />
+            </div>
+          )}
+          {guessPlayerStep === 'career' && guessPlayerSport && (
+            <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
+              <CareerArcSetup
+                sport={guessPlayerSport}
+                onBack={() => setGuessPlayerStep('select')}
+              />
+            </div>
+          )}
+          {guessPlayerStep === 'scramble' && guessPlayerSport && (
+            <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
+              <ScrambleSetup
+                sport={guessPlayerSport}
+                onBack={() => setGuessPlayerStep('select')}
+              />
+            </div>
+          )}
+          {guessPlayerStep === 'face-reveal' && guessPlayerSport && (
+            <div className="w-full max-w-4xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
+              <FaceRevealSetup
+                sport={guessPlayerSport}
+                onBack={() => setGuessPlayerStep('select')}
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {/* SVG filter used by the title text for the white outline effect */}
-      <svg style={{ height: 0, width: 0, position: 'absolute' }}>
-        <filter id="whiteOutline">
-          <feMorphology in="SourceAlpha" result="DILATED" operator="dilate" radius="1" />
-          <feFlood floodColor="white" floodOpacity="1" result="WHITE" />
-          <feComposite in="WHITE" in2="DILATED" operator="in" result="OUTLINE" />
-          <feMerge><feMergeNode in="OUTLINE" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </svg>
-
-      {/* ── Header ── */}
-      <header className="p-4 flex justify-between items-center border-b-4 border-[#333] z-50 bg-[#111] relative gap-2">
-        <div className="flex-1 min-w-0">
-          <motion.h1
-            style={{ filter: 'url(#whiteOutline)' }}
-            className={`retro-title text-xl sm:text-2xl md:text-3xl truncate ${sport === 'nba' ? 'text-[var(--nba-orange)]' : 'text-[#013369]'}`}
-          >
-            <>Ball <span className="xs:inline">Knowledge</span></>
-          </motion.h1>
-        </div>
-
-        {/* NBA / NFL sport toggle */}
-        <div className="flex shrink-0 border-2 border-[#2a2a2a] overflow-hidden rounded-sm">
-          {(['nba', 'nfl'] as const).map((s, i) => {
-            const isActive = sport === s;
-            const activeBg = s === 'nba' ? '#f15a29' : '#013369';
-            return (
-              <motion.button
-                key={s}
-                onClick={() => setSport(s)}
-                className={`relative px-4 sm:px-5 py-1.5 sm:py-2 retro-title text-lg sm:text-xl tracking-wider cursor-pointer overflow-hidden ${i === 0 ? 'border-r-2 border-[#2a2a2a]' : ''}`}
-                animate={{ backgroundColor: isActive ? activeBg : '#0a0a0a', color: isActive ? '#ffffff' : '#2e2e2e' }}
-                transition={{ duration: 0.08 }}
-                whileTap={{ scale: 0.92, transition: { duration: 0.08 } }}
-              >
-                <motion.span
-                  key={`${s}-${isActive}`}
-                  initial={{ rotateX: -90, opacity: 0 }}
-                  animate={{ rotateX: 0, opacity: 1 }}
-                  transition={{ duration: 0.28, ease: [0.2, 0.9, 0.25, 1.05] }}
-                  style={{ display: 'block', transformPerspective: 320 }}
+      {/* Roster Royale modal — sport picker → settings */}
+      {rosterStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setRosterStep(null); setLoadingStatus('idle'); }}>
+          {rosterStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+              <div className="mb-8">
+                <p className="home-kicker text-[#bfbfbf] mb-3">Roster Royale</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm">Name every player on a team's roster for a given season.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                <button
+                  onClick={() => { setRosterSport('nba'); setRosterStep('settings'); setGameMode('random'); setLoadingStatus('idle'); }}
+                  className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/8"
                 >
-                  {s.toUpperCase()}
-                </motion.span>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {/* About button */}
-        <div className="flex-1 flex justify-end items-center">
-          <button
-            onClick={() => setShowAbout(true)}
-            className="p-1.5 md:p-2 text-[#444] hover:text-[#888] transition-colors shrink-0"
-            title="About"
-          >
-            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      {/* ── Main content — slides up when roulette fires ── */}
-      <motion.div
-        animate={{ y: showRoulette ? '-100vh' : '0vh' }}
-        transition={{ duration: 1.2, ease: [0.65, 0, 0.35, 1] }}
-        className="flex-1 flex flex-col"
-      >
-        <main className="h-screen w-full flex-shrink-0 flex flex-col items-center justify-center p-4 relative overflow-hidden bg-[#111]">
-
-          {/* Decorative background SVGs */}
-          <div className="absolute bottom-15 left-1 w-70 h-70 opacity-40 pointer-events-none">
-            <img src={sportArtA} alt="" />
-          </div>
-          <div className="absolute -top-10 -right-10 w-55 h-55 opacity-40 pointer-events-none">
-            <img src={sportArtB} alt="" />
-          </div>
-
-          <AnimatePresence mode="wait">
-
-            {/* ── Deck (pre-deal) ── */}
-            {!isDealt && (
-              <motion.div
-                key="deck"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
-                className="flex flex-col items-center z-10"
-                style={{ gap: Math.round(32 * fanScale), transform: `translateY(-${deckYOffset}px)` }}
-              >
-                <div className="text-center">
-                  <h2
-                    className="retro-title text-[var(--vintage-cream)] uppercase tracking-tight"
-                    style={{ fontSize: Math.max(22, Math.round(40 * fanScale)) }}
-                  >
-                    Pick a Card
-                  </h2>
-                  <p
-                    className="sports-font text-[#555] tracking-[0.25em] mt-1.5 uppercase"
-                    style={{ fontSize: Math.max(9, Math.round(12 * fanScale)) }}
-                  >
-                    {sport === 'nba' ? 'NBA' : 'NFL'} · Click to deal
-                  </p>
-                </div>
-
-                {/* Deck stack — click to deal the fan */}
-                <motion.button
-                  onClick={() => setIsDealt(true)}
-                  whileHover={{ y: -8 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative focus:outline-none cursor-pointer"
-                  style={{ width: Math.round(200 * fanScale), height: Math.round(280 * fanScale) }}
-                >
-                  <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff]/25 bg-[#161616]"
-                    style={{ transform: `rotate(8deg) translate(${Math.round(10 * fanScale)}px, ${Math.round(10 * fanScale)}px)` }} />
-                  <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff]/45 bg-[#181818]"
-                    style={{ transform: `rotate(4deg) translate(${Math.round(5 * fanScale)}px, ${Math.round(5 * fanScale)}px)` }} />
-                  <div className="absolute inset-0 rounded-2xl border-2 border-[#ffffff] overflow-hidden shadow-2xl">
-                    <img
-                      src={deckArt}
-                      alt=""
-                      className="absolute inset-0 w-full h-full"
-                      style={{ objectFit: 'cover', objectPosition: 'center' }}
-                    />
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#FDF100]">Basketball</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Seasons from 2000 to present.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
                   </div>
-                </motion.button>
-              </motion.div>
-            )}
-
-            {/* ── Roster Royale setup panel ── */}
-            {isDealt && selectedCard === 'roster' && (
-              <RosterRoyaleSetup
-                sport={sport}
-                deckArt={deckArt}
-                rosterSubMode={rosterSubMode}     setRosterSubMode={setRosterSubMode}
-                boxScoreMinYear={boxScoreMinYear}  setBoxScoreMinYear={setBoxScoreMinYear}
-                boxScoreMaxYear={boxScoreMaxYear}  setBoxScoreMaxYear={setBoxScoreMaxYear}
-                boxScoreTeam={boxScoreTeam}        setBoxScoreTeam={setBoxScoreTeam}
-                gameMode={gameMode}                setGameMode={setGameMode}
-                selectedTeam={selectedTeam}        setSelectedTeam={setSelectedTeam}
-                selectedYear={selectedYear}        setSelectedYear={setSelectedYear}
-                randomMinYear={randomMinYear}      setRandomMinYear={setRandomMinYear}
-                randomMaxYear={randomMaxYear}      setRandomMaxYear={setRandomMaxYear}
-                timerDuration={timerDuration}
-                loadingStatus={loadingStatus}      setLoadingStatus={setLoadingStatus}
-                statusMessage={statusMessage}
-                onBack={() => { setSelectedCard(null); setLoadingStatus('idle'); }}
-                onStartGame={handleStartGame}
-                onOpenSettings={() => setShowSettings(true)}
-              />
-            )}
-
-            {/* ── Guess the Player setup panel ── */}
-            {isDealt && (selectedCard === 'guess-player' || selectedCard === 'guess-player-lobby') && (
-              <GuessPlayerSetup
-                sport={sport}
-                mode={selectedCard === 'guess-player-lobby' ? 'lobby' : 'solo'}
-                onBack={() => setSelectedCard(null)}
-              />
-            )}
-
-            {/* ── Fan arc (dealt, no setup panel open) ── */}
-            {isDealt && selectedCard === null && (
-              <GameFanArc
-                sport={sport}
-                cardW={cardW}               cardH={cardH}
-                containerH={containerH}     popDist={popDist}
-                fanToJoinGap={fanToJoinGap} fanScale={fanScale}
-                scaledPositions={scaledPositions}
-                deckYOffset={deckYOffset}
-                isTouchDevice={isTouchDevice}
-                hoveredCard={hoveredCard}   tappedCard={tappedCard}
-                setHoveredCardDebounced={setHoveredCardDebounced}
-                setTappedCard={setTappedCard}
-                onCardSelect={id => setSelectedCard(id)}
-              />
-            )}
-
-          </AnimatePresence>
-        </main>
-
-        {/* Roulette slide — renders below main, revealed by the slide-up animation */}
-        <section className="h-screen w-full flex-shrink-0 flex items-center justify-center relative bg-[#0d2a0b]">
-          <div className="absolute inset-0 opacity-50" style={{ background: 'radial-gradient(circle, #2d5a27 0%, #0d2a0b 100%)' }} />
-          {showRoulette && preparedGameData && (
-            <RouletteOverlay
-              winningTeam={preparedGameData.team.name}
-              winningYear={preparedGameData.season}
-              sport={sport}
-              winningTeamData={preparedGameData.team}
-              skipAnimation={skipAnimation}
-              onComplete={() => {
-                setGameConfig(
-                  preparedGameData.sport, preparedGameData.team, preparedGameData.season,
-                  preparedGameData.gameMode, preparedGameData.timerDuration,
-                  preparedGameData.players, preparedGameData.leaguePlayers,
-                  preparedGameData.hideResultsDuringGame,
-                );
-                navigate('/game');
-              }}
-            />
+                </button>
+                <button
+                  onClick={() => { setRosterSport('nfl'); setRosterStep('settings'); setGameMode('random'); setLoadingStatus('idle'); }}
+                  className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#68BBE5]">Football</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Seasons from 2000 to present. Includes Box Score mode.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button onClick={() => setRosterStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+              </div>
+            </div>
           )}
-        </section>
-      </motion.div>
+          {rosterStep === 'settings' && rosterSport && (
+            <div onClick={e => e.stopPropagation()}>
+            <RosterRoyaleSetup
+              sport={rosterSport}
+              deckArt="/images/home/roster-royale.svg"
+              rosterSubMode={rosterSubMode}
+              setRosterSubMode={setRosterSubMode}
+              boxScoreMinYear={boxScoreMinYear}
+              setBoxScoreMinYear={setBoxScoreMinYear}
+              boxScoreMaxYear={boxScoreMaxYear}
+              setBoxScoreMaxYear={setBoxScoreMaxYear}
+              boxScoreTeam={boxScoreTeam}
+              setBoxScoreTeam={setBoxScoreTeam}
+              gameMode={gameMode}
+              setGameMode={setGameMode}
+              selectedTeam={selectedTeam}
+              setSelectedTeam={setSelectedTeam}
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
+              randomMinYear={randomMinYear}
+              setRandomMinYear={setRandomMinYear}
+              randomMaxYear={randomMaxYear}
+              setRandomMaxYear={setRandomMaxYear}
+              timerDuration={timerDuration}
+              loadingStatus={loadingStatus}
+              setLoadingStatus={setLoadingStatus}
+              statusMessage={statusMessage}
+              onBack={() => setRosterStep('sport')}
+              onStartGame={handleStartGame}
+              setTimerDuration={setTimerDuration}
+              soloOnly
+            />
+            </div>
+          )}
+        </div>
+      )}
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-      {showAbout    && <AboutModal   onClose={() => setShowAbout(false)} />}
+      {/* Top Ten modal — sport picker → settings */}
+      {topTenStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setTopTenStep(null)}>
+          {topTenStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+              <div className="mb-8">
+                <p className="home-kicker text-[#bfbfbf] mb-3">Top Ten</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm">Name the top 10 players in a stat category for a given season.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                <button
+                  onClick={() => { setTopTenSport('nba'); setTopTenStep('settings'); }}
+                  className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#70BE5B]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#70BE5B]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#70BE5B]">Basketball</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Points, rebounds, assists, and more from 1996 onward.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setTopTenSport('nfl'); setTopTenStep('settings'); }}
+                  className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#70BE5B]/8"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#70BE5B]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#70BE5B]">Football</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">Passing, rushing, receiving, and fantasy from 1999 onward.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button onClick={() => setTopTenStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+              </div>
+            </div>
+          )}
+          {topTenStep === 'settings' && topTenSport && (
+            <div onClick={e => e.stopPropagation()}>
+              <TopTenSetup
+                initialSport={topTenSport}
+                onBack={() => setTopTenStep('sport')}
+                soloOnly
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {capCrunchStep && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setCapCrunchStep(null)}>
+          {capCrunchStep === 'sport' && (
+            <div className="capcrunch-panel w-full max-w-4xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+              <div className="mb-8">
+                <p className="home-kicker text-[#bfbfbf] mb-3">Cap Crunch</p>
+                <h2 className="capcrunch-title text-4xl md:text-6xl text-white mb-3">Pick a Sport</h2>
+                <p className="capcrunch-body text-white/60 text-sm md:text-base">Choose a league, then configure the solo game without leaving the homepage.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
+                <button
+                  onClick={() => { setCapCrunchSport('nba'); setCapCrunchStep('settings'); }}
+                  className="group relative min-h-[220px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/10"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#FDF100]">Basketball</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
+                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Per-game categories and team-based career games played.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setCapCrunchSport('nfl'); setCapCrunchStep('settings'); }}
+                  className="group relative min-h-[220px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/10"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <span className="capcrunch-kicker text-[#68BBE5]">Football</span>
+                      <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
+                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Season and career stat variants with broader qualifier rounds.</p>
+                    </div>
+                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
+                  </div>
+                </button>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button
+                  onClick={() => setCapCrunchStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
+          {capCrunchStep === 'settings' && capCrunchSport && (
+            <div className="w-full max-w-6xl" onClick={e => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between lg:hidden">
+                <div className="inline-flex border border-white/10 bg-black/20">
+                  <button
+                    onClick={() => setCapCrunchTab('settings')}
+                    className={`px-4 py-2 capcrunch-kicker transition ${capCrunchTab === 'settings' ? 'bg-[#FDF100] text-black' : 'text-white/60'}`}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => setCapCrunchTab('rules')}
+                    className={`px-4 py-2 capcrunch-kicker transition ${capCrunchTab === 'rules' ? 'bg-[#68BBE5] text-black' : 'text-white/60'}`}
+                  >
+                    Rules
+                  </button>
+                </div>
+                <button
+                  onClick={() => setCapCrunchStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                <section className={`${capCrunchTab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
+                  <div className="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                      <p className="home-kicker text-[#bfbfbf] mb-2">Cap Crunch</p>
+                      <h2 className="capcrunch-title text-4xl md:text-5xl text-white">{capCrunchSport.toUpperCase()} Settings</h2>
+                    </div>
+                    <button
+                      onClick={() => setCapCrunchStep('sport')}
+                      className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                    >
+                      Change Sport
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-4 w-full">
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <button
+                        onClick={() => launchCapCrunch(capCrunchSport, null)}
+                        className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                      >
+                        RANDOM
+                      </button>
+                      {(capCrunchSport === 'nba' ? CAP_CRUNCH_NBA_CATS : CAP_CRUNCH_NFL_CATS).map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => launchCapCrunch(capCrunchSport, category)}
+                          className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                        >
+                          {getCapCrunchLabel(category)}
+                        </button>
+                      ))}
+                    </div>
+
+                    {capCrunchSport === 'nfl' && (
+                      <div className="w-full">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex-1 h-px bg-white/10" />
+                          <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
+                          <div className="flex-1 h-px bg-white/10" />
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <button
+                            onClick={() => launchCapCrunch(capCrunchSport, CAP_CRUNCH_NFL_CAREER_CATS[Math.floor(Math.random() * CAP_CRUNCH_NFL_CAREER_CATS.length)])}
+                            className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                          >
+                            RANDOM
+                          </button>
+                          {CAP_CRUNCH_NFL_CAREER_CATS.map((category) => (
+                            <button
+                              key={category}
+                              onClick={() => launchCapCrunch(capCrunchSport, category)}
+                              className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                            >
+                              {getCapCrunchLabel(category)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 justify-center mt-6">
+                    <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">ROUNDS</span>
+                    <div className="flex gap-1">
+                      {[3, 4, 5, 6, 7, 8, 9, 10].map((rounds) => (
+                        <button
+                          key={rounds}
+                          onClick={() => setCapCrunchRounds(rounds)}
+                          className={`w-8 h-8 rounded-sm capcrunch-kicker text-xs transition ${
+                            capCrunchRounds === rounds
+                              ? 'bg-[#d4af37] text-black font-bold'
+                              : 'bg-black/50 border border-white/20 text-white/50 hover:text-white hover:border-white/40'
+                          }`}
+                        >
+                          {rounds}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                <aside className={`${capCrunchTab !== 'rules' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h3 className="capcrunch-title text-lg text-[#FDF100]">How to Play</h3>
+                    <button
+                      onClick={() => setCapCrunchStep(null)}
+                      className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <ul className="text-sm text-white/80 space-y-2.5 text-left">
+                    <li><span className="text-[#d4af37] font-bold">Goal:</span> Build a lineup whose combined stat reaches — but does not exceed — the target cap.</li>
+                    <li><span className="text-[#d4af37] font-bold">Each pick:</span> A filter is shown. Search any qualifying player and their value gets added to your total.</li>
+                    <li><span className="text-emerald-400 font-bold">Season stats:</span> Pick a year and that team-season value counts.</li>
+                    <li><span className="text-emerald-400 font-bold">Career variants:</span> Some modes count career totals without needing a year.</li>
+                    <li><span className="text-red-400 font-bold">Busts:</span> A pick that pushes you over the cap scores 0 and your total reverts.</li>
+                    <li><span className="text-white/60 font-bold">Special rounds:</span> Filters can be team, division, conference, draft, teammate, or more.</li>
+                    <li><span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts wins; then oldest average pick year.</li>
+                  </ul>
+                </aside>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {rulesTileId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setRulesTileId(null)}>
+          <div className="capcrunch-panel w-full max-w-2xl p-5 md:p-6" onClick={e => e.stopPropagation()}>
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="home-kicker text-[#bfbfbf] mb-2">Rules</p>
+                <h3 className="capcrunch-title text-3xl md:text-4xl text-white">
+                  {RULES_CONTENT[rulesTileId].title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setRulesTileId(null)}
+                className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mb-5 h-1 w-28" style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }} />
+            <ul className="space-y-3 text-sm text-white/80">
+              {RULES_CONTENT[rulesTileId].bullets.map((bullet) => (
+                <li key={bullet} className="flex gap-3">
+                  <span className="mt-1 h-2 w-2 shrink-0" style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }} />
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

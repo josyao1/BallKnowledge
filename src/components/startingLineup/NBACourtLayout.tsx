@@ -53,10 +53,10 @@ export function NBACourtLayout({ players, encoding, blobState, bonusCorrect, onB
     <div className="w-full">
       {/* Labels */}
       <div className="flex items-center justify-between mb-1 px-1">
-        <span className="text-[10px] sports-font text-white/40 uppercase tracking-wider">
+        <span className="text-[10px] capcrunch-kicker text-white/40 uppercase tracking-wider">
           Starting 5
         </span>
-        <span className="text-[10px] sports-font text-white/30 uppercase tracking-wider">
+        <span className="text-[10px] capcrunch-kicker text-white/30 uppercase tracking-wider">
           {getEncodingLabel(encoding)}
         </span>
       </div>

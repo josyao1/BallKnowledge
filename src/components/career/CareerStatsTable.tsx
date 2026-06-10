@@ -23,9 +23,9 @@ export function CareerStatsTable({ columns, seasons, careerHighs, yearsRevealed,
     <div className="flex-1 overflow-x-auto mb-4">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b-2 border-[#333]">
+          <tr className="border-b-2 border-white/10">
             {columns.map(col => (
-              <th key={col.key} className="px-3 py-2 text-left sports-font text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
+              <th key={col.key} className="px-3 py-2 text-left capcrunch-kicker text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
                 {col.label}
               </th>
             ))}
@@ -42,7 +42,7 @@ export function CareerStatsTable({ columns, seasons, careerHighs, yearsRevealed,
                   opacity: { duration: 0.3 },
                   y: { type: 'spring', stiffness: 350, damping: 26 },
                 }}
-                className="border-b border-[#222] hover:bg-[#1a1a1a] row-gold-flash"
+                className="border-b border-white/5 hover:bg-white/5 row-gold-flash"
               >
                 {columns.map(col => {
                   const isHigh = col.key !== 'season' && col.key !== 'team'
@@ -51,10 +51,10 @@ export function CareerStatsTable({ columns, seasons, careerHighs, yearsRevealed,
                   return (
                     <td
                       key={col.key}
-                      className={`px-3 py-2 sports-font text-xs whitespace-nowrap ${
+                      className={`px-3 py-2 capcrunch-kicker text-xs whitespace-nowrap ${
                         isHigh
                           ? 'text-[#d4af37] bg-[#d4af37]/10 font-bold'
-                          : 'text-[var(--vintage-cream)]'
+                          : 'text-white/80'
                       }`}
                     >
                       {col.key === 'season'

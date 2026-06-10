@@ -730,6 +730,28 @@ NEW_PLAYERS = [
             {"season":"2000","team":"DAL","gp":11,"completions":156,"attempts":262,"passing_yards":1632,"passing_tds":7, "interceptions":14,"rushing_yards":0,"rushing_tds":0},
         ],
     },
+    # ── Franco Harris ──────────────────────────────────────────────────────────
+    {
+        "player_id":   "HAR453297",
+        "player_name": "Franco Harris",
+        "position":    "RB",
+        "bio":         {"height": "6-2", "weight": 225, "college": "Penn State", "years_exp": 13, "draft_club": "PIT", "draft_number": 13},
+        "seasons": [
+            {"season":"1972","team":"PIT","gp":14,"carries":188,"rushing_yards":1055,"rushing_tds":10,"receptions":16,"receiving_yards":180,"receiving_tds":1,"passing_yards":0,"passing_tds":0},
+            {"season":"1973","team":"PIT","gp":14,"carries":188,"rushing_yards":698, "rushing_tds":3, "receptions":21,"receiving_yards":148,"receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1974","team":"PIT","gp":13,"carries":208,"rushing_yards":1006,"rushing_tds":5, "receptions":18,"receiving_yards":200,"receiving_tds":1,"passing_yards":0,"passing_tds":0},
+            {"season":"1975","team":"PIT","gp":14,"carries":262,"rushing_yards":1246,"rushing_tds":10,"receptions":28,"receiving_yards":214,"receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1976","team":"PIT","gp":14,"carries":289,"rushing_yards":1128,"rushing_tds":14,"receptions":19,"receiving_yards":111,"receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1977","team":"PIT","gp":14,"carries":300,"rushing_yards":1162,"rushing_tds":11,"receptions":11,"receiving_yards":62, "receiving_tds":1,"passing_yards":0,"passing_tds":0},
+            {"season":"1978","team":"PIT","gp":16,"carries":310,"rushing_yards":1082,"rushing_tds":8, "receptions":22,"receiving_yards":144,"receiving_tds":1,"passing_yards":0,"passing_tds":0},
+            {"season":"1979","team":"PIT","gp":16,"carries":267,"rushing_yards":1186,"rushing_tds":11,"receptions":36,"receiving_yards":291,"receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1980","team":"PIT","gp":13,"carries":208,"rushing_yards":789, "rushing_tds":4, "receptions":28,"receiving_yards":167,"receiving_tds":2,"passing_yards":0,"passing_tds":0},
+            {"season":"1981","team":"PIT","gp":8, "carries":139,"rushing_yards":457, "rushing_tds":2, "receptions":13,"receiving_yards":84, "receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1982","team":"PIT","gp":9, "carries":140,"rushing_yards":604, "rushing_tds":7, "receptions":9, "receiving_yards":48, "receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1983","team":"PIT","gp":16,"carries":279,"rushing_yards":1007,"rushing_tds":5, "receptions":26,"receiving_yards":116,"receiving_tds":0,"passing_yards":0,"passing_tds":0},
+            {"season":"1984","team":"SEA","gp":8, "carries":68, "rushing_yards":170, "rushing_tds":1, "receptions":12,"receiving_yards":105,"receiving_tds":0,"passing_yards":0,"passing_tds":0},
+        ],
+    },
 ]
 
 

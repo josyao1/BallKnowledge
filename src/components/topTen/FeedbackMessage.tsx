@@ -14,7 +14,7 @@ export function FeedbackMessage({ feedback }: Props) {
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className={`sports-font text-xs tracking-wider ${feedback.type === 'correct' ? 'text-emerald-400' : 'text-red-400'}`}
+            className={`capcrunch-kicker text-xs tracking-wider ${feedback.type === 'correct' ? 'text-[#70BE5B]' : 'text-red-400'}`}
           >
             {feedback.msg}
           </motion.p>

@@ -50,14 +50,14 @@ export function MultiplayerStartingLineupResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      <header className="flex items-center px-4 py-3 border-b border-[#1a2a1a]">
-        <button onClick={() => navigate('/')} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col">
+      <header className="flex items-center px-4 py-3 border-b border-white/10">
+        <button onClick={() => navigate('/')} className="p-2 hover:bg-white/10 transition-colors">
           <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 className="retro-title text-xl text-[#ea580c] ml-3">Starting Lineup</h1>
+        <h1 className="capcrunch-title text-xl text-[#ea580c] ml-3">Starting Lineup</h1>
       </header>
 
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-md mx-auto w-full gap-6">
@@ -68,15 +68,15 @@ export function MultiplayerStartingLineupResultsPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <div className="sports-font text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">Winner</div>
-            <div className="retro-title text-4xl text-[#ea580c] mb-1">{winner.player_name}</div>
-            <div className="retro-title text-2xl text-[#fdb927]">{winner.points ?? 0} pts</div>
+            <div className="capcrunch-kicker text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">Winner</div>
+            <div className="capcrunch-title text-4xl text-[#ea580c] mb-1">{winner.player_name}</div>
+            <div className="capcrunch-title text-2xl text-[#fdb927]">{winner.points ?? 0} pts</div>
           </motion.div>
         )}
 
         {/* Final standings */}
         <div className="w-full">
-          <div className="text-[9px] text-white/30 sports-font tracking-widest uppercase mb-3">Final Standings</div>
+          <div className="capcrunch-kicker text-[9px] text-white/30 tracking-widest uppercase mb-3">Final Standings</div>
           <div className="flex flex-col gap-2">
             {sorted.map((p, i) => (
               <motion.div
@@ -84,12 +84,12 @@ export function MultiplayerStartingLineupResultsPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#111] border border-[#1a2a1a]"
+                className="flex items-center gap-3 px-4 py-3 bg-black/40 border border-white/10"
               >
-                <span className="retro-title text-lg text-white/40 w-6">{i + 1}</span>
+                <span className="capcrunch-title text-lg text-white/40 w-6">{i + 1}</span>
                 {i === 0 && <span className="text-base">🏆</span>}
-                <span className="flex-1 sports-font text-sm text-white">{p.player_name}</span>
-                <span className="retro-title text-xl text-[#fdb927]">{p.points ?? 0}</span>
+                <span className="flex-1 capcrunch-kicker text-sm text-white">{p.player_name}</span>
+                <span className="capcrunch-title text-xl text-[#fdb927]">{p.points ?? 0}</span>
               </motion.div>
             ))}
           </div>
@@ -100,14 +100,14 @@ export function MultiplayerStartingLineupResultsPage() {
           {isHost && (
             <button
               onClick={handlePlayAgain}
-              className="flex-1 py-4 rounded-lg retro-title text-lg tracking-wider bg-gradient-to-b from-[#ea580c] to-[#c2410c] text-white shadow-[0_4px_0_#9a3412] active:shadow-none active:translate-y-1 transition-all"
+              className="flex-1 py-4 capcrunch-title text-lg tracking-wider bg-[#ea580c] hover:bg-[#c2410c] text-white transition-all"
             >
               Play Again
             </button>
           )}
           <button
             onClick={() => navigate('/')}
-            className="flex-1 py-4 rounded-lg sports-font text-sm bg-[#1a1a1a] border-2 border-[#333] text-white/60 hover:border-[#555] transition-all"
+            className="flex-1 py-4 capcrunch-kicker text-sm bg-black/40 border border-white/10 text-white/60 hover:border-white/25 transition-all"
           >
             Leave
           </button>

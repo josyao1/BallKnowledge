@@ -6,6 +6,7 @@ import { nflTeams } from '../../../data/nfl-teams';
 interface Props {
   sport: 'nba' | 'nfl';
   onSportChange: (s: 'nba' | 'nfl') => void;
+  showSportToggle?: boolean;
   roundType: 'league' | 'division' | 'team';
   onRoundTypeChange: (t: 'league' | 'division' | 'team') => void;
   divisionMode: 'cumulative' | 'single_season';
@@ -47,6 +48,7 @@ function getDivisionsByConference(sport: 'nba' | 'nfl'): { conference: string; d
 
 export function TopTenSettings({
   sport, onSportChange,
+  showSportToggle = true,
   roundType, onRoundTypeChange,
   divisionMode, onDivisionModeChange,
   minYear, onMinYearChange,
@@ -70,17 +72,19 @@ export function TopTenSettings({
 
   return (
     <div className="space-y-2.5">
-      <Row label="Sport">
-        <Chips>
-          <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff" onClick={() => onSportChange('nba')}>NBA</Chip>
-          <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff" onClick={() => onSportChange('nfl')}>NFL</Chip>
-        </Chips>
-      </Row>
+      {showSportToggle && (
+        <Row label="Sport">
+          <Chips>
+            <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff" onClick={() => onSportChange('nba')}>NBA</Chip>
+            <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff" onClick={() => onSportChange('nfl')}>NFL</Chip>
+          </Chips>
+        </Row>
+      )}
 
       <Row label="Round">
         <Chips>
           {(['league', 'division', 'team'] as const).map(t => (
-            <Chip key={t} active={roundType === t} onClick={() => onRoundTypeChange(t)}>
+            <Chip key={t} active={roundType === t} activeBg="#70BE5B" activeText="#000" onClick={() => onRoundTypeChange(t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </Chip>
           ))}
@@ -90,8 +94,8 @@ export function TopTenSettings({
       {roundType !== 'league' && (
         <Row label="Mode">
           <Chips>
-            <Chip active={divisionMode === 'cumulative'} onClick={() => onDivisionModeChange('cumulative')}>Cumulative</Chip>
-            <Chip active={divisionMode === 'single_season'} onClick={() => onDivisionModeChange('single_season')}>Single Season</Chip>
+            <Chip active={divisionMode === 'cumulative'} activeBg="#70BE5B" activeText="#000" onClick={() => onDivisionModeChange('cumulative')}>Cumulative</Chip>
+            <Chip active={divisionMode === 'single_season'} activeBg="#70BE5B" activeText="#000" onClick={() => onDivisionModeChange('single_season')}>Single Season</Chip>
           </Chips>
         </Row>
       )}
@@ -102,7 +106,7 @@ export function TopTenSettings({
             <select value={minYear} onChange={e => onMinYearChange(+e.target.value)} className={selectCls}>
               {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <span className="sports-font text-[9px] text-[#333]">→</span>
+            <span className="capcrunch-kicker text-[9px] text-[#333]">→</span>
             <select value={maxYear} onChange={e => onMaxYearChange(+e.target.value)} className={selectCls}>
               {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -112,7 +116,7 @@ export function TopTenSettings({
         <Row label="Window">
           <Chips>
             {[5, 10, 15, 20].map(n => (
-              <Chip key={n} active={windowYears === n} onClick={() => onWindowYearsChange(n)}>{n}y</Chip>
+              <Chip key={n} active={windowYears === n} activeBg="#70BE5B" activeText="#000" onClick={() => onWindowYearsChange(n)}>{n}y</Chip>
             ))}
           </Chips>
         </Row>
@@ -160,7 +164,7 @@ export function TopTenSettings({
         <Row label="Strikes">
           <Chips>
             {[1, 2, 3].map(n => (
-              <Chip key={n} active={maxStrikes === n} onClick={() => onMaxStrikesChange!(n)}>{n}</Chip>
+              <Chip key={n} active={maxStrikes === n} activeBg="#70BE5B" activeText="#000" onClick={() => onMaxStrikesChange!(n)}>{n}</Chip>
             ))}
           </Chips>
         </Row>
@@ -170,7 +174,7 @@ export function TopTenSettings({
         <Row label="Timer">
           <Chips>
             {[30, 45, 60, 90].map(n => (
-              <Chip key={n} active={turnTimer === n} onClick={() => onTurnTimerChange!(n)}>{n}s</Chip>
+              <Chip key={n} active={turnTimer === n} activeBg="#70BE5B" activeText="#000" onClick={() => onTurnTimerChange!(n)}>{n}s</Chip>
             ))}
           </Chips>
         </Row>

@@ -21,11 +21,10 @@ const SUSPENSE_MS = 1200;
 function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedName: string; isCorrect: boolean; playerId?: string; sport: 'nba' | 'nfl' }) {
   const [phase, setPhase] = useState<'suspense' | 'reveal'>('suspense');
 
-  // Deterministic confetti particles — avoids re-generating on each render
   const particles = useMemo(() =>
     Array.from({ length: 32 }, (_, i) => ({
       id: i,
-      color: ['#22c55e', '#d4af37', '#60a5fa', '#a78bfa', '#fb923c', '#f472b6', '#34d399', '#fbbf24'][i % 8],
+      color: ['#70BE5B', '#70BE5B', '#68BBE5', '#E2008A', '#fb923c', '#f472b6', '#34d399', '#fbbf24'][i % 8],
       xStart: ((i * 37) % 80) - 40,
       xDrift: ((i * 53) % 160) - 80,
       yHeight: 100 + (i * 17) % 120,
@@ -43,7 +42,7 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#050505]/98"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/96"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -57,11 +56,11 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="text-center px-8 py-10 bg-[#111] border border-white/10 rounded-sm max-w-xs w-full mx-6"
+            className="text-center px-8 py-10 bg-black/80 border border-white/10 max-w-xs w-full mx-6"
           >
             <motion.p
-              className="retro-title text-3xl text-white leading-tight"
-              animate={{ textShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 24px rgba(255,255,255,0.7)', '0 0 0px rgba(255,255,255,0)'] }}
+              className="capcrunch-title text-3xl text-white leading-tight"
+              animate={{ textShadow: ['0 0 0px rgba(112,190,91,0)', '0 0 24px rgba(112,190,91,0.5)', '0 0 0px rgba(112,190,91,0)'] }}
               transition={{ duration: 0.9, repeat: Infinity }}
             >
               {guessedName}
@@ -78,13 +77,11 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
             </div>
           </motion.div>
         ) : isCorrect ? (
-          // Correct — confetti burst + bounce
           <motion.div key="correct" className="relative flex items-center justify-center">
-            {/* Confetti particles */}
             {particles.map(p => (
               <motion.div
                 key={p.id}
-                className="absolute rounded-sm pointer-events-none"
+                className="absolute pointer-events-none"
                 style={{ backgroundColor: p.color, width: p.w, height: p.h }}
                 initial={{ x: p.xStart, y: 0, opacity: 1, rotate: 0 }}
                 animate={{ x: p.xStart + p.xDrift, y: -p.yHeight, opacity: [1, 1, 0], rotate: p.rotation }}
@@ -95,34 +92,33 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
               initial={{ scale: 0.88, opacity: 0 }}
               animate={{ scale: [0.88, 1.08, 0.97, 1.02, 1], opacity: 1 }}
               transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="text-center px-8 py-10 bg-emerald-950/60 border border-emerald-500/60 rounded-sm max-w-xs w-full mx-6 relative z-10"
-              style={{ boxShadow: '0 0 40px rgba(34,197,94,0.25)' }}
+              className="text-center px-8 py-10 bg-[#70BE5B]/10 border border-[#70BE5B]/50 max-w-xs w-full mx-6 relative z-10"
+              style={{ boxShadow: '0 0 40px rgba(112,190,91,0.2)' }}
             >
               <div className="flex justify-center mb-4">
                 <PlayerHeadshot
                   playerId={playerId}
                   sport={sport}
-                  className="w-20 h-20 rounded-full object-cover ring-2 ring-emerald-500/50"
+                  className="w-20 h-20 rounded-full object-cover ring-2 ring-[#70BE5B]/50"
                 />
               </div>
-              <p className="retro-title text-3xl text-emerald-300 leading-tight">{guessedName}</p>
+              <p className="capcrunch-title text-3xl text-[#70BE5B] leading-tight">{guessedName}</p>
               <motion.p
-                className="retro-title text-5xl mt-4 text-emerald-400"
+                className="capcrunch-title text-5xl mt-4 text-[#70BE5B]"
                 initial={{ opacity: 0, scale: 0.3, rotate: -20 }}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
                 transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 14 }}
-                style={{ textShadow: '0 0 24px rgba(34,197,94,0.7)' }}
+                style={{ textShadow: '0 0 24px rgba(112,190,91,0.6)' }}
               >✓</motion.p>
             </motion.div>
           </motion.div>
         ) : (
-          // Wrong — heavy thud shake, name droops, big ✗ stamps in
           <motion.div
             key="wrong"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1, x: [0, -14, 12, -10, 8, -5, 3, 0] }}
             transition={{ duration: 0.55, times: [0, 0.12, 0.26, 0.4, 0.54, 0.68, 0.84, 1] }}
-            className="text-center px-8 py-10 bg-red-950/60 border border-red-800/50 rounded-sm max-w-xs w-full mx-6"
+            className="text-center px-8 py-10 bg-red-950/60 border border-red-800/50 max-w-xs w-full mx-6"
             style={{ boxShadow: '0 0 40px rgba(185,28,28,0.3)' }}
           >
             <div className="flex justify-center mb-4">
@@ -136,21 +132,21 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
               </div>
             </div>
             <motion.p
-              className="retro-title text-3xl text-red-400 leading-tight"
+              className="capcrunch-title text-3xl text-red-400 leading-tight"
               animate={{ y: [0, 0, 2, 5, 8], opacity: [1, 1, 1, 0.85, 0.7] }}
               transition={{ duration: 1.1, delay: 0.4, ease: 'easeIn' }}
             >
               {guessedName}
             </motion.p>
             <motion.p
-              className="retro-title text-6xl mt-3 text-red-600"
+              className="capcrunch-title text-6xl mt-3 text-red-600"
               initial={{ opacity: 0, scale: 3, rotate: 15 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ delay: 0.18, duration: 0.35, ease: 'easeOut' }}
               style={{ textShadow: '0 0 28px rgba(239,68,68,0.7)' }}
             >✗</motion.p>
             <motion.p
-              className="sports-font text-[10px] text-red-500/55 tracking-[0.3em] uppercase mt-3"
+              className="capcrunch-kicker text-[10px] text-red-500/55 tracking-[0.3em] mt-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -162,7 +158,6 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
   );
 }
 
-// Returns winner IDs: primary = most correct guesses, tiebreaker = most strikes left
 function determineWinners(
   allIds: string[],
   attribution: Record<string, number>,
@@ -206,7 +201,6 @@ export function MultiplayerTopTenPage() {
   const isWritingRef      = useRef(false);
   const zeroSinceRef      = useRef<number | null>(null);
   const prevTurnIdRef     = useRef<string>('');
-  // Always-current reference so the timer effect never captures a stale advanceTurn
   const advanceTurnRef    = useRef<typeof advanceTurn>(() => Promise.resolve());
 
   useLobbySubscription(lobby?.id || null);
@@ -216,6 +210,7 @@ export function MultiplayerTopTenPage() {
     if (lobby) return;
     findLobbyByCode(code).then(result => {
       if (!result.lobby) { navigate('/'); return; }
+      if (result.lobby.status !== 'playing') { navigate(`/lobby/${code}`); return; }
       setLobby(result.lobby);
       getLobbyPlayers(result.lobby.id).then(pr => {
         if (pr.players) setPlayers(pr.players);
@@ -236,7 +231,6 @@ export function MultiplayerTopTenPage() {
   const turnTimerSecs: number                     = cs.turn_timer || 45;
   const { isDivisionRound, isTeamRound, isCumulativeRound, isSingleSeason } = parseRoundFlags(cs);
   const hintMode: boolean                         = cs.hint_mode || false;
-  // Division round shows team logos as hints; team round doesn't (team is already known)
   const showTeamHint: boolean                     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
   const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
   const turnDeadline: string | null               = cs.turn_deadline || null;
@@ -251,7 +245,6 @@ export function MultiplayerTopTenPage() {
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
   const isMyTurn        = currentTurnId === currentPlayerId;
 
-  // Players sorted by turn order (active first in turn sequence, eliminated appended)
   const playersInTurnOrder = [
     ...turnOrder.map(id => players.find(p => p.player_id === id)).filter(Boolean),
     ...players.filter(p => !turnOrder.includes(p.player_id)),
@@ -259,7 +252,6 @@ export function MultiplayerTopTenPage() {
   const catDef: StatCategoryDef | undefined = getCategoryDef(cs.sport || 'nba', categoryKey);
   const statShortLabel  = getStatShortLabel(catDef);
 
-  // Timer — active player fires immediately; host fallback after 500ms grace
   useEffect(() => {
     if (!turnDeadline) return;
 
@@ -312,8 +304,6 @@ export function MultiplayerTopTenPage() {
     hasAdvancedRef.current = false;
     if (isMyTurn) {
       setTimeout(() => inputRef.current?.focus(), 100);
-      // Flash whenever the turn switches to me — guard against initial mount (prevTurnIdRef empty)
-      // and against the same player getting consecutive turns without the ID changing.
       if (prevTurnIdRef.current && prevTurnIdRef.current !== currentTurnId) {
         setShowMyTurnFlash(true);
         const t = setTimeout(() => setShowMyTurnFlash(false), 1400);
@@ -404,7 +394,6 @@ export function MultiplayerTopTenPage() {
         await updateLobbyStatus(lobby.id, 'finished');
         setLobby({ ...lobby, career_state: newState, status: 'finished' });
       } else {
-        // If a player submitted a guess, show animation and push deadline past it
         let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string; playerId?: string } | null = null;
         let newDeadline: string;
         if (guessedName) {
@@ -505,7 +494,6 @@ export function MultiplayerTopTenPage() {
     await advanceTurn(false);
   }
 
-  // Generate a fresh round using the same settings currently in career_state
   async function generateRound() {
     const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
     return generateTopTenRound({
@@ -568,8 +556,8 @@ export function MultiplayerTopTenPage() {
 
   if (!lobby || entries.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-white/30 sports-font tracking-widest">Loading...</p>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <p className="capcrunch-kicker text-white/30 tracking-[0.3em]">Loading...</p>
       </div>
     );
   }
@@ -577,23 +565,22 @@ export function MultiplayerTopTenPage() {
   const currentTurnPlayer   = players.find(p => p.player_id === currentTurnId);
   const displayTimeLeft     = revealOverlay ? turnTimerSecs : timeLeft;
   const displayTimerFraction = revealOverlay ? 1 : displayTimeLeft / turnTimerSecs;
-  const timerColor          = displayTimerFraction > 0.5 ? '#22c55e' : displayTimerFraction > 0.25 ? '#f59e0b' : '#ef4444';
+  const timerColor          = displayTimerFraction > 0.5 ? '#70BE5B' : displayTimerFraction > 0.25 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-white/8 flex items-center gap-3 bg-black/60 relative z-20">
+      <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3 bg-black/20 relative z-20">
         <HomeButton isHost={isHost} onEndGame={handleSendToLobby} />
-        <h1 className="retro-title text-base text-[#22c55e]">Top Ten</h1>
-        <span className="sports-font text-[9px] text-white/25 tracking-[0.25em] uppercase">{sport.toUpperCase()}</span>
+        <h1 className="capcrunch-title text-base text-[#70BE5B]">Top Ten</h1>
+        <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.25em]">{sport.toUpperCase()}</span>
         <div className="ml-auto flex items-center gap-2">
-          {/* Teams reference panel — visible to all */}
           {(sport === 'nfl' || sport === 'nba') && (
             <button
               onClick={() => setShowTeamsPanel(v => !v)}
-              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
                 showTeamsPanel
-                  ? 'border-[#22c55e]/60 text-[#22c55e] bg-[#22c55e]/8'
+                  ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
@@ -603,9 +590,9 @@ export function MultiplayerTopTenPage() {
           {isHost && (
             <button
               onClick={handleToggleHint}
-              className={`px-2.5 py-1 rounded-sm sports-font text-[9px] tracking-widest uppercase border transition-colors ${
+              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
                 hintMode
-                  ? 'border-[#d4af37]/60 text-[#d4af37] bg-[#d4af37]/8'
+                  ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
@@ -615,7 +602,7 @@ export function MultiplayerTopTenPage() {
           {isHost && !isMyTurn && (
             <button
               onClick={handleSkipTurn}
-              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-yellow-500/50 hover:text-yellow-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-white/30 hover:text-white/50 px-2.5 py-1 tracking-[0.25em] transition-colors"
             >
               Skip
             </button>
@@ -623,7 +610,7 @@ export function MultiplayerTopTenPage() {
           {isHost && (
             <button
               onClick={handleSkipCategory}
-              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-blue-500/50 hover:text-blue-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-[#68BBE5]/50 hover:text-[#68BBE5] px-2.5 py-1 tracking-[0.25em] transition-colors"
             >
               Skip Cat
             </button>
@@ -631,7 +618,7 @@ export function MultiplayerTopTenPage() {
           {isHost && (
             <button
               onClick={handleForceEnd}
-              className="sports-font text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-2.5 py-1 rounded-sm tracking-widest uppercase transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-2.5 py-1 tracking-[0.25em] transition-colors"
             >
               End
             </button>
@@ -662,25 +649,26 @@ export function MultiplayerTopTenPage() {
             return (
               <div
                 key={p.player_id}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-sm border transition-colors ${
+                className={`flex items-center gap-1.5 px-2 py-1 border transition-colors ${
                   isElim   ? 'opacity-20 border-white/5 bg-transparent' :
-                  isMe     ? 'border-white/25 bg-white/5' :
+                  isCurrent ? 'border-[#70BE5B]/40 bg-[#70BE5B]/5' :
+                  isMe     ? 'border-white/20 bg-white/5' :
                              'border-white/8 bg-transparent'
                 }`}
               >
                 {isCurrent && !isElim && (
                   <motion.span
-                    className="block w-1.5 h-1.5 rounded-full bg-[#22c55e] shrink-0"
+                    className="block w-1.5 h-1.5 rounded-full bg-[#70BE5B] shrink-0"
                     animate={{ opacity: [1, 0.3, 1] }}
                     transition={{ duration: 1, repeat: Infinity }}
                   />
                 )}
-                <span className={`sports-font text-[9px] max-w-[56px] truncate ${
-                  isMe ? 'text-white' : 'text-white/40'
+                <span className={`capcrunch-kicker text-[9px] max-w-[56px] truncate ${
+                  isCurrent ? 'text-[#70BE5B]' : isMe ? 'text-white' : 'text-white/40'
                 }`}>
                   {p.player_name.split(' ')[0]}
                 </span>
-                <span className="sports-font text-[10px] tracking-tight">
+                <span className="capcrunch-title text-[10px] tracking-tight">
                   {Array.from({ length: maxStrikes }).map((_, i) => (
                     <span key={i} className={i < pStrikes ? 'text-red-400' : 'text-white/12'}>✕</span>
                   ))}
@@ -692,30 +680,30 @@ export function MultiplayerTopTenPage() {
 
         {/* Turn indicator + timer */}
         <motion.div
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
-            isMyTurn ? 'border-[#22c55e]/60 bg-[#22c55e]/10' : 'border-white/8 bg-[#0d0d0d]'
+          className={`flex items-center gap-3 px-3 py-2.5 border transition-colors ${
+            isMyTurn ? 'border-[#70BE5B]/50 bg-[#70BE5B]/6' : 'border-white/8 bg-black/30'
           }`}
           animate={isMyTurn ? {
-            boxShadow: ['0 0 0px rgba(34,197,94,0)', '0 0 18px rgba(34,197,94,0.22)', '0 0 0px rgba(34,197,94,0)'],
+            boxShadow: ['0 0 0px rgba(112,190,91,0)', '0 0 18px rgba(112,190,91,0.15)', '0 0 0px rgba(112,190,91,0)'],
           } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
           transition={isMyTurn ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
         >
           <div className="flex-1">
-            <p className={`sports-font tracking-widest uppercase mb-1 transition-all ${
-              isMyTurn ? 'text-[#22c55e] text-sm' : 'text-white/35 text-[10px]'
+            <p className={`capcrunch-kicker tracking-[0.25em] mb-1 transition-all ${
+              isMyTurn ? 'text-[#70BE5B] text-sm' : 'text-white/35 text-[10px]'
             }`}>
               {isMyTurn ? 'Your turn' : `${currentTurnPlayer?.player_name ?? '...'}'s turn`}
             </p>
-            <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+            <div className="h-1 bg-white/8 overflow-hidden">
               <motion.div
-                className="h-full rounded-full"
+                className="h-full"
                 style={{ backgroundColor: timerColor }}
                 animate={{ width: `${displayTimerFraction * 100}%` }}
                 transition={{ duration: 0.4 }}
               />
             </div>
           </div>
-          <span className="retro-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
+          <span className="capcrunch-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
         </motion.div>
 
         <FeedbackMessage feedback={feedback} />
@@ -729,11 +717,11 @@ export function MultiplayerTopTenPage() {
               onChange={e => setGuess(e.target.value)}
               placeholder="Type a player name..."
               autoComplete="off"
-              className="flex-1 bg-[#0d0d0d] border border-[#22c55e]/40 rounded-sm px-4 py-2.5 text-white sports-font text-sm focus:outline-none focus:border-[#22c55e] placeholder-white/15 transition-colors"
+              className="flex-1 bg-black/40 border border-[#70BE5B]/30 px-4 py-2.5 text-white capcrunch-kicker text-sm focus:outline-none focus:border-[#70BE5B]/60 placeholder-white/20 transition-colors"
             />
             <button
               type="submit"
-              className="px-4 py-2.5 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_3px_0_#166534] active:shadow-none active:translate-y-px rounded-sm retro-title text-sm transition-all"
+              className="capcrunch-btn-primary capcrunch-title text-sm px-4 py-2.5"
             >
               Guess
             </button>
@@ -758,12 +746,11 @@ export function MultiplayerTopTenPage() {
           ))}
         </div>
 
-        {/* Wrong guesses */}
         <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Player scoreboard */}
-        <div className="bg-[#0d0d0d] border border-white/8 rounded-sm p-3">
-          <p className="sports-font text-[9px] text-white/25 tracking-widest uppercase mb-2">Players</p>
+        <div className="capcrunch-panel p-3">
+          <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em] mb-2">Players</p>
           <div className="space-y-1">
             {playersInTurnOrder.map(p => {
               const strikes   = playerStrikes[p.player_id] || 0;
@@ -774,14 +761,14 @@ export function MultiplayerTopTenPage() {
               return (
                 <div
                   key={p.player_id}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded-sm transition-colors ${
-                    isElim ? 'opacity-25' : isCurrent ? 'bg-[#22c55e]/10' : ''
+                  className={`flex items-center gap-2 px-2 py-1.5 transition-colors ${
+                    isElim ? 'opacity-25' : isCurrent ? 'bg-[#70BE5B]/6' : ''
                   }`}
                 >
                   <div className="w-3 h-3 shrink-0 flex items-center justify-center">
                     {isCurrent ? (
                       <motion.span
-                        className="block w-2.5 h-2.5 rounded-full bg-[#22c55e]"
+                        className="block w-2.5 h-2.5 rounded-full bg-[#70BE5B]"
                         animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
                         transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
                       />
@@ -789,17 +776,17 @@ export function MultiplayerTopTenPage() {
                       <span className="block w-1.5 h-1.5 rounded-full bg-white/10" />
                     )}
                   </div>
-                  <span className={`sports-font text-sm flex-1 truncate ${
-                    isCurrent ? 'text-[#22c55e]' : isMe ? 'text-white' : 'text-white/50'
+                  <span className={`capcrunch-kicker text-sm flex-1 truncate ${
+                    isCurrent ? 'text-[#70BE5B]' : isMe ? 'text-white' : 'text-white/50'
                   }`}>
                     {p.player_name}{isElim ? ' ✕' : ''}
                   </span>
-                  <span className="sports-font text-[10px] text-white/25">
+                  <span className="capcrunch-title text-[10px]">
                     {Array.from({ length: maxStrikes }).map((_, i) => (
-                      <span key={i} className={i < strikes ? 'text-red-400' : 'opacity-20'}>✕</span>
+                      <span key={i} className={i < strikes ? 'text-red-400' : 'text-white/12 opacity-20'}>✕</span>
                     ))}
                   </span>
-                  <span className="sports-font text-[10px] text-emerald-400 w-8 text-right tabular-nums">{guesses} pts</span>
+                  <span className="capcrunch-kicker text-[10px] text-[#70BE5B] w-8 text-right tabular-nums">{guesses} pts</span>
                 </div>
               );
             })}
@@ -829,10 +816,10 @@ export function MultiplayerTopTenPage() {
             transition={{ duration: 0.22 }}
           >
             <div
-              className="px-5 py-2 rounded-sm retro-title text-base text-black"
+              className="px-5 py-2 capcrunch-title text-base text-black"
               style={{
-                background: '#22c55e',
-                boxShadow: '0 0 24px rgba(34,197,94,0.55), 0 3px 0 #166534',
+                background: '#70BE5B',
+                boxShadow: '0 0 24px rgba(112,190,91,0.55), 0 3px 0 rgba(70,130,55,0.8)',
               }}
             >
               YOUR TURN

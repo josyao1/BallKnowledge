@@ -46,13 +46,13 @@ export function RosterSettings({
             onClick={() => onSportChange('nba')}>NBA</Chip>
           <Chip active={!randomSport && sport === 'nfl'} activeBg="#013369" activeText="#fff"
             onClick={() => onSportChange('nfl')}>NFL</Chip>
-          <Chip active={randomSport} activeBg="#d4af37" activeText="#000"
+          <Chip active={randomSport} activeBg="#FDF100" activeText="#000"
             onClick={() => onSportChange('random')}>?</Chip>
         </Chips>
       </Row>
 
       {randomSport ? (
-        <p className="sports-font text-[9px] text-[#444] tracking-wider pl-[68px]">
+        <p className="capcrunch-kicker text-[9px] text-[#444] tracking-wider pl-[68px]">
           Sport + team randomised each round
         </p>
       ) : (
@@ -79,7 +79,7 @@ export function RosterSettings({
                 <select value={minYear} onChange={e => onMinYearChange(+e.target.value)} className={selectCls}>
                   {YEAR_RANGE.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
-                <span className="sports-font text-[9px] text-[#333]">→</span>
+                <span className="capcrunch-kicker text-[9px] text-[#333]">→</span>
                 <select value={maxYear} onChange={e => onMaxYearChange(+e.target.value)} className={selectCls}>
                   {YEAR_RANGE.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>

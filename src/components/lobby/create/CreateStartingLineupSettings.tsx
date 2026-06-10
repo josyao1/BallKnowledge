@@ -18,7 +18,7 @@ export function CreateStartingLineupSettings({ winTarget, onWinTargetChange }: P
       exit={{ opacity: 0, height: 0 }}
       className="bg-black/50 border border-[#16a34a]/30 rounded-sm p-4"
     >
-      <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+      <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
         Win Target
       </div>
       <div className="flex gap-2 justify-center">
@@ -26,7 +26,7 @@ export function CreateStartingLineupSettings({ winTarget, onWinTargetChange }: P
           <button
             key={n}
             onClick={() => onWinTargetChange(n)}
-            className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+            className={`px-6 py-2 rounded-sm capcrunch-kicker tracking-wider transition-all ${
               winTarget === n
                 ? 'bg-[#16a34a] text-white shadow-lg font-bold'
                 : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
@@ -36,7 +36,7 @@ export function CreateStartingLineupSettings({ winTarget, onWinTargetChange }: P
           </button>
         ))}
       </div>
-      <div className="text-center text-white/30 text-[10px] sports-font tracking-wider mt-2">
+      <div className="text-center text-white/30 text-[10px] capcrunch-kicker tracking-wider mt-2">
         First player to {winTarget} pts takes the match
       </div>
     </motion.div>

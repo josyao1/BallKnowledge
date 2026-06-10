@@ -186,7 +186,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               <span style={{ fontSize: 'clamp(48px, 14vw, 72px)', lineHeight: 1, display: 'block' }}>
                 {emote.emoji}
               </span>
-              <span className="sports-font text-white text-[11px] mt-1.5 bg-black/75 px-2.5 py-0.5 rounded-full whitespace-nowrap max-w-[100px] truncate block text-center">
+              <span className="capcrunch-kicker text-white text-[11px] mt-1.5 bg-black/75 px-2.5 py-0.5 rounded-full whitespace-nowrap max-w-[100px] truncate block text-center">
                 {emote.senderName}
               </span>
             </motion.div>
@@ -217,7 +217,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
             maxWidth: 'min(260px, 70vw)',
           }}
         >
-          <p className={`sports-font text-[9px] tracking-widest uppercase leading-none mb-1 ${msg.isOwn ? 'text-white/50' : 'text-[#d4af37]/70'}`}>
+          <p className={`capcrunch-kicker text-[9px] tracking-widest uppercase leading-none mb-1 ${msg.isOwn ? 'text-white/50' : 'text-[#d4af37]/70'}`}>
             {msg.senderName}
           </p>
           <p className="text-white text-sm leading-snug break-words">{msg.text}</p>
@@ -283,7 +283,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               <button
                 onClick={sendChat}
                 disabled={!chatText.trim() || chatCooldown}
-                className="h-9 px-3 rounded-lg bg-white/15 text-white text-xs sports-font tracking-wider disabled:opacity-30 hover:bg-white/25 transition-colors"
+                className="h-9 px-3 rounded-lg bg-white/15 text-white text-xs capcrunch-kicker tracking-wider disabled:opacity-30 hover:bg-white/25 transition-colors"
               >
                 send
               </button>

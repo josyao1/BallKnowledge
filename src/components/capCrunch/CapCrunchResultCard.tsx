@@ -83,35 +83,35 @@ export function CapCrunchResultCard({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: reverseDelay, type: 'spring', stiffness: 300, damping: 26 }}
-      className={`bg-black/60 rounded p-4 border-2 ${isWinner ? 'border-[#d4af37]/70 shadow-[0_0_24px_rgba(212,175,55,0.2)]' : 'border-white/10'}`}
+      className={`capcrunch-panel p-4 ${isWinner ? 'border-[#FDF100]/70 shadow-[0_0_24px_rgba(253,241,0,0.18)]' : 'border-white/10'}`}
     >
       {/* Header row */}
       <div className="flex justify-between items-start mb-3 gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             {isWinner && (
-              <span className="sports-font text-[8px] bg-[#d4af37] text-black px-1.5 py-0.5 rounded-sm font-bold tracking-widest uppercase shrink-0">Winner</span>
+              <span className="capcrunch-kicker text-[8px] bg-[#FDF100] text-black px-1.5 py-0.5 font-bold shrink-0">Winner</span>
             )}
             <p className="font-semibold text-white text-lg truncate">
               {idx + 1}. {item.player_name}
             </p>
           </div>
           {(item.lineup.bustCount ?? 0) > 0 && (
-            <span className="text-[9px] sports-font text-red-400/70">{item.lineup.bustCount} bust{item.lineup.bustCount !== 1 ? 's' : ''} (each counted as 0)</span>
+            <span className="text-[9px] capcrunch-kicker text-red-400/70">{item.lineup.bustCount} bust{item.lineup.bustCount !== 1 ? 's' : ''} (each counted as 0)</span>
           )}
           {tiebreakerUsed && tiedOnBusts && !tiedOnUnique && idx <= 1 && (
-            <span className="block text-[9px] sports-font text-[#d4af37]/60">{myUniqueCount} unique pick{myUniqueCount !== 1 ? 's' : ''}</span>
+            <span className="block text-[9px] capcrunch-kicker text-[#d4af37]/60">{myUniqueCount} unique pick{myUniqueCount !== 1 ? 's' : ''}</span>
           )}
           {tiebreakerUsed && tiedOnUnique && idx <= 1 && (
-            <span className="block text-[9px] sports-font text-[#d4af37]/60">avg yr {myAvgYear.toFixed(1)}</span>
+            <span className="block text-[9px] capcrunch-kicker text-[#d4af37]/60">avg yr {myAvgYear.toFixed(1)}</span>
           )}
         </div>
         <div className="text-right shrink-0">
           <RevealingScore
             value={fmt(item.lineup.totalStat)}
             delay={scoreDelay}
-            className="retro-title text-3xl"
-            color={isWinner ? '#d4af37' : '#ffffff'}
+            className="capcrunch-title text-3xl"
+            color={isWinner ? '#FDF100' : '#ffffff'}
           />
           <p className="text-xs text-white/40">
             {fmt(Math.abs(item.lineup.totalStat - targetCap))} away
@@ -149,7 +149,7 @@ export function CapCrunchResultCard({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1">
                     <span className={`truncate ${isBad ? 'text-red-400' : ''}`}>{pidx + 1}. {selected.playerName}</span>
-                    {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 rounded shrink-0">{badLabel}</span>}
+                    {isBad && <span className="text-[7px] bg-red-600 text-white px-0.5 shrink-0">{badLabel}</span>}
                   </div>
                   <span className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}>({selected.selectedYear}, {formatPickTeam(selected.team)})</span>
                   {isBust && <span className="block text-[10px] text-red-400/60">busted by {fmt(totalBefore + selected.statValue - targetCap)}</span>}
@@ -177,7 +177,7 @@ export function CapCrunchResultCard({
         if (validTotal === 0) return null;
         return (
           <div className="mb-3 pb-3 border-b border-white/10">
-            <div className="sports-font text-[7px] text-white/25 tracking-widest uppercase mb-1.5">Cap usage</div>
+            <div className="capcrunch-kicker text-[7px] text-white/25 tracking-widest uppercase mb-1.5">Cap usage</div>
             <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden flex gap-px">
               {item.lineup.selectedPlayers.map((p, i) => {
                 const pct = p.isBust || p.neverOnTeam ? 0 : Math.min((p.statValue / targetCap) * 100, 100);
@@ -200,7 +200,7 @@ export function CapCrunchResultCard({
                     className="w-1.5 h-1.5 rounded-sm shrink-0"
                     style={{ backgroundColor: PICK_COLORS[i % PICK_COLORS.length], opacity: p.isBust || p.neverOnTeam ? 0.25 : 1 }}
                   />
-                  <span className="sports-font text-[8px] text-white/35 truncate max-w-[52px]">
+                  <span className="capcrunch-kicker text-[8px] text-white/35 truncate max-w-[52px]">
                     {p.playerName.split(' ').slice(-1)[0]}
                   </span>
                 </div>
@@ -218,8 +218,8 @@ export function CapCrunchResultCard({
           : parseFloat((item.lineup.totalStat - lastPick.statValue).toFixed(1));
         const wouldFinishAt = parseFloat((totalBeforeLast + opt!.statValue).toFixed(1));
         return (
-          <div className="mt-2 bg-black/40 border border-[#d4af37]/25 rounded px-3 py-2">
-            <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-1">Optimal Last Pick</div>
+          <div className="mt-2 bg-black/40 border border-[#d4af37]/25 px-3 py-2">
+            <div className="capcrunch-kicker text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-1">Optimal Last Pick</div>
             <div className="flex justify-between items-center gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
                 <PlayerHeadshot playerId={opt!.playerId} sport={sport} className="w-6 h-6 rounded-full object-cover shrink-0" />

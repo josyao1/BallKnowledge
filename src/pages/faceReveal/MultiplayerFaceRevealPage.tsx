@@ -142,6 +142,9 @@ export function MultiplayerFaceRevealPage() {
 
     findLobbyByCode(code).then(result => {
       if (!result.lobby) { navigate('/'); return; }
+      // Only redirect for non-playing states when the game hasn't started yet.
+      // 'waiting' between rounds is valid for FaceReveal (interstitial screen).
+      if (result.lobby.status === 'finished') { navigate(`/lobby/${code}/face-reveal/results`); return; }
       setLobby(result.lobby);
       getLobbyPlayers(result.lobby.id).then(pr => {
         if (pr.players) setPlayers(pr.players);
@@ -556,8 +559,8 @@ export function MultiplayerFaceRevealPage() {
   // ── Render guard ──
   if (!lobby || !careerState) {
     return (
-      <div className="min-h-screen bg-[#111] flex items-center justify-center">
-        <div className="text-white/50 sports-font">Loading...</div>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <div className="text-white/50 capcrunch-kicker">Loading...</div>
       </div>
     );
   }
@@ -594,17 +597,17 @@ export function MultiplayerFaceRevealPage() {
       .map(t => new Date(t).getTime());
     const interFirstMs = interFinisherMs.length > 0 ? Math.min(...interFinisherMs) : null;
     return (
-      <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+      <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
           <div>
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
-            <h1 className="retro-title text-2xl text-[var(--vintage-cream)]">
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <h1 className="capcrunch-title text-2xl text-white">
               Round {summary?.round ?? careerState.round}
             </h1>
           </div>
           <div className="text-right">
-            <div className="sports-font text-[8px] text-[#888] tracking-widest">FIRST TO</div>
-            <div className="retro-title text-2xl" style={{ color: COLOR }}>{winTarget} pts</div>
+            <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">FIRST TO</div>
+            <div className="capcrunch-title text-2xl" style={{ color: COLOR }}>{winTarget} pts</div>
           </div>
         </header>
 
@@ -613,11 +616,11 @@ export function MultiplayerFaceRevealPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 p-6 bg-[#1a1a1a] border-2 rounded-lg text-center space-y-3"
+            className="mb-6 p-6 bg-black/40 border-2 text-center space-y-3"
             style={{ borderColor: `${COLOR}50` }}
           >
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase">The Answer Was</div>
-            <div className="retro-title text-3xl text-[#d4af37]">{summary.playerName}</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">The Answer Was</div>
+            <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.playerName}</div>
             <div className="flex justify-center">
               <ZoomedHeadshot playerId={summary.playerId} sport={careerState.sport} zoomLevel={0} size={200} className="rounded-xl" />
             </div>
@@ -629,9 +632,9 @@ export function MultiplayerFaceRevealPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+          className="mb-6 bg-black/40 border border-white/10 p-4"
         >
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
             This Round
           </div>
           <div className="space-y-2">
@@ -654,10 +657,10 @@ export function MultiplayerFaceRevealPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-xl w-8 text-center">{badge}</span>
                     <div>
-                      <span className="sports-font text-sm text-white/80">{player.player_name}</span>
-                      {isMe && <span className="text-[10px] text-white/40 sports-font ml-1">(you)</span>}
+                      <span className="capcrunch-kicker text-sm text-white/80">{player.player_name}</span>
+                      {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">(you)</span>}
                       {offsetMs !== null && offsetMs > 0 && (
-                        <span className="sports-font text-[9px] text-[#d4af37] ml-1.5">
+                        <span className="capcrunch-kicker text-[9px] text-[#d4af37] ml-1.5">
                           +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
                         </span>
                       )}
@@ -665,14 +668,14 @@ export function MultiplayerFaceRevealPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className="sports-font text-[8px] text-[#888] tracking-wider">RND</div>
-                      <div className={`retro-title text-lg ${pts > 0 ? 'text-[#d4af37]' : 'text-[#555]'}`}>
+                      <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">RND</div>
+                      <div className={`capcrunch-title text-lg ${pts > 0 ? 'text-[#d4af37]' : 'text-[#555]'}`}>
                         {pts > 0 ? `+${pts}` : '—'}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="sports-font text-[8px] text-[#888] tracking-wider">TOTAL</div>
-                      <div className="retro-title text-lg" style={{ color: COLOR }}>{player.points ?? 0}</div>
+                      <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">TOTAL</div>
+                      <div className="capcrunch-title text-lg" style={{ color: COLOR }}>{player.points ?? 0}</div>
                     </div>
                   </div>
                 </div>
@@ -686,9 +689,9 @@ export function MultiplayerFaceRevealPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-lg p-4"
+          className="mb-6 bg-black/40 border border-white/10 p-4"
         >
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase text-center">
             Race to {winTarget} pts
           </div>
           <div className="space-y-3">
@@ -699,10 +702,10 @@ export function MultiplayerFaceRevealPage() {
               return (
                 <div key={player.player_id}>
                   <div className="flex justify-between mb-1">
-                    <span className={`sports-font text-xs ${isMe ? 'text-white' : 'text-white/60'}`}>
+                    <span className={`capcrunch-kicker text-xs ${isMe ? 'text-white' : 'text-white/60'}`}>
                       {player.player_name}{isMe ? ' (you)' : ''}
                     </span>
-                    <span className="retro-title text-sm" style={{ color: COLOR }}>{pts}</span>
+                    <span className="capcrunch-title text-sm" style={{ color: COLOR }}>{pts}</span>
                   </div>
                   <div className="h-2 bg-[#222] rounded-full overflow-hidden">
                     <motion.div
@@ -723,12 +726,12 @@ export function MultiplayerFaceRevealPage() {
           <button
             onClick={handleNextRound}
             disabled={isLoadingNext}
-            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="capcrunch-btn-primary w-full py-4 capcrunch-title text-xl disabled:opacity-50"
           >
             {isLoadingNext ? 'Loading...' : 'Next Round'}
           </button>
         ) : (
-          <div className="text-center text-white/30 sports-font text-sm tracking-wider">
+          <div className="text-center text-white/30 capcrunch-kicker text-sm tracking-wider">
             Waiting for host to start next round...
           </div>
         )}
@@ -738,33 +741,33 @@ export function MultiplayerFaceRevealPage() {
 
   // ── GAMEPLAY ──
   return (
-    <div className="fixed inset-0 bg-[#111] text-white flex flex-col overflow-hidden">
+    <div className="fixed inset-0 home-chalkboard text-white flex flex-col overflow-hidden">
       <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={myPlayerName} />
 
       {/* Pinned top */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 bg-[#111]">
+      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 home-chalkboard">
         {/* Round / done badge row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider text-[#111]" style={{ backgroundColor: COLOR }}>
+            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider text-[#111]" style={{ backgroundColor: COLOR }}>
               FACE REVEAL
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] sports-font tracking-wider bg-[#1a1a1a] text-[#888]">
+            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider bg-black/40 text-[#888]">
               Round {careerState.round}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
-            <div className="bg-[#1a1a1a] border border-[#3d3d3d] rounded-lg px-3 py-1 text-center">
-              <div className="sports-font text-[8px] text-[#888] tracking-widest">DONE</div>
-              <div className="retro-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
+            <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-1 text-center">
+              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">DONE</div>
+              <div className="capcrunch-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
             </div>
           </div>
         </div>
 
         {/* Zoom level info + countdown */}
         <div className="flex items-center justify-between mb-2">
-          <div className="sports-font text-[9px] text-[#888] tracking-widest uppercase">
+          <div className="capcrunch-kicker text-[9px] text-[#888] tracking-widest uppercase">
             Zoom {displayZoom}/4
           </div>
           <div className="flex items-center gap-2">
@@ -777,7 +780,7 @@ export function MultiplayerFaceRevealPage() {
                 }}
               />
             </div>
-            <span className="sports-font text-[10px] tabular-nums" style={{ color: color }}>
+            <span className="capcrunch-kicker text-[10px] tabular-nums" style={{ color: color }}>
               {countdown}s
             </span>
           </div>
@@ -808,9 +811,9 @@ export function MultiplayerFaceRevealPage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center justify-center gap-4 px-4 py-2.5 rounded-lg border"
-              style={{ width: 320, backgroundColor: '#1a1a1a', borderColor: `${COLOR}30` }}
+              style={{ width: 320, borderColor: `${COLOR}30` }}
             >
-              <div className="retro-title text-4xl tracking-widest" style={{ color: COLOR }}>
+              <div className="capcrunch-title text-4xl tracking-widest" style={{ color: COLOR }}>
                 {getInitials(careerState.player_name)}
               </div>
               {careerState.longest_team && (
@@ -818,7 +821,7 @@ export function MultiplayerFaceRevealPage() {
                   <div className="w-px self-stretch bg-[#333]" />
                   <div className="flex flex-col items-center gap-1">
                     <TeamLogo sport={careerState.sport} abbr={careerState.longest_team} size={48} />
-                    <div className="sports-font text-[8px] text-[#555] tracking-[0.2em] uppercase">
+                    <div className="capcrunch-kicker text-[8px] text-[#555] tracking-[0.2em] uppercase">
                       Longest Team
                     </div>
                   </div>
@@ -839,7 +842,7 @@ export function MultiplayerFaceRevealPage() {
             const isMe = player.player_id === currentPlayerId;
             return (
               <div key={player.player_id} className="flex items-center gap-2">
-                <span className={`sports-font text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
+                <span className={`capcrunch-kicker text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
                   {player.player_name}
                 </span>
                 <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
@@ -850,7 +853,7 @@ export function MultiplayerFaceRevealPage() {
                     style={{ background: `linear-gradient(to right, ${COLOR}, #67e8f9)` }}
                   />
                 </div>
-                <span className="retro-title text-sm w-8 text-right flex-shrink-0" style={{ color: COLOR }}>{pts}</span>
+                <span className="capcrunch-title text-sm w-8 text-right flex-shrink-0" style={{ color: COLOR }}>{pts}</span>
               </div>
             );
           })}
@@ -865,12 +868,12 @@ export function MultiplayerFaceRevealPage() {
             return (
               <div
                 key={player.player_id}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border sports-font text-xs ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border capcrunch-kicker text-xs ${
                   gotIt
                     ? 'bg-green-900/20 border-green-700/40 text-green-300'
                     : finished
                     ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                    : 'bg-[#1a1a1a] border-[#333] text-white/60'
+                    : 'bg-black/40 border-white/10 text-white/60'
                 }`}
               >
                 <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
@@ -893,20 +896,20 @@ export function MultiplayerFaceRevealPage() {
               exit={{ opacity: 0 }}
               className="flex items-center gap-2 px-3 py-2 bg-[#06b6d4]/10 border border-[#06b6d4]/30 rounded-lg"
             >
-              <span className="sports-font text-[10px] text-[#06b6d4]/70 tracking-wider flex-shrink-0">
+              <span className="capcrunch-kicker text-[10px] text-[#06b6d4]/70 tracking-wider flex-shrink-0">
                 SKIP ZOOM
               </span>
               <div className="flex flex-wrap gap-1 flex-1">
                 {votedPlayers.map(p => (
                   <span
                     key={p.player_id}
-                    className="px-1.5 py-0.5 rounded bg-[#06b6d4]/20 sports-font text-[10px] text-[#06b6d4]"
+                    className="px-1.5 py-0.5 rounded bg-[#06b6d4]/20 capcrunch-kicker text-[10px] text-[#06b6d4]"
                   >
                     {p.player_name}
                   </span>
                 ))}
               </div>
-              <span className="sports-font text-[10px] text-[#555] flex-shrink-0">
+              <span className="capcrunch-kicker text-[10px] text-[#555] flex-shrink-0">
                 {votedPlayers.length}/{eligibleForSkip.length}
               </span>
             </motion.div>
@@ -920,7 +923,7 @@ export function MultiplayerFaceRevealPage() {
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className={`text-center sports-font text-sm ${feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'}`}
+              className={`text-center capcrunch-kicker text-sm ${feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'}`}
             >
               {feedbackMsg}
             </motion.div>
@@ -933,9 +936,9 @@ export function MultiplayerFaceRevealPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-4 rounded-lg text-center bg-[#1a1a1a] border border-[#333]"
+              className="p-4 text-center bg-black/40 border border-white/10"
             >
-              <div className="sports-font text-sm text-[#888]">
+              <div className="capcrunch-kicker text-sm text-[#888]">
                 {iGotIt ? (() => {
                   const base = zoomToPoints(myRow?.score || 0);
                   const total = base + (isFirstCorrect ? 1 : 0);
@@ -949,7 +952,7 @@ export function MultiplayerFaceRevealPage() {
 
       {/* Pinned bottom — input */}
       {!localDone && (
-        <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 bg-[#111] space-y-2">
+        <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 home-chalkboard space-y-2">
           <div className="flex gap-2">
             <div className="relative flex-1">
             <input
@@ -966,7 +969,7 @@ export function MultiplayerFaceRevealPage() {
                 if (e.key === 'Escape') setSuggestions([]);
               }}
               placeholder="Type the player's name..."
-              className="w-full bg-[#1a1a1a] border-2 rounded-lg px-4 py-3 sports-font text-sm text-[var(--vintage-cream)] placeholder-[#555] focus:outline-none"
+              className="w-full bg-black/40 border border-white/10 px-4 py-3 capcrunch-kicker text-sm text-white placeholder-white/30 focus:outline-none"
               style={{ borderColor: `${COLOR}60` }}
               onFocus={e => (e.currentTarget.style.borderColor = COLOR)}
               onBlur={e => {
@@ -975,7 +978,7 @@ export function MultiplayerFaceRevealPage() {
               }}
             />
             {suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 bottom-full mb-1 z-20 bg-[#1a1a1a] border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
+              <div className="absolute left-0 right-0 bottom-full mb-1 z-20 bg-black/40 border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
                 {suggestions.map(s => (
                   <button
                     key={s.player_id}
@@ -983,7 +986,7 @@ export function MultiplayerFaceRevealPage() {
                       e.preventDefault();
                       handleGuess(s.player_name);
                     }}
-                    className="w-full text-left px-4 py-2.5 sports-font text-sm text-[var(--vintage-cream)] hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
+                    className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
                   >
                     {s.player_name}
                   </button>
@@ -994,7 +997,7 @@ export function MultiplayerFaceRevealPage() {
             <button
               onClick={() => handleGuess()}
               disabled={!guessInput.trim()}
-              className="px-6 py-3 rounded-lg sports-font text-sm text-[#111] disabled:opacity-50 transition-all"
+              className="px-6 py-3 capcrunch-kicker text-sm text-black disabled:opacity-50 transition-all"
               style={{ backgroundColor: COLOR }}
             >
               Guess
@@ -1005,14 +1008,14 @@ export function MultiplayerFaceRevealPage() {
               <button
                 onClick={handleSkipZoom}
                 disabled={iHaveVoted}
-                className="flex-1 py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 transition-all disabled:opacity-40 disabled:cursor-default border-[#3a3a3a] text-[#888] hover:border-[#06b6d4]/50 hover:text-[#06b6d4] disabled:hover:border-[#3a3a3a] disabled:hover:text-[#888]"
+                className="flex-1 py-2 capcrunch-kicker text-xs bg-black/40 border border-white/10 text-white/40 transition-all disabled:opacity-40 disabled:cursor-default hover:border-[#06b6d4]/50 hover:text-[#06b6d4] disabled:hover:border-white/10 disabled:hover:text-white/40"
               >
                 {iHaveVoted ? 'Voted ✓' : 'Skip zoom →'}
               </button>
             )}
             <button
               onClick={handleGiveUp}
-              className={`py-2 rounded-lg sports-font text-xs bg-[#1a1a1a] border-2 border-red-900/50 text-red-400 hover:border-red-700 transition-all ${displayZoom < 4 ? 'flex-1' : 'w-full'}`}
+              className={`py-2 capcrunch-kicker text-xs bg-black/40 border border-red-900/50 text-red-400 hover:border-red-700 transition-all ${displayZoom < 4 ? 'flex-1' : 'w-full'}`}
             >
               Give Up
             </button>

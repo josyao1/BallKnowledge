@@ -11,17 +11,17 @@ interface LeaderboardTableProps {
 export function LeaderboardTable({ entries, highlightUserId, showTeam = true }: LeaderboardTableProps) {
   if (entries.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-8">
+      <div className="text-center text-white/40 capcrunch-kicker py-8">
         No scores yet. Be the first!
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-700">
+    <div className="overflow-hidden border border-white/10">
       <table className="w-full">
         <thead>
-          <tr className="bg-gray-800 text-gray-400 text-sm">
+          <tr className="bg-black/40 text-white/40 capcrunch-kicker text-[10px] tracking-widest uppercase text-sm">
             <th className="px-4 py-3 text-left w-12">#</th>
             <th className="px-4 py-3 text-left">Player</th>
             {showTeam && <th className="px-4 py-3 text-left">Team</th>}
@@ -40,22 +40,22 @@ export function LeaderboardTable({ entries, highlightUserId, showTeam = true }: 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`border-t border-gray-700 ${
-                  isHighlighted ? 'bg-indigo-900/30' : 'hover:bg-gray-800/50'
+                className={`border-t border-white/5 ${
+                  isHighlighted ? 'bg-[#d4af37]/10' : 'hover:bg-white/5'
                 }`}
               >
                 <td className="px-4 py-3">
-                  <span className={`font-bold ${
-                    entry.rank === 1 ? 'text-yellow-400' :
-                    entry.rank === 2 ? 'text-gray-300' :
+                  <span className={`capcrunch-title font-bold ${
+                    entry.rank === 1 ? 'text-[#d4af37]' :
+                    entry.rank === 2 ? 'text-white/60' :
                     entry.rank === 3 ? 'text-amber-600' :
-                    'text-gray-500'
+                    'text-white/30'
                   }`}>
                     {entry.rank}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-white">
+                  <span className="capcrunch-kicker text-white">
                     {entry.username || 'Anonymous'}
                   </span>
                 </td>
@@ -66,16 +66,16 @@ export function LeaderboardTable({ entries, highlightUserId, showTeam = true }: 
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: team?.colors.primary || '#666' }}
                       />
-                      <span className="text-gray-300">
+                      <span className="capcrunch-kicker text-white/60">
                         {entry.team_abbreviation} {entry.season}
                       </span>
                     </div>
                   </td>
                 )}
-                <td className="px-4 py-3 text-right font-mono text-white">
+                <td className="px-4 py-3 text-right capcrunch-title text-white">
                   {entry.score}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-gray-400">
+                <td className="px-4 py-3 text-right capcrunch-kicker text-white/40">
                   {Math.round(entry.percentage)}%
                 </td>
               </motion.tr>
