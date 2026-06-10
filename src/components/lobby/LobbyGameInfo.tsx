@@ -199,7 +199,7 @@ export function LobbyGameInfo({ lobby, players, isHost, onToggleSettings }: Prop
                   key={player.player_id}
                   className="flex items-center gap-2 px-3 py-2 bg-black/30 border border-white/10 min-w-0"
                 >
-                  <span className="sports-font text-sm text-white/80 truncate">{player.player_name}</span>
+                  <span className="capcrunch-kicker text-sm text-white/80 truncate">{player.player_name}</span>
                   <span className="capcrunch-title text-lg text-[#FDF100]">{player.wins ?? 0}</span>
                 </div>
               ))}

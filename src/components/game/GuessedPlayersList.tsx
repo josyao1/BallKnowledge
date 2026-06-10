@@ -29,7 +29,7 @@ export function GuessedPlayersList({
   hideResults = false,
   uniqueGuessNames,
 }: GuessedPlayersListProps) {
-  const chipBase = "px-3 py-1.5 sports-font text-[11px] font-bold uppercase tracking-wider";
+  const chipBase = "px-3 py-1.5 capcrunch-kicker text-[11px] font-bold uppercase tracking-wider";
 
   // Hidden results mode: show all guesses in neutral state
   if (hideResults) {

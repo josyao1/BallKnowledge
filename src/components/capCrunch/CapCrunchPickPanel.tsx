@@ -92,7 +92,7 @@ export function CapCrunchPickPanel({
           <p className="text-2xl text-[#70BE5B] capcrunch-title">All Picks In!</p>
           <p className="text-white/50 capcrunch-body text-sm">You've made all {totalRounds} picks. Sit tight while others finish.</p>
           {(myLineup.bustCount ?? 0) > 0 && (
-            <p className="text-red-400/70 sports-font text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
+            <p className="text-red-400/70 capcrunch-kicker text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
           )}
           {waitingFor.length > 0 && isHost && onHostSkipPlayer && (
             <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs mt-2">
@@ -105,7 +105,7 @@ export function CapCrunchPickPanel({
                   </div>
                   <button
                     onClick={() => onHostSkipPlayer(p.player_id)}
-                    className="text-[10px] sports-font tracking-wider text-orange-400/60 hover:text-orange-400 transition-colors shrink-0"
+                    className="text-[10px] capcrunch-kicker tracking-wider text-orange-400/60 hover:text-orange-400 transition-colors shrink-0"
                   >
                     skip
                   </button>
@@ -168,7 +168,7 @@ export function CapCrunchPickPanel({
               />
               {loading && <p className="text-white/60 text-sm">Loading...</p>}
               {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
+                <p className="text-white/30 text-[9px] capcrunch-kicker mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
               )}
               {duplicateError && (
                 <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
@@ -185,7 +185,7 @@ export function CapCrunchPickPanel({
                         onClick={() => onSelectPlayer(result)}
                         className={`w-full text-left px-4 py-3 rounded border transition text-sm font-semibold ${
                           disabled
-                            ? 'bg-[#111] border-white/5 text-white/25 cursor-not-allowed line-through'
+                            ? 'bg-black/40 border-white/5 text-white/25 cursor-not-allowed line-through'
                             : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 text-white'
                         }`}
                       >
@@ -264,7 +264,7 @@ export function CapCrunchPickPanel({
               </div>
               <div className="flex items-baseline justify-between">
                 <label className="capcrunch-kicker text-[9px] text-white/60">Select a year</label>
-                {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] sports-font">through 2025</span>}
+                {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] capcrunch-kicker">through 2025</span>}
               </div>
               {loadingYears ? (
                 <p className="text-white/60 text-sm">Loading years...</p>
@@ -318,7 +318,7 @@ export function CapCrunchPickPanel({
               {isHost && currentPickerId && onHostSkipPlayer && (
                 <button
                   onClick={() => onHostSkipPlayer(currentPickerId)}
-                  className="mt-1 px-3 py-1 text-[11px] sports-font tracking-wider uppercase text-orange-400/70 border border-orange-400/30 rounded hover:text-orange-400 hover:border-orange-400/60 transition-colors"
+                  className="mt-1 px-3 py-1 text-[11px] capcrunch-kicker tracking-wider uppercase text-orange-400/70 border border-orange-400/30 rounded hover:text-orange-400 hover:border-orange-400/60 transition-colors"
                 >
                   Skip {players.find(p => p.player_id === currentPickerId)?.player_name ?? 'Player'}'s turn
                 </button>
@@ -342,7 +342,7 @@ export function CapCrunchPickPanel({
                   {isHost && onHostSkipPlayer && (
                     <button
                       onClick={() => onHostSkipPlayer(p.player_id)}
-                      className="text-[10px] sports-font tracking-wider text-orange-400/60 hover:text-orange-400 transition-colors shrink-0"
+                      className="text-[10px] capcrunch-kicker tracking-wider text-orange-400/60 hover:text-orange-400 transition-colors shrink-0"
                     >
                       skip
                     </button>

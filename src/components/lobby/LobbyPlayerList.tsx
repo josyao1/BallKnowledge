@@ -119,7 +119,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                         if (e.key === 'Enter') handleConfirmRename();
                         if (e.key === 'Escape') { setRenamingPlayerId(null); setRenameValue(''); }
                       }}
-                      className="flex-1 min-w-0 w-28 px-2 py-0.5 bg-black/40 border border-[#FDF100]/60 text-white text-sm sports-font focus:outline-none"
+                      className="flex-1 min-w-0 w-28 px-2 py-0.5 bg-black/40 border border-[#FDF100]/60 text-white text-sm capcrunch-kicker focus:outline-none"
                     />
                     <button onClick={handleConfirmRename} className="text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0" title="Confirm">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,7 +196,7 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   </button>
                 )}
                 {multiplier > 1 && !isMultiplierlessMode && !isHost && (
-                  <span className="flex-shrink-0 text-[10px] text-purple-400 sports-font px-1.5 py-0.5 bg-purple-900/40 rounded">
+                  <span className="flex-shrink-0 text-[10px] text-purple-400 capcrunch-kicker px-1.5 py-0.5 bg-purple-900/40 rounded">
                     {multiplier}x
                   </span>
                 )}

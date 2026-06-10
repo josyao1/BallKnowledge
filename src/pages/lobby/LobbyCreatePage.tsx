@@ -189,7 +189,7 @@ export function LobbyCreatePage() {
             onChange={(e) => setHostName(e.target.value)}
             placeholder="Enter your name"
             maxLength={20}
-            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors sports-font"
+            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors capcrunch-kicker"
           />
         </motion.div>
 
@@ -227,7 +227,7 @@ export function LobbyCreatePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="p-3 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center sports-font"
+            className="p-3 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center capcrunch-kicker"
           >
             {error}
           </motion.div>

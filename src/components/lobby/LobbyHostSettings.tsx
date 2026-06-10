@@ -331,7 +331,7 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
                   setEditGameType(v);
                   if (v === 'box-score') { setEditBoxSport('nfl'); setEditBoxMinYear(2015); setEditBoxMaxYear(2024); setEditBoxTeam(null); }
                 }}
-                className="w-full bg-black/40 text-white/80 px-3 py-2 pr-8 border border-white/15 sports-font text-sm focus:outline-none focus:border-white/30 appearance-none cursor-pointer transition-colors hover:border-white/25"
+                className="w-full bg-black/40 text-white/80 px-3 py-2 pr-8 border border-white/15 capcrunch-kicker text-sm focus:outline-none focus:border-white/30 appearance-none cursor-pointer transition-colors hover:border-white/25"
               >
                 <option value="roster">★ Roster Challenge</option>
                 <option value="career">Career Arc</option>

@@ -40,7 +40,7 @@ function formatDate(dateStr: string): string {
 
 function ResultName({ name, guessed, correct }: { name: string; guessed: string; correct: boolean }) {
   return (
-    <div className={`flex-1 min-w-0 px-2 py-1 rounded border text-xs sports-font truncate ${
+    <div className={`flex-1 min-w-0 px-2 py-1 rounded border text-xs capcrunch-kicker truncate ${
       correct
         ? 'bg-green-900/25 border-green-700/50 text-green-400'
         : 'bg-red-900/15 border-red-900/30 text-red-400/80'
@@ -57,14 +57,14 @@ function PassingResultRow({ player, guessed }: { player: BoxScorePassingPlayer; 
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
     <div className="flex items-center gap-1.5 py-1">
-      <span className="sports-font text-[10px] text-[#3a3a3a] w-7 text-right shrink-0 tabular-nums">
+      <span className="capcrunch-kicker text-[10px] text-[#3a3a3a] w-7 text-right shrink-0 tabular-nums">
         {player.number ? `#${player.number}` : '—'}
       </span>
       <ResultName name={player.name} guessed={guessed} correct={correct} />
-      <div className="sports-font text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 130 }}>
+      <div className="capcrunch-kicker text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 130 }}>
         {player.completions}/{player.attempts} · {player.yards}yd · {player.tds}TD{player.ints > 0 ? ` · ${player.ints}INT` : ''}
       </div>
-      <div className="sports-font text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 70 }}>
+      <div className="capcrunch-kicker text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 70 }}>
         {player.yards}yd {player.tds}TD
       </div>
     </div>
@@ -75,14 +75,14 @@ function RushingResultRow({ player, guessed }: { player: BoxScoreRushingPlayer; 
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
     <div className="flex items-center gap-1.5 py-1">
-      <span className="sports-font text-[10px] text-[#3a3a3a] w-7 text-right shrink-0 tabular-nums">
+      <span className="capcrunch-kicker text-[10px] text-[#3a3a3a] w-7 text-right shrink-0 tabular-nums">
         {player.number ? `#${player.number}` : '—'}
       </span>
       <ResultName name={player.name} guessed={guessed} correct={correct} />
-      <div className="sports-font text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 130 }}>
+      <div className="capcrunch-kicker text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 130 }}>
         {player.carries}car · {player.yards}yd · {player.tds}TD
       </div>
-      <div className="sports-font text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 70 }}>
+      <div className="capcrunch-kicker text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 70 }}>
         {player.yards}yd {player.tds}TD
       </div>
     </div>
@@ -93,14 +93,14 @@ function ReceivingResultRow({ player, guessed }: { player: BoxScoreReceivingPlay
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
     <div className="flex items-center gap-1.5 py-1">
-      <span className="sports-font text-[10px] text-[#3a3a3a] w-7 text-right shrink-0 tabular-nums">
+      <span className="capcrunch-kicker text-[10px] text-[#3a3a3a] w-7 text-right shrink-0 tabular-nums">
         {player.number ? `#${player.number}` : '—'}
       </span>
       <ResultName name={player.name} guessed={guessed} correct={correct} />
-      <div className="sports-font text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 130 }}>
+      <div className="capcrunch-kicker text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right hidden sm:block" style={{ minWidth: 130 }}>
         {player.receptions}/{player.targets} · {player.yards}yd · {player.tds}TD
       </div>
-      <div className="sports-font text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 70 }}>
+      <div className="capcrunch-kicker text-[10px] text-[#3a3a3a] shrink-0 tabular-nums text-right sm:hidden" style={{ minWidth: 70 }}>
         {player.yards}yd {player.tds}TD
       </div>
     </div>
@@ -179,18 +179,18 @@ export function BoxScoreResultsPage() {
 
         {/* ── Score card ── */}
         <div className="capcrunch-panel p-5 flex flex-col items-center gap-2">
-          <div className="sports-font text-[10px] text-[#444] tracking-[0.35em] uppercase">Final Score</div>
+          <div className="capcrunch-kicker text-[10px] text-[#444] tracking-[0.35em] uppercase">Final Score</div>
           <div className="capcrunch-title text-6xl text-[#FDF100] tabular-nums leading-none">
             {correctRows}<span className="text-3xl text-[#444]">/{totalRows}</span>
           </div>
-          <div className="sports-font text-sm text-[#555]">
+          <div className="capcrunch-kicker text-sm text-[#555]">
             {pct}% · {correctRows === totalRows ? 'Perfect game!' : correctRows >= Math.floor(totalRows * 0.7) ? 'Great job!' : correctRows >= Math.floor(totalRows * 0.4) ? 'Not bad!' : 'Keep practicing!'}
           </div>
           {game.spread_line != null && (
-            <div className={`mt-1 px-3 py-1 rounded border sports-font text-xs ${
+            <div className={`mt-1 px-3 py-1 rounded border capcrunch-kicker text-xs ${
               spreadCorrect
                 ? 'bg-green-900/20 border-green-700/40 text-green-400'
-                : 'bg-[#1a1a1a] border-[#2a2a2a] text-[#555]'
+                : 'bg-black/40 border-white/10 text-white/30'
             }`}>
               Spread: {game.spread_line > 0 ? '+' : ''}{game.spread_line}
               {spreadCorrect ? ' ✓ correct' : spreadGuess ? ` · you said ${spreadGuess}` : ' · not guessed'}
@@ -204,29 +204,29 @@ export function BoxScoreResultsPage() {
             <div className="flex flex-col items-center gap-1">
               <div className="capcrunch-title text-2xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</div>
               <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.away_score}</div>
-              <div className="sports-font text-[9px] text-[#444] tracking-widest mt-0.5">AWAY</div>
+              <div className="capcrunch-kicker text-[9px] text-[#444] tracking-widest mt-0.5">AWAY</div>
             </div>
             <div className="flex flex-col items-center gap-1.5 px-3">
               {game.overtime && (
-                <span className="px-2 py-0.5 bg-amber-900/30 border border-amber-700/40 rounded sports-font text-[9px] text-amber-500 tracking-wider">OT</span>
+                <span className="px-2 py-0.5 bg-amber-900/30 border border-amber-700/40 rounded capcrunch-kicker text-[9px] text-amber-500 tracking-wider">OT</span>
               )}
-              <div className="sports-font text-[10px] text-[#333] tracking-[0.3em]">FINAL</div>
-              <div className="sports-font text-[10px] text-[#444] text-center leading-snug">
+              <div className="capcrunch-kicker text-[10px] text-[#333] tracking-[0.3em]">FINAL</div>
+              <div className="capcrunch-kicker text-[10px] text-[#444] text-center leading-snug">
                 {gameLabel}<br />Wk {game.week}
               </div>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="capcrunch-title text-2xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</div>
               <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.home_score}</div>
-              <div className="sports-font text-[9px] text-[#444] tracking-widest mt-0.5">HOME</div>
+              <div className="capcrunch-kicker text-[9px] text-[#444] tracking-widest mt-0.5">HOME</div>
             </div>
           </div>
           <div className="border-t border-white/8 px-4 py-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
-            <span className="sports-font text-[10px] text-[#3a3a3a]">{formatDate(game.gameday)}</span>
-            {game.stadium && <span className="sports-font text-[10px] text-[#2e2e2e]">· {game.stadium}</span>}
-            {game.roof && <span className="sports-font text-[10px] text-[#2e2e2e] capitalize">· {game.roof}</span>}
-            {game.temp != null && <span className="sports-font text-[10px] text-[#2e2e2e]">· {game.temp}°F</span>}
-            {game.wind != null && <span className="sports-font text-[10px] text-[#2e2e2e]">· {game.wind} mph wind</span>}
+            <span className="capcrunch-kicker text-[10px] text-[#3a3a3a]">{formatDate(game.gameday)}</span>
+            {game.stadium && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.stadium}</span>}
+            {game.roof && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e] capitalize">· {game.roof}</span>}
+            {game.temp != null && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.temp}°F</span>}
+            {game.wind != null && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.wind} mph wind</span>}
           </div>
         </div>
 
@@ -242,13 +242,13 @@ export function BoxScoreResultsPage() {
                 <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                   <span className="capcrunch-title text-base" style={{ color }}>{abbr}</span>
-                  <span className="sports-font text-[9px] text-[#333] tracking-widest uppercase ml-1">{side}</span>
+                  <span className="capcrunch-kicker text-[9px] text-[#333] tracking-widest uppercase ml-1">{side}</span>
                 </div>
 
                 <div className="p-3 space-y-3">
                   {data.passing.length > 0 && (
                     <section>
-                      <div className="sports-font text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Passing</div>
+                      <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Passing</div>
                       {data.passing.map((p, i) => (
                         <PassingResultRow key={`${p.id}-${i}`} player={p} guessed={guesses[bk(side, 'passing', i)] ?? ''} />
                       ))}
@@ -256,7 +256,7 @@ export function BoxScoreResultsPage() {
                   )}
                   {data.rushing.length > 0 && (
                     <section>
-                      <div className="sports-font text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Rushing</div>
+                      <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Rushing</div>
                       {data.rushing.map((p, i) => (
                         <RushingResultRow key={`${p.id}-${i}`} player={p} guessed={guesses[bk(side, 'rushing', i)] ?? ''} />
                       ))}
@@ -264,7 +264,7 @@ export function BoxScoreResultsPage() {
                   )}
                   {data.receiving.length > 0 && (
                     <section>
-                      <div className="sports-font text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Receiving</div>
+                      <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1.5 pb-1 border-b border-white/8">Receiving</div>
                       {data.receiving.map((p, i) => (
                         <ReceivingResultRow key={`${p.id}-${i}`} player={p} guessed={guesses[bk(side, 'receiving', i)] ?? ''} />
                       ))}

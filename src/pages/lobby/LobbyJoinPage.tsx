@@ -82,7 +82,7 @@ export function LobbyJoinPage() {
             onChange={(e) => setPlayerName(e.target.value)}
             placeholder="Enter your name"
             maxLength={20}
-            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors sports-font"
+            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors capcrunch-kicker"
           />
         </motion.div>
 
@@ -114,7 +114,7 @@ export function LobbyJoinPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="text-center text-white/30 text-[11px] sports-font tracking-wide"
+          className="text-center text-white/30 text-[11px] capcrunch-kicker tracking-wide"
         >
           Glitched out of a game? Re-enter the same code with your name as it shows in the lobby to pick up where you left off.
         </motion.p>
@@ -124,7 +124,7 @@ export function LobbyJoinPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="p-3 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center sports-font"
+            className="p-3 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center capcrunch-kicker"
           >
             {error}
           </motion.div>
@@ -145,7 +145,7 @@ export function LobbyJoinPage() {
         {/* Divider */}
         <div className="flex items-center gap-4">
           <div className="flex-1 h-px bg-white/10"></div>
-          <span className="text-white/30 text-sm sports-font">or</span>
+          <span className="text-white/30 text-sm capcrunch-kicker">or</span>
           <div className="flex-1 h-px bg-white/10"></div>
         </div>
 

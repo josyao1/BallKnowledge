@@ -158,7 +158,7 @@ export function CapCrunchSettings({
               const v = e.target.value === '' ? null : parseInt(e.target.value);
               onCustomCapChange(v && !isNaN(v) && v > 0 ? v : null);
             }}
-            className={`w-20 text-center bg-black/40 border sports-font text-sm py-1 focus:outline-none transition-all ${
+            className={`w-20 text-center bg-black/40 border capcrunch-kicker text-sm py-1 focus:outline-none transition-all ${
               lineupStat === 'random'
                 ? 'border-white/5 text-white/15 cursor-not-allowed placeholder-white/10'
                 : 'border-white/15 text-[#FDF100]/80 focus:border-[#FDF100]/40 placeholder-white/25'
@@ -203,7 +203,7 @@ export function CapCrunchSettings({
                     {label}
                   </Chip>
                   {tooltip && (
-                    <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-black/90 border border-white/15 px-2.5 py-2 sports-font text-[9px] text-white/50 leading-relaxed z-20 whitespace-normal">
+                    <div className="pointer-events-none hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-52 bg-black/90 border border-white/15 px-2.5 py-2 capcrunch-kicker text-[9px] text-white/50 leading-relaxed z-20 whitespace-normal">
                       {tooltip}
                     </div>
                   )}

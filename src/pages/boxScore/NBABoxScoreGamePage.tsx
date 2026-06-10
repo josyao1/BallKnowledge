@@ -47,7 +47,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
   return (
     <div ref={rowRef} className="flex items-center gap-2 py-1">
       <div
-        className="shrink-0 w-9 h-7 flex items-center justify-center rounded-md sports-font text-[11px] font-bold tabular-nums"
+        className="shrink-0 w-9 h-7 flex items-center justify-center rounded-md capcrunch-kicker text-[11px] font-bold tabular-nums"
         style={{ background: `${teamColor}30`, color: teamColor, border: `1px solid ${teamColor}50` }}
       >
         {jersey ? `#${jersey}` : '–'}
@@ -70,7 +70,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
               <svg className="w-3.5 h-3.5 text-green-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              <span className="sports-font text-sm font-semibold text-green-300">
+              <span className="capcrunch-kicker text-sm font-semibold text-green-300">
                 <FlipReveal name={playerName} />
               </span>
             </motion.div>
@@ -81,7 +81,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
               animate={{ opacity: 1 }}
               className="px-3 py-1.5 border border-red-900/40 bg-red-950/20"
             >
-              <span className="sports-font text-sm text-red-400/80">{playerName}</span>
+              <span className="capcrunch-kicker text-sm text-red-400/80">{playerName}</span>
             </motion.div>
           ) : (
             <div key="input" className="flex flex-col gap-0.5">
@@ -90,12 +90,12 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
                 value={guess}
                 onChange={e => onGuessChange(e.target.value)}
                 placeholder="Player name..."
-                className="w-full bg-black/40 border border-white/15 px-3 py-1.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
+                className="w-full bg-black/40 border border-white/15 px-3 py-1.5 capcrunch-kicker text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
                 onFocus={e => (e.currentTarget.style.borderColor = `${teamColor}60`)}
                 onBlur={e => (e.currentTarget.style.borderColor = '')}
               />
               {showHint && (
-                <div className="pl-1 sports-font text-[11px] tracking-widest font-mono" style={{ color: `${teamColor}90` }}>
+                <div className="pl-1 capcrunch-kicker text-[11px] tracking-widest font-mono" style={{ color: `${teamColor}90` }}>
                   {getInitials(playerName)}
                 </div>
               )}
@@ -208,7 +208,7 @@ export function NBABoxScoreGamePage() {
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
-          <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
+          <span className="capcrunch-kicker text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
     );
@@ -237,10 +237,10 @@ export function NBABoxScoreGamePage() {
             style={{ background: `${homeColor}18`, borderColor: `${homeColor}50` }}
           >
             <span className="capcrunch-title text-lg tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
-            <span className="sports-font text-xs text-[#444]">/</span>
+            <span className="capcrunch-kicker text-xs text-[#444]">/</span>
             <span className="capcrunch-title text-lg tabular-nums text-[#555]">{totalRows}</span>
             {totalRows > 0 && (
-              <span className="sports-font text-[10px] ml-1" style={{ color: pct === 100 ? '#4ade80' : '#888' }}>{pct}%</span>
+              <span className="capcrunch-kicker text-[10px] ml-1" style={{ color: pct === 100 ? '#4ade80' : '#888' }}>{pct}%</span>
             )}
           </div>
         </div>
@@ -272,7 +272,7 @@ export function NBABoxScoreGamePage() {
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
               placeholder="Type a player name — press Enter to fill the box score..."
-              className="flex-1 bg-transparent sports-font text-base text-white placeholder-[#3a3a3a] focus:outline-none"
+              className="flex-1 bg-transparent capcrunch-kicker text-base text-white placeholder-[#3a3a3a] focus:outline-none"
             />
             {globalInput ? (
               <button onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }} className="text-[#555] hover:text-white transition-colors">
@@ -281,7 +281,7 @@ export function NBABoxScoreGamePage() {
                 </svg>
               </button>
             ) : (
-              <kbd className="hidden sm:flex sports-font text-[10px] text-[#555] px-2 py-1 rounded border border-[#2a2a2a] items-center">↵</kbd>
+              <kbd className="hidden sm:flex capcrunch-kicker text-[10px] text-[#555] px-2 py-1 rounded border border-[#2a2a2a] items-center">↵</kbd>
             )}
           </div>
 
@@ -304,7 +304,7 @@ export function NBABoxScoreGamePage() {
                     <svg className="w-4 h-4 text-[#555] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    <span className="sports-font text-sm text-white font-semibold flex-1">{c.name}</span>
+                    <span className="capcrunch-kicker text-sm text-white font-semibold flex-1">{c.name}</span>
                     <svg className="w-4 h-4 text-[#444] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -327,7 +327,7 @@ export function NBABoxScoreGamePage() {
               <svg className="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              <span className="sports-font text-sm text-red-400">
+              <span className="capcrunch-kicker text-sm text-red-400">
                 <span className="font-semibold">{notInGame}</span> didn't play in this game
               </span>
             </motion.div>
@@ -359,10 +359,10 @@ export function NBABoxScoreGamePage() {
                   <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
                     <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                    <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   <div className="ml-auto">
-                    <div className="sports-font text-[10px] tracking-wider" style={{ color: doneCount === players.length ? '#4ade80' : '#555' }}>
+                    <div className="capcrunch-kicker text-[10px] tracking-wider" style={{ color: doneCount === players.length ? '#4ade80' : '#555' }}>
                       {doneCount}/{players.length}
                     </div>
                   </div>
@@ -399,7 +399,7 @@ export function NBABoxScoreGamePage() {
           {!revealed && (
             <button
               onClick={() => setHintsRevealed(h => !h)}
-              className={`px-5 py-4 sports-font text-sm border transition-all ${
+              className={`px-5 py-4 capcrunch-kicker text-sm border transition-all ${
                 hintsRevealed
                   ? 'border-amber-500/60 text-amber-400 bg-amber-900/15'
                   : 'border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa]'
@@ -411,7 +411,7 @@ export function NBABoxScoreGamePage() {
           {!revealed && (
             <button
               onClick={() => setRevealed(true)}
-              className="px-6 py-4 sports-font text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
+              className="px-6 py-4 capcrunch-kicker text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
             >
               Reveal All
             </button>

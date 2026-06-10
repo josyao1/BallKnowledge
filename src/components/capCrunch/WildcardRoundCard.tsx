@@ -31,7 +31,7 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
       <div className="absolute inset-[1px] bg-black/80" style={{ zIndex: -1 }} />
 
       <p
-        className={`sports-font tracking-widest uppercase leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}
+        className={`capcrunch-kicker tracking-widest uppercase leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}
         style={{
           background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
           WebkitBackgroundClip: 'text',
@@ -91,7 +91,7 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
                 <div className="absolute inset-[1px] bg-[#0d0d0d]" style={{ zIndex: -1 }} />
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Free Pick</p>
+                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Free Pick</p>
                     <p
                       className="capcrunch-title text-sm"
                       style={{
@@ -110,7 +110,7 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
                     ✕
                   </button>
                 </div>
-                <p className="sports-font text-[10px] text-white/60 leading-relaxed">
+                <p className="capcrunch-kicker text-[10px] text-white/60 leading-relaxed">
                   Pick anything! No team, conference, or name constraints — any player, any season counts.
                 </p>
               </motion.div>

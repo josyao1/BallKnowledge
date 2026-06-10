@@ -116,7 +116,7 @@ export function CapCrunchScoresPanel({
                     {player.player_name}
                   </p>
                   {isMe && myBustCount > 0 && (
-                    <p className="text-[9px] text-red-400/70 sports-font">{myBustCount} bust{myBustCount !== 1 ? 's' : ''}</p>
+                    <p className="text-[9px] text-red-400/70 capcrunch-kicker">{myBustCount} bust{myBustCount !== 1 ? 's' : ''}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -148,7 +148,7 @@ export function CapCrunchScoresPanel({
                         <div className="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                           <span className="text-[8px] text-white/25">✕</span>
                         </div>
-                        <span className="sports-font text-[10px] text-white/25 italic">Skipped</span>
+                        <span className="capcrunch-kicker text-[10px] text-white/25 italic">Skipped</span>
                       </div>
                     ) : (
                       <>

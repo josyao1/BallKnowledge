@@ -369,7 +369,7 @@ export function SoloTopTenPage() {
             </form>
 
             {suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-[88px] mt-0.5 bg-[#111] border border-white/10 z-30 overflow-hidden">
+              <div className="absolute top-full left-0 right-[88px] mt-0.5 bg-black/90 border border-white/10 z-30 overflow-hidden">
                 {suggestions.map(name => (
                   <button
                     key={name}

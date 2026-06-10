@@ -48,7 +48,7 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
           {division}
         </p>
         <div className="flex items-center gap-1.5">
-          <span className="sports-font text-[9px] text-white/30">+</span>
+          <span className="capcrunch-kicker text-[9px] text-white/30">+</span>
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#a855f7]/20 border border-[#a855f7]/50">
             <img src="/draftlogo.png" alt="Draft" className={size === 'lg' ? 'h-5 object-contain' : 'h-4 object-contain'} />
             <span className={`capcrunch-title text-[#a855f7] leading-none ${roundSize}`}>
@@ -61,7 +61,7 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
       {/* See teams trigger */}
       <button
         onClick={() => setShowPanel(v => !v)}
-        className="mt-1.5 sports-font text-[8px] text-[#a855f7]/60 hover:text-[#a855f7] transition-colors"
+        className="mt-1.5 capcrunch-kicker text-[8px] text-[#a855f7]/60 hover:text-[#a855f7] transition-colors"
       >
         {showPanel ? 'hide teams ▲' : 'see teams ▼'}
       </button>
@@ -94,7 +94,7 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Division Teams</p>
+                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Division Teams</p>
                     <p className="capcrunch-title text-sm text-[#FDF100]">{division}</p>
                   </div>
                   <button
@@ -110,7 +110,7 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
                   {divTeams.map(abbr => (
                     <div key={abbr} className="flex flex-col items-center gap-1.5">
                       <TeamLogo sport={sport} abbr={abbr} size={52} />
-                      <span className="sports-font text-[9px] text-white/40">{abbr}</span>
+                      <span className="capcrunch-kicker text-[9px] text-white/40">{abbr}</span>
                     </div>
                   ))}
                 </div>

@@ -20,7 +20,7 @@ export function TeamLogo({ sport, abbr, size = 48, className = '' }: TeamLogoPro
     // Fallback: show abbreviation text styled to match surrounding context
     return (
       <span
-        className={`retro-title font-bold leading-none ${className}`}
+        className={`capcrunch-title font-bold leading-none ${className}`}
         style={{ fontSize: size * 0.4 }}
       >
         {abbr}

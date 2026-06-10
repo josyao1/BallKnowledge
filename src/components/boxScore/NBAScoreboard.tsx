@@ -49,29 +49,29 @@ export function NBAScoreboard({ game, compact = false }: Props) {
           >
             {game.away_score}
           </span>
-          <span className={`sports-font text-[#666] uppercase ${compact ? 'text-[9px] tracking-widest' : 'text-[10px] tracking-[0.3em]'}`}>Away</span>
+          <span className={`capcrunch-kicker text-[#666] uppercase ${compact ? 'text-[9px] tracking-widest' : 'text-[10px] tracking-[0.3em]'}`}>Away</span>
         </div>
 
         {/* Center */}
         <div className={`flex flex-col items-center ${compact ? 'gap-1.5 px-2' : 'gap-3 px-2 sm:px-6'}`}>
           {game.overtime && (
             <span
-              className={`rounded-full sports-font ${compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[10px] tracking-wider'}`}
+              className={`rounded-full capcrunch-kicker ${compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[10px] tracking-wider'}`}
               style={{ background: 'rgba(253,241,0,0.15)', border: '1px solid rgba(253,241,0,0.4)', color: '#FDF100' }}
             >
               OT
             </span>
           )}
-          <div className={`sports-font text-[#444] tracking-[0.4em] ${compact ? 'text-[11px]' : 'text-[12px]'}`}>FINAL</div>
+          <div className={`capcrunch-kicker text-[#444] tracking-[0.4em] ${compact ? 'text-[11px]' : 'text-[12px]'}`}>FINAL</div>
           {compact ? (
             <>
-              <div className="sports-font text-[9px] text-[#444]">{nbaSeasonStr(game.season)}</div>
-              <div className="sports-font text-[9px] text-[#555] text-center leading-tight">{gameLabel}</div>
+              <div className="capcrunch-kicker text-[9px] text-[#444]">{nbaSeasonStr(game.season)}</div>
+              <div className="capcrunch-kicker text-[9px] text-[#555] text-center leading-tight">{gameLabel}</div>
             </>
           ) : (
             <>
               <div className="w-px h-10 bg-white/10" />
-              <div className="sports-font text-[11px] text-[#666] text-center">{gameLabel}</div>
+              <div className="capcrunch-kicker text-[11px] text-[#666] text-center">{gameLabel}</div>
             </>
           )}
         </div>
@@ -95,7 +95,7 @@ export function NBAScoreboard({ game, compact = false }: Props) {
           >
             {game.home_score}
           </span>
-          <span className={`sports-font text-[#666] uppercase ${compact ? 'text-[9px] tracking-widest' : 'text-[10px] tracking-[0.3em]'}`}>Home</span>
+          <span className={`capcrunch-kicker text-[#666] uppercase ${compact ? 'text-[9px] tracking-widest' : 'text-[10px] tracking-[0.3em]'}`}>Home</span>
         </div>
       </div>
 
@@ -103,13 +103,13 @@ export function NBAScoreboard({ game, compact = false }: Props) {
       {!compact && (
         <div className="relative border-t border-white/6 px-4 py-3 flex flex-wrap justify-center gap-2">
           <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[72px]">
-            <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Season</span>
+            <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Season</span>
             <span className="capcrunch-title text-base text-white leading-tight">{nbaSeasonStr(game.season)}</span>
-            <span className="sports-font text-[9px] text-[#666]">{formatDate(game.game_date)}</span>
+            <span className="capcrunch-kicker text-[9px] text-[#666]">{formatDate(game.game_date)}</span>
           </div>
           <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[72px]">
-            <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Type</span>
-            <span className="sports-font text-[11px] text-[#ccc] leading-tight text-center mt-0.5">{gameLabel}</span>
+            <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Type</span>
+            <span className="capcrunch-kicker text-[11px] text-[#ccc] leading-tight text-center mt-0.5">{gameLabel}</span>
           </div>
         </div>
       )}

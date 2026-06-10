@@ -299,12 +299,12 @@ export function GamePage() {
                 <div className="capcrunch-title text-xl text-[#FDF100]">
                   {lobbyDivisionConference} {lobbyDivisionName}
                 </div>
-                <div className="sports-font text-[9px] text-white/40 tracking-widest">
+                <div className="capcrunch-kicker text-[9px] text-white/40 tracking-widest">
                   {selectedSeason}
                 </div>
                 <div className="flex gap-1.5 mt-1">
                   {divisionTeams.map(abbr => (
-                    <span key={abbr} className="text-[9px] text-white/50 sports-font px-1.5 py-0.5 bg-white/5">
+                    <span key={abbr} className="text-[9px] text-white/50 capcrunch-kicker px-1.5 py-0.5 bg-white/5">
                       {abbr}
                     </span>
                   ))}
@@ -317,7 +317,7 @@ export function GamePage() {
 
             {/* RESPONSIVE TIMER DESIGN */}
             <div className="flex flex-col items-center">
-                <span className="sports-font text-[9px] text-white/40 tracking-[0.4em] uppercase mb-1">Clock</span>
+                <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.4em] uppercase mb-1">Clock</span>
                 <div className={`capcrunch-title text-3xl transition-colors duration-300 ${isShotClockActive ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                     {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, '0')}
                 </div>
@@ -327,7 +327,7 @@ export function GamePage() {
           {/* THREE MECHANICAL SCORE PANELS */}
           <div className="flex gap-4">
             <div className="capcrunch-panel px-6 py-3 text-center min-w-[100px]">
-              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Correct</div>
+              <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Correct</div>
               {hideResultsDuringGame ? (
                 <div className="capcrunch-title text-3xl text-[#FDF100]">?</div>
               ) : (
@@ -335,7 +335,7 @@ export function GamePage() {
               )}
             </div>
             <div className="capcrunch-panel px-6 py-3 text-center min-w-[100px]">
-              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Guessed</div>
+              <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Guessed</div>
               <SpinningNumber
                 value={String(hideResultsDuringGame ? pendingGuesses.length : guessedPlayers.length)}
                 className="capcrunch-title text-3xl"
@@ -343,7 +343,7 @@ export function GamePage() {
               />
             </div>
             <div className="capcrunch-panel px-6 py-3 text-center min-w-[100px]">
-              <div className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Roster</div>
+              <div className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase mb-1">Roster</div>
               <div className="capcrunch-title text-3xl text-white/40">
                 {currentRoster.length}
               </div>
@@ -360,7 +360,7 @@ export function GamePage() {
 
           <div className="flex-1 capcrunch-panel flex flex-col overflow-hidden">
             <div className="p-3 border-b border-white/10 bg-white/5 flex justify-between items-center">
-              <span className="sports-font text-[10px] tracking-[0.4em] text-white/60 uppercase">
+              <span className="capcrunch-kicker text-[10px] tracking-[0.4em] text-white/60 uppercase">
                 Your Picks
               </span>
             </div>
@@ -384,7 +384,7 @@ export function GamePage() {
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg }}
                 />
-                <span className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                <span className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">
                   Teammate Guesses ({teammateGuessedNames.length})
                 </span>
               </div>
@@ -392,7 +392,7 @@ export function GamePage() {
                 {teammateGuessedNames.map((name, idx) => (
                   <span
                     key={`tm-${idx}`}
-                    className="px-2.5 py-1 sports-font text-[10px] font-bold uppercase tracking-wider border"
+                    className="px-2.5 py-1 capcrunch-kicker text-[10px] font-bold uppercase tracking-wider border"
                     style={{
                       backgroundColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg + '20',
                       borderColor: TEAM_COLORS[currentPlayerTeamNumber - 1].bg + '40',

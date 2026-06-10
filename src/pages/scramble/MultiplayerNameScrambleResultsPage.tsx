@@ -36,19 +36,22 @@ export function MultiplayerNameScrambleResultsPage() {
 
   if (!lobby) {
     return (
-      <div className="min-h-screen bg-[#111] flex items-center justify-center">
-        <div className="text-white/50 sports-font">Loading results...</div>
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="capcrunch-kicker text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#111] text-white flex flex-col p-4 md:p-6">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
       {/* Header */}
       <header className="text-center mb-8 mt-4">
-        <div className="sports-font text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
-        <h1 className="retro-title text-4xl md:text-5xl text-[#3b82f6]">Name Scramble</h1>
-        <div className="sports-font text-[10px] text-[#555] tracking-widest mt-1 uppercase">
+        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
+        <h1 className="capcrunch-title text-4xl md:text-5xl text-[#3b82f6]">Name Scramble</h1>
+        <div className="capcrunch-kicker text-[10px] text-[#555] tracking-widest mt-1 uppercase">
           {lobby.sport.toUpperCase()} · First to {winTarget} pts
         </div>
       </header>
@@ -60,17 +63,17 @@ export function MultiplayerNameScrambleResultsPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md mx-auto w-full mb-8"
         >
-          <div className={`p-6 rounded-lg text-center border-2 ${
+          <div className={`p-6 text-center border-2 ${
             isWinner
               ? 'bg-[#3b82f6]/10 border-[#3b82f6]'
-              : 'bg-[#1a1a1a] border-[#333]'
+              : 'bg-black/40 border-white/10'
           }`}>
             <div className="text-4xl mb-2">{isWinner ? '🏆' : '🎯'}</div>
-            <div className="sports-font text-[10px] text-[#888] tracking-widest uppercase mb-1">
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase mb-1">
               {isWinner ? 'You won the match!' : 'Match Winner'}
             </div>
-            <div className="retro-title text-3xl text-[#d4af37]">{matchWinner.player_name}</div>
-            <div className="sports-font text-sm text-[#888] mt-1">
+            <div className="capcrunch-title text-3xl text-[#d4af37]">{matchWinner.player_name}</div>
+            <div className="capcrunch-kicker text-sm text-[#888] mt-1">
               {matchWinner.points ?? 0} pts
             </div>
           </div>
@@ -84,8 +87,8 @@ export function MultiplayerNameScrambleResultsPage() {
         transition={{ delay: 0.1 }}
         className="max-w-md mx-auto w-full mb-8"
       >
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
+        <div className="capcrunch-panel p-4">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
             Final Standings
           </div>
           <div className="space-y-3">
@@ -99,7 +102,7 @@ export function MultiplayerNameScrambleResultsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + rank * 0.05 }}
-                  className={`p-3 rounded-lg ${
+                  className={`p-3 ${
                     rank === 0
                       ? 'bg-[#3b82f6]/10 border border-[#3b82f6]/40'
                       : isMe
@@ -109,15 +112,15 @@ export function MultiplayerNameScrambleResultsPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className={`retro-title text-lg w-8 text-center ${
+                      <span className={`capcrunch-title text-lg w-8 text-center ${
                         rank === 0 ? 'text-[#d4af37]' : 'text-[#555]'
                       }`}>
                         #{rank + 1}
                       </span>
-                      <span className="sports-font text-sm text-white/90">{player.player_name}</span>
-                      {isMe && <span className="text-[10px] text-white/40 sports-font">(you)</span>}
+                      <span className="capcrunch-kicker text-sm text-white/90">{player.player_name}</span>
+                      {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker">(you)</span>}
                     </div>
-                    <span className="retro-title text-xl text-[#3b82f6]">{pts}</span>
+                    <span className="capcrunch-title text-xl text-[#3b82f6]">{pts}</span>
                   </div>
                   <div className="h-2 bg-[#222] rounded-full overflow-hidden ml-10">
                     <div
@@ -140,13 +143,12 @@ export function MultiplayerNameScrambleResultsPage() {
           transition={{ delay: 0.2 }}
           className="max-w-md mx-auto w-full mb-8"
         >
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
-            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
+          <div className="capcrunch-panel p-4">
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
               Round History
             </div>
             <div className="space-y-3">
               {roundHistory.map((round) => {
-                // Sort players for this round: by pts desc, then finished_at asc
                 const sortedForRound = [...players].sort((a, b) => {
                   const diff = (round.pts[b.player_id] ?? 0) - (round.pts[a.player_id] ?? 0);
                   if (diff !== 0) return diff;
@@ -161,17 +163,17 @@ export function MultiplayerNameScrambleResultsPage() {
                 const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
-                  <div key={round.round} className="border border-[#2a2a2a] rounded-lg overflow-hidden">
+                  <div key={round.round} className="border border-white/10 overflow-hidden">
                     {/* Round header */}
-                    <div className="px-3 py-2 bg-[#111] space-y-0.5">
+                    <div className="px-3 py-2 bg-black/40 space-y-0.5">
                       <div className="flex items-center justify-between">
-                        <span className="sports-font text-[10px] text-[#666] tracking-wider uppercase">
+                        <span className="capcrunch-kicker text-[10px] text-[#666] tracking-wider uppercase">
                           Round {round.round}
                         </span>
-                        <span className="retro-title text-xs text-[#3b82f6]">{round.scrambledName}</span>
+                        <span className="capcrunch-title text-xs text-[#3b82f6]">{round.scrambledName}</span>
                       </div>
                       <div className="flex items-center justify-end">
-                        <span className="sports-font text-xs text-[var(--vintage-cream)]">→ {round.answer}</span>
+                        <span className="capcrunch-kicker text-xs text-white/80">→ {round.answer}</span>
                       </div>
                     </div>
                     {/* Player rows */}
@@ -192,17 +194,17 @@ export function MultiplayerNameScrambleResultsPage() {
                           >
                             <div className="flex items-center gap-2">
                               <span className="text-sm w-6 text-center">{badge}</span>
-                              <span className={`sports-font text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
+                              <span className={`capcrunch-kicker text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
                                 {player.player_name}
                                 {isMe && <span className="text-white/30 ml-1">(you)</span>}
                               </span>
                               {offsetMs !== null && offsetMs > 0 && (
-                                <span className="sports-font text-[9px] text-[#d4af37]">
+                                <span className="capcrunch-kicker text-[9px] text-[#d4af37]">
                                   +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
                                 </span>
                               )}
                             </div>
-                            <span className={`retro-title text-base ${gotIt ? 'text-[#d4af37]' : 'text-[#444]'}`}>
+                            <span className={`capcrunch-title text-base ${gotIt ? 'text-[#d4af37]' : 'text-[#444]'}`}>
                               {gotIt ? `+${pts}` : '—'}
                             </span>
                           </div>
@@ -228,20 +230,20 @@ export function MultiplayerNameScrambleResultsPage() {
           <button
             onClick={handlePlayAgain}
             disabled={isResetting}
-            className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_0_#1d4ed8] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="w-full py-4 capcrunch-title text-xl tracking-wider transition-all bg-[#3b82f6] hover:bg-[#2563eb] text-white disabled:opacity-50"
           >
             {isResetting ? 'Starting...' : 'Play Again'}
           </button>
         )}
         {!isHost && (
-          <div className="text-center text-white/30 sports-font text-sm tracking-wider py-2">
+          <div className="text-center text-white/30 capcrunch-kicker text-sm tracking-wider py-2">
             Waiting for host to start again...
           </div>
         )}
         <button
           onClick={handleLeave}
           disabled={isLeaving}
-          className="w-full py-4 rounded-lg retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+          className="w-full py-4 capcrunch-title text-xl tracking-wider transition-all bg-black/40 border border-white/10 hover:border-white/20 text-white disabled:opacity-50"
         >
           {isLeaving ? 'Leaving...' : 'Back to Home'}
         </button>

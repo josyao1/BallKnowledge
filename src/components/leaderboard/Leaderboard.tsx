@@ -46,9 +46,9 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
 
   if (!isSupabaseEnabled) {
     return (
-      <div className="bg-gray-800/50 rounded-xl p-6 text-center">
-        <h3 className="text-lg font-semibold text-gray-400 mb-2">Leaderboard</h3>
-        <p className="text-gray-500 text-sm">
+      <div className="capcrunch-panel p-6 text-center">
+        <h3 className="capcrunch-title text-lg text-white/40 mb-2">Leaderboard</h3>
+        <p className="capcrunch-kicker text-white/30 text-sm">
           Leaderboard is not configured. Add Supabase credentials to enable.
         </p>
       </div>
@@ -59,10 +59,10 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gray-800/50 rounded-xl p-6"
+      className="capcrunch-panel p-6"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-white">
+        <h3 className="capcrunch-title text-xl text-white">
           {title || 'Leaderboard'}
         </h3>
 
@@ -70,20 +70,20 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
           <div className="flex gap-2">
             <button
               onClick={() => setView('team')}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+              className={`px-3 py-1 capcrunch-kicker text-sm transition-colors ${
                 view === 'team'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-700 text-gray-400 hover:text-white'
+                  ? 'bg-[#d4af37] text-black'
+                  : 'bg-black/40 border border-white/10 text-white/50 hover:text-white'
               }`}
             >
               This Roster
             </button>
             <button
               onClick={() => setView('global')}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+              className={`px-3 py-1 capcrunch-kicker text-sm transition-colors ${
                 view === 'global'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-700 text-gray-400 hover:text-white'
+                  ? 'bg-[#d4af37] text-black'
+                  : 'bg-black/40 border border-white/10 text-white/50 hover:text-white'
               }`}
             >
               Global

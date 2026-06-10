@@ -104,7 +104,7 @@ export function BlindModeReveal({
                     <div
                       className={`w-full p-3 text-center border transition-all ${isWinner ? 'border-[#FDF100]/60 bg-[#FDF100]/10' : 'border-white/10 bg-black/40'}`}
                     >
-                      <p className="sports-font text-[9px] tracking-widest truncate mb-1" style={{ color }}>
+                      <p className="capcrunch-kicker text-[9px] tracking-widest truncate mb-1" style={{ color }}>
                         {player.player_name}
                       </p>
                       <motion.p
@@ -121,7 +121,7 @@ export function BlindModeReveal({
                         <motion.div
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="sports-font text-[8px] text-[#d4af37] tracking-widest mt-1 uppercase"
+                          className="capcrunch-kicker text-[8px] text-[#d4af37] tracking-widest mt-1 uppercase"
                         >
                           Winner
                         </motion.div>
@@ -159,10 +159,10 @@ export function BlindModeReveal({
                             >
                               <div className="flex items-center gap-1.5 mb-1">
                                 <PlayerHeadshot playerId={pick.playerId} sport={sport} className="w-6 h-6 rounded-full object-cover bg-white/5 shrink-0" />
-                                <p className="sports-font text-[10px] text-white/80 truncate leading-tight">{pick.playerName}</p>
+                                <p className="capcrunch-kicker text-[10px] text-white/80 truncate leading-tight">{pick.playerName}</p>
                               </div>
                               <div className="flex items-center justify-between">
-                                <span className="sports-font text-[9px] text-white/30">{pick.team} {pick.selectedYear}</span>
+                                <span className="capcrunch-kicker text-[9px] text-white/30">{pick.team} {pick.selectedYear}</span>
                                 <span className="capcrunch-title text-sm" style={{ color }}>{fmt(pick.statValue)}</span>
                               </div>
                             </motion.div>
@@ -172,7 +172,7 @@ export function BlindModeReveal({
                               className="border border-white/5 bg-black/20 p-2 flex items-center justify-center"
                               style={{ height: 60 }}
                             >
-                              <span className="sports-font text-[10px] text-white/15 tracking-widest">
+                              <span className="capcrunch-kicker text-[10px] text-white/15 tracking-widest">
                                 {roundIdx < revealStep ? '—' : `Round ${roundIdx + 1}`}
                               </span>
                             </motion.div>

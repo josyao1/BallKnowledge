@@ -425,13 +425,13 @@ export function SoloCapCrunchPage() {
                 <h2 className="capcrunch-title text-4xl md:text-5xl mb-3 text-white">
                   {selectedSport ? `${selectedSport.toUpperCase()} Settings` : 'Game Settings'}
                 </h2>
-                <p className="sports-font text-[10px] text-white/50 tracking-widest mb-6">CHOOSE STAT CATEGORY</p>
+                <p className="capcrunch-kicker text-[10px] text-white/50 tracking-widest mb-6">CHOOSE STAT CATEGORY</p>
 
                 <div className={`flex flex-col items-center gap-4 w-full transition ${!selectedSport ? 'opacity-40 blur-[2px] pointer-events-none select-none' : ''}`}>
                   <div className="flex flex-wrap gap-2 justify-center">
                     <button
                       onClick={() => handleStartGame(selectedSport as Sport, null, totalRounds)}
-                      className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                      className="px-4 py-2 capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                     >
                       RANDOM
                     </button>
@@ -442,7 +442,7 @@ export function SoloCapCrunchPage() {
                       <button
                         key={cat}
                         onClick={() => handleStartGame((selectedSport ?? 'nba') as Sport, cat, totalRounds)}
-                        className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                        className="px-4 py-2 capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                       >
                         {getCategoryAbbr(cat)}
                       </button>
@@ -453,7 +453,7 @@ export function SoloCapCrunchPage() {
                     <div className="w-full">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex-1 h-px bg-white/10" />
-                        <span className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
+                        <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
                         <div className="flex-1 h-px bg-white/10" />
                       </div>
                       <div className="flex flex-wrap gap-2 justify-center">
@@ -462,7 +462,7 @@ export function SoloCapCrunchPage() {
                             const careerCats = ['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as const;
                             handleStartGame((selectedSport ?? 'nfl') as Sport, careerCats[Math.floor(Math.random() * careerCats.length)], totalRounds);
                           }}
-                          className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                          className="px-4 py-2 capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                         >
                           RANDOM
                         </button>
@@ -470,7 +470,7 @@ export function SoloCapCrunchPage() {
                           <button
                             key={cat}
                             onClick={() => handleStartGame((selectedSport ?? 'nfl') as Sport, cat, totalRounds)}
-                            className="px-4 py-2 sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                            className="px-4 py-2 capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                           >
                             {getCategoryAbbr(cat)}
                           </button>
@@ -481,13 +481,13 @@ export function SoloCapCrunchPage() {
                 </div>
 
                 <div className={`flex items-center gap-3 justify-center mt-6 mb-4 transition ${!selectedSport ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <span className="sports-font text-[10px] text-white/50 tracking-widest">ROUNDS</span>
+                  <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">ROUNDS</span>
                   <div className="flex gap-1">
                     {[3,4,5,6,7,8,9,10].map(n => (
                       <button
                         key={n}
                         onClick={() => setTotalRounds(n)}
-                        className={`w-8 h-8 sports-font text-xs transition ${
+                        className={`w-8 h-8 capcrunch-kicker text-xs transition ${
                           totalRounds === n
                             ? 'bg-[#d4af37] text-black font-bold'
                             : 'bg-black/50 border border-white/20 text-white/50 hover:text-white hover:border-white/40'
@@ -502,7 +502,7 @@ export function SoloCapCrunchPage() {
                 {selectedSport && (
                   <button
                     onClick={() => setSelectedSport(null)}
-                    className="sports-font text-[10px] text-white/40 hover:text-white/70 transition tracking-widest"
+                    className="capcrunch-kicker text-[10px] text-white/40 hover:text-white/70 transition tracking-widest"
                   >
                     ← CHANGE SPORT
                   </button>
@@ -641,7 +641,7 @@ export function SoloCapCrunchPage() {
                 if (addingPlayer) return;
                 navigate('/');
               }}
-              className="sports-font text-[10px] text-white/40 hover:text-white/70 tracking-widest uppercase transition"
+              className="capcrunch-kicker text-[10px] text-white/40 hover:text-white/70 tracking-widest uppercase transition"
             >
               ← Back
             </button>
@@ -686,11 +686,11 @@ export function SoloCapCrunchPage() {
                 style={{ perspective: 600 }}
                 className="text-center px-8 md:px-12 py-2 md:py-3 border-2 bg-black/70 border-[#FDF100]/60 shadow-[0_20px_50px_rgba(0,0,0,0.28)]"
               >
-                <p className="sports-font text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Division</p>
+                <p className="capcrunch-kicker text-[8px] md:text-[10px] text-white/60 tracking-[0.4em] uppercase mb-1">Division</p>
                 <p className="capcrunch-title text-2xl md:text-4xl tracking-tight text-[#FDF100]">
                   {currentTeam}
                 </p>
-                <p className="sports-font text-[9px] text-white/35 mt-1">
+                <p className="capcrunch-kicker text-[9px] text-white/35 mt-1">
                   {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
                 </p>
               </motion.div>
@@ -769,7 +769,7 @@ export function SoloCapCrunchPage() {
           {/* Left Column - Stats (desktop only) */}
           <div className="hidden lg:flex w-44 flex-shrink-0 flex-col gap-3">
             <div className="capcrunch-metric px-6 py-6 text-center shadow-xl flex flex-col justify-center" style={{ borderLeftColor: '#FDF100' }}>
-              <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
+              <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
               <p className="capcrunch-title text-4xl text-white">{targetCap}</p>
             </div>
             <div className="capcrunch-metric px-6 py-6 text-center shadow-xl flex flex-col justify-center" style={{ borderLeftColor: '#68BBE5' }}>
@@ -777,14 +777,14 @@ export function SoloCapCrunchPage() {
                 <div className="capcrunch-kicker text-[8px] text-[#68BBE5] mb-1">Career</div>
               )}
               {!isCareerStatRound && (
-                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
+                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">Category</div>
               )}
               <p className="capcrunch-title text-2xl text-white">
                 {isCareerStatRound ? getCategoryAbbr(statCategory!).replace('CAREER ', '') : getCategoryAbbr(statCategory!)}
               </p>
             </div>
             <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#E2008A' }}>
-              <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
+              <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-1">Total</div>
               <SpinningNumber
                 value={fmt(lineup.totalStat)}
                 className="capcrunch-title text-4xl"
@@ -792,7 +792,7 @@ export function SoloCapCrunchPage() {
                 flashKey={badFlashKey}
               />
               <div className="mt-3 border-t border-white/10 pt-3">
-                <div className="sports-font text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
+                <div className="capcrunch-kicker text-[8px] text-[#d4af37]/50 tracking-widest uppercase mb-0.5">Remaining</div>
                 <SpinningNumber
                   value={fmt(targetCap - lineup.totalStat)}
                   className="capcrunch-title text-3xl"
@@ -801,11 +801,11 @@ export function SoloCapCrunchPage() {
                 />
               </div>
               {(lineup.bustCount ?? 0) > 0 && (
-                <p className="sports-font text-[7px] text-red-400/70 tracking-wide mt-1 uppercase">{lineup.bustCount} Bust{lineup.bustCount !== 1 ? 's' : ''}</p>
+                <p className="capcrunch-kicker text-[7px] text-red-400/70 tracking-wide mt-1 uppercase">{lineup.bustCount} Bust{lineup.bustCount !== 1 ? 's' : ''}</p>
               )}
             </div>
             <div className="capcrunch-metric px-3 py-2 shadow-xl" style={{ borderLeftColor: '#70BE5B' }}>
-              <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
+              <div className="capcrunch-kicker text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
               <div className="w-full h-2 bg-white/10 overflow-hidden">
                 <motion.div
                   className="h-full"
@@ -817,8 +817,8 @@ export function SoloCapCrunchPage() {
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="sports-font text-[6px] text-white/20">0</span>
-                <span className="sports-font text-[6px] text-white/20">{targetCap}</span>
+                <span className="capcrunch-kicker text-[6px] text-white/20">0</span>
+                <span className="capcrunch-kicker text-[6px] text-white/20">{targetCap}</span>
               </div>
             </div>
           </div>
@@ -832,7 +832,7 @@ export function SoloCapCrunchPage() {
               >
                 {!selectedPlayerName ? (
                   <div className="flex flex-col h-full">
-                    <label className="block sports-font text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-4 font-semibold">
+                    <label className="block capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase mb-2 md:mb-4 font-semibold">
                       Search for a player
                     </label>
                     <input
@@ -845,7 +845,7 @@ export function SoloCapCrunchPage() {
 
                     {loading && <p className="text-white/60 text-xs md:text-sm">Loading...</p>}
                     {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                      <p className="text-white/30 text-[9px] sports-font mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
+                      <p className="text-white/30 text-[9px] capcrunch-kicker mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
                     )}
 
                     {searchResults.length > 0 && (
@@ -884,7 +884,7 @@ export function SoloCapCrunchPage() {
                       </p>
                     </div>
                     <div className="flex-1 flex items-center justify-center text-center">
-                      <p className="text-white/30 sports-font text-xs leading-relaxed">
+                      <p className="text-white/30 capcrunch-kicker text-xs leading-relaxed">
                         {isNameMatchRound(currentTeam)
                           ? <>Career stats — no team constraint<br />initial match is the only requirement</>
                           : <>Games played across every season<br />this player was on the team</>}
@@ -917,11 +917,11 @@ export function SoloCapCrunchPage() {
 
                     <div className="flex-1 overflow-hidden">
                       <div className="flex items-baseline justify-between mb-2 md:mb-3">
-                        <label className="block sports-font text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
+                        <label className="block capcrunch-kicker text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
                           Select a year
                         </label>
                         {selectedSport === 'nfl' && !isCareerStatRound && (
-                          <span className="text-white/25 text-[7px] sports-font tracking-wide">through 2025</span>
+                          <span className="text-white/25 text-[7px] capcrunch-kicker tracking-wide">through 2025</span>
                         )}
                       </div>
                       {loadingYears ? (
@@ -1067,7 +1067,7 @@ export function SoloCapCrunchPage() {
           {/* HEADER */}
           <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4">
             <div>
-              <div className="sports-font text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.6em] text-white/30 uppercase">Game Result</div>
+              <div className="capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.6em] text-white/30 uppercase">Game Result</div>
               <h1 className="capcrunch-title text-4xl md:text-6xl text-white leading-none">Lineup Score</h1>
             </div>
             <div className="flex flex-col items-start md:items-end w-full md:w-auto">
@@ -1092,7 +1092,7 @@ export function SoloCapCrunchPage() {
                   { label: 'BUSTS', value: String(lineup.bustCount ?? 0), color: (lineup.bustCount ?? 0) > 0 ? 'text-red-400' : 'text-white' },
                 ].map((stat) => (
                   <div key={stat.label} className="capcrunch-panel-soft p-3 md:p-4 shadow-xl relative overflow-hidden">
-                    <div className="sports-font text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">{stat.label}</div>
+                    <div className="capcrunch-kicker text-[7px] md:text-[8px] text-white/30 tracking-widest uppercase mb-1">{stat.label}</div>
                     <div className={`capcrunch-title text-xl md:text-2xl ${stat.color}`}>{stat.value}</div>
                   </div>
                 ))}
@@ -1108,13 +1108,13 @@ export function SoloCapCrunchPage() {
                 const wouldFinishAt = parseFloat((totalBeforeLast + optimalPick.statValue).toFixed(1));
                 return (
                   <div className="capcrunch-panel-soft p-3 md:p-4">
-                    <div className="sports-font text-[8px] text-[#d4af37]/60 tracking-widest uppercase mb-2">Optimal Last Pick</div>
+                    <div className="capcrunch-kicker text-[8px] text-[#d4af37]/60 tracking-widest uppercase mb-2">Optimal Last Pick</div>
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <PlayerHeadshot playerId={optimalPick.playerId} sport={selectedSport as 'nba' | 'nfl'} className="w-8 h-8 rounded-full object-cover shrink-0" />
                       <div className="overflow-hidden">
                         <div className="capcrunch-title text-sm text-white truncate">{optimalPick.playerName}</div>
-                        <div className="sports-font text-[9px] text-white/40 mt-0.5">
+                        <div className="capcrunch-kicker text-[9px] text-white/40 mt-0.5">
                           {optimalPick.year === 'career' ? (isCareerStatRound ? getCategoryAbbr(statCategory!) : 'Career GP') : optimalPick.year} · {optimalPick.team}
                           {optimalPick.college && (
                             <span className="text-[#3b82f6]/60 ml-1">· {optimalPick.college}</span>
@@ -1126,10 +1126,10 @@ export function SoloCapCrunchPage() {
                             <span className="text-[#22c55e]/60 ml-1">· played with {optimalPick.teammate}{optimalPick.teammateYear ? ` in ${optimalPick.teammateYear}` : ''}</span>
                           )}
                         </div>
-                        <div className="sports-font text-[9px] text-white/30 mt-0.5">
+                        <div className="capcrunch-kicker text-[9px] text-white/30 mt-0.5">
                           vs your pick: {optimalPick.playerName !== lastPick.playerName ? lastPick.playerName : '—'} ({fmt(lastPick.statValue)})
                         </div>
-                        <div className="sports-font text-[9px] text-emerald-400/70 mt-1">
+                        <div className="capcrunch-kicker text-[9px] text-emerald-400/70 mt-1">
                           Would finish: {fmt(wouldFinishAt)} / {targetCap}
                         </div>
                       </div>
@@ -1137,7 +1137,7 @@ export function SoloCapCrunchPage() {
                       <div className="text-right shrink-0">
                         <div className="capcrunch-title text-xl text-[#FDF100]">{fmt(optimalPick.statValue)}</div>
                         {optimalPick.statValue > lastPick.statValue && (
-                          <div className="sports-font text-[8px] text-emerald-400/70">+{fmt(optimalPick.statValue - lastPick.statValue)}</div>
+                          <div className="capcrunch-kicker text-[8px] text-emerald-400/70">+{fmt(optimalPick.statValue - lastPick.statValue)}</div>
                         )}
                       </div>
                     </div>
@@ -1168,7 +1168,7 @@ export function SoloCapCrunchPage() {
             {/* RIGHT COLUMN - Lineup Detail */}
             <div className="lg:w-2/3 capcrunch-panel flex flex-col shadow-2xl overflow-hidden">
               <div className="p-3 md:p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                <span className="sports-font text-[9px] tracking-widest text-white/40 uppercase">Your Lineup</span>
+                <span className="capcrunch-kicker text-[9px] tracking-widest text-white/40 uppercase">Your Lineup</span>
                 <span className="capcrunch-title text-[9px] text-white/20">{totalRounds} Slots</span>
               </div>
               
@@ -1204,7 +1204,7 @@ export function SoloCapCrunchPage() {
                             {isInvalid && <div className="absolute inset-0 rounded-full bg-red-500/30" />}
                           </div>
                           <div className="overflow-hidden flex-1">
-                          <div className={`sports-font text-[7px] md:text-[8px] ${isInvalid ? 'text-red-400/50' : 'text-white/50'}`}>
+                          <div className={`capcrunch-kicker text-[7px] md:text-[8px] ${isInvalid ? 'text-red-400/50' : 'text-white/50'}`}>
                             {selectedSport?.toUpperCase()} • {getCategoryAbbr(statCategory!)}
                           </div>
                           <div className={`capcrunch-title text-sm md:text-base truncate ${isInvalid ? 'text-red-400' : 'text-white'}`}>
@@ -1227,7 +1227,7 @@ export function SoloCapCrunchPage() {
                           <p className={`capcrunch-title text-lg md:text-xl ${isInvalid ? 'text-red-400' : player.statValue === 0 ? 'text-red-400' : 'text-[#FDF100]'}`}>
                             {isBust ? `${fmt(player.statValue)}→0` : fmt(player.statValue)}
                           </p>
-                          {(isBust || isNotOnTeam) && <div className="bg-red-700 text-white text-[7px] px-1.5 py-0.5 sports-font font-bold shadow-sm mt-1 text-center">{getPickBadgeLabel(player)}</div>}
+                          {(isBust || isNotOnTeam) && <div className="bg-red-700 text-white text-[7px] px-1.5 py-0.5 capcrunch-kicker font-bold shadow-sm mt-1 text-center">{getPickBadgeLabel(player)}</div>}
                         </div>
                       </div>
                     </motion.div>
@@ -1244,7 +1244,7 @@ export function SoloCapCrunchPage() {
                 if (validTotal === 0) return null;
                 return (
                   <div className="px-4 md:px-6 pb-4 md:pb-6 border-t border-white/5 pt-3">
-                    <div className="sports-font text-[7px] text-white/25 tracking-widest uppercase mb-2">Cap usage</div>
+                    <div className="capcrunch-kicker text-[7px] text-white/25 tracking-widest uppercase mb-2">Cap usage</div>
                     <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden flex gap-px">
                       {lineup.selectedPlayers.map((p, i) => {
                         const pct = p.isBust || p.neverOnTeam ? 0 : Math.min((p.statValue / targetCap) * 100, 100);
@@ -1264,7 +1264,7 @@ export function SoloCapCrunchPage() {
                       {lineup.selectedPlayers.map((p, i) => (
                         <div key={i} className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: PICK_COLORS[i % PICK_COLORS.length], opacity: p.isBust || p.neverOnTeam ? 0.25 : 1 }} />
-                          <span className="sports-font text-[8px] text-white/35 truncate max-w-[64px]">{p.playerName.split(' ').slice(-1)[0]}</span>
+                          <span className="capcrunch-kicker text-[8px] text-white/35 truncate max-w-[64px]">{p.playerName.split(' ').slice(-1)[0]}</span>
                         </div>
                       ))}
                     </div>

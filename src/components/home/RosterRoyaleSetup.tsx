@@ -19,7 +19,7 @@ import type { GameMode } from '../../types';
 const NFL_BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 const NBA_BOX_SCORE_YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 
-const selectCls = 'bg-black/40 text-white/70 px-3 py-2 border border-white/15 sports-font text-xs focus:outline-none focus:border-white/30 hover:border-white/25 appearance-none cursor-pointer transition-colors';
+const selectCls = 'bg-black/40 text-white/70 px-3 py-2 border border-white/15 capcrunch-kicker text-xs focus:outline-none focus:border-white/30 hover:border-white/25 appearance-none cursor-pointer transition-colors';
 
 interface Props {
   sport: 'nba' | 'nfl';
@@ -110,7 +110,7 @@ export function RosterRoyaleSetup({
                   <button
                     key={m}
                     onClick={() => setRosterSubMode(m)}
-                    className={`px-4 py-1.5 sports-font text-xs transition-all ${
+                    className={`px-4 py-1.5 capcrunch-kicker text-xs transition-all ${
                       rosterSubMode === m
                         ? 'bg-[#FDF100] text-black font-bold'
                         : 'bg-black/40 text-white/50 border border-white/15 hover:border-white/30'
@@ -139,7 +139,7 @@ export function RosterRoyaleSetup({
                           >
                             {bsYears.map(y => <option key={y} value={y}>{y}</option>)}
                           </select>
-                          <span className="text-white/30 sports-font text-xs">to</span>
+                          <span className="text-white/30 capcrunch-kicker text-xs">to</span>
                           <select
                             value={boxScoreMaxYear}
                             onChange={e => { const v = parseInt(e.target.value); setBoxScoreMaxYear(v); if (v < boxScoreMinYear) setBoxScoreMinYear(v); }}
@@ -193,7 +193,7 @@ export function RosterRoyaleSetup({
                       <button
                         key={m}
                         onClick={() => setGameMode(m)}
-                        className={`px-5 py-1.5 sports-font text-xs transition-all ${
+                        className={`px-5 py-1.5 capcrunch-kicker text-xs transition-all ${
                           gameMode === m
                             ? 'bg-[#FDF100] text-black font-bold'
                             : 'bg-black/40 text-white/50 border border-white/15 hover:border-white/30'
@@ -220,7 +220,7 @@ export function RosterRoyaleSetup({
                         >
                           {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
-                        <span className="text-white/30 sports-font text-xs">to</span>
+                        <span className="text-white/30 capcrunch-kicker text-xs">to</span>
                         <select
                           value={randomMaxYear}
                           onChange={e => setRandomMaxYear(+e.target.value)}
@@ -331,7 +331,7 @@ export function RosterRoyaleSetup({
             // Loading / error state
             <div className="flex flex-col items-center gap-4 py-6">
               <div className="w-8 h-8 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
-              <span className="sports-font text-sm text-white/70">{statusMessage}</span>
+              <span className="capcrunch-kicker text-sm text-white/70">{statusMessage}</span>
               {loadingStatus === 'error' && (
                 <button onClick={() => setLoadingStatus('idle')} className="capcrunch-kicker text-xs text-red-400 underline">Back</button>
               )}

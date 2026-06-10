@@ -38,7 +38,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
 
   return (
     <div className="px-4 py-2 border bg-black/60 border-[#3b82f6]/70 shadow-[0_0_16px_rgba(59,130,246,0.18)]">
-      <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-1.5">Conference</p>
+      <p className="capcrunch-kicker text-[8px] text-white/50 tracking-widest uppercase leading-none mb-1.5">Conference</p>
 
       {/* College + pro conf side by side */}
       <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
         {/* Pro conference pill */}
         {nflConf && (
           <div className="flex items-center gap-1.5">
-            <span className="sports-font text-[9px] text-white/30">+</span>
+            <span className="capcrunch-kicker text-[9px] text-white/30">+</span>
             <div className={`px-3 py-1 ${PRO_CONF_STYLES[nflConf] ?? 'bg-white/10 border border-white/20'}`}>
               <span className={`capcrunch-title leading-none text-white ${proTextSize}`}>{nflConf}</span>
             </div>
@@ -67,13 +67,13 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
       {/* Schools trigger */}
       <div className="mt-1.5">
         {confName === 'Non-P4' ? (
-          <p className="sports-font text-[7px] text-white/35 leading-none">
+          <p className="capcrunch-kicker text-[7px] text-white/35 leading-none">
             any year — just need to have attended a non-P4 school
           </p>
         ) : (
           <button
             onClick={() => setShowPanel(v => !v)}
-            className="sports-font text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] transition-colors"
+            className="capcrunch-kicker text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] transition-colors"
           >
             {showPanel ? 'hide schools ▲' : 'see schools ▼'}
           </button>
@@ -114,7 +114,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
                       </div>
                     )}
                     <div>
-                      <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Qualifying Schools</p>
+                      <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Qualifying Schools</p>
                       <p className="capcrunch-title text-sm text-[#3b82f6]">{confName}</p>
                     </div>
                   </div>
@@ -149,7 +149,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
                     return (
                       <span
                         key={school}
-                        className="sports-font text-[9px] text-white/60 bg-white/5 border border-white/10 px-2 py-1 leading-none"
+                        className="capcrunch-kicker text-[9px] text-white/60 bg-white/5 border border-white/10 px-2 py-1 leading-none"
                       >
                         {school}
                       </span>

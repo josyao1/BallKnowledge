@@ -96,7 +96,7 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Same</p>
+                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Same</p>
                     <p className="capcrunch-title text-sm text-[#06b6d4]">{label}: Pick {pickIndex}{proConf ? ` + ${proConf}` : ''}</p>
                   </div>
                   <button
@@ -106,7 +106,7 @@ export function NameMatchRoundCard({ nameType, pickIndex, proConf, size = 'sm' }
                     ✕
                   </button>
                 </div>
-                <p className="sports-font text-[10px] text-white/60 leading-relaxed">
+                <p className="capcrunch-kicker text-[10px] text-white/60 leading-relaxed">
                   {tooltipBody}
                 </p>
               </motion.div>

@@ -1060,7 +1060,7 @@ export function MultiplayerCapCrunchPage() {
               >
                 EXACT!
               </motion.div>
-              <div className="sports-font text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
+              <div className="capcrunch-kicker text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
               <div className="capcrunch-title text-3xl md:text-4xl text-[#FDF100]">{targetCap}</div>
             </motion.div>
           </motion.div>
@@ -1077,7 +1077,7 @@ export function MultiplayerCapCrunchPage() {
               transition={{ duration: 0.18 }}
               className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 capcrunch-panel px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-none max-w-[88vw]"
             >
-              <span className="text-white/50 text-[11px] sports-font truncate shrink-0">{opponentPickToast.name}:</span>
+              <span className="text-white/50 text-[11px] capcrunch-kicker truncate shrink-0">{opponentPickToast.name}:</span>
               {opponentPickToast.isSkipped ? (
                 <span className="text-white/30 text-[11px] capcrunch-title italic">skipped</span>
               ) : (
@@ -1205,18 +1205,18 @@ export function MultiplayerCapCrunchPage() {
           <div className="hidden md:flex h-full px-6 py-4 gap-4">
             <div className="w-52 flex flex-col gap-4">
               <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#FDF100' }}>
-                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
+                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
                 <p className="capcrunch-title text-4xl text-white">{targetCap}</p>
               </div>
               <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#68BBE5' }}>
-                <div className="sports-font text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
+                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
                 <p className="capcrunch-title text-2xl text-white">
                   {statCategory ? (isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)) : '—'}
                 </p>
               </div>
               {!blindMode && (
               <div className="capcrunch-metric px-3 py-2 shadow-xl" style={{ borderLeftColor: '#70BE5B' }}>
-                <div className="sports-font text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
+                <div className="capcrunch-kicker text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
@@ -1228,8 +1228,8 @@ export function MultiplayerCapCrunchPage() {
                   />
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="sports-font text-[6px] text-white/20">0</span>
-                  <span className="sports-font text-[6px] text-white/20">{targetCap}</span>
+                  <span className="capcrunch-kicker text-[6px] text-white/20">0</span>
+                  <span className="capcrunch-kicker text-[6px] text-white/20">{targetCap}</span>
                 </div>
               </div>
               )}
@@ -1377,12 +1377,12 @@ export function MultiplayerCapCrunchPage() {
             className="w-full max-w-2xl"
           >
             <div className="mb-4 p-4 capcrunch-panel text-center">
-              <p className="sports-font text-[10px] text-white/40 tracking-[0.3em] uppercase">Target Cap</p>
+              <p className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">Target Cap</p>
               <p className="capcrunch-title text-3xl text-[#FDF100]">{targetCap}</p>
             </div>
             {tiebreakerUsed && (
               <div className="mb-4 p-3 bg-[#FDF100]/10 border border-[#FDF100]/30 text-center">
-                <p className="sports-font text-[10px] text-[#FDF100] tracking-widest uppercase">
+                <p className="capcrunch-kicker text-[10px] text-[#FDF100] tracking-widest uppercase">
                   {tiedOnUnique
                     ? (bothHitExactCap ? 'Tied score, hit round, busts & unique — older avg year wins' : 'Tied score, busts & unique — older avg year wins')
                     : tiedOnBusts

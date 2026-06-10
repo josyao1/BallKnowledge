@@ -206,7 +206,7 @@ export function ResultsPage() {
               <h2 className="capcrunch-kicker text-[9px] text-white/40 mb-3 flex justify-between">Dead Bets <span>// {incorrectGuesses.length}</span></h2>
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-wrap content-start gap-2 pb-2">
                 {incorrectGuesses.map((guess, index) => (
-                  <span key={index} className="px-2 py-1 bg-[#f0f0f0] text-black sports-font text-[9px] font-bold uppercase border-b-2 border-gray-400">
+                  <span key={index} className="px-2 py-1 bg-[#f0f0f0] text-black capcrunch-kicker text-[9px] font-bold uppercase border-b-2 border-gray-400">
                     {guess}
                   </span>
                 ))}
@@ -238,7 +238,7 @@ export function ResultsPage() {
                     >
                       <div className="flex justify-between items-center relative z-10">
                         <div className="overflow-hidden">
-                          <div className={`sports-font text-[7px] md:text-[8px] ${wasGuessed ? 'text-white/50' : 'text-white/20'}`}>
+                          <div className={`capcrunch-kicker text-[7px] md:text-[8px] ${wasGuessed ? 'text-white/50' : 'text-white/20'}`}>
                             #{player.number || '??'} // {player.position}
                           </div>
                           <div className={`capcrunch-title text-sm md:text-base truncate ${wasGuessed ? 'text-white' : 'text-white/40'}`}>
@@ -246,7 +246,7 @@ export function ResultsPage() {
                           </div>
                         </div>
                         {wasGuessed && (
-                          <div className="bg-white text-black text-[7px] px-1 py-0.5 sports-font font-bold shadow-sm">FOUND</div>
+                          <div className="bg-white text-black text-[7px] px-1 py-0.5 capcrunch-kicker font-bold shadow-sm">FOUND</div>
                         )}
                       </div>
                     </div>

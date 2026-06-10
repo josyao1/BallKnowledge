@@ -55,7 +55,7 @@ export function TeammateRoundCard({ pickIndex, size = 'sm' }: Props) {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="sports-font text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Rule</p>
+                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Rule</p>
                     <p className="capcrunch-title text-sm text-[#70BE5B]">Played with Pick {pickIndex}</p>
                   </div>
                   <button
@@ -65,7 +65,7 @@ export function TeammateRoundCard({ pickIndex, size = 'sm' }: Props) {
                     ✕
                   </button>
                 </div>
-                <p className="sports-font text-[10px] text-white/60 leading-relaxed">
+                <p className="capcrunch-kicker text-[10px] text-white/60 leading-relaxed">
                   Pick any player who was ever on the same team as Pick {pickIndex} — even in a different year. The overlap just needs to have happened at some point in their careers.
                 </p>
               </motion.div>

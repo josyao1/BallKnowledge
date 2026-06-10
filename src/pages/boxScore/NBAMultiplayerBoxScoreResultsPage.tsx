@@ -64,7 +64,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
   if (!lobby) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#080808' }}>
-        <div className="text-white/50 sports-font">Loading results...</div>
+        <div className="text-white/50 capcrunch-kicker">Loading results...</div>
       </div>
     );
   }
@@ -125,9 +125,9 @@ export function NBAMultiplayerBoxScoreResultsPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="relative overflow-hidden capcrunch-panel border-[#FDF100]/30 p-5 text-center"
           >
-            <div className="sports-font text-[10px] text-[#555] tracking-[0.4em] uppercase mb-2">Match Winner</div>
+            <div className="capcrunch-kicker text-[10px] text-[#555] tracking-[0.4em] uppercase mb-2">Match Winner</div>
             <div className="capcrunch-title text-4xl text-[#FDF100]">{winner.player_name}</div>
-            <div className="sports-font text-sm text-[#888] mt-1">{winner.score || 0} correct</div>
+            <div className="capcrunch-kicker text-sm text-[#888] mt-1">{winner.score || 0} correct</div>
           </motion.div>
         )}
 
@@ -159,7 +159,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className={`capcrunch-title text-lg w-7 text-center ${rank === 0 ? 'text-[#FDF100]' : 'text-[#444]'}`}>#{rank + 1}</span>
-                    <span className="sports-font text-sm text-white/90">
+                    <span className="capcrunch-kicker text-sm text-white/90">
                       {player.player_name}
                       {isMe && <span className="text-white/40 ml-1 text-[10px]">(you)</span>}
                     </span>
@@ -210,7 +210,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
                     <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                     <div>
                       <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                      <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                      <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                     </div>
                   </div>
                   <div className="p-4">
@@ -241,7 +241,7 @@ export function NBAMultiplayerBoxScoreResultsPage() {
             </button>
           )}
           {!isHost && (
-            <div className="flex-1 py-4 text-center sports-font text-sm text-[#555] border border-white/6">
+            <div className="flex-1 py-4 text-center capcrunch-kicker text-sm text-[#555] border border-white/6">
               Waiting for host...
             </div>
           )}

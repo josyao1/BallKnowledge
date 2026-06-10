@@ -69,11 +69,11 @@ export function NBABoxScoreResultsPage() {
             border: '1px solid rgba(253,241,0,0.2)',
           }}
         >
-          <div className="sports-font text-[10px] text-white/40 tracking-[0.4em] uppercase">Final Score</div>
+          <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.4em] uppercase">Final Score</div>
           <div className="capcrunch-title text-7xl text-[#FDF100] tabular-nums leading-none">
             {correctRows}<span className="text-4xl text-[#444]">/{totalRows}</span>
           </div>
-          <div className="sports-font text-sm" style={{ color: pct === 100 ? '#4ade80' : '#666' }}>
+          <div className="capcrunch-kicker text-sm" style={{ color: pct === 100 ? '#4ade80' : '#666' }}>
             {pct}% · {message}
           </div>
         </div>
@@ -105,9 +105,9 @@ export function NBABoxScoreResultsPage() {
                   <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
                     <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                    <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
-                  <div className="ml-auto sports-font text-[10px] tracking-wider" style={{ color: correct === players.length ? '#4ade80' : '#555' }}>
+                  <div className="ml-auto capcrunch-kicker text-[10px] tracking-wider" style={{ color: correct === players.length ? '#4ade80' : '#555' }}>
                     {correct}/{players.length}
                   </div>
                 </div>

@@ -32,22 +32,22 @@ export function MultiplayerCareerResultsPage() {
 
   if (!lobby) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen home-chalkboard flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="sports-font text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
+          <p className="capcrunch-kicker text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-4 md:p-6 relative overflow-hidden">
+    <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6 relative overflow-hidden">
       {/* Header */}
       <header className="text-center mb-8 mt-4">
-        <div className="sports-font text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
-        <h1 className="retro-title text-4xl md:text-5xl text-[#d4af37]">Career Mode</h1>
-        <div className="sports-font text-[10px] text-[#555] tracking-widest mt-1 uppercase">
+        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
+        <h1 className="capcrunch-title text-4xl md:text-5xl text-[#d4af37]">Career Mode</h1>
+        <div className="capcrunch-kicker text-[10px] text-[#555] tracking-widest mt-1 uppercase">
           {lobby.sport.toUpperCase()} · First to {winTarget}
         </div>
       </header>
@@ -59,16 +59,16 @@ export function MultiplayerCareerResultsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md mx-auto w-full mb-6 text-center"
         >
-          <p className="sports-font text-[9px] text-[#d4af37]/50 tracking-[0.4em] uppercase mb-1">
+          <p className="capcrunch-kicker text-[9px] text-[#d4af37]/50 tracking-[0.4em] uppercase mb-1">
             {isWinner ? 'You won' : 'Match Winner'}
           </p>
           <h2
-            className="retro-title text-5xl text-[#d4af37]"
+            className="capcrunch-title text-5xl text-[#d4af37]"
             style={{ textShadow: '0 0 28px rgba(212,175,55,0.35)' }}
           >
             {matchWinner.player_name}
           </h2>
-          <p className="sports-font text-[10px] text-[#666] mt-1 tracking-wider">
+          <p className="capcrunch-kicker text-[10px] text-[#666] mt-1 tracking-wider">
             {matchWinner.points ?? 0} rounds won
           </p>
         </motion.div>
@@ -81,8 +81,8 @@ export function MultiplayerCareerResultsPage() {
         transition={{ delay: 0.1 }}
         className="max-w-md mx-auto w-full mb-8"
       >
-        <div className="bg-[#0d0d0d] border border-white/10 rounded-sm p-4">
-          <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
+        <div className="capcrunch-panel p-4">
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
             Final Standings
           </div>
           <div className="space-y-2">
@@ -95,7 +95,7 @@ export function MultiplayerCareerResultsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + rank * 0.05 }}
-                  className={`flex items-center justify-between p-3 rounded-sm ${
+                  className={`flex items-center justify-between p-3 ${
                     rank === 0
                       ? 'bg-[#d4af37]/15 border border-[#d4af37]/40'
                       : isMe
@@ -104,14 +104,14 @@ export function MultiplayerCareerResultsPage() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`retro-title text-lg w-8 text-center ${
+                    <span className={`capcrunch-title text-lg w-8 text-center ${
                       rank === 0 ? 'text-[#d4af37]' : 'text-[#555]'
                     }`}>
                       #{rank + 1}
                     </span>
                     <div>
-                      <span className="sports-font text-sm text-white/90">{player.player_name}</span>
-                      {isMe && <span className="text-[10px] text-white/40 sports-font ml-1">(you)</span>}
+                      <span className="capcrunch-kicker text-sm text-white/90">{player.player_name}</span>
+                      {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">(you)</span>}
                     </div>
                   </div>
 
@@ -127,7 +127,7 @@ export function MultiplayerCareerResultsPage() {
                         />
                       ))}
                     </div>
-                    <span className="retro-title text-xl text-[#d4af37] ml-1">{wins}</span>
+                    <span className="capcrunch-title text-xl text-[#d4af37] ml-1">{wins}</span>
                   </div>
                 </motion.div>
               );
@@ -144,8 +144,8 @@ export function MultiplayerCareerResultsPage() {
           transition={{ delay: 0.2 }}
           className="max-w-md mx-auto w-full mb-8"
         >
-          <div className="bg-[#0d0d0d] border border-white/10 rounded-sm p-4">
-            <div className="sports-font text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
+          <div className="capcrunch-panel p-4">
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-4 uppercase text-center">
               Round History
             </div>
             <div className="space-y-3">
@@ -159,7 +159,6 @@ export function MultiplayerCareerResultsPage() {
                     )
                   : topScorers;
                 const roundWinnerId = sortedTopScorers[0]?.player_id;
-                // First guesser among all correct players (for time offset display)
                 const finisherMs = players
                   .map(p => round.finishedAt[p.player_id])
                   .filter((t): t is string => !!t)
@@ -167,11 +166,11 @@ export function MultiplayerCareerResultsPage() {
                 const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
-                  <div key={round.round} className="border border-[#2a2a2a] rounded-sm overflow-hidden">
+                  <div key={round.round} className="border border-white/10 overflow-hidden">
                     {/* Round header */}
-                    <div className="flex items-center justify-between px-3 py-2 bg-[#111]">
-                      <span className="sports-font text-[10px] text-[#666] tracking-wider uppercase">Round {round.round}</span>
-                      <span className="sports-font text-xs text-[var(--vintage-cream)]">{round.answer}</span>
+                    <div className="flex items-center justify-between px-3 py-2 bg-black/40">
+                      <span className="capcrunch-kicker text-[10px] text-[#666] tracking-wider uppercase">Round {round.round}</span>
+                      <span className="capcrunch-kicker text-xs text-white/80">{round.answer}</span>
                     </div>
                     {/* Player rows */}
                     <div className="divide-y divide-[#222]">
@@ -192,22 +191,22 @@ export function MultiplayerCareerResultsPage() {
                               className={`flex items-center justify-between px-3 py-2 ${isMe ? 'bg-[#d4af37]/5' : ''}`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className={`sports-font text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
+                                <span className={`capcrunch-kicker text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
                                   {player.player_name}
                                   {isMe && <span className="text-white/30 ml-1">(you)</span>}
                                 </span>
                                 {isWinner && (
-                                  <span className="sports-font text-[9px] text-[#d4af37]">
+                                  <span className="capcrunch-kicker text-[9px] text-[#d4af37]">
                                     {isTiebreaker ? '⚡' : '★'}
                                   </span>
                                 )}
                                 {offsetMs !== null && offsetMs > 0 && (
-                                  <span className="sports-font text-[9px] text-[#d4af37]">
+                                  <span className="capcrunch-kicker text-[9px] text-[#d4af37]">
                                     +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
                                   </span>
                                 )}
                               </div>
-                              <span className={`retro-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
+                              <span className={`capcrunch-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
                                 {gotIt ? score : '—'}
                               </span>
                             </div>
@@ -233,20 +232,20 @@ export function MultiplayerCareerResultsPage() {
           <button
             onClick={handlePlayAgain}
             disabled={isResetting}
-            className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-1 disabled:opacity-50"
+            className="w-full py-4 capcrunch-title text-xl tracking-wider transition-all bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50"
           >
             {isResetting ? 'Starting...' : 'Play Again'}
           </button>
         )}
         {!isHost && (
-          <div className="text-center text-white/30 sports-font text-sm tracking-wider py-2">
+          <div className="text-center text-white/30 capcrunch-kicker text-sm tracking-wider py-2">
             Waiting for host to start again...
           </div>
         )}
         <button
           onClick={handleLeave}
           disabled={isLeaving}
-          className="w-full py-4 rounded-sm retro-title text-xl tracking-wider transition-all bg-gradient-to-b from-[#f5e6c8] to-[#d4c4a0] text-black shadow-[0_4px_0_#a89860] active:shadow-none active:translate-y-1 disabled:opacity-50"
+          className="w-full py-4 capcrunch-title text-xl tracking-wider transition-all bg-black/40 border border-white/10 hover:border-white/20 text-white disabled:opacity-50"
         >
           {isLeaving ? 'Leaving...' : 'Back to Home'}
         </button>

@@ -30,13 +30,13 @@ export function CareerSettings({ sport, onSportChange, winTarget, onWinTargetCha
 
       <Row label="Era">
         <div className="flex items-center gap-1.5">
-          <span className="sports-font text-[8px] text-[#444]">From</span>
+          <span className="capcrunch-kicker text-[8px] text-[#444]">From</span>
           <select value={careerFrom} onChange={e => onCareerFromChange(+e.target.value)} className={selectCls}>
             <option value={0}>Any</option>
             {FROM_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <span className="sports-font text-[8px] text-[#333]">→</span>
-          <span className="sports-font text-[8px] text-[#444]">To</span>
+          <span className="capcrunch-kicker text-[8px] text-[#333]">→</span>
+          <span className="capcrunch-kicker text-[8px] text-[#444]">To</span>
           <select value={careerTo} onChange={e => onCareerToChange(+e.target.value)} className={selectCls}>
             <option value={0}>Any</option>
             {TO_YEARS.map(y => <option key={y} value={y}>{y}</option>)}

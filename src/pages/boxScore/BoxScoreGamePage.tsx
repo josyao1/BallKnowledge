@@ -60,7 +60,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
     <div ref={rowRef} className="flex items-center gap-2 py-1">
       {/* Jersey badge */}
       <div
-        className="shrink-0 w-9 h-7 flex items-center justify-center sports-font text-[11px] font-bold tabular-nums"
+        className="shrink-0 w-9 h-7 flex items-center justify-center capcrunch-kicker text-[11px] font-bold tabular-nums"
         style={{ background: `${teamColor}30`, color: teamColor, border: `1px solid ${teamColor}50` }}
       >
         {jersey ? `#${jersey}` : '–'}
@@ -84,7 +84,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
               <svg className="w-3.5 h-3.5 text-green-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              <span className="sports-font text-sm font-semibold text-green-300">
+              <span className="capcrunch-kicker text-sm font-semibold text-green-300">
                 <FlipReveal name={playerName} />
               </span>
             </motion.div>
@@ -95,7 +95,7 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
               animate={{ opacity: 1 }}
               className="px-3 py-1.5 border border-red-900/40 bg-red-950/20"
             >
-              <span className="sports-font text-sm text-red-400/80">{playerName}</span>
+              <span className="capcrunch-kicker text-sm text-red-400/80">{playerName}</span>
             </motion.div>
           ) : (
             <div key="input" className="flex flex-col gap-0.5">
@@ -104,13 +104,13 @@ function PlayerRow({ playerName, number, correct, revealed, teamColor, guess, on
                 value={guess}
                 onChange={e => onGuessChange(e.target.value)}
                 placeholder="Player name..."
-                className="w-full bg-black/40 border border-white/15 px-3 py-1.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
+                className="w-full bg-black/40 border border-white/15 px-3 py-1.5 capcrunch-kicker text-sm text-white placeholder-[#2a2a2a] focus:outline-none transition-colors"
                 style={{ '--tw-ring-color': teamColor } as React.CSSProperties}
                 onFocus={e => (e.currentTarget.style.borderColor = `${teamColor}60`)}
                 onBlur={e => (e.currentTarget.style.borderColor = '')}
               />
               {showHint && (
-                <div className="pl-1 sports-font text-[11px] tracking-widest font-mono" style={{ color: `${teamColor}90` }}>
+                <div className="pl-1 capcrunch-kicker text-[11px] tracking-widest font-mono" style={{ color: `${teamColor}90` }}>
                   {getInitials(playerName)}
                 </div>
               )}
@@ -240,7 +240,7 @@ export function BoxScoreGamePage() {
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
-          <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
+          <span className="capcrunch-kicker text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
     );
@@ -273,10 +273,10 @@ export function BoxScoreGamePage() {
             style={{ background: `${homeColor}18`, borderColor: `${homeColor}50` }}
           >
             <span className="capcrunch-title text-lg tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
-            <span className="sports-font text-xs text-[#444]">/</span>
+            <span className="capcrunch-kicker text-xs text-[#444]">/</span>
             <span className="capcrunch-title text-lg tabular-nums text-[#555]">{totalRows}</span>
             {totalRows > 0 && (
-              <span className="sports-font text-[10px] ml-1" style={{ color: pct === 100 ? '#4ade80' : '#888' }}>{pct}%</span>
+              <span className="capcrunch-kicker text-[10px] ml-1" style={{ color: pct === 100 ? '#4ade80' : '#888' }}>{pct}%</span>
             )}
           </div>
         </div>
@@ -310,24 +310,24 @@ export function BoxScoreGamePage() {
                 style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
                 {game.away_score}
               </span>
-              <span className="sports-font text-[10px] text-[#666] tracking-[0.3em] uppercase">Away</span>
+              <span className="capcrunch-kicker text-[10px] text-[#666] tracking-[0.3em] uppercase">Away</span>
             </div>
 
             {/* Center */}
             <div className="flex flex-col items-center gap-3 px-2 sm:px-6">
               {game.overtime && (
-                <span className="px-2.5 py-1 rounded-full sports-font text-[10px] tracking-wider"
+                <span className="px-2.5 py-1 rounded-full capcrunch-kicker text-[10px] tracking-wider"
                   style={{ background: 'rgba(253,241,0,0.15)', border: '1px solid rgba(253,241,0,0.4)', color: '#FDF100' }}>
                   OT
                 </span>
               )}
-              <div className="sports-font text-[12px] text-[#444] tracking-[0.4em]">FINAL</div>
+              <div className="capcrunch-kicker text-[12px] text-[#444] tracking-[0.4em]">FINAL</div>
               <div className="flex items-center">
                 <div className="w-px h-10 bg-white/10" />
               </div>
               <div className="text-center">
-                <div className="sports-font text-[11px] text-[#666]">{gameLabel}</div>
-                <div className="sports-font text-[11px] text-[#555] mt-0.5">WK {game.week}</div>
+                <div className="capcrunch-kicker text-[11px] text-[#666]">{gameLabel}</div>
+                <div className="capcrunch-kicker text-[11px] text-[#555] mt-0.5">WK {game.week}</div>
               </div>
             </div>
 
@@ -341,7 +341,7 @@ export function BoxScoreGamePage() {
                 style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
                 {game.home_score}
               </span>
-              <span className="sports-font text-[10px] text-[#666] tracking-[0.3em] uppercase">Home</span>
+              <span className="capcrunch-kicker text-[10px] text-[#666] tracking-[0.3em] uppercase">Home</span>
             </div>
           </div>
 
@@ -349,37 +349,37 @@ export function BoxScoreGamePage() {
           <div className="relative border-t border-white/6 px-4 py-3 flex flex-wrap justify-center gap-2">
             {/* Season / Date */}
             <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[72px]">
-              <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Season</span>
+              <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Season</span>
               <span className="capcrunch-title text-base text-white leading-tight">{game.season}</span>
-              <span className="sports-font text-[9px] text-[#666]">{formatDate(game.gameday)}</span>
+              <span className="capcrunch-kicker text-[9px] text-[#666]">{formatDate(game.gameday)}</span>
             </div>
             {/* Week / Type */}
             <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[60px]">
-              <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Week</span>
+              <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Week</span>
               <span className="capcrunch-title text-base text-white leading-tight">{game.week}</span>
-              <span className="sports-font text-[9px] text-[#666]">{gameLabel}</span>
+              <span className="capcrunch-kicker text-[9px] text-[#666]">{gameLabel}</span>
             </div>
             {/* Stadium */}
             {game.stadium && (
               <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 max-w-[140px]">
-                <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Stadium</span>
-                <span className="sports-font text-[10px] text-[#bbb] text-center leading-snug mt-0.5 line-clamp-2">{game.stadium}</span>
+                <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Stadium</span>
+                <span className="capcrunch-kicker text-[10px] text-[#bbb] text-center leading-snug mt-0.5 line-clamp-2">{game.stadium}</span>
               </div>
             )}
             {/* Conditions */}
             {(game.temp != null || game.roof) && (
               <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[60px]">
-                <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Conditions</span>
+                <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Conditions</span>
                 {game.temp != null && <span className="capcrunch-title text-base text-white leading-tight">{game.temp}°F</span>}
-                {game.roof && <span className="sports-font text-[9px] text-[#666] capitalize">{game.roof}</span>}
+                {game.roof && <span className="capcrunch-kicker text-[9px] text-[#666] capitalize">{game.roof}</span>}
               </div>
             )}
             {/* Wind */}
             {game.wind != null && (
               <div className="flex flex-col items-center justify-center bg-white/4 py-1.5 px-3 min-w-[52px]">
-                <span className="sports-font text-[8px] text-[#555] tracking-widest uppercase">Wind</span>
+                <span className="capcrunch-kicker text-[8px] text-[#555] tracking-widest uppercase">Wind</span>
                 <span className="capcrunch-title text-base text-white leading-tight">{game.wind}</span>
-                <span className="sports-font text-[9px] text-[#666]">mph</span>
+                <span className="capcrunch-kicker text-[9px] text-[#666]">mph</span>
               </div>
             )}
           </div>
@@ -407,7 +407,7 @@ export function BoxScoreGamePage() {
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
               placeholder="Type a player name — hits Enter to fill the box score..."
-              className="flex-1 bg-transparent sports-font text-base text-white placeholder-[#3a3a3a] focus:outline-none"
+              className="flex-1 bg-transparent capcrunch-kicker text-base text-white placeholder-[#3a3a3a] focus:outline-none"
             />
             {globalInput ? (
               <button onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }}
@@ -417,7 +417,7 @@ export function BoxScoreGamePage() {
                 </svg>
               </button>
             ) : (
-              <kbd className="hidden sm:flex sports-font text-[10px] text-[#555] px-2 py-1 rounded border border-[#2a2a2a] items-center">↵</kbd>
+              <kbd className="hidden sm:flex capcrunch-kicker text-[10px] text-[#555] px-2 py-1 rounded border border-[#2a2a2a] items-center">↵</kbd>
             )}
           </div>
 
@@ -441,7 +441,7 @@ export function BoxScoreGamePage() {
                     <svg className="w-4 h-4 text-[#555] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    <span className="sports-font text-sm text-white font-semibold flex-1">{c.name}</span>
+                    <span className="capcrunch-kicker text-sm text-white font-semibold flex-1">{c.name}</span>
                     <svg className="w-4 h-4 text-[#444] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -464,7 +464,7 @@ export function BoxScoreGamePage() {
               <svg className="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              <span className="sports-font text-sm text-red-400">
+              <span className="capcrunch-kicker text-sm text-red-400">
                 <span className="font-semibold">{notInGame}</span> didn't play in this game
               </span>
             </motion.div>
@@ -498,7 +498,7 @@ export function BoxScoreGamePage() {
                   <TeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
                     <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                    <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   {/* Mini progress */}
                   <div className="ml-auto flex items-center gap-1.5">
@@ -507,10 +507,10 @@ export function BoxScoreGamePage() {
                       const done = rows.filter((p, i) => isCorrect(side, cat, i, p.name)).length;
                       return rows.length > 0 ? (
                         <div key={cat} className="text-center">
-                          <div className="sports-font text-[8px] tracking-wider" style={{ color: done === rows.length ? '#4ade80' : '#555' }}>
+                          <div className="capcrunch-kicker text-[8px] tracking-wider" style={{ color: done === rows.length ? '#4ade80' : '#555' }}>
                             {done}/{rows.length}
                           </div>
-                          <div className="sports-font text-[7px] text-[#3a3a3a] uppercase tracking-wider">{cat.slice(0, 3)}</div>
+                          <div className="capcrunch-kicker text-[7px] text-[#3a3a3a] uppercase tracking-wider">{cat.slice(0, 3)}</div>
                         </div>
                       ) : null;
                     })}
@@ -538,7 +538,7 @@ export function BoxScoreGamePage() {
                             rowRef={el => { rowRefs.current[key] = el; }}
                             showHint={hintsRevealed && !isCorrect(side, 'passing', i, p.name) && !revealed}
                             statLine={
-                              <span className="sports-font text-[11px] tabular-nums">
+                              <span className="capcrunch-kicker text-[11px] tabular-nums">
                                 <span className="text-[#888] hidden sm:inline">{p.completions}/{p.attempts} </span>
                                 <span className="text-[#ddd] font-semibold">{p.yards}yd</span>
                                 {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
@@ -571,7 +571,7 @@ export function BoxScoreGamePage() {
                             rowRef={el => { rowRefs.current[key] = el; }}
                             showHint={hintsRevealed && !isCorrect(side, 'rushing', i, p.name) && !revealed}
                             statLine={
-                              <span className="sports-font text-[11px] tabular-nums">
+                              <span className="capcrunch-kicker text-[11px] tabular-nums">
                                 <span className="text-[#888] hidden sm:inline">{p.carries}car </span>
                                 <span className="text-[#ddd] font-semibold">{p.yards}yd</span>
                                 {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
@@ -603,7 +603,7 @@ export function BoxScoreGamePage() {
                             rowRef={el => { rowRefs.current[key] = el; }}
                             showHint={hintsRevealed && !isCorrect(side, 'receiving', i, p.name) && !revealed}
                             statLine={
-                              <span className="sports-font text-[11px] tabular-nums">
+                              <span className="capcrunch-kicker text-[11px] tabular-nums">
                                 <span className="text-[#888] hidden sm:inline">{p.receptions}/{p.targets} </span>
                                 <span className="text-[#ddd] font-semibold">{p.yards}yd</span>
                                 {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
@@ -631,14 +631,14 @@ export function BoxScoreGamePage() {
                 onChange={e => setSpreadGuess(e.target.value)}
                 placeholder="e.g. 3 or −3"
                 disabled={revealed}
-                className="w-36 bg-black/40 border border-white/15 px-4 py-2.5 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#FDF100]/40 disabled:opacity-40 transition-colors"
+                className="w-36 bg-black/40 border border-white/15 px-4 py-2.5 capcrunch-kicker text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#FDF100]/40 disabled:opacity-40 transition-colors"
               />
-              <span className="sports-font text-xs text-[#666]">pts · + = home favored · − = away favored</span>
+              <span className="capcrunch-kicker text-xs text-[#666]">pts · + = home favored · − = away favored</span>
               {revealed && (
                 <motion.span
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`sports-font text-sm font-bold px-3 py-1 rounded-full ${
+                  className={`capcrunch-kicker text-sm font-bold px-3 py-1 rounded-full ${
                     spreadCorrect
                       ? 'text-green-300 bg-green-900/30 border border-green-700/40'
                       : 'text-red-400 bg-red-950/30 border border-red-900/40'
@@ -656,7 +656,7 @@ export function BoxScoreGamePage() {
           {!revealed && (
             <button
               onClick={() => setHintsRevealed(h => !h)}
-              className={`px-5 py-4 sports-font text-sm border transition-all ${
+              className={`px-5 py-4 capcrunch-kicker text-sm border transition-all ${
                 hintsRevealed
                   ? 'border-amber-500/60 text-amber-400 bg-amber-900/15'
                   : 'border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa]'
@@ -669,7 +669,7 @@ export function BoxScoreGamePage() {
           {!revealed && (
             <button
               onClick={() => setRevealed(true)}
-              className="px-6 py-4 sports-font text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
+              className="px-6 py-4 capcrunch-kicker text-sm border border-white/8 text-[#666] hover:border-white/20 hover:text-[#aaa] transition-all"
             >
               Reveal All
             </button>

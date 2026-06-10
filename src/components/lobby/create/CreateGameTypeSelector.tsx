@@ -32,7 +32,7 @@ interface Props {
 export function CreateGameTypeSelector({ lobbyMode, onModeChange }: Props) {
   return (
     <div className="bg-black/50 border border-white/10 rounded-sm p-4">
-      <div className="sports-font text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
+      <div className="capcrunch-kicker text-[10px] text-white/40 text-center mb-3 tracking-[0.3em] uppercase">
         Game Type
       </div>
       <div className="flex gap-2 justify-center flex-wrap">
@@ -40,7 +40,7 @@ export function CreateGameTypeSelector({ lobbyMode, onModeChange }: Props) {
           <button
             key={value}
             onClick={() => onModeChange(value)}
-            className={`px-6 py-2 rounded-sm sports-font tracking-wider transition-all ${
+            className={`px-6 py-2 rounded-sm capcrunch-kicker tracking-wider transition-all ${
               lobbyMode === value
                 ? `${activeClass} shadow-lg font-bold`
                 : 'bg-black/40 text-white/50 border border-white/20 hover:border-white/40'
@@ -50,7 +50,7 @@ export function CreateGameTypeSelector({ lobbyMode, onModeChange }: Props) {
           </button>
         ))}
       </div>
-      <div className="text-center mt-2 sports-font text-[10px] text-white/30 tracking-wider">
+      <div className="text-center mt-2 capcrunch-kicker text-[10px] text-white/30 tracking-wider">
         <span style={{ color: '#d4af37' }}>★</span> = most popular
       </div>
     </div>

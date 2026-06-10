@@ -312,7 +312,7 @@ export function MultiplayerBoxScorePage() {
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
-          <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
+          <span className="capcrunch-kicker text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
     );
@@ -344,8 +344,8 @@ export function MultiplayerBoxScorePage() {
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
             <div className="flex items-center gap-1 px-2.5 py-1 border border-white/10">
               <span className="capcrunch-title text-xl tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
-              <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
-              {finished && spreadOk && <span className="sports-font text-[10px] text-green-400 ml-0.5">+S</span>}
+              <span className="capcrunch-kicker text-xs text-[#444]">/{totalRows}</span>
+              {finished && spreadOk && <span className="capcrunch-kicker text-[10px] text-green-400 ml-0.5">+S</span>}
             </div>
           </div>
         </div>
@@ -359,7 +359,7 @@ export function MultiplayerBoxScorePage() {
             return (
               <div
                 key={p.player_id}
-                className={`flex items-center gap-1 shrink-0 px-2 py-1 rounded sports-font text-[10px] ${
+                className={`flex items-center gap-1 shrink-0 px-2 py-1 rounded capcrunch-kicker text-[10px] ${
                   done && score > 0
                     ? 'bg-green-900/20 border border-green-700/30 text-green-400'
                     : done
@@ -379,7 +379,7 @@ export function MultiplayerBoxScorePage() {
               </div>
             );
           })}
-          <div className="shrink-0 sports-font text-[10px] text-[#444] self-center ml-auto whitespace-nowrap">
+          <div className="shrink-0 capcrunch-kicker text-[10px] text-[#444] self-center ml-auto whitespace-nowrap">
             {doneCount}/{players.length} done
           </div>
         </div>
@@ -403,7 +403,7 @@ export function MultiplayerBoxScorePage() {
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
                 placeholder="Type a player name..."
-                className="flex-1 min-w-0 bg-transparent sports-font text-sm text-white placeholder-[#3a3a3a] focus:outline-none"
+                className="flex-1 min-w-0 bg-transparent capcrunch-kicker text-sm text-white placeholder-[#3a3a3a] focus:outline-none"
               />
               {globalInput && (
                 <button
@@ -433,7 +433,7 @@ export function MultiplayerBoxScorePage() {
                       onMouseDown={() => confirmCandidate(c.name)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/5 ${i > 0 ? 'border-t border-white/5' : ''}`}
                     >
-                      <span className="sports-font text-sm text-white font-semibold flex-1 min-w-0 truncate">{c.name}</span>
+                      <span className="capcrunch-kicker text-sm text-white font-semibold flex-1 min-w-0 truncate">{c.name}</span>
                       <svg className="w-3.5 h-3.5 text-[#444] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -463,24 +463,24 @@ export function MultiplayerBoxScorePage() {
               <TeamLogo abbr={game.away_team} className="w-14 h-14 sm:w-20 sm:h-20 object-contain" />
               <span className="capcrunch-title text-xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</span>
               <span className="capcrunch-title text-5xl sm:text-6xl text-white leading-none tabular-nums">{game.away_score}</span>
-              <span className="sports-font text-[9px] text-[#666] tracking-widest uppercase">Away</span>
+              <span className="capcrunch-kicker text-[9px] text-[#666] tracking-widest uppercase">Away</span>
             </div>
             <div className="flex flex-col items-center gap-1.5 px-2">
               {game.overtime && (
-                <span className="px-2 py-0.5 rounded-full sports-font text-[10px]"
+                <span className="px-2 py-0.5 rounded-full capcrunch-kicker text-[10px]"
                   style={{ background: 'rgba(253,241,0,0.15)', border: '1px solid rgba(253,241,0,0.4)', color: '#FDF100' }}>OT</span>
               )}
-              <div className="sports-font text-[11px] text-[#444] tracking-[0.4em]">FINAL</div>
-              <div className="sports-font text-[10px] text-[#555] text-center leading-snug">
+              <div className="capcrunch-kicker text-[11px] text-[#444] tracking-[0.4em]">FINAL</div>
+              <div className="capcrunch-kicker text-[10px] text-[#555] text-center leading-snug">
                 {GAME_TYPE_LABELS[game.game_type] ?? game.game_type}<br />WK {game.week}
               </div>
-              <div className="sports-font text-[9px] text-[#444]">{game.season}</div>
+              <div className="capcrunch-kicker text-[9px] text-[#444]">{game.season}</div>
             </div>
             <div className="flex flex-col items-center gap-1.5 flex-1">
               <TeamLogo abbr={game.home_team} className="w-14 h-14 sm:w-20 sm:h-20 object-contain" />
               <span className="capcrunch-title text-xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</span>
               <span className="capcrunch-title text-5xl sm:text-6xl text-white leading-none tabular-nums">{game.home_score}</span>
-              <span className="sports-font text-[9px] text-[#666] tracking-widest uppercase">Home</span>
+              <span className="capcrunch-kicker text-[9px] text-[#666] tracking-widest uppercase">Home</span>
             </div>
           </div>
         </div>
@@ -493,7 +493,7 @@ export function MultiplayerBoxScorePage() {
               initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
               className="flex items-center gap-3 px-4 py-3 border border-red-900/40 bg-red-950/25"
             >
-              <span className="sports-font text-sm text-red-400">
+              <span className="capcrunch-kicker text-sm text-red-400">
                 <span className="font-semibold">{notInGame}</span> didn't play in this game
               </span>
             </motion.div>
@@ -507,18 +507,18 @@ export function MultiplayerBoxScorePage() {
             style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             {hintsGranted ? (
-              <span className="sports-font text-xs text-amber-400 font-semibold">
+              <span className="capcrunch-kicker text-xs text-amber-400 font-semibold">
                 💡 Hints active — player initials shown
               </span>
             ) : (
               <>
-                <span className="sports-font text-xs text-[#555]">
+                <span className="capcrunch-kicker text-xs text-[#555]">
                   💡 Reveal initials? ({hintVotes}/{players.length} agreed)
                 </span>
                 <button
                   onClick={requestHints}
                   disabled={myHintRequested}
-                  className={`px-4 py-1.5 sports-font text-xs transition-all ${
+                  className={`px-4 py-1.5 capcrunch-kicker text-xs transition-all ${
                     myHintRequested
                       ? 'bg-amber-900/20 border border-amber-700/30 text-amber-400/60 cursor-default'
                       : 'border border-amber-600/40 text-amber-500 hover:bg-amber-900/20 hover:border-amber-500/60'
@@ -537,7 +537,7 @@ export function MultiplayerBoxScorePage() {
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 px-4 py-3 border border-amber-700/40 bg-amber-900/15"
           >
-            <span className="sports-font text-sm text-amber-400 font-semibold">
+            <span className="capcrunch-kicker text-sm text-amber-400 font-semibold">
               ⏱ Time's up! Score: {correctCount + (spreadOk ? 3 : 0)} — waiting for others...
             </span>
           </motion.div>
@@ -564,7 +564,7 @@ export function MultiplayerBoxScorePage() {
                   <TeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
                     <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                    <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   {/* Mini progress */}
                   <div className="ml-auto flex items-center gap-1.5">
@@ -573,10 +573,10 @@ export function MultiplayerBoxScorePage() {
                       const done = rows.filter((p, i) => isCorrect(side, cat, i, p.name)).length;
                       return rows.length > 0 ? (
                         <div key={cat} className="text-center">
-                          <div className="sports-font text-[8px] tracking-wider" style={{ color: done === rows.length ? '#4ade80' : '#555' }}>
+                          <div className="capcrunch-kicker text-[8px] tracking-wider" style={{ color: done === rows.length ? '#4ade80' : '#555' }}>
                             {done}/{rows.length}
                           </div>
-                          <div className="sports-font text-[7px] text-[#3a3a3a] uppercase">{cat.slice(0, 3)}</div>
+                          <div className="capcrunch-kicker text-[7px] text-[#3a3a3a] uppercase">{cat.slice(0, 3)}</div>
                         </div>
                       ) : null;
                     })}
@@ -603,12 +603,12 @@ export function MultiplayerBoxScorePage() {
                             >
                               {/* Jersey badge with teammate indicator */}
                               <div
-                                className="relative shrink-0 w-9 h-7 flex items-center justify-center sports-font text-[11px] font-bold tabular-nums"
+                                className="relative shrink-0 w-9 h-7 flex items-center justify-center capcrunch-kicker text-[11px] font-bold tabular-nums"
                                 style={{ background: `${color}30`, color, border: `1px solid ${color}50` }}
                               >
                                 {jersey ? `#${jersey}` : '–'}
                                 {tmCount > 0 && (
-                                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-500 border border-[#080808] flex items-center justify-center sports-font text-[8px] text-white font-bold">
+                                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-500 border border-[#080808] flex items-center justify-center capcrunch-kicker text-[8px] text-white font-bold">
                                     {tmCount}
                                   </span>
                                 )}
@@ -632,7 +632,7 @@ export function MultiplayerBoxScorePage() {
                                       <svg className="w-3 h-3 text-green-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                       </svg>
-                                      <span className="sports-font text-sm font-semibold text-green-300 truncate">
+                                      <span className="capcrunch-kicker text-sm font-semibold text-green-300 truncate">
                                         <FlipReveal name={p.name} />
                                       </span>
                                     </motion.div>
@@ -643,15 +643,15 @@ export function MultiplayerBoxScorePage() {
                                       animate={{ opacity: 1 }}
                                       className="px-2.5 py-1.5 border border-red-900/40 bg-red-950/20 truncate"
                                     >
-                                      <span className="sports-font text-sm text-red-400/80">{p.name}</span>
+                                      <span className="capcrunch-kicker text-sm text-red-400/80">{p.name}</span>
                                     </motion.div>
                                   ) : (
                                     <div className="flex flex-col gap-0.5">
                                       <div className="px-2.5 py-1.5 border border-white/8 bg-black/30">
-                                        <span className="sports-font text-sm text-[#2a2a2a] select-none">████████</span>
+                                        <span className="capcrunch-kicker text-sm text-[#2a2a2a] select-none">████████</span>
                                       </div>
                                       {hintsGranted && (
-                                        <div className="pl-1 sports-font text-[11px] tracking-widest font-mono" style={{ color: `${color}90` }}>
+                                        <div className="pl-1 capcrunch-kicker text-[11px] tracking-widest font-mono" style={{ color: `${color}90` }}>
                                           {getInitials(p.name)}
                                         </div>
                                       )}
@@ -663,20 +663,20 @@ export function MultiplayerBoxScorePage() {
                               {/* Stat line */}
                               <div className="shrink-0 text-right" style={{ minWidth: 72 }}>
                                 {cat === 'passing' && (
-                                  <span className="sports-font text-[11px] tabular-nums">
+                                  <span className="capcrunch-kicker text-[11px] tabular-nums">
                                     <span className="text-[#ccc] font-semibold">{p.yards}yd</span>
                                     {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
                                     {p.ints > 0 && <span className="text-red-400"> {p.ints}INT</span>}
                                   </span>
                                 )}
                                 {cat === 'rushing' && (
-                                  <span className="sports-font text-[11px] tabular-nums">
+                                  <span className="capcrunch-kicker text-[11px] tabular-nums">
                                     <span className="text-[#ccc] font-semibold">{p.yards}yd</span>
                                     {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
                                   </span>
                                 )}
                                 {cat === 'receiving' && (
-                                  <span className="sports-font text-[11px] tabular-nums">
+                                  <span className="capcrunch-kicker text-[11px] tabular-nums">
                                     <span className="text-[#ccc] font-semibold">{p.yards}yd</span>
                                     {' '}<span className={p.tds > 0 ? 'text-green-400 font-bold' : 'text-[#666]'}>{p.tds}TD</span>
                                   </span>
@@ -717,10 +717,10 @@ export function MultiplayerBoxScorePage() {
                 }}
                 disabled={finished}
                 placeholder="e.g. 3 or −3"
-                className="w-32 bg-black/40 border border-white/15 px-3 py-2 sports-font text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#FDF100]/40 disabled:opacity-40 transition-colors"
+                className="w-32 bg-black/40 border border-white/15 px-3 py-2 capcrunch-kicker text-sm text-white placeholder-[#2a2a2a] focus:outline-none focus:border-[#FDF100]/40 disabled:opacity-40 transition-colors"
               />
-              <span className="sports-font text-xs text-[#555]">+ = home favored</span>
-              {finished && spreadOk && <span className="sports-font text-xs text-green-400 font-semibold">✓ correct!</span>}
+              <span className="capcrunch-kicker text-xs text-[#555]">+ = home favored</span>
+              {finished && spreadOk && <span className="capcrunch-kicker text-xs text-green-400 font-semibold">✓ correct!</span>}
             </div>
           </div>
         )}
@@ -739,7 +739,7 @@ export function MultiplayerBoxScorePage() {
               Submit Early
             </button>
           ) : (
-            <div className="text-center sports-font text-sm text-[#555] tracking-widest">
+            <div className="text-center capcrunch-kicker text-sm text-[#555] tracking-widest">
               Waiting for {players.length - doneCount} more player{players.length - doneCount !== 1 ? 's' : ''}...
             </div>
           )}

@@ -32,10 +32,10 @@ export function TeamDisplay({ team, season, record, sport }: TeamDisplayProps) {
       )}
       <div>
         <div className="font-semibold text-lg">{team.name}</div>
-        <div className="text-gray-400 text-sm">
+        <div className="text-white/40 text-sm">
           {season} Season
           {record && (
-            <span className="ml-2 text-gray-500">({record})</span>
+            <span className="ml-2 text-white/30">({record})</span>
           )}
         </div>
       </div>

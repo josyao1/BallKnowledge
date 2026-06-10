@@ -63,11 +63,11 @@ export function LobbyJoinPrompt({ lobby, players, joinName, setJoinName, isJoini
             placeholder="Enter your name"
             maxLength={20}
             onKeyDown={e => e.key === 'Enter' && onJoin()}
-            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors sports-font"
+            className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors capcrunch-kicker"
           />
 
           {joinError && (
-            <div className="p-2 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center sports-font">
+            <div className="p-2 bg-red-900/30 border border-red-700 text-red-400 text-sm text-center capcrunch-kicker">
               {joinError}
             </div>
           )}
@@ -91,7 +91,7 @@ export function LobbyJoinPrompt({ lobby, players, joinName, setJoinName, isJoini
             <div className="capcrunch-kicker text-[10px] text-white/30 mb-2">Already Seated</div>
             <div className="flex flex-wrap justify-center gap-2">
               {players.map(p => (
-                <span key={p.player_id} className="px-3 py-1 bg-black/40 border border-white/10 sports-font text-sm text-white/60">
+                <span key={p.player_id} className="px-3 py-1 bg-black/40 border border-white/10 capcrunch-kicker text-sm text-white/60">
                   {p.is_host && '★ '}{p.player_name}
                 </span>
               ))}

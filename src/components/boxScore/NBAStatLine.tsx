@@ -25,7 +25,7 @@ interface Props {
 
 export function NBAStatLine({ player: p, leaders }: Props) {
   return (
-    <span className="sports-font text-[11px] tabular-nums">
+    <span className="capcrunch-kicker text-[11px] tabular-nums">
       <span className="font-semibold" style={{ color: p.pts > 0 && p.pts === leaders.pts ? '#FDF100' : '#ccc' }}>{p.pts}pts</span>
       {' '}<span style={{ color: p.reb > 0 && p.reb === leaders.reb ? '#FDF100' : '#888' }}>{p.reb}reb</span>
       {' '}<span style={{ color: p.ast > 0 && p.ast === leaders.ast ? '#FDF100' : '#888' }}>{p.ast}ast</span>

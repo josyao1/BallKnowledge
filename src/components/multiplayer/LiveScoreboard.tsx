@@ -64,7 +64,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
   return (
     <div className="space-y-3">
       {(showBonuses || hasMultiplierPlayers) && (
-        <div className="text-[10px] text-white/40 text-center mb-1 sports-font">
+        <div className="text-[10px] text-white/40 text-center mb-1 capcrunch-kicker">
           {showBonuses && (isTeamMode ? '+1 for unique guesses (teams = one)' : '+1 for unique guesses')}
           {showBonuses && hasMultiplierPlayers && ' • '}
           {hasMultiplierPlayers && <span className="text-purple-400">multipliers active</span>}
@@ -89,7 +89,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                 layout
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`rounded-sm border transition-all overflow-hidden ${
+                className={`border transition-all overflow-hidden ${
                   isCurrent
                     ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
                     : 'bg-black/40 border-white/10'
@@ -105,7 +105,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`retro-title text-lg w-6 ${
+                    <span className={`capcrunch-title text-lg w-6 ${
                       isLeader ? 'text-[#d4af37]' : 'text-white/30'
                     }`}>
                       {index + 1}
@@ -115,7 +115,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                       style={{ backgroundColor: team.color.bg }}
                     />
                     <div className="flex flex-col">
-                      <span className={`sports-font text-sm font-medium truncate max-w-[100px] ${
+                      <span className={`capcrunch-kicker text-sm font-medium truncate max-w-[100px] ${
                         isCurrent ? 'text-[#d4af37]' : 'text-white/80'
                       }`}>
                         {team.members.map(m => m.player_name).join(' & ')}
@@ -131,7 +131,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                         {showBonuses && bonus > 0 && (
                           <span className="text-xs text-emerald-400">+{bonus}</span>
                         )}
-                        <span className="retro-title text-xl text-white">
+                        <span className="capcrunch-title text-xl text-white">
                           {effectiveScore}
                         </span>
                       </div>
@@ -165,7 +165,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                             className="flex items-center justify-between px-6 py-2 border-t border-white/5"
                           >
                             <div className="flex items-center gap-2">
-                              <span className={`sports-font text-xs ${isMemberCurrent ? 'text-[#d4af37]' : 'text-white/60'}`}>
+                              <span className={`capcrunch-kicker text-xs ${isMemberCurrent ? 'text-[#d4af37]' : 'text-white/60'}`}>
                                 {member.player_name}
                               </span>
                               {isMemberCurrent && (
@@ -196,7 +196,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
               layout
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex items-center justify-between p-3 rounded-sm border transition-all ${
+              className={`flex items-center justify-between p-3 border transition-all ${
                 isCurrentPlayer
                   ? 'bg-[#d4af37]/20 border-[#d4af37]/50'
                   : (player.score_multiplier ?? 1) > 1
@@ -205,14 +205,14 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className={`retro-title text-lg w-6 ${
+                <span className={`capcrunch-title text-lg w-6 ${
                   isLeader ? 'text-[#d4af37]' : 'text-white/30'
                 }`}>
                   {index + 1}
                 </span>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
-                    <span className={`sports-font text-sm font-medium truncate max-w-[100px] ${
+                    <span className={`capcrunch-kicker text-sm font-medium truncate max-w-[100px] ${
                       isCurrentPlayer ? 'text-[#d4af37]' : 'text-white/80'
                     }`}>
                       {player.player_name}
@@ -234,7 +234,7 @@ export function LiveScoreboard({ players, currentPlayerId, rosterSize }: LiveSco
                   {(player.score_multiplier ?? 1) > 1 && (
                     <span className="text-xs text-purple-400">×{player.score_multiplier}</span>
                   )}
-                  <span className="retro-title text-xl text-white">
+                  <span className="capcrunch-title text-xl text-white">
                     {effectiveScore}
                   </span>
                 </div>

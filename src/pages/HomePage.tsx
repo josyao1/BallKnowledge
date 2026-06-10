@@ -869,7 +869,7 @@ export function HomePage() {
                     <div className="flex flex-wrap gap-2 justify-center">
                       <button
                         onClick={() => launchCapCrunch(capCrunchSport, null)}
-                        className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                        className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                       >
                         RANDOM
                       </button>
@@ -877,7 +877,7 @@ export function HomePage() {
                         <button
                           key={category}
                           onClick={() => launchCapCrunch(capCrunchSport, category)}
-                          className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                          className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                         >
                           {getCapCrunchLabel(category)}
                         </button>
@@ -888,13 +888,13 @@ export function HomePage() {
                       <div className="w-full">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex-1 h-px bg-white/10" />
-                          <span className="sports-font text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
+                          <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
                           <div className="flex-1 h-px bg-white/10" />
                         </div>
                         <div className="flex flex-wrap gap-2 justify-center">
                           <button
                             onClick={() => launchCapCrunch(capCrunchSport, CAP_CRUNCH_NFL_CAREER_CATS[Math.floor(Math.random() * CAP_CRUNCH_NFL_CAREER_CATS.length)])}
-                            className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                            className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                           >
                             RANDOM
                           </button>
@@ -902,7 +902,7 @@ export function HomePage() {
                             <button
                               key={category}
                               onClick={() => launchCapCrunch(capCrunchSport, category)}
-                              className="px-4 py-2 rounded-sm sports-font text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                              className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
                             >
                               {getCapCrunchLabel(category)}
                             </button>
@@ -913,13 +913,13 @@ export function HomePage() {
                   </div>
 
                   <div className="flex items-center gap-3 justify-center mt-6">
-                    <span className="sports-font text-[10px] text-white/50 tracking-widest">ROUNDS</span>
+                    <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">ROUNDS</span>
                     <div className="flex gap-1">
                       {[3, 4, 5, 6, 7, 8, 9, 10].map((rounds) => (
                         <button
                           key={rounds}
                           onClick={() => setCapCrunchRounds(rounds)}
-                          className={`w-8 h-8 rounded-sm sports-font text-xs transition ${
+                          className={`w-8 h-8 rounded-sm capcrunch-kicker text-xs transition ${
                             capCrunchRounds === rounds
                               ? 'bg-[#d4af37] text-black font-bold'
                               : 'bg-black/50 border border-white/20 text-white/50 hover:text-white hover:border-white/40'

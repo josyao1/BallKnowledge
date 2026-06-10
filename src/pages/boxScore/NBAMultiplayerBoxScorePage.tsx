@@ -212,7 +212,7 @@ export function NBAMultiplayerBoxScorePage() {
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
-          <span className="sports-font text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
+          <span className="capcrunch-kicker text-[#666] tracking-[0.4em] text-xs">LOADING GAME</span>
         </div>
       </div>
     );
@@ -236,7 +236,7 @@ export function NBAMultiplayerBoxScorePage() {
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/10">
               <span className="capcrunch-title text-xl tabular-nums" style={{ color: '#FDF100' }}>{correctCount}</span>
-              <span className="sports-font text-xs text-[#444]">/{totalRows}</span>
+              <span className="capcrunch-kicker text-xs text-[#444]">/{totalRows}</span>
             </div>
           </div>
         </div>
@@ -247,7 +247,7 @@ export function NBAMultiplayerBoxScorePage() {
             const isMe = p.player_id === currentPlayerId;
             const done = p.finished_at !== null;
             return (
-              <div key={p.player_id} className={`flex items-center gap-1 shrink-0 px-2 py-1 rounded sports-font text-[10px] ${
+              <div key={p.player_id} className={`flex items-center gap-1 shrink-0 px-2 py-1 rounded capcrunch-kicker text-[10px] ${
                 done && (p.score || 0) > 0 ? 'bg-green-900/20 border border-green-700/30 text-green-400'
                 : done ? 'bg-red-900/15 border border-red-900/30 text-red-400/80'
                 : isMe ? 'bg-white/5 border border-white/10 text-white'
@@ -259,7 +259,7 @@ export function NBAMultiplayerBoxScorePage() {
               </div>
             );
           })}
-          <div className="shrink-0 sports-font text-[10px] text-[#444] self-center ml-auto whitespace-nowrap">{doneCount}/{players.length} done</div>
+          <div className="shrink-0 capcrunch-kicker text-[10px] text-[#444] self-center ml-auto whitespace-nowrap">{doneCount}/{players.length} done</div>
         </div>
 
         {/* Search bar */}
@@ -275,7 +275,7 @@ export function NBAMultiplayerBoxScorePage() {
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 160)}
                 placeholder="Type a player name..."
-                className="flex-1 min-w-0 bg-transparent sports-font text-sm text-white placeholder-[#3a3a3a] focus:outline-none"
+                className="flex-1 min-w-0 bg-transparent capcrunch-kicker text-sm text-white placeholder-[#3a3a3a] focus:outline-none"
               />
               {globalInput && (
                 <button onClick={() => { setGlobalInput(''); searchRef.current?.focus(); }} className="text-[#555] hover:text-white transition-colors">
@@ -296,7 +296,7 @@ export function NBAMultiplayerBoxScorePage() {
                   {candidates.map((c, i) => (
                     <button key={c.name + i} onMouseDown={() => confirmCandidate(c.name)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/5 ${i > 0 ? 'border-t border-white/5' : ''}`}>
-                      <span className="sports-font text-sm text-white font-semibold flex-1 min-w-0 truncate">{c.name}</span>
+                      <span className="capcrunch-kicker text-sm text-white font-semibold flex-1 min-w-0 truncate">{c.name}</span>
                     </button>
                   ))}
                 </motion.div>
@@ -314,7 +314,7 @@ export function NBAMultiplayerBoxScorePage() {
           {notInGame && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
               className="flex items-center gap-3 px-4 py-3 border border-red-900/40 bg-red-950/25">
-              <span className="sports-font text-sm text-red-400"><span className="font-semibold">{notInGame}</span> didn't play in this game</span>
+              <span className="capcrunch-kicker text-sm text-red-400"><span className="font-semibold">{notInGame}</span> didn't play in this game</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -323,12 +323,12 @@ export function NBAMultiplayerBoxScorePage() {
         {!finished && (
           <div className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)' }}>
             {hintsGranted ? (
-              <span className="sports-font text-xs text-amber-400 font-semibold">💡 Hints active — player initials shown</span>
+              <span className="capcrunch-kicker text-xs text-amber-400 font-semibold">💡 Hints active — player initials shown</span>
             ) : (
               <>
-                <span className="sports-font text-xs text-[#555]">💡 Reveal initials? ({hintVotes}/{players.length} agreed)</span>
+                <span className="capcrunch-kicker text-xs text-[#555]">💡 Reveal initials? ({hintVotes}/{players.length} agreed)</span>
                 <button onClick={requestHints} disabled={myHintRequested}
-                  className={`px-4 py-1.5 rounded-lg sports-font text-xs transition-all ${myHintRequested ? 'bg-amber-900/20 border border-amber-700/30 text-amber-400/60 cursor-default' : 'border border-amber-600/40 text-amber-500 hover:bg-amber-900/20'}`}>
+                  className={`px-4 py-1.5 rounded-lg capcrunch-kicker text-xs transition-all ${myHintRequested ? 'bg-amber-900/20 border border-amber-700/30 text-amber-400/60 cursor-default' : 'border border-amber-600/40 text-amber-500 hover:bg-amber-900/20'}`}>
                   {myHintRequested ? 'Requested' : 'Request Hints'}
                 </button>
               </>
@@ -339,7 +339,7 @@ export function NBAMultiplayerBoxScorePage() {
         {finished && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 px-4 py-3 border border-amber-700/40 bg-amber-900/15">
-            <span className="sports-font text-sm text-amber-400 font-semibold">⏱ Time's up! Score: {correctCount} — waiting for others...</span>
+            <span className="capcrunch-kicker text-sm text-amber-400 font-semibold">⏱ Time's up! Score: {correctCount} — waiting for others...</span>
           </motion.div>
         )}
 
@@ -360,10 +360,10 @@ export function NBAMultiplayerBoxScorePage() {
                   <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
                     <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                    <div className="sports-font text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
                   </div>
                   <div className="ml-auto">
-                    <div className="sports-font text-[10px] tracking-wider" style={{ color: sideDone === players_list.length ? '#4ade80' : '#555' }}>
+                    <div className="capcrunch-kicker text-[10px] tracking-wider" style={{ color: sideDone === players_list.length ? '#4ade80' : '#555' }}>
                       {sideDone}/{players_list.length}
                     </div>
                   </div>
@@ -379,11 +379,11 @@ export function NBAMultiplayerBoxScorePage() {
                     return (
                       <div key={`${p.id}-${i}`} ref={el => { rowRefs.current[key] = el; }}
                         className="flex items-center gap-2 py-1 rounded-lg">
-                        <div className="relative shrink-0 w-9 h-7 flex items-center justify-center rounded-md sports-font text-[11px] font-bold tabular-nums"
+                        <div className="relative shrink-0 w-9 h-7 flex items-center justify-center rounded-md capcrunch-kicker text-[11px] font-bold tabular-nums"
                           style={{ background: `${color}30`, color, border: `1px solid ${color}50` }}>
                           {jersey ? `#${jersey}` : '–'}
                           {tmCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-500 border border-[#080808] flex items-center justify-center sports-font text-[8px] text-white font-bold">{tmCount}</span>
+                            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-500 border border-[#080808] flex items-center justify-center capcrunch-kicker text-[8px] text-white font-bold">{tmCount}</span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -395,20 +395,20 @@ export function NBAMultiplayerBoxScorePage() {
                                 <svg className="w-3 h-3 text-green-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
-                                <span className="sports-font text-sm font-semibold text-green-300 truncate"><FlipReveal name={p.name} /></span>
+                                <span className="capcrunch-kicker text-sm font-semibold text-green-300 truncate"><FlipReveal name={p.name} /></span>
                               </motion.div>
                             ) : finished ? (
                               <motion.div key="revealed" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                 className="px-2.5 py-1.5 rounded-lg border border-red-900/40 bg-red-950/20 truncate">
-                                <span className="sports-font text-sm text-red-400/80">{p.name}</span>
+                                <span className="capcrunch-kicker text-sm text-red-400/80">{p.name}</span>
                               </motion.div>
                             ) : (
                               <div className="flex flex-col gap-0.5">
                                 <div className="px-2.5 py-1.5 rounded-lg border border-white/6 bg-black/30">
-                                  <span className="sports-font text-sm text-[#2a2a2a] select-none">████████</span>
+                                  <span className="capcrunch-kicker text-sm text-[#2a2a2a] select-none">████████</span>
                                 </div>
                                 {hintsGranted && (
-                                  <div className="pl-1 sports-font text-[11px] tracking-widest font-mono" style={{ color: `${color}90` }}>{getInitials(p.name)}</div>
+                                  <div className="pl-1 capcrunch-kicker text-[11px] tracking-widest font-mono" style={{ color: `${color}90` }}>{getInitials(p.name)}</div>
                                 )}
                               </div>
                             )}
@@ -434,7 +434,7 @@ export function NBAMultiplayerBoxScorePage() {
               Submit Early
             </button>
           ) : (
-            <div className="text-center sports-font text-sm text-[#555] tracking-widest">
+            <div className="text-center capcrunch-kicker text-sm text-[#555] tracking-widest">
               Waiting for {players.length - doneCount} more player{players.length - doneCount !== 1 ? 's' : ''}...
             </div>
           )}

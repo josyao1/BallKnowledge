@@ -57,56 +57,56 @@ export function LobbyActionButtons({
       onStart: onScrambleStart,
       label: 'Start Name Scramble',
       loadingLabel: 'Loading Player...',
-      btnClass: 'bg-gradient-to-b from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_0_#1d4ed8]',
+      btnClass: 'bg-[#3b82f6] hover:bg-[#2563eb] text-white',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     career: {
       onStart: onCareerStart,
       label: 'Start Career Mode',
       loadingLabel: 'Loading Player...',
-      btnClass: 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_4px_0_#166534]',
+      btnClass: 'bg-emerald-600 hover:bg-emerald-500 text-white',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'lineup-is-right': {
       onStart: onLineupStart,
       label: 'Start Cap Crunch',
       loadingLabel: 'Loading Game...',
-      btnClass: 'bg-gradient-to-b from-[#ec4899] to-[#be185d] text-white shadow-[0_4px_0_#831843]',
+      btnClass: 'bg-[#ec4899] hover:bg-[#be185d] text-white',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'box-score': {
       onStart: onBoxScoreStart,
       label: 'Start Box Score',
       loadingLabel: 'Loading Game...',
-      btnClass: 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e]',
+      btnClass: 'bg-[#f59e0b] hover:bg-[#d97706] text-black',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'nba-box-score': {
       onStart: onNBABoxScoreStart,
       label: 'Start NBA Box Score',
       loadingLabel: 'Loading Game...',
-      btnClass: 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-black shadow-[0_4px_0_#92400e]',
+      btnClass: 'bg-[#f59e0b] hover:bg-[#d97706] text-black',
       forceHoverClass: 'hover:border-orange-500 hover:text-orange-400',
     },
     'starting-lineup': {
       onStart: onStartingLineupStart,
       label: 'Start Starting Lineup',
       loadingLabel: 'Loading...',
-      btnClass: 'bg-gradient-to-b from-[#ea580c] to-[#c2410c] text-white shadow-[0_4px_0_#9a3412]',
+      btnClass: 'bg-[#ea580c] hover:bg-[#c2410c] text-white',
       forceHoverClass: 'hover:border-[#ea580c] hover:text-orange-400',
     },
     'face-reveal': {
       onStart: onFaceRevealStart,
       label: 'Start Face Reveal',
       loadingLabel: 'Loading...',
-      btnClass: 'bg-gradient-to-b from-[#06b6d4] to-[#0891b2] text-[#111] shadow-[0_4px_0_#0e7490]',
+      btnClass: 'bg-[#06b6d4] hover:bg-[#0891b2] text-black',
       forceHoverClass: 'hover:border-[#06b6d4] hover:text-[#06b6d4]',
     },
     'top-ten': {
       onStart: onTopTenStart,
       label: 'Start Top Ten',
       loadingLabel: 'Loading...',
-      btnClass: 'bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-black shadow-[0_4px_0_#166534]',
+      btnClass: 'bg-[#22c55e] hover:bg-[#16a34a] text-black',
       forceHoverClass: 'hover:border-[#22c55e] hover:text-[#22c55e]',
     },
   };
@@ -171,7 +171,7 @@ export function LobbyActionButtons({
             <button
               onClick={config.onStart}
               disabled={isLoadingRoster}
-              className={`w-full py-4 capcrunch-title text-lg transition-all active:translate-y-0.5 disabled:opacity-50 ${config.btnClass}`}
+              className={`w-full py-4 capcrunch-title text-lg transition-all disabled:opacity-50 ${config.btnClass}`}
             >
               {isLoadingRoster ? config.loadingLabel : config.label}
             </button>
@@ -190,7 +190,7 @@ export function LobbyActionButtons({
 
       {/* Waiting for more players */}
       {players.length < 2 && (
-        <p className="text-center text-white/30 text-sm sports-font tracking-widest">
+        <p className="text-center text-white/30 text-sm capcrunch-kicker tracking-widest">
           Share the code above to invite players
         </p>
       )}
@@ -201,7 +201,7 @@ export function LobbyActionButtons({
         <HowToPlay gameType={lobby.game_type} />
       </div>
 
-      <p className="text-center text-white/20 text-[10px] sports-font tracking-wider mt-4">
+      <p className="text-center text-white/20 text-[10px] capcrunch-kicker tracking-wider mt-4">
         Tip: If stuck on empty screen, refresh page to rejoin
       </p>
     </motion.div>
@@ -211,7 +211,7 @@ export function LobbyActionButtons({
 // ── How to Play copy per game mode ────────────────────────────────────────────
 
 function HowToPlay({ gameType }: { gameType: string }) {
-  const prose = 'space-y-2 text-white/50 sports-font text-xs leading-relaxed';
+  const prose = 'space-y-2 text-white/50 capcrunch-kicker text-xs leading-relaxed';
 
   if (gameType === 'roster') return (
     <div className={prose}>

@@ -190,7 +190,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
       return (
         <div
           style={style}
-          className={`px-4 py-2 cursor-pointer transition-colors sports-font text-sm ${
+          className={`px-4 py-2 cursor-pointer transition-colors capcrunch-kicker text-sm ${
             isSelected ? 'bg-[#FDF100] text-black font-bold' : 'hover:bg-white/10 text-white/80'
           }`}
           onClick={() => handleSelect(player.name)}
@@ -225,7 +225,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
         onKeyDown={handleKeyDown}
         placeholder="Enter player name..."
         autoComplete="off"
-        className="w-full p-4 text-lg bg-black/40 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-[#FDF100] transition-colors sports-font"
+        className="w-full p-4 text-lg bg-black/40 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-[#FDF100] transition-colors capcrunch-kicker"
       />
 
       {/* Dropdown */}
@@ -244,7 +244,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
       )}
 
       {/* Hint */}
-      <div className="mt-2 text-[10px] text-white/30 text-center sports-font tracking-[0.3em] uppercase">
+      <div className="mt-2 text-[10px] text-white/30 text-center capcrunch-kicker tracking-[0.3em] uppercase">
         Enter to submit • Arrows to navigate
       </div>
     </div>

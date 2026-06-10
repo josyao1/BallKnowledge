@@ -106,7 +106,7 @@ export function TopTenSettings({
             <select value={minYear} onChange={e => onMinYearChange(+e.target.value)} className={selectCls}>
               {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <span className="sports-font text-[9px] text-[#333]">→</span>
+            <span className="capcrunch-kicker text-[9px] text-[#333]">→</span>
             <select value={maxYear} onChange={e => onMaxYearChange(+e.target.value)} className={selectCls}>
               {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
             </select>

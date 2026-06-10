@@ -31,7 +31,7 @@ export function HomeButton({ isHost = false, onEndGame }: Props) {
           transition={{ duration: 0.15 }}
           className="flex items-center gap-1.5 flex-wrap"
         >
-          <span className="sports-font text-[10px] text-white/50 tracking-widest">Leave?</span>
+          <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">Leave?</span>
           {isHost && onEndGame && (
             <button
               onClick={() => { setConfirming(false); onEndGame(); }}

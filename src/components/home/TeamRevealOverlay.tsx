@@ -297,7 +297,7 @@ function FlashBox({
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
-        <span className="sports-font text-[8px] md:text-[10px] tracking-[0.3em] uppercase text-white/40">{label}</span>
+        <span className="capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.3em] uppercase text-white/40">{label}</span>
         <span className="w-12 h-px" style={{ backgroundColor: accent, opacity: 0.45 }} />
       </div>
       <motion.div

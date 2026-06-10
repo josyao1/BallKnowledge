@@ -133,11 +133,11 @@ export function CapCrunchHeader({
             style={{ perspective: 600 }}
             className="px-5 py-2 border bg-black/40 border-[#FDF100]/70 shadow-[0_0_16px_rgba(253,241,0,0.18)]"
           >
-            <p className="sports-font text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
+            <p className="capcrunch-kicker text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
             <p className="capcrunch-title text-2xl md:text-3xl text-[#FDF100] leading-tight">
               {currentTeam}
             </p>
-            <p className="sports-font text-[8px] text-white/40 leading-none mt-0.5">
+            <p className="capcrunch-kicker text-[8px] text-white/40 leading-none mt-0.5">
               {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
             </p>
           </motion.div>

@@ -317,7 +317,7 @@ export function MultiplayerResultsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center home-chalkboard">
         <div className="text-center">
-          <p className="text-white/50 mb-4 sports-font">Table closed</p>
+          <p className="text-white/50 mb-4 capcrunch-kicker">Table closed</p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-3 capcrunch-btn-primary capcrunch-kicker"
@@ -334,7 +334,7 @@ export function MultiplayerResultsPage() {
       <div className="min-h-screen flex items-center justify-center home-chalkboard">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/50 sports-font tracking-widest">Shuffling deck...</p>
+          <p className="text-white/50 capcrunch-kicker tracking-widest">Shuffling deck...</p>
         </div>
       </div>
     );
@@ -348,7 +348,7 @@ export function MultiplayerResultsPage() {
           <div className="w-12 h-12 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin mx-auto" />
           <div>
             <h2 className="capcrunch-title text-2xl text-[#FDF100] mb-2">Waiting for Players</h2>
-            <p className="sports-font text-white/50 tracking-widest">
+            <p className="capcrunch-kicker text-white/50 tracking-widest">
               {finishedCount}/{players.length} players finished
             </p>
           </div>
@@ -360,7 +360,7 @@ export function MultiplayerResultsPage() {
                   player.finished_at ? 'bg-emerald-900/30 border border-emerald-700/50' : 'bg-black/30 border border-white/10'
                 }`}
               >
-                <span className="sports-font text-sm text-white/70">{player.player_name}</span>
+                <span className="capcrunch-kicker text-sm text-white/70">{player.player_name}</span>
                 <span className={`text-xs ${player.finished_at ? 'text-emerald-400' : 'text-white/30'}`}>
                   {player.finished_at ? '✓ Finished' : 'Playing...'}
                 </span>
@@ -371,7 +371,7 @@ export function MultiplayerResultsPage() {
             <button
               onClick={handleForceEnd}
               disabled={isForcingEnd}
-              className="mt-2 sports-font text-xs text-white/30 hover:text-white/60 tracking-widest transition-colors disabled:opacity-40"
+              className="mt-2 capcrunch-kicker text-xs text-white/30 hover:text-white/60 tracking-widest transition-colors disabled:opacity-40"
             >
               {isForcingEnd ? 'Ending...' : 'End game for everyone'}
             </button>
@@ -421,16 +421,16 @@ export function MultiplayerResultsPage() {
                 <span className="text-emerald-400 text-lg ml-2">(+{winnerBonus} unique)</span>
               )}
             </div>
-            <div className="text-white/40 text-sm sports-font">
+            <div className="text-white/40 text-sm capcrunch-kicker">
               {currentRoster.length > 0 ? Math.round((winnerGuessedCount / currentRoster.length) * 100) : 0}% of roster
             </div>
             {isTie && (
-              <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
+              <div className="text-amber-400 text-xs capcrunch-kicker mt-2 tracking-wider">
                 Tied with {winnerTotal} points and {winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'}
               </div>
             )}
             {tiebreakerUsed && !isTie && (
-              <div className="text-amber-400 text-xs sports-font mt-2 tracking-wider">
+              <div className="text-amber-400 text-xs capcrunch-kicker mt-2 tracking-wider">
                 Won by tiebreaker ({winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'})
               </div>
             )}
@@ -500,9 +500,9 @@ export function MultiplayerResultsPage() {
                             isWinner
                               ? 'bg-[#FDF100] text-black'
                               : displayRank === 2
-                              ? 'bg-gradient-to-b from-gray-300 to-gray-500 text-black'
+                              ? 'bg-gray-400 text-black'
                               : displayRank === 3
-                              ? 'bg-gradient-to-b from-amber-600 to-amber-800 text-white'
+                              ? 'bg-amber-700 text-white'
                               : 'bg-black/50 text-white/40 border border-white/10'
                           }`}
                         >
@@ -514,11 +514,11 @@ export function MultiplayerResultsPage() {
                               className="w-3.5 h-3.5 rounded-full"
                               style={{ backgroundColor: team.color.bg }}
                             />
-                            <span className={`sports-font font-medium ${isCurrent ? 'text-[#FDF100]' : 'text-white/90'}`}>
+                            <span className={`capcrunch-kicker font-medium ${isCurrent ? 'text-[#FDF100]' : 'text-white/90'}`}>
                               {team.members.map(m => m.player_name).join(' & ')}
                             </span>
                           </div>
-                          <div className="text-[10px] text-white/40 sports-font mt-0.5">
+                          <div className="text-[10px] text-white/40 capcrunch-kicker mt-0.5">
                             {guessedCount}/{currentRoster.length} found ({percentage}%)
                             {showBonuses && bonus > 0 && (
                               <span className="text-emerald-400 ml-2">+{bonus} unique</span>
@@ -530,7 +530,7 @@ export function MultiplayerResultsPage() {
                           {/* Individual member scores */}
                           <div className="flex gap-3 mt-1.5">
                             {team.members.map(member => (
-                              <span key={member.player_id} className="text-[9px] text-white/30 sports-font">
+                              <span key={member.player_id} className="text-[9px] text-white/30 capcrunch-kicker">
                                 {member.player_name}: {member.score}
                                 {member.player_id === currentPlayerId && <span className="text-white/50"> (you)</span>}
                               </span>
@@ -572,21 +572,21 @@ export function MultiplayerResultsPage() {
                         isWinner
                           ? 'bg-[#FDF100] text-black'
                           : displayRank === 2
-                          ? 'bg-gradient-to-b from-gray-300 to-gray-500 text-black'
+                          ? 'bg-gray-400 text-black'
                           : displayRank === 3
-                          ? 'bg-gradient-to-b from-amber-600 to-amber-800 text-white'
+                          ? 'bg-amber-700 text-white'
                           : 'bg-black/50 text-white/40 border border-white/10'
                       }`}
                     >
                       {displayRank}
                     </div>
                     <div>
-                      <div className={`sports-font font-medium ${isCurrentPlayer ? 'text-[#FDF100]' : 'text-white/90'}`}>
+                      <div className={`capcrunch-kicker font-medium ${isCurrentPlayer ? 'text-[#FDF100]' : 'text-white/90'}`}>
                         {player.player_name}
                         {isCurrentPlayer && <span className="text-[10px] ml-2 text-white/40">(you)</span>}
                         {(player.score_multiplier ?? 1) > 1 && <span className="text-[10px] ml-2 text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">{player.score_multiplier}x</span>}
                       </div>
-                      <div className="text-[10px] text-white/40 sports-font">
+                      <div className="text-[10px] text-white/40 capcrunch-kicker">
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
                         {showBonuses && bonus > 0 && (
                           <span className="text-emerald-400 ml-2">+{bonus} unique</span>
@@ -615,7 +615,7 @@ export function MultiplayerResultsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center text-white/50 sports-font"
+            className="text-center text-white/50 capcrunch-kicker"
           >
             You finished in <span className="text-[#FDF100] font-bold">{currentEntityRank}{getOrdinalSuffix(currentEntityRank)}</span> place!
           </motion.div>
@@ -642,7 +642,7 @@ export function MultiplayerResultsPage() {
 
                 return (
                   <div key={entity.entityId} className="space-y-1">
-                    <div className={`text-xs sports-font flex items-center gap-2 ${isCurrent ? 'text-[#FDF100]' : 'text-white/60'}`}>
+                    <div className={`text-xs capcrunch-kicker flex items-center gap-2 ${isCurrent ? 'text-[#FDF100]' : 'text-white/60'}`}>
                       {teamColor && (
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: teamColor }} />
                       )}
@@ -671,7 +671,7 @@ export function MultiplayerResultsPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.55 }}
           onClick={() => setShowRosterBreakdown(!showRosterBreakdown)}
-          className="w-full py-3 capcrunch-panel sports-font text-sm tracking-wider text-white/60 hover:text-white/90 hover:border-white/30 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 capcrunch-panel capcrunch-kicker text-sm tracking-wider text-white/60 hover:text-white/90 hover:border-white/30 transition-all flex items-center justify-center gap-2"
         >
           <span>{showRosterBreakdown ? 'Hide' : 'Show'} Roster Breakdown</span>
           <svg
@@ -709,7 +709,7 @@ export function MultiplayerResultsPage() {
                               className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: color }}
                             />
-                            <span className="text-[10px] text-white/70 sports-font">
+                            <span className="text-[10px] text-white/70 capcrunch-kicker">
                               {member.player_name}
                             </span>
                           </div>
@@ -726,7 +726,7 @@ export function MultiplayerResultsPage() {
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-[10px] text-white/70 sports-font">
+                        <span className="text-[10px] text-white/70 capcrunch-kicker">
                           {entity.player.player_name}
                         </span>
                       </div>
@@ -741,7 +741,7 @@ export function MultiplayerResultsPage() {
                       <button
                         key={abbr}
                         onClick={() => setActiveRosterTab(abbr)}
-                        className={`px-3 py-1.5 sports-font text-xs tracking-wider transition-all ${
+                        className={`px-3 py-1.5 capcrunch-kicker text-xs tracking-wider transition-all ${
                           activeRosterTab === abbr
                             ? 'bg-[#FDF100] text-black font-bold'
                             : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/30'
@@ -786,7 +786,7 @@ export function MultiplayerResultsPage() {
                       >
                         <div className="truncate mr-2">
                           {rosterPlayer.position && (
-                            <span className={`text-[9px] sports-font ${wasGuessed ? 'text-white/40' : 'text-white/15'}`}>
+                            <span className={`text-[9px] capcrunch-kicker ${wasGuessed ? 'text-white/40' : 'text-white/15'}`}>
                               {rosterPlayer.position}
                               {' '}
                             </span>
@@ -837,7 +837,7 @@ export function MultiplayerResultsPage() {
             </button>
           )}
           {!isHost && (
-            <p className="text-center text-white/30 text-sm sports-font tracking-widest">
+            <p className="text-center text-white/30 text-sm capcrunch-kicker tracking-widest">
               Waiting for dealer to start another round...
             </p>
           )}
