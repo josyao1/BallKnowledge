@@ -298,7 +298,7 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory, _tot
       case 'receiving_yards': return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
       case 'receiving_tds':   return r(28,   50);   // 3× 9    = 27;  5 elite = 55
       // receptions: avg ~35/yr, elite 100+. 3 avg = 105; 5 elite = 500+
-      case 'receptions':      return r(300, 600);
+      case 'receptions':      return r(220, 500);
       // fpts (PPR): QB ~350-450, WR/TE ~200-300, RB ~200-300 in a good season.
       // 5 picks averaging ~200 each = 1000. Elite 5-stack = 1500+.
       case 'fpts':            return r(650, 1750);
