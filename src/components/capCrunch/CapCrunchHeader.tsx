@@ -163,7 +163,8 @@ export function CapCrunchHeader({
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 md:gap-2 w-full lg:w-auto lg:ml-auto">
+        {/* Desktop stat grid — hidden on mobile, shown md+ */}
+        <div className="hidden md:grid md:grid-cols-4 gap-1.5 md:gap-2 w-full lg:w-auto lg:ml-auto">
           <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
             <div className="capcrunch-kicker text-[7px] text-white/35">Target</div>
             <p className="capcrunch-title text-sm md:text-lg text-white leading-none">{targetCap}</p>
@@ -172,7 +173,6 @@ export function CapCrunchHeader({
             <div className="capcrunch-kicker text-[7px] text-white/35">{isCareerStatRound ? 'Career' : 'Stat'}</div>
             <p className="capcrunch-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory)}</p>
           </div>
-          {/* My running total — hidden in blind mode */}
           {!blindMode && (
             <>
               <div className="px-2 md:px-3 py-1 md:py-1.5 text-center bg-[#70BE5B]/10 border border-[#70BE5B]/35">
@@ -184,7 +184,6 @@ export function CapCrunchHeader({
                   flashKey={badFlashKey}
                 />
               </div>
-              {/* Remaining to cap */}
               <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
                 <div className="capcrunch-kicker text-[7px] text-white/35">Left</div>
                 <SpinningNumber
@@ -197,12 +196,63 @@ export function CapCrunchHeader({
             </>
           )}
           {blindMode && (
-            <div className="bg-[#4E53A5]/10 border border-[#4E53A5]/40 px-2 md:px-3 py-1 md:py-1.5 text-center col-span-2 sm:col-span-1">
+            <div className="bg-[#4E53A5]/10 border border-[#4E53A5]/40 px-2 md:px-3 py-1 md:py-1.5 text-center col-span-2 md:col-span-1">
               <div className="capcrunch-kicker text-[7px] text-[#68BBE5]">Blind</div>
               <p className="capcrunch-title text-sm md:text-lg leading-none text-[#68BBE5]">?</p>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Mobile stat strip — matches solo's compact 4-column accent-border layout */}
+      <div className="md:hidden grid grid-cols-4 border-t border-white/10">
+        <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#FDF100' }}>
+          <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Target</div>
+          <p className="capcrunch-title text-sm text-white leading-none">{targetCap}</p>
+        </div>
+        <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#68BBE5' }}>
+          {isCareerStatRound
+            ? <div className="capcrunch-kicker text-[6px] text-[#68BBE5] mb-0.5">Career</div>
+            : <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Stat</div>
+          }
+          <p className="capcrunch-title text-sm text-white leading-none">
+            {isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)}
+          </p>
+        </div>
+        {!blindMode && (
+          <>
+            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">You</div>
+              <SpinningNumber
+                value={fmt(myLineup?.totalStat ?? 0)}
+                className="capcrunch-title text-sm leading-none"
+                color={getTotalColor(myLineup?.totalStat ?? 0, targetCap)}
+                flashKey={badFlashKey}
+              />
+            </div>
+            <div className="px-2 py-2 text-center" style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Left</div>
+              <SpinningNumber
+                value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
+                className="capcrunch-title text-sm leading-none"
+                color={getRemainingColor(myLineup?.totalStat ?? 0, targetCap)}
+                flashKey={badFlashKey}
+              />
+            </div>
+          </>
+        )}
+        {blindMode && (
+          <>
+            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">You</div>
+              <p className="capcrunch-title text-sm leading-none text-[#4E53A5]">?</p>
+            </div>
+            <div className="px-2 py-2 text-center" style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}>
+              <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Left</div>
+              <p className="capcrunch-title text-sm leading-none text-[#4E53A5]">?</p>
+            </div>
+          </>
+        )}
       </div>
     </motion.header>
   );
