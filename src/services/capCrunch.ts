@@ -293,24 +293,24 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory, _tot
       case 'passing_tds':   return r(80,   140);    // 3× 30   = 90;  5 elite = 180
       // interceptions: avg ~9/yr, bad QBs 20+. 3 avg = 27; 5 bad = 75+
       case 'interceptions': return r(25,   55);
-      case 'rushing_yards': return r(4000, 7000);   // 3× 1200 = 3600; 5 elite = 8000
+      case 'rushing_yards': return r(4000, 7500);   // 3× 1200 = 3600; 5 elite = 8000
       case 'rushing_tds':   return r(35,   65);     // 3× 10   = 30;  5 elite = 75
       case 'receiving_yards': return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
       case 'receiving_tds':   return r(28,   50);   // 3× 9    = 27;  5 elite = 55
       // receptions: avg ~35/yr, elite 100+. 3 avg = 105; 5 elite = 500+
-      case 'receptions':      return r(150, 300);
+      case 'receptions':      return r(300, 600);
       // fpts (PPR): QB ~350-450, WR/TE ~200-300, RB ~200-300 in a good season.
       // 5 picks averaging ~200 each = 1000. Elite 5-stack = 1500+.
-      case 'fpts':            return r(500, 1750);
+      case 'fpts':            return r(650, 1750);
       // total_gp: career GP with one team. Franchise guys hit 100-200, avg starter 30-80.
       // 5 picks averaging ~50 GP each = 250. Range creates tension.
-      case 'total_gp':        return r(175, 325);
+      case 'total_gp':        return r(225, 450);
       case 'career_passing_yards':   return r(55000,  184000);
-      case 'career_passing_tds':     return r(150,    800);
+      case 'career_passing_tds':     return r(300,    800);
       case 'career_rushing_yards':   return r(18000,  51000);
-      case 'career_rushing_tds':     return r(80,     300);
+      case 'career_rushing_tds':     return r(130,     450);
       case 'career_receiving_yards': return r(18000,  51000);
-      case 'career_receiving_tds':   return r(80,     300);
+      case 'career_receiving_tds':   return r(130,     450);
       default: return 500;
     }
   }
