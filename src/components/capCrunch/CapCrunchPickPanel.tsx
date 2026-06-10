@@ -257,38 +257,40 @@ export function CapCrunchPickPanel({
             </div>
           ) : (
             // ── Normal mode: pick a year ──────────────────────────────────
-            <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
-              <div className="p-3 capcrunch-panel-soft flex-shrink-0">
+            <div className="space-y-2 flex flex-col flex-1 overflow-hidden">
+              <div className="p-3 capcrunch-panel-soft">
                 <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
                 <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
               </div>
-              <div className="flex items-baseline justify-between flex-shrink-0">
-                <label className="capcrunch-kicker text-[9px] text-white/60">Select a year</label>
-                {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] capcrunch-kicker">through 2025</span>}
-              </div>
-              {loadingYears ? (
-                <p className="text-white/60 text-sm">Loading years...</p>
-              ) : availableYears.length > 0 ? (
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-1.5">
-                  {availableYears.map((year) => (
-                    <button
-                      key={year}
-                      onClick={() => onSelectYear(year)}
-                      className={`w-full px-4 py-2.5 rounded border transition text-white font-semibold text-sm ${
-                        selectedYear === year
-                          ? 'bg-[#FDF100] text-black border-[#FDF100]'
-                          : 'bg-white/[0.03] border-white/10 hover:border-[#68BBE5]/40'
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
+              <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                <div className="flex items-baseline justify-between mb-2 flex-shrink-0">
+                  <label className="capcrunch-kicker text-[9px] text-white/60">Select a year</label>
+                  {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] capcrunch-kicker">through 2025</span>}
                 </div>
-              ) : (
-                <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
-              )}
+                {loadingYears ? (
+                  <p className="text-white/60 text-sm">Loading years...</p>
+                ) : availableYears.length > 0 ? (
+                  <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5">
+                    {availableYears.map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => onSelectYear(year)}
+                        className={`w-full px-4 py-2.5 rounded border transition text-white font-semibold text-sm ${
+                          selectedYear === year
+                            ? 'bg-[#FDF100] text-black border-[#FDF100]'
+                            : 'bg-white/[0.03] border-white/10 hover:border-[#68BBE5]/40'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
+                )}
+              </div>
               {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-1">
                 <button
                   onClick={onBack}
                   className="flex-1 px-4 py-2.5 capcrunch-btn-secondary text-sm capcrunch-title"
