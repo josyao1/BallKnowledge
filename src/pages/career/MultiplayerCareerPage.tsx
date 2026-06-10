@@ -299,8 +299,10 @@ export function MultiplayerCareerPage() {
     const sport = (careerState.sport || lobby.sport) as Sport;
     const careerFrom = (careerState as any).career_from || 0;
     const careerTo   = (careerState as any).career_to   || 0;
+    const minMpg     = (careerState as any).min_mpg     || 0;
+    const minYards   = (careerState as any).min_yards   || 0;
     try {
-      const game = await getNextGame(sport, { careerFrom, careerTo });
+      const game = await getNextGame(sport, { careerFrom, careerTo, minMpg, minYards });
       if (!game) { setIsLoadingNext(false); return; }
 
       const newState = {
@@ -310,6 +312,8 @@ export function MultiplayerCareerPage() {
         win_target: careerState.win_target || 3,
         career_from: careerFrom,
         career_to: careerTo,
+        min_mpg: minMpg,
+        min_yards: minYards,
       };
 
       await startCareerRound(lobby.id, newState);

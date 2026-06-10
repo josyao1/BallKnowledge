@@ -40,6 +40,9 @@ interface ScrambleState {
   round: number;
   win_target: number;
   career_to: number;
+  min_mpg: number;
+  min_yards: number;
+  include_defense: boolean;
   firstCorrectAt?: string; // ISO timestamp written by host when first player answers correctly
 }
 
@@ -302,8 +305,11 @@ export function MultiplayerNameScramblePage() {
 
     try {
       const sport = (careerState.sport || lobby.sport) as Sport;
-      const careerTo = careerState.career_to || 0;
-      const filters = careerTo ? { careerTo } : undefined;
+      const careerTo       = careerState.career_to      || 0;
+      const minMpg         = careerState.min_mpg        || 0;
+      const minYards       = careerState.min_yards      || 0;
+      const includeDefense = careerState.include_defense !== false;
+      const filters = (careerTo || minMpg || minYards || !includeDefense) ? { careerTo, minMpg, minYards, includeDefense } : undefined;
 
       const player = sport === 'nba'
         ? await getRandomNBAScramblePlayer(filters)
@@ -322,6 +328,9 @@ export function MultiplayerNameScramblePage() {
         round: (careerState.round || 0) + 1,
         win_target: careerState.win_target || 20,
         career_to: careerTo,
+        min_mpg: minMpg,
+        min_yards: minYards,
+        include_defense: includeDefense,
       };
 
       await startCareerRound(lobby.id, newState as unknown as Record<string, unknown>);

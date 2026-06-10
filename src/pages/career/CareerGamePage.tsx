@@ -23,8 +23,14 @@ export function CareerGamePage() {
   const { sport } = useSettingsStore();
   const store = useCareerStore();
 
-  const locState = location.state as { careerTo?: number } | null;
-  const careerFilters = useMemo(() => (locState?.careerTo ? { careerTo: locState.careerTo } : undefined), []);
+  const locState = location.state as { careerTo?: number; minMpg?: number; minYards?: number } | null;
+  const careerFilters = useMemo(() => {
+    const f: { careerTo?: number; minMpg?: number; minYards?: number } = {};
+    if (locState?.careerTo) f.careerTo = locState.careerTo;
+    if (locState?.minMpg)   f.minMpg   = locState.minMpg;
+    if (locState?.minYards) f.minYards  = locState.minYards;
+    return Object.keys(f).length ? f : undefined;
+  }, []);
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const { guessInput, setGuessInput, feedbackMsg: feedbackMessage, setFeedbackMsg: setFeedbackMessage, feedbackType, setFeedbackType, inputRef } = useGuessInput();
 

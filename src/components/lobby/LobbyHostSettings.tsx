@@ -56,6 +56,12 @@ export interface HostFormValues {
   careerFrom: number;
   /** Career/scramble: latest birth/draft year to include (0 = no filter) */
   careerTo: number;
+  /** Career/scramble (NBA): min MPG in any season (0 = any) */
+  minMpg: number;
+  /** Career/scramble (NFL): min offensive yards in any season (0 = any) */
+  minYards: number;
+  /** Scramble (NFL): whether defensive players are included in the pool */
+  scrambleIncludeDefense: boolean;
   /** Cap Crunch: forced stat category, or 'random' to pick one each round */
   lineupStat: string;
   /** Cap Crunch: number of pick rounds per game */
@@ -125,6 +131,9 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
   const [editWinTarget,      setEditWinTarget]      = useState(3);
   const [editCareerFrom,     setEditCareerFrom]     = useState(0);
   const [editCareerTo,       setEditCareerTo]       = useState(0);
+  const [editMinMpg,               setEditMinMpg]               = useState(0);
+  const [editMinYards,             setEditMinYards]             = useState(0);
+  const [editScrambleIncludeDefense, setEditScrambleIncludeDefense] = useState(true);
   const [editLineupStat,     setEditLineupStat]     = useState('random');
   const [editTotalRounds,    setEditTotalRounds]    = useState(5);
   const [editCustomCap,      setEditCustomCap]      = useState<number | null>(null);
@@ -160,6 +169,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       team: editTeam, year: editYear, timer: editTimer,
       minYear: editMinYear, maxYear: editMaxYear, winTarget: editWinTarget,
       careerFrom: editCareerFrom, careerTo: editCareerTo,
+      minMpg: editMinMpg, minYards: editMinYards,
+      scrambleIncludeDefense: editScrambleIncludeDefense,
       lineupStat: editLineupStat, totalRounds: editTotalRounds,
       customCap: editCustomCap, hardMode: editHardMode, blindMode: editBlindMode,
       pickTimer: editPickTimer, firstPickerId: editFirstPickerId,
@@ -196,6 +207,9 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditWinTarget(cs.win_target || 3);
     setEditCareerFrom(cs.career_from || 0);
     setEditCareerTo(cs.career_to || 0);
+    setEditMinMpg(cs.min_mpg || 0);
+    setEditMinYards(cs.min_yards || 0);
+    setEditScrambleIncludeDefense(cs.include_defense !== false);
     setEditLineupStat((cs.forcedStatCategory as string) || 'random');
     setEditCustomCap((cs.forcedTargetCap as number | null) || null);
     setEditHardMode((cs.hardMode as boolean) || false);
@@ -276,6 +290,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       team: editTeam, year: editYear, timer: editTimer,
       minYear: editMinYear, maxYear: editMaxYear, winTarget: editWinTarget,
       careerFrom: editCareerFrom, careerTo: editCareerTo,
+      minMpg: editMinMpg, minYards: editMinYards,
+      scrambleIncludeDefense: editScrambleIncludeDefense,
       lineupStat: editLineupStat, totalRounds: editTotalRounds,
       customCap: editCustomCap, hardMode: editHardMode, blindMode: editBlindMode,
       pickTimer: editPickTimer, firstPickerId: editFirstPickerId, boxMinYear: editBoxMinYear,
@@ -366,6 +382,9 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
               sport={editSport} onSportChange={setEditSport}
               winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
               careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
+              minMpg={editMinMpg} onMinMpgChange={setEditMinMpg}
+              minYards={editMinYards} onMinYardsChange={setEditMinYards}
+              includeDefense={editScrambleIncludeDefense} onIncludeDefenseChange={setEditScrambleIncludeDefense}
             />
           )}
 
@@ -375,6 +394,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
               winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
               careerFrom={editCareerFrom} onCareerFromChange={setEditCareerFrom}
               careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
+              minMpg={editMinMpg} onMinMpgChange={setEditMinMpg}
+              minYards={editMinYards} onMinYardsChange={setEditMinYards}
             />
           )}
 

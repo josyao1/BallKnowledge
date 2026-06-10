@@ -61,7 +61,7 @@ export function LobbyCreatePage() {
       const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
       const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'career', 'team', null, null);
       if (lobby) {
-        await updateCareerState(lobby.id, { win_target: winTarget, round: 0 });
+        await updateCareerState(lobby.id, { win_target: winTarget, round: 0, min_mpg: 0, min_yards: 0 });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
@@ -72,7 +72,7 @@ export function LobbyCreatePage() {
       const dummySeason   = sport === 'nba' ? '2023-24' : '2023';
       const lobby = await createLobby(hostName.trim(), sport, dummyTeamAbbr, dummySeason, 90, 'random', 2000, 2025, 'scramble', 'team', null, null);
       if (lobby) {
-        await updateCareerState(lobby.id, { win_target: scrambleWinTarget, round: 0, career_to: scrambleCareerTo });
+        await updateCareerState(lobby.id, { win_target: scrambleWinTarget, round: 0, career_to: scrambleCareerTo, min_mpg: 0, min_yards: 0, include_defense: true });
         navigate(`/lobby/${lobby.join_code}`);
       }
       return;
