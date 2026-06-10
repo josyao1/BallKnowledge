@@ -61,7 +61,7 @@ function teamMatchesInput(input: string, team: AnyTeam): boolean {
 
 export function SoloStartingLineupPage() {
   const navigate = useNavigate();
-  const { sport } = useSettingsStore();
+  const { sport, setSport } = useSettingsStore();
   const isNBA = sport === 'nba';
 
   const [phase, setPhase] = useState<Phase>('loading');
@@ -97,8 +97,10 @@ export function SoloStartingLineupPage() {
     ? nbaTeams.map(t => ({ name: t.name, city: t.city, abbreviation: t.abbreviation, colors: t.colors }))
     : nflTeams.map(t => ({ name: t.name, city: t.city, abbreviation: t.abbreviation, colors: t.colors }));
 
-  // Load starters on mount
+  // Load starters on mount and when sport changes
   useEffect(() => {
+    setScore(0);
+    setPhase('loading');
     if (isNBA) {
       loadNBAStarters().then(data => {
         setNbaData(data);
@@ -308,9 +310,20 @@ export function SoloStartingLineupPage() {
 
         <div className="text-center">
           <h1 className="capcrunch-title text-2xl text-[#ea580c]">Starting Lineup</h1>
-          {phase !== 'loading' && phase !== 'results' && (
-            <div className="capcrunch-kicker text-[10px] text-[#ea580c]/50 tracking-widest">{sportLabel}</div>
-          )}
+          <div className="mt-1 inline-flex border border-white/10">
+            <button
+              onClick={() => setSport('nba')}
+              className={`px-3 py-0.5 capcrunch-kicker text-[10px] transition ${isNBA ? 'bg-[#ea580c] text-white' : 'text-white/30 hover:text-white/60'}`}
+            >
+              NBA
+            </button>
+            <button
+              onClick={() => setSport('nfl')}
+              className={`px-3 py-0.5 capcrunch-kicker text-[10px] transition ${!isNBA ? 'bg-[#ea580c] text-white' : 'text-white/30 hover:text-white/60'}`}
+            >
+              NFL
+            </button>
+          </div>
         </div>
 
         <div className="min-w-[40px] text-right">

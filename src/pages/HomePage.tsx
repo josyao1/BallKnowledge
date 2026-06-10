@@ -76,6 +76,7 @@ export function HomePage() {
   const [capCrunchSport, setCapCrunchSport] = useState<Sport | null>(null);
   const [capCrunchRounds, setCapCrunchRounds] = useState(5);
   const [capCrunchTab, setCapCrunchTab] = useState<'settings' | 'rules'>('settings');
+  const [capCrunchCategory, setCapCrunchCategory] = useState<string | null>(null);
   const [rulesTileId, setRulesTileId] = useState<RulesTileId>(null);
 
   const [rosterStep, setRosterStep] = useState<SportPickStep>(null);
@@ -329,7 +330,7 @@ export function HomePage() {
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10">
         <header className="flex items-center justify-between gap-3 border-b border-white/10 pb-6 sm:gap-4 sm:pb-8">
           <div className="min-w-0 flex-1">
-            <h1 className="home-display truncate text-2xl leading-[0.98] text-white sm:text-4xl lg:text-5xl">
+            <h1 className="home-display text-2xl leading-[0.98] text-white sm:text-4xl lg:text-5xl">
               Ball Knowledge
             </h1>
           </div>
@@ -496,24 +497,24 @@ export function HomePage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 flex flex-wrap gap-2">
+                    <div className="mt-5 flex gap-1.5">
                       {tile.hasSolo && !tile.disabled && (
                         <button
                           onClick={() => openTile(tile.id, 'solo')}
-                          className="border px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-white transition hover:bg-white/8"
+                          className="border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-white transition hover:bg-white/8"
                           style={{ borderColor: `${tile.accent}80` }}
                         >
-                          {tile.id === 'roster' || tile.id === 'guess-player' ? 'Solo' : 'Solo'}
+                          Solo
                         </button>
                       )}
                       {tile.disabled ? (
-                        <span className="border border-white/10 bg-white/[0.02] px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc]/75">
+                        <span className="border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-[#d0d0cc]/75">
                           Coming Soon
                         </span>
                       ) : (
                         <button
                           onClick={() => openTile(tile.id, 'lobby')}
-                          className="border border-white/14 px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc] transition hover:border-white/35 hover:bg-white/8 hover:text-white"
+                          className="border border-white/14 px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-[#d0d0cc] transition hover:border-white/35 hover:bg-white/8 hover:text-white"
                         >
                           {tile.hasSolo ? 'Lobby' : 'Play'}
                         </button>
@@ -786,7 +787,7 @@ export function HomePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
                 <button
-                  onClick={() => { setCapCrunchSport('nba'); setCapCrunchStep('settings'); }}
+                  onClick={() => { setCapCrunchSport('nba'); setCapCrunchCategory(null); setCapCrunchStep('settings'); }}
                   className="group relative min-h-[220px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/10"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
@@ -800,7 +801,7 @@ export function HomePage() {
                   </div>
                 </button>
                 <button
-                  onClick={() => { setCapCrunchSport('nfl'); setCapCrunchStep('settings'); }}
+                  onClick={() => { setCapCrunchSport('nfl'); setCapCrunchCategory(null); setCapCrunchStep('settings'); }}
                   className="group relative min-h-[220px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/10"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
@@ -868,16 +869,16 @@ export function HomePage() {
                   <div className="flex flex-col items-center gap-4 w-full">
                     <div className="flex flex-wrap gap-2 justify-center">
                       <button
-                        onClick={() => launchCapCrunch(capCrunchSport, null)}
-                        className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                        onClick={() => setCapCrunchCategory(null)}
+                        className={`px-4 py-2 rounded-sm capcrunch-kicker text-xs transition ${capCrunchCategory === null ? 'bg-[#d4af37] text-black border border-[#d4af37]' : 'bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white'}`}
                       >
                         RANDOM
                       </button>
                       {(capCrunchSport === 'nba' ? CAP_CRUNCH_NBA_CATS : CAP_CRUNCH_NFL_CATS).map((category) => (
                         <button
                           key={category}
-                          onClick={() => launchCapCrunch(capCrunchSport, category)}
-                          className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                          onClick={() => setCapCrunchCategory(category)}
+                          className={`px-4 py-2 rounded-sm capcrunch-kicker text-xs transition ${capCrunchCategory === category ? 'bg-[#d4af37] text-black border border-[#d4af37]' : 'bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white'}`}
                         >
                           {getCapCrunchLabel(category)}
                         </button>
@@ -892,17 +893,11 @@ export function HomePage() {
                           <div className="flex-1 h-px bg-white/10" />
                         </div>
                         <div className="flex flex-wrap gap-2 justify-center">
-                          <button
-                            onClick={() => launchCapCrunch(capCrunchSport, CAP_CRUNCH_NFL_CAREER_CATS[Math.floor(Math.random() * CAP_CRUNCH_NFL_CAREER_CATS.length)])}
-                            className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
-                          >
-                            RANDOM
-                          </button>
                           {CAP_CRUNCH_NFL_CAREER_CATS.map((category) => (
                             <button
                               key={category}
-                              onClick={() => launchCapCrunch(capCrunchSport, category)}
-                              className="px-4 py-2 rounded-sm capcrunch-kicker text-xs bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white transition"
+                              onClick={() => setCapCrunchCategory(category)}
+                              className={`px-4 py-2 rounded-sm capcrunch-kicker text-xs transition ${capCrunchCategory === category ? 'bg-[#d4af37] text-black border border-[#d4af37]' : 'bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white'}`}
                             >
                               {getCapCrunchLabel(category)}
                             </button>
@@ -929,6 +924,15 @@ export function HomePage() {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      onClick={() => capCrunchSport && launchCapCrunch(capCrunchSport, capCrunchCategory)}
+                      className="capcrunch-btn-primary px-10 py-3 capcrunch-kicker text-sm"
+                    >
+                      START
+                    </button>
                   </div>
                 </section>
 

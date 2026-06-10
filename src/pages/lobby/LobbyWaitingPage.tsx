@@ -278,9 +278,9 @@ export function LobbyWaitingPage() {
     const sport = lobby.sport as Sport;
     try {
       const cs = (lobby.career_state as any) || {};
-      const game = await getNextGame(sport, { careerFrom: cs.career_from || 0, careerTo: cs.career_to || 0 });
+      const game = await getNextGame(sport, { careerFrom: cs.career_from || 0, careerTo: cs.career_to || 0, minMpg: cs.min_mpg || 0, minYards: cs.min_yards || 0 });
       if (!game) { setIsLoadingRoster(false); return; }
-      const newState = { ...game.data, sport: game.sport, round: 1, win_target: cs.win_target || 3, career_from: cs.career_from || 0, career_to: cs.career_to || 0 };
+      const newState = { ...game.data, sport: game.sport, round: 1, win_target: cs.win_target || 3, career_from: cs.career_from || 0, career_to: cs.career_to || 0, min_mpg: cs.min_mpg || 0, min_yards: cs.min_yards || 0 };
       await startCareerRound(lobby.id, newState);
       startPrefetch(sport);
       hasStartedGame.current = true;
@@ -298,10 +298,11 @@ export function LobbyWaitingPage() {
     try {
       const cs = (lobby.career_state as any) || {};
       const sport = lobby.sport as Sport;
-      const filters = cs.career_to ? { careerTo: cs.career_to } : undefined;
+      const includeDefense = cs.include_defense !== false;
+      const filters = (cs.career_to || cs.min_mpg || cs.min_yards || !includeDefense) ? { careerTo: cs.career_to || 0, minMpg: cs.min_mpg || 0, minYards: cs.min_yards || 0, includeDefense } : undefined;
       const player = sport === 'nba' ? await getRandomNBAScramblePlayer(filters) : await getRandomNFLScramblePlayer(filters);
       if (!player) { setIsLoadingRoster(false); return; }
-      const newState = { playerName: player.player_name, scrambledName: scrambleName(player.player_name), sport, round: 1, win_target: cs.win_target || 20, career_to: cs.career_to || 0 };
+      const newState = { playerName: player.player_name, scrambledName: scrambleName(player.player_name), sport, round: 1, win_target: cs.win_target || 20, career_to: cs.career_to || 0, min_mpg: cs.min_mpg || 0, min_yards: cs.min_yards || 0, include_defense: includeDefense };
       await startCareerRound(lobby.id, newState);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
@@ -667,12 +668,12 @@ export function LobbyWaitingPage() {
     const fresh = () => useLobbyStore.getState().lobby ?? baseLobby;
 
     if (v.gameType === 'scramble') {
-      const newState = { ...baseState, win_target: v.winTarget, career_to: v.careerTo };
+      const newState = { ...baseState, win_target: v.winTarget, career_to: v.careerTo, min_mpg: v.minMpg, min_yards: v.minYards, include_defense: v.scrambleIncludeDefense };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'career') {
-      const newState = { ...baseState, win_target: v.winTarget, career_from: v.careerFrom, career_to: v.careerTo };
+      const newState = { ...baseState, win_target: v.winTarget, career_from: v.careerFrom, career_to: v.careerTo, min_mpg: v.minMpg, min_yards: v.minYards };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });

@@ -63,10 +63,15 @@ export interface NFLCareerPlayer {
 export interface CareerFilters {
   careerFrom?: number;
   careerTo?: number;
+  minMpg?: number;
+  minYards?: number;
 }
 
 export interface ScrambleFilters {
   careerTo?: number;
+  minMpg?: number;
+  minYards?: number;
+  includeDefense?: boolean;
 }
 
 // ─── Lazy loaders (promise shared across all callers) ─────────────────────────
@@ -229,6 +234,7 @@ export async function getRandomNBACareer(
   let pool = all;
   if (filters?.careerFrom) pool = pool.filter(p => nbaStartYear(p) >= filters.careerFrom!);
   if (filters?.careerTo)   pool = pool.filter(p => nbaEndYear(p)   >= filters.careerTo!);
+  if (filters?.minMpg)     pool = pool.filter(p => p.seasons.some(s => (s.min ?? 0) >= filters.minMpg!));
   if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -275,6 +281,7 @@ export async function getRandomNBAScramblePlayer(
   const mostRecentYear = getMostRecentNBAYear(all);
   let pool = all.filter(p => isNBAScrambleEligible(p, mostRecentYear));
   if (filters?.careerTo) pool = pool.filter(p => nbaEndYear(p) >= filters.careerTo!);
+  if (filters?.minMpg)   pool = pool.filter(p => p.seasons.some(s => (s.min ?? 0) >= filters.minMpg!));
   if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -292,11 +299,12 @@ export async function getRandomNFLScramblePlayer(
   const nameToId = new Map<string, string>(lineupPool.map(p => [p.player_name, p.player_id]));
   const mostRecentYear = getMostRecentNFLYear(all);
   let offensivePool: NFLCareerPlayer[] = all.filter(p => isNFLScrambleEligible(p, mostRecentYear));
-  if (filters?.careerTo) offensivePool = offensivePool.filter(p => nflEndYear(p) >= filters.careerTo!);
-  const defensivePool: { player_name: string; player_id?: string }[] = defensiveNames.map(name => ({
-    player_name: name,
-    player_id: nameToId.get(name),
-  }));
+  if (filters?.careerTo)  offensivePool = offensivePool.filter(p => nflEndYear(p) >= filters.careerTo!);
+  if (filters?.minYards)  offensivePool = offensivePool.filter(p => p.seasons.some(s => (Number(s.passing_yards) || 0) + (Number(s.rushing_yards) || 0) + (Number(s.receiving_yards) || 0) >= filters.minYards!));
+  const includeDefense = filters?.includeDefense !== false;
+  const defensivePool: { player_name: string; player_id?: string }[] = includeDefense
+    ? defensiveNames.map(name => ({ player_name: name, player_id: nameToId.get(name) }))
+    : [];
   const pool: { player_name: string; player_id?: string }[] = [...offensivePool, ...defensivePool];
   if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
@@ -314,9 +322,13 @@ export async function getRandomNFLCareer(
 ): Promise<NFLCareerPlayer | null> {
   const all = await loadNFLCareers();
   let pool = all;
-  if (position) pool = pool.filter(p => p.position === position.toUpperCase());
+  if (position)            pool = pool.filter(p => p.position === position.toUpperCase());
   if (filters?.careerFrom) pool = pool.filter(p => nflStartYear(p) >= filters.careerFrom!);
   if (filters?.careerTo)   pool = pool.filter(p => nflEndYear(p)   >= filters.careerTo!);
+  if (filters?.minYards) {
+    const OFF = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
+    pool = pool.filter(p => !OFF.has(p.position?.toUpperCase()) || p.seasons.some(s => (Number(s.passing_yards) || 0) + (Number(s.rushing_yards) || 0) + (Number(s.receiving_yards) || 0) >= filters.minYards!));
+  }
   if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }

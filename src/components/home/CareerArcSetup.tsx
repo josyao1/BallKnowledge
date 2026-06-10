@@ -3,7 +3,9 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const COLOR = '#22c55e';
-const ERA_OPTIONS: (number | null)[] = [null, 2010, 2015, 2018, 2020, 2022];
+const CAREER_TO_YEARS = Array.from({ length: 2025 - 1990 + 1 }, (_, i) => 1990 + i);
+const MPG_OPTIONS  = [{ label: 'Any', value: 0 }, { label: '15+', value: 15 }, { label: '20+', value: 20 }, { label: '25+', value: 25 }];
+const YARD_OPTIONS = [{ label: 'Any', value: 0 }, { label: '500+', value: 500 }, { label: '1000+', value: 1000 }];
 
 interface Props {
   sport: 'nba' | 'nfl';
@@ -12,7 +14,9 @@ interface Props {
 
 export function CareerArcSetup({ sport, onBack }: Props) {
   const navigate = useNavigate();
-  const [activeYear, setActiveYear] = useState<number | null>(null);
+  const [activeYear, setActiveYear] = useState<number>(0);
+  const [minMpg, setMinMpg] = useState(0);
+  const [minYards, setMinYards] = useState(0);
   const [tab, setTab] = useState<'settings' | 'rules'>('settings');
 
   return (
@@ -69,36 +73,65 @@ export function CareerArcSetup({ sport, onBack }: Props) {
 
             {/* Era filter */}
             <div className="flex flex-col gap-2">
-              <p className="capcrunch-kicker text-[9px] text-white/40 text-center">Player must be active into</p>
-              <div className="grid grid-cols-3 gap-2">
-                {ERA_OPTIONS.map(yr => (
-                  <button
-                    key={yr ?? 'any'}
-                    onClick={() => setActiveYear(yr)}
-                    className={`py-2 capcrunch-kicker text-[10px] border transition-all ${
-                      activeYear === yr
-                        ? 'text-black border-transparent'
-                        : 'border-white/10 text-white/40 hover:border-white/25 hover:text-white/60'
-                    }`}
-                    style={activeYear === yr ? { backgroundColor: COLOR } : {}}
-                  >
-                    {yr == null ? 'Any era' : `${yr}+`}
-                  </button>
-                ))}
-              </div>
-              {activeYear && (
-                <p className="capcrunch-kicker text-[9px] text-white/30 text-center">
-                  Players active in {activeYear} or later
-                </p>
-              )}
+              <p className="capcrunch-kicker text-[9px] text-white/40 text-center">Player active into</p>
+              <select
+                value={activeYear}
+                onChange={e => setActiveYear(+e.target.value)}
+                className="w-full bg-black/40 border border-white/10 px-3 py-2 capcrunch-kicker text-[10px] text-white focus:outline-none focus:border-[#d4af37]"
+              >
+                <option value={0}>Any era</option>
+                {CAREER_TO_YEARS.map(y => <option key={y} value={y}>{y}+</option>)}
+              </select>
             </div>
+
+            {/* MPG filter (NBA only) */}
+            {sport === 'nba' && (
+              <div className="flex flex-col gap-2">
+                <p className="capcrunch-kicker text-[9px] text-white/40 text-center">Min MPG (any season)</p>
+                <div className="flex gap-2">
+                  {MPG_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setMinMpg(opt.value)}
+                      className={`flex-1 py-2 capcrunch-kicker text-[10px] border transition-all ${
+                        minMpg === opt.value ? 'text-black border-transparent' : 'border-white/10 text-white/40 hover:border-white/25 hover:text-white/60'
+                      }`}
+                      style={minMpg === opt.value ? { backgroundColor: COLOR } : {}}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Yards filter (NFL only) */}
+            {sport === 'nfl' && (
+              <div className="flex flex-col gap-2">
+                <p className="capcrunch-kicker text-[9px] text-white/40 text-center">Min off. yards (any season)</p>
+                <div className="flex gap-2">
+                  {YARD_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setMinYards(opt.value)}
+                      className={`flex-1 py-2 capcrunch-kicker text-[10px] border transition-all ${
+                        minYards === opt.value ? 'text-black border-transparent' : 'border-white/10 text-white/40 hover:border-white/25 hover:text-white/60'
+                      }`}
+                      style={minYards === opt.value ? { backgroundColor: COLOR } : {}}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="border-t border-white/10" />
 
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2 justify-center">
               <button
-                onClick={() => navigate('/career', { state: activeYear ? { careerTo: activeYear } : null })}
+                onClick={() => navigate('/career', { state: { careerTo: activeYear || undefined, minMpg: minMpg || undefined, minYards: minYards || undefined } })}
                 className="capcrunch-title px-8 py-2.5 text-base text-black transition-all active:translate-y-px"
                 style={{ background: COLOR, boxShadow: '0 3px 0 rgba(30,100,20,0.9)' }}
               >

@@ -17,8 +17,15 @@ export function SoloScramblePage() {
   const location = useLocation();
   const { sport, setSport } = useSettingsStore();
 
-  const locState = location.state as { careerTo?: number; gpSport?: Sport } | null;
-  const scrambleFilters = useMemo(() => (locState?.careerTo ? { careerTo: locState.careerTo } : undefined), []);
+  const locState = location.state as { careerTo?: number; minMpg?: number; minYards?: number; includeDefense?: boolean; gpSport?: Sport } | null;
+  const scrambleFilters = useMemo(() => {
+    const f: { careerTo?: number; minMpg?: number; minYards?: number; includeDefense?: boolean } = {};
+    if (locState?.careerTo) f.careerTo = locState.careerTo;
+    if (locState?.minMpg)   f.minMpg   = locState.minMpg;
+    if (locState?.minYards) f.minYards  = locState.minYards;
+    if (locState?.includeDefense === false) f.includeDefense = false;
+    return Object.keys(f).length ? f : undefined;
+  }, []);
 
   const [scrambled, setScrambled] = useState('');
   const [answer, setAnswer]       = useState('');
