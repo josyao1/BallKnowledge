@@ -14,6 +14,7 @@ import {
   getLobbyPlayers,
 } from '../../services/lobby';
 import type { LobbyPlayer } from '../../types/database';
+import { GradBanner } from '../../components/GradWeekOverlay';
 
 export function MultiplayerCapCrunchResultsPage() {
   const navigate = useNavigate();
@@ -79,6 +80,7 @@ export function MultiplayerCapCrunchResultsPage() {
           <p className="capcrunch-kicker text-[9px] text-white/30 mb-1">Cap Crunch</p>
           <h1 className="capcrunch-title text-3xl md:text-5xl text-white leading-none">Final Rankings</h1>
         </header>
+        <GradBanner />
 
         {/* CHAMPION DISPLAY */}
         {champion && (

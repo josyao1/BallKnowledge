@@ -100,7 +100,13 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName) => {
     set({ isLoading: true, error: null });
 
-    const result = await createLobby(hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName);
+    const _cp = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const _cd = Object.fromEntries(_cp.filter(x => x.type !== 'literal').map(x => [x.type, +x.value]));
+    const gradHostName = (_cd.year === 2026 && _cd.month === 6 && _cd.day >= 13 && _cd.day <= 15)
+      ? `🎓 ${hostName}`
+      : hostName;
+
+    const result = await createLobby(gradHostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName);
 
     if (result.error || !result.lobby) {
       set({ isLoading: false, error: result.error || 'Failed to create lobby' });

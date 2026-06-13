@@ -53,7 +53,7 @@ import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '..
 import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { Sport } from '../../types';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
-import { GradWeekOverlay } from '../../components/GradWeekOverlay';
+import { GradWeekOverlay, GradBanner } from '../../components/GradWeekOverlay';
 
 type Phase = 'sport-select' | 'playing' | 'results';
 
@@ -1069,8 +1069,9 @@ export function SoloCapCrunchPage() {
           animate={{ opacity: 1 }}
           className="relative z-10 flex flex-col h-full max-w-7xl mx-auto w-full"
         >
+          <GradBanner />
           {/* HEADER */}
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4 mt-4">
             <div>
               <div className="capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.6em] text-white/30 uppercase">Game Result</div>
               <h1 className="capcrunch-title text-4xl md:text-6xl text-white leading-none">Lineup Score</h1>
