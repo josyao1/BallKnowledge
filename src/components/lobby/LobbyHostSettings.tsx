@@ -101,6 +101,8 @@ export interface HostFormValues {
   topTenTimer: number;
   topTenPinnedDivision: string | null;
   topTenPinnedTeam: string | null;
+  topTenGameMode: 'strike' | 'race';
+  topTenRaceTarget: number;
   /** Cap Crunch: special round types the host has disabled */
   disabledRoundTypes: SpecialRoundType[];
 }
@@ -160,6 +162,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
   const [editTopTenTimer,           setEditTopTenTimer]           = useState(45);
   const [editTopTenPinnedDivision,  setEditTopTenPinnedDivision]  = useState<string | null>(null);
   const [editTopTenPinnedTeam,      setEditTopTenPinnedTeam]      = useState<string | null>(null);
+  const [editTopTenGameMode,        setEditTopTenGameMode]        = useState<'strike' | 'race'>('strike');
+  const [editTopTenRaceTarget,      setEditTopTenRaceTarget]      = useState(3);
   const [editDisabledRoundTypes,    setEditDisabledRoundTypes]    = useState<SpecialRoundType[]>([]);
 
   useImperativeHandle(ref, () => ({
@@ -185,6 +189,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       topTenTimer: editTopTenTimer,
       topTenPinnedDivision: editTopTenPinnedDivision,
       topTenPinnedTeam: editTopTenPinnedTeam,
+      topTenGameMode: editTopTenGameMode,
+      topTenRaceTarget: editTopTenRaceTarget,
       disabledRoundTypes: editDisabledRoundTypes,
     }),
   }));
@@ -237,6 +243,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditTopTenTimer((cs.turn_timer as number) || 45);
     setEditTopTenPinnedDivision((cs.top_ten_pinned_division as string | null) || null);
     setEditTopTenPinnedTeam((cs.top_ten_pinned_team as string | null) || null);
+    setEditTopTenGameMode((cs.top_ten_game_mode as 'strike' | 'race') || 'strike');
+    setEditTopTenRaceTarget((cs.race_target as number) || 3);
     setEditDisabledRoundTypes((cs.disabledRoundTypes as SpecialRoundType[]) || []);
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
@@ -311,6 +319,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       topTenTimer: editTopTenTimer,
       topTenPinnedDivision: editTopTenPinnedDivision,
       topTenPinnedTeam: editTopTenPinnedTeam,
+      topTenGameMode: editTopTenGameMode,
+      topTenRaceTarget: editTopTenRaceTarget,
       disabledRoundTypes: editDisabledRoundTypes,
     });
   };
@@ -446,6 +456,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
               turnTimer={editTopTenTimer} onTurnTimerChange={setEditTopTenTimer}
               pinnedDivision={editTopTenPinnedDivision} onPinnedDivisionChange={setEditTopTenPinnedDivision}
               pinnedTeam={editTopTenPinnedTeam} onPinnedTeamChange={setEditTopTenPinnedTeam}
+              gameMode={editTopTenGameMode} onGameModeChange={setEditTopTenGameMode}
+              raceTarget={editTopTenRaceTarget} onRaceTargetChange={setEditTopTenRaceTarget}
             />
           )}
 

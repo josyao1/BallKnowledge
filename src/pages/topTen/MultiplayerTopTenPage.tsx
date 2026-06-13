@@ -242,9 +242,15 @@ export function MultiplayerTopTenPage() {
   const teamAbbr: string                          = cs.top_ten_team || '';
   const wrongGuesses: string[]                    = cs.wrong_guesses || [];
   const sport: string                             = cs.sport || 'nba';
+  const raceMode: boolean                         = cs.top_ten_game_mode === 'race';
+  const raceTarget: number                        = cs.race_target || 3;
+  const rebuttalTriggerIndex: number | null       = cs.rebuttal_trigger_index ?? null;
+  const giveUpVotes: string[]                     = cs.give_up_votes || [];
 
-  const activePlayers   = turnOrder.filter(id => !eliminated.includes(id));
-  const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
+  const activePlayers   = raceMode ? turnOrder : turnOrder.filter(id => !eliminated.includes(id));
+  const currentTurnId   = raceMode
+    ? (turnOrder[currentTurnIndex % Math.max(turnOrder.length, 1)] || '')
+    : (activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '');
   const isMyTurn        = currentTurnId === currentPlayerId;
 
   const playersInTurnOrder = [
@@ -347,77 +353,137 @@ export function MultiplayerTopTenPage() {
     isWritingRef.current = true;
 
     try {
-      const currentStrikes    = { ...playerStrikes };
-      const currentEliminated = [...eliminated];
+      const finalGuessed = newGuessedIndices ?? guessedIndices;
+      const allSlotsFilled = finalGuessed.length >= entries.length;
 
-      if (!correct) {
-        const n = (currentStrikes[currentTurnId] || 0) + 1;
-        currentStrikes[currentTurnId] = n;
-        if (n >= maxStrikes && !currentEliminated.includes(currentTurnId)) {
-          currentEliminated.push(currentTurnId);
-        }
-      }
-
-      const newActivePlayers  = turnOrder.filter(id => !currentEliminated.includes(id));
-      const finalGuessed      = newGuessedIndices ?? guessedIndices;
-      const allSlotsFilled    = finalGuessed.length >= entries.length;
-      const allOut            = newActivePlayers.length === 0;
-      const allRemainingOnLastStrike = maxStrikes > 1
-        && newActivePlayers.length > 0
-        && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
-      // In 1v1, don't end early when one player is eliminated — the other keeps guessing.
-      const isOneOnOne   = turnOrder.length === 2;
-      const lastStanding = !isOneOnOne && newActivePlayers.length === 1 && !allRemainingOnLastStrike;
-
-      const roundOver = allSlotsFilled || lastStanding || allOut;
-
-      const currentWasEliminated = !eliminated.includes(currentTurnId) && currentEliminated.includes(currentTurnId);
-      const nextIndex = newActivePlayers.length > 0
-        ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
-        : 0;
-
-      if (roundOver) {
+      if (raceMode) {
+        // ── Race mode: no strikes/elimination, race to raceTarget correct guesses ──
         const mergedAttribution: Record<string, number> =
           (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
-        const winnerIds = determineWinners(
-          turnOrder, mergedAttribution, currentStrikes, maxStrikes,
-          lastStanding && !allOut, newActivePlayers[0] || '',
-        );
-        const newState = {
-          ...cs, ...extras,
-          guessed_indices:    finalGuessed,
-          player_strikes:     currentStrikes,
-          eliminated:         currentEliminated,
-          missed_in_rotation: [],
-          winner_ids:         winnerIds,
-          winner_id:          winnerIds[0] || '',
-          guess_attribution:  mergedAttribution,
-          reveal_anim:        null,
-        };
-        await updateCareerState(lobby.id, newState);
-        await updateLobbyStatus(lobby.id, 'finished');
-        setLobby({ ...lobby, career_state: newState, status: 'finished' });
-      } else {
-        let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string; playerId?: string } | null = null;
-        let newDeadline: string;
-        if (guessedName) {
-          const animEndsAt = new Date(Date.now() + ANIM_MS).toISOString();
-          newDeadline = new Date(new Date(animEndsAt).getTime() + turnTimerSecs * 1000).toISOString();
-          revealAnim = { guessedName, isCorrect: correct, endsAt: animEndsAt, playerId };
-        } else {
-          newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+
+        // Check if this correct guess crosses the target and triggers rebuttal
+        let newRebuttalTriggerIdx: number | null = rebuttalTriggerIndex;
+        if (correct && newRebuttalTriggerIdx === null) {
+          const myGuesses = mergedAttribution[currentTurnId] || 0;
+          if (myGuesses >= raceTarget) {
+            newRebuttalTriggerIdx = currentTurnIndex;
+          }
         }
-        const newState = {
-          ...cs, ...extras,
-          guessed_indices:    finalGuessed,
-          player_strikes:     currentStrikes,
-          eliminated:         currentEliminated,
-          current_turn_index: nextIndex,
-          turn_deadline:      newDeadline,
-          reveal_anim:        revealAnim,
+
+        const nextIndex = (currentTurnIndex + 1) % turnOrder.length;
+        // Rebuttal is complete when the rotation would return to the triggering player
+        const rebuttalComplete = newRebuttalTriggerIdx !== null && nextIndex === newRebuttalTriggerIdx;
+        const roundOver = allSlotsFilled || rebuttalComplete;
+
+        const buildAnim = (name: string, pid?: string) => {
+          const endsAt = new Date(Date.now() + ANIM_MS).toISOString();
+          return { anim: { guessedName: name, isCorrect: correct, endsAt, playerId: pid }, deadline: new Date(new Date(endsAt).getTime() + turnTimerSecs * 1000).toISOString() };
         };
-        await updateCareerState(lobby.id, newState);
-        setLobby({ ...lobby, career_state: newState });
+
+        if (roundOver) {
+          const winnerIds = determineWinners(turnOrder, mergedAttribution, {}, 1, false, '');
+          const newState = {
+            ...cs, ...extras,
+            guessed_indices:        finalGuessed,
+            rebuttal_trigger_index: newRebuttalTriggerIdx,
+            winner_ids:             winnerIds,
+            winner_id:              winnerIds[0] || '',
+            guess_attribution:      mergedAttribution,
+            reveal_anim:            null,
+          };
+          await updateCareerState(lobby.id, newState);
+          await updateLobbyStatus(lobby.id, 'finished');
+          setLobby({ ...lobby, career_state: newState, status: 'finished' });
+        } else {
+          let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string; playerId?: string } | null = null;
+          let newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+          if (guessedName) {
+            const { anim, deadline } = buildAnim(guessedName, playerId);
+            revealAnim = anim;
+            newDeadline = deadline;
+          }
+          const newState = {
+            ...cs, ...extras,
+            guessed_indices:        finalGuessed,
+            rebuttal_trigger_index: newRebuttalTriggerIdx,
+            current_turn_index:     nextIndex,
+            turn_deadline:          newDeadline,
+            reveal_anim:            revealAnim,
+          };
+          await updateCareerState(lobby.id, newState);
+          setLobby({ ...lobby, career_state: newState });
+        }
+      } else {
+        // ── Strike mode (original logic) ──────────────────────────────────────
+        const currentStrikes    = { ...playerStrikes };
+        const currentEliminated = [...eliminated];
+
+        if (!correct) {
+          const n = (currentStrikes[currentTurnId] || 0) + 1;
+          currentStrikes[currentTurnId] = n;
+          if (n >= maxStrikes && !currentEliminated.includes(currentTurnId)) {
+            currentEliminated.push(currentTurnId);
+          }
+        }
+
+        const newActivePlayers  = turnOrder.filter(id => !currentEliminated.includes(id));
+        const allOut            = newActivePlayers.length === 0;
+        const allRemainingOnLastStrike = maxStrikes > 1
+          && newActivePlayers.length > 0
+          && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
+        const isOneOnOne   = turnOrder.length === 2;
+        const lastStanding = !isOneOnOne && newActivePlayers.length === 1 && !allRemainingOnLastStrike;
+
+        const roundOver = allSlotsFilled || lastStanding || allOut;
+
+        const currentWasEliminated = !eliminated.includes(currentTurnId) && currentEliminated.includes(currentTurnId);
+        const nextIndex = newActivePlayers.length > 0
+          ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
+          : 0;
+
+        if (roundOver) {
+          const mergedAttribution: Record<string, number> =
+            (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
+          const winnerIds = determineWinners(
+            turnOrder, mergedAttribution, currentStrikes, maxStrikes,
+            lastStanding && !allOut, newActivePlayers[0] || '',
+          );
+          const newState = {
+            ...cs, ...extras,
+            guessed_indices:    finalGuessed,
+            player_strikes:     currentStrikes,
+            eliminated:         currentEliminated,
+            missed_in_rotation: [],
+            winner_ids:         winnerIds,
+            winner_id:          winnerIds[0] || '',
+            guess_attribution:  mergedAttribution,
+            reveal_anim:        null,
+          };
+          await updateCareerState(lobby.id, newState);
+          await updateLobbyStatus(lobby.id, 'finished');
+          setLobby({ ...lobby, career_state: newState, status: 'finished' });
+        } else {
+          let revealAnim: { guessedName: string; isCorrect: boolean; endsAt: string; playerId?: string } | null = null;
+          let newDeadline: string;
+          if (guessedName) {
+            const animEndsAt = new Date(Date.now() + ANIM_MS).toISOString();
+            newDeadline = new Date(new Date(animEndsAt).getTime() + turnTimerSecs * 1000).toISOString();
+            revealAnim = { guessedName, isCorrect: correct, endsAt: animEndsAt, playerId };
+          } else {
+            newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
+          }
+          const newState = {
+            ...cs, ...extras,
+            guessed_indices:    finalGuessed,
+            player_strikes:     currentStrikes,
+            eliminated:         currentEliminated,
+            current_turn_index: nextIndex,
+            turn_deadline:      newDeadline,
+            reveal_anim:        revealAnim,
+          };
+          await updateCareerState(lobby.id, newState);
+          setLobby({ ...lobby, career_state: newState });
+        }
       }
     } catch (err) {
       console.error('[TopTen] advanceTurn failed:', err);
@@ -426,7 +492,8 @@ export function MultiplayerTopTenPage() {
       isWritingRef.current = false;
     }
   }, [lobby, cs, currentTurnId, currentTurnIndex, guessedIndices, entries.length,
-      playerStrikes, eliminated, maxStrikes, turnOrder, turnTimerSecs]);
+      playerStrikes, eliminated, maxStrikes, turnOrder, turnTimerSecs,
+      raceMode, raceTarget, rebuttalTriggerIndex]);
 
   useEffect(() => { advanceTurnRef.current = advanceTurn; }, [advanceTurn]);
 
@@ -478,6 +545,30 @@ export function MultiplayerTopTenPage() {
       await updateLobbyStatus(lobby.id, 'finished');
     } catch (err) {
       console.error('[TopTen] handleForceEnd failed:', err);
+    }
+  }
+
+  async function handleGiveUp() {
+    if (!lobby || isWritingRef.current || giveUpVotes.includes(currentPlayerId)) return;
+    isWritingRef.current = true;
+    try {
+      const newVotes = [...giveUpVotes, currentPlayerId];
+      if (newVotes.length >= turnOrder.length) {
+        const attribution: Record<string, number> = cs.guess_attribution || {};
+        const winnerIds = determineWinners(turnOrder, attribution, {}, 1, false, '');
+        const newState = { ...cs, give_up_votes: newVotes, winner_ids: winnerIds, winner_id: winnerIds[0] || '', reveal_anim: null };
+        await updateCareerState(lobby.id, newState);
+        await updateLobbyStatus(lobby.id, 'finished');
+        setLobby({ ...lobby, career_state: newState, status: 'finished' });
+      } else {
+        const newState = { ...cs, give_up_votes: newVotes };
+        await updateCareerState(lobby.id, newState);
+        setLobby({ ...lobby, career_state: newState });
+      }
+    } catch (err) {
+      console.error('[TopTen] handleGiveUp failed:', err);
+    } finally {
+      isWritingRef.current = false;
     }
   }
 
@@ -651,21 +742,22 @@ export function MultiplayerTopTenPage() {
           sport={sport as 'nba' | 'nfl'}
         />
 
-        {/* Compact player strikes strip */}
+        {/* Compact player strip */}
         <div className="flex flex-wrap gap-1.5 justify-center">
           {playersInTurnOrder.map(p => {
             const pStrikes  = playerStrikes[p.player_id] || 0;
-            const isElim    = eliminated.includes(p.player_id);
+            const pGuesses  = (cs.guess_attribution || {})[p.player_id] || 0;
+            const isElim    = !raceMode && eliminated.includes(p.player_id);
             const isMe      = p.player_id === currentPlayerId;
             const isCurrent = p.player_id === currentTurnId && !isElim;
             return (
               <div
                 key={p.player_id}
                 className={`flex items-center gap-1.5 px-2 py-1 border transition-colors ${
-                  isElim   ? 'opacity-20 border-white/5 bg-transparent' :
+                  isElim    ? 'opacity-20 border-white/5 bg-transparent' :
                   isCurrent ? 'border-[#70BE5B]/40 bg-[#70BE5B]/5' :
-                  isMe     ? 'border-white/20 bg-white/5' :
-                             'border-white/8 bg-transparent'
+                  isMe      ? 'border-white/20 bg-white/5' :
+                              'border-white/8 bg-transparent'
                 }`}
               >
                 {isCurrent && !isElim && (
@@ -680,15 +772,32 @@ export function MultiplayerTopTenPage() {
                 }`}>
                   {p.player_name.split(' ')[0]}
                 </span>
-                <span className="capcrunch-title text-[10px] tracking-tight">
-                  {Array.from({ length: maxStrikes }).map((_, i) => (
-                    <span key={i} className={i < pStrikes ? 'text-red-400' : 'text-white/12'}>✕</span>
-                  ))}
-                </span>
+                {raceMode ? (
+                  <span className={`capcrunch-title text-[10px] tabular-nums ${pGuesses >= raceTarget ? 'text-[#E2008A]' : 'text-white/50'}`}>
+                    {pGuesses}/{raceTarget}
+                  </span>
+                ) : (
+                  <span className="capcrunch-title text-[10px] tracking-tight">
+                    {Array.from({ length: maxStrikes }).map((_, i) => (
+                      <span key={i} className={i < pStrikes ? 'text-red-400' : 'text-white/12'}>✕</span>
+                    ))}
+                  </span>
+                )}
               </div>
             );
           })}
         </div>
+
+        {/* Rebuttal banner */}
+        {raceMode && rebuttalTriggerIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-3 py-2 border border-[#E2008A]/50 bg-[#E2008A]/8 text-center"
+          >
+            <p className="capcrunch-kicker text-[10px] text-[#E2008A] tracking-[0.25em]">REBUTTAL — everyone gets one last turn</p>
+          </motion.div>
+        )}
 
         {/* Turn indicator + timer */}
         <motion.div
@@ -762,14 +871,20 @@ export function MultiplayerTopTenPage() {
 
         {/* Player scoreboard */}
         <div className="capcrunch-panel p-3">
-          <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em] mb-2">Players</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em]">Players</p>
+            {raceMode && (
+              <p className="capcrunch-kicker text-[9px] text-[#E2008A]/60 tracking-[0.2em]">First to {raceTarget}</p>
+            )}
+          </div>
           <div className="space-y-1">
             {playersInTurnOrder.map(p => {
               const strikes   = playerStrikes[p.player_id] || 0;
-              const isElim    = eliminated.includes(p.player_id);
+              const isElim    = !raceMode && eliminated.includes(p.player_id);
               const guesses   = (cs.guess_attribution || {})[p.player_id] || 0;
               const isCurrent = p.player_id === currentTurnId && !isElim;
               const isMe      = p.player_id === currentPlayerId;
+              const hasGivenUp = giveUpVotes.includes(p.player_id);
               return (
                 <div
                   key={p.player_id}
@@ -791,18 +906,41 @@ export function MultiplayerTopTenPage() {
                   <span className={`capcrunch-kicker text-sm flex-1 truncate ${
                     isCurrent ? 'text-[#70BE5B]' : isMe ? 'text-white' : 'text-white/50'
                   }`}>
-                    {p.player_name}{isElim ? ' ✕' : ''}
+                    {p.player_name}{isElim ? ' ✕' : ''}{hasGivenUp ? ' 🏳' : ''}
                   </span>
-                  <span className="capcrunch-title text-[10px]">
-                    {Array.from({ length: maxStrikes }).map((_, i) => (
-                      <span key={i} className={i < strikes ? 'text-red-400' : 'text-white/12 opacity-20'}>✕</span>
-                    ))}
-                  </span>
+                  {raceMode ? (
+                    <div className="flex items-center gap-1.5">
+                      {Array.from({ length: raceTarget }).map((_, i) => (
+                        <span key={i} className={`block w-2 h-2 rounded-full ${i < guesses ? 'bg-[#E2008A]' : 'bg-white/10'}`} />
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="capcrunch-title text-[10px]">
+                      {Array.from({ length: maxStrikes }).map((_, i) => (
+                        <span key={i} className={i < strikes ? 'text-red-400' : 'text-white/12 opacity-20'}>✕</span>
+                      ))}
+                    </span>
+                  )}
                   <span className="capcrunch-kicker text-[10px] text-[#70BE5B] w-8 text-right tabular-nums">{guesses} pts</span>
                 </div>
               );
             })}
           </div>
+
+          {/* Give Up button — race mode only */}
+          {raceMode && !giveUpVotes.includes(currentPlayerId) && (
+            <button
+              onClick={handleGiveUp}
+              className="mt-3 w-full py-1.5 capcrunch-kicker text-[9px] tracking-[0.25em] border border-white/12 text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors"
+            >
+              Give Up ({giveUpVotes.length}/{turnOrder.length})
+            </button>
+          )}
+          {raceMode && giveUpVotes.includes(currentPlayerId) && (
+            <p className="mt-3 text-center capcrunch-kicker text-[9px] text-white/20 tracking-[0.2em]">
+              Waiting for others… ({giveUpVotes.length}/{turnOrder.length} gave up)
+            </p>
+          )}
         </div>
       </main>
 
