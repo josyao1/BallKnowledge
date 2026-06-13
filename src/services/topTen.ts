@@ -532,9 +532,12 @@ export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'divis
 
   // Passing stats are QB-only so they repeat in restricted pools — down-weight them.
   // Team mode: heavy reduction (0.3×). Division mode: mild reduction (0.6×).
-  if (sport === 'nfl' && (mode === 'team' || mode === 'division')) {
-    const passingWeight = mode === 'team' ? 0.3 : 0.6;
-    return weightedRandom(candidates, candidates.map(c => PASSING_KEYS.has(c.key) ? passingWeight : 1));
+  // Award categories are rare/novelty — down-weight them in all NFL modes (0.3×).
+  if (sport === 'nfl') {
+    const passingWeight = (mode === 'team' || mode === 'division') ? (mode === 'team' ? 0.3 : 0.6) : 1;
+    return weightedRandom(candidates, candidates.map(c =>
+      c.key.startsWith('award_') ? 0.3 : PASSING_KEYS.has(c.key) ? passingWeight : 1
+    ));
   }
 
   return candidates[Math.floor(Math.random() * candidates.length)];
