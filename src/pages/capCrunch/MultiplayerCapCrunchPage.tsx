@@ -54,6 +54,7 @@ import { CapCrunchResultCard }  from '../../components/capCrunch/CapCrunchResult
 import { BlindModeReveal }      from '../../components/capCrunch/BlindModeReveal';
 import { getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
 import { getTotalColor }        from '../../components/capCrunch/SpinningNumber';
+import { GradWeekOverlay }      from '../../components/GradWeekOverlay';
 
 type Phase = 'loading' | 'picking' | 'blind-reveal' | 'results';
 
@@ -1052,6 +1053,7 @@ export function MultiplayerCapCrunchPage() {
         transition={{ duration: 0.45, ease: 'easeInOut' }}
         className="h-[100dvh] capcrunch-shell text-white flex flex-col relative overflow-hidden"
       >
+        <GradWeekOverlay />
         <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
         {/* Exact hit celebration overlay */}
         {showExactHit && (

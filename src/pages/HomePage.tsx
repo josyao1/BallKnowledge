@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { GradWeekOverlay } from '../components/GradWeekOverlay';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SettingsModal } from '../components/home/SettingsModal';
@@ -327,6 +328,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#000] text-[#f1f1ef] home-chalkboard">
+      <GradWeekOverlay />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10">
         <header className="flex items-center justify-between gap-3 border-b border-white/10 pb-6 sm:gap-4 sm:pb-8">
           <div className="min-w-0 flex-1">
