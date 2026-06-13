@@ -196,12 +196,14 @@ export function MultiplayerTopTenPage() {
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
   const [revealOverlay, setRevealOverlay] = useState<{ guessedName: string; isCorrect: boolean; playerId?: string; sport: 'nba' | 'nfl' } | null>(null);
   const [showMyTurnFlash, setShowMyTurnFlash] = useState(false);
-  const inputRef          = useRef<HTMLInputElement>(null);
-  const hasAdvancedRef    = useRef(false);
-  const isWritingRef      = useRef(false);
-  const zeroSinceRef      = useRef<number | null>(null);
-  const prevTurnIdRef     = useRef<string>('');
-  const advanceTurnRef    = useRef<typeof advanceTurn>(() => Promise.resolve());
+  const inputRef              = useRef<HTMLInputElement>(null);
+  const hasAdvancedRef        = useRef(false);
+  const isWritingRef          = useRef(false);
+  const zeroSinceRef          = useRef<number | null>(null);
+  const prevTurnIdRef         = useRef<string>('');
+  const advanceTurnRef        = useRef<typeof advanceTurn>(() => Promise.resolve());
+  const recentCategoryKeysRef = useRef<string[]>([]);
+  const recentTeamAbbrsRef    = useRef<string[]>([]);
 
   useLobbySubscription(lobby?.id || null);
 
@@ -363,7 +365,9 @@ export function MultiplayerTopTenPage() {
       const allRemainingOnLastStrike = maxStrikes > 1
         && newActivePlayers.length > 0
         && newActivePlayers.every(id => (currentStrikes[id] || 0) >= maxStrikes - 1);
-      const lastStanding      = newActivePlayers.length === 1 && !allRemainingOnLastStrike;
+      // In 1v1, don't end early when one player is eliminated — the other keeps guessing.
+      const isOneOnOne   = turnOrder.length === 2;
+      const lastStanding = !isOneOnOne && newActivePlayers.length === 1 && !allRemainingOnLastStrike;
 
       const roundOver = allSlotsFilled || lastStanding || allOut;
 
@@ -496,14 +500,22 @@ export function MultiplayerTopTenPage() {
 
   async function generateRound() {
     const roundSport = (cs.top_ten_sport || cs.sport || 'nba') as 'nba' | 'nfl';
-    return generateTopTenRound({
-      sport:        roundSport,
-      roundType:    cs.top_ten_round_type || 'league',
-      minYear:      cs.top_ten_min_year   || (roundSport === 'nba' ? 1996 : 1999),
-      maxYear:      cs.top_ten_max_year   || 2025,
-      windowYears:  cs.top_ten_window_years || 10,
-      divisionMode: (cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative',
+    const result = await generateTopTenRound({
+      sport:              roundSport,
+      roundType:          cs.top_ten_round_type || 'league',
+      minYear:            cs.top_ten_min_year   || (roundSport === 'nba' ? 1996 : 1999),
+      maxYear:            cs.top_ten_max_year   || 2025,
+      windowYears:        cs.top_ten_window_years || 10,
+      divisionMode:       (cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative',
+      recentCategoryKeys: recentCategoryKeysRef.current,
+      recentTeamAbbrs:    recentTeamAbbrsRef.current,
     });
+    // Track recently used categories and teams to avoid immediate repeats
+    recentCategoryKeysRef.current = [result.cat.key, ...recentCategoryKeysRef.current].slice(0, 3);
+    if (result.teamAbbr) {
+      recentTeamAbbrsRef.current = [result.teamAbbr, ...recentTeamAbbrsRef.current].slice(0, 3);
+    }
+    return result;
   }
 
   async function handleSkipCategory() {
