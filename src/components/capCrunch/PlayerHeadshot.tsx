@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isGradWeek } from '../GradWeekOverlay';
 
 interface Props {
   playerId: string | number | undefined;
@@ -41,6 +42,7 @@ function Silhouette({ className }: { className: string }) {
 export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-full object-cover shrink-0' }: Props) {
   const [error, setError] = useState(false);
   const [nflUrl, setNflUrl] = useState<string | null>(null);
+  const showCap = isGradWeek();
 
   useEffect(() => {
     if (sport !== 'nfl' || !playerId) return;
@@ -49,20 +51,37 @@ export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-f
     });
   }, [sport, playerId]);
 
-  if (!playerId || error) return <Silhouette className={className} />;
+  // When wrapping in a span, shrink-0 moves to the wrapper so the img doesn't double-apply it
+  const innerClass = showCap ? className.replace('shrink-0', '').trim() : className;
 
-  const url = sport === 'nba'
-    ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
-    : nflUrl;
+  const renderInner = () => {
+    if (!playerId || error) return <Silhouette className={innerClass} />;
+    const url = sport === 'nba'
+      ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
+      : nflUrl;
+    if (!url) return <Silhouette className={innerClass} />;
+    return (
+      <img
+        src={url}
+        alt=""
+        className={innerClass}
+        referrerPolicy="no-referrer"
+        onError={() => setError(true)}
+      />
+    );
+  };
 
-  if (!url) return <Silhouette className={className} />;
+  if (!showCap) return renderInner();
+
   return (
-    <img
-      src={url}
-      alt=""
-      className={className}
-      referrerPolicy="no-referrer"
-      onError={() => setError(true)}
-    />
+    <span className="relative inline-block shrink-0" style={{ lineHeight: 0, verticalAlign: 'middle' }}>
+      {renderInner()}
+      <span
+        aria-hidden="true"
+        style={{ position: 'absolute', fontSize: '10px', top: '-6px', left: '50%', transform: 'translateX(-50%)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}
+      >
+        🎓
+      </span>
+    </span>
   );
 }
