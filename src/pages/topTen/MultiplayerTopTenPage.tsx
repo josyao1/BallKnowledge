@@ -158,6 +158,8 @@ function RevealOverlay({ guessedName, isCorrect, playerId, sport }: { guessedNam
   );
 }
 
+// hardnessScores: optional per-player sum of (entryIndex+1) for each correct guess.
+// Higher = guessed more obscure (lower-ranked) entries. Used as race-mode tiebreaker.
 function determineWinners(
   allIds: string[],
   attribution: Record<string, number>,
@@ -165,20 +167,35 @@ function determineWinners(
   maxStrikes: number,
   lastStanding: boolean,
   lastActiveId: string,
+  hardnessScores?: Record<string, number>,
 ): string[] {
   if (lastStanding) return [lastActiveId];
   const sorted = [...allIds].sort((a, b) => {
     const ga = attribution[a] || 0, gb = attribution[b] || 0;
     if (gb !== ga) return gb - ga;
+    if (hardnessScores) {
+      return (hardnessScores[b] || 0) - (hardnessScores[a] || 0);
+    }
     return (maxStrikes - (strikes[b] || 0)) - (maxStrikes - (strikes[a] || 0));
   });
   if (!sorted.length) return [];
   const topG  = attribution[sorted[0]] || 0;
-  const topSL = maxStrikes - (strikes[sorted[0]] || 0);
-  return sorted.filter(id =>
-    (attribution[id] || 0) === topG &&
-    (maxStrikes - (strikes[id]  || 0)) === topSL
-  );
+  const topTb = hardnessScores
+    ? (hardnessScores[sorted[0]] || 0)
+    : (maxStrikes - (strikes[sorted[0]] || 0));
+  return sorted.filter(id => {
+    const g  = attribution[id] || 0;
+    const tb = hardnessScores ? (hardnessScores[id] || 0) : (maxStrikes - (strikes[id] || 0));
+    return g === topG && tb === topTb;
+  });
+}
+
+function computeHardnessScores(guessIndexAttr: Record<string, number[]>): Record<string, number> {
+  const scores: Record<string, number> = {};
+  for (const [pid, indices] of Object.entries(guessIndexAttr)) {
+    scores[pid] = indices.reduce((sum, idx) => sum + (idx + 1), 0);
+  }
+  return scores;
 }
 
 
@@ -242,10 +259,11 @@ export function MultiplayerTopTenPage() {
   const teamAbbr: string                          = cs.top_ten_team || '';
   const wrongGuesses: string[]                    = cs.wrong_guesses || [];
   const sport: string                             = cs.sport || 'nba';
-  const raceMode: boolean                         = cs.top_ten_game_mode === 'race';
-  const raceTarget: number                        = cs.race_target || 3;
-  const rebuttalTriggerIndex: number | null       = cs.rebuttal_trigger_index ?? null;
-  const giveUpVotes: string[]                     = cs.give_up_votes || [];
+  const raceMode: boolean                              = cs.top_ten_game_mode === 'race';
+  const raceTarget: number                             = cs.race_target || 3;
+  const rebuttalTriggerIndex: number | null            = cs.rebuttal_trigger_index ?? null;
+  const giveUpVotes: string[]                          = cs.give_up_votes || [];
+  const guessIndexAttribution: Record<string, number[]> = cs.guess_index_attribution || {};
 
   const activePlayers   = raceMode ? turnOrder : turnOrder.filter(id => !eliminated.includes(id));
   const currentTurnId   = raceMode
@@ -381,15 +399,17 @@ export function MultiplayerTopTenPage() {
         };
 
         if (roundOver) {
-          const winnerIds = determineWinners(turnOrder, mergedAttribution, {}, 1, false, '');
+          const mergedIdxAttr = (extras.guess_index_attribution as Record<string, number[]>) ?? (cs.guess_index_attribution || {});
+          const winnerIds = determineWinners(turnOrder, mergedAttribution, {}, 1, false, '', computeHardnessScores(mergedIdxAttr));
           const newState = {
             ...cs, ...extras,
-            guessed_indices:        finalGuessed,
-            rebuttal_trigger_index: newRebuttalTriggerIdx,
-            winner_ids:             winnerIds,
-            winner_id:              winnerIds[0] || '',
-            guess_attribution:      mergedAttribution,
-            reveal_anim:            null,
+            guessed_indices:          finalGuessed,
+            rebuttal_trigger_index:   newRebuttalTriggerIdx,
+            winner_ids:               winnerIds,
+            winner_id:                winnerIds[0] || '',
+            guess_attribution:        mergedAttribution,
+            guess_index_attribution:  mergedIdxAttr,
+            reveal_anim:              null,
           };
           await updateCareerState(lobby.id, newState);
           await updateLobbyStatus(lobby.id, 'finished');
@@ -511,8 +531,13 @@ export function MultiplayerTopTenPage() {
         ...(cs.guess_attribution || {}),
         [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
       };
+      const prevIdxAttr = cs.guess_index_attribution || {};
+      const newIndexAttribution = {
+        ...prevIdxAttr,
+        [currentTurnId]: [...(prevIdxAttr[currentTurnId] || []), ...matched],
+      };
       hasAdvancedRef.current = true;
-      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, entries[matched[0]].playerName, String(entries[matched[0]].playerId));
+      await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution, guess_index_attribution: newIndexAttribution }, entries[matched[0]].playerName, String(entries[matched[0]].playerId));
     } else {
       if (wrongGuesses.includes(trimmed)) {
         setGuess('');
@@ -536,9 +561,11 @@ export function MultiplayerTopTenPage() {
     if (!lobby || !isHost) return;
     try {
       const attribution: Record<string, number> = cs.guess_attribution || {};
+      const hardness = raceMode ? computeHardnessScores(guessIndexAttribution) : undefined;
       const winnerIds = determineWinners(
         turnOrder, attribution, playerStrikes, maxStrikes,
-        activePlayers.length === 1, activePlayers[0] || '',
+        !raceMode && activePlayers.length === 1, activePlayers[0] || '',
+        hardness,
       );
       const newState = { ...cs, winner_ids: winnerIds, winner_id: winnerIds[0] || '' };
       await updateCareerState(lobby.id, newState);
@@ -555,7 +582,7 @@ export function MultiplayerTopTenPage() {
       const newVotes = [...giveUpVotes, currentPlayerId];
       if (newVotes.length >= turnOrder.length) {
         const attribution: Record<string, number> = cs.guess_attribution || {};
-        const winnerIds = determineWinners(turnOrder, attribution, {}, 1, false, '');
+        const winnerIds = determineWinners(turnOrder, attribution, {}, 1, false, '', computeHardnessScores(guessIndexAttribution));
         const newState = { ...cs, give_up_votes: newVotes, winner_ids: winnerIds, winner_id: winnerIds[0] || '', reveal_anim: null };
         await updateCareerState(lobby.id, newState);
         await updateLobbyStatus(lobby.id, 'finished');
@@ -626,13 +653,18 @@ export function MultiplayerTopTenPage() {
         is_team_round:      newTeam,
         is_single_season:   newSingleSeason,
         top_ten_team:       newTeamAbbr,
-        guessed_indices:    [],
-        wrong_guesses:      [],
-        hint_mode:          false,
-        guess_attribution:  {},
-        current_turn_index: 0,
-        turn_deadline:      deadline,
-        reveal_anim:        null,
+        guessed_indices:        [],
+        wrong_guesses:          [],
+        hint_mode:              false,
+        guess_attribution:      {},
+        guess_index_attribution: {},
+        give_up_votes:          [],
+        rebuttal_trigger_index: null,
+        player_strikes:         {},
+        eliminated:             [],
+        current_turn_index:     0,
+        turn_deadline:          deadline,
+        reveal_anim:            null,
       };
       await updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });

@@ -603,6 +603,7 @@ export function LobbyWaitingPage() {
         player_strikes: {},
         eliminated: [],
         guess_attribution: {},
+        guess_index_attribution: {},
         turn_order: turnOrder,
         current_turn_index: 0,
         turn_deadline: deadline,
