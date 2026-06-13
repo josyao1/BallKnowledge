@@ -24,7 +24,7 @@ export function GradWeekOverlay() {
             transform: 'translateX(-50%) rotate(-22deg)',
           }}
         >
-          {'🎓 HAPPY GRADUATION 🎓 '.repeat(12)}
+          {'🎓 🎉 🥂 🎊 🏆 📜 ✨ 🎈 👨‍🎓 👩‍🎓 🎓 🎉 🥂 🎊 🏆 📜 ✨ 🎈 '.repeat(6)}
         </div>
       ))}
     </div>
