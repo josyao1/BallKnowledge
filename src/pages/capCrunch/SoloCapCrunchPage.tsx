@@ -53,7 +53,7 @@ import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '..
 import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { Sport } from '../../types';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
-import { GradWeekOverlay, GradBanner } from '../../components/GradWeekOverlay';
+import { GradWeekOverlay, GradBanner, isGradWeek } from '../../components/GradWeekOverlay';
 
 type Phase = 'sport-select' | 'playing' | 'results';
 
@@ -588,9 +588,6 @@ export function SoloCapCrunchPage() {
   }
 
   if (phase === 'playing' && lineup && selectedSport && statCategory) {
-    const _p2 = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-    const _d2 = Object.fromEntries(_p2.filter(x => x.type !== 'literal').map(x => [x.type, +x.value]));
-    const isGradWeek = _d2.year === 2026 && _d2.month === 6 && _d2.day >= 13 && _d2.day <= 15;
     return (
       <motion.div
         animate={showExactHit ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : {}}
@@ -650,7 +647,7 @@ export function SoloCapCrunchPage() {
             >
               ← Back
             </button>
-            <h1 className="capcrunch-title text-lg sm:text-2xl text-[#FDF100]">Cap Crunch{isGradWeek ? ' 🎓' : ''}</h1>
+            <h1 className="capcrunch-title text-lg sm:text-2xl text-[#FDF100]">Cap Crunch{isGradWeek() ? ' 🎓' : ''}</h1>
             <div className="w-10 sm:w-16" />
           </div>
           {/* Team / Division / Conference Display */}

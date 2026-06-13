@@ -20,6 +20,7 @@ import { NameMatchRoundCard } from './NameMatchRoundCard';
 import { WildcardRoundCard } from './WildcardRoundCard';
 import { getCategoryAbbr, fmt } from './capCrunchUtils';
 import type { StatCategory, PlayerLineup } from '../../types/capCrunch';
+import { isGradWeek } from '../GradWeekOverlay';
 
 interface Player {
   player_id: string;
@@ -61,9 +62,7 @@ export function CapCrunchHeader({
   isHost = false, onEndGame, hwFilter,
 }: Props) {
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
-  const _p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-  const _d = Object.fromEntries(_p.filter(x => x.type !== 'literal').map(x => [x.type, +x.value]));
-  const isGradWeek = _d.year === 2026 && _d.month === 6 && _d.day >= 13 && _d.day <= 15;
+  const gradWeek = isGradWeek();
   return (
     <motion.header
       className="relative z-10 flex-shrink-0 capcrunch-panel border-b border-white/12"
@@ -72,7 +71,7 @@ export function CapCrunchHeader({
     >
       <div className="px-3 sm:px-4 py-2 flex flex-col gap-2 border-b border-white/5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3 min-w-0 sm:justify-start">
-          <h1 className="capcrunch-title text-lg sm:text-xl text-[#FDF100] truncate">Cap Crunch{isGradWeek ? ' 🎓' : ''}</h1>
+          <h1 className="capcrunch-title text-lg sm:text-xl text-[#FDF100] truncate">Cap Crunch{gradWeek ? ' 🎓' : ''}</h1>
           <HomeButton isHost={isHost} onEndGame={onEndGame} />
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
