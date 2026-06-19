@@ -34,6 +34,7 @@ type LocationState = {
   windowYears?: number;
   pinnedDivision?: string | null;
   pinnedTeam?: string | null;
+  strikeMode?: 'strikes' | 'infinite';
 } | null;
 
 export function SoloTopTenPage() {
@@ -45,6 +46,7 @@ export function SoloTopTenPage() {
   const defaultSport: 'nba' | 'nfl' = locState?.sport ?? ((storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba');
 
   const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(defaultSport);
+  const [strikeMode, setStrikeMode]     = useState<'strikes' | 'infinite'>(locState?.strikeMode ?? 'strikes');
   const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>(locState?.roundType ?? 'league');
   const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>(locState?.divisionMode ?? 'cumulative');
   const [minYear, setMinYear]           = useState(locState?.minYear ?? NBA_MIN);
@@ -63,7 +65,7 @@ export function SoloTopTenPage() {
   const [guess, setGuess]           = useState('');
   const [feedback, setFeedback]     = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
   const [status, setStatus]         = useState<Status>(locState ? 'loading' : 'setup');
-  const [hintMode, setHintMode]     = useState(false);
+  const [hintLevel, setHintLevel]   = useState(0);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
   const [isDivisionRound, setIsDivisionRound] = useState(false);
   const [isTeamRound, setIsTeamRound]         = useState(false);
@@ -141,7 +143,7 @@ export function SoloTopTenPage() {
     setStrikes(0);
     setGuess('');
     setFeedback({ msg: '', type: '' });
-    setHintMode(false);
+    setHintLevel(0);
     setWrongGuesses([]);
     setStatus('playing');
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -159,6 +161,7 @@ export function SoloTopTenPage() {
 
   function submitGuess(value: string) {
     if (!value.trim() || status !== 'playing') return;
+    if (suggestTimer.current) clearTimeout(suggestTimer.current);
     setSuggestions([]);
     const matched = isValidGuess(value.trim(), entries, guessedIndices);
     if (matched.length > 0) {
@@ -171,6 +174,8 @@ export function SoloTopTenPage() {
     } else {
       if (wrongGuesses.includes(value.trim())) {
         setGuess('');
+        setFeedback({ msg: 'Already guessed!', type: 'wrong' });
+        clearFeedback();
         inputRef.current?.focus();
         return;
       }
@@ -178,9 +183,10 @@ export function SoloTopTenPage() {
       setStrikes(n);
       setWrongGuesses(prev => [...prev, value.trim()]);
       setGuess('');
-      setFeedback({ msg: n >= MAX_STRIKES ? 'Strike 3 — game over!' : '✗ Not in the top 10', type: 'wrong' });
+      const hitStrikeLimit = strikeMode === 'strikes' && n >= MAX_STRIKES;
+      setFeedback({ msg: hitStrikeLimit ? 'Strike 3 — game over!' : '✗ Not in the top 10', type: 'wrong' });
       clearFeedback();
-      if (n >= MAX_STRIKES) setStatus('done');
+      if (hitStrikeLimit) setStatus('done');
     }
     inputRef.current?.focus();
   }
@@ -205,7 +211,9 @@ export function SoloTopTenPage() {
   const catDef            = getCategoryDef(sport, category);
   const isCumulativeRound = isDivisionRound || isTeamRound;
   const statShortLabel    = getStatShortLabel(catDef);
-  const showTeamHint     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
+  const maxHintLevel      = (isDivisionRound || isTeamRound) ? 1 : 2;
+  const showTeamHint      = isDivisionRound || isSingleSeason || hintLevel >= 1;
+  const showInitialsHint  = (isDivisionRound || isTeamRound) ? hintLevel >= 1 : hintLevel >= 2;
 
   // ── Setup screen (modal style) ────────────────────────────────────────────────
   if (status === 'setup') {
@@ -242,6 +250,27 @@ export function SoloTopTenPage() {
                 pinnedDivision={pinnedDivision} onPinnedDivisionChange={setPinnedDivision}
                 pinnedTeam={pinnedTeam} onPinnedTeamChange={setPinnedTeam}
               />
+              <div className="border-t border-white/8 pt-4">
+                <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mb-2">Mode</p>
+                <div className="flex gap-2">
+                  {(['strikes', 'infinite'] as const).map(m => (
+                    <button
+                      key={m}
+                      onClick={() => setStrikeMode(m)}
+                      className={`flex-1 py-1.5 capcrunch-kicker text-[10px] tracking-[0.2em] border transition-colors ${
+                        strikeMode === m
+                          ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
+                          : 'border-white/12 text-white/35 hover:border-white/25 hover:text-white/60'
+                      }`}
+                    >
+                      {m === 'strikes' ? '3 Strikes' : 'Infinite'}
+                    </button>
+                  ))}
+                </div>
+                {strikeMode === 'infinite' && (
+                  <p className="capcrunch-kicker text-[9px] text-white/25 mt-1.5">Guess until you clear the board or give up.</p>
+                )}
+              </div>
               <button
                 onClick={startGame}
                 className="capcrunch-title text-lg w-full py-3 text-black transition-all active:translate-y-px"
@@ -293,14 +322,14 @@ export function SoloTopTenPage() {
           )}
           {!isDone && (
             <button
-              onClick={() => setHintMode(h => !h)}
+              onClick={() => setHintLevel(l => l >= maxHintLevel ? 0 : l + 1)}
               className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
-                hintMode
+                hintLevel > 0
                   ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
-              Hint {hintMode ? 'On' : 'Off'}
+              {hintLevel === 0 ? 'Hint Off' : hintLevel === 1 ? 'Hint 1' : 'Hint 2'}
             </button>
           )}
           {!isDone && (
@@ -309,6 +338,14 @@ export function SoloTopTenPage() {
               className="px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border border-white/12 text-white/25 hover:border-white/30 hover:text-white/50 transition-colors"
             >
               Skip
+            </button>
+          )}
+          {!isDone && strikeMode === 'infinite' && (
+            <button
+              onClick={() => setStatus('done')}
+              className="px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border border-white/12 text-white/25 hover:border-red-500/40 hover:text-red-400/60 transition-colors"
+            >
+              Give Up
             </button>
           )}
         </div>
@@ -328,7 +365,7 @@ export function SoloTopTenPage() {
         />
 
         {/* Strikes */}
-        <div className="flex justify-center gap-2.5">
+        {strikeMode === 'strikes' && <div className="flex justify-center gap-2.5">
           {Array.from({ length: MAX_STRIKES }).map((_, i) => (
             <motion.div
               key={i}
@@ -343,7 +380,7 @@ export function SoloTopTenPage() {
               <span className={`capcrunch-title text-sm transition-colors ${i < strikes ? 'text-red-400' : 'text-white/15'}`}>✕</span>
             </motion.div>
           ))}
-        </div>
+        </div>}
 
         <FeedbackMessage feedback={feedback} />
 
@@ -385,6 +422,8 @@ export function SoloTopTenPage() {
           </div>
         )}
 
+        <WrongGuessesList wrongGuesses={wrongGuesses} />
+
         {/* Board */}
         <div className="space-y-1.5">
           {entries.map((entry, i) => (
@@ -395,7 +434,7 @@ export function SoloTopTenPage() {
               wasGuessed={guessedIndices.includes(i)}
               gameOver={isDone}
               showTeamHint={showTeamHint}
-              showInitialsHint={(isDivisionRound || isTeamRound) && hintMode}
+              showInitialsHint={showInitialsHint}
               sport={sport}
               categoryKey={category}
               catDef={catDef}
@@ -404,8 +443,6 @@ export function SoloTopTenPage() {
             />
           ))}
         </div>
-
-        <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Done state */}
         {isDone && (

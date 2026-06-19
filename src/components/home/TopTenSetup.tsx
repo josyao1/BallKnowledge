@@ -24,6 +24,7 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
   const [windowYears, setWindowYears]   = useState(10);
   const [pinnedDivision, setPinnedDivision] = useState<string | null>(null);
   const [pinnedTeam, setPinnedTeam]         = useState<string | null>(null);
+  const [strikeMode, setStrikeMode]         = useState<'strikes' | 'infinite'>('strikes');
 
   useEffect(() => {
     setMinYear(sport === 'nba' ? NBA_MIN : NFL_MIN);
@@ -32,7 +33,7 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
 
   function handleStartSolo() {
     navigate('/top-ten', {
-      state: { sport, roundType, divisionMode, minYear, maxYear, windowYears, pinnedDivision, pinnedTeam },
+      state: { sport, roundType, divisionMode, minYear, maxYear, windowYears, pinnedDivision, pinnedTeam, strikeMode },
     });
   }
 
@@ -107,6 +108,31 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
               pinnedTeam={pinnedTeam}
               onPinnedTeamChange={setPinnedTeam}
             />
+
+            <div className="border-t border-white/10" />
+
+            {/* Mode */}
+            <div>
+              <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mb-2">Mode</p>
+              <div className="flex gap-2">
+                {(['strikes', 'infinite'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setStrikeMode(m)}
+                    className={`flex-1 py-1.5 capcrunch-kicker text-[10px] tracking-[0.2em] border transition-colors ${
+                      strikeMode === m
+                        ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
+                        : 'border-white/12 text-white/35 hover:border-white/25 hover:text-white/60'
+                    }`}
+                  >
+                    {m === 'strikes' ? '3 Strikes' : 'Infinite'}
+                  </button>
+                ))}
+              </div>
+              {strikeMode === 'infinite' && (
+                <p className="capcrunch-kicker text-[9px] text-white/25 mt-1.5">Guess until you clear the board or give up.</p>
+              )}
+            </div>
 
             <div className="border-t border-white/10" />
 

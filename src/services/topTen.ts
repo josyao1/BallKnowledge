@@ -314,7 +314,7 @@ export async function getTopTenDivision(
       for (const season of player.seasons) {
         const yr = parseInt(season.season.split('-')[0]);
         // yearTo for NBA is one past the last season start year (e.g., 2025 for 2024-25)
-        if (yr < yearFrom || yr >= yearTo) continue;
+        if (yr < yearFrom || yr > yearTo) continue;
         if (!nbaTeamInDivision(season.team, conference, division)) continue;
         const stat = (season as any)[category] as number | undefined;
         if (!stat || stat <= 0) continue;
@@ -424,7 +424,7 @@ export async function getTopTenTeam(
     for (const player of players) {
       for (const season of player.seasons) {
         const yr = parseInt(season.season.split('-')[0]);
-        if (yr < yearFrom || yr >= yearTo) continue;
+        if (yr < yearFrom || yr > yearTo) continue;
         if (!nbaTeamMatches(season.team, teamAbbr)) continue;
         const stat = (season as any)[category] as number | undefined;
         if (!stat || stat <= 0) continue;

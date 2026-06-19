@@ -66,7 +66,7 @@ export function TopTenSettings({
   raceTarget, onRaceTargetChange,
 }: Props) {
   const sportMin = sport === 'nba' ? 1996 : 1999;
-  const sportMax = sport === 'nba' ? 2025 : 2024;
+  const sportMax = sport === 'nba' ? 2025 : 2025;
   const yearRange = Array.from({ length: sportMax - sportMin + 1 }, (_, i) => sportMin + i);
 
   // Reset pins when sport or roundType changes

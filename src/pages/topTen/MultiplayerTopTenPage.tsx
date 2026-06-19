@@ -249,8 +249,13 @@ export function MultiplayerTopTenPage() {
   const maxStrikes: number                        = cs.max_strikes || 2;
   const turnTimerSecs: number                     = cs.turn_timer || 45;
   const { isDivisionRound, isTeamRound, isCumulativeRound, isSingleSeason } = parseRoundFlags(cs);
-  const hintMode: boolean                         = cs.hint_mode || false;
-  const showTeamHint: boolean                     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
+  const hintLevel: number                         = cs.hint_level ?? 0;
+  const maxHintLevel                              = (isDivisionRound || isTeamRound) ? 1 : 2;
+  const showTeamHint: boolean                     = isDivisionRound || isSingleSeason || hintLevel >= 1;
+  const showInitialsHint: boolean                 = (isDivisionRound || isTeamRound) ? hintLevel >= 1 : hintLevel >= 2;
+  const hintVotes: string[]                       = cs.hint_votes || [];
+  const iHaveVoted                                = hintVotes.includes(currentPlayerId ?? '');
+  const hintVoteCount                             = hintVotes.length;
   const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
   const turnDeadline: string | null               = cs.turn_deadline || null;
   const categoryKey: string                       = cs.category || '';
@@ -517,10 +522,12 @@ export function MultiplayerTopTenPage() {
 
   useEffect(() => { advanceTurnRef.current = advanceTurn; }, [advanceTurn]);
 
+  const canGuessNow = isMyTurn;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = guess.trim();
-    if (!trimmed || !isMyTurn || isWritingRef.current) return;
+    if (!trimmed || !canGuessNow || isWritingRef.current) return;
 
     const matched = isValidGuess(trimmed, entries, guessedIndices);
     setGuess('');
@@ -529,7 +536,7 @@ export function MultiplayerTopTenPage() {
       const newGuessedIndices = [...guessedIndices, ...matched];
       const newAttribution = {
         ...(cs.guess_attribution || {}),
-        [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
+        [currentPlayerId ?? '']: ((cs.guess_attribution || {})[currentPlayerId ?? ''] || 0) + matched.length,
       };
       const prevIdxAttr = cs.guess_index_attribution || {};
       const newIndexAttribution = {
@@ -541,6 +548,8 @@ export function MultiplayerTopTenPage() {
     } else {
       if (wrongGuesses.includes(trimmed)) {
         setGuess('');
+        setFeedback({ msg: 'Already guessed!', type: 'wrong' });
+        setTimeout(() => setFeedback({ msg: '', type: '' }), 1800);
         inputRef.current?.focus();
         return;
       }
@@ -599,14 +608,18 @@ export function MultiplayerTopTenPage() {
     }
   }
 
-  async function handleToggleHint() {
-    if (!lobby || !isHost) return;
+  async function handleVoteHint() {
+    if (!lobby || !currentPlayerId || iHaveVoted || hintLevel >= maxHintLevel || isWritingRef.current) return;
     try {
-      const newState = { ...cs, hint_mode: !hintMode };
+      const newVotes = [...hintVotes, currentPlayerId];
+      const allVoted = newVotes.length >= players.length;
+      const newState = allVoted
+        ? { ...cs, hint_level: hintLevel + 1, hint_votes: [] }
+        : { ...cs, hint_votes: newVotes };
       await updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });
     } catch (err) {
-      console.error('[TopTen] handleToggleHint failed:', err);
+      console.error('[TopTen] handleVoteHint failed:', err);
     }
   }
 
@@ -653,18 +666,19 @@ export function MultiplayerTopTenPage() {
         is_team_round:      newTeam,
         is_single_season:   newSingleSeason,
         top_ten_team:       newTeamAbbr,
-        guessed_indices:        [],
-        wrong_guesses:          [],
-        hint_mode:              false,
-        guess_attribution:      {},
+        guessed_indices:         [],
+        wrong_guesses:           [],
+        hint_level:              0,
+        hint_votes:              [],
+        guess_attribution:       {},
         guess_index_attribution: {},
-        give_up_votes:          [],
-        rebuttal_trigger_index: null,
-        player_strikes:         {},
-        eliminated:             [],
-        current_turn_index:     0,
-        turn_deadline:          deadline,
-        reveal_anim:            null,
+        give_up_votes:           [],
+        rebuttal_trigger_index:  null,
+        player_strikes:          {},
+        eliminated:              [],
+        current_turn_index:      0,
+        turn_deadline:           deadline,
+        reveal_anim:             null,
       };
       await updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });
@@ -705,15 +719,15 @@ export function MultiplayerTopTenPage() {
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3 bg-black/20 relative z-20">
+      <header className="px-3 py-3 border-b border-white/10 flex items-center gap-2 bg-black/20 relative z-20">
         <HomeButton isHost={isHost} onEndGame={handleSendToLobby} />
-        <h1 className="capcrunch-title text-base text-[#70BE5B]">Top Ten</h1>
-        <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.25em]">{sport.toUpperCase()}</span>
-        <div className="ml-auto flex items-center gap-2">
+        <h1 className="capcrunch-title text-base text-[#70BE5B] shrink-0">Top Ten</h1>
+        <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.2em] hidden sm:inline shrink-0">{sport.toUpperCase()}</span>
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 min-w-0">
           {(sport === 'nfl' || sport === 'nba') && (
             <button
               onClick={() => setShowTeamsPanel(v => !v)}
-              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
+              className={`px-1.5 sm:px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.2em] border transition-colors shrink-0 ${
                 showTeamsPanel
                   ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
@@ -722,22 +736,23 @@ export function MultiplayerTopTenPage() {
               Teams
             </button>
           )}
-          {isHost && (
+          {hintLevel < maxHintLevel && (
             <button
-              onClick={handleToggleHint}
-              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
-                hintMode
-                  ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
+              onClick={handleVoteHint}
+              disabled={iHaveVoted}
+              className={`px-1.5 sm:px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.2em] border transition-colors shrink-0 ${
+                iHaveVoted
+                  ? 'border-[#70BE5B]/40 text-[#70BE5B]/50 cursor-default'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
-              Hint {hintMode ? 'On' : 'Off'}
+              Hint {hintLevel + 1}{hintVoteCount > 0 ? ` ${hintVoteCount}/${players.length}` : ''}
             </button>
           )}
           {isHost && !isMyTurn && (
             <button
               onClick={handleSkipTurn}
-              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-white/30 hover:text-white/50 px-2.5 py-1 tracking-[0.25em] transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-white/30 hover:text-white/50 px-1.5 sm:px-2.5 py-1 tracking-[0.2em] transition-colors shrink-0"
             >
               Skip
             </button>
@@ -745,15 +760,15 @@ export function MultiplayerTopTenPage() {
           {isHost && (
             <button
               onClick={handleSkipCategory}
-              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-[#68BBE5]/50 hover:text-[#68BBE5] px-2.5 py-1 tracking-[0.25em] transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-[#68BBE5]/50 hover:text-[#68BBE5] px-1.5 sm:px-2.5 py-1 tracking-[0.2em] transition-colors shrink-0"
             >
-              Skip Cat
+              New Cat
             </button>
           )}
           {isHost && (
             <button
               onClick={handleForceEnd}
-              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-2.5 py-1 tracking-[0.25em] transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-1.5 sm:px-2.5 py-1 tracking-[0.2em] transition-colors shrink-0"
             >
               End
             </button>
@@ -862,7 +877,7 @@ export function MultiplayerTopTenPage() {
         <FeedbackMessage feedback={feedback} />
 
         {/* Guess input */}
-        {isMyTurn && !revealOverlay && (
+        {canGuessNow && !revealOverlay && (
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
               ref={inputRef}
@@ -881,6 +896,8 @@ export function MultiplayerTopTenPage() {
           </form>
         )}
 
+        <WrongGuessesList wrongGuesses={wrongGuesses} />
+
         {/* Board */}
         <div className="space-y-1.5">
           {entries.map((entry, i) => (
@@ -890,7 +907,7 @@ export function MultiplayerTopTenPage() {
               index={i}
               wasGuessed={guessedIndices.includes(i)}
               showTeamHint={showTeamHint}
-              showInitialsHint={(isDivisionRound || isTeamRound) && hintMode}
+              showInitialsHint={showInitialsHint}
               sport={sport as 'nba' | 'nfl'}
               categoryKey={categoryKey}
               catDef={catDef}
@@ -898,8 +915,6 @@ export function MultiplayerTopTenPage() {
             />
           ))}
         </div>
-
-        <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Player scoreboard */}
         <div className="capcrunch-panel p-3">
