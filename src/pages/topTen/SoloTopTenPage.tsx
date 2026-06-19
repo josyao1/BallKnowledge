@@ -161,6 +161,7 @@ export function SoloTopTenPage() {
 
   function submitGuess(value: string) {
     if (!value.trim() || status !== 'playing') return;
+    if (suggestTimer.current) clearTimeout(suggestTimer.current);
     setSuggestions([]);
     const matched = isValidGuess(value.trim(), entries, guessedIndices);
     if (matched.length > 0) {
