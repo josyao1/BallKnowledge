@@ -34,6 +34,7 @@ type LocationState = {
   windowYears?: number;
   pinnedDivision?: string | null;
   pinnedTeam?: string | null;
+  strikeMode?: 'strikes' | 'infinite';
 } | null;
 
 export function SoloTopTenPage() {
@@ -45,7 +46,7 @@ export function SoloTopTenPage() {
   const defaultSport: 'nba' | 'nfl' = locState?.sport ?? ((storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba');
 
   const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(defaultSport);
-  const [strikeMode, setStrikeMode]     = useState<'strikes' | 'infinite'>('strikes');
+  const [strikeMode, setStrikeMode]     = useState<'strikes' | 'infinite'>(locState?.strikeMode ?? 'strikes');
   const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>(locState?.roundType ?? 'league');
   const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>(locState?.divisionMode ?? 'cumulative');
   const [minYear, setMinYear]           = useState(locState?.minYear ?? NBA_MIN);
