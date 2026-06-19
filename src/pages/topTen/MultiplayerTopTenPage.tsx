@@ -649,12 +649,6 @@ export function MultiplayerTopTenPage() {
               Hint {hintLevel + 1}{hintVoteCount > 0 ? ` ${hintVoteCount}/${players.length}` : ''}
             </button>
           )}
-          {hintLevel > 0 && hintLevel < maxHintLevel && (
-            <span className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 shrink-0">H{hintLevel}</span>
-          )}
-          {hintLevel >= maxHintLevel && (
-            <span className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 shrink-0">H{hintLevel} ✓</span>
-          )}
           {isHost && !isMyTurn && (
             <button
               onClick={handleSkipTurn}
