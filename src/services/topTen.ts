@@ -519,21 +519,28 @@ function weightedRandom(cats: StatCategoryDef[], weights: number[]): StatCategor
   return cats[cats.length - 1];
 }
 
-export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'division' | 'team' = 'league'): StatCategoryDef {
+export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'division' | 'team' = 'league', excludeKeys: string[] = []): StatCategoryDef {
   let cats: StatCategoryDef[];
   if (sport === 'nba') cats = NBA_STAT_CATEGORIES;
   else if (mode === 'team') cats = NFL_TEAM_STAT_CATEGORIES;
   else if (mode === 'division') cats = NFL_STAT_CATEGORIES.filter(c => !c.key.startsWith('award_'));
   else cats = NFL_STAT_CATEGORIES;
 
+  // Exclude recently seen categories; fall back to full pool if all are excluded.
+  const pool = excludeKeys.length > 0 ? (cats.filter(c => !excludeKeys.includes(c.key)) || []) : cats;
+  const candidates = pool.length > 0 ? pool : cats;
+
   // Passing stats are QB-only so they repeat in restricted pools — down-weight them.
   // Team mode: heavy reduction (0.3×). Division mode: mild reduction (0.6×).
-  if (sport === 'nfl' && (mode === 'team' || mode === 'division')) {
-    const passingWeight = mode === 'team' ? 0.3 : 0.6;
-    return weightedRandom(cats, cats.map(c => PASSING_KEYS.has(c.key) ? passingWeight : 1));
+  // Award categories are rare/novelty — down-weight them in all NFL modes (0.3×).
+  if (sport === 'nfl') {
+    const passingWeight = (mode === 'team' || mode === 'division') ? (mode === 'team' ? 0.3 : 0.6) : 1;
+    return weightedRandom(candidates, candidates.map(c =>
+      c.key.startsWith('award_') ? 0.3 : PASSING_KEYS.has(c.key) ? passingWeight : 1
+    ));
   }
 
-  return cats[Math.floor(Math.random() * cats.length)];
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 export function getAvailableYears(sport: 'nba' | 'nfl', category?: string): number[] {
@@ -666,6 +673,10 @@ export interface GenerateRoundConfig {
   divisionMode?: 'cumulative' | 'single_season';
   pinnedDivision?: { conference: string; division: string };
   pinnedTeam?: string;
+  /** Category keys to exclude from random selection (recently seen). */
+  recentCategoryKeys?: string[];
+  /** Team abbreviations to exclude from random selection (recently seen). */
+  recentTeamAbbrs?: string[];
 }
 
 export interface GenerateRoundResult {
@@ -689,7 +700,7 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
   const minYear = config.minYear ?? defaultMinYear;
   const maxYear = config.maxYear ?? currentYear;
 
-  let cat = pickRandomCategory(sport, roundType);
+  let cat = pickRandomCategory(sport, roundType, config.recentCategoryKeys ?? []);
   const years = getAvailableYears(sport, cat.key);
 
   let entries: TopTenEntry[] = [];
@@ -702,9 +713,12 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
   if (roundType === 'team') {
     const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
     const allTeams = sport === 'nba' ? teams : nflTeams;
+    const recentTeamAbbrs = config.recentTeamAbbrs ?? [];
+    const eligibleTeams = recentTeamAbbrs.length > 0 ? allTeams.filter((t: any) => !recentTeamAbbrs.includes(t.abbreviation)) : allTeams;
+    const teamPool = (eligibleTeams as typeof allTeams).length > 0 ? eligibleTeams : allTeams;
     const picked = config.pinnedTeam
-      ? (allTeams.find((t: any) => t.abbreviation === config.pinnedTeam) ?? allTeams[Math.floor(Math.random() * allTeams.length)])
-      : allTeams[Math.floor(Math.random() * allTeams.length)];
+      ? (allTeams.find((t: any) => t.abbreviation === config.pinnedTeam) ?? teamPool[Math.floor(Math.random() * teamPool.length)])
+      : teamPool[Math.floor(Math.random() * teamPool.length)];
     teamAbbr = picked.abbreviation;
     entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, calcTeamBoardLimit(cat.key, windowYears), singleSeason);
     roundInfo = `${picked.name} · last ${windowYears} years`;

@@ -25,6 +25,10 @@ interface Props {
   onPinnedDivisionChange: (v: string | null) => void;
   pinnedTeam: string | null;
   onPinnedTeamChange: (v: string | null) => void;
+  gameMode?: 'strike' | 'race';
+  onGameModeChange?: (m: 'strike' | 'race') => void;
+  raceTarget?: number;
+  onRaceTargetChange?: (n: number) => void;
 }
 
 // Returns unique conferences in order from the team list
@@ -58,6 +62,8 @@ export function TopTenSettings({
   turnTimer, onTurnTimerChange,
   pinnedDivision, onPinnedDivisionChange,
   pinnedTeam, onPinnedTeamChange,
+  gameMode, onGameModeChange,
+  raceTarget, onRaceTargetChange,
 }: Props) {
   const sportMin = sport === 'nba' ? 1996 : 1999;
   const sportMax = sport === 'nba' ? 2025 : 2025;
@@ -160,11 +166,30 @@ export function TopTenSettings({
         </Row>
       )}
 
-      {maxStrikes !== undefined && onMaxStrikesChange && (
+      {gameMode !== undefined && onGameModeChange && (
+        <Row label="Win Cond.">
+          <Chips>
+            <Chip active={gameMode === 'strike'} activeBg="#70BE5B" activeText="#000" onClick={() => onGameModeChange('strike')}>Strike Out</Chip>
+            <Chip active={gameMode === 'race'}   activeBg="#E2008A" activeText="#fff" onClick={() => onGameModeChange('race')}>Race To</Chip>
+          </Chips>
+        </Row>
+      )}
+
+      {gameMode !== 'race' && maxStrikes !== undefined && onMaxStrikesChange && (
         <Row label="Strikes">
           <Chips>
             {[1, 2, 3].map(n => (
               <Chip key={n} active={maxStrikes === n} activeBg="#70BE5B" activeText="#000" onClick={() => onMaxStrikesChange!(n)}>{n}</Chip>
+            ))}
+          </Chips>
+        </Row>
+      )}
+
+      {gameMode === 'race' && raceTarget !== undefined && onRaceTargetChange && (
+        <Row label="First to">
+          <Chips>
+            {[1, 2, 3, 4, 5].map(n => (
+              <Chip key={n} active={raceTarget === n} activeBg="#E2008A" activeText="#fff" onClick={() => onRaceTargetChange!(n)}>{n}</Chip>
             ))}
           </Chips>
         </Row>

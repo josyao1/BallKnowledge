@@ -53,6 +53,7 @@ import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '..
 import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { Sport } from '../../types';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
+import { GradWeekOverlay, GradBanner, isGradWeek } from '../../components/GradWeekOverlay';
 
 type Phase = 'sport-select' | 'playing' | 'results';
 
@@ -593,6 +594,7 @@ export function SoloCapCrunchPage() {
         transition={{ duration: 0.45, ease: 'easeInOut' }}
         className="min-h-screen capcrunch-shell text-white flex flex-col relative overflow-hidden"
       >
+        <GradWeekOverlay />
         {/* GREEN FELT BACKGROUND */}
         {/* EXACT HIT CELEBRATION OVERLAY */}
         {showExactHit && (
@@ -645,7 +647,7 @@ export function SoloCapCrunchPage() {
             >
               ← Back
             </button>
-            <h1 className="capcrunch-title text-lg sm:text-2xl text-[#FDF100]">Cap Crunch</h1>
+            <h1 className="capcrunch-title text-lg sm:text-2xl text-[#FDF100]">Cap Crunch{isGradWeek() ? ' 🎓' : ''}</h1>
             <div className="w-10 sm:w-16" />
           </div>
           {/* Team / Division / Conference Display */}
@@ -915,8 +917,8 @@ export function SoloCapCrunchPage() {
                       <p className="text-[10px] md:text-sm text-white/60">Select any year this player played</p>
                     </div>
 
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-baseline justify-between mb-2 md:mb-3">
+                    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                      <div className="flex items-baseline justify-between mb-2 md:mb-3 flex-shrink-0">
                         <label className="block capcrunch-kicker text-[7px] md:text-[10px] tracking-[0.4em] text-white/60 uppercase font-semibold">
                           Select a year
                         </label>
@@ -927,7 +929,7 @@ export function SoloCapCrunchPage() {
                       {loadingYears ? (
                         <p className="text-white/60 text-xs md:text-sm">Loading years...</p>
                       ) : availableYears.length > 0 ? (
-                        <div className="max-h-40 md:max-h-56 overflow-y-auto space-y-1 md:space-y-2">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-1 md:space-y-2">
                           {availableYears.map((year) => (
                             <button
                               key={year}
@@ -1064,8 +1066,9 @@ export function SoloCapCrunchPage() {
           animate={{ opacity: 1 }}
           className="relative z-10 flex flex-col h-full max-w-7xl mx-auto w-full"
         >
+          <GradBanner />
           {/* HEADER */}
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b-2 border-white/10 pb-4 gap-4 mt-4">
             <div>
               <div className="capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.6em] text-white/30 uppercase">Game Result</div>
               <h1 className="capcrunch-title text-4xl md:text-6xl text-white leading-none">Lineup Score</h1>
