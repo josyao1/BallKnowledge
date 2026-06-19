@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const COLLAPSE_THRESHOLD = 5;
 
@@ -8,6 +8,10 @@ interface Props {
 
 export function WrongGuessesList({ wrongGuesses }: Props) {
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (wrongGuesses.length === 0) setExpanded(false);
+  }, [wrongGuesses.length]);
 
   if (wrongGuesses.length === 0) return null;
 

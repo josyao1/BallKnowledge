@@ -609,7 +609,7 @@ export function MultiplayerTopTenPage() {
   }
 
   async function handleVoteHint() {
-    if (!lobby || !currentPlayerId || iHaveVoted || hintLevel >= maxHintLevel) return;
+    if (!lobby || !currentPlayerId || iHaveVoted || hintLevel >= maxHintLevel || isWritingRef.current) return;
     try {
       const newVotes = [...hintVotes, currentPlayerId];
       const allVoted = newVotes.length >= players.length;

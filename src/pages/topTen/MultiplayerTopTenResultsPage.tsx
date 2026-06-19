@@ -22,8 +22,15 @@ export function MultiplayerTopTenResultsPage() {
       top_ten_min_year: c.top_ten_min_year,
       top_ten_max_year: c.top_ten_max_year,
       top_ten_window_years: c.top_ten_window_years,
+      top_ten_division_mode: c.top_ten_division_mode,
+      top_ten_pinned_division: c.top_ten_pinned_division,
+      top_ten_pinned_team: c.top_ten_pinned_team,
+      top_ten_game_mode: c.top_ten_game_mode,
+      race_target: c.race_target,
       max_strikes: c.max_strikes,
       turn_timer: c.turn_timer,
+      hint_level: 0,
+      hint_votes: [],
     }),
   });
 
