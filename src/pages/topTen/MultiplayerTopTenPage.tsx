@@ -230,8 +230,13 @@ export function MultiplayerTopTenPage() {
   const maxStrikes: number                        = cs.max_strikes || 2;
   const turnTimerSecs: number                     = cs.turn_timer || 45;
   const { isDivisionRound, isTeamRound, isCumulativeRound, isSingleSeason } = parseRoundFlags(cs);
-  const hintMode: boolean                         = cs.hint_mode || false;
-  const showTeamHint: boolean                     = isDivisionRound || isSingleSeason || (hintMode && !isTeamRound);
+  const hintLevel: number                         = cs.hint_level ?? 0;
+  const maxHintLevel                              = (isDivisionRound || isTeamRound) ? 1 : 2;
+  const showTeamHint: boolean                     = isDivisionRound || isSingleSeason || hintLevel >= 1;
+  const showInitialsHint: boolean                 = (isDivisionRound || isTeamRound) ? hintLevel >= 1 : hintLevel >= 2;
+  const hintVotes: string[]                       = cs.hint_votes || [];
+  const iHaveVoted                                = hintVotes.includes(currentPlayerId ?? '');
+  const hintVoteCount                             = hintVotes.length;
   const currentTurnIndex: number                  = cs.current_turn_index ?? 0;
   const turnDeadline: string | null               = cs.turn_deadline || null;
   const categoryKey: string                       = cs.category || '';
@@ -240,6 +245,8 @@ export function MultiplayerTopTenPage() {
   const teamAbbr: string                          = cs.top_ten_team || '';
   const wrongGuesses: string[]                    = cs.wrong_guesses || [];
   const sport: string                             = cs.sport || 'nba';
+  const gameOver: boolean                         = cs.game_over || false;
+  const gameOverWinner: string                    = cs.game_over_winner || '';
 
   const activePlayers   = turnOrder.filter(id => !eliminated.includes(id));
   const currentTurnId   = activePlayers[currentTurnIndex % Math.max(activePlayers.length, 1)] || '';
@@ -372,13 +379,15 @@ export function MultiplayerTopTenPage() {
         ? (currentWasEliminated ? currentTurnIndex : currentTurnIndex + 1) % newActivePlayers.length
         : 0;
 
-      if (roundOver) {
+      if (roundOver && !cs.game_over) {
+        // Enter "game over" state: winner decided, but winner can keep guessing to clear the board
         const mergedAttribution: Record<string, number> =
           (extras.guess_attribution as Record<string, number>) ?? (cs.guess_attribution || {});
         const winnerIds = determineWinners(
           turnOrder, mergedAttribution, currentStrikes, maxStrikes,
           lastStanding && !allOut, newActivePlayers[0] || '',
         );
+        const newDeadline = new Date(Date.now() + turnTimerSecs * 1000).toISOString();
         const newState = {
           ...cs, ...extras,
           guessed_indices:    finalGuessed,
@@ -388,8 +397,17 @@ export function MultiplayerTopTenPage() {
           winner_ids:         winnerIds,
           winner_id:          winnerIds[0] || '',
           guess_attribution:  mergedAttribution,
+          game_over:          true,
+          game_over_winner:   winnerIds[0] || '',
+          current_turn_index: winnerIds.length > 0 ? turnOrder.indexOf(winnerIds[0]) : nextIndex,
+          turn_deadline:      newDeadline,
           reveal_anim:        null,
         };
+        await updateCareerState(lobby.id, newState);
+        setLobby({ ...lobby, career_state: newState });
+      } else if (cs.game_over && allSlotsFilled) {
+        // Board fully cleared — now actually finish
+        const newState = { ...cs, ...extras, guessed_indices: finalGuessed, reveal_anim: null };
         await updateCareerState(lobby.id, newState);
         await updateLobbyStatus(lobby.id, 'finished');
         setLobby({ ...lobby, career_state: newState, status: 'finished' });
@@ -426,10 +444,13 @@ export function MultiplayerTopTenPage() {
 
   useEffect(() => { advanceTurnRef.current = advanceTurn; }, [advanceTurn]);
 
+  const isWinner = gameOver && (cs.winner_ids || []).includes(currentPlayerId ?? '');
+  const canGuessNow = gameOver ? isWinner : isMyTurn;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = guess.trim();
-    if (!trimmed || !isMyTurn || isWritingRef.current) return;
+    if (!trimmed || !canGuessNow || isWritingRef.current) return;
 
     const matched = isValidGuess(trimmed, entries, guessedIndices);
     setGuess('');
@@ -438,25 +459,36 @@ export function MultiplayerTopTenPage() {
       const newGuessedIndices = [...guessedIndices, ...matched];
       const newAttribution = {
         ...(cs.guess_attribution || {}),
-        [currentTurnId]: ((cs.guess_attribution || {})[currentTurnId] || 0) + matched.length,
+        [currentPlayerId ?? '']: ((cs.guess_attribution || {})[currentPlayerId ?? ''] || 0) + matched.length,
       };
       hasAdvancedRef.current = true;
       await advanceTurn(true, newGuessedIndices, { guess_attribution: newAttribution }, entries[matched[0]].playerName, String(entries[matched[0]].playerId));
     } else {
       if (wrongGuesses.includes(trimmed)) {
         setGuess('');
+        setFeedback({ msg: 'Already guessed!', type: 'wrong' });
+        setTimeout(() => setFeedback({ msg: '', type: '' }), 1800);
         inputRef.current?.focus();
         return;
       }
-      hasAdvancedRef.current = true;
-      const playerMatch = await findPlayerInPool(trimmed, sport as 'nba' | 'nfl');
-      await advanceTurn(
-        false,
-        undefined,
-        { wrong_guesses: [...wrongGuesses, trimmed] },
-        playerMatch?.playerName,
-        playerMatch ? String(playerMatch.playerId) : undefined,
-      );
+      if (!gameOver) {
+        hasAdvancedRef.current = true;
+        const playerMatch = await findPlayerInPool(trimmed, sport as 'nba' | 'nfl');
+        await advanceTurn(
+          false,
+          undefined,
+          { wrong_guesses: [...wrongGuesses, trimmed] },
+          playerMatch?.playerName,
+          playerMatch ? String(playerMatch.playerId) : undefined,
+        );
+      } else {
+        // In game_over mode wrong guesses don't count as strikes
+        const newState = { ...cs, wrong_guesses: [...wrongGuesses, trimmed] };
+        await updateCareerState(lobby!.id, newState);
+        setLobby({ ...lobby!, career_state: newState });
+        setFeedback({ msg: '✗ Not in the top 10', type: 'wrong' });
+        setTimeout(() => setFeedback({ msg: '', type: '' }), 1800);
+      }
     }
     inputRef.current?.focus();
   }
@@ -477,14 +509,30 @@ export function MultiplayerTopTenPage() {
     }
   }
 
-  async function handleToggleHint() {
-    if (!lobby || !isHost) return;
+  async function handleGameOverDone() {
+    if (!lobby) return;
     try {
-      const newState = { ...cs, hint_mode: !hintMode };
+      const newState = { ...cs, reveal_anim: null };
+      await updateCareerState(lobby.id, newState);
+      await updateLobbyStatus(lobby.id, 'finished');
+      setLobby({ ...lobby, career_state: newState, status: 'finished' });
+    } catch (err) {
+      console.error('[TopTen] handleGameOverDone failed:', err);
+    }
+  }
+
+  async function handleVoteHint() {
+    if (!lobby || !currentPlayerId || iHaveVoted || hintLevel >= maxHintLevel) return;
+    try {
+      const newVotes = [...hintVotes, currentPlayerId];
+      const allVoted = newVotes.length >= players.length;
+      const newState = allVoted
+        ? { ...cs, hint_level: hintLevel + 1, hint_votes: [] }
+        : { ...cs, hint_votes: newVotes };
       await updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });
     } catch (err) {
-      console.error('[TopTen] handleToggleHint failed:', err);
+      console.error('[TopTen] handleVoteHint failed:', err);
     }
   }
 
@@ -525,7 +573,8 @@ export function MultiplayerTopTenPage() {
         top_ten_team:       newTeamAbbr,
         guessed_indices:    [],
         wrong_guesses:      [],
-        hint_mode:          false,
+        hint_level:         0,
+        hint_votes:         [],
         guess_attribution:  {},
         current_turn_index: 0,
         turn_deadline:      deadline,
@@ -570,15 +619,15 @@ export function MultiplayerTopTenPage() {
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3 bg-black/20 relative z-20">
+      <header className="px-3 py-3 border-b border-white/10 flex items-center gap-2 bg-black/20 relative z-20">
         <HomeButton isHost={isHost} onEndGame={handleSendToLobby} />
-        <h1 className="capcrunch-title text-base text-[#70BE5B]">Top Ten</h1>
-        <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.25em]">{sport.toUpperCase()}</span>
-        <div className="ml-auto flex items-center gap-2">
+        <h1 className="capcrunch-title text-base text-[#70BE5B] shrink-0">Top Ten</h1>
+        <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.2em] hidden sm:inline shrink-0">{sport.toUpperCase()}</span>
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 min-w-0">
           {(sport === 'nfl' || sport === 'nba') && (
             <button
               onClick={() => setShowTeamsPanel(v => !v)}
-              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
+              className={`px-1.5 sm:px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.2em] border transition-colors shrink-0 ${
                 showTeamsPanel
                   ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
@@ -587,22 +636,29 @@ export function MultiplayerTopTenPage() {
               Teams
             </button>
           )}
-          {isHost && (
+          {hintLevel < maxHintLevel && (
             <button
-              onClick={handleToggleHint}
-              className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
-                hintMode
-                  ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
+              onClick={handleVoteHint}
+              disabled={iHaveVoted}
+              className={`px-1.5 sm:px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.2em] border transition-colors shrink-0 ${
+                iHaveVoted
+                  ? 'border-[#70BE5B]/40 text-[#70BE5B]/50 cursor-default'
                   : 'border-white/12 text-white/25 hover:border-white/25 hover:text-white/50'
               }`}
             >
-              Hint {hintMode ? 'On' : 'Off'}
+              Hint {hintLevel + 1}{hintVoteCount > 0 ? ` ${hintVoteCount}/${players.length}` : ''}
             </button>
+          )}
+          {hintLevel > 0 && hintLevel < maxHintLevel && (
+            <span className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 shrink-0">H{hintLevel}</span>
+          )}
+          {hintLevel >= maxHintLevel && (
+            <span className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 shrink-0">H{hintLevel} ✓</span>
           )}
           {isHost && !isMyTurn && (
             <button
               onClick={handleSkipTurn}
-              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-white/30 hover:text-white/50 px-2.5 py-1 tracking-[0.25em] transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-white/30 hover:text-white/50 px-1.5 sm:px-2.5 py-1 tracking-[0.2em] transition-colors shrink-0"
             >
               Skip
             </button>
@@ -610,15 +666,15 @@ export function MultiplayerTopTenPage() {
           {isHost && (
             <button
               onClick={handleSkipCategory}
-              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-[#68BBE5]/50 hover:text-[#68BBE5] px-2.5 py-1 tracking-[0.25em] transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-[#68BBE5]/50 hover:text-[#68BBE5] px-1.5 sm:px-2.5 py-1 tracking-[0.2em] transition-colors shrink-0"
             >
-              Skip Cat
+              New Cat
             </button>
           )}
           {isHost && (
             <button
               onClick={handleForceEnd}
-              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-2.5 py-1 tracking-[0.25em] transition-colors"
+              className="capcrunch-kicker text-[9px] text-white/30 border border-white/15 hover:border-red-500/50 hover:text-red-400 px-1.5 sm:px-2.5 py-1 tracking-[0.2em] transition-colors shrink-0"
             >
               End
             </button>
@@ -678,44 +734,75 @@ export function MultiplayerTopTenPage() {
           })}
         </div>
 
-        {/* Turn indicator + timer */}
-        <motion.div
-          className={`flex items-center gap-3 px-3 py-2.5 border transition-colors ${
-            isMyTurn ? 'border-[#70BE5B]/50 bg-[#70BE5B]/6' : 'border-white/8 bg-black/30'
-          }`}
-          animate={isMyTurn ? {
-            boxShadow: ['0 0 0px rgba(112,190,91,0)', '0 0 18px rgba(112,190,91,0.15)', '0 0 0px rgba(112,190,91,0)'],
-          } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
-          transition={isMyTurn ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
-        >
-          <div className="flex-1">
-            <p className={`capcrunch-kicker tracking-[0.25em] mb-1 transition-all ${
-              isMyTurn ? 'text-[#70BE5B] text-sm' : 'text-white/35 text-[10px]'
-            }`}>
-              {isMyTurn ? 'Your turn' : `${currentTurnPlayer?.player_name ?? '...'}'s turn`}
-            </p>
-            <div className="h-1 bg-white/8 overflow-hidden">
-              <motion.div
-                className="h-full"
-                style={{ backgroundColor: timerColor }}
-                animate={{ width: `${displayTimerFraction * 100}%` }}
-                transition={{ duration: 0.4 }}
-              />
+        {/* Turn indicator + timer (hidden during game-over free-guess phase) */}
+        {!gameOver && (
+          <motion.div
+            className={`flex items-center gap-3 px-3 py-2.5 border transition-colors ${
+              isMyTurn ? 'border-[#70BE5B]/50 bg-[#70BE5B]/6' : 'border-white/8 bg-black/30'
+            }`}
+            animate={isMyTurn ? {
+              boxShadow: ['0 0 0px rgba(112,190,91,0)', '0 0 18px rgba(112,190,91,0.15)', '0 0 0px rgba(112,190,91,0)'],
+            } : { boxShadow: '0 0 0px rgba(0,0,0,0)' }}
+            transition={isMyTurn ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
+          >
+            <div className="flex-1">
+              <p className={`capcrunch-kicker tracking-[0.25em] mb-1 transition-all ${
+                isMyTurn ? 'text-[#70BE5B] text-sm' : 'text-white/35 text-[10px]'
+              }`}>
+                {isMyTurn ? 'Your turn' : `${currentTurnPlayer?.player_name ?? '...'}'s turn`}
+              </p>
+              <div className="h-1 bg-white/8 overflow-hidden">
+                <motion.div
+                  className="h-full"
+                  style={{ backgroundColor: timerColor }}
+                  animate={{ width: `${displayTimerFraction * 100}%` }}
+                  transition={{ duration: 0.4 }}
+                />
+              </div>
             </div>
-          </div>
-          <span className="capcrunch-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
-        </motion.div>
+            <span className="capcrunch-title text-2xl tabular-nums" style={{ color: timerColor }}>{displayTimeLeft}</span>
+          </motion.div>
+        )}
+
+        {/* Game-over banner */}
+        {gameOver && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-4 py-3 border flex items-center gap-3"
+            style={{ borderColor: '#d4af37', background: 'rgba(212,175,55,0.06)' }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="capcrunch-kicker text-[9px] tracking-[0.25em] text-[#d4af37]">
+                {players.find(p => p.player_id === gameOverWinner)?.player_name ?? 'Winner'} wins!
+              </p>
+              {isWinner ? (
+                <p className="capcrunch-kicker text-[9px] text-white/40 mt-0.5">Keep guessing to clear the board, or finish up.</p>
+              ) : (
+                <p className="capcrunch-kicker text-[9px] text-white/40 mt-0.5">Watching the winner finish the board…</p>
+              )}
+            </div>
+            {isWinner && (
+              <button
+                onClick={handleGameOverDone}
+                className="capcrunch-kicker text-[9px] px-3 py-1.5 border border-[#d4af37]/50 text-[#d4af37] hover:bg-[#d4af37]/10 transition-colors shrink-0"
+              >
+                Done
+              </button>
+            )}
+          </motion.div>
+        )}
 
         <FeedbackMessage feedback={feedback} />
 
         {/* Guess input */}
-        {isMyTurn && !revealOverlay && (
+        {canGuessNow && !revealOverlay && (
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
               ref={inputRef}
               value={guess}
               onChange={e => setGuess(e.target.value)}
-              placeholder="Type a player name..."
+              placeholder={gameOver ? 'Keep guessing…' : 'Type a player name...'}
               autoComplete="off"
               className="flex-1 bg-black/40 border border-[#70BE5B]/30 px-4 py-2.5 text-white capcrunch-kicker text-sm focus:outline-none focus:border-[#70BE5B]/60 placeholder-white/20 transition-colors"
             />
@@ -728,6 +815,8 @@ export function MultiplayerTopTenPage() {
           </form>
         )}
 
+        <WrongGuessesList wrongGuesses={wrongGuesses} />
+
         {/* Board */}
         <div className="space-y-1.5">
           {entries.map((entry, i) => (
@@ -737,7 +826,7 @@ export function MultiplayerTopTenPage() {
               index={i}
               wasGuessed={guessedIndices.includes(i)}
               showTeamHint={showTeamHint}
-              showInitialsHint={(isDivisionRound || isTeamRound) && hintMode}
+              showInitialsHint={showInitialsHint}
               sport={sport as 'nba' | 'nfl'}
               categoryKey={categoryKey}
               catDef={catDef}
@@ -745,8 +834,6 @@ export function MultiplayerTopTenPage() {
             />
           ))}
         </div>
-
-        <WrongGuessesList wrongGuesses={wrongGuesses} />
 
         {/* Player scoreboard */}
         <div className="capcrunch-panel p-3">
