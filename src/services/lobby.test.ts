@@ -32,23 +32,33 @@ function resetCapture() {
   capture.results = { single: [], select: [], update: [], delete: [] };
 }
 
-function setResults(overrides: Partial<{
-  single: SingleResult | SingleResult[];
-  select: SelectResult | SelectResult[];
-  update: UpdateResult | UpdateResult[];
-  delete: DeleteResult | DeleteResult[];
-}>) {
+function setResults(
+  overrides: Partial<{
+    single: SingleResult | SingleResult[];
+    select: SelectResult | SelectResult[];
+    update: UpdateResult | UpdateResult[];
+    delete: DeleteResult | DeleteResult[];
+  }>,
+) {
   if (overrides.single) {
-    capture.results.single = Array.isArray(overrides.single) ? overrides.single : [overrides.single];
+    capture.results.single = Array.isArray(overrides.single)
+      ? overrides.single
+      : [overrides.single];
   }
   if (overrides.select) {
-    capture.results.select = Array.isArray(overrides.select) ? overrides.select : [overrides.select];
+    capture.results.select = Array.isArray(overrides.select)
+      ? overrides.select
+      : [overrides.select];
   }
   if (overrides.update) {
-    capture.results.update = Array.isArray(overrides.update) ? overrides.update : [overrides.update];
+    capture.results.update = Array.isArray(overrides.update)
+      ? overrides.update
+      : [overrides.update];
   }
   if (overrides.delete) {
-    capture.results.delete = Array.isArray(overrides.delete) ? overrides.delete : [overrides.delete];
+    capture.results.delete = Array.isArray(overrides.delete)
+      ? overrides.delete
+      : [overrides.delete];
   }
 }
 
@@ -97,9 +107,12 @@ function makeQueryChain(table: string) {
     then: (resolve: (value: unknown) => unknown) => {
       // The last recorded operation determines what the chain resolves to.
       const last = capture.fromCalls.filter((c) => c.table === table).pop();
-      if (last?.method === 'insert') return resolve(shiftResult(capture.results.single, DEFAULT_SINGLE));
-      if (last?.method === 'update') return resolve(shiftResult(capture.results.update, DEFAULT_UPDATE));
-      if (last?.method === 'delete') return resolve(shiftResult(capture.results.delete, DEFAULT_DELETE));
+      if (last?.method === 'insert')
+        return resolve(shiftResult(capture.results.single, DEFAULT_SINGLE));
+      if (last?.method === 'update')
+        return resolve(shiftResult(capture.results.update, DEFAULT_UPDATE));
+      if (last?.method === 'delete')
+        return resolve(shiftResult(capture.results.delete, DEFAULT_DELETE));
       return resolve(shiftResult(capture.results.select, DEFAULT_SELECT));
     },
   };
@@ -266,7 +279,9 @@ describe('createLobby', () => {
 
     await createLobby('Alice', 'nba', 'LAL', '2024-25');
 
-    const insertCall = capture.fromCalls.find((c) => c.method === 'insert' && c.table === 'lobbies');
+    const insertCall = capture.fromCalls.find(
+      (c) => c.method === 'insert' && c.table === 'lobbies',
+    );
     expect(insertCall).toBeDefined();
     expect((insertCall!.args[0] as Record<string, unknown>).host_id).toBe(MOCK_AUTH_ID);
     expect((insertCall!.args[0] as Record<string, unknown>).host_name).toBe('Alice');
@@ -379,7 +394,9 @@ describe('joinLobby', () => {
     expect(result.error).toBeNull();
     expect(result.player!.player_id).toBe(MOCK_AUTH_ID);
 
-    const updateCall = capture.fromCalls.find((c) => c.method === 'update' && c.table === 'lobby_players');
+    const updateCall = capture.fromCalls.find(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
     expect(updateCall).toBeDefined();
     expect((updateCall!.args[0] as Record<string, unknown>).player_id).toBeUndefined();
   });
@@ -412,11 +429,15 @@ describe('joinLobby', () => {
     expect(result.player!.player_id).toBe(MOCK_AUTH_ID);
 
     // Should NOT have updated the other player's row
-    const updateCalls = capture.fromCalls.filter((c) => c.method === 'update' && c.table === 'lobby_players');
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
     expect(updateCalls.length).toBe(0);
 
     // Should have inserted a new row
-    const insertCall = capture.fromCalls.find((c) => c.method === 'insert' && c.table === 'lobby_players');
+    const insertCall = capture.fromCalls.find(
+      (c) => c.method === 'insert' && c.table === 'lobby_players',
+    );
     expect(insertCall).toBeDefined();
     expect((insertCall!.args[0] as Record<string, unknown>).player_id).toBe(MOCK_AUTH_ID);
   });
@@ -443,11 +464,15 @@ describe('player-scoped updates', () => {
     setResults({ update: { data: null, error: null } });
     await updatePlayerScore('lobby-1', 100, 5, ['a'], ['b'], true);
 
-    const updateCalls = capture.fromCalls.filter((c) => c.method === 'update' && c.table === 'lobby_players');
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
     expect(updateCalls.length).toBe(1);
     expect((updateCalls[0].args[0] as Record<string, unknown>).score).toBe(100);
 
-    const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobby_players');
+    const eqCalls = capture.fromCalls.filter(
+      (c) => c.method === 'eq' && c.table === 'lobby_players',
+    );
     expect(eqCalls.map((c) => c.args)).toContainEqual(['player_id', MOCK_AUTH_ID]);
   });
 
@@ -455,7 +480,9 @@ describe('player-scoped updates', () => {
     setResults({ update: { data: null, error: null } });
     await setPlayerReady('lobby-1', true);
 
-    const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobby_players');
+    const eqCalls = capture.fromCalls.filter(
+      (c) => c.method === 'eq' && c.table === 'lobby_players',
+    );
     expect(eqCalls.map((c) => c.args)).toContainEqual(['player_id', MOCK_AUTH_ID]);
   });
 
@@ -463,7 +490,9 @@ describe('player-scoped updates', () => {
     setResults({ delete: { error: null } });
     await leaveLobby('lobby-1');
 
-    const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobby_players');
+    const eqCalls = capture.fromCalls.filter(
+      (c) => c.method === 'eq' && c.table === 'lobby_players',
+    );
     expect(eqCalls.map((c) => c.args)).toContainEqual(['player_id', MOCK_AUTH_ID]);
   });
 });
@@ -669,7 +698,9 @@ describe('utility functions', () => {
     setResults({ select: { data: [], error: null } });
     await getLobbyPlayers('lobby-1');
 
-    const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobby_players');
+    const eqCalls = capture.fromCalls.filter(
+      (c) => c.method === 'eq' && c.table === 'lobby_players',
+    );
     expect(eqCalls.map((c) => c.args)).toContainEqual(['lobby_id', 'lobby-1']);
   });
 
