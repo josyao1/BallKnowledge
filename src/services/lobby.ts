@@ -90,8 +90,17 @@ export async function createLobby(
     return { lobby: null, error: 'Multiplayer not available' };
   }
 
+  // Input validation — prevent oversized/blank names from hitting the DB
+  const trimmedHostName = hostName?.trim() ?? '';
+  if (trimmedHostName.length === 0) {
+    return { lobby: null, error: 'Player name is required' };
+  }
+  if (trimmedHostName.length > 50) {
+    return { lobby: null, error: 'Player name must be 50 characters or less' };
+  }
+
   const hostId = await getPlayerId();
-  setStoredPlayerName(hostName);
+  setStoredPlayerName(trimmedHostName);
 
   // Try to generate a unique join code (max 5 attempts)
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -100,7 +109,7 @@ export async function createLobby(
     const lobbyData: LobbyInsert = {
       join_code: joinCode,
       host_id: hostId,
-      host_name: hostName,
+      host_name: trimmedHostName,
       sport,
       team_abbreviation: teamAbbreviation,
       season,
@@ -131,7 +140,7 @@ export async function createLobby(
     const playerData: LobbyPlayerInsert = {
       lobby_id: lobby.id,
       player_id: hostId,
-      player_name: hostName,
+      player_name: trimmedHostName,
       is_host: true,
       is_ready: true,
     };
@@ -180,8 +189,17 @@ export async function joinLobby(
     return { player: null, error: 'Multiplayer not available' };
   }
 
+  // Input validation
+  const trimmedPlayerName = playerName?.trim() ?? '';
+  if (trimmedPlayerName.length === 0) {
+    return { player: null, error: 'Player name is required' };
+  }
+  if (trimmedPlayerName.length > 50) {
+    return { player: null, error: 'Player name must be 50 characters or less' };
+  }
+
   const playerId = await getPlayerId();
-  setStoredPlayerName(playerName);
+  setStoredPlayerName(trimmedPlayerName);
 
   // Check if lobby exists and is joinable
   const { data: lobby, error: lobbyError } = await supabase
@@ -194,7 +212,7 @@ export async function joinLobby(
     return { player: null, error: 'Lobby not found' };
   }
 
-  // Fetch all current players once — used for count check, existing-player check, and username rejoin
+  // Fetch all current players once — used for count check and existing-player (same-device) check
   const { data: currentPlayers } = await supabase
     .from('lobby_players')
     .select()
@@ -207,7 +225,7 @@ export async function joinLobby(
     if (existingByPlayerId) {
       const { data: updated, error: updateError } = await supabase
         .from('lobby_players')
-        .update({ is_connected: true, player_name: playerName })
+        .update({ is_connected: true, player_name: trimmedPlayerName })
         .eq('id', existingByPlayerId.id)
         .select()
         .single();
@@ -216,26 +234,13 @@ export async function joinLobby(
     }
 
     // Case B: different device — same username.
-    // SECURITY: Previously this adopted the old player_id by writing it to localStorage,
-    // allowing identity spoofing. With auth-based identity, we cannot adopt another
-    // user's auth UID. Instead, update the existing row to use the new auth UID.
-    // This requires the caller to be the same user — which we can't verify by name alone.
-    // Safest approach: treat as a new player (will fail if game is in progress, which is correct).
-    // TODO: Implement proper reconnection tokens for cross-device rejoin.
-    const existingByName = existingPlayers.find(
-      (p) => p.player_name.toLowerCase() === playerName.trim().toLowerCase(),
-    );
-    if (existingByName) {
-      // Update the existing row to link to the new auth UID
-      const { data: updated, error: updateError } = await supabase
-        .from('lobby_players')
-        .update({ is_connected: true, player_name: playerName, player_id: playerId })
-        .eq('id', existingByName.id)
-        .select()
-        .single();
-      if (updateError) return { player: null, error: updateError.message };
-      return { player: updated as LobbyPlayer, error: null };
-    }
+    // SECURITY: We intentionally do NOT adopt the existing row here. Re-pointing an
+    // existing player_id to a new auth UID (or vice versa) would let anyone take over
+    // another player's session, scores, and wins simply by typing the same name.
+    // Identity cannot be verified by name alone, so a same-name join from a new device
+    // is treated as a brand-new player and falls through to the mid-game-join checks
+    // below (which correctly reject joining a game already in progress).
+    // Proper cross-device reconnection requires authenticated reconnection tokens (future work).
 
     // Case C: brand-new player — only Cap Crunch (non-hard-mode) supports mid-game joins
     if (lobby.game_type !== 'lineup-is-right') {
@@ -259,7 +264,7 @@ export async function joinLobby(
         .from('lobby_players')
         .update({
           is_connected: true,
-          player_name: playerName,
+          player_name: trimmedPlayerName,
           score: 0,
           guessed_count: 0,
           finished_at: null,
@@ -279,7 +284,7 @@ export async function joinLobby(
   const playerData: LobbyPlayerInsert = {
     lobby_id: lobbyId,
     player_id: playerId,
-    player_name: playerName,
+    player_name: trimmedPlayerName,
     is_host: false,
     is_ready: false,
   };
@@ -730,7 +735,7 @@ export async function resetMatchForPlayAgain(
   return { error: error?.message || null };
 }
 
-// Update team assignment for a player (host only)
+// Update team assignment for a player (host only) — via SECURITY DEFINER RPC
 export async function updatePlayerTeam(
   lobbyId: string,
   targetPlayerId: string,
@@ -740,11 +745,11 @@ export async function updatePlayerTeam(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ team_number: teamNumber })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', targetPlayerId);
+  const { error } = await supabase.rpc('update_player_team', {
+    p_lobby_id: lobbyId,
+    p_player_id: targetPlayerId,
+    p_team_number: teamNumber,
+  });
 
   return { error: error?.message || null };
 }
