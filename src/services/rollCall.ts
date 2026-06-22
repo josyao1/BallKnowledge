@@ -17,6 +17,15 @@ export async function submitEntry(
     return { entry: null, error: 'Multiplayer not available' };
   }
 
+  // Input validation — cap entry text length
+  const trimmed = entryText.trim();
+  if (!trimmed) {
+    return { entry: null, error: 'Entry text is required' };
+  }
+  if (trimmed.length > 200) {
+    return { entry: null, error: 'Entry must be 200 characters or less' };
+  }
+
   const playerId = await getPlayerId();
   const playerName = getStoredPlayerName() || 'Anonymous';
 
@@ -24,7 +33,7 @@ export async function submitEntry(
     lobby_id: lobbyId,
     player_id: playerId,
     player_name: playerName,
-    entry_text: entryText.trim(),
+    entry_text: trimmed,
   };
 
   const { data: entry, error } = await supabase
