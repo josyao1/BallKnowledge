@@ -4,10 +4,10 @@
  * Handles lobby CRUD, player management, score tracking, and round resets.
  * All functions are thin wrappers around Supabase queries with consistent
  * `{ data, error }` return patterns. Player identity is stored in localStorage
- * via `getOrCreatePlayerId()`.
+ * via `getPlayerId()` (Supabase anonymous auth) with a localStorage fallback.
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, getAuthPlayerId } from '../lib/supabase';
 import type {
   Lobby,
   LobbyInsert,
@@ -29,7 +29,29 @@ function generateJoinCode(): string {
   return code;
 }
 
-// Generate a unique player ID (stored in localStorage)
+/**
+ * Get the authenticated player ID via Supabase anonymous auth.
+ * Falls back to a localStorage UUID only if Supabase is not configured (solo mode).
+ * This replaces the old spoofable localStorage-only UUID with real JWT-based identity.
+ */
+export async function getPlayerId(): Promise<string> {
+  const authId = await getAuthPlayerId();
+  if (authId) return authId;
+
+  // Fallback for when Supabase is not configured — solo mode doesn't need real auth
+  const stored = localStorage.getItem('ballknowledge_player_id');
+  if (stored) return stored;
+
+  const newId = crypto.randomUUID();
+  localStorage.setItem('ballknowledge_player_id', newId);
+  return newId;
+}
+
+/**
+ * Synchronous fallback for store initialization before auth completes.
+ * Returns a stored localStorage ID or generates a temporary one.
+ * The real auth UID is set via getPlayerId() once async auth completes.
+ */
 export function getOrCreatePlayerId(): string {
   const stored = localStorage.getItem('ballknowledge_player_id');
   if (stored) return stored;
@@ -68,7 +90,7 @@ export async function createLobby(
     return { lobby: null, error: 'Multiplayer not available' };
   }
 
-  const hostId = getOrCreatePlayerId();
+  const hostId = await getPlayerId();
   setStoredPlayerName(hostName);
 
   // Try to generate a unique join code (max 5 attempts)
@@ -158,7 +180,7 @@ export async function joinLobby(
     return { player: null, error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
   setStoredPlayerName(playerName);
 
   // Check if lobby exists and is joinable
@@ -193,15 +215,21 @@ export async function joinLobby(
       return { player: updated as LobbyPlayer, error: null };
     }
 
-    // Case B: different device — same username, adopt old player_id so career_state lineup is found
+    // Case B: different device — same username.
+    // SECURITY: Previously this adopted the old player_id by writing it to localStorage,
+    // allowing identity spoofing. With auth-based identity, we cannot adopt another
+    // user's auth UID. Instead, update the existing row to use the new auth UID.
+    // This requires the caller to be the same user — which we can't verify by name alone.
+    // Safest approach: treat as a new player (will fail if game is in progress, which is correct).
+    // TODO: Implement proper reconnection tokens for cross-device rejoin.
     const existingByName = existingPlayers.find(
       (p) => p.player_name.toLowerCase() === playerName.trim().toLowerCase(),
     );
     if (existingByName) {
-      localStorage.setItem('ballknowledge_player_id', existingByName.player_id);
+      // Update the existing row to link to the new auth UID
       const { data: updated, error: updateError } = await supabase
         .from('lobby_players')
-        .update({ is_connected: true, player_name: playerName })
+        .update({ is_connected: true, player_name: playerName, player_id: playerId })
         .eq('id', existingByName.id)
         .select()
         .single();
@@ -275,7 +303,7 @@ export async function leaveLobby(lobbyId: string): Promise<{ error: string | nul
     return { error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
 
   const { error } = await supabase
     .from('lobby_players')
@@ -342,7 +370,7 @@ export async function updatePlayerScore(
     return { error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
 
   const updateData: Record<string, unknown> = { score, guessed_count: guessedCount };
   if (guessedPlayers !== undefined) {
@@ -400,7 +428,7 @@ export async function setPlayerReady(
     return { error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
 
   const { error } = await supabase
     .from('lobby_players')

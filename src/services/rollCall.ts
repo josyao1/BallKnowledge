@@ -7,7 +7,7 @@
 
 import { supabase } from '../lib/supabase';
 import type { Lobby, RollCallEntry, RollCallEntryInsert, RollCallMerge } from '../types/database';
-import { getOrCreatePlayerId, getStoredPlayerName, createLobby } from './lobby';
+import { getPlayerId, getStoredPlayerName, createLobby } from './lobby';
 
 export async function submitEntry(
   lobbyId: string,
@@ -17,7 +17,7 @@ export async function submitEntry(
     return { entry: null, error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
   const playerName = getStoredPlayerName() || 'Anonymous';
 
   const data: RollCallEntryInsert = {

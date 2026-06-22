@@ -21,6 +21,7 @@ import {
   setPlayerReady,
   deleteLobby,
   getOrCreatePlayerId,
+  getPlayerId,
   updateLobbySettings,
   checkAllPlayersFinished,
   incrementPlayerWins,
@@ -156,7 +157,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       return null;
     }
 
-    const playerId = getOrCreatePlayerId();
+    const playerId = await getPlayerId();
     set({
       lobby: result.lobby,
       isHost: true,
@@ -210,7 +211,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       return false;
     }
 
-    const playerId = getOrCreatePlayerId();
+    const playerId = await getPlayerId();
     set({
       lobby,
       isHost: result.player.is_host,
