@@ -147,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { data: lobby } = await supabase
           .from('lobbies')
           .select('game_type, sport')
-          .eq('code', code)
+          .eq('join_code', code)
           .single();
 
         if (lobby) {

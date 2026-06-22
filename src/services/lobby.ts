@@ -4,10 +4,10 @@
  * Handles lobby CRUD, player management, score tracking, and round resets.
  * All functions are thin wrappers around Supabase queries with consistent
  * `{ data, error }` return patterns. Player identity is stored in localStorage
- * via `getOrCreatePlayerId()`.
+ * via `getPlayerId()` (Supabase anonymous auth) with a localStorage fallback.
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, getAuthPlayerId } from '../lib/supabase';
 import type {
   Lobby,
   LobbyInsert,
@@ -29,7 +29,29 @@ function generateJoinCode(): string {
   return code;
 }
 
-// Generate a unique player ID (stored in localStorage)
+/**
+ * Get the authenticated player ID via Supabase anonymous auth.
+ * Falls back to a localStorage UUID only if Supabase is not configured (solo mode).
+ * This replaces the old spoofable localStorage-only UUID with real JWT-based identity.
+ */
+export async function getPlayerId(): Promise<string> {
+  const authId = await getAuthPlayerId();
+  if (authId) return authId;
+
+  // Fallback for when Supabase is not configured — solo mode doesn't need real auth
+  const stored = localStorage.getItem('ballknowledge_player_id');
+  if (stored) return stored;
+
+  const newId = crypto.randomUUID();
+  localStorage.setItem('ballknowledge_player_id', newId);
+  return newId;
+}
+
+/**
+ * Synchronous fallback for store initialization before auth completes.
+ * Returns a stored localStorage ID or generates a temporary one.
+ * The real auth UID is set via getPlayerId() once async auth completes.
+ */
 export function getOrCreatePlayerId(): string {
   const stored = localStorage.getItem('ballknowledge_player_id');
   if (stored) return stored;
@@ -68,8 +90,17 @@ export async function createLobby(
     return { lobby: null, error: 'Multiplayer not available' };
   }
 
-  const hostId = getOrCreatePlayerId();
-  setStoredPlayerName(hostName);
+  // Input validation — prevent oversized/blank names from hitting the DB
+  const trimmedHostName = hostName?.trim() ?? '';
+  if (trimmedHostName.length === 0) {
+    return { lobby: null, error: 'Player name is required' };
+  }
+  if (trimmedHostName.length > 50) {
+    return { lobby: null, error: 'Player name must be 50 characters or less' };
+  }
+
+  const hostId = await getPlayerId();
+  setStoredPlayerName(trimmedHostName);
 
   // Try to generate a unique join code (max 5 attempts)
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -78,7 +109,7 @@ export async function createLobby(
     const lobbyData: LobbyInsert = {
       join_code: joinCode,
       host_id: hostId,
-      host_name: hostName,
+      host_name: trimmedHostName,
       sport,
       team_abbreviation: teamAbbreviation,
       season,
@@ -109,7 +140,7 @@ export async function createLobby(
     const playerData: LobbyPlayerInsert = {
       lobby_id: lobby.id,
       player_id: hostId,
-      player_name: hostName,
+      player_name: trimmedHostName,
       is_host: true,
       is_ready: true,
     };
@@ -158,8 +189,17 @@ export async function joinLobby(
     return { player: null, error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
-  setStoredPlayerName(playerName);
+  // Input validation
+  const trimmedPlayerName = playerName?.trim() ?? '';
+  if (trimmedPlayerName.length === 0) {
+    return { player: null, error: 'Player name is required' };
+  }
+  if (trimmedPlayerName.length > 50) {
+    return { player: null, error: 'Player name must be 50 characters or less' };
+  }
+
+  const playerId = await getPlayerId();
+  setStoredPlayerName(trimmedPlayerName);
 
   // Check if lobby exists and is joinable
   const { data: lobby, error: lobbyError } = await supabase
@@ -172,7 +212,7 @@ export async function joinLobby(
     return { player: null, error: 'Lobby not found' };
   }
 
-  // Fetch all current players once — used for count check, existing-player check, and username rejoin
+  // Fetch all current players once — used for count check and existing-player (same-device) check
   const { data: currentPlayers } = await supabase
     .from('lobby_players')
     .select()
@@ -185,7 +225,7 @@ export async function joinLobby(
     if (existingByPlayerId) {
       const { data: updated, error: updateError } = await supabase
         .from('lobby_players')
-        .update({ is_connected: true, player_name: playerName })
+        .update({ is_connected: true, player_name: trimmedPlayerName })
         .eq('id', existingByPlayerId.id)
         .select()
         .single();
@@ -193,21 +233,14 @@ export async function joinLobby(
       return { player: updated as LobbyPlayer, error: null };
     }
 
-    // Case B: different device — same username, adopt old player_id so career_state lineup is found
-    const existingByName = existingPlayers.find(
-      (p) => p.player_name.toLowerCase() === playerName.trim().toLowerCase(),
-    );
-    if (existingByName) {
-      localStorage.setItem('ballknowledge_player_id', existingByName.player_id);
-      const { data: updated, error: updateError } = await supabase
-        .from('lobby_players')
-        .update({ is_connected: true, player_name: playerName })
-        .eq('id', existingByName.id)
-        .select()
-        .single();
-      if (updateError) return { player: null, error: updateError.message };
-      return { player: updated as LobbyPlayer, error: null };
-    }
+    // Case B: different device — same username.
+    // SECURITY: We intentionally do NOT adopt the existing row here. Re-pointing an
+    // existing player_id to a new auth UID (or vice versa) would let anyone take over
+    // another player's session, scores, and wins simply by typing the same name.
+    // Identity cannot be verified by name alone, so a same-name join from a new device
+    // is treated as a brand-new player and falls through to the mid-game-join checks
+    // below (which correctly reject joining a game already in progress).
+    // Proper cross-device reconnection requires authenticated reconnection tokens (future work).
 
     // Case C: brand-new player — only Cap Crunch (non-hard-mode) supports mid-game joins
     if (lobby.game_type !== 'lineup-is-right') {
@@ -231,7 +264,7 @@ export async function joinLobby(
         .from('lobby_players')
         .update({
           is_connected: true,
-          player_name: playerName,
+          player_name: trimmedPlayerName,
           score: 0,
           guessed_count: 0,
           finished_at: null,
@@ -251,7 +284,7 @@ export async function joinLobby(
   const playerData: LobbyPlayerInsert = {
     lobby_id: lobbyId,
     player_id: playerId,
-    player_name: playerName,
+    player_name: trimmedPlayerName,
     is_host: false,
     is_ready: false,
   };
@@ -275,7 +308,7 @@ export async function leaveLobby(lobbyId: string): Promise<{ error: string | nul
     return { error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
 
   const { error } = await supabase
     .from('lobby_players')
@@ -307,7 +340,7 @@ export async function getLobbyPlayers(
   return { players: players as LobbyPlayer[], error: null };
 }
 
-// Update lobby status
+// Update lobby status (host only) — RLS enforces host_id = auth.uid()
 export async function updateLobbyStatus(
   lobbyId: string,
   status: LobbyStatus,
@@ -316,6 +349,7 @@ export async function updateLobbyStatus(
     return { error: 'Multiplayer not available' };
   }
 
+  const playerId = await getPlayerId();
   const updates: Record<string, unknown> = { status };
 
   if (status === 'playing') {
@@ -324,7 +358,11 @@ export async function updateLobbyStatus(
     updates.finished_at = new Date().toISOString();
   }
 
-  const { error } = await supabase.from('lobbies').update(updates).eq('id', lobbyId);
+  const { error } = await supabase
+    .from('lobbies')
+    .update(updates)
+    .eq('id', lobbyId)
+    .eq('host_id', playerId);
 
   return { error: error?.message || null };
 }
@@ -342,7 +380,7 @@ export async function updatePlayerScore(
     return { error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
 
   const updateData: Record<string, unknown> = { score, guessed_count: guessedCount };
   if (guessedPlayers !== undefined) {
@@ -366,14 +404,13 @@ export async function updatePlayerScore(
 
 // Host-only: mark a specific player as finished (used to force-end a stuck session).
 // Skips players already finished to avoid overwriting their finish time.
+// Uses SECURITY DEFINER RPC that verifies host status server-side.
 export async function markPlayerFinished(lobbyId: string, playerId: string): Promise<void> {
   if (!supabase) return;
-  await supabase
-    .from('lobby_players')
-    .update({ finished_at: new Date().toISOString() })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId)
-    .is('finished_at', null);
+  await supabase.rpc('mark_player_finished', {
+    p_lobby_id: lobbyId,
+    p_player_id: playerId,
+  });
 }
 
 // Check if all players have finished
@@ -400,7 +437,7 @@ export async function setPlayerReady(
     return { error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getPlayerId();
 
   const { error } = await supabase
     .from('lobby_players')
@@ -411,18 +448,23 @@ export async function setPlayerReady(
   return { error: error?.message || null };
 }
 
-// Delete a lobby (host only)
+// Delete a lobby (host only) — RLS enforces host_id = auth.uid()
 export async function deleteLobby(lobbyId: string): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase.from('lobbies').delete().eq('id', lobbyId);
+  const playerId = await getPlayerId();
+  const { error } = await supabase
+    .from('lobbies')
+    .delete()
+    .eq('id', lobbyId)
+    .eq('host_id', playerId);
 
   return { error: error?.message || null };
 }
 
-// Update lobby settings (host only)
+// Update lobby settings (host only) — RLS enforces host_id = auth.uid()
 export async function updateLobbySettings(
   lobbyId: string,
   settings: {
@@ -443,13 +485,18 @@ export async function updateLobbySettings(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase.from('lobbies').update(settings).eq('id', lobbyId);
+  const playerId = await getPlayerId();
+  const { error } = await supabase
+    .from('lobbies')
+    .update(settings)
+    .eq('id', lobbyId)
+    .eq('host_id', playerId);
 
   return { error: error?.message || null };
 }
 
 // Add pts to a player's points column (used for Name Scramble / Starting Lineup
-// positional scoring and Career Arc round wins). Safe to call from host only.
+// positional scoring and Career Arc round wins). Host-only via SECURITY DEFINER RPC.
 export async function addCareerPoints(
   lobbyId: string,
   playerId: string,
@@ -459,22 +506,11 @@ export async function addCareerPoints(
     return { error: 'Multiplayer not available' };
   }
 
-  const { data: player, error: fetchError } = await supabase
-    .from('lobby_players')
-    .select('points')
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId)
-    .single();
-
-  if (fetchError || !player) {
-    return { error: fetchError?.message || 'Player not found' };
-  }
-
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ points: (player.points ?? 0) + pts })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId);
+  const { error } = await supabase.rpc('add_career_points', {
+    p_lobby_id: lobbyId,
+    p_player_id: playerId,
+    p_pts: pts,
+  });
 
   return { error: error?.message || null };
 }
@@ -504,12 +540,12 @@ export async function incrementPlayerWins(
 
 // Reset all player points to 0 for a lobby (between games within a session).
 // wins (session wins) are never reset here — they persist for the whole lobby.
+// Host-only via SECURITY DEFINER RPC.
 export async function resetPlayerPoints(lobbyId: string): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ points: 0 })
-    .eq('lobby_id', lobbyId);
+  const { error } = await supabase.rpc('reset_player_points', {
+    p_lobby_id: lobbyId,
+  });
   return { error: error?.message || null };
 }
 
@@ -536,7 +572,9 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     return { error: fetchError?.message || 'Lobby not found' };
   }
 
-  // Build the update object
+  // Build the update object — the random team/division selection runs client-side
+  // (it needs access to the team data arrays), then the result is passed to the
+  // SECURITY DEFINER RPC which performs the actual DB writes with host verification.
   const lobbyUpdate: Record<string, unknown> = {
     status: 'waiting',
     started_at: null,
@@ -625,109 +663,53 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
     }
   }
 
-  // Reset lobby status (and team/season if random)
-  const { error: lobbyError } = await supabase
-    .from('lobbies')
-    .update(lobbyUpdate)
-    .eq('id', lobbyId);
+  // Call the SECURITY DEFINER RPC to perform the actual writes with host verification.
+  // The RPC resets lobby status/timestamps, updates team/season/division, and resets
+  // all player scores in a single server-side transaction.
+  const { error: rpcError } = await supabase.rpc('reset_lobby_for_new_round', {
+    p_lobby_id: lobbyId,
+    p_lobby_update: lobbyUpdate,
+  });
 
-  if (lobbyError) {
-    return { error: lobbyError.message };
-  }
-
-  // Reset non-host player scores and ready status (points reset too — new game)
-  const { error: playersError } = await supabase
-    .from('lobby_players')
-    .update({
-      score: 0,
-      points: 0,
-      guessed_count: 0,
-      guessed_players: [],
-      incorrect_guesses: [],
-      is_ready: false,
-      finished_at: null,
-    })
-    .eq('lobby_id', lobbyId)
-    .eq('is_host', false);
-
-  if (playersError) {
-    return { error: playersError.message };
-  }
-
-  // Reset host scores but keep them ready
-  const { error: hostError } = await supabase
-    .from('lobby_players')
-    .update({
-      score: 0,
-      points: 0,
-      guessed_count: 0,
-      guessed_players: [],
-      incorrect_guesses: [],
-      is_ready: true,
-      finished_at: null,
-    })
-    .eq('lobby_id', lobbyId)
-    .eq('is_host', true);
-
-  if (hostError) {
-    return { error: hostError.message };
-  }
-
-  return { error: null };
+  return { error: rpcError?.message || null };
 }
 
-// Update the career_state JSONB for a career-mode lobby
+// Update the career_state JSONB for a career-mode lobby (host only)
 export async function updateCareerState(
   lobbyId: string,
   state: Record<string, unknown>,
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
+  const playerId = await getPlayerId();
   const { error } = await supabase
     .from('lobbies')
     .update({ career_state: state })
-    .eq('id', lobbyId);
+    .eq('id', lobbyId)
+    .eq('host_id', playerId);
 
   return { error: error?.message || null };
 }
 
 // Start a new career round: reset all player scores/finished_at, write new career_state, set status=playing.
+// Host-only via SECURITY DEFINER RPC (modifies all players' rows).
 export async function startCareerRound(
   lobbyId: string,
   careerState: Record<string, unknown>,
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
-  // Reset player scores and round state
-  const { error: playersError } = await supabase
-    .from('lobby_players')
-    .update({
-      finished_at: null,
-      score: 0,
-      guessed_count: 0,
-      guessed_players: [],
-      incorrect_guesses: [],
-    })
-    .eq('lobby_id', lobbyId);
-
-  if (playersError) return { error: playersError.message };
-
-  // Write new career state and set lobby to playing
-  const { error } = await supabase
-    .from('lobbies')
-    .update({
-      career_state: careerState,
-      status: 'playing',
-      started_at: new Date().toISOString(),
-      finished_at: null,
-    })
-    .eq('id', lobbyId);
+  const { error } = await supabase.rpc('start_career_round', {
+    p_lobby_id: lobbyId,
+    p_career_state: careerState,
+  });
 
   return { error: error?.message || null };
 }
 
 // Reset player points/scores and lobby state for a new match (Play Again).
 // Session wins (wins column) are preserved — they accumulate across all matches in a lobby session.
+// Host-only via SECURITY DEFINER RPC (modifies all players' rows).
 export async function resetMatchForPlayAgain(
   lobbyId: string,
   winTarget: number,
@@ -737,40 +719,23 @@ export async function resetMatchForPlayAgain(
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
-  const { error: playersError } = await supabase
-    .from('lobby_players')
-    .update({
-      points: 0,
-      score: 0,
-      finished_at: null,
-      guessed_count: 0,
-      guessed_players: [],
-      incorrect_guesses: [],
-      is_ready: false,
-    })
-    .eq('lobby_id', lobbyId);
+  const careerState = {
+    win_target: winTarget,
+    round: 0,
+    career_from: careerFrom || 0,
+    career_to: careerTo || 0,
+    ...extraState,
+  };
 
-  if (playersError) return { error: playersError.message };
-
-  const { error } = await supabase
-    .from('lobbies')
-    .update({
-      career_state: {
-        win_target: winTarget,
-        round: 0,
-        career_from: careerFrom || 0,
-        career_to: careerTo || 0,
-        ...extraState,
-      },
-      status: 'waiting',
-      finished_at: null,
-    })
-    .eq('id', lobbyId);
+  const { error } = await supabase.rpc('reset_match_for_play_again', {
+    p_lobby_id: lobbyId,
+    p_career_state: careerState,
+  });
 
   return { error: error?.message || null };
 }
 
-// Update team assignment for a player (host only)
+// Update team assignment for a player (host only) — via SECURITY DEFINER RPC
 export async function updatePlayerTeam(
   lobbyId: string,
   targetPlayerId: string,
@@ -780,16 +745,16 @@ export async function updatePlayerTeam(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ team_number: teamNumber })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', targetPlayerId);
+  const { error } = await supabase.rpc('update_player_team', {
+    p_lobby_id: lobbyId,
+    p_player_id: targetPlayerId,
+    p_team_number: teamNumber,
+  });
 
   return { error: error?.message || null };
 }
 
-// Kick a player from the lobby (host only)
+// Kick a player from the lobby (host only) — via SECURITY DEFINER RPC
 export async function kickPlayer(
   lobbyId: string,
   targetPlayerId: string,
@@ -798,16 +763,15 @@ export async function kickPlayer(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobby_players')
-    .delete()
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', targetPlayerId);
+  const { error } = await supabase.rpc('kick_player', {
+    p_lobby_id: lobbyId,
+    p_player_id: targetPlayerId,
+  });
 
   return { error: error?.message || null };
 }
 
-// Rename a player in the lobby (host only)
+// Rename a player in the lobby (host only) — via SECURITY DEFINER RPC
 export async function renamePlayer(
   lobbyId: string,
   targetPlayerId: string,
@@ -817,16 +781,16 @@ export async function renamePlayer(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ player_name: newName })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', targetPlayerId);
+  const { error } = await supabase.rpc('rename_player', {
+    p_lobby_id: lobbyId,
+    p_player_id: targetPlayerId,
+    p_new_name: newName,
+  });
 
   return { error: error?.message || null };
 }
 
-// Set score multiplier for a player (host only)
+// Set score multiplier for a player (host only) — via SECURITY DEFINER RPC
 export async function setPlayerScoreMultiplier(
   lobbyId: string,
   playerId: string,
@@ -836,16 +800,16 @@ export async function setPlayerScoreMultiplier(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ score_multiplier: multiplier })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId);
+  const { error } = await supabase.rpc('set_player_score_multiplier', {
+    p_lobby_id: lobbyId,
+    p_player_id: playerId,
+    p_multiplier: multiplier,
+  });
 
   return { error: error?.message || null };
 }
 
-// Toggle dummy mode for a player (host only)
+// Toggle dummy mode for a player (host only) — via SECURITY DEFINER RPC
 export async function setPlayerDummyMode(
   lobbyId: string,
   playerId: string,
@@ -855,11 +819,11 @@ export async function setPlayerDummyMode(
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobby_players')
-    .update({ is_dummy: isDummy })
-    .eq('lobby_id', lobbyId)
-    .eq('player_id', playerId);
+  const { error } = await supabase.rpc('set_player_dummy_mode', {
+    p_lobby_id: lobbyId,
+    p_player_id: playerId,
+    p_is_dummy: isDummy,
+  });
 
   return { error: error?.message || null };
 }

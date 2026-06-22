@@ -7,7 +7,7 @@
 
 import { supabase } from '../lib/supabase';
 import type { Lobby, RollCallEntry, RollCallEntryInsert, RollCallMerge } from '../types/database';
-import { getOrCreatePlayerId, getStoredPlayerName, createLobby } from './lobby';
+import { getPlayerId, getStoredPlayerName, createLobby } from './lobby';
 
 export async function submitEntry(
   lobbyId: string,
@@ -17,14 +17,23 @@ export async function submitEntry(
     return { entry: null, error: 'Multiplayer not available' };
   }
 
-  const playerId = getOrCreatePlayerId();
+  // Input validation — cap entry text length
+  const trimmed = entryText.trim();
+  if (!trimmed) {
+    return { entry: null, error: 'Entry text is required' };
+  }
+  if (trimmed.length > 200) {
+    return { entry: null, error: 'Entry must be 200 characters or less' };
+  }
+
+  const playerId = await getPlayerId();
   const playerName = getStoredPlayerName() || 'Anonymous';
 
   const data: RollCallEntryInsert = {
     lobby_id: lobbyId,
     player_id: playerId,
     player_name: playerName,
-    entry_text: entryText.trim(),
+    entry_text: trimmed,
   };
 
   const { data: entry, error } = await supabase
