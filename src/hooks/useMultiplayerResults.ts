@@ -21,9 +21,15 @@ interface Options {
  * effect, Play Again, and Leave. Returns everything the results page needs to
  * render standings and drive the action buttons.
  */
-export function useMultiplayerResults({ code, defaultWinTarget = 3, includeCareerFrom = false, extraPlayAgainState }: Options) {
+export function useMultiplayerResults({
+  code,
+  defaultWinTarget = 3,
+  includeCareerFrom = false,
+  extraPlayAgainState,
+}: Options) {
   const navigate = useNavigate();
-  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } = useLobbyStore();
+  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } =
+    useLobbyStore();
   const [isLeaving, setIsLeaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
@@ -31,12 +37,18 @@ export function useMultiplayerResults({ code, defaultWinTarget = 3, includeCaree
 
   // Load lobby if not in store (page refresh).
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
     if (lobby) return;
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
+    findLobbyByCode(code).then((result) => {
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
       setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
+      getLobbyPlayers(result.lobby.id).then((pr) => {
         if (pr.players) setPlayers(pr.players);
       });
     });
@@ -59,7 +71,7 @@ export function useMultiplayerResults({ code, defaultWinTarget = 3, includeCaree
     await resetMatchForPlayAgain(
       lobby.id,
       cs.win_target || defaultWinTarget,
-      includeCareerFrom ? (cs.career_from || 0) : 0,
+      includeCareerFrom ? cs.career_from || 0 : 0,
       cs.career_to || 0,
       extraPlayAgainState ? extraPlayAgainState(cs) : undefined,
     );

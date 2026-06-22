@@ -20,7 +20,15 @@ interface Props {
   onJoin: () => void;
 }
 
-export function LobbyJoinPrompt({ lobby, players, joinName, setJoinName, isJoining, joinError, onJoin }: Props) {
+export function LobbyJoinPrompt({
+  lobby,
+  players,
+  joinName,
+  setJoinName,
+  isJoining,
+  joinError,
+  onJoin,
+}: Props) {
   const navigate = useNavigate();
 
   return (
@@ -53,16 +61,18 @@ export function LobbyJoinPrompt({ lobby, players, joinName, setJoinName, isJoini
               {lobby.sport.toUpperCase()} Roster Challenge
             </div>
             <div className="capcrunch-title text-xl text-white mb-1">Take a Seat</div>
-            <div className="capcrunch-kicker text-[10px] text-white/30">Enter your name to join</div>
+            <div className="capcrunch-kicker text-[10px] text-white/30">
+              Enter your name to join
+            </div>
           </div>
 
           <input
             type="text"
             value={joinName}
-            onChange={e => setJoinName(e.target.value)}
+            onChange={(e) => setJoinName(e.target.value)}
             placeholder="Enter your name"
             maxLength={20}
-            onKeyDown={e => e.key === 'Enter' && onJoin()}
+            onKeyDown={(e) => e.key === 'Enter' && onJoin()}
             className="w-full p-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:border-[#FDF100] transition-colors capcrunch-kicker"
           />
 
@@ -90,9 +100,13 @@ export function LobbyJoinPrompt({ lobby, players, joinName, setJoinName, isJoini
           >
             <div className="capcrunch-kicker text-[10px] text-white/30 mb-2">Already Seated</div>
             <div className="flex flex-wrap justify-center gap-2">
-              {players.map(p => (
-                <span key={p.player_id} className="px-3 py-1 bg-black/40 border border-white/10 capcrunch-kicker text-sm text-white/60">
-                  {p.is_host && '★ '}{p.player_name}
+              {players.map((p) => (
+                <span
+                  key={p.player_id}
+                  className="px-3 py-1 bg-black/40 border border-white/10 capcrunch-kicker text-sm text-white/60"
+                >
+                  {p.is_host && '★ '}
+                  {p.player_name}
                 </span>
               ))}
             </div>

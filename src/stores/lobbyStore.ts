@@ -53,7 +53,7 @@ interface LobbyState {
     gameType?: string,
     selectionScope?: string,
     divisionConference?: string | null,
-    divisionName?: string | null
+    divisionName?: string | null,
   ) => Promise<Lobby | null>;
   joinLobbyByCode: (joinCode: string, playerName: string) => Promise<boolean>;
   joinExistingLobby: (lobby: Lobby, playerName: string) => Promise<boolean>;
@@ -61,7 +61,14 @@ interface LobbyState {
   setReady: (isReady: boolean) => Promise<void>;
   startGame: () => Promise<void>;
   endGame: () => Promise<void>;
-  syncScore: (score: number, guessedCount: number, guessedPlayers?: string[], incorrectGuesses?: string[], isFinished?: boolean, fallbackLobbyId?: string) => Promise<void>;
+  syncScore: (
+    score: number,
+    guessedCount: number,
+    guessedPlayers?: string[],
+    incorrectGuesses?: string[],
+    isFinished?: boolean,
+    fallbackLobbyId?: string,
+  ) => Promise<void>;
   updateSettings: (settings: {
     sport?: Sport;
     teamAbbreviation?: string;
@@ -97,16 +104,52 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  createLobby: async (hostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName) => {
+  createLobby: async (
+    hostName,
+    sport,
+    teamAbbreviation,
+    season,
+    timerDuration,
+    gameMode,
+    minYear,
+    maxYear,
+    gameType,
+    selectionScope,
+    divisionConference,
+    divisionName,
+  ) => {
     set({ isLoading: true, error: null });
 
-    const _cp = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-    const _cd = Object.fromEntries(_cp.filter(x => x.type !== 'literal').map(x => [x.type, +x.value]));
-    const gradHostName = (_cd.year === 2026 && _cd.month === 6 && _cd.day >= 13 && _cd.day <= 15)
-      ? (hostName.startsWith('🎓') ? hostName : `🎓 ${hostName}`)
-      : hostName;
+    const _cp = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const _cd = Object.fromEntries(
+      _cp.filter((x) => x.type !== 'literal').map((x) => [x.type, +x.value]),
+    );
+    const gradHostName =
+      _cd.year === 2026 && _cd.month === 6 && _cd.day >= 13 && _cd.day <= 15
+        ? hostName.startsWith('🎓')
+          ? hostName
+          : `🎓 ${hostName}`
+        : hostName;
 
-    const result = await createLobby(gradHostName, sport, teamAbbreviation, season, timerDuration, gameMode, minYear, maxYear, gameType, selectionScope, divisionConference, divisionName);
+    const result = await createLobby(
+      gradHostName,
+      sport,
+      teamAbbreviation,
+      season,
+      timerDuration,
+      gameMode,
+      minYear,
+      maxYear,
+      gameType,
+      selectionScope,
+      divisionConference,
+      divisionName,
+    );
 
     if (result.error || !result.lobby) {
       set({ isLoading: false, error: result.error || 'Failed to create lobby' });
@@ -145,11 +188,21 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   joinExistingLobby: async (lobby, playerName) => {
     set({ isLoading: true, error: null });
 
-    const _p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-    const _d = Object.fromEntries(_p.filter(x => x.type !== 'literal').map(x => [x.type, +x.value]));
-    const displayName = (_d.year === 2026 && _d.month === 6 && _d.day >= 13 && _d.day <= 15)
-      ? (playerName.startsWith('🎓') ? playerName : `🎓 ${playerName}`)
-      : playerName;
+    const _p = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const _d = Object.fromEntries(
+      _p.filter((x) => x.type !== 'literal').map((x) => [x.type, +x.value]),
+    );
+    const displayName =
+      _d.year === 2026 && _d.month === 6 && _d.day >= 13 && _d.day <= 15
+        ? playerName.startsWith('🎓')
+          ? playerName
+          : `🎓 ${playerName}`
+        : playerName;
 
     const result = await joinLobby(lobby.id, displayName);
     if (result.error || !result.player) {
@@ -216,16 +269,32 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     }
   },
 
-  syncScore: async (score, guessedCount, guessedPlayers, incorrectGuesses, isFinished, fallbackLobbyId) => {
+  syncScore: async (
+    score,
+    guessedCount,
+    guessedPlayers,
+    incorrectGuesses,
+    isFinished,
+    fallbackLobbyId,
+  ) => {
     const { lobby } = get();
     const lobbyId = lobby?.id || fallbackLobbyId;
 
     if (!lobbyId) {
-      console.error('syncScore called but no lobby ID available (store lobby is null and no fallback provided)');
+      console.error(
+        'syncScore called but no lobby ID available (store lobby is null and no fallback provided)',
+      );
       return;
     }
 
-    const result = await updatePlayerScore(lobbyId, score, guessedCount, guessedPlayers, incorrectGuesses, isFinished);
+    const result = await updatePlayerScore(
+      lobbyId,
+      score,
+      guessedCount,
+      guessedPlayers,
+      incorrectGuesses,
+      isFinished,
+    );
     if (result.error) {
       console.error('syncScore error:', result.error);
     }
@@ -238,14 +307,16 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     // Map camelCase frontend keys to snake_case Supabase column names
     const dbSettings: Record<string, unknown> = {};
     if (settings.sport !== undefined) dbSettings.sport = settings.sport;
-    if (settings.teamAbbreviation !== undefined) dbSettings.team_abbreviation = settings.teamAbbreviation;
+    if (settings.teamAbbreviation !== undefined)
+      dbSettings.team_abbreviation = settings.teamAbbreviation;
     if (settings.season !== undefined) dbSettings.season = settings.season;
     if (settings.timerDuration !== undefined) dbSettings.timer_duration = settings.timerDuration;
     if (settings.gameMode !== undefined) dbSettings.game_mode = settings.gameMode;
     if (settings.minYear !== undefined) dbSettings.min_year = settings.minYear;
     if (settings.maxYear !== undefined) dbSettings.max_year = settings.maxYear;
     if (settings.selectionScope !== undefined) dbSettings.selection_scope = settings.selectionScope;
-    if (settings.divisionConference !== undefined) dbSettings.division_conference = settings.divisionConference;
+    if (settings.divisionConference !== undefined)
+      dbSettings.division_conference = settings.divisionConference;
     if (settings.divisionName !== undefined) dbSettings.division_name = settings.divisionName;
     if (settings.gameType !== undefined) dbSettings.game_type = settings.gameType;
 
@@ -286,7 +357,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   setPlayers: (players) => {
     // Also update isHost based on whether current player is the host
     const currentPlayerId = get().currentPlayerId;
-    const currentPlayer = players.find(p => p.player_id === currentPlayerId);
+    const currentPlayer = players.find((p) => p.player_id === currentPlayerId);
     const isHost = currentPlayer?.is_host ?? false;
     set({ players, isHost });
   },
@@ -294,7 +365,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   updatePlayer: (updatedPlayer) => {
     set((state) => ({
       players: state.players.map((p) =>
-        p.player_id === updatedPlayer.player_id ? updatedPlayer : p
+        p.player_id === updatedPlayer.player_id ? updatedPlayer : p,
       ),
     }));
   },

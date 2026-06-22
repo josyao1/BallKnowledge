@@ -23,17 +23,23 @@ export function useMultiplayerGame({ code }: Options) {
   useLobbySubscription(lobby?.id || null);
 
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
     if (lobby) return;
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
+    findLobbyByCode(code).then((result) => {
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
       // If the game is over or not started, let the lobby waiting page handle routing.
       if (result.lobby.status !== 'playing') {
         navigate(`/lobby/${code}`);
         return;
       }
       setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
+      getLobbyPlayers(result.lobby.id).then((pr) => {
         if (pr.players) setPlayers(pr.players);
       });
     });

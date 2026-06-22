@@ -47,6 +47,6 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'ball-knowledge-settings',
-    }
-  )
+    },
+  ),
 );

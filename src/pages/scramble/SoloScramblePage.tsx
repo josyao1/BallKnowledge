@@ -17,22 +17,29 @@ export function SoloScramblePage() {
   const location = useLocation();
   const { sport, setSport } = useSettingsStore();
 
-  const locState = location.state as { careerTo?: number; minMpg?: number; minYards?: number; includeDefense?: boolean; gpSport?: Sport } | null;
+  const locState = location.state as {
+    careerTo?: number;
+    minMpg?: number;
+    minYards?: number;
+    includeDefense?: boolean;
+    gpSport?: Sport;
+  } | null;
   const scrambleFilters = useMemo(() => {
-    const f: { careerTo?: number; minMpg?: number; minYards?: number; includeDefense?: boolean } = {};
+    const f: { careerTo?: number; minMpg?: number; minYards?: number; includeDefense?: boolean } =
+      {};
     if (locState?.careerTo) f.careerTo = locState.careerTo;
-    if (locState?.minMpg)   f.minMpg   = locState.minMpg;
-    if (locState?.minYards) f.minYards  = locState.minYards;
+    if (locState?.minMpg) f.minMpg = locState.minMpg;
+    if (locState?.minYards) f.minYards = locState.minYards;
     if (locState?.includeDefense === false) f.includeDefense = false;
     return Object.keys(f).length ? f : undefined;
   }, []);
 
   const [scrambled, setScrambled] = useState('');
-  const [answer, setAnswer]       = useState('');
-  const [answerId, setAnswerId]   = useState<string | number | null>(null);
+  const [answer, setAnswer] = useState('');
+  const [answerId, setAnswerId] = useState<string | number | null>(null);
   const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, inputRef } = useGuessInput();
-  const [status, setStatus]       = useState<GameStatus>('loading');
-  const [streak, setStreak]       = useState(0);
+  const [status, setStatus] = useState<GameStatus>('loading');
+  const [streak, setStreak] = useState(0);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
 
   async function loadPlayer(currentSport: Sport) {
@@ -41,11 +48,15 @@ export function SoloScramblePage() {
     setFeedbackMsg('');
     setWrongGuesses([]);
 
-    const player = currentSport === 'nba'
-      ? await getRandomNBAScramblePlayer(scrambleFilters)
-      : await getRandomNFLScramblePlayer(scrambleFilters);
+    const player =
+      currentSport === 'nba'
+        ? await getRandomNBAScramblePlayer(scrambleFilters)
+        : await getRandomNFLScramblePlayer(scrambleFilters);
 
-    if (!player) { setStatus('loading'); return; }
+    if (!player) {
+      setStatus('loading');
+      return;
+    }
 
     setAnswer(player.player_name);
     setAnswerId((player as any).player_id ?? null);
@@ -54,7 +65,9 @@ export function SoloScramblePage() {
     setTimeout(() => inputRef.current?.focus(), 50);
   }
 
-  useEffect(() => { loadPlayer(sport); }, []);
+  useEffect(() => {
+    loadPlayer(sport);
+  }, []);
 
   function handleGuess() {
     if (status !== 'playing' || !guessInput.trim()) return;
@@ -62,10 +75,10 @@ export function SoloScramblePage() {
     setGuessInput('');
     if (areSimilarNames(name, answer)) {
       setStatus('correct');
-      setStreak(s => s + 1);
+      setStreak((s) => s + 1);
       setFeedbackMsg('');
     } else {
-      setWrongGuesses(prev => [...prev, name]);
+      setWrongGuesses((prev) => [...prev, name]);
       setFeedbackMsg('Not quite — try again');
       setTimeout(() => setFeedbackMsg(''), 1500);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -78,7 +91,9 @@ export function SoloScramblePage() {
     setStreak(0);
   }
 
-  function handleNext() { loadPlayer(sport); }
+  function handleNext() {
+    loadPlayer(sport);
+  }
 
   function handleBack() {
     navigate('/', { state: { openScramble: true, gpSport: sport } });
@@ -93,39 +108,63 @@ export function SoloScramblePage() {
     if (status !== 'correct' && status !== 'gave-up') return;
     let handler: ((e: KeyboardEvent) => void) | null = null;
     const t = setTimeout(() => {
-      handler = (e: KeyboardEvent) => { if (e.key === 'Enter') handleNext(); };
+      handler = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') handleNext();
+      };
       window.addEventListener('keydown', handler);
     }, 400);
-    return () => { clearTimeout(t); if (handler) window.removeEventListener('keydown', handler); };
+    return () => {
+      clearTimeout(t);
+      if (handler) window.removeEventListener('keydown', handler);
+    };
   }, [status, sport]);
 
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6 max-w-5xl mx-auto">
       {/* Header */}
-      <header className="capcrunch-panel mb-5 p-3 flex items-center gap-3" style={{ borderColor: `${COLOR}33` }}>
-        <button onClick={handleBack} className="text-white/40 hover:text-white transition-colors flex-shrink-0">
+      <header
+        className="capcrunch-panel mb-5 p-3 flex items-center gap-3"
+        style={{ borderColor: `${COLOR}33` }}
+      >
+        <button
+          onClick={handleBack}
+          className="text-white/40 hover:text-white transition-colors flex-shrink-0"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
 
         <div className="flex-1 text-center">
-          <h1 className="capcrunch-title text-xl" style={{ color: COLOR }}>Name Scramble</h1>
+          <h1 className="capcrunch-title text-xl" style={{ color: COLOR }}>
+            Name Scramble
+          </h1>
           {streak > 0 ? (
             <p className="capcrunch-kicker text-[9px] text-[#d4af37] mt-0.5">{streak} in a row</p>
           ) : locState?.careerTo ? (
-            <p className="capcrunch-kicker text-[9px] mt-0.5" style={{ color: `${COLOR}60` }}>{locState.careerTo}+ ERA</p>
+            <p className="capcrunch-kicker text-[9px] mt-0.5" style={{ color: `${COLOR}60` }}>
+              {locState.careerTo}+ ERA
+            </p>
           ) : null}
         </div>
 
         {/* Sport toggle */}
         <div className="flex gap-1 flex-shrink-0">
-          {(['nba', 'nfl'] as const).map(s => (
+          {(['nba', 'nfl'] as const).map((s) => (
             <button
               key={s}
               onClick={() => handleSportSwitch(s)}
               className="px-2.5 py-1 capcrunch-kicker text-[10px] border transition-all"
-              style={sport === s ? { backgroundColor: COLOR, borderColor: COLOR, color: '#fff' } : { borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.35)' }}
+              style={
+                sport === s
+                  ? { backgroundColor: COLOR, borderColor: COLOR, color: '#fff' }
+                  : { borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.35)' }
+              }
             >
               {s.toUpperCase()}
             </button>
@@ -136,14 +175,16 @@ export function SoloScramblePage() {
       {/* Loading */}
       {status === 'loading' && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: COLOR, borderTopColor: 'transparent' }} />
+          <div
+            className="w-8 h-8 border-4 rounded-full animate-spin"
+            style={{ borderColor: COLOR, borderTopColor: 'transparent' }}
+          />
         </div>
       )}
 
       {/* Game area */}
       {status !== 'loading' && (
         <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1.6fr_1fr] lg:gap-12 lg:items-center">
-
           {/* Left / Top: scrambled name display */}
           <motion.div
             key={scrambled}
@@ -184,7 +225,10 @@ export function SoloScramblePage() {
                   {wrongGuesses.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1 justify-center">
                       {wrongGuesses.map((g, i) => (
-                        <span key={i} className="capcrunch-kicker text-[9px] px-2 py-0.5 border border-red-800/50 text-red-400 bg-red-900/20">
+                        <span
+                          key={i}
+                          className="capcrunch-kicker text-[9px] px-2 py-0.5 border border-red-800/50 text-red-400 bg-red-900/20"
+                        >
                           {g}
                         </span>
                       ))}
@@ -201,7 +245,10 @@ export function SoloScramblePage() {
             {status === 'playing' && wrongGuesses.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-1">
                 {wrongGuesses.map((g, i) => (
-                  <span key={i} className="capcrunch-kicker text-[9px] px-2 py-0.5 border border-red-900/40 text-red-400 bg-red-900/15">
+                  <span
+                    key={i}
+                    className="capcrunch-kicker text-[9px] px-2 py-0.5 border border-red-900/40 text-red-400 bg-red-900/15"
+                  >
                     {g}
                   </span>
                 ))}
@@ -230,13 +277,17 @@ export function SoloScramblePage() {
                     ref={inputRef}
                     type="text"
                     value={guessInput}
-                    onChange={e => setGuessInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleGuess()}
+                    onChange={(e) => setGuessInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleGuess()}
                     placeholder="Type the player's name…"
                     className="flex-1 bg-black/40 border border-white/15 px-4 py-3 capcrunch-title text-sm text-white placeholder-white/25 focus:outline-none"
                     style={{ borderColor: `${COLOR}30` }}
-                    onFocus={e => { e.currentTarget.style.borderColor = `${COLOR}80`; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = `${COLOR}30`; }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = `${COLOR}80`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = `${COLOR}30`;
+                    }}
                   />
                   <button
                     onClick={handleGuess}

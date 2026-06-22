@@ -20,8 +20,11 @@ function loadNflHeadshots(): Promise<Record<string, string>> {
   if (_nflHeadshots) return Promise.resolve(_nflHeadshots);
   if (!_nflHeadshotsPromise) {
     _nflHeadshotsPromise = fetch('/data/nfl_headshots.json')
-      .then(r => r.json())
-      .then(data => { _nflHeadshots = data; return data; });
+      .then((r) => r.json())
+      .then((data) => {
+        _nflHeadshots = data;
+        return data;
+      });
   }
   return _nflHeadshotsPromise;
 }
@@ -60,9 +63,17 @@ function Silhouette() {
   );
 }
 
-export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, originY = 28, size = 320, className = '' }: Props) {
+export function ZoomedHeadshot({
+  playerId,
+  sport,
+  zoomLevel,
+  originX = 50,
+  originY = 28,
+  size = 320,
+  className = '',
+}: Props) {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
-  const [error, setError]   = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     setError(false);
@@ -71,7 +82,7 @@ export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, origi
     if (sport === 'nba') {
       setImgUrl(`https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`);
     } else {
-      loadNflHeadshots().then(map => {
+      loadNflHeadshots().then((map) => {
         setImgUrl(map[String(playerId)] ?? null);
       });
     }
@@ -84,7 +95,7 @@ export function ZoomedHeadshot({ playerId, sport, zoomLevel, originX = 50, origi
       className={`relative overflow-hidden bg-[#0e0e0e] ${className}`}
       style={{ width: size, height: size }}
     >
-      {(!imgUrl || error) ? (
+      {!imgUrl || error ? (
         <Silhouette />
       ) : (
         <img

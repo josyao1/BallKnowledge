@@ -38,17 +38,27 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
 
   return (
     <div className="px-4 py-2 border bg-black/60 border-[#3b82f6]/70 shadow-[0_0_16px_rgba(59,130,246,0.18)]">
-      <p className="capcrunch-kicker text-[8px] text-white/50 tracking-widest uppercase leading-none mb-1.5">Conference</p>
+      <p className="capcrunch-kicker text-[8px] text-white/50 tracking-widest uppercase leading-none mb-1.5">
+        Conference
+      </p>
 
       {/* College + pro conf side by side */}
       <div className="flex items-center gap-3">
         {/* College logo or name */}
         {CONFERENCE_LOGOS[confName] ? (
-          <div className={`px-1 py-0.5 flex-shrink-0 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
-            <img src={CONFERENCE_LOGOS[confName]} alt={confName} className={`${logoH} object-contain`} />
+          <div
+            className={`px-1 py-0.5 flex-shrink-0 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}
+          >
+            <img
+              src={CONFERENCE_LOGOS[confName]}
+              alt={confName}
+              className={`${logoH} object-contain`}
+            />
           </div>
         ) : (
-          <p className={`capcrunch-title text-[#3b82f6] leading-tight flex-shrink-0 ${confTextSize}`}>
+          <p
+            className={`capcrunch-title text-[#3b82f6] leading-tight flex-shrink-0 ${confTextSize}`}
+          >
             {confName}
           </p>
         )}
@@ -57,8 +67,12 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
         {nflConf && (
           <div className="flex items-center gap-1.5">
             <span className="capcrunch-kicker text-[9px] text-white/30">+</span>
-            <div className={`px-3 py-1 ${PRO_CONF_STYLES[nflConf] ?? 'bg-white/10 border border-white/20'}`}>
-              <span className={`capcrunch-title leading-none text-white ${proTextSize}`}>{nflConf}</span>
+            <div
+              className={`px-3 py-1 ${PRO_CONF_STYLES[nflConf] ?? 'bg-white/10 border border-white/20'}`}
+            >
+              <span className={`capcrunch-title leading-none text-white ${proTextSize}`}>
+                {nflConf}
+              </span>
             </div>
           </div>
         )}
@@ -72,7 +86,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
           </p>
         ) : (
           <button
-            onClick={() => setShowPanel(v => !v)}
+            onClick={() => setShowPanel((v) => !v)}
             className="capcrunch-kicker text-[8px] text-[#3b82f6]/60 hover:text-[#3b82f6] transition-colors"
           >
             {showPanel ? 'hide schools ▲' : 'see schools ▼'}
@@ -109,12 +123,20 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     {CONFERENCE_LOGOS[confName] && (
-                      <div className={`px-1 py-0.5 flex-shrink-0 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}>
-                        <img src={CONFERENCE_LOGOS[confName]} alt={confName} className="h-7 object-contain" />
+                      <div
+                        className={`px-1 py-0.5 flex-shrink-0 ${confName === 'Big Ten' ? 'bg-white/15' : ''}`}
+                      >
+                        <img
+                          src={CONFERENCE_LOGOS[confName]}
+                          alt={confName}
+                          className="h-7 object-contain"
+                        />
                       </div>
                     )}
                     <div>
-                      <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Qualifying Schools</p>
+                      <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">
+                        Qualifying Schools
+                      </p>
                       <p className="capcrunch-title text-sm text-[#3b82f6]">{confName}</p>
                     </div>
                   </div>
@@ -128,7 +150,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
 
                 {/* School grid — logos where available, text pill fallback */}
                 <div className="flex flex-wrap gap-2">
-                  {schools.map(school => {
+                  {schools.map((school) => {
                     const espnId = P4_SCHOOL_ESPN_IDS[school];
                     if (espnId && !imgErrors.has(school)) {
                       return (
@@ -141,7 +163,7 @@ export function ConferenceRoundCard({ confName, nflConf, size = 'sm' }: Props) {
                             src={`https://a.espncdn.com/i/teamlogos/ncaa/500/${espnId}.png`}
                             alt={school}
                             className="w-full h-full object-contain"
-                            onError={() => setImgErrors(prev => new Set(prev).add(school))}
+                            onError={() => setImgErrors((prev) => new Set(prev).add(school))}
                           />
                         </div>
                       );

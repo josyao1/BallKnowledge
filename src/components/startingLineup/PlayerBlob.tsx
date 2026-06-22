@@ -31,7 +31,11 @@ function collegeAbbr(college: string | null): string {
   if (!college) return '?';
   const words = college.split(/\s+/).filter(Boolean);
   if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
-  return words.map(w => w[0]).join('').toUpperCase().slice(0, 3);
+  return words
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 3);
 }
 
 const NAME_SUFFIXES = new Set(['jr.', 'sr.', 'ii', 'iii', 'iv', 'jr', 'sr']);
@@ -44,7 +48,14 @@ function displayLastName(name: string): string {
   return parts[i] || '?';
 }
 
-export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect, showHint }: Props) {
+export function PlayerBlob({
+  player,
+  encoding,
+  state,
+  onBonusGuess,
+  bonusCorrect,
+  showHint,
+}: Props) {
   const [guessInput, setGuessInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +100,9 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           <div className="text-[8px] md:text-[9px] text-white/90 font-semibold leading-tight truncate">
             {displayLastName(player.name)}
           </div>
-          <div className="text-[7px] md:text-[8px] text-green-400 capcrunch-kicker">{player.pos_abb}</div>
+          <div className="text-[7px] md:text-[8px] text-green-400 capcrunch-kicker">
+            {player.pos_abb}
+          </div>
         </div>
       </motion.div>
     );
@@ -106,8 +119,18 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           transition={{ type: 'spring', stiffness: 420, damping: 18 }}
         >
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-700 border-2 border-green-400 flex items-center justify-center shadow-lg">
-            <svg className="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            <svg
+              className="w-5 h-5 text-green-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </div>
           <div className="text-[8px] text-green-400 capcrunch-kicker text-center max-w-[60px] leading-tight truncate">
@@ -125,12 +148,17 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
               ref={inputRef}
               type="text"
               value={guessInput}
-              onChange={e => setGuessInput(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setGuessInput(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') submitGuess();
-                if (e.key === 'Escape') { setIsOpen(false); setGuessInput(''); }
+                if (e.key === 'Escape') {
+                  setIsOpen(false);
+                  setGuessInput('');
+                }
               }}
-              onBlur={() => { if (!guessInput.trim()) setIsOpen(false); }}
+              onBlur={() => {
+                if (!guessInput.trim()) setIsOpen(false);
+              }}
               placeholder="Name..."
               className="w-full bg-[#1a2a1a] border border-green-600 rounded px-2 py-1 text-[10px] text-white placeholder-white/30 focus:outline-none focus:border-green-400"
             />
@@ -150,7 +178,9 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
         whileTap={{ scale: 0.93 }}
       >
         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#1c2e1c] border-2 border-dashed border-green-600/60 flex items-center justify-center group-hover:border-green-400 group-hover:bg-[#1a3a1a] transition-all shadow">
-          <span className="capcrunch-title text-lg text-green-500/60 group-hover:text-green-400">?</span>
+          <span className="capcrunch-title text-lg text-green-500/60 group-hover:text-green-400">
+            ?
+          </span>
         </div>
         <div className="text-[7px] text-green-600/50 capcrunch-kicker">{player.pos_abb}</div>
       </motion.button>
@@ -167,7 +197,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
               src={`https://a.espncdn.com/i/teamlogos/ncaa/500/${player.college_espn_id}.png`}
               alt={player.college || ''}
               className="w-7 h-7 md:w-9 md:h-9 object-contain"
-              onError={e => {
+              onError={(e) => {
                 // Fallback to text abbreviation if logo fails to load
                 const target = e.currentTarget;
                 target.style.display = 'none';
@@ -197,9 +227,7 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
       }
       case 'draft': {
         if (!player.draft_pick) {
-          return (
-            <span className="text-[8px] text-white/40 capcrunch-kicker">UDFA</span>
-          );
+          return <span className="text-[8px] text-white/40 capcrunch-kicker">UDFA</span>;
         }
         return (
           <div className="flex flex-col items-center leading-none">
@@ -227,7 +255,9 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
           </div>
         )}
       </div>
-      <div className="text-[7px] md:text-[8px] text-white/30 capcrunch-kicker">{player.pos_abb}</div>
+      <div className="text-[7px] md:text-[8px] text-white/30 capcrunch-kicker">
+        {player.pos_abb}
+      </div>
       {showHint && player.ppg != null && (
         <div className="text-[7px] text-[#fdb927]/70 capcrunch-kicker leading-none">
           {player.ppg.toFixed(1)} PPG
@@ -235,7 +265,10 @@ export function PlayerBlob({ player, encoding, state, onBonusGuess, bonusCorrect
       )}
       {showHint && player.ppg == null && (
         <div className="text-[7px] text-[#fdb927]/70 capcrunch-kicker leading-none tracking-wider">
-          {player.name.split(' ').map(w => w[0]?.toUpperCase() ?? '').join('.')}
+          {player.name
+            .split(' ')
+            .map((w) => w[0]?.toUpperCase() ?? '')
+            .join('.')}
         </div>
       )}
     </div>

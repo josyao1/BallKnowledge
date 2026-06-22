@@ -9,10 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
-import {
-  findLobbyByCode,
-  getLobbyPlayers,
-} from '../../services/lobby';
+import { findLobbyByCode, getLobbyPlayers } from '../../services/lobby';
 import type { LobbyPlayer } from '../../types/database';
 import { GradBanner } from '../../components/GradWeekOverlay';
 
@@ -33,13 +30,13 @@ export function MultiplayerCapCrunchResultsPage() {
     }
 
     if (!lobby) {
-      findLobbyByCode(code).then(result => {
+      findLobbyByCode(code).then((result) => {
         if (!result.lobby) {
           navigate('/');
           return;
         }
         setLobby(result.lobby);
-        getLobbyPlayers(result.lobby.id).then(pr => {
+        getLobbyPlayers(result.lobby.id).then((pr) => {
           if (pr.players) setPlayers(pr.players);
         });
       });
@@ -78,7 +75,9 @@ export function MultiplayerCapCrunchResultsPage() {
         {/* HEADER */}
         <header className="capcrunch-panel px-5 py-4 mb-4">
           <p className="capcrunch-kicker text-[9px] text-white/30 mb-1">Cap Crunch</p>
-          <h1 className="capcrunch-title text-3xl md:text-5xl text-white leading-none">Final Rankings</h1>
+          <h1 className="capcrunch-title text-3xl md:text-5xl text-white leading-none">
+            Final Rankings
+          </h1>
         </header>
         <GradBanner />
 
@@ -92,7 +91,9 @@ export function MultiplayerCapCrunchResultsPage() {
             style={{ borderColor: 'rgba(253,241,0,0.3)' }}
           >
             <p className="capcrunch-kicker text-[9px] text-[#FDF100]/60 mb-3">Match Champion</p>
-            <h2 className="capcrunch-title text-3xl md:text-5xl text-white mb-1">{champion.player.player_name}</h2>
+            <h2 className="capcrunch-title text-3xl md:text-5xl text-white mb-1">
+              {champion.player.player_name}
+            </h2>
             <p className="capcrunch-title text-xl md:text-2xl text-[#FDF100]">
               {champion.wins} Win{champion.wins !== 1 ? 's' : ''}
             </p>
@@ -103,7 +104,9 @@ export function MultiplayerCapCrunchResultsPage() {
         <div className="capcrunch-panel flex flex-col overflow-hidden mb-4 flex-1">
           <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
             <span className="capcrunch-kicker text-[9px] text-white/40">Final Standings</span>
-            <span className="capcrunch-kicker text-[9px] text-white/20">{rankings.length} Players</span>
+            <span className="capcrunch-kicker text-[9px] text-white/20">
+              {rankings.length} Players
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 md:p-5 max-h-96 lg:max-h-none">
@@ -125,7 +128,9 @@ export function MultiplayerCapCrunchResultsPage() {
                       {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${entry.rank}.`}
                     </span>
                     <div>
-                      <p className={`capcrunch-title text-sm md:text-base ${idx === 0 ? 'text-[#FDF100]' : 'text-white'}`}>
+                      <p
+                        className={`capcrunch-title text-sm md:text-base ${idx === 0 ? 'text-[#FDF100]' : 'text-white'}`}
+                      >
                         {entry.player.player_name}
                       </p>
                       <p className="capcrunch-kicker text-[8px] text-white/35">

@@ -28,65 +28,73 @@ export interface StatCategoryDef {
 // ─── Category definitions ─────────────────────────────────────────────────────
 
 export const NBA_STAT_CATEGORIES: StatCategoryDef[] = [
-  { key: 'total_pts', label: 'Total Points',      shortLabel: 'PTS', sport: 'nba' },
-  { key: 'total_reb', label: 'Total Rebounds',    shortLabel: 'REB', sport: 'nba' },
-  { key: 'total_ast', label: 'Total Assists',     shortLabel: 'AST', sport: 'nba' },
-  { key: 'total_stl', label: 'Total Steals',      shortLabel: 'STL', sport: 'nba' },
-  { key: 'total_blk', label: 'Total Blocks',      shortLabel: 'BLK', sport: 'nba' },
-  { key: 'total_3pm', label: '3-Pointers Made',   shortLabel: '3PM', sport: 'nba' },
-  { key: 'total_ftm', label: 'Free Throws Made',  shortLabel: 'FTM', sport: 'nba' },
+  { key: 'total_pts', label: 'Total Points', shortLabel: 'PTS', sport: 'nba' },
+  { key: 'total_reb', label: 'Total Rebounds', shortLabel: 'REB', sport: 'nba' },
+  { key: 'total_ast', label: 'Total Assists', shortLabel: 'AST', sport: 'nba' },
+  { key: 'total_stl', label: 'Total Steals', shortLabel: 'STL', sport: 'nba' },
+  { key: 'total_blk', label: 'Total Blocks', shortLabel: 'BLK', sport: 'nba' },
+  { key: 'total_3pm', label: '3-Pointers Made', shortLabel: '3PM', sport: 'nba' },
+  { key: 'total_ftm', label: 'Free Throws Made', shortLabel: 'FTM', sport: 'nba' },
 ];
 
 /** NFL categories for team-cumulative mode: combined fantasy_pts instead of per-position. */
 export const NFL_TEAM_STAT_CATEGORIES: StatCategoryDef[] = [
-  { key: 'passing_yards',   label: 'Passing Yards',        shortLabel: 'PASS YDS', sport: 'nfl' },
-  { key: 'passing_tds',     label: 'Passing TDs',          shortLabel: 'PASS TDs', sport: 'nfl' },
-  { key: 'interceptions',   label: 'Interceptions Thrown', shortLabel: 'INTs',     sport: 'nfl' },
-  { key: 'rushing_yards',   label: 'Rushing Yards',        shortLabel: 'RUSH YDS', sport: 'nfl' },
-  { key: 'rushing_tds',     label: 'Rushing TDs',          shortLabel: 'RUSH TDs', sport: 'nfl' },
-  { key: 'receiving_yards', label: 'Receiving Yards',      shortLabel: 'REC YDS',  sport: 'nfl' },
-  { key: 'receiving_tds',   label: 'Receiving TDs',        shortLabel: 'REC TDs',  sport: 'nfl' },
-  { key: 'receptions',      label: 'Receptions',           shortLabel: 'REC',      sport: 'nfl' },
-  { key: 'fantasy_pts',     label: 'Fantasy Points (PPR)', shortLabel: 'FPTS',     sport: 'nfl' },
+  { key: 'passing_yards', label: 'Passing Yards', shortLabel: 'PASS YDS', sport: 'nfl' },
+  { key: 'passing_tds', label: 'Passing TDs', shortLabel: 'PASS TDs', sport: 'nfl' },
+  { key: 'interceptions', label: 'Interceptions Thrown', shortLabel: 'INTs', sport: 'nfl' },
+  { key: 'rushing_yards', label: 'Rushing Yards', shortLabel: 'RUSH YDS', sport: 'nfl' },
+  { key: 'rushing_tds', label: 'Rushing TDs', shortLabel: 'RUSH TDs', sport: 'nfl' },
+  { key: 'receiving_yards', label: 'Receiving Yards', shortLabel: 'REC YDS', sport: 'nfl' },
+  { key: 'receiving_tds', label: 'Receiving TDs', shortLabel: 'REC TDs', sport: 'nfl' },
+  { key: 'receptions', label: 'Receptions', shortLabel: 'REC', sport: 'nfl' },
+  { key: 'fantasy_pts', label: 'Fantasy Points (PPR)', shortLabel: 'FPTS', sport: 'nfl' },
 ];
 
 export const NFL_STAT_CATEGORIES: StatCategoryDef[] = [
-  { key: 'passing_yards',    label: 'Passing Yards',        shortLabel: 'PASS YDS', sport: 'nfl' },
-  { key: 'passing_tds',      label: 'Passing TDs',          shortLabel: 'PASS TDs', sport: 'nfl' },
-  { key: 'interceptions',    label: 'Interceptions Thrown', shortLabel: 'INTs',     sport: 'nfl' },
-  { key: 'rushing_yards',    label: 'Rushing Yards',        shortLabel: 'RUSH YDS', sport: 'nfl' },
-  { key: 'rushing_tds',      label: 'Rushing TDs',          shortLabel: 'RUSH TDs', sport: 'nfl' },
-  { key: 'receiving_yards',  label: 'Receiving Yards',      shortLabel: 'REC YDS',  sport: 'nfl' },
-  { key: 'receiving_tds',    label: 'Receiving TDs',        shortLabel: 'REC TDs',  sport: 'nfl' },
-  { key: 'receptions',       label: 'Receptions',           shortLabel: 'REC',      sport: 'nfl' },
-  { key: 'fantasy_pts_qb',   label: 'Fantasy Points (QB)',  shortLabel: 'FPTS',  sport: 'nfl' },
-  { key: 'fantasy_pts_rb',   label: 'Fantasy Points (RB)',  shortLabel: 'FPTS',  sport: 'nfl' },
-  { key: 'fantasy_pts_wr',   label: 'Fantasy Points (WR)',  shortLabel: 'FPTS',  sport: 'nfl' },
-  { key: 'fantasy_pts_te',   label: 'Fantasy Points (TE)',  shortLabel: 'FPTS',  sport: 'nfl' },
-  { key: 'award_mvp',        label: 'AP MVP Voting',        shortLabel: 'AP MVP',   sport: 'nfl' },
-  { key: 'award_opoy',       label: 'AP Off. Player of Year', shortLabel: 'OPOY',   sport: 'nfl' },
-  { key: 'award_oroy',       label: 'AP Off. Rookie of Year', shortLabel: 'OROY',   sport: 'nfl' },
+  { key: 'passing_yards', label: 'Passing Yards', shortLabel: 'PASS YDS', sport: 'nfl' },
+  { key: 'passing_tds', label: 'Passing TDs', shortLabel: 'PASS TDs', sport: 'nfl' },
+  { key: 'interceptions', label: 'Interceptions Thrown', shortLabel: 'INTs', sport: 'nfl' },
+  { key: 'rushing_yards', label: 'Rushing Yards', shortLabel: 'RUSH YDS', sport: 'nfl' },
+  { key: 'rushing_tds', label: 'Rushing TDs', shortLabel: 'RUSH TDs', sport: 'nfl' },
+  { key: 'receiving_yards', label: 'Receiving Yards', shortLabel: 'REC YDS', sport: 'nfl' },
+  { key: 'receiving_tds', label: 'Receiving TDs', shortLabel: 'REC TDs', sport: 'nfl' },
+  { key: 'receptions', label: 'Receptions', shortLabel: 'REC', sport: 'nfl' },
+  { key: 'fantasy_pts_qb', label: 'Fantasy Points (QB)', shortLabel: 'FPTS', sport: 'nfl' },
+  { key: 'fantasy_pts_rb', label: 'Fantasy Points (RB)', shortLabel: 'FPTS', sport: 'nfl' },
+  { key: 'fantasy_pts_wr', label: 'Fantasy Points (WR)', shortLabel: 'FPTS', sport: 'nfl' },
+  { key: 'fantasy_pts_te', label: 'Fantasy Points (TE)', shortLabel: 'FPTS', sport: 'nfl' },
+  { key: 'award_mvp', label: 'AP MVP Voting', shortLabel: 'AP MVP', sport: 'nfl' },
+  { key: 'award_opoy', label: 'AP Off. Player of Year', shortLabel: 'OPOY', sport: 'nfl' },
+  { key: 'award_oroy', label: 'AP Off. Rookie of Year', shortLabel: 'OROY', sport: 'nfl' },
 ];
 
 // Minimum stat value to qualify (avoids 1-game cameos dominating low-traffic categories)
 const NFL_MIN_QUALIFY: Record<string, number> = {
-  passing_yards: 200, passing_tds: 1, interceptions: 1,
-  rushing_yards: 50,  rushing_tds: 1,
-  receiving_yards: 50, receiving_tds: 1, receptions: 10,
+  passing_yards: 200,
+  passing_tds: 1,
+  interceptions: 1,
+  rushing_yards: 50,
+  rushing_tds: 1,
+  receiving_yards: 50,
+  receiving_tds: 1,
+  receptions: 10,
 };
 
 // PPR fantasy points scoring
 function calcFantasyPts(season: any): number {
-  return Math.round((
-    (Number(season.passing_yards)  || 0) * 0.04 +
-    (Number(season.passing_tds)    || 0) * 4 +
-    (Number(season.interceptions)  || 0) * -2 +
-    (Number(season.rushing_yards)  || 0) * 0.1 +
-    (Number(season.rushing_tds)    || 0) * 6 +
-    (Number(season.receptions)     || 0) * 1 +
-    (Number(season.receiving_yards)|| 0) * 0.1 +
-    (Number(season.receiving_tds)  || 0) * 6
-  ) * 10) / 10;
+  return (
+    Math.round(
+      ((Number(season.passing_yards) || 0) * 0.04 +
+        (Number(season.passing_tds) || 0) * 4 +
+        (Number(season.interceptions) || 0) * -2 +
+        (Number(season.rushing_yards) || 0) * 0.1 +
+        (Number(season.rushing_tds) || 0) * 6 +
+        (Number(season.receptions) || 0) * 1 +
+        (Number(season.receiving_yards) || 0) * 0.1 +
+        (Number(season.receiving_tds) || 0) * 6) *
+        10,
+    ) / 10
+  );
 }
 
 // ─── Franchise alias resolution ───────────────────────────────────────────────
@@ -95,7 +103,7 @@ function resolveNBATeam(abbr: string): string {
   const aliases = NBA_FRANCHISE_ALIASES[abbr];
   if (aliases) {
     for (const a of aliases) {
-      if (teams.find(t => t.abbreviation === a)) return a;
+      if (teams.find((t) => t.abbreviation === a)) return a;
     }
   }
   return abbr;
@@ -105,7 +113,7 @@ function resolveNFLTeam(abbr: string): string {
   const aliases = NFL_FRANCHISE_ALIASES[abbr];
   if (aliases) {
     for (const a of aliases) {
-      if (nflTeams.find(t => t.abbreviation === a)) return a;
+      if (nflTeams.find((t) => t.abbreviation === a)) return a;
     }
   }
   return abbr;
@@ -115,7 +123,9 @@ function resolveNFLTeam(abbr: string): string {
 function nbaTeamInDivision(teamStr: string, conference: string, division: string): boolean {
   for (const part of teamStr.split('/')) {
     const canonical = resolveNBATeam(part.trim());
-    const team = teams.find(t => t.abbreviation === canonical) ?? teams.find(t => t.abbreviation === part.trim());
+    const team =
+      teams.find((t) => t.abbreviation === canonical) ??
+      teams.find((t) => t.abbreviation === part.trim());
     if (team && team.conference === conference && team.division === division) return true;
   }
   return false;
@@ -124,7 +134,9 @@ function nbaTeamInDivision(teamStr: string, conference: string, division: string
 function nflTeamInDivision(teamStr: string, conference: string, division: string): boolean {
   for (const part of teamStr.split('/')) {
     const canonical = resolveNFLTeam(part.trim());
-    const team = nflTeams.find(t => t.abbreviation === canonical) ?? nflTeams.find(t => t.abbreviation === part.trim());
+    const team =
+      nflTeams.find((t) => t.abbreviation === canonical) ??
+      nflTeams.find((t) => t.abbreviation === part.trim());
     if (team && team.conference === conference && team.division === division) return true;
   }
   return false;
@@ -151,7 +163,7 @@ function nbaDisplayTeam(teamStr: string, conference?: string, division?: string)
   if (!conference || !division) return teamStr.split('/')[0];
   for (const part of teamStr.split('/')) {
     const canonical = resolveNBATeam(part.trim());
-    const team = teams.find(t => t.abbreviation === canonical);
+    const team = teams.find((t) => t.abbreviation === canonical);
     if (team && team.conference === conference && team.division === division) return canonical;
   }
   return resolveNBATeam(teamStr.split('/')[0]);
@@ -161,7 +173,7 @@ function nflDisplayTeam(teamStr: string, conference?: string, division?: string)
   if (!conference || !division) return teamStr.split('/')[0];
   for (const part of teamStr.split('/')) {
     const canonical = resolveNFLTeam(part.trim());
-    const team = nflTeams.find(t => t.abbreviation === canonical);
+    const team = nflTeams.find((t) => t.abbreviation === canonical);
     if (team && team.conference === conference && team.division === division) return canonical;
   }
   return resolveNFLTeam(teamStr.split('/')[0]);
@@ -200,13 +212,15 @@ export async function getTopTen(
   // Award voting — hardcoded, not derived from career stats
   if (category in AWARD_CATEGORY_KEYS) {
     const raw = getAwardEntries(category, year);
-    return Promise.all(raw.map(async e => ({
-      playerName: e.name,
-      playerId:   await nflIdByName(e.name),
-      stat:       e.rank,
-      team:       e.team,
-      year:       String(year),
-    })));
+    return Promise.all(
+      raw.map(async (e) => ({
+        playerName: e.name,
+        playerId: await nflIdByName(e.name),
+        stat: e.rank,
+        team: e.team,
+        year: String(year),
+      })),
+    );
   }
 
   if (sport === 'nba') {
@@ -275,8 +289,15 @@ export async function getTopTen(
   }
 }
 
-
-type DivSumEntry = { playerName: string; playerId: number | string; total: number; team: string; latestYr: number; earliestYr: number; teamTotals?: Record<string, number> };
+type DivSumEntry = {
+  playerName: string;
+  playerId: number | string;
+  total: number;
+  team: string;
+  latestYr: number;
+  earliestYr: number;
+  teamTotals?: Record<string, number>;
+};
 
 function bestTeam(teamTotals: Record<string, number>): string {
   return Object.entries(teamTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
@@ -294,16 +315,18 @@ export async function getTopTenDivision(
 ): Promise<TopTenEntry[]> {
   // Award categories are league-wide — pick the most recent year in the window that has data
   if (category in AWARD_CATEGORY_KEYS) {
-    const awardYears = getAwardYears().filter(y => y >= yearFrom && y <= yearTo);
+    const awardYears = getAwardYears().filter((y) => y >= yearFrom && y <= yearTo);
     const targetYear = awardYears.length ? Math.max(...awardYears) : yearTo;
     const raw = getAwardEntries(category, targetYear);
-    return Promise.all(raw.map(async e => ({
-      playerName: e.name,
-      playerId:   await nflIdByName(e.name),
-      stat:       e.rank,
-      team:       e.team,
-      year:       String(targetYear),
-    })));
+    return Promise.all(
+      raw.map(async (e) => ({
+        playerName: e.name,
+        playerId: await nflIdByName(e.name),
+        stat: e.rank,
+        team: e.team,
+        year: String(targetYear),
+      })),
+    );
   }
 
   if (sport === 'nba') {
@@ -322,16 +345,37 @@ export async function getTopTenDivision(
         const existing = sums.get(player.player_id);
         if (singleSeason) {
           if (!existing || stat > existing.total) {
-            sums.set(player.player_id, { playerName: player.player_name, playerId: player.player_id, total: stat, team, latestYr: yr, earliestYr: yr });
+            sums.set(player.player_id, {
+              playerName: player.player_name,
+              playerId: player.player_id,
+              total: stat,
+              team,
+              latestYr: yr,
+              earliestYr: yr,
+            });
           }
         } else if (existing) {
-          const teamTotals = { ...(existing.teamTotals ?? {}), [team]: ((existing.teamTotals ?? {})[team] ?? 0) + stat };
-          sums.set(player.player_id, { ...existing, total: existing.total + stat, teamTotals,
+          const teamTotals = {
+            ...(existing.teamTotals ?? {}),
+            [team]: ((existing.teamTotals ?? {})[team] ?? 0) + stat,
+          };
+          sums.set(player.player_id, {
+            ...existing,
+            total: existing.total + stat,
+            teamTotals,
             ...(yr > existing.latestYr ? { latestYr: yr } : {}),
             ...(yr < existing.earliestYr ? { earliestYr: yr } : {}),
           });
         } else {
-          sums.set(player.player_id, { playerName: player.player_name, playerId: player.player_id, total: stat, team, latestYr: yr, earliestYr: yr, teamTotals: { [team]: stat } });
+          sums.set(player.player_id, {
+            playerName: player.player_name,
+            playerId: player.player_id,
+            total: stat,
+            team,
+            latestYr: yr,
+            earliestYr: yr,
+            teamTotals: { [team]: stat },
+          });
         }
       }
     }
@@ -339,32 +383,68 @@ export async function getTopTenDivision(
     return Array.from(sums.values())
       .sort((a, b) => b.total - a.total)
       .slice(0, 10)
-      .map(({ playerName, playerId, total, team: entryTeam, teamTotals, earliestYr, latestYr }) => ({
-        playerName, playerId, stat: total,
-        team: singleSeason ? entryTeam : bestTeam(teamTotals ?? {}),
-        year: singleSeason
-          ? `${earliestYr}-${String(earliestYr + 1).slice(-2)}`
-          : (earliestYr === latestYr ? String(earliestYr) : `${earliestYr}–${latestYr}`),
-      }));
+      .map(
+        ({ playerName, playerId, total, team: entryTeam, teamTotals, earliestYr, latestYr }) => ({
+          playerName,
+          playerId,
+          stat: total,
+          team: singleSeason ? entryTeam : bestTeam(teamTotals ?? {}),
+          year: singleSeason
+            ? `${earliestYr}-${String(earliestYr + 1).slice(-2)}`
+            : earliestYr === latestYr
+              ? String(earliestYr)
+              : `${earliestYr}–${latestYr}`,
+        }),
+      );
   } else {
     const players = await loadNFLLineupPool();
     const sums = new Map<string, DivSumEntry>();
 
-    function accumulate(id: string, name: string, stat: number, team: string, yr: number, round = false) {
+    function accumulate(
+      id: string,
+      name: string,
+      stat: number,
+      team: string,
+      yr: number,
+      round = false,
+    ) {
       const existing = sums.get(id);
       if (singleSeason) {
         if (!existing || stat > existing.total) {
-          sums.set(id, { playerName: name, playerId: id, total: round ? Math.round(stat * 10) / 10 : stat, team, latestYr: yr, earliestYr: yr });
+          sums.set(id, {
+            playerName: name,
+            playerId: id,
+            total: round ? Math.round(stat * 10) / 10 : stat,
+            team,
+            latestYr: yr,
+            earliestYr: yr,
+          });
         }
       } else if (existing) {
-        const newTotal = round ? Math.round((existing.total + stat) * 10) / 10 : existing.total + stat;
-        const teamTotals = { ...(existing.teamTotals ?? {}), [team]: ((existing.teamTotals ?? {})[team] ?? 0) + stat };
-        sums.set(id, { ...existing, total: newTotal, teamTotals,
+        const newTotal = round
+          ? Math.round((existing.total + stat) * 10) / 10
+          : existing.total + stat;
+        const teamTotals = {
+          ...(existing.teamTotals ?? {}),
+          [team]: ((existing.teamTotals ?? {})[team] ?? 0) + stat,
+        };
+        sums.set(id, {
+          ...existing,
+          total: newTotal,
+          teamTotals,
           ...(yr > existing.latestYr ? { latestYr: yr } : {}),
           ...(yr < existing.earliestYr ? { earliestYr: yr } : {}),
         });
       } else {
-        sums.set(id, { playerName: name, playerId: id, total: stat, team, latestYr: yr, earliestYr: yr, teamTotals: { [team]: stat } });
+        sums.set(id, {
+          playerName: name,
+          playerId: id,
+          total: stat,
+          team,
+          latestYr: yr,
+          earliestYr: yr,
+          teamTotals: { [team]: stat },
+        });
       }
     }
 
@@ -378,7 +458,14 @@ export async function getTopTenDivision(
           if (!nflTeamInDivision(season.team, conference, division)) continue;
           const stat = calcFantasyPts(season);
           if (stat <= 0) continue;
-          accumulate(player.player_id, player.player_name, stat, nflDisplayTeam(season.team, conference, division), yr, true);
+          accumulate(
+            player.player_id,
+            player.player_name,
+            stat,
+            nflDisplayTeam(season.team, conference, division),
+            yr,
+            true,
+          );
         }
       }
     } else {
@@ -390,7 +477,13 @@ export async function getTopTenDivision(
           if (!nflTeamInDivision(season.team, conference, division)) continue;
           const stat = (season as any)[category] as number | undefined;
           if (!stat || stat < minQual) continue;
-          accumulate(player.player_id, player.player_name, stat, nflDisplayTeam(season.team, conference, division), yr);
+          accumulate(
+            player.player_id,
+            player.player_name,
+            stat,
+            nflDisplayTeam(season.team, conference, division),
+            yr,
+          );
         }
       }
     }
@@ -398,11 +491,15 @@ export async function getTopTenDivision(
     return Array.from(sums.values())
       .sort((a, b) => b.total - a.total)
       .slice(0, 10)
-      .map(({ playerName, playerId, total, team: entryTeam, teamTotals, earliestYr, latestYr }) => ({
-        playerName, playerId, stat: total,
-        team: singleSeason ? entryTeam : bestTeam(teamTotals ?? {}),
-        year: earliestYr === latestYr ? String(earliestYr) : `${earliestYr}–${latestYr}`,
-      }));
+      .map(
+        ({ playerName, playerId, total, team: entryTeam, teamTotals, earliestYr, latestYr }) => ({
+          playerName,
+          playerId,
+          stat: total,
+          team: singleSeason ? entryTeam : bestTeam(teamTotals ?? {}),
+          year: earliestYr === latestYr ? String(earliestYr) : `${earliestYr}–${latestYr}`,
+        }),
+      );
   }
 }
 
@@ -416,7 +513,6 @@ export async function getTopTenTeam(
   limit: number,
   singleSeason = false,
 ): Promise<TopTenEntry[]> {
-
   if (sport === 'nba') {
     const players = await loadNBALineupPool();
     const sums = new Map<number, DivSumEntry>();
@@ -431,12 +527,33 @@ export async function getTopTenTeam(
         const existing = sums.get(player.player_id);
         if (singleSeason) {
           if (!existing || stat > existing.total) {
-            sums.set(player.player_id, { playerName: player.player_name, playerId: player.player_id, total: stat, team: teamAbbr, latestYr: yr, earliestYr: yr });
+            sums.set(player.player_id, {
+              playerName: player.player_name,
+              playerId: player.player_id,
+              total: stat,
+              team: teamAbbr,
+              latestYr: yr,
+              earliestYr: yr,
+            });
           }
         } else {
-          sums.set(player.player_id, existing
-            ? { ...existing, total: existing.total + stat, ...(yr > existing.latestYr ? { latestYr: yr } : {}), ...(yr < existing.earliestYr ? { earliestYr: yr } : {}) }
-            : { playerName: player.player_name, playerId: player.player_id, total: stat, team: teamAbbr, latestYr: yr, earliestYr: yr }
+          sums.set(
+            player.player_id,
+            existing
+              ? {
+                  ...existing,
+                  total: existing.total + stat,
+                  ...(yr > existing.latestYr ? { latestYr: yr } : {}),
+                  ...(yr < existing.earliestYr ? { earliestYr: yr } : {}),
+                }
+              : {
+                  playerName: player.player_name,
+                  playerId: player.player_id,
+                  total: stat,
+                  team: teamAbbr,
+                  latestYr: yr,
+                  earliestYr: yr,
+                },
           );
         }
       }
@@ -448,7 +565,9 @@ export async function getTopTenTeam(
       .map(({ playerName, playerId, total, earliestYr, latestYr }) => {
         const yr = singleSeason
           ? `${earliestYr}-${String(earliestYr + 1).slice(-2)}`
-          : (earliestYr === latestYr ? `${earliestYr}–${earliestYr + 1}` : `${earliestYr}–${latestYr + 1}`);
+          : earliestYr === latestYr
+            ? `${earliestYr}–${earliestYr + 1}`
+            : `${earliestYr}–${latestYr + 1}`;
         return { playerName, playerId, stat: total, team: teamAbbr, year: yr };
       });
   } else {
@@ -459,16 +578,31 @@ export async function getTopTenTeam(
       const existing = sums.get(id);
       if (singleSeason) {
         if (!existing || stat > existing.total) {
-          sums.set(id, { playerName: name, playerId: id, total: round ? Math.round(stat * 10) / 10 : stat, team: teamAbbr, latestYr: yr, earliestYr: yr });
+          sums.set(id, {
+            playerName: name,
+            playerId: id,
+            total: round ? Math.round(stat * 10) / 10 : stat,
+            team: teamAbbr,
+            latestYr: yr,
+            earliestYr: yr,
+          });
         }
       } else if (existing) {
-        sums.set(id, { ...existing,
+        sums.set(id, {
+          ...existing,
           total: round ? Math.round((existing.total + stat) * 10) / 10 : existing.total + stat,
           ...(yr > existing.latestYr ? { latestYr: yr } : {}),
           ...(yr < existing.earliestYr ? { earliestYr: yr } : {}),
         });
       } else {
-        sums.set(id, { playerName: name, playerId: id, total: stat, team: teamAbbr, latestYr: yr, earliestYr: yr });
+        sums.set(id, {
+          playerName: name,
+          playerId: id,
+          total: stat,
+          team: teamAbbr,
+          latestYr: yr,
+          earliestYr: yr,
+        });
       }
     }
 
@@ -519,25 +653,35 @@ function weightedRandom(cats: StatCategoryDef[], weights: number[]): StatCategor
   return cats[cats.length - 1];
 }
 
-export function pickRandomCategory(sport: 'nba' | 'nfl', mode: 'league' | 'division' | 'team' = 'league', excludeKeys: string[] = []): StatCategoryDef {
+export function pickRandomCategory(
+  sport: 'nba' | 'nfl',
+  mode: 'league' | 'division' | 'team' = 'league',
+  excludeKeys: string[] = [],
+): StatCategoryDef {
   let cats: StatCategoryDef[];
   if (sport === 'nba') cats = NBA_STAT_CATEGORIES;
   else if (mode === 'team') cats = NFL_TEAM_STAT_CATEGORIES;
-  else if (mode === 'division') cats = NFL_STAT_CATEGORIES.filter(c => !c.key.startsWith('award_'));
+  else if (mode === 'division')
+    cats = NFL_STAT_CATEGORIES.filter((c) => !c.key.startsWith('award_'));
   else cats = NFL_STAT_CATEGORIES;
 
   // Exclude recently seen categories; fall back to full pool if all are excluded.
-  const pool = excludeKeys.length > 0 ? (cats.filter(c => !excludeKeys.includes(c.key)) || []) : cats;
+  const pool =
+    excludeKeys.length > 0 ? cats.filter((c) => !excludeKeys.includes(c.key)) || [] : cats;
   const candidates = pool.length > 0 ? pool : cats;
 
   // Passing stats are QB-only so they repeat in restricted pools — down-weight them.
   // Team mode: heavy reduction (0.3×). Division mode: mild reduction (0.6×).
   // Award categories are rare/novelty — down-weight them in all NFL modes (0.3×).
   if (sport === 'nfl') {
-    const passingWeight = (mode === 'team' || mode === 'division') ? (mode === 'team' ? 0.3 : 0.6) : 1;
-    return weightedRandom(candidates, candidates.map(c =>
-      c.key.startsWith('award_') ? 0.3 : PASSING_KEYS.has(c.key) ? passingWeight : 1
-    ));
+    const passingWeight =
+      mode === 'team' || mode === 'division' ? (mode === 'team' ? 0.3 : 0.6) : 1;
+    return weightedRandom(
+      candidates,
+      candidates.map((c) =>
+        c.key.startsWith('award_') ? 0.3 : PASSING_KEYS.has(c.key) ? passingWeight : 1,
+      ),
+    );
   }
 
   return candidates[Math.floor(Math.random() * candidates.length)];
@@ -550,8 +694,11 @@ export function getAvailableYears(sport: 'nba' | 'nfl', category?: string): numb
 }
 
 export function getCategoryDef(sport: 'nba' | 'nfl', key: string): StatCategoryDef | undefined {
-  if (sport === 'nba') return NBA_STAT_CATEGORIES.find(c => c.key === key);
-  return NFL_STAT_CATEGORIES.find(c => c.key === key) ?? NFL_TEAM_STAT_CATEGORIES.find(c => c.key === key);
+  if (sport === 'nba') return NBA_STAT_CATEGORIES.find((c) => c.key === key);
+  return (
+    NFL_STAT_CATEGORIES.find((c) => c.key === key) ??
+    NFL_TEAM_STAT_CATEGORIES.find((c) => c.key === key)
+  );
 }
 
 export function formatStat(stat: number, categoryKey: string): string {
@@ -582,7 +729,7 @@ export async function getPlayerSuggestions(
     seen.add(name);
     const nameNorm = normalize(name);
     const words = nameNorm.split(' ');
-    if (nameNorm.startsWith(norm) || words.some(w => w.length >= 2 && w.startsWith(norm))) {
+    if (nameNorm.startsWith(norm) || words.some((w) => w.length >= 2 && w.startsWith(norm))) {
       results.push(name);
       if (results.length >= limit) break;
     }
@@ -639,9 +786,11 @@ export async function findPlayerInPool(
 export function calcTeamBoardLimit(categoryKey: string, windowYears: number): number {
   if (categoryKey === 'fantasy_pts') return 10;
   const step = (windowYears - 5) / 5;
-  if (['passing_yards', 'passing_tds', 'interceptions'].includes(categoryKey)) return Math.min(10, 4 + step);
-  if (['rushing_yards', 'rushing_tds'].includes(categoryKey))                   return Math.min(10, 6 + step);
-  if (['receiving_yards', 'receiving_tds', 'receptions'].includes(categoryKey)) return Math.min(10, 8 + step);
+  if (['passing_yards', 'passing_tds', 'interceptions'].includes(categoryKey))
+    return Math.min(10, 4 + step);
+  if (['rushing_yards', 'rushing_tds'].includes(categoryKey)) return Math.min(10, 6 + step);
+  if (['receiving_yards', 'receiving_tds', 'receptions'].includes(categoryKey))
+    return Math.min(10, 8 + step);
   return Math.min(10, 6 + step); // NBA stats
 }
 
@@ -659,7 +808,12 @@ export function parseRoundFlags(cs: Record<string, any>): {
   const isDivisionRound = Boolean(cs.is_division_round);
   const isTeamRound = Boolean(cs.is_team_round) || cs.top_ten_round_type === 'team';
   const isSingleSeason = Boolean(cs.is_single_season);
-  return { isDivisionRound, isTeamRound, isCumulativeRound: isDivisionRound || isTeamRound, isSingleSeason };
+  return {
+    isDivisionRound,
+    isTeamRound,
+    isCumulativeRound: isDivisionRound || isTeamRound,
+    isSingleSeason,
+  };
 }
 
 // ─── generateTopTenRound ──────────────────────────────────────────────────────
@@ -691,7 +845,9 @@ export interface GenerateRoundResult {
 }
 
 /** Picks a random category + generates the top-10 list for the given round config. */
-export async function generateTopTenRound(config: GenerateRoundConfig): Promise<GenerateRoundResult> {
+export async function generateTopTenRound(
+  config: GenerateRoundConfig,
+): Promise<GenerateRoundResult> {
   const { sport, roundType } = config;
   const windowYears = config.windowYears ?? 10;
   const singleSeason = config.divisionMode === 'single_season';
@@ -714,13 +870,25 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
     const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
     const allTeams = sport === 'nba' ? teams : nflTeams;
     const recentTeamAbbrs = config.recentTeamAbbrs ?? [];
-    const eligibleTeams = recentTeamAbbrs.length > 0 ? allTeams.filter((t: any) => !recentTeamAbbrs.includes(t.abbreviation)) : allTeams;
+    const eligibleTeams =
+      recentTeamAbbrs.length > 0
+        ? allTeams.filter((t: any) => !recentTeamAbbrs.includes(t.abbreviation))
+        : allTeams;
     const teamPool = (eligibleTeams as typeof allTeams).length > 0 ? eligibleTeams : allTeams;
     const picked = config.pinnedTeam
-      ? (allTeams.find((t: any) => t.abbreviation === config.pinnedTeam) ?? teamPool[Math.floor(Math.random() * teamPool.length)])
+      ? (allTeams.find((t: any) => t.abbreviation === config.pinnedTeam) ??
+        teamPool[Math.floor(Math.random() * teamPool.length)])
       : teamPool[Math.floor(Math.random() * teamPool.length)];
     teamAbbr = picked.abbreviation;
-    entries = await getTopTenTeam(sport, cat.key, teamAbbr, fromYear, currentYear, calcTeamBoardLimit(cat.key, windowYears), singleSeason);
+    entries = await getTopTenTeam(
+      sport,
+      cat.key,
+      teamAbbr,
+      fromYear,
+      currentYear,
+      calcTeamBoardLimit(cat.key, windowYears),
+      singleSeason,
+    );
     roundInfo = `${picked.name} · last ${windowYears} years`;
     isTeamRound = true;
     isSingleSeason = singleSeason;
@@ -729,7 +897,15 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
     const fromYear = sport === 'nba' ? currentYear - windowYears : currentYear - windowYears + 1;
     const divs = sport === 'nba' ? getNBADivisions() : getNFLDivisions();
     const div = config.pinnedDivision ?? divs[Math.floor(Math.random() * divs.length)];
-    entries = await getTopTenDivision(sport, cat.key, div.conference, div.division, fromYear, currentYear, singleSeason);
+    entries = await getTopTenDivision(
+      sport,
+      cat.key,
+      div.conference,
+      div.division,
+      fromYear,
+      currentYear,
+      singleSeason,
+    );
     roundInfo = `${div.conference} ${div.division} · last ${windowYears} years`;
     if (entries.length >= 5) {
       isDivisionRound = true;
@@ -737,10 +913,11 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
     } else {
       const year = years[Math.floor(Math.random() * years.length)];
       entries = await getTopTen(sport, cat.key, year);
-      roundInfo = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
+      roundInfo =
+        sport === 'nba' ? `${year}-${String(year + 1).slice(-2)} season` : `${year} season`;
     }
   } else {
-    const filtered = years.filter(y => y >= minYear && y <= maxYear);
+    const filtered = years.filter((y) => y >= minYear && y <= maxYear);
     const pool = filtered.length > 0 ? filtered : years;
     const year = pool[Math.floor(Math.random() * pool.length)];
     entries = await getTopTen(sport, cat.key, year);
@@ -762,5 +939,14 @@ export async function generateTopTenRound(config: GenerateRoundConfig): Promise<
 
   const catLabel = cat.label;
 
-  return { entries, cat, catLabel, roundInfo, isDivisionRound, isTeamRound, isSingleSeason, teamAbbr };
+  return {
+    entries,
+    cat,
+    catLabel,
+    roundInfo,
+    isDivisionRound,
+    isTeamRound,
+    isSingleSeason,
+    teamAbbr,
+  };
 }

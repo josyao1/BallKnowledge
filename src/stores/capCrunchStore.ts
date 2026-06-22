@@ -15,7 +15,7 @@ interface LineupIsRightStore {
     currentPlayerId: string,
     playerNames: Record<string, string>,
     sport: Sport,
-    win_target: number
+    win_target: number,
   ) => void;
   selectPlayer: (playerSeason: PlayerSeason) => void;
   passTurn: () => void;

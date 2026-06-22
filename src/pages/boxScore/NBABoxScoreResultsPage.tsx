@@ -31,7 +31,8 @@ export function NBABoxScoreResultsPage() {
   const homeColor = getNBATeamColor(game.home_team);
   const awayColor = getNBATeamColor(game.away_team);
 
-  let totalRows = 0, correctRows = 0;
+  let totalRows = 0,
+    correctRows = 0;
   for (const side of ['home', 'away'] as const) {
     game.box_score[side].forEach((p, i) => {
       totalRows++;
@@ -39,28 +40,41 @@ export function NBABoxScoreResultsPage() {
     });
   }
 
-  const pct = totalRows > 0 ? Math.round(correctRows / totalRows * 100) : 0;
-  const message = correctRows === totalRows ? 'Perfect game!'
-    : correctRows >= Math.floor(totalRows * 0.7) ? 'Great job!'
-    : correctRows >= Math.floor(totalRows * 0.4) ? 'Not bad!'
-    : 'Keep practicing!';
+  const pct = totalRows > 0 ? Math.round((correctRows / totalRows) * 100) : 0;
+  const message =
+    correctRows === totalRows
+      ? 'Perfect game!'
+      : correctRows >= Math.floor(totalRows * 0.7)
+        ? 'Great job!'
+        : correctRows >= Math.floor(totalRows * 0.4)
+          ? 'Not bad!'
+          : 'Keep practicing!';
 
   return (
     <div className="min-h-screen home-chalkboard text-white">
       <header className="sticky top-0 z-20 capcrunch-panel border-b border-white/10 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/')} className="p-1.5 text-[#555] hover:text-white transition-colors shrink-0">
+        <button
+          onClick={() => navigate('/')}
+          className="p-1.5 text-[#555] hover:text-white transition-colors shrink-0"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
         </button>
         <div className="flex-1 text-center">
-          <span className="capcrunch-title text-xl" style={{ color: '#FDF100' }}>RESULTS</span>
+          <span className="capcrunch-title text-xl" style={{ color: '#FDF100' }}>
+            RESULTS
+          </span>
         </div>
         <div className="w-8 shrink-0" />
       </header>
 
       <div className="max-w-5xl mx-auto px-3 py-4 space-y-4">
-
         {/* Score card */}
         <div
           className="relative overflow-hidden p-6 flex flex-col items-center gap-2"
@@ -69,11 +83,17 @@ export function NBABoxScoreResultsPage() {
             border: '1px solid rgba(253,241,0,0.2)',
           }}
         >
-          <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.4em] uppercase">Final Score</div>
-          <div className="capcrunch-title text-7xl text-[#FDF100] tabular-nums leading-none">
-            {correctRows}<span className="text-4xl text-[#444]">/{totalRows}</span>
+          <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.4em] uppercase">
+            Final Score
           </div>
-          <div className="capcrunch-kicker text-sm" style={{ color: pct === 100 ? '#4ade80' : '#666' }}>
+          <div className="capcrunch-title text-7xl text-[#FDF100] tabular-nums leading-none">
+            {correctRows}
+            <span className="text-4xl text-[#444]">/{totalRows}</span>
+          </div>
+          <div
+            className="capcrunch-kicker text-sm"
+            style={{ color: pct === 100 ? '#4ade80' : '#666' }}
+          >
             {pct}% · {message}
           </div>
         </div>
@@ -82,12 +102,14 @@ export function NBABoxScoreResultsPage() {
 
         {/* Box score columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(['away', 'home'] as const).map(side => {
-            const color   = side === 'home' ? homeColor : awayColor;
-            const abbr    = side === 'home' ? game.home_team : game.away_team;
+          {(['away', 'home'] as const).map((side) => {
+            const color = side === 'home' ? homeColor : awayColor;
+            const abbr = side === 'home' ? game.home_team : game.away_team;
             const players = game.box_score[side];
             const leaders = computeLeaders(players);
-            const correct = players.filter((p, i) => areSimilarNames(guesses[nbk(side, i)] ?? '', p.name)).length;
+            const correct = players.filter((p, i) =>
+              areSimilarNames(guesses[nbk(side, i)] ?? '', p.name),
+            ).length;
 
             return (
               <div
@@ -100,14 +122,24 @@ export function NBABoxScoreResultsPage() {
               >
                 <div
                   className="flex items-center gap-3 px-4 py-3 border-b"
-                  style={{ background: `linear-gradient(90deg, ${color}25 0%, transparent 80%)`, borderColor: `${color}20` }}
+                  style={{
+                    background: `linear-gradient(90deg, ${color}25 0%, transparent 80%)`,
+                    borderColor: `${color}20`,
+                  }}
                 >
                   <NBATeamLogo abbr={abbr} className="w-9 h-9 object-contain shrink-0" />
                   <div>
-                    <div className="capcrunch-title text-xl leading-none" style={{ color }}>{abbr}</div>
-                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">{side}</div>
+                    <div className="capcrunch-title text-xl leading-none" style={{ color }}>
+                      {abbr}
+                    </div>
+                    <div className="capcrunch-kicker text-[9px] text-[#555] tracking-widest uppercase mt-0.5">
+                      {side}
+                    </div>
                   </div>
-                  <div className="ml-auto capcrunch-kicker text-[10px] tracking-wider" style={{ color: correct === players.length ? '#4ade80' : '#555' }}>
+                  <div
+                    className="ml-auto capcrunch-kicker text-[10px] tracking-wider"
+                    style={{ color: correct === players.length ? '#4ade80' : '#555' }}
+                  >
                     {correct}/{players.length}
                   </div>
                 </div>

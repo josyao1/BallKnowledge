@@ -14,7 +14,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useGameStore } from '../../stores/gameStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
-import { resetLobbyForNewRound, findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins, markPlayerFinished } from '../../services/lobby';
+import {
+  resetLobbyForNewRound,
+  findLobbyByCode,
+  getLobbyPlayers,
+  updateLobbyStatus,
+  incrementPlayerWins,
+  markPlayerFinished,
+} from '../../services/lobby';
 import {
   buildScoringEntities,
   computeEntityBonuses,
@@ -42,7 +49,15 @@ const PLAYER_COLORS = [
 export function MultiplayerResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { lobby, players, currentPlayerId, isHost, reset: resetLobby, setLobby, setPlayers } = useLobbyStore();
+  const {
+    lobby,
+    players,
+    currentPlayerId,
+    isHost,
+    reset: resetLobby,
+    setLobby,
+    setPlayers,
+  } = useLobbyStore();
   const { currentRoster, divisionRosters, divisionTeams, resetGame } = useGameStore();
   const [isResetting, setIsResetting] = useState(false);
   const [isForcingEnd, setIsForcingEnd] = useState(false);
@@ -81,7 +96,7 @@ export function MultiplayerResultsPage() {
   // Check if all players have finished
   const allPlayersFinished = useMemo(() => {
     if (players.length === 0) return false;
-    return players.every(p => p.finished_at !== null);
+    return players.every((p) => p.finished_at !== null);
   }, [players]);
 
   // Fetch fresh player data on mount and poll until all have finished
@@ -92,7 +107,7 @@ export function MultiplayerResultsPage() {
       const result = await getLobbyPlayers(lobby.id);
       if (result.players) {
         setPlayers(result.players);
-        const allFinished = result.players.every(p => p.finished_at !== null);
+        const allFinished = result.players.every((p) => p.finished_at !== null);
         if (allFinished && lobby.status === 'playing') {
           await updateLobbyStatus(lobby.id, 'finished');
         }
@@ -122,8 +137,8 @@ export function MultiplayerResultsPage() {
   const handleForceEnd = useCallback(async () => {
     if (!lobby || isForcingEnd) return;
     setIsForcingEnd(true);
-    const unfinished = players.filter(p => p.finished_at === null);
-    await Promise.all(unfinished.map(p => markPlayerFinished(lobby.id, p.player_id)));
+    const unfinished = players.filter((p) => p.finished_at === null);
+    await Promise.all(unfinished.map((p) => markPlayerFinished(lobby.id, p.player_id)));
     setIsForcingEnd(false);
   }, [lobby, players, isForcingEnd]);
 
@@ -155,17 +170,20 @@ export function MultiplayerResultsPage() {
   const entityBonuses = useMemo(() => computeEntityBonuses(entities), [entities]);
 
   const showBonuses = entities.length >= 3;
-  const hasMultiplierPlayers = players.some(p => (p.score_multiplier ?? 1) !== 1);
+  const hasMultiplierPlayers = players.some((p) => (p.score_multiplier ?? 1) !== 1);
 
   // Get effective score for an entity (applies score_multiplier for solo; team already has weighted score)
-  const getEffectiveEntityScore = useCallback((entity: ScoringEntity): number => {
-    const bonus = entityBonuses.get(entity.entityId) || 0;
-    if (entity.type === 'solo') {
-      const base = entity.player.score + bonus;
-      return base * (entity.player.score_multiplier ?? 1);
-    }
-    return getEntityScore(entity) + bonus;
-  }, [entityBonuses]);
+  const getEffectiveEntityScore = useCallback(
+    (entity: ScoringEntity): number => {
+      const bonus = entityBonuses.get(entity.entityId) || 0;
+      if (entity.type === 'solo') {
+        const base = entity.player.score + bonus;
+        return base * (entity.player.score_multiplier ?? 1);
+      }
+      return getEntityScore(entity) + bonus;
+    },
+    [entityBonuses],
+  );
 
   // Sort entities by total score descending; break ties by fewest incorrect guesses
   const { sortedEntities, tiebreakerUsed } = useMemo(() => {
@@ -195,7 +213,7 @@ export function MultiplayerResultsPage() {
     const firstTotal = getEffectiveEntityScore(first);
     const firstIncorrect = getEntityIncorrectGuesses(first).length;
 
-    return sortedEntities.filter(e => {
+    return sortedEntities.filter((e) => {
       const total = getEffectiveEntityScore(e);
       const incorrect = getEntityIncorrectGuesses(e).length;
       return total === firstTotal && incorrect === firstIncorrect;
@@ -204,18 +222,28 @@ export function MultiplayerResultsPage() {
 
   const isTie = winnerEntities.length > 1;
   const winnerTotal = winnerEntities[0] ? getEffectiveEntityScore(winnerEntities[0]) : 0;
-  const winnerBonus = winnerEntities[0] ? (entityBonuses.get(winnerEntities[0].entityId) || 0) : 0;
-  const winnerIncorrect = winnerEntities[0] ? getEntityIncorrectGuesses(winnerEntities[0]).length : 0;
+  const winnerBonus = winnerEntities[0] ? entityBonuses.get(winnerEntities[0].entityId) || 0 : 0;
+  const winnerIncorrect = winnerEntities[0]
+    ? getEntityIncorrectGuesses(winnerEntities[0]).length
+    : 0;
   const winnerGuessedCount = winnerEntities[0] ? getEntityGuessedCount(winnerEntities[0]) : 0;
 
   // Current player's rank
-  const currentEntityRank = sortedEntities.findIndex(e => isCurrentPlayerInEntity(e, currentPlayerId)) + 1;
-  const currentIsWinner = winnerEntities.some(e => isCurrentPlayerInEntity(e, currentPlayerId));
+  const currentEntityRank =
+    sortedEntities.findIndex((e) => isCurrentPlayerInEntity(e, currentPlayerId)) + 1;
+  const currentIsWinner = winnerEntities.some((e) => isCurrentPlayerInEntity(e, currentPlayerId));
 
   // Increment wins for all winners (host only, once per game)
   // Individual wins: all members of a winning team get +1
   useEffect(() => {
-    if (!isHost || !allPlayersFinished || winnerEntities.length === 0 || !lobby || hasIncrementedWins.current) return;
+    if (
+      !isHost ||
+      !allPlayersFinished ||
+      winnerEntities.length === 0 ||
+      !lobby ||
+      hasIncrementedWins.current
+    )
+      return;
 
     hasIncrementedWins.current = true;
     for (const entity of winnerEntities) {
@@ -231,9 +259,12 @@ export function MultiplayerResultsPage() {
 
   // Build roster breakdown - which individual players guessed each roster player
   const rosterBreakdown = useMemo(() => {
-    const breakdown: Map<string, { playerId: string; displayName: string; color: string; initial: string }[]> = new Map();
+    const breakdown: Map<
+      string,
+      { playerId: string; displayName: string; color: string; initial: string }[]
+    > = new Map();
 
-    currentRoster.forEach(rosterPlayer => {
+    currentRoster.forEach((rosterPlayer) => {
       breakdown.set(rosterPlayer.name, []);
     });
 
@@ -241,11 +272,11 @@ export function MultiplayerResultsPage() {
     const entityColors: Map<string, string> = new Map();
     let soloColorIndex = 0;
 
-    sortedEntities.forEach(entity => {
+    sortedEntities.forEach((entity) => {
       if (entity.type === 'team') {
         const color = entity.team.color.bg;
         entityColors.set(entity.entityId, color);
-        entity.team.members.forEach(m => entityColors.set(m.player_id, color));
+        entity.team.members.forEach((m) => entityColors.set(m.player_id, color));
       } else {
         const color = PLAYER_COLORS[soloColorIndex % PLAYER_COLORS.length];
         entityColors.set(entity.entityId, color);
@@ -255,18 +286,23 @@ export function MultiplayerResultsPage() {
     });
 
     // Fill in who guessed each roster player (by individual player, not entity)
-    sortedEntities.forEach(entity => {
+    sortedEntities.forEach((entity) => {
       if (entity.type === 'team') {
         // For teams, attribute each guess to the specific member who made it
-        entity.team.members.forEach(member => {
+        entity.team.members.forEach((member) => {
           const memberGuesses = member.guessed_players || [];
           const color = entityColors.get(member.player_id) || '#888';
           const initial = member.player_name.charAt(0).toUpperCase();
 
-          memberGuesses.forEach(guessedName => {
+          memberGuesses.forEach((guessedName) => {
             const existing = breakdown.get(guessedName);
-            if (existing && !existing.some(e => e.playerId === member.player_id)) {
-              existing.push({ playerId: member.player_id, displayName: member.player_name, color, initial });
+            if (existing && !existing.some((e) => e.playerId === member.player_id)) {
+              existing.push({
+                playerId: member.player_id,
+                displayName: member.player_name,
+                color,
+                initial,
+              });
             }
           });
         });
@@ -276,10 +312,15 @@ export function MultiplayerResultsPage() {
         const color = entityColors.get(player.player_id) || '#888';
         const initial = player.player_name.charAt(0).toUpperCase();
 
-        guesses.forEach(guessedName => {
+        guesses.forEach((guessedName) => {
           const existing = breakdown.get(guessedName);
-          if (existing && !existing.some(e => e.playerId === player.player_id)) {
-            existing.push({ playerId: player.player_id, displayName: player.player_name, color, initial });
+          if (existing && !existing.some((e) => e.playerId === player.player_id)) {
+            existing.push({
+              playerId: player.player_id,
+              displayName: player.player_name,
+              color,
+              initial,
+            });
           }
         });
       }
@@ -341,7 +382,7 @@ export function MultiplayerResultsPage() {
   }
 
   if (!allPlayersFinished) {
-    const finishedCount = players.filter(p => p.finished_at !== null).length;
+    const finishedCount = players.filter((p) => p.finished_at !== null).length;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center home-chalkboard">
         <div className="relative z-10 text-center space-y-6">
@@ -353,15 +394,19 @@ export function MultiplayerResultsPage() {
             </p>
           </div>
           <div className="space-y-2">
-            {players.map(player => (
+            {players.map((player) => (
               <div
                 key={player.player_id}
                 className={`flex items-center justify-between px-4 py-2 ${
-                  player.finished_at ? 'bg-emerald-900/30 border border-emerald-700/50' : 'bg-black/30 border border-white/10'
+                  player.finished_at
+                    ? 'bg-emerald-900/30 border border-emerald-700/50'
+                    : 'bg-black/30 border border-white/10'
                 }`}
               >
                 <span className="capcrunch-kicker text-sm text-white/70">{player.player_name}</span>
-                <span className={`text-xs ${player.finished_at ? 'text-emerald-400' : 'text-white/30'}`}>
+                <span
+                  className={`text-xs ${player.finished_at ? 'text-emerald-400' : 'text-white/30'}`}
+                >
                   {player.finished_at ? '✓ Finished' : 'Playing...'}
                 </span>
               </div>
@@ -383,15 +428,14 @@ export function MultiplayerResultsPage() {
 
   return (
     <div className="min-h-screen flex flex-col home-chalkboard text-white relative overflow-hidden">
-
       {/* Header */}
       <header className="relative z-10 p-6 capcrunch-panel border-b border-white/10">
         <div className="text-center">
-          <h1 className="capcrunch-title text-4xl text-[#FDF100]">
-            Final Score
-          </h1>
+          <h1 className="capcrunch-title text-4xl text-[#FDF100]">Final Score</h1>
           <p className="capcrunch-kicker text-[9px] text-white/30 mt-1">
-            {lobby.selection_scope === 'division' && lobby.division_conference && lobby.division_name
+            {lobby.selection_scope === 'division' &&
+            lobby.division_conference &&
+            lobby.division_name
               ? `${lobby.division_conference} ${lobby.division_name} • ${lobby.season}`
               : `${lobby.team_abbreviation} • ${lobby.season}`}
           </p>
@@ -412,7 +456,7 @@ export function MultiplayerResultsPage() {
             </div>
             <div className="capcrunch-title text-4xl text-[#FDF100]">
               {isTie
-                ? winnerEntities.map(e => getEntityDisplayName(e)).join(' & ')
+                ? winnerEntities.map((e) => getEntityDisplayName(e)).join(' & ')
                 : getEntityDisplayName(winnerEntities[0])}
             </div>
             <div className="capcrunch-title text-2xl text-white mt-2">
@@ -422,16 +466,21 @@ export function MultiplayerResultsPage() {
               )}
             </div>
             <div className="text-white/40 text-sm capcrunch-kicker">
-              {currentRoster.length > 0 ? Math.round((winnerGuessedCount / currentRoster.length) * 100) : 0}% of roster
+              {currentRoster.length > 0
+                ? Math.round((winnerGuessedCount / currentRoster.length) * 100)
+                : 0}
+              % of roster
             </div>
             {isTie && (
               <div className="text-amber-400 text-xs capcrunch-kicker mt-2 tracking-wider">
-                Tied with {winnerTotal} points and {winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'}
+                Tied with {winnerTotal} points and {winnerIncorrect} incorrect{' '}
+                {winnerIncorrect === 1 ? 'guess' : 'guesses'}
               </div>
             )}
             {tiebreakerUsed && !isTie && (
               <div className="text-amber-400 text-xs capcrunch-kicker mt-2 tracking-wider">
-                Won by tiebreaker ({winnerIncorrect} incorrect {winnerIncorrect === 1 ? 'guess' : 'guesses'})
+                Won by tiebreaker ({winnerIncorrect} incorrect{' '}
+                {winnerIncorrect === 1 ? 'guess' : 'guesses'})
               </div>
             )}
           </motion.div>
@@ -449,7 +498,9 @@ export function MultiplayerResultsPage() {
           </div>
           {showBonuses && (
             <div className="text-xs text-white/30 text-center mb-2">
-              {isTeamMode ? '+1 bonus for each unique guess (teams = one)' : '+1 bonus for each unique guess'}
+              {isTeamMode
+                ? '+1 bonus for each unique guess (teams = one)'
+                : '+1 bonus for each unique guess'}
             </div>
           )}
           {tiebreakerUsed && (
@@ -465,11 +516,14 @@ export function MultiplayerResultsPage() {
           <div className="space-y-2">
             {sortedEntities.map((entity, index) => {
               const isCurrent = isCurrentPlayerInEntity(entity, currentPlayerId);
-              const isWinner = winnerEntities.some(w => w.entityId === entity.entityId);
+              const isWinner = winnerEntities.some((w) => w.entityId === entity.entityId);
               const bonus = entityBonuses.get(entity.entityId) || 0;
               const effectiveScore = getEffectiveEntityScore(entity);
               const guessedCount = getEntityGuessedCount(entity);
-              const percentage = currentRoster.length > 0 ? Math.round((guessedCount / currentRoster.length) * 100) : 0;
+              const percentage =
+                currentRoster.length > 0
+                  ? Math.round((guessedCount / currentRoster.length) * 100)
+                  : 0;
               const incorrectCount = getEntityIncorrectGuesses(entity).length;
               const displayRank = isWinner ? 1 : index + 1;
 
@@ -485,8 +539,8 @@ export function MultiplayerResultsPage() {
                       isWinner
                         ? 'bg-[#FDF100]/10 border-[#FDF100]/40'
                         : isCurrent
-                        ? 'bg-[#FDF100]/5 border-[#FDF100]/20'
-                        : 'bg-black/30 border-white/10'
+                          ? 'bg-[#FDF100]/5 border-[#FDF100]/20'
+                          : 'bg-black/30 border-white/10'
                     }`}
                     style={{
                       borderLeftWidth: '4px',
@@ -500,10 +554,10 @@ export function MultiplayerResultsPage() {
                             isWinner
                               ? 'bg-[#FDF100] text-black'
                               : displayRank === 2
-                              ? 'bg-gray-400 text-black'
-                              : displayRank === 3
-                              ? 'bg-amber-700 text-white'
-                              : 'bg-black/50 text-white/40 border border-white/10'
+                                ? 'bg-gray-400 text-black'
+                                : displayRank === 3
+                                  ? 'bg-amber-700 text-white'
+                                  : 'bg-black/50 text-white/40 border border-white/10'
                           }`}
                         >
                           {displayRank}
@@ -514,8 +568,10 @@ export function MultiplayerResultsPage() {
                               className="w-3.5 h-3.5 rounded-full"
                               style={{ backgroundColor: team.color.bg }}
                             />
-                            <span className={`capcrunch-kicker font-medium ${isCurrent ? 'text-[#FDF100]' : 'text-white/90'}`}>
-                              {team.members.map(m => m.player_name).join(' & ')}
+                            <span
+                              className={`capcrunch-kicker font-medium ${isCurrent ? 'text-[#FDF100]' : 'text-white/90'}`}
+                            >
+                              {team.members.map((m) => m.player_name).join(' & ')}
                             </span>
                           </div>
                           <div className="text-[10px] text-white/40 capcrunch-kicker mt-0.5">
@@ -524,21 +580,30 @@ export function MultiplayerResultsPage() {
                               <span className="text-emerald-400 ml-2">+{bonus} unique</span>
                             )}
                             {(tiebreakerUsed || isTie) && (
-                              <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>
+                              <span className="text-amber-400/70 ml-2">
+                                • {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}
+                              </span>
                             )}
                           </div>
                           {/* Individual member scores */}
                           <div className="flex gap-3 mt-1.5">
-                            {team.members.map(member => (
-                              <span key={member.player_id} className="text-[9px] text-white/30 capcrunch-kicker">
+                            {team.members.map((member) => (
+                              <span
+                                key={member.player_id}
+                                className="text-[9px] text-white/30 capcrunch-kicker"
+                              >
                                 {member.player_name}: {member.score}
-                                {member.player_id === currentPlayerId && <span className="text-white/50"> (you)</span>}
+                                {member.player_id === currentPlayerId && (
+                                  <span className="text-white/50"> (you)</span>
+                                )}
                               </span>
                             ))}
                           </div>
                         </div>
                       </div>
-                      <div className={`capcrunch-title text-3xl ${isWinner ? 'text-[#FDF100]' : 'text-white'}`}>
+                      <div
+                        className={`capcrunch-title text-3xl ${isWinner ? 'text-[#FDF100]' : 'text-white'}`}
+                      >
                         {effectiveScore}
                       </div>
                     </div>
@@ -560,10 +625,10 @@ export function MultiplayerResultsPage() {
                     isWinner
                       ? 'bg-[#FDF100]/10 border-[#FDF100]/40'
                       : isCurrentPlayer
-                      ? 'bg-[#FDF100]/5 border-[#FDF100]/20'
-                      : (player.score_multiplier ?? 1) > 1
-                      ? 'bg-purple-900/20 border-purple-500/30'
-                      : 'bg-black/30 border-white/10'
+                        ? 'bg-[#FDF100]/5 border-[#FDF100]/20'
+                        : (player.score_multiplier ?? 1) > 1
+                          ? 'bg-purple-900/20 border-purple-500/30'
+                          : 'bg-black/30 border-white/10'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -572,19 +637,27 @@ export function MultiplayerResultsPage() {
                         isWinner
                           ? 'bg-[#FDF100] text-black'
                           : displayRank === 2
-                          ? 'bg-gray-400 text-black'
-                          : displayRank === 3
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-black/50 text-white/40 border border-white/10'
+                            ? 'bg-gray-400 text-black'
+                            : displayRank === 3
+                              ? 'bg-amber-700 text-white'
+                              : 'bg-black/50 text-white/40 border border-white/10'
                       }`}
                     >
                       {displayRank}
                     </div>
                     <div>
-                      <div className={`capcrunch-kicker font-medium ${isCurrentPlayer ? 'text-[#FDF100]' : 'text-white/90'}`}>
+                      <div
+                        className={`capcrunch-kicker font-medium ${isCurrentPlayer ? 'text-[#FDF100]' : 'text-white/90'}`}
+                      >
                         {player.player_name}
-                        {isCurrentPlayer && <span className="text-[10px] ml-2 text-white/40">(you)</span>}
-                        {(player.score_multiplier ?? 1) > 1 && <span className="text-[10px] ml-2 text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">{player.score_multiplier}x</span>}
+                        {isCurrentPlayer && (
+                          <span className="text-[10px] ml-2 text-white/40">(you)</span>
+                        )}
+                        {(player.score_multiplier ?? 1) > 1 && (
+                          <span className="text-[10px] ml-2 text-purple-400 px-1 py-0.5 bg-purple-900/40 rounded">
+                            {player.score_multiplier}x
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-white/40 capcrunch-kicker">
                         {player.guessed_count}/{currentRoster.length} found ({percentage}%)
@@ -592,15 +665,21 @@ export function MultiplayerResultsPage() {
                           <span className="text-emerald-400 ml-2">+{bonus} unique</span>
                         )}
                         {(player.score_multiplier ?? 1) > 1 && (
-                          <span className="text-purple-400 ml-2">×{player.score_multiplier} = {effectiveScore}</span>
+                          <span className="text-purple-400 ml-2">
+                            ×{player.score_multiplier} = {effectiveScore}
+                          </span>
                         )}
                         {(tiebreakerUsed || isTie) && (
-                          <span className="text-amber-400/70 ml-2">• {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}</span>
+                          <span className="text-amber-400/70 ml-2">
+                            • {incorrectCount} miss{incorrectCount !== 1 ? 'es' : ''}
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className={`capcrunch-title text-3xl ${isWinner ? 'text-[#FDF100]' : 'text-white'}`}>
+                  <div
+                    className={`capcrunch-title text-3xl ${isWinner ? 'text-[#FDF100]' : 'text-white'}`}
+                  >
                     {effectiveScore}
                   </div>
                 </motion.div>
@@ -617,12 +696,17 @@ export function MultiplayerResultsPage() {
             transition={{ delay: 0.5 }}
             className="text-center text-white/50 capcrunch-kicker"
           >
-            You finished in <span className="text-[#FDF100] font-bold">{currentEntityRank}{getOrdinalSuffix(currentEntityRank)}</span> place!
+            You finished in{' '}
+            <span className="text-[#FDF100] font-bold">
+              {currentEntityRank}
+              {getOrdinalSuffix(currentEntityRank)}
+            </span>{' '}
+            place!
           </motion.div>
         )}
 
         {/* Incorrect Guesses Comparison */}
-        {sortedEntities.some(e => getEntityIncorrectGuesses(e).length > 0) && (
+        {sortedEntities.some((e) => getEntityIncorrectGuesses(e).length > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -642,9 +726,14 @@ export function MultiplayerResultsPage() {
 
                 return (
                   <div key={entity.entityId} className="space-y-1">
-                    <div className={`text-xs capcrunch-kicker flex items-center gap-2 ${isCurrent ? 'text-[#FDF100]' : 'text-white/60'}`}>
+                    <div
+                      className={`text-xs capcrunch-kicker flex items-center gap-2 ${isCurrent ? 'text-[#FDF100]' : 'text-white/60'}`}
+                    >
                       {teamColor && (
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: teamColor }} />
+                        <div
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: teamColor }}
+                        />
                       )}
                       {displayName} ({incorrectList.length})
                     </div>
@@ -698,7 +787,7 @@ export function MultiplayerResultsPage() {
                 <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-white/10">
                   {sortedEntities.flatMap((entity) => {
                     if (entity.type === 'team') {
-                      return entity.team.members.map(member => {
+                      return entity.team.members.map((member) => {
                         const color = rosterBreakdown.entityColors.get(member.player_id) || '#888';
                         return (
                           <div
@@ -716,28 +805,26 @@ export function MultiplayerResultsPage() {
                         );
                       });
                     }
-                    const color = rosterBreakdown.entityColors.get(entity.player.player_id) || '#888';
-                    return [(
+                    const color =
+                      rosterBreakdown.entityColors.get(entity.player.player_id) || '#888';
+                    return [
                       <div
                         key={entity.player.player_id}
                         className="flex items-center gap-1.5 px-2 py-1 bg-black/30"
                       >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: color }}
-                        />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
                         <span className="text-[10px] text-white/70 capcrunch-kicker">
                           {entity.player.player_name}
                         </span>
-                      </div>
-                    )];
+                      </div>,
+                    ];
                   })}
                 </div>
 
                 {/* Division tabs */}
                 {divisionTeams.length > 0 && (
                   <div className="flex gap-1 mb-3 justify-center flex-wrap">
-                    {divisionTeams.map(abbr => (
+                    {divisionTeams.map((abbr) => (
                       <button
                         key={abbr}
                         onClick={() => setActiveRosterTab(abbr)}
@@ -761,7 +848,7 @@ export function MultiplayerResultsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                   {(divisionTeams.length > 0 && activeRosterTab
-                    ? (divisionRosters[activeRosterTab] || [])
+                    ? divisionRosters[activeRosterTab] || []
                     : currentRoster
                   ).map((rosterPlayer) => {
                     const guessers = rosterBreakdown.breakdown.get(rosterPlayer.name) || [];
@@ -776,22 +863,29 @@ export function MultiplayerResultsPage() {
                           isUnique
                             ? 'bg-black/30'
                             : wasGuessed
-                            ? 'bg-black/30 border-white/20'
-                            : 'bg-black/10 border-white/5'
+                              ? 'bg-black/30 border-white/20'
+                              : 'bg-black/10 border-white/5'
                         }`}
-                        style={isUnique && uniqueColor ? {
-                          borderColor: uniqueColor,
-                          boxShadow: `0 0 8px ${uniqueColor}55, inset 0 0 8px ${uniqueColor}11`,
-                        } : undefined}
+                        style={
+                          isUnique && uniqueColor
+                            ? {
+                                borderColor: uniqueColor,
+                                boxShadow: `0 0 8px ${uniqueColor}55, inset 0 0 8px ${uniqueColor}11`,
+                              }
+                            : undefined
+                        }
                       >
                         <div className="truncate mr-2">
                           {rosterPlayer.position && (
-                            <span className={`text-[9px] capcrunch-kicker ${wasGuessed ? 'text-white/40' : 'text-white/15'}`}>
-                              {rosterPlayer.position}
-                              {' '}
+                            <span
+                              className={`text-[9px] capcrunch-kicker ${wasGuessed ? 'text-white/40' : 'text-white/15'}`}
+                            >
+                              {rosterPlayer.position}{' '}
                             </span>
                           )}
-                          <span className={`text-sm ${wasGuessed ? 'text-white/90' : 'text-white/30'}`}>
+                          <span
+                            className={`text-sm ${wasGuessed ? 'text-white/90' : 'text-white/30'}`}
+                          >
                             {rosterPlayer.name}
                           </span>
                         </div>

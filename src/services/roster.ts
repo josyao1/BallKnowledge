@@ -9,7 +9,12 @@
  * the output of getApiAbbreviation() in utils/teamHistory.ts.
  */
 
-import { rosters, getAllPlayers, getAvailableSeasons as getSeasons, getTeamsWithSeason } from '../data/rosters';
+import {
+  rosters,
+  getAllPlayers,
+  getAvailableSeasons as getSeasons,
+  getTeamsWithSeason,
+} from '../data/rosters';
 import { getApiAbbreviation } from '../utils/teamHistory';
 import type { Player } from '../types';
 import type { NFLPlayer } from '../types/nfl';
@@ -24,7 +29,7 @@ function parseSeasonYear(season: string): number {
  */
 async function fetchStaticRoster(
   teamAbbreviation: string,
-  season: string
+  season: string,
 ): Promise<Player[] | null> {
   const hist = getApiAbbreviation(teamAbbreviation, parseSeasonYear(season), 'nba');
   try {
@@ -42,7 +47,7 @@ async function fetchStaticRoster(
  * Returns null if the file doesn't exist.
  */
 export async function fetchStaticSeasonPlayers(
-  season: string
+  season: string,
 ): Promise<{ id: number; name: string }[] | null> {
   try {
     const res = await fetch(`/data/players/${season}.json`);
@@ -59,7 +64,7 @@ export async function fetchStaticSeasonPlayers(
  */
 export async function fetchStaticNFLRoster(
   teamAbbreviation: string,
-  year: number
+  year: number,
 ): Promise<NFLPlayer[] | null> {
   try {
     const res = await fetch(`/data/nfl/rosters/${teamAbbreviation}_${year}.json`);
@@ -75,7 +80,7 @@ export async function fetchStaticNFLRoster(
  * Fetch all NFL players for a season from preloaded static JSON (for autocomplete).
  */
 export async function fetchStaticNFLSeasonPlayers(
-  year: number
+  year: number,
 ): Promise<{ id: string; name: string }[] | null> {
   try {
     const res = await fetch(`/data/nfl/players/${year}.json`);
@@ -92,7 +97,7 @@ export async function fetchStaticNFLSeasonPlayers(
  */
 export async function fetchTeamRoster(
   teamAbbreviation: string,
-  season: string
+  season: string,
 ): Promise<{ players: Player[]; fromApi: boolean; cached: boolean }> {
   const staticPlayers = await fetchStaticRoster(teamAbbreviation, season);
   if (staticPlayers && staticPlayers.length > 0) {
@@ -170,7 +175,7 @@ interface GenericPlayer {
   unit?: string;
 }
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Fetch rosters for all teams in a division (4 teams).
@@ -180,7 +185,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export async function fetchDivisionRosters(
   sport: string,
   teamAbbreviations: string[],
-  season: string
+  season: string,
 ): Promise<{ combined: GenericPlayer[]; byTeam: Record<string, GenericPlayer[]> }> {
   const byTeam: Record<string, GenericPlayer[]> = {};
   const combined: GenericPlayer[] = [];
@@ -209,12 +214,16 @@ export async function fetchDivisionRosters(
   return { combined, byTeam };
 }
 
-async function fetchSingleTeamRoster(sport: string, abbr: string, season: string): Promise<GenericPlayer[]> {
+async function fetchSingleTeamRoster(
+  sport: string,
+  abbr: string,
+  season: string,
+): Promise<GenericPlayer[]> {
   if (sport === 'nba') {
     const result = await fetchTeamRoster(abbr, season);
     return result.players;
   } else {
     const year = parseInt(season);
-    return await fetchStaticNFLRoster(abbr, year) ?? [];
+    return (await fetchStaticNFLRoster(abbr, year)) ?? [];
   }
 }

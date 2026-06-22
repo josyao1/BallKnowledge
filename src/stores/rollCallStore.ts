@@ -27,8 +27,18 @@ interface RollCallState {
 
   setMergeDecisions: (merges: RollCallMerge[]) => void;
   fetchMergeDecisions: (lobbyId: string) => Promise<void>;
-  confirmMerge: (lobbyId: string, key: string, entryIds: string[], canonical: string) => Promise<void>;
-  dismissSuggestion: (lobbyId: string, key: string, entryIds: string[], canonical: string) => Promise<void>;
+  confirmMerge: (
+    lobbyId: string,
+    key: string,
+    entryIds: string[],
+    canonical: string,
+  ) => Promise<void>;
+  dismissSuggestion: (
+    lobbyId: string,
+    key: string,
+    entryIds: string[],
+    canonical: string,
+  ) => Promise<void>;
 
   clearAll: (lobbyId: string) => Promise<void>;
   reset: () => void;
@@ -42,7 +52,7 @@ export const useRollCallStore = create<RollCallState>((set, get) => ({
 
   addEntry: (entry) => {
     const existing = get().entries;
-    if (existing.some(e => e.id === entry.id)) return;
+    if (existing.some((e) => e.id === entry.id)) return;
     set({ entries: [...existing, entry] });
   },
 

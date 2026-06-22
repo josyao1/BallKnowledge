@@ -47,26 +47,25 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
 
     // Always add current roster players FIRST (ensures they're always in autocomplete)
     if (currentRoster.length > 0) {
-      currentRoster.forEach(p => {
+      currentRoster.forEach((p) => {
         playerMap.set(p.name.toLowerCase(), {
           id: p.id,
           name: p.name,
-          searchName: normalizeForSearch(p.name) // "T.J. Watt" -> "tj watt"
+          searchName: normalizeForSearch(p.name), // "T.J. Watt" -> "tj watt"
         });
       });
     }
 
     // Then add league players if available, otherwise add static data
-    const additionalPlayers = leaguePlayers.length > 0
-      ? leaguePlayers
-      : getAllPlayersForAutocomplete();
+    const additionalPlayers =
+      leaguePlayers.length > 0 ? leaguePlayers : getAllPlayersForAutocomplete();
 
-    additionalPlayers.forEach(p => {
+    additionalPlayers.forEach((p) => {
       if (!playerMap.has(p.name.toLowerCase())) {
         playerMap.set(p.name.toLowerCase(), {
           id: p.id,
           name: p.name,
-          searchName: normalizeForSearch(p.name)
+          searchName: normalizeForSearch(p.name),
         });
       }
     });
@@ -94,7 +93,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
         ignoreLocation: true,
         minMatchCharLength: 2,
       }),
-    [allPlayers]
+    [allPlayers],
   );
 
   // Filter results - require at least 3 characters to avoid giving away answers
@@ -127,7 +126,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
       setIsOpen(false);
       inputRef.current?.focus();
     },
-    [makeGuess, teammateGuessedNames]
+    [makeGuess, teammateGuessedNames],
   );
 
   // Handle keyboard navigation
@@ -178,7 +177,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
           break;
       }
     },
-    [isOpen, filteredPlayers, selectedIndex, query, handleSelect, hasNavigated]
+    [isOpen, filteredPlayers, selectedIndex, query, handleSelect, hasNavigated],
   );
 
   // Row renderer for virtualized list
@@ -203,7 +202,7 @@ export function PlayerInput({ teammateGuessedNames = [] }: PlayerInputProps) {
         </div>
       );
     },
-    [filteredPlayers, selectedIndex, handleSelect, hasNavigated]
+    [filteredPlayers, selectedIndex, handleSelect, hasNavigated],
   );
 
   return (

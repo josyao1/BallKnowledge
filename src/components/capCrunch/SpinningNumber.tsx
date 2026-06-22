@@ -82,7 +82,9 @@ export function SpinningNumber({ value, className, color, flashKey }: SpinningNu
   const colorRef = useRef(color);
   const flashingRef = useRef(false);
 
-  useEffect(() => { colorRef.current = color; });
+  useEffect(() => {
+    colorRef.current = color;
+  });
 
   useEffect(() => {
     if (flashKey === undefined || flashKey === prevFlashKey.current) return;
@@ -139,16 +141,16 @@ export function SpinningNumber({ value, className, color, flashKey }: SpinningNu
 export function getTotalColor(total: number, cap: number): string {
   if (total <= 0) return '#ffffff';
   const ratio = total / cap;
-  if (ratio >= 1)   return '#f87171';  // red-400   — bust
-  if (ratio >= 0.9) return '#f87171';  // red-400   — danger zone
+  if (ratio >= 1) return '#f87171'; // red-400   — bust
+  if (ratio >= 0.9) return '#f87171'; // red-400   — danger zone
   if (ratio >= 0.75) return '#fb923c'; // orange-400 — getting tight
-  if (ratio >= 0.5) return '#facc15';  // yellow-400 — halfway
-  return '#4ade80';                    // green-400  — comfortable
+  if (ratio >= 0.5) return '#facc15'; // yellow-400 — halfway
+  return '#4ade80'; // green-400  — comfortable
 }
 
 export function getRemainingColor(total: number, cap: number): string {
   const ratio = total / cap;
-  if (ratio >= 1)   return '#f87171';
+  if (ratio >= 1) return '#f87171';
   if (ratio >= 0.9) return '#f87171';
   if (ratio >= 0.75) return '#fb923c';
   if (ratio >= 0.5) return '#facc15';

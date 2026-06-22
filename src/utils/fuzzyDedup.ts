@@ -52,7 +52,7 @@ function levenshtein(a: string, b: string): number {
       matrix[i][j] = Math.min(
         matrix[i - 1][j] + 1,
         matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
+        matrix[i - 1][j - 1] + cost,
       );
     }
   }
@@ -86,7 +86,7 @@ function areSimilar(normA: string, normB: string): boolean {
       const firstA = tokA[0];
       const firstB = tokB[0];
       const shorterFirst = firstA.length <= firstB.length ? firstA : firstB;
-      const longerFirst  = firstA.length <= firstB.length ? firstB : firstA;
+      const longerFirst = firstA.length <= firstB.length ? firstB : firstA;
       if (shorterFirst.length >= 3 && longerFirst.startsWith(shorterFirst)) return true;
     }
   }
@@ -95,8 +95,9 @@ function areSimilar(normA: string, normB: string): boolean {
   // Handles "Jr" suffix variants (e.g. "Michael Pittman" ≈ "Michael Pittman Jr")
   // without accepting first-name-only guesses (e.g. "LeBron" vs "LeBron James").
   const shorter = normA.length <= normB.length ? normA : normB;
-  const longer  = normA.length <= normB.length ? normB : normA;
-  if (shorter.length >= 5 && shorter.length / longer.length >= 0.8 && longer.includes(shorter)) return true;
+  const longer = normA.length <= normB.length ? normB : normA;
+  if (shorter.length >= 5 && shorter.length / longer.length >= 0.8 && longer.includes(shorter))
+    return true;
 
   // Levenshtein: allow 1 edit per 5 chars
   const maxLen = Math.max(normA.length, normB.length);
@@ -129,11 +130,11 @@ function buildSuggestionKey(ids: string[]): string {
 export function findSuggestions(
   entries: RollCallEntry[],
   confirmedKeys: Set<string>,
-  dismissedKeys: Set<string>
+  dismissedKeys: Set<string>,
 ): MergeSuggestion[] {
   if (entries.length < 2) return [];
 
-  const normalized = entries.map(e => ({ entry: e, norm: normalize(e.entry_text) }));
+  const normalized = entries.map((e) => ({ entry: e, norm: normalize(e.entry_text) }));
 
   // Union-find via group map: entry index → group id
   const groupOf = new Map<number, number>();
@@ -176,21 +177,21 @@ export function findSuggestions(
   for (const memberIndices of groupMembers.values()) {
     if (memberIndices.length < 2) continue;
 
-    const groupEntries = memberIndices.map(i => normalized[i].entry);
-    const ids = groupEntries.map(e => e.id);
+    const groupEntries = memberIndices.map((i) => normalized[i].entry);
+    const ids = groupEntries.map((e) => e.id);
     const key = buildSuggestionKey(ids);
 
     if (confirmedKeys.has(key) || dismissedKeys.has(key)) continue;
 
     // Canonical = longest entry text
     const canonical = groupEntries.reduce((longest, e) =>
-      e.entry_text.length > longest.entry_text.length ? e : longest
+      e.entry_text.length > longest.entry_text.length ? e : longest,
     ).entry_text;
 
     suggestions.push({
       key,
       canonical,
-      entries: groupEntries.map(e => ({
+      entries: groupEntries.map((e) => ({
         id: e.id,
         text: e.entry_text,
         submitter: e.player_name,
@@ -207,20 +208,17 @@ export function findSuggestions(
  * Builds the final grouped list. Confirmed merges are grouped together;
  * all other entries appear as individual items.
  */
-export function applyMerges(
-  entries: RollCallEntry[],
-  confirmedMerges: string[][]
-): PlayerGroup[] {
+export function applyMerges(entries: RollCallEntry[], confirmedMerges: string[][]): PlayerGroup[] {
   if (entries.length === 0) return [];
 
-  const entryMap = new Map(entries.map(e => [e.id, e]));
+  const entryMap = new Map(entries.map((e) => [e.id, e]));
   const usedIds = new Set<string>();
   const groups: PlayerGroup[] = [];
 
   // Build groups from confirmed merges
   for (const mergeIds of confirmedMerges) {
     const mergeEntries = mergeIds
-      .map(id => entryMap.get(id))
+      .map((id) => entryMap.get(id))
       .filter((e): e is RollCallEntry => e !== undefined);
 
     if (mergeEntries.length === 0) continue;
@@ -228,13 +226,13 @@ export function applyMerges(
     for (const e of mergeEntries) usedIds.add(e.id);
 
     const canonical = mergeEntries.reduce((longest, e) =>
-      e.entry_text.length > longest.entry_text.length ? e : longest
+      e.entry_text.length > longest.entry_text.length ? e : longest,
     ).entry_text;
 
     groups.push({
       canonical,
-      variants: mergeEntries.map(e => ({ text: e.entry_text, submitter: e.player_name })),
-      uniqueSubmitters: new Set(mergeEntries.map(e => e.player_id)).size,
+      variants: mergeEntries.map((e) => ({ text: e.entry_text, submitter: e.player_name })),
+      uniqueSubmitters: new Set(mergeEntries.map((e) => e.player_id)).size,
     });
   }
 

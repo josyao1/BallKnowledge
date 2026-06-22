@@ -11,8 +11,24 @@
  */
 
 import { motion } from 'framer-motion';
-import { isConferenceRound, parseConferenceRound, isDivisionRound, isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound, formatHeightInches } from '../../services/capCrunch';
-import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
+import {
+  isConferenceRound,
+  parseConferenceRound,
+  isDivisionRound,
+  isDivisionDraftRound,
+  parseDivisionDraftRound,
+  isTeammateRound,
+  parseTeammateRound,
+  isNameMatchRound,
+  parseNameRound,
+  isWildcardRound,
+  formatHeightInches,
+} from '../../services/capCrunch';
+import {
+  HEIGHT_THRESHOLD_NBA,
+  HEIGHT_THRESHOLD_NFL,
+  WEIGHT_THRESHOLD,
+} from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 
@@ -74,11 +90,38 @@ interface Props {
 }
 
 export function CapCrunchPickPanel({
-  myLineup, canPickThisRound, hardMode, currentPickerId, players, totalRounds,
-  selectedPlayerName, isNoYearSelect, isCareerStatRound, currentTeam,
-  searchQuery, searchResults, loading, loadingYears, availableYears, selectedYear,
-  duplicateError, pickError, addingPlayer, usedPlayerNames, lockedPlayerNames,
-  waitingFor, selectedSport, statCategory: _statCategory, hwFilter, isHost, onSearch, onSelectPlayer, onSelectYear, onConfirm, onBack, onHostSkipPlayer,
+  myLineup,
+  canPickThisRound,
+  hardMode,
+  currentPickerId,
+  players,
+  totalRounds,
+  selectedPlayerName,
+  isNoYearSelect,
+  isCareerStatRound,
+  currentTeam,
+  searchQuery,
+  searchResults,
+  loading,
+  loadingYears,
+  availableYears,
+  selectedYear,
+  duplicateError,
+  pickError,
+  addingPlayer,
+  usedPlayerNames,
+  lockedPlayerNames,
+  waitingFor,
+  selectedSport,
+  statCategory: _statCategory,
+  hwFilter,
+  isHost,
+  onSearch,
+  onSelectPlayer,
+  onSelectYear,
+  onConfirm,
+  onBack,
+  onHostSkipPlayer,
 }: Props) {
   return (
     <motion.div
@@ -90,14 +133,19 @@ export function CapCrunchPickPanel({
         // ── All picks made ──────────────────────────────────────────────────
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
           <p className="text-2xl text-[#70BE5B] capcrunch-title">All Picks In!</p>
-          <p className="text-white/50 capcrunch-body text-sm">You've made all {totalRounds} picks. Sit tight while others finish.</p>
+          <p className="text-white/50 capcrunch-body text-sm">
+            You've made all {totalRounds} picks. Sit tight while others finish.
+          </p>
           {(myLineup.bustCount ?? 0) > 0 && (
-            <p className="text-red-400/70 capcrunch-kicker text-xs">{myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as 0</p>
+            <p className="text-red-400/70 capcrunch-kicker text-xs">
+              {myLineup.bustCount} bust pick{myLineup.bustCount !== 1 ? 's' : ''} — each counted as
+              0
+            </p>
           )}
           {waitingFor.length > 0 && isHost && onHostSkipPlayer && (
             <div className="bg-black/40 border border-white/10 rounded p-3 w-full max-w-xs mt-2">
               <p className="capcrunch-kicker text-[10px] text-white/30 mb-2">Still picking</p>
-              {waitingFor.map(p => (
+              {waitingFor.map((p) => (
                 <div key={p.player_id} className="flex items-center justify-between gap-2 py-1">
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-400 text-xs">⏳</span>
@@ -129,33 +177,71 @@ export function CapCrunchPickPanel({
                   const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName;
                   const parts = refName ? refName.split(' ') : [];
                   const SUFFIXES = new Set(['Jr', 'Sr', 'II', 'III', 'IV', 'V', 'Jr.', 'Sr.']);
-                  const filtered = parts.filter(p => !SUFFIXES.has(p));
-                  const required = type === 'first' ? parts[0] : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+                  const filtered = parts.filter((p) => !SUFFIXES.has(p));
+                  const required =
+                    type === 'first'
+                      ? parts[0]
+                      : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
                   const initial = (required?.[0] ?? '?').toUpperCase();
-                  const CONF_COLORS: Record<string, string> = { AFC: '#ef4444', NFC: '#3b82f6', East: '#34d399', West: '#fb923c' };
+                  const CONF_COLORS: Record<string, string> = {
+                    AFC: '#ef4444',
+                    NFC: '#3b82f6',
+                    East: '#34d399',
+                    West: '#fb923c',
+                  };
                   const color = proConf ? (CONF_COLORS[proConf] ?? '#06b6d4') : '#06b6d4';
                   return (
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                      <span className="px-2 py-0.5 border text-[10px] capcrunch-kicker" style={{ borderColor: color, color }}>{type === 'first' ? 'First' : 'Last'} initial: {initial}</span>
-                      {proConf && <span className="px-2 py-0.5 border text-[10px] capcrunch-kicker" style={{ borderColor: color, color }}>{proConf}</span>}
+                      <span
+                        className="px-2 py-0.5 border text-[10px] capcrunch-kicker"
+                        style={{ borderColor: color, color }}
+                      >
+                        {type === 'first' ? 'First' : 'Last'} initial: {initial}
+                      </span>
+                      {proConf && (
+                        <span
+                          className="px-2 py-0.5 border text-[10px] capcrunch-kicker"
+                          style={{ borderColor: color, color }}
+                        >
+                          {proConf}
+                        </span>
+                      )}
                     </div>
                   );
                 }
                 if (isTeammateRound(currentTeam)) {
                   const { pickIndex } = parseTeammateRound(currentTeam);
-                  const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
-                  return <p className="text-[10px] text-[#68BBE5] capcrunch-kicker mb-2">Played with {refName}</p>;
+                  const refName =
+                    myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
+                  return (
+                    <p className="text-[10px] text-[#68BBE5] capcrunch-kicker mb-2">
+                      Played with {refName}
+                    </p>
+                  );
                 }
                 if (isConferenceRound(currentTeam)) {
                   const { college, nflConf } = parseConferenceRound(currentTeam);
-                  return <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">{college}{nflConf ? ` + ${nflConf}` : ''}</p>;
+                  return (
+                    <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">
+                      {college}
+                      {nflConf ? ` + ${nflConf}` : ''}
+                    </p>
+                  );
                 }
                 if (isDivisionRound(currentTeam)) {
-                  return <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">Division: {currentTeam}</p>;
+                  return (
+                    <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">
+                      Division: {currentTeam}
+                    </p>
+                  );
                 }
                 if (isDivisionDraftRound(currentTeam)) {
                   const { division, draftRound } = parseDivisionDraftRound(currentTeam);
-                  return <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">{division} · {draftRound}</p>;
+                  return (
+                    <p className="text-[10px] text-[#FDF100] capcrunch-kicker mb-2">
+                      {division} · {draftRound}
+                    </p>
+                  );
                 }
                 return null;
               })()}
@@ -168,7 +254,10 @@ export function CapCrunchPickPanel({
               />
               {loading && <p className="text-white/60 text-sm">Loading...</p>}
               {!loading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                <p className="text-white/30 text-[9px] capcrunch-kicker mt-1">No results — player may be too recent, have limited stats, or try a different spelling.</p>
+                <p className="text-white/30 text-[9px] capcrunch-kicker mt-1">
+                  No results — player may be too recent, have limited stats, or try a different
+                  spelling.
+                </p>
               )}
               {duplicateError && (
                 <p className="text-red-400 text-sm font-semibold mb-2">{duplicateError}</p>
@@ -190,8 +279,16 @@ export function CapCrunchPickPanel({
                         }`}
                       >
                         {result.playerName}
-                        {alreadyUsed && <span className="ml-2 text-[10px] text-white/20 no-underline not-italic font-normal">(already used)</span>}
-                        {taken && <span className="ml-2 text-[10px] text-red-400/40 no-underline not-italic font-normal">(taken)</span>}
+                        {alreadyUsed && (
+                          <span className="ml-2 text-[10px] text-white/20 no-underline not-italic font-normal">
+                            (already used)
+                          </span>
+                        )}
+                        {taken && (
+                          <span className="ml-2 text-[10px] text-red-400/40 no-underline not-italic font-normal">
+                            (taken)
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -202,40 +299,70 @@ export function CapCrunchPickPanel({
             // ── Total GP / career stat: no year needed, just confirm ──────
             <div className="flex flex-col gap-3 h-full">
               <div className="p-3 capcrunch-panel-soft">
-                <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
+                <p className="capcrunch-title text-base text-white truncate">
+                  {selectedPlayerName}
+                </p>
                 <p className="text-xs text-white/60 mt-0.5">
                   {isWildcardRound(currentTeam)
-                    ? (isCareerStatRound ? 'Total career stats — no restrictions' : 'All career GP — no restrictions')
-                    : isNameMatchRound(currentTeam) ? (() => {
-                    const { type, pickIndex, proConf } = parseNameRound(currentTeam);
-                    const refName = myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ?? `Pick ${pickIndex}`;
-                    const parts = refName.split(' ');
-                    const SUFFIXES = new Set(['Jr', 'Sr', 'II', 'III', 'IV', 'V', 'Jr.', 'Sr.']);
-                    const filtered = parts.filter(p => !SUFFIXES.has(p));
-                    const required = type === 'first' ? parts[0] : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
-                    return `${isCareerStatRound ? 'Total career stats' : 'All career GP'} — ${type} initial must be "${(required[0] ?? '').toUpperCase()}"${proConf ? ` + played for ${proConf}` : ''}`;
-                  })()
-                  : isCareerStatRound
-                    ? isConferenceRound(currentTeam)
-                      ? `Total career stats — must have attended a ${currentTeam} school`
-                      : isTeammateRound(currentTeam)
-                        ? `Total career stats — must have played with Pick ${parseTeammateRound(currentTeam).pickIndex} at some point`
-                        : `Total career stats (all teams) — must have played for ${currentTeam} at some point`
-                    : isConferenceRound(currentTeam)
-                      ? `Will count all career GP — must have attended a ${currentTeam} school`
-                      : isTeammateRound(currentTeam)
-                        ? `Will count all career GP — must have played with Pick ${parseTeammateRound(currentTeam).pickIndex} at some point`
-                        : `Will count all career GP with ${currentTeam}`}
-                  {hwFilter && ` — ${hwFilter === 'height_above' ? `above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'height_below' ? `below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'weight_above' ? `above ${WEIGHT_THRESHOLD} lbs` : `below ${WEIGHT_THRESHOLD} lbs`}`}
+                    ? isCareerStatRound
+                      ? 'Total career stats — no restrictions'
+                      : 'All career GP — no restrictions'
+                    : isNameMatchRound(currentTeam)
+                      ? (() => {
+                          const { type, pickIndex, proConf } = parseNameRound(currentTeam);
+                          const refName =
+                            myLineup?.selectedPlayers?.[pickIndex - 1]?.playerName ??
+                            `Pick ${pickIndex}`;
+                          const parts = refName.split(' ');
+                          const SUFFIXES = new Set([
+                            'Jr',
+                            'Sr',
+                            'II',
+                            'III',
+                            'IV',
+                            'V',
+                            'Jr.',
+                            'Sr.',
+                          ]);
+                          const filtered = parts.filter((p) => !SUFFIXES.has(p));
+                          const required =
+                            type === 'first'
+                              ? parts[0]
+                              : (filtered[filtered.length - 1] ?? parts[parts.length - 1]);
+                          return `${isCareerStatRound ? 'Total career stats' : 'All career GP'} — ${type} initial must be "${(required[0] ?? '').toUpperCase()}"${proConf ? ` + played for ${proConf}` : ''}`;
+                        })()
+                      : isCareerStatRound
+                        ? isConferenceRound(currentTeam)
+                          ? `Total career stats — must have attended a ${currentTeam} school`
+                          : isTeammateRound(currentTeam)
+                            ? `Total career stats — must have played with Pick ${parseTeammateRound(currentTeam).pickIndex} at some point`
+                            : `Total career stats (all teams) — must have played for ${currentTeam} at some point`
+                        : isConferenceRound(currentTeam)
+                          ? `Will count all career GP — must have attended a ${currentTeam} school`
+                          : isTeammateRound(currentTeam)
+                            ? `Will count all career GP — must have played with Pick ${parseTeammateRound(currentTeam).pickIndex} at some point`
+                            : `Will count all career GP with ${currentTeam}`}
+                  {hwFilter &&
+                    ` — ${hwFilter === 'height_above' ? `above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'height_below' ? `below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)} tall` : hwFilter === 'weight_above' ? `above ${WEIGHT_THRESHOLD} lbs` : `below ${WEIGHT_THRESHOLD} lbs`}`}
                 </p>
               </div>
               <div className="flex-1 flex items-center justify-center text-center">
                 <p className="text-white/30 capcrunch-body text-xs leading-relaxed">
-                  {isWildcardRound(currentTeam)
-                    ? <>No constraints — pick any player freely</>
-                    : isNameMatchRound(currentTeam)
-                    ? <>Career stats — no team constraint<br />initial match is the only requirement</>
-                    : <>Games played across every season<br />this player was on the team</>}
+                  {isWildcardRound(currentTeam) ? (
+                    <>No constraints — pick any player freely</>
+                  ) : isNameMatchRound(currentTeam) ? (
+                    <>
+                      Career stats — no team constraint
+                      <br />
+                      initial match is the only requirement
+                    </>
+                  ) : (
+                    <>
+                      Games played across every season
+                      <br />
+                      this player was on the team
+                    </>
+                  )}
                 </p>
               </div>
               {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
@@ -259,13 +386,17 @@ export function CapCrunchPickPanel({
             // ── Normal mode: pick a year ──────────────────────────────────
             <div className="space-y-2 flex flex-col flex-1 overflow-hidden">
               <div className="p-3 capcrunch-panel-soft">
-                <p className="capcrunch-title text-base text-white truncate">{selectedPlayerName}</p>
+                <p className="capcrunch-title text-base text-white truncate">
+                  {selectedPlayerName}
+                </p>
                 <p className="text-xs text-white/60 mt-0.5">Select any year this player played</p>
               </div>
               <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                 <div className="flex items-baseline justify-between mb-2 flex-shrink-0">
                   <label className="capcrunch-kicker text-[9px] text-white/60">Select a year</label>
-                  {selectedSport === 'nfl' && !isCareerStatRound && <span className="text-white/25 text-[8px] capcrunch-kicker">through 2025</span>}
+                  {selectedSport === 'nfl' && !isCareerStatRound && (
+                    <span className="text-white/25 text-[8px] capcrunch-kicker">through 2025</span>
+                  )}
                 </div>
                 {loadingYears ? (
                   <p className="text-white/60 text-sm">Loading years...</p>
@@ -286,7 +417,10 @@ export function CapCrunchPickPanel({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-red-400 text-sm">No data found — player may be too recent, have limited stats, or try a different spelling.</p>
+                  <p className="text-red-400 text-sm">
+                    No data found — player may be too recent, have limited stats, or try a different
+                    spelling.
+                  </p>
                 )}
               </div>
               {pickError && <p className="text-red-400 text-xs mt-1">{pickError}</p>}
@@ -315,14 +449,17 @@ export function CapCrunchPickPanel({
             <div className="flex flex-col items-center gap-2">
               <p className="text-lg text-[#FDF100] capcrunch-title mb-1">Waiting for your turn</p>
               <p className="text-white/50 capcrunch-body text-sm">
-                {players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'} is picking
+                {players.find((p) => p.player_id === currentPickerId)?.player_name ?? '...'} is
+                picking
               </p>
               {isHost && currentPickerId && onHostSkipPlayer && (
                 <button
                   onClick={() => onHostSkipPlayer(currentPickerId)}
                   className="mt-1 px-3 py-1 text-[11px] capcrunch-kicker tracking-wider uppercase text-orange-400/70 border border-orange-400/30 rounded hover:text-orange-400 hover:border-orange-400/60 transition-colors"
                 >
-                  Skip {players.find(p => p.player_id === currentPickerId)?.player_name ?? 'Player'}'s turn
+                  Skip{' '}
+                  {players.find((p) => p.player_id === currentPickerId)?.player_name ?? 'Player'}'s
+                  turn
                 </button>
               )}
             </div>
@@ -335,7 +472,7 @@ export function CapCrunchPickPanel({
           {waitingFor.length > 0 && (hardMode ? myLineup?.hasPickedThisRound : true) && (
             <div className="bg-black/20 border border-white/10 p-3 w-full max-w-xs">
               <p className="capcrunch-kicker text-[10px] text-white/30 mb-2">Still picking</p>
-              {waitingFor.map(p => (
+              {waitingFor.map((p) => (
                 <div key={p.player_id} className="flex items-center justify-between gap-2 py-1">
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-400 text-xs">⏳</span>

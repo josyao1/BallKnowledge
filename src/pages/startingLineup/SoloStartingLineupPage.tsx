@@ -41,7 +41,10 @@ type Phase = 'loading' | 'guessing' | 'bonus' | 'results';
 type AnyTeam = { name: string; city?: string; abbreviation: string; colors: { primary: string } };
 
 function normalizeTeamInput(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '')
+    .trim();
 }
 
 function teamMatchesInput(input: string, team: AnyTeam): boolean {
@@ -55,7 +58,7 @@ function teamMatchesInput(input: string, team: AnyTeam): boolean {
     (city && city.includes(norm)) ||
     abbr === norm ||
     norm.includes(abbr) ||
-    name.split(' ').some(w => w.startsWith(norm) && norm.length >= 3)
+    name.split(' ').some((w) => w.startsWith(norm) && norm.length >= 3)
   );
 }
 
@@ -94,27 +97,45 @@ export function SoloStartingLineupPage() {
   const bonusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const teamList: AnyTeam[] = isNBA
-    ? nbaTeams.map(t => ({ name: t.name, city: t.city, abbreviation: t.abbreviation, colors: t.colors }))
-    : nflTeams.map(t => ({ name: t.name, city: t.city, abbreviation: t.abbreviation, colors: t.colors }));
+    ? nbaTeams.map((t) => ({
+        name: t.name,
+        city: t.city,
+        abbreviation: t.abbreviation,
+        colors: t.colors,
+      }))
+    : nflTeams.map((t) => ({
+        name: t.name,
+        city: t.city,
+        abbreviation: t.abbreviation,
+        colors: t.colors,
+      }));
 
   // Load starters on mount and when sport changes
   useEffect(() => {
     setScore(0);
     setPhase('loading');
     if (isNBA) {
-      loadNBAStarters().then(data => {
-        setNbaData(data);
-        startRound(null, data);
-      }).catch(err => console.error('Failed to load starters:', err));
+      loadNBAStarters()
+        .then((data) => {
+          setNbaData(data);
+          startRound(null, data);
+        })
+        .catch((err) => console.error('Failed to load starters:', err));
     } else {
-      loadNFLStarters().then(data => {
-        setNflData(data);
-        startRound(data, null);
-      }).catch(err => console.error('Failed to load starters:', err));
+      loadNFLStarters()
+        .then((data) => {
+          setNflData(data);
+          startRound(data, null);
+        })
+        .catch((err) => console.error('Failed to load starters:', err));
     }
   }, [isNBA]);
 
-  function startRound(nfl: NFLStartersData | null, nba: NBAStartersData | null, excludeTeam?: string) {
+  function startRound(
+    nfl: NFLStartersData | null,
+    nba: NBAStartersData | null,
+    excludeTeam?: string,
+  ) {
     let pickedPlayers: StarterPlayer[];
     let pickedTeam: string;
     let pickedSide: 'offense' | 'defense' | null = null;
@@ -134,9 +155,9 @@ export function SoloStartingLineupPage() {
 
     let enc = getRandomEncoding();
     const dataScore = {
-      college: pickedPlayers.filter(p => p.college_espn_id != null).length,
-      number:  pickedPlayers.filter(p => p.number != null).length,
-      draft:   pickedPlayers.filter(p => p.draft_pick != null).length,
+      college: pickedPlayers.filter((p) => p.college_espn_id != null).length,
+      number: pickedPlayers.filter((p) => p.number != null).length,
+      draft: pickedPlayers.filter((p) => p.draft_pick != null).length,
     };
     if (dataScore[enc] < (isNBA ? 3 : 5)) enc = pickBestEncoding(pickedPlayers);
 
@@ -165,37 +186,39 @@ export function SoloStartingLineupPage() {
       setShowSuggestions(false);
       return;
     }
-    const matches = teamList.filter(t => teamMatchesInput(value, t)).slice(0, 5);
+    const matches = teamList.filter((t) => teamMatchesInput(value, t)).slice(0, 5);
     setSuggestions(matches);
     setShowSuggestions(matches.length > 0);
   }
 
   function submitGuess(guessedAbbr?: string) {
     const inputVal = guessedAbbr
-      ? teamList.find(t => t.abbreviation === guessedAbbr)?.name || guessInput
+      ? teamList.find((t) => t.abbreviation === guessedAbbr)?.name || guessInput
       : guessInput;
 
     setShowSuggestions(false);
     setGuessInput('');
 
-    const correctTeam = teamList.find(t => t.abbreviation === team);
+    const correctTeam = teamList.find((t) => t.abbreviation === team);
     if (!correctTeam) return;
 
-    const isCorrect = guessedAbbr === team ||
-      (!guessedAbbr && teamMatchesInput(inputVal, correctTeam) &&
-        teamList.filter(t => teamMatchesInput(inputVal, t)).length === 1 &&
-        teamList.filter(t => teamMatchesInput(inputVal, t))[0].abbreviation === team);
+    const isCorrect =
+      guessedAbbr === team ||
+      (!guessedAbbr &&
+        teamMatchesInput(inputVal, correctTeam) &&
+        teamList.filter((t) => teamMatchesInput(inputVal, t)).length === 1 &&
+        teamList.filter((t) => teamMatchesInput(inputVal, t))[0].abbreviation === team);
 
     if (isCorrect) {
       const pts = wrongGuesses.length === 0 ? 10 : 5;
       setTeamGuessScore(pts);
-      setScore(s => s + pts);
+      setScore((s) => s + pts);
       setTimeout(() => {
         setPhase('bonus');
         startBonusTimer();
       }, 800);
     } else {
-      setWrongGuesses(prev => [...prev, inputVal]);
+      setWrongGuesses((prev) => [...prev, inputVal]);
       setShake(true);
       setTimeout(() => setShake(false), 500);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -212,7 +235,7 @@ export function SoloStartingLineupPage() {
     setBonusTimeLeft(60);
     if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
     bonusTimerRef.current = setInterval(() => {
-      setBonusTimeLeft(prev => {
+      setBonusTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(bonusTimerRef.current!);
           bonusTimerRef.current = null;
@@ -225,15 +248,15 @@ export function SoloStartingLineupPage() {
   }
 
   function handleBonusGuess(playerId: string, name: string) {
-    const player = players.find(p => p.id === playerId);
+    const player = players.find((p) => p.id === playerId);
     if (!player || bonusCorrect.has(playerId)) return;
     if (areSimilarNames(name, player.name)) {
-      setBonusCorrect(prev => {
+      setBonusCorrect((prev) => {
         const next = new Set(prev);
         next.add(playerId);
         return next;
       });
-      setScore(s => s + 1);
+      setScore((s) => s + 1);
     }
   }
 
@@ -253,16 +276,23 @@ export function SoloStartingLineupPage() {
     setPhase('results');
   }, []);
 
-  useEffect(() => () => {
-    if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
+    },
+    [],
+  );
 
   function playAgain() {
     startRound(nflData, nbaData, team);
   }
 
-  const correctTeamObj = teamList.find(t => t.abbreviation === team);
-  const encodingLabel = { college: 'college logos', number: 'jersey numbers', draft: 'draft picks' }[encoding];
+  const correctTeamObj = teamList.find((t) => t.abbreviation === team);
+  const encodingLabel = {
+    college: 'college logos',
+    number: 'jersey numbers',
+    draft: 'draft picks',
+  }[encoding];
   const maxBonus = isNBA ? 5 : 11;
   const sportLabel = isNBA ? 'NBA' : 'NFL';
   const contextLine = isNBA
@@ -299,12 +329,19 @@ export function SoloStartingLineupPage() {
     <div className="min-h-screen home-chalkboard text-white flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2 hover:bg-white/10 transition-colors"
-        >
-          <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        <button onClick={() => navigate('/')} className="p-2 hover:bg-white/10 transition-colors">
+          <svg
+            className="w-5 h-5 text-white/50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
         </button>
 
@@ -339,7 +376,9 @@ export function SoloStartingLineupPage() {
       {/* Loading */}
       {phase === 'loading' && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-white/30 capcrunch-kicker tracking-widest text-sm">Loading lineup...</div>
+          <div className="text-white/30 capcrunch-kicker tracking-widest text-sm">
+            Loading lineup...
+          </div>
         </div>
       )}
 
@@ -355,7 +394,7 @@ export function SoloStartingLineupPage() {
                 : `Which ${sportLabel} team's ${side} is this? · ${encodingLabel}`}
             </p>
             <button
-              onClick={() => setHintEnabled(h => !h)}
+              onClick={() => setHintEnabled((h) => !h)}
               className={`flex items-center gap-1 px-2 py-0.5 text-[10px] capcrunch-kicker border transition-all ${
                 hintEnabled
                   ? 'border-[#fdb927]/50 text-[#fdb927] bg-[#fdb927]/10'
@@ -369,7 +408,10 @@ export function SoloStartingLineupPage() {
           {wrongGuesses.length > 0 && (
             <div className="flex flex-wrap gap-1.5 justify-center">
               {wrongGuesses.map((g, i) => (
-                <span key={i} className="px-2 py-0.5 bg-red-900/20 border border-red-800/40 text-xs capcrunch-kicker text-red-400">
+                <span
+                  key={i}
+                  className="px-2 py-0.5 bg-red-900/20 border border-red-800/40 text-xs capcrunch-kicker text-red-400"
+                >
                   ✗ {g}
                 </span>
               ))}
@@ -387,10 +429,13 @@ export function SoloStartingLineupPage() {
                   ref={inputRef}
                   type="text"
                   value={guessInput}
-                  onChange={e => handleGuessInput(e.target.value)}
-                  onKeyDown={e => {
+                  onChange={(e) => handleGuessInput(e.target.value)}
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter' && guessInput.trim()) submitGuess();
-                    if (e.key === 'Escape') { setShowSuggestions(false); setGuessInput(''); }
+                    if (e.key === 'Escape') {
+                      setShowSuggestions(false);
+                      setGuessInput('');
+                    }
                   }}
                   onFocus={() => guessInput.trim().length >= 2 && setShowSuggestions(true)}
                   placeholder="Type team name..."
@@ -414,10 +459,13 @@ export function SoloStartingLineupPage() {
                     exit={{ opacity: 0, y: -4 }}
                     className="absolute top-full left-0 right-0 mt-1 bg-black/90 border border-white/10 overflow-hidden z-20 shadow-xl"
                   >
-                    {suggestions.map(t => (
+                    {suggestions.map((t) => (
                       <button
                         key={t.abbreviation}
-                        onMouseDown={e => { e.preventDefault(); submitGuess(t.abbreviation); }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          submitGuess(t.abbreviation);
+                        }}
                         className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                       >
                         <span
@@ -453,8 +501,12 @@ export function SoloStartingLineupPage() {
             className="flex items-center justify-between px-4 py-2 bg-[#ea580c]/10 border border-[#ea580c]/40"
           >
             <div>
-              <div className="text-[9px] text-[#ea580c]/60 capcrunch-kicker tracking-widest uppercase">Correct!</div>
-              <div className="capcrunch-title text-lg text-[#fdb927]">{correctTeamObj?.name || team}</div>
+              <div className="text-[9px] text-[#ea580c]/60 capcrunch-kicker tracking-widest uppercase">
+                Correct!
+              </div>
+              <div className="capcrunch-title text-lg text-[#fdb927]">
+                {correctTeamObj?.name || team}
+              </div>
             </div>
             <div className="text-right">
               <div className="capcrunch-title text-xl text-[#ea580c]">+{teamGuessScore}</div>
@@ -466,7 +518,9 @@ export function SoloStartingLineupPage() {
             <p className="text-[11px] text-white/40 capcrunch-kicker tracking-wider">
               Tap blobs to name players — +1 pt each
             </p>
-            <div className={`capcrunch-title text-lg ${bonusTimeLeft <= 10 ? 'text-red-400' : 'text-white/60'}`}>
+            <div
+              className={`capcrunch-title text-lg ${bonusTimeLeft <= 10 ? 'text-red-400' : 'text-white/60'}`}
+            >
               {bonusTimeLeft}s
             </div>
           </div>
@@ -499,7 +553,9 @@ export function SoloStartingLineupPage() {
               <div className="capcrunch-kicker text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">
                 {gaveUp ? 'Better luck next time' : 'Round Complete'}
               </div>
-              <div className={`capcrunch-title text-5xl ${gaveUp ? 'text-white/40' : 'text-[#ea580c]'}`}>
+              <div
+                className={`capcrunch-title text-5xl ${gaveUp ? 'text-white/40' : 'text-[#ea580c]'}`}
+              >
                 +{teamGuessScore + bonusCorrect.size}
               </div>
               <div className="capcrunch-kicker text-sm text-white/40 mt-1">points this round</div>
@@ -511,8 +567,12 @@ export function SoloStartingLineupPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="px-4 py-3 bg-black/40 border border-white/10 text-center"
               >
-                <div className="capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-1">The Answer Was</div>
-                <div className="capcrunch-title text-2xl text-[#fdb927]">{correctTeamObj?.name || team}</div>
+                <div className="capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-1">
+                  The Answer Was
+                </div>
+                <div className="capcrunch-title text-2xl text-[#fdb927]">
+                  {correctTeamObj?.name || team}
+                </div>
               </motion.div>
             )}
 
@@ -522,7 +582,9 @@ export function SoloStartingLineupPage() {
                 <span className="capcrunch-title text-lg text-[#fdb927]">
                   {teamGuessScore > 0 ? `+${teamGuessScore}` : gaveUp ? 'Gave up' : '0'}
                   {!gaveUp && wrongGuesses.length > 0 && (
-                    <span className="text-xs text-white/30 ml-1">({wrongGuesses.length} wrong)</span>
+                    <span className="text-xs text-white/30 ml-1">
+                      ({wrongGuesses.length} wrong)
+                    </span>
                   )}
                 </span>
               </div>
@@ -537,7 +599,9 @@ export function SoloStartingLineupPage() {
             {renderLayout('revealed')}
 
             <div className="text-center">
-              <div className="text-[10px] text-white/30 capcrunch-kicker tracking-widest uppercase">Total Score</div>
+              <div className="text-[10px] text-white/30 capcrunch-kicker tracking-widest uppercase">
+                Total Score
+              </div>
               <div className="capcrunch-title text-3xl text-[#fdb927]">{score}</div>
             </div>
 

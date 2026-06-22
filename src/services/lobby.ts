@@ -8,7 +8,13 @@
  */
 
 import { supabase } from '../lib/supabase';
-import type { Lobby, LobbyInsert, LobbyPlayer, LobbyPlayerInsert, LobbyStatus } from '../types/database';
+import type {
+  Lobby,
+  LobbyInsert,
+  LobbyPlayer,
+  LobbyPlayerInsert,
+  LobbyStatus,
+} from '../types/database';
 import { teams } from '../data/teams';
 import { getNBADivisions, getNBATeamsByDivision } from '../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../data/nfl-teams';
@@ -56,7 +62,7 @@ export async function createLobby(
   gameType: string = 'roster',
   selectionScope: string = 'team',
   divisionConference?: string | null,
-  divisionName?: string | null
+  divisionName?: string | null,
 ): Promise<{ lobby: Lobby; error: null } | { lobby: null; error: string }> {
   if (!supabase) {
     return { lobby: null, error: 'Multiplayer not available' };
@@ -108,9 +114,7 @@ export async function createLobby(
       is_ready: true,
     };
 
-    const { error: playerError } = await supabase
-      .from('lobby_players')
-      .insert(playerData);
+    const { error: playerError } = await supabase.from('lobby_players').insert(playerData);
 
     if (playerError) {
       // Clean up lobby if player insert fails
@@ -126,7 +130,7 @@ export async function createLobby(
 
 // Find lobby by join code
 export async function findLobbyByCode(
-  joinCode: string
+  joinCode: string,
 ): Promise<{ lobby: Lobby; error: null } | { lobby: null; error: string }> {
   if (!supabase) {
     return { lobby: null, error: 'Multiplayer not available' };
@@ -148,7 +152,7 @@ export async function findLobbyByCode(
 // Join a lobby
 export async function joinLobby(
   lobbyId: string,
-  playerName: string
+  playerName: string,
 ): Promise<{ player: LobbyPlayer; error: null } | { player: null; error: string }> {
   if (!supabase) {
     return { player: null, error: 'Multiplayer not available' };
@@ -177,7 +181,7 @@ export async function joinLobby(
 
   if (lobby.status !== 'waiting') {
     // Case A: same device reconnect — player_id already in lobby
-    const existingByPlayerId = existingPlayers.find(p => p.player_id === playerId);
+    const existingByPlayerId = existingPlayers.find((p) => p.player_id === playerId);
     if (existingByPlayerId) {
       const { data: updated, error: updateError } = await supabase
         .from('lobby_players')
@@ -191,7 +195,7 @@ export async function joinLobby(
 
     // Case B: different device — same username, adopt old player_id so career_state lineup is found
     const existingByName = existingPlayers.find(
-      p => p.player_name.toLowerCase() === playerName.trim().toLowerCase()
+      (p) => p.player_name.toLowerCase() === playerName.trim().toLowerCase(),
     );
     if (existingByName) {
       localStorage.setItem('ballknowledge_player_id', existingByName.player_id);
@@ -210,12 +214,12 @@ export async function joinLobby(
       return { player: null, error: 'Game already started' };
     }
     if ((lobby.career_state as any)?.hardMode) {
-      return { player: null, error: 'Can\'t join a hard-mode game in progress' };
+      return { player: null, error: "Can't join a hard-mode game in progress" };
     }
     // Fall through to insert for Cap Crunch mid-game join
   } else {
     // Waiting lobby: enforce player count limit for new players
-    const existingByPlayerId = existingPlayers.find(p => p.player_id === playerId);
+    const existingByPlayerId = existingPlayers.find((p) => p.player_id === playerId);
     if (!existingByPlayerId && existingPlayers.length >= lobby.max_players) {
       return { player: null, error: 'Lobby is full' };
     }
@@ -284,7 +288,7 @@ export async function leaveLobby(lobbyId: string): Promise<{ error: string | nul
 
 // Get lobby players
 export async function getLobbyPlayers(
-  lobbyId: string
+  lobbyId: string,
 ): Promise<{ players: LobbyPlayer[]; error: null } | { players: null; error: string }> {
   if (!supabase) {
     return { players: null, error: 'Multiplayer not available' };
@@ -306,7 +310,7 @@ export async function getLobbyPlayers(
 // Update lobby status
 export async function updateLobbyStatus(
   lobbyId: string,
-  status: LobbyStatus
+  status: LobbyStatus,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -320,10 +324,7 @@ export async function updateLobbyStatus(
     updates.finished_at = new Date().toISOString();
   }
 
-  const { error } = await supabase
-    .from('lobbies')
-    .update(updates)
-    .eq('id', lobbyId);
+  const { error } = await supabase.from('lobbies').update(updates).eq('id', lobbyId);
 
   return { error: error?.message || null };
 }
@@ -335,7 +336,7 @@ export async function updatePlayerScore(
   guessedCount: number,
   guessedPlayers?: string[],
   incorrectGuesses?: string[],
-  isFinished?: boolean
+  isFinished?: boolean,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -387,13 +388,13 @@ export async function checkAllPlayersFinished(lobbyId: string): Promise<boolean>
   if (error || !players) return false;
 
   // All connected players must have finished_at set
-  return players.every(p => p.finished_at !== null);
+  return players.every((p) => p.finished_at !== null);
 }
 
 // Set player ready status
 export async function setPlayerReady(
   lobbyId: string,
-  isReady: boolean
+  isReady: boolean,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -416,10 +417,7 @@ export async function deleteLobby(lobbyId: string): Promise<{ error: string | nu
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobbies')
-    .delete()
-    .eq('id', lobbyId);
+  const { error } = await supabase.from('lobbies').delete().eq('id', lobbyId);
 
   return { error: error?.message || null };
 }
@@ -439,23 +437,24 @@ export async function updateLobbySettings(
     division_conference?: string | null;
     division_name?: string | null;
     game_type?: string;
-  }
+  },
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('lobbies')
-    .update(settings)
-    .eq('id', lobbyId);
+  const { error } = await supabase.from('lobbies').update(settings).eq('id', lobbyId);
 
   return { error: error?.message || null };
 }
 
 // Add pts to a player's points column (used for Name Scramble / Starting Lineup
 // positional scoring and Career Arc round wins). Safe to call from host only.
-export async function addCareerPoints(lobbyId: string, playerId: string, pts: number): Promise<{ error: string | null }> {
+export async function addCareerPoints(
+  lobbyId: string,
+  playerId: string,
+  pts: number,
+): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
   }
@@ -487,7 +486,10 @@ export async function addCareerPoints(lobbyId: string, playerId: string, pts: nu
 //     UPDATE lobby_players SET wins = wins + 1
 //     WHERE lobby_id = p_lobby_id AND player_id = p_player_id;
 //   $$;
-export async function incrementPlayerWins(lobbyId: string, playerId: string): Promise<{ error: string | null }> {
+export async function incrementPlayerWins(
+  lobbyId: string,
+  playerId: string,
+): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
   }
@@ -524,7 +526,9 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
   // First, fetch the current lobby to check game_mode, year range, and used teams
   const { data: currentLobby, error: fetchError } = await supabase
     .from('lobbies')
-    .select('game_mode, sport, min_year, max_year, used_nba_teams, used_nfl_teams, team_abbreviation, selection_scope, division_conference, division_name, used_nba_divisions, used_nfl_divisions')
+    .select(
+      'game_mode, sport, min_year, max_year, used_nba_teams, used_nfl_teams, team_abbreviation, selection_scope, division_conference, division_name, used_nba_divisions, used_nfl_divisions',
+    )
     .eq('id', lobbyId)
     .single();
 
@@ -564,7 +568,9 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
       }
 
       // Filter out used divisions
-      let availableDivisions = allDivisions.filter(d => !usedDivisions.includes(`${d.conference}_${d.division}`));
+      let availableDivisions = allDivisions.filter(
+        (d) => !usedDivisions.includes(`${d.conference}_${d.division}`),
+      );
 
       // If all used, reset
       if (availableDivisions.length === 0) {
@@ -582,18 +588,18 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
       lobbyUpdate.division_name = randomDiv.division;
 
       // Set team_abbreviation to first team in division as reference
-      const divTeams = sport === 'nba'
-        ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
-        : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+      const divTeams =
+        sport === 'nba'
+          ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+          : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
       lobbyUpdate.team_abbreviation = divTeams[0]?.abbreviation || currentLobby.team_abbreviation;
 
-      lobbyUpdate.season = sport === 'nba'
-        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
-        : `${randomYear}`;
+      lobbyUpdate.season =
+        sport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
     } else {
       // Team mode: pick a random team
       const teamList = sport === 'nba' ? teams : nflTeams;
-      const allTeamAbbrs = teamList.map(t => t.abbreviation);
+      const allTeamAbbrs = teamList.map((t) => t.abbreviation);
 
       const usedTeamsKey = sport === 'nba' ? 'used_nba_teams' : 'used_nfl_teams';
       let usedTeams: string[] = (currentLobby[usedTeamsKey] as string[]) || [];
@@ -602,7 +608,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
         usedTeams = [...usedTeams, currentLobby.team_abbreviation];
       }
 
-      let availableTeams = allTeamAbbrs.filter(abbr => !usedTeams.includes(abbr));
+      let availableTeams = allTeamAbbrs.filter((abbr) => !usedTeams.includes(abbr));
 
       if (availableTeams.length === 0) {
         usedTeams = [];
@@ -614,9 +620,8 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
       lobbyUpdate[usedTeamsKey] = newUsedTeams;
 
       lobbyUpdate.team_abbreviation = randomTeamAbbr;
-      lobbyUpdate.season = sport === 'nba'
-        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
-        : `${randomYear}`;
+      lobbyUpdate.season =
+        sport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
     }
   }
 
@@ -674,7 +679,7 @@ export async function resetLobbyForNewRound(lobbyId: string): Promise<{ error: s
 // Update the career_state JSONB for a career-mode lobby
 export async function updateCareerState(
   lobbyId: string,
-  state: Record<string, unknown>
+  state: Record<string, unknown>,
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
@@ -689,7 +694,7 @@ export async function updateCareerState(
 // Start a new career round: reset all player scores/finished_at, write new career_state, set status=playing.
 export async function startCareerRound(
   lobbyId: string,
-  careerState: Record<string, unknown>
+  careerState: Record<string, unknown>,
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
@@ -728,7 +733,7 @@ export async function resetMatchForPlayAgain(
   winTarget: number,
   careerFrom?: number,
   careerTo?: number,
-  extraState?: Record<string, unknown>
+  extraState?: Record<string, unknown>,
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
@@ -769,7 +774,7 @@ export async function resetMatchForPlayAgain(
 export async function updatePlayerTeam(
   lobbyId: string,
   targetPlayerId: string,
-  teamNumber: number | null
+  teamNumber: number | null,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -787,7 +792,7 @@ export async function updatePlayerTeam(
 // Kick a player from the lobby (host only)
 export async function kickPlayer(
   lobbyId: string,
-  targetPlayerId: string
+  targetPlayerId: string,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -806,7 +811,7 @@ export async function kickPlayer(
 export async function renamePlayer(
   lobbyId: string,
   targetPlayerId: string,
-  newName: string
+  newName: string,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -825,7 +830,7 @@ export async function renamePlayer(
 export async function setPlayerScoreMultiplier(
   lobbyId: string,
   playerId: string,
-  multiplier: number
+  multiplier: number,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
@@ -844,7 +849,7 @@ export async function setPlayerScoreMultiplier(
 export async function setPlayerDummyMode(
   lobbyId: string,
   playerId: string,
-  isDummy: boolean
+  isDummy: boolean,
 ): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };

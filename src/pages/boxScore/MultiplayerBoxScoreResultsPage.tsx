@@ -11,27 +11,42 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, incrementPlayerWins } from '../../services/lobby';
+import {
+  findLobbyByCode,
+  getLobbyPlayers,
+  updateLobbyStatus,
+  incrementPlayerWins,
+} from '../../services/lobby';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
 import { nflTeams } from '../../data/nfl-teams';
-import type { BoxScoreGame, BoxScorePassingPlayer, BoxScoreRushingPlayer, BoxScoreReceivingPlayer } from '../../services/boxScoreData';
+import type {
+  BoxScoreGame,
+  BoxScorePassingPlayer,
+  BoxScoreRushingPlayer,
+  BoxScoreReceivingPlayer,
+} from '../../services/boxScoreData';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const GAME_TYPE_LABELS: Record<string, string> = {
-  REG: 'Regular Season', WC: 'Wild Card', DIV: 'Divisional',
-  CON: 'Conf. Championship', SB: 'Super Bowl',
+  REG: 'Regular Season',
+  WC: 'Wild Card',
+  DIV: 'Divisional',
+  CON: 'Conf. Championship',
+  SB: 'Super Bowl',
 };
 
 function getTeamColor(abbr: string): string {
-  return nflTeams.find(t => t.abbreviation === abbr)?.colors.primary ?? '#4a4a4a';
+  return nflTeams.find((t) => t.abbreviation === abbr)?.colors.primary ?? '#4a4a4a';
 }
 
 function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr + 'T12:00:00');
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch { return dateStr; }
+  } catch {
+    return dateStr;
+  }
 }
 
 function bk(side: 'home' | 'away', cat: string, idx: number) {
@@ -40,13 +55,23 @@ function bk(side: 'home' | 'away', cat: string, idx: number) {
 
 // ─── Row components ───────────────────────────────────────────────────────────
 
-function ResultName({ name, guessed, correct }: { name: string; guessed: string; correct: boolean }) {
+function ResultName({
+  name,
+  guessed,
+  correct,
+}: {
+  name: string;
+  guessed: string;
+  correct: boolean;
+}) {
   return (
-    <div className={`flex-1 min-w-0 px-2 py-1 rounded border text-xs capcrunch-kicker truncate ${
-      correct
-        ? 'bg-green-900/25 border-green-700/50 text-green-400'
-        : 'bg-red-900/15 border-red-900/30 text-red-400/80'
-    }`}>
+    <div
+      className={`flex-1 min-w-0 px-2 py-1 rounded border text-xs capcrunch-kicker truncate ${
+        correct
+          ? 'bg-green-900/25 border-green-700/50 text-green-400'
+          : 'bg-red-900/15 border-red-900/30 text-red-400/80'
+      }`}
+    >
       {name}
       {!correct && guessed && (
         <span className="ml-2 text-[#444] line-through text-[10px]">{guessed}</span>
@@ -64,7 +89,15 @@ function GetterLine({ getters }: { getters?: string[] }) {
   );
 }
 
-function PassingRow({ player, guessed, getters }: { player: BoxScorePassingPlayer; guessed: string; getters?: string[] }) {
+function PassingRow({
+  player,
+  guessed,
+  getters,
+}: {
+  player: BoxScorePassingPlayer;
+  guessed: string;
+  getters?: string[];
+}) {
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
     <div className="flex items-start gap-1.5 py-0.5">
@@ -75,17 +108,32 @@ function PassingRow({ player, guessed, getters }: { player: BoxScorePassingPlaye
         <ResultName name={player.name} guessed={guessed} correct={correct} />
         <GetterLine getters={getters} />
       </div>
-      <div className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1" style={{ minWidth: 110 }}>
-        {player.completions}/{player.attempts} · {player.yards}yd · {player.tds}TD{player.ints > 0 ? ` · ${player.ints}INT` : ''}
+      <div
+        className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1"
+        style={{ minWidth: 110 }}
+      >
+        {player.completions}/{player.attempts} · {player.yards}yd · {player.tds}TD
+        {player.ints > 0 ? ` · ${player.ints}INT` : ''}
       </div>
-      <div className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1" style={{ minWidth: 60 }}>
+      <div
+        className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1"
+        style={{ minWidth: 60 }}
+      >
         {player.yards}yd {player.tds}TD
       </div>
     </div>
   );
 }
 
-function RushingRow({ player, guessed, getters }: { player: BoxScoreRushingPlayer; guessed: string; getters?: string[] }) {
+function RushingRow({
+  player,
+  guessed,
+  getters,
+}: {
+  player: BoxScoreRushingPlayer;
+  guessed: string;
+  getters?: string[];
+}) {
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
     <div className="flex items-start gap-1.5 py-0.5">
@@ -96,17 +144,31 @@ function RushingRow({ player, guessed, getters }: { player: BoxScoreRushingPlaye
         <ResultName name={player.name} guessed={guessed} correct={correct} />
         <GetterLine getters={getters} />
       </div>
-      <div className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1" style={{ minWidth: 110 }}>
+      <div
+        className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1"
+        style={{ minWidth: 110 }}
+      >
         {player.carries}car · {player.yards}yd · {player.tds}TD
       </div>
-      <div className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1" style={{ minWidth: 60 }}>
+      <div
+        className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1"
+        style={{ minWidth: 60 }}
+      >
         {player.yards}yd {player.tds}TD
       </div>
     </div>
   );
 }
 
-function ReceivingRow({ player, guessed, getters }: { player: BoxScoreReceivingPlayer; guessed: string; getters?: string[] }) {
+function ReceivingRow({
+  player,
+  guessed,
+  getters,
+}: {
+  player: BoxScoreReceivingPlayer;
+  guessed: string;
+  getters?: string[];
+}) {
   const correct = !!guessed && areSimilarNames(guessed, player.name);
   return (
     <div className="flex items-start gap-1.5 py-0.5">
@@ -117,10 +179,16 @@ function ReceivingRow({ player, guessed, getters }: { player: BoxScoreReceivingP
         <ResultName name={player.name} guessed={guessed} correct={correct} />
         <GetterLine getters={getters} />
       </div>
-      <div className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1" style={{ minWidth: 110 }}>
+      <div
+        className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right hidden sm:block mt-1"
+        style={{ minWidth: 110 }}
+      >
         {player.receptions}/{player.targets} · {player.yards}yd · {player.tds}TD
       </div>
-      <div className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1" style={{ minWidth: 60 }}>
+      <div
+        className="capcrunch-kicker text-[10px] text-[#888] shrink-0 tabular-nums text-right sm:hidden mt-1"
+        style={{ minWidth: 60 }}
+      >
         {player.yards}yd {player.tds}TD
       </div>
     </div>
@@ -139,9 +207,10 @@ export function MultiplayerBoxScoreResultsPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const location = useLocation();
-  const state = (location.state as ResultsState | null);
+  const state = location.state as ResultsState | null;
 
-  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } = useLobbyStore();
+  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } =
+    useLobbyStore();
   const hasIncrementedWins = useRef(false);
 
   useLobbySubscription(lobby?.id || null);
@@ -154,18 +223,24 @@ export function MultiplayerBoxScoreResultsPage() {
     if (topScore === 0) return; // nobody scored — don't award a win for a blank game
     hasIncrementedWins.current = true;
     sorted
-      .filter(p => (p.score || 0) === topScore)
-      .forEach(p => incrementPlayerWins(lobby.id, p.player_id));
+      .filter((p) => (p.score || 0) === topScore)
+      .forEach((p) => incrementPlayerWins(lobby.id, p.player_id));
   }, [isHost, lobby?.id, players]);
 
   // Load lobby on refresh
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
     if (lobby) return;
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
+    findLobbyByCode(code).then((result) => {
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
       setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
+      getLobbyPlayers(result.lobby.id).then((pr) => {
         if (pr.players) setPlayers(pr.players);
       });
     });
@@ -236,7 +311,7 @@ export function MultiplayerBoxScoreResultsPage() {
   // Build who-got-what map: slot key → list of player names who identified it
   const whoGot: Record<string, string[]> = {};
   if (game) {
-    players.forEach(p => {
+    players.forEach((p) => {
       (p.guessed_players || []).forEach((entry: string) => {
         if (!entry.startsWith('BOX:')) return;
         const parts = entry.split(':');
@@ -250,7 +325,7 @@ export function MultiplayerBoxScoreResultsPage() {
 
   // Per-player spread guesses from guessed_players (SPREAD:{value} entries)
   const playerSpreadGuesses: Record<string, string | null> = {};
-  players.forEach(p => {
+  players.forEach((p) => {
     const entry = (p.guessed_players || []).find((e: string) => e.startsWith('SPREAD:'));
     playerSpreadGuesses[p.player_id] = entry ? entry.slice('SPREAD:'.length) : null;
   });
@@ -263,9 +338,17 @@ export function MultiplayerBoxScoreResultsPage() {
     <div className="min-h-screen home-chalkboard text-white">
       {/* Header */}
       <header className="sticky top-0 z-20 capcrunch-panel border-b border-white/10 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/')} className="p-1.5 text-[#444] hover:text-white transition-colors shrink-0">
+        <button
+          onClick={() => navigate('/')}
+          className="p-1.5 text-[#444] hover:text-white transition-colors shrink-0"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
         </button>
         <div className="flex-1 text-center">
@@ -275,7 +358,6 @@ export function MultiplayerBoxScoreResultsPage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-3 py-4 space-y-3">
-
         {/* ── Winner banner ── */}
         {winner && (
           <motion.div
@@ -283,9 +365,13 @@ export function MultiplayerBoxScoreResultsPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="capcrunch-panel border-[#FDF100]/30 p-5 text-center"
           >
-            <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.4em] uppercase mb-2">Match Winner</div>
+            <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.4em] uppercase mb-2">
+              Match Winner
+            </div>
             <div className="capcrunch-title text-3xl text-[#FDF100]">{winner.player_name}</div>
-            <div className="capcrunch-kicker text-sm text-[#888] mt-1">{winner.score || 0} correct</div>
+            <div className="capcrunch-kicker text-sm text-[#888] mt-1">
+              {winner.score || 0} correct
+            </div>
           </motion.div>
         )}
 
@@ -296,7 +382,9 @@ export function MultiplayerBoxScoreResultsPage() {
           transition={{ delay: 0.05 }}
           className="capcrunch-panel p-4"
         >
-          <div className="capcrunch-kicker text-[9px] text-white/40 mb-3 text-center">Standings</div>
+          <div className="capcrunch-kicker text-[9px] text-white/40 mb-3 text-center">
+            Standings
+          </div>
           <div className="space-y-2">
             {sortedPlayers.map((player, rank) => {
               const isMe = player.player_id === currentPlayerId;
@@ -316,21 +404,32 @@ export function MultiplayerBoxScoreResultsPage() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`capcrunch-title text-lg w-7 text-center ${
-                      rank === 0 ? 'text-[#FDF100]' : 'text-[#444]'
-                    }`}>#{rank + 1}</span>
+                    <span
+                      className={`capcrunch-title text-lg w-7 text-center ${
+                        rank === 0 ? 'text-[#FDF100]' : 'text-[#444]'
+                      }`}
+                    >
+                      #{rank + 1}
+                    </span>
                     <span className="capcrunch-kicker text-sm text-white/90">
                       {player.player_name}
                       {isMe && <span className="text-white/40 ml-1 text-[10px]">(you)</span>}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {game?.spread_line != null && (player.score || 0) - (player.guessed_count || 0) >= 1 && (
-                      <span className="capcrunch-kicker text-[10px] text-green-400 bg-green-900/20 border border-green-700/30 px-1.5 py-0.5 rounded">+S</span>
-                    )}
-                    <span className={`capcrunch-title text-xl tabular-nums ${
-                      rank === 0 ? 'text-[#FDF100]' : 'text-[#888]'
-                    }`}>{score}</span>
+                    {game?.spread_line != null &&
+                      (player.score || 0) - (player.guessed_count || 0) >= 1 && (
+                        <span className="capcrunch-kicker text-[10px] text-green-400 bg-green-900/20 border border-green-700/30 px-1.5 py-0.5 rounded">
+                          +S
+                        </span>
+                      )}
+                    <span
+                      className={`capcrunch-title text-xl tabular-nums ${
+                        rank === 0 ? 'text-[#FDF100]' : 'text-[#888]'
+                      }`}
+                    >
+                      {score}
+                    </span>
                   </div>
                 </motion.div>
               );
@@ -343,7 +442,8 @@ export function MultiplayerBoxScoreResultsPage() {
           <div className="capcrunch-panel p-4 text-center">
             <div className="capcrunch-kicker text-[9px] text-white/40 mb-1">Your Score</div>
             <div className="capcrunch-title text-4xl text-[#FDF100] tabular-nums">
-              {myCorrect}<span className="text-xl text-[#444]">/{myTotal}</span>
+              {myCorrect}
+              <span className="text-xl text-[#444]">/{myTotal}</span>
             </div>
           </div>
         )}
@@ -353,15 +453,28 @@ export function MultiplayerBoxScoreResultsPage() {
           <div className="capcrunch-panel overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4">
               <div className="flex flex-col items-center gap-1">
-                <div className="capcrunch-title text-2xl sm:text-3xl leading-none" style={{ color: awayColor }}>{game.away_team}</div>
-                <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.away_score}</div>
-                <div className="capcrunch-kicker text-[9px] text-[#444] tracking-widest mt-0.5">AWAY</div>
+                <div
+                  className="capcrunch-title text-2xl sm:text-3xl leading-none"
+                  style={{ color: awayColor }}
+                >
+                  {game.away_team}
+                </div>
+                <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">
+                  {game.away_score}
+                </div>
+                <div className="capcrunch-kicker text-[9px] text-[#444] tracking-widest mt-0.5">
+                  AWAY
+                </div>
               </div>
               <div className="flex flex-col items-center gap-1 px-2">
                 {game.overtime && (
-                  <span className="px-2 py-0.5 bg-amber-900/30 border border-amber-700/40 rounded capcrunch-kicker text-[9px] text-amber-500">OT</span>
+                  <span className="px-2 py-0.5 bg-amber-900/30 border border-amber-700/40 rounded capcrunch-kicker text-[9px] text-amber-500">
+                    OT
+                  </span>
                 )}
-                <div className="capcrunch-kicker text-[10px] text-[#555] tracking-[0.3em]">FINAL</div>
+                <div className="capcrunch-kicker text-[10px] text-[#555] tracking-[0.3em]">
+                  FINAL
+                </div>
                 <div className="capcrunch-kicker text-xs text-white/70 text-center leading-snug font-semibold">
                   {gameLabel}
                 </div>
@@ -370,16 +483,37 @@ export function MultiplayerBoxScoreResultsPage() {
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1">
-                <div className="capcrunch-title text-2xl sm:text-3xl leading-none" style={{ color: homeColor }}>{game.home_team}</div>
-                <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">{game.home_score}</div>
-                <div className="capcrunch-kicker text-[9px] text-[#444] tracking-widest mt-0.5">HOME</div>
+                <div
+                  className="capcrunch-title text-2xl sm:text-3xl leading-none"
+                  style={{ color: homeColor }}
+                >
+                  {game.home_team}
+                </div>
+                <div className="capcrunch-title text-4xl sm:text-5xl text-white leading-none tabular-nums">
+                  {game.home_score}
+                </div>
+                <div className="capcrunch-kicker text-[9px] text-[#444] tracking-widest mt-0.5">
+                  HOME
+                </div>
               </div>
             </div>
             <div className="border-t border-white/8 px-4 py-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
-              <span className="capcrunch-kicker text-[10px] text-[#3a3a3a]">{formatDate(game.gameday)}</span>
-              {game.stadium && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.stadium}</span>}
-              {game.temp != null && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.temp}°F</span>}
-              {game.wind != null && <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.wind} mph wind</span>}
+              <span className="capcrunch-kicker text-[10px] text-[#3a3a3a]">
+                {formatDate(game.gameday)}
+              </span>
+              {game.stadium && (
+                <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">
+                  · {game.stadium}
+                </span>
+              )}
+              {game.temp != null && (
+                <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">· {game.temp}°F</span>
+              )}
+              {game.wind != null && (
+                <span className="capcrunch-kicker text-[10px] text-[#2e2e2e]">
+                  · {game.wind} mph wind
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -387,39 +521,73 @@ export function MultiplayerBoxScoreResultsPage() {
         {/* ── My box score (personal) ── */}
         {game && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {(['away', 'home'] as const).map(side => {
+            {(['away', 'home'] as const).map((side) => {
               const color = side === 'home' ? homeColor : awayColor;
-              const abbr  = side === 'home' ? game.home_team : game.away_team;
-              const data  = game.box_score[side];
+              const abbr = side === 'home' ? game.home_team : game.away_team;
+              const data = game.box_score[side];
               return (
                 <div key={side} className="capcrunch-panel overflow-hidden">
                   <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                    <span className="capcrunch-title text-base" style={{ color }}>{abbr}</span>
-                    <span className="capcrunch-kicker text-[9px] text-[#333] tracking-widest uppercase ml-1">{side}</span>
+                    <div
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="capcrunch-title text-base" style={{ color }}>
+                      {abbr}
+                    </span>
+                    <span className="capcrunch-kicker text-[9px] text-[#333] tracking-widest uppercase ml-1">
+                      {side}
+                    </span>
                   </div>
                   <div className="p-3 space-y-3">
                     {data.passing.length > 0 && (
                       <section>
-                        <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-white/8">Passing</div>
+                        <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-white/8">
+                          Passing
+                        </div>
                         {data.passing.map((p, i) => (
-                          <PassingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'passing', i)] ?? ''} getters={players.length > 1 ? whoGot[bk(side, 'passing', i)] : undefined} />
+                          <PassingRow
+                            key={p.id}
+                            player={p}
+                            guessed={myGuesses[bk(side, 'passing', i)] ?? ''}
+                            getters={
+                              players.length > 1 ? whoGot[bk(side, 'passing', i)] : undefined
+                            }
+                          />
                         ))}
                       </section>
                     )}
                     {data.rushing.length > 0 && (
                       <section>
-                        <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-white/8">Rushing</div>
+                        <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-white/8">
+                          Rushing
+                        </div>
                         {data.rushing.map((p, i) => (
-                          <RushingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'rushing', i)] ?? ''} getters={players.length > 1 ? whoGot[bk(side, 'rushing', i)] : undefined} />
+                          <RushingRow
+                            key={p.id}
+                            player={p}
+                            guessed={myGuesses[bk(side, 'rushing', i)] ?? ''}
+                            getters={
+                              players.length > 1 ? whoGot[bk(side, 'rushing', i)] : undefined
+                            }
+                          />
                         ))}
                       </section>
                     )}
                     {data.receiving.length > 0 && (
                       <section>
-                        <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-white/8">Receiving</div>
+                        <div className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.35em] uppercase mb-1 pb-0.5 border-b border-white/8">
+                          Receiving
+                        </div>
                         {data.receiving.map((p, i) => (
-                          <ReceivingRow key={p.id} player={p} guessed={myGuesses[bk(side, 'receiving', i)] ?? ''} getters={players.length > 1 ? whoGot[bk(side, 'receiving', i)] : undefined} />
+                          <ReceivingRow
+                            key={p.id}
+                            player={p}
+                            guessed={myGuesses[bk(side, 'receiving', i)] ?? ''}
+                            getters={
+                              players.length > 1 ? whoGot[bk(side, 'receiving', i)] : undefined
+                            }
+                          />
                         ))}
                       </section>
                     )}
@@ -436,14 +604,18 @@ export function MultiplayerBoxScoreResultsPage() {
             <div className="capcrunch-kicker text-[9px] text-white/40 mb-3">Vegas Spread</div>
             <div className="mb-3">
               <span className="capcrunch-kicker text-sm text-white/80">
-                Actual: <span className="text-[#FDF100] font-semibold">
-                  {game.spread_line > 0 ? '+' : ''}{game.spread_line}
+                Actual:{' '}
+                <span className="text-[#FDF100] font-semibold">
+                  {game.spread_line > 0 ? '+' : ''}
+                  {game.spread_line}
                 </span>
               </span>
-              <span className="capcrunch-kicker text-[10px] text-[#444] ml-2">+ = {game.home_team} favored</span>
+              <span className="capcrunch-kicker text-[10px] text-[#444] ml-2">
+                + = {game.home_team} favored
+              </span>
             </div>
             <div className="space-y-1.5">
-              {sortedPlayers.map(p => {
+              {sortedPlayers.map((p) => {
                 const val = playerSpreadGuesses[p.player_id];
                 const hasGuess = val !== null && val !== '';
                 const guessNum = hasGuess ? parseFloat(val) : null;
@@ -452,8 +624,11 @@ export function MultiplayerBoxScoreResultsPage() {
                   <div key={p.player_id} className="flex items-center justify-between">
                     <span className="capcrunch-kicker text-xs text-white/50">{p.player_name}</span>
                     {hasGuess ? (
-                      <span className={`capcrunch-kicker text-xs font-semibold ${correct ? 'text-green-400' : 'text-red-400'}`}>
-                        {guessNum !== null && guessNum > 0 ? '+' : ''}{val}
+                      <span
+                        className={`capcrunch-kicker text-xs font-semibold ${correct ? 'text-green-400' : 'text-red-400'}`}
+                      >
+                        {guessNum !== null && guessNum > 0 ? '+' : ''}
+                        {val}
                         {correct && <span className="ml-1 text-[10px]">✓</span>}
                       </span>
                     ) : (

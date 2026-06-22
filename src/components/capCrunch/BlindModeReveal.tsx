@@ -14,7 +14,16 @@ import { PlayerHeadshot } from './PlayerHeadshot';
 import { HomeButton } from '../multiplayer/HomeButton';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 
-const PLAYER_COLORS = ['#818cf8', '#34d399', '#fb923c', '#f472b6', '#60a5fa', '#a78bfa', '#4ade80', '#f87171'];
+const PLAYER_COLORS = [
+  '#818cf8',
+  '#34d399',
+  '#fb923c',
+  '#f472b6',
+  '#60a5fa',
+  '#a78bfa',
+  '#4ade80',
+  '#f87171',
+];
 
 interface Player {
   id: string;
@@ -38,8 +47,15 @@ interface Props {
 }
 
 export function BlindModeReveal({
-  players, allLineups, targetCap, totalRounds, revealStep,
-  isHost, sport, onReveal, onFinish,
+  players,
+  allLineups,
+  targetCap,
+  totalRounds,
+  revealStep,
+  isHost,
+  sport,
+  onReveal,
+  onFinish,
 }: Props) {
   const allRevealed = revealStep >= totalRounds;
 
@@ -55,7 +71,20 @@ export function BlindModeReveal({
   }
 
   const winnerDist = allRevealed
-    ? Math.min(...players.map(p => distFromCap(allLineups[p.player_id] ?? { selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false, playerId: '', playerName: '' })))
+    ? Math.min(
+        ...players.map((p) =>
+          distFromCap(
+            allLineups[p.player_id] ?? {
+              selectedPlayers: [],
+              totalStat: 0,
+              bustCount: 0,
+              isFinished: false,
+              playerId: '',
+              playerName: '',
+            },
+          ),
+        ),
+      )
     : Infinity;
 
   return (
@@ -76,7 +105,9 @@ export function BlindModeReveal({
           </div>
           <div className="text-center">
             <div className="capcrunch-kicker text-[8px] text-white/30 mb-0.5">Round</div>
-            <p className="capcrunch-title text-xl text-white">{revealStep}/{totalRounds}</p>
+            <p className="capcrunch-title text-xl text-white">
+              {revealStep}/{totalRounds}
+            </p>
           </div>
         </div>
       </header>
@@ -87,106 +118,142 @@ export function BlindModeReveal({
           {/* Single scroll container keeps totals row and pick rows in sync */}
           <div className="overflow-x-auto">
             <div className="min-w-max">
-
-            {/* Running totals row */}
-            <div className="flex gap-3 pb-2 mb-4">
-              {players.map((player, pi) => {
-                const lineup = allLineups[player.player_id];
-                const total = lineup ? runningTotal(lineup, revealStep) : 0;
-                const color = PLAYER_COLORS[pi % PLAYER_COLORS.length];
-                const isWinner = allRevealed && lineup ? distFromCap(lineup) === winnerDist : false;
-                return (
-                  <div
-                    key={player.player_id}
-                    className="flex flex-col items-center"
-                    style={{ width: Math.max(120, Math.floor(Math.min(180, (typeof window !== 'undefined' ? window.innerWidth - 24 : 400) / players.length))) }}
-                  >
+              {/* Running totals row */}
+              <div className="flex gap-3 pb-2 mb-4">
+                {players.map((player, pi) => {
+                  const lineup = allLineups[player.player_id];
+                  const total = lineup ? runningTotal(lineup, revealStep) : 0;
+                  const color = PLAYER_COLORS[pi % PLAYER_COLORS.length];
+                  const isWinner =
+                    allRevealed && lineup ? distFromCap(lineup) === winnerDist : false;
+                  return (
                     <div
-                      className={`w-full p-3 text-center border transition-all ${isWinner ? 'border-[#FDF100]/60 bg-[#FDF100]/10' : 'border-white/10 bg-black/40'}`}
+                      key={player.player_id}
+                      className="flex flex-col items-center"
+                      style={{
+                        width: Math.max(
+                          120,
+                          Math.floor(
+                            Math.min(
+                              180,
+                              (typeof window !== 'undefined' ? window.innerWidth - 24 : 400) /
+                                players.length,
+                            ),
+                          ),
+                        ),
+                      }}
                     >
-                      <p className="capcrunch-kicker text-[9px] tracking-widest truncate mb-1" style={{ color }}>
-                        {player.player_name}
-                      </p>
-                      <motion.p
-                        key={`${player.player_id}-${revealStep}`}
-                        initial={{ scale: 1.3, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                        className="capcrunch-title text-2xl md:text-3xl"
-                        style={{ color: revealStep === 0 ? '#444' : color }}
+                      <div
+                        className={`w-full p-3 text-center border transition-all ${isWinner ? 'border-[#FDF100]/60 bg-[#FDF100]/10' : 'border-white/10 bg-black/40'}`}
                       >
-                        {revealStep === 0 ? '—' : fmt(total)}
-                      </motion.p>
-                      {isWinner && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="capcrunch-kicker text-[8px] text-[#d4af37] tracking-widest mt-1 uppercase"
+                        <p
+                          className="capcrunch-kicker text-[9px] tracking-widest truncate mb-1"
+                          style={{ color }}
                         >
-                          Winner
-                        </motion.div>
-                      )}
+                          {player.player_name}
+                        </p>
+                        <motion.p
+                          key={`${player.player_id}-${revealStep}`}
+                          initial={{ scale: 1.3, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+                          className="capcrunch-title text-2xl md:text-3xl"
+                          style={{ color: revealStep === 0 ? '#444' : color }}
+                        >
+                          {revealStep === 0 ? '—' : fmt(total)}
+                        </motion.p>
+                        {isWinner && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="capcrunch-kicker text-[8px] text-[#d4af37] tracking-widest mt-1 uppercase"
+                          >
+                            Winner
+                          </motion.div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            {/* Pick rows */}
-            <div className="flex gap-3">
-              {players.map((player, pi) => {
-                const lineup = allLineups[player.player_id];
-                const picks = lineup?.selectedPlayers ?? [];
-                const color = PLAYER_COLORS[pi % PLAYER_COLORS.length];
-                return (
-                  <div
-                    key={player.player_id}
-                    className="flex flex-col gap-2"
-                    style={{ width: Math.max(120, Math.floor(Math.min(180, (typeof window !== 'undefined' ? window.innerWidth - 24 : 400) / players.length))) }}
-                  >
-                    {Array.from({ length: totalRounds }).map((_, roundIdx) => {
-                      const pick = picks[roundIdx];
-                      const revealed = roundIdx < revealStep;
-                      return (
-                        <AnimatePresence key={roundIdx} mode="wait">
-                          {revealed && pick ? (
-                            <motion.div
-                              key="pick"
-                              initial={{ opacity: 0, y: -8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3, delay: 0.05 * pi }}
-                              className="border border-white/10 bg-black/40 p-2"
-                            >
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <PlayerHeadshot playerId={pick.playerId} sport={sport} className="w-6 h-6 rounded-full object-cover bg-white/5 shrink-0" />
-                                <p className="capcrunch-kicker text-[10px] text-white/80 truncate leading-tight">{pick.playerName}</p>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="capcrunch-kicker text-[9px] text-white/30">{pick.team} {pick.selectedYear}</span>
-                                <span className="capcrunch-title text-sm" style={{ color }}>{fmt(pick.statValue)}</span>
-                              </div>
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="hidden"
-                              className="border border-white/5 bg-black/20 p-2 flex items-center justify-center"
-                              style={{ height: 60 }}
-                            >
-                              <span className="capcrunch-kicker text-[10px] text-white/15 tracking-widest">
-                                {roundIdx < revealStep ? '—' : `Round ${roundIdx + 1}`}
-                              </span>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+              {/* Pick rows */}
+              <div className="flex gap-3">
+                {players.map((player, pi) => {
+                  const lineup = allLineups[player.player_id];
+                  const picks = lineup?.selectedPlayers ?? [];
+                  const color = PLAYER_COLORS[pi % PLAYER_COLORS.length];
+                  return (
+                    <div
+                      key={player.player_id}
+                      className="flex flex-col gap-2"
+                      style={{
+                        width: Math.max(
+                          120,
+                          Math.floor(
+                            Math.min(
+                              180,
+                              (typeof window !== 'undefined' ? window.innerWidth - 24 : 400) /
+                                players.length,
+                            ),
+                          ),
+                        ),
+                      }}
+                    >
+                      {Array.from({ length: totalRounds }).map((_, roundIdx) => {
+                        const pick = picks[roundIdx];
+                        const revealed = roundIdx < revealStep;
+                        return (
+                          <AnimatePresence key={roundIdx} mode="wait">
+                            {revealed && pick ? (
+                              <motion.div
+                                key="pick"
+                                initial={{ opacity: 0, y: -8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.05 * pi }}
+                                className="border border-white/10 bg-black/40 p-2"
+                              >
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <PlayerHeadshot
+                                    playerId={pick.playerId}
+                                    sport={sport}
+                                    className="w-6 h-6 rounded-full object-cover bg-white/5 shrink-0"
+                                  />
+                                  <p className="capcrunch-kicker text-[10px] text-white/80 truncate leading-tight">
+                                    {pick.playerName}
+                                  </p>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="capcrunch-kicker text-[9px] text-white/30">
+                                    {pick.team} {pick.selectedYear}
+                                  </span>
+                                  <span className="capcrunch-title text-sm" style={{ color }}>
+                                    {fmt(pick.statValue)}
+                                  </span>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="hidden"
+                                className="border border-white/5 bg-black/20 p-2 flex items-center justify-center"
+                                style={{ height: 60 }}
+                              >
+                                <span className="capcrunch-kicker text-[10px] text-white/15 tracking-widest">
+                                  {roundIdx < revealStep ? '—' : `Round ${roundIdx + 1}`}
+                                </span>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-
-            </div>{/* min-w-max */}
-          </div>{/* overflow-x-auto */}
+            {/* min-w-max */}
+          </div>
+          {/* overflow-x-auto */}
         </div>
       </main>
 
@@ -211,7 +278,9 @@ export function BlindModeReveal({
             )
           ) : (
             <div className="flex-1 py-4 text-center capcrunch-kicker text-sm text-white/40 border border-white/10">
-              {allRevealed ? 'Waiting for host to show final results...' : `Waiting for host to reveal round ${revealStep + 1}...`}
+              {allRevealed
+                ? 'Waiting for host to show final results...'
+                : `Waiting for host to reveal round ${revealStep + 1}...`}
             </div>
           )}
         </div>

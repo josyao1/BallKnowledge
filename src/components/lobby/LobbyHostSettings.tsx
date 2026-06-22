@@ -18,20 +18,27 @@ import { nflTeams } from '../../data/nfl-teams';
 import { teams } from '../../data/teams';
 import type { GenericTeam } from '../../data/homeGames';
 import type { Sport } from '../../types';
-import { ScrambleSettings }       from './settings/ScrambleSettings';
-import { CareerSettings }         from './settings/CareerSettings';
-import { CapCrunchSettings }      from './settings/CapCrunchSettings';
-import { BoxScoreSettings }       from './settings/BoxScoreSettings';
+import { ScrambleSettings } from './settings/ScrambleSettings';
+import { CareerSettings } from './settings/CareerSettings';
+import { CapCrunchSettings } from './settings/CapCrunchSettings';
+import { BoxScoreSettings } from './settings/BoxScoreSettings';
 import { StartingLineupSettings } from './settings/StartingLineupSettings';
-import { RosterSettings }         from './settings/RosterSettings';
-import { FaceRevealSettings }     from './settings/FaceRevealSettings';
-import { TopTenSettings }         from './settings/TopTenSettings';
+import { RosterSettings } from './settings/RosterSettings';
+import { FaceRevealSettings } from './settings/FaceRevealSettings';
+import { TopTenSettings } from './settings/TopTenSettings';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type GameTypeValue =
-  | 'roster' | 'career' | 'scramble'
-  | 'lineup-is-right' | 'box-score' | 'nba-box-score' | 'starting-lineup' | 'face-reveal' | 'top-ten';
+  | 'roster'
+  | 'career'
+  | 'scramble'
+  | 'lineup-is-right'
+  | 'box-score'
+  | 'nba-box-score'
+  | 'starting-lineup'
+  | 'face-reveal'
+  | 'top-ten';
 
 /** All current form values, passed to onApply so the parent can write to Supabase. */
 export interface HostFormValues {
@@ -117,75 +124,104 @@ interface Props {
   onApply: (values: HostFormValues) => Promise<void>;
 }
 
-export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHostSettings({ lobby, players, onApply }, ref) {
+export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHostSettings(
+  { lobby, players, onApply },
+  ref,
+) {
   // ── Edit state ─────────────────────────────────────────────────────────────
-  const [editGameType,       setEditGameType]       = useState<GameTypeValue>('roster');
-  const [editSport,          setEditSport]          = useState<Sport>('nba');
-  const [editRandomSport,    setEditRandomSport]    = useState(false);
-  const [editGameMode,       setEditGameMode]       = useState<'random' | 'manual'>('manual');
+  const [editGameType, setEditGameType] = useState<GameTypeValue>('roster');
+  const [editSport, setEditSport] = useState<Sport>('nba');
+  const [editRandomSport, setEditRandomSport] = useState(false);
+  const [editGameMode, setEditGameMode] = useState<'random' | 'manual'>('manual');
   const [editSelectionScope, setEditSelectionScope] = useState<'team' | 'division'>('team');
-  const [editTeam,           setEditTeam]           = useState<GenericTeam | null>(null);
-  const [editYear,           setEditYear]           = useState<number | null>(null);
-  const [editTimer,          setEditTimer]          = useState(90);
-  const [editCustomTimer,    setEditCustomTimer]    = useState('');
-  const [editMinYear,        setEditMinYear]        = useState(2015);
-  const [editMaxYear,        setEditMaxYear]        = useState(2025);
-  const [editWinTarget,      setEditWinTarget]      = useState(3);
-  const [editCareerFrom,     setEditCareerFrom]     = useState(0);
-  const [editCareerTo,       setEditCareerTo]       = useState(0);
-  const [editMinMpg,               setEditMinMpg]               = useState(0);
-  const [editMinYards,             setEditMinYards]             = useState(0);
+  const [editTeam, setEditTeam] = useState<GenericTeam | null>(null);
+  const [editYear, setEditYear] = useState<number | null>(null);
+  const [editTimer, setEditTimer] = useState(90);
+  const [editCustomTimer, setEditCustomTimer] = useState('');
+  const [editMinYear, setEditMinYear] = useState(2015);
+  const [editMaxYear, setEditMaxYear] = useState(2025);
+  const [editWinTarget, setEditWinTarget] = useState(3);
+  const [editCareerFrom, setEditCareerFrom] = useState(0);
+  const [editCareerTo, setEditCareerTo] = useState(0);
+  const [editMinMpg, setEditMinMpg] = useState(0);
+  const [editMinYards, setEditMinYards] = useState(0);
   const [editScrambleIncludeDefense, setEditScrambleIncludeDefense] = useState(true);
-  const [editLineupStat,     setEditLineupStat]     = useState('random');
-  const [editTotalRounds,    setEditTotalRounds]    = useState(5);
-  const [editCustomCap,      setEditCustomCap]      = useState<number | null>(null);
-  const [editHardMode,       setEditHardMode]       = useState(false);
-  const [editBlindMode,      setEditBlindMode]      = useState(false);
-  const [editPickTimer,      setEditPickTimer]      = useState<number | null>(null);
-  const [editFirstPickerId,  setEditFirstPickerId]  = useState<string | null>(null);
-  const [editBoxMinYear,     setEditBoxMinYear]     = useState(2015);
-  const [editBoxMaxYear,     setEditBoxMaxYear]     = useState(2024);
-  const [editBoxTeam,        setEditBoxTeam]        = useState<string | null>(null);
-  const [editBoxSport,       setEditBoxSport]       = useState<'nba' | 'nfl'>('nfl');
-  const [editStartingSport,  setEditStartingSport]  = useState<'nba' | 'nfl'>('nfl');
-  const [editFaceRevealTimer,       setEditFaceRevealTimer]       = useState(60);
-  const [editFaceRevealMinYards,    setEditFaceRevealMinYards]    = useState(0);
-  const [editFaceRevealMinMpg,      setEditFaceRevealMinMpg]      = useState(0);
-  const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>('known');
-  const [editTopTenSport,        setEditTopTenSport]        = useState<'nba' | 'nfl'>('nba');
-  const [editTopTenRoundType,    setEditTopTenRoundType]    = useState<'league' | 'division' | 'team'>('league');
-  const [editTopTenDivisionMode, setEditTopTenDivisionMode] = useState<'cumulative' | 'single_season'>('cumulative');
-  const [editTopTenMinYear,      setEditTopTenMinYear]      = useState(2015);
-  const [editTopTenMaxYear,      setEditTopTenMaxYear]      = useState(2025);
-  const [editTopTenWindowYears,  setEditTopTenWindowYears]  = useState(10);
-  const [editTopTenMaxStrikes,      setEditTopTenMaxStrikes]      = useState(2);
-  const [editTopTenTimer,           setEditTopTenTimer]           = useState(45);
-  const [editTopTenPinnedDivision,  setEditTopTenPinnedDivision]  = useState<string | null>(null);
-  const [editTopTenPinnedTeam,      setEditTopTenPinnedTeam]      = useState<string | null>(null);
-  const [editTopTenGameMode,        setEditTopTenGameMode]        = useState<'strike' | 'race'>('strike');
-  const [editTopTenRaceTarget,      setEditTopTenRaceTarget]      = useState(3);
-  const [editDisabledRoundTypes,    setEditDisabledRoundTypes]    = useState<SpecialRoundType[]>([]);
+  const [editLineupStat, setEditLineupStat] = useState('random');
+  const [editTotalRounds, setEditTotalRounds] = useState(5);
+  const [editCustomCap, setEditCustomCap] = useState<number | null>(null);
+  const [editHardMode, setEditHardMode] = useState(false);
+  const [editBlindMode, setEditBlindMode] = useState(false);
+  const [editPickTimer, setEditPickTimer] = useState<number | null>(null);
+  const [editFirstPickerId, setEditFirstPickerId] = useState<string | null>(null);
+  const [editBoxMinYear, setEditBoxMinYear] = useState(2015);
+  const [editBoxMaxYear, setEditBoxMaxYear] = useState(2024);
+  const [editBoxTeam, setEditBoxTeam] = useState<string | null>(null);
+  const [editBoxSport, setEditBoxSport] = useState<'nba' | 'nfl'>('nfl');
+  const [editStartingSport, setEditStartingSport] = useState<'nba' | 'nfl'>('nfl');
+  const [editFaceRevealTimer, setEditFaceRevealTimer] = useState(60);
+  const [editFaceRevealMinYards, setEditFaceRevealMinYards] = useState(0);
+  const [editFaceRevealMinMpg, setEditFaceRevealMinMpg] = useState(0);
+  const [editFaceRevealDefenseMode, setEditFaceRevealDefenseMode] = useState<'known' | 'all'>(
+    'known',
+  );
+  const [editTopTenSport, setEditTopTenSport] = useState<'nba' | 'nfl'>('nba');
+  const [editTopTenRoundType, setEditTopTenRoundType] = useState<'league' | 'division' | 'team'>(
+    'league',
+  );
+  const [editTopTenDivisionMode, setEditTopTenDivisionMode] = useState<
+    'cumulative' | 'single_season'
+  >('cumulative');
+  const [editTopTenMinYear, setEditTopTenMinYear] = useState(2015);
+  const [editTopTenMaxYear, setEditTopTenMaxYear] = useState(2025);
+  const [editTopTenWindowYears, setEditTopTenWindowYears] = useState(10);
+  const [editTopTenMaxStrikes, setEditTopTenMaxStrikes] = useState(2);
+  const [editTopTenTimer, setEditTopTenTimer] = useState(45);
+  const [editTopTenPinnedDivision, setEditTopTenPinnedDivision] = useState<string | null>(null);
+  const [editTopTenPinnedTeam, setEditTopTenPinnedTeam] = useState<string | null>(null);
+  const [editTopTenGameMode, setEditTopTenGameMode] = useState<'strike' | 'race'>('strike');
+  const [editTopTenRaceTarget, setEditTopTenRaceTarget] = useState(3);
+  const [editDisabledRoundTypes, setEditDisabledRoundTypes] = useState<SpecialRoundType[]>([]);
 
   useImperativeHandle(ref, () => ({
     getValues: (): HostFormValues => ({
-      gameType: editGameType, sport: editSport, randomSport: editRandomSport,
-      gameMode: editGameMode, selectionScope: editSelectionScope,
-      team: editTeam, year: editYear, timer: editTimer,
-      minYear: editMinYear, maxYear: editMaxYear, winTarget: editWinTarget,
-      careerFrom: editCareerFrom, careerTo: editCareerTo,
-      minMpg: editMinMpg, minYards: editMinYards,
+      gameType: editGameType,
+      sport: editSport,
+      randomSport: editRandomSport,
+      gameMode: editGameMode,
+      selectionScope: editSelectionScope,
+      team: editTeam,
+      year: editYear,
+      timer: editTimer,
+      minYear: editMinYear,
+      maxYear: editMaxYear,
+      winTarget: editWinTarget,
+      careerFrom: editCareerFrom,
+      careerTo: editCareerTo,
+      minMpg: editMinMpg,
+      minYards: editMinYards,
       scrambleIncludeDefense: editScrambleIncludeDefense,
-      lineupStat: editLineupStat, totalRounds: editTotalRounds,
-      customCap: editCustomCap, hardMode: editHardMode, blindMode: editBlindMode,
-      pickTimer: editPickTimer, firstPickerId: editFirstPickerId,
-      boxMinYear: editBoxMinYear, boxMaxYear: editBoxMaxYear, boxTeam: editBoxTeam,
+      lineupStat: editLineupStat,
+      totalRounds: editTotalRounds,
+      customCap: editCustomCap,
+      hardMode: editHardMode,
+      blindMode: editBlindMode,
+      pickTimer: editPickTimer,
+      firstPickerId: editFirstPickerId,
+      boxMinYear: editBoxMinYear,
+      boxMaxYear: editBoxMaxYear,
+      boxTeam: editBoxTeam,
       startingSport: editStartingSport,
-      faceRevealTimer: editFaceRevealTimer, faceRevealMinYards: editFaceRevealMinYards,
-      faceRevealMinMpg: editFaceRevealMinMpg, faceRevealDefenseMode: editFaceRevealDefenseMode,
-      topTenSport: editTopTenSport, topTenRoundType: editTopTenRoundType,
+      faceRevealTimer: editFaceRevealTimer,
+      faceRevealMinYards: editFaceRevealMinYards,
+      faceRevealMinMpg: editFaceRevealMinMpg,
+      faceRevealDefenseMode: editFaceRevealDefenseMode,
+      topTenSport: editTopTenSport,
+      topTenRoundType: editTopTenRoundType,
       topTenDivisionMode: editTopTenDivisionMode,
-      topTenMinYear: editTopTenMinYear, topTenMaxYear: editTopTenMaxYear,
-      topTenWindowYears: editTopTenWindowYears, topTenMaxStrikes: editTopTenMaxStrikes,
+      topTenMinYear: editTopTenMinYear,
+      topTenMaxYear: editTopTenMaxYear,
+      topTenWindowYears: editTopTenWindowYears,
+      topTenMaxStrikes: editTopTenMaxStrikes,
       topTenTimer: editTopTenTimer,
       topTenPinnedDivision: editTopTenPinnedDivision,
       topTenPinnedTeam: editTopTenPinnedTeam,
@@ -233,9 +269,11 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditFaceRevealMinYards((cs.min_yards as number) || 0);
     setEditFaceRevealMinMpg((cs.min_mpg as number) || 0);
     setEditFaceRevealDefenseMode((cs.defense_mode as 'known' | 'all') || 'known');
-    setEditTopTenSport((cs.top_ten_sport as 'nba' | 'nfl') || lobbySport as 'nba' | 'nfl');
+    setEditTopTenSport((cs.top_ten_sport as 'nba' | 'nfl') || (lobbySport as 'nba' | 'nfl'));
     setEditTopTenRoundType((cs.top_ten_round_type as 'league' | 'division' | 'team') || 'league');
-    setEditTopTenDivisionMode((cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative');
+    setEditTopTenDivisionMode(
+      (cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative',
+    );
     setEditTopTenMinYear((cs.top_ten_min_year as number) || (lobbySport === 'nba' ? 1996 : 1999));
     setEditTopTenMaxYear((cs.top_ten_max_year as number) || 2025);
     setEditTopTenWindowYears((cs.top_ten_window_years as number) || 10);
@@ -248,13 +286,22 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditDisabledRoundTypes((cs.disabledRoundTypes as SpecialRoundType[]) || []);
 
     const teamList = lobbySport === 'nba' ? teams : nflTeams;
-    setEditTeam(teamList.find(t => t.abbreviation === lobby.team_abbreviation) || null);
+    setEditTeam(teamList.find((t) => t.abbreviation === lobby.team_abbreviation) || null);
 
     const yearMatch = lobby.season?.match(/^(\d{4})/);
     setEditYear(yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear());
-  }, [lobby?.id, lobby?.sport, lobby?.game_mode, lobby?.timer_duration,
-      lobby?.team_abbreviation, lobby?.season, lobby?.min_year, lobby?.max_year,
-      lobby?.game_type, lobby?.career_state]);
+  }, [
+    lobby?.id,
+    lobby?.sport,
+    lobby?.game_mode,
+    lobby?.timer_duration,
+    lobby?.team_abbreviation,
+    lobby?.season,
+    lobby?.min_year,
+    lobby?.max_year,
+    lobby?.game_type,
+    lobby?.career_state,
+  ]);
 
   // ── Sport change handler (Roster mode: handles NBA / NFL / Random) ─────────
   const handleSportChange = (newSport: Sport | 'random') => {
@@ -269,8 +316,8 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
       setEditTeam(null);
       setEditYear(null);
       if (newSport === 'nfl') {
-        setEditMinYear(prev => Math.max(prev, 2000));
-        setEditMaxYear(prev => Math.min(prev, 2024));
+        setEditMinYear((prev) => Math.max(prev, 2000));
+        setEditMaxYear((prev) => Math.min(prev, 2024));
       }
     }
   };
@@ -287,23 +334,38 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     setEditTopTenSport(s);
     const minBound = s === 'nba' ? 1996 : 1999;
     const maxBound = s === 'nba' ? 2025 : 2024;
-    setEditTopTenMinYear(prev => Math.max(minBound, Math.min(prev, maxBound)));
-    setEditTopTenMaxYear(prev => Math.max(minBound, Math.min(prev, maxBound)));
+    setEditTopTenMinYear((prev) => Math.max(minBound, Math.min(prev, maxBound)));
+    setEditTopTenMaxYear((prev) => Math.max(minBound, Math.min(prev, maxBound)));
   }
 
   const handleApply = () => {
     onApply({
-      gameType: editGameType, sport: editSport, randomSport: editRandomSport,
-      gameMode: editGameMode, selectionScope: editSelectionScope,
-      team: editTeam, year: editYear, timer: editTimer,
-      minYear: editMinYear, maxYear: editMaxYear, winTarget: editWinTarget,
-      careerFrom: editCareerFrom, careerTo: editCareerTo,
-      minMpg: editMinMpg, minYards: editMinYards,
+      gameType: editGameType,
+      sport: editSport,
+      randomSport: editRandomSport,
+      gameMode: editGameMode,
+      selectionScope: editSelectionScope,
+      team: editTeam,
+      year: editYear,
+      timer: editTimer,
+      minYear: editMinYear,
+      maxYear: editMaxYear,
+      winTarget: editWinTarget,
+      careerFrom: editCareerFrom,
+      careerTo: editCareerTo,
+      minMpg: editMinMpg,
+      minYards: editMinYards,
       scrambleIncludeDefense: editScrambleIncludeDefense,
-      lineupStat: editLineupStat, totalRounds: editTotalRounds,
-      customCap: editCustomCap, hardMode: editHardMode, blindMode: editBlindMode,
-      pickTimer: editPickTimer, firstPickerId: editFirstPickerId, boxMinYear: editBoxMinYear,
-      boxMaxYear: editBoxMaxYear, boxTeam: editBoxTeam,
+      lineupStat: editLineupStat,
+      totalRounds: editTotalRounds,
+      customCap: editCustomCap,
+      hardMode: editHardMode,
+      blindMode: editBlindMode,
+      pickTimer: editPickTimer,
+      firstPickerId: editFirstPickerId,
+      boxMinYear: editBoxMinYear,
+      boxMaxYear: editBoxMaxYear,
+      boxTeam: editBoxTeam,
       startingSport: editStartingSport,
       faceRevealTimer: editFaceRevealTimer,
       faceRevealMinYards: editFaceRevealMinYards,
@@ -325,10 +387,11 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
     });
   };
 
-  const applyDisabled = editGameType === 'roster'
-    && editGameMode === 'manual'
-    && !editRandomSport
-    && (!editTeam || !editYear);
+  const applyDisabled =
+    editGameType === 'roster' &&
+    editGameMode === 'manual' &&
+    !editRandomSport &&
+    (!editTeam || !editYear);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -352,10 +415,15 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
             <div className="relative">
               <select
                 value={editGameType === 'nba-box-score' ? 'box-score' : editGameType}
-                onChange={e => {
+                onChange={(e) => {
                   const v = e.target.value as GameTypeValue;
                   setEditGameType(v);
-                  if (v === 'box-score') { setEditBoxSport('nfl'); setEditBoxMinYear(2015); setEditBoxMaxYear(2024); setEditBoxTeam(null); }
+                  if (v === 'box-score') {
+                    setEditBoxSport('nfl');
+                    setEditBoxMinYear(2015);
+                    setEditBoxMaxYear(2024);
+                    setEditBoxTeam(null);
+                  }
                 }}
                 className="w-full bg-black/40 text-white/80 px-3 py-2 pr-8 border border-white/15 capcrunch-kicker text-sm focus:outline-none focus:border-white/30 appearance-none cursor-pointer transition-colors hover:border-white/25"
               >
@@ -368,8 +436,18 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
                 <option value="starting-lineup">Starters</option>
                 <option value="top-ten">Top Ten</option>
               </select>
-              <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              <svg
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </div>
@@ -377,48 +455,75 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
           {/* Game-type-specific settings */}
           {editGameType === 'face-reveal' && (
             <FaceRevealSettings
-              sport={editSport} onSportChange={setEditSport}
-              winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
-              careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
-              faceRevealTimer={editFaceRevealTimer} onFaceRevealTimerChange={setEditFaceRevealTimer}
-              minYards={editFaceRevealMinYards} onMinYardsChange={setEditFaceRevealMinYards}
-              minMpg={editFaceRevealMinMpg} onMinMpgChange={setEditFaceRevealMinMpg}
-              defenseMode={editFaceRevealDefenseMode} onDefenseModeChange={setEditFaceRevealDefenseMode}
+              sport={editSport}
+              onSportChange={setEditSport}
+              winTarget={editWinTarget}
+              onWinTargetChange={setEditWinTarget}
+              careerTo={editCareerTo}
+              onCareerToChange={setEditCareerTo}
+              faceRevealTimer={editFaceRevealTimer}
+              onFaceRevealTimerChange={setEditFaceRevealTimer}
+              minYards={editFaceRevealMinYards}
+              onMinYardsChange={setEditFaceRevealMinYards}
+              minMpg={editFaceRevealMinMpg}
+              onMinMpgChange={setEditFaceRevealMinMpg}
+              defenseMode={editFaceRevealDefenseMode}
+              onDefenseModeChange={setEditFaceRevealDefenseMode}
             />
           )}
 
           {editGameType === 'scramble' && (
             <ScrambleSettings
-              sport={editSport} onSportChange={setEditSport}
-              winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
-              careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
-              minMpg={editMinMpg} onMinMpgChange={setEditMinMpg}
-              minYards={editMinYards} onMinYardsChange={setEditMinYards}
-              includeDefense={editScrambleIncludeDefense} onIncludeDefenseChange={setEditScrambleIncludeDefense}
+              sport={editSport}
+              onSportChange={setEditSport}
+              winTarget={editWinTarget}
+              onWinTargetChange={setEditWinTarget}
+              careerTo={editCareerTo}
+              onCareerToChange={setEditCareerTo}
+              minMpg={editMinMpg}
+              onMinMpgChange={setEditMinMpg}
+              minYards={editMinYards}
+              onMinYardsChange={setEditMinYards}
+              includeDefense={editScrambleIncludeDefense}
+              onIncludeDefenseChange={setEditScrambleIncludeDefense}
             />
           )}
 
           {editGameType === 'career' && (
             <CareerSettings
-              sport={editSport} onSportChange={setEditSport}
-              winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
-              careerFrom={editCareerFrom} onCareerFromChange={setEditCareerFrom}
-              careerTo={editCareerTo} onCareerToChange={setEditCareerTo}
-              minMpg={editMinMpg} onMinMpgChange={setEditMinMpg}
-              minYards={editMinYards} onMinYardsChange={setEditMinYards}
+              sport={editSport}
+              onSportChange={setEditSport}
+              winTarget={editWinTarget}
+              onWinTargetChange={setEditWinTarget}
+              careerFrom={editCareerFrom}
+              onCareerFromChange={setEditCareerFrom}
+              careerTo={editCareerTo}
+              onCareerToChange={setEditCareerTo}
+              minMpg={editMinMpg}
+              onMinMpgChange={setEditMinMpg}
+              minYards={editMinYards}
+              onMinYardsChange={setEditMinYards}
             />
           )}
 
           {editGameType === 'lineup-is-right' && (
             <CapCrunchSettings
-              sport={editSport} onSportChange={setEditSport}
-              lineupStat={editLineupStat} onLineupStatChange={setEditLineupStat}
-              customCap={editCustomCap} onCustomCapChange={setEditCustomCap}
-              hardMode={editHardMode} onHardModeChange={setEditHardMode}
-              blindMode={editBlindMode} onBlindModeChange={setEditBlindMode}
-              pickTimer={editPickTimer} onPickTimerChange={setEditPickTimer}
-              firstPickerId={editFirstPickerId} onFirstPickerIdChange={setEditFirstPickerId}
-              totalRounds={editTotalRounds} onTotalRoundsChange={setEditTotalRounds}
+              sport={editSport}
+              onSportChange={setEditSport}
+              lineupStat={editLineupStat}
+              onLineupStatChange={setEditLineupStat}
+              customCap={editCustomCap}
+              onCustomCapChange={setEditCustomCap}
+              hardMode={editHardMode}
+              onHardModeChange={setEditHardMode}
+              blindMode={editBlindMode}
+              onBlindModeChange={setEditBlindMode}
+              pickTimer={editPickTimer}
+              onPickTimerChange={setEditPickTimer}
+              firstPickerId={editFirstPickerId}
+              onFirstPickerIdChange={setEditFirstPickerId}
+              totalRounds={editTotalRounds}
+              onTotalRoundsChange={setEditTotalRounds}
               players={players}
               disabledRoundTypes={editDisabledRoundTypes}
               onDisabledRoundTypesChange={setEditDisabledRoundTypes}
@@ -427,52 +532,92 @@ export const LobbyHostSettings = forwardRef<SettingsRef, Props>(function LobbyHo
 
           {(editGameType === 'box-score' || editGameType === 'nba-box-score') && (
             <BoxScoreSettings
-              sport={editBoxSport} onSportChange={handleBoxSportChange}
-              boxMinYear={editBoxMinYear} onBoxMinYearChange={setEditBoxMinYear}
-              boxMaxYear={editBoxMaxYear} onBoxMaxYearChange={setEditBoxMaxYear}
-              boxTeam={editBoxTeam} onBoxTeamChange={setEditBoxTeam}
-              timer={editTimer} customTimer={editCustomTimer}
-              onTimerSelect={s => { setEditTimer(s); setEditCustomTimer(''); }}
-              onCustomTimerChange={(raw, clamped) => { setEditCustomTimer(raw); if (raw) setEditTimer(clamped); }}
+              sport={editBoxSport}
+              onSportChange={handleBoxSportChange}
+              boxMinYear={editBoxMinYear}
+              onBoxMinYearChange={setEditBoxMinYear}
+              boxMaxYear={editBoxMaxYear}
+              onBoxMaxYearChange={setEditBoxMaxYear}
+              boxTeam={editBoxTeam}
+              onBoxTeamChange={setEditBoxTeam}
+              timer={editTimer}
+              customTimer={editCustomTimer}
+              onTimerSelect={(s) => {
+                setEditTimer(s);
+                setEditCustomTimer('');
+              }}
+              onCustomTimerChange={(raw, clamped) => {
+                setEditCustomTimer(raw);
+                if (raw) setEditTimer(clamped);
+              }}
             />
           )}
 
           {editGameType === 'starting-lineup' && (
             <StartingLineupSettings
-              startingSport={editStartingSport} onStartingSportChange={setEditStartingSport}
-              winTarget={editWinTarget} onWinTargetChange={setEditWinTarget}
+              startingSport={editStartingSport}
+              onStartingSportChange={setEditStartingSport}
+              winTarget={editWinTarget}
+              onWinTargetChange={setEditWinTarget}
             />
           )}
 
           {editGameType === 'top-ten' && (
             <TopTenSettings
-              sport={editTopTenSport} onSportChange={handleTopTenSportChange}
-              roundType={editTopTenRoundType} onRoundTypeChange={setEditTopTenRoundType}
-              divisionMode={editTopTenDivisionMode} onDivisionModeChange={setEditTopTenDivisionMode}
-              minYear={editTopTenMinYear} onMinYearChange={setEditTopTenMinYear}
-              maxYear={editTopTenMaxYear} onMaxYearChange={setEditTopTenMaxYear}
-              windowYears={editTopTenWindowYears} onWindowYearsChange={setEditTopTenWindowYears}
-              maxStrikes={editTopTenMaxStrikes} onMaxStrikesChange={setEditTopTenMaxStrikes}
-              turnTimer={editTopTenTimer} onTurnTimerChange={setEditTopTenTimer}
-              pinnedDivision={editTopTenPinnedDivision} onPinnedDivisionChange={setEditTopTenPinnedDivision}
-              pinnedTeam={editTopTenPinnedTeam} onPinnedTeamChange={setEditTopTenPinnedTeam}
-              gameMode={editTopTenGameMode} onGameModeChange={setEditTopTenGameMode}
-              raceTarget={editTopTenRaceTarget} onRaceTargetChange={setEditTopTenRaceTarget}
+              sport={editTopTenSport}
+              onSportChange={handleTopTenSportChange}
+              roundType={editTopTenRoundType}
+              onRoundTypeChange={setEditTopTenRoundType}
+              divisionMode={editTopTenDivisionMode}
+              onDivisionModeChange={setEditTopTenDivisionMode}
+              minYear={editTopTenMinYear}
+              onMinYearChange={setEditTopTenMinYear}
+              maxYear={editTopTenMaxYear}
+              onMaxYearChange={setEditTopTenMaxYear}
+              windowYears={editTopTenWindowYears}
+              onWindowYearsChange={setEditTopTenWindowYears}
+              maxStrikes={editTopTenMaxStrikes}
+              onMaxStrikesChange={setEditTopTenMaxStrikes}
+              turnTimer={editTopTenTimer}
+              onTurnTimerChange={setEditTopTenTimer}
+              pinnedDivision={editTopTenPinnedDivision}
+              onPinnedDivisionChange={setEditTopTenPinnedDivision}
+              pinnedTeam={editTopTenPinnedTeam}
+              onPinnedTeamChange={setEditTopTenPinnedTeam}
+              gameMode={editTopTenGameMode}
+              onGameModeChange={setEditTopTenGameMode}
+              raceTarget={editTopTenRaceTarget}
+              onRaceTargetChange={setEditTopTenRaceTarget}
             />
           )}
 
           {editGameType === 'roster' && (
             <RosterSettings
-              sport={editSport} randomSport={editRandomSport} onSportChange={handleSportChange}
-              gameMode={editGameMode} onGameModeChange={setEditGameMode}
-              selectionScope={editSelectionScope} onSelectionScopeChange={setEditSelectionScope}
-              team={editTeam} onTeamChange={setEditTeam}
-              year={editYear} onYearChange={setEditYear}
-              minYear={editMinYear} onMinYearChange={setEditMinYear}
-              maxYear={editMaxYear} onMaxYearChange={setEditMaxYear}
-              timer={editTimer} customTimer={editCustomTimer}
-              onTimerSelect={s => { setEditTimer(s); setEditCustomTimer(''); }}
-              onCustomTimerChange={(raw, clamped) => { setEditCustomTimer(raw); if (raw) setEditTimer(clamped); }}
+              sport={editSport}
+              randomSport={editRandomSport}
+              onSportChange={handleSportChange}
+              gameMode={editGameMode}
+              onGameModeChange={setEditGameMode}
+              selectionScope={editSelectionScope}
+              onSelectionScopeChange={setEditSelectionScope}
+              team={editTeam}
+              onTeamChange={setEditTeam}
+              year={editYear}
+              onYearChange={setEditYear}
+              minYear={editMinYear}
+              onMinYearChange={setEditMinYear}
+              maxYear={editMaxYear}
+              onMaxYearChange={setEditMaxYear}
+              timer={editTimer}
+              customTimer={editCustomTimer}
+              onTimerSelect={(s) => {
+                setEditTimer(s);
+                setEditCustomTimer('');
+              }}
+              onCustomTimerChange={(raw, clamped) => {
+                setEditCustomTimer(raw);
+                if (raw) setEditTimer(clamped);
+              }}
             />
           )}
 

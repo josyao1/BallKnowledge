@@ -9,8 +9,8 @@ const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
-    .filter(w => !SUFFIXES.has(w.toLowerCase().replace(/\./g, '')))
-    .map(w => w[0]?.toUpperCase() ?? '')
+    .filter((w) => !SUFFIXES.has(w.toLowerCase().replace(/\./g, '')))
+    .map((w) => w[0]?.toUpperCase() ?? '')
     .filter(Boolean)
     .join('.');
 }
@@ -30,12 +30,20 @@ interface Props {
 }
 
 export function TopTenEntryRow({
-  entry, index, wasGuessed, gameOver = false, showTeamHint = false,
-  showInitialsHint = false, sport, categoryKey, catDef, statShortLabel,
+  entry,
+  index,
+  wasGuessed,
+  gameOver = false,
+  showTeamHint = false,
+  showInitialsHint = false,
+  sport,
+  categoryKey,
+  catDef,
+  statShortLabel,
   justGuessed = false,
 }: Props) {
   const showInfo = wasGuessed || gameOver;
-  const dimmed   = gameOver && !wasGuessed;
+  const dimmed = gameOver && !wasGuessed;
   const initials = showInitialsHint && !showInfo ? getInitials(entry.playerName) : '';
 
   return (
@@ -47,8 +55,8 @@ export function TopTenEntryRow({
         wasGuessed
           ? 'bg-[#70BE5B]/10 border-[#70BE5B]/30'
           : gameOver
-          ? 'bg-white/4 border-white/5'
-          : 'bg-black/40 border-white/8'
+            ? 'bg-white/4 border-white/5'
+            : 'bg-black/40 border-white/8'
       }`}
     >
       <span className="capcrunch-kicker text-[10px] text-white/25 w-4 text-right shrink-0 tabular-nums">
@@ -60,7 +68,7 @@ export function TopTenEntryRow({
           wasGuessed ? 'ring-[#70BE5B]/40' : 'ring-white/5'
         }`}
         style={{
-          filter:  showInfo ? 'none' : 'blur(14px) saturate(0) brightness(0.45)',
+          filter: showInfo ? 'none' : 'blur(14px) saturate(0) brightness(0.45)',
           opacity: showInfo ? (dimmed ? 0.4 : 1) : 0.6,
         }}
       >
@@ -70,9 +78,11 @@ export function TopTenEntryRow({
       <div className="flex-1 min-w-0">
         {showInfo ? (
           <>
-            <p className={`capcrunch-title text-sm leading-tight truncate ${
-              wasGuessed ? 'text-[#70BE5B]' : 'text-white/35'
-            }`}>
+            <p
+              className={`capcrunch-title text-sm leading-tight truncate ${
+                wasGuessed ? 'text-[#70BE5B]' : 'text-white/35'
+              }`}
+            >
               {entry.playerName}
             </p>
             <div className={`flex items-center gap-1.5 mt-0.5 ${dimmed ? 'opacity-40' : ''}`}>
@@ -94,7 +104,9 @@ export function TopTenEntryRow({
 
       {showInfo && catDef && (
         <span className="flex items-baseline gap-1 shrink-0">
-          <span className={`capcrunch-title text-sm tabular-nums ${wasGuessed ? 'text-[#70BE5B]' : 'text-white/20'}`}>
+          <span
+            className={`capcrunch-title text-sm tabular-nums ${wasGuessed ? 'text-[#70BE5B]' : 'text-white/20'}`}
+          >
             {formatStat(entry.stat, categoryKey)}
           </span>
           <span className="capcrunch-kicker text-[9px] text-white/30">{statShortLabel}</span>

@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { TopTenSettings } from '../lobby/settings/TopTenSettings';
 
-const NBA_MIN = 1996, NBA_MAX = 2025;
-const NFL_MIN = 1999, NFL_MAX = 2025;
+const NBA_MIN = 1996,
+  NBA_MAX = 2025;
+const NFL_MIN = 1999,
+  NFL_MAX = 2025;
 
 interface Props {
   initialSport: 'nba' | 'nfl';
@@ -16,15 +18,15 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
   const navigate = useNavigate();
   const [tab, setTab] = useState<'settings' | 'rules'>('settings');
 
-  const [sport, setSport]               = useState<'nba' | 'nfl'>(initialSport);
-  const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>('league');
+  const [sport, setSport] = useState<'nba' | 'nfl'>(initialSport);
+  const [roundType, setRoundType] = useState<'league' | 'division' | 'team'>('league');
   const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>('cumulative');
-  const [minYear, setMinYear]           = useState(initialSport === 'nba' ? NBA_MIN : NFL_MIN);
-  const [maxYear, setMaxYear]           = useState(initialSport === 'nba' ? NBA_MAX : NFL_MAX);
-  const [windowYears, setWindowYears]   = useState(10);
+  const [minYear, setMinYear] = useState(initialSport === 'nba' ? NBA_MIN : NFL_MIN);
+  const [maxYear, setMaxYear] = useState(initialSport === 'nba' ? NBA_MAX : NFL_MAX);
+  const [windowYears, setWindowYears] = useState(10);
   const [pinnedDivision, setPinnedDivision] = useState<string | null>(null);
-  const [pinnedTeam, setPinnedTeam]         = useState<string | null>(null);
-  const [strikeMode, setStrikeMode]         = useState<'strikes' | 'infinite'>('strikes');
+  const [pinnedTeam, setPinnedTeam] = useState<string | null>(null);
+  const [strikeMode, setStrikeMode] = useState<'strikes' | 'infinite'>('strikes');
 
   useEffect(() => {
     setMinYear(sport === 'nba' ? NBA_MIN : NFL_MIN);
@@ -33,7 +35,17 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
 
   function handleStartSolo() {
     navigate('/top-ten', {
-      state: { sport, roundType, divisionMode, minYear, maxYear, windowYears, pinnedDivision, pinnedTeam, strikeMode },
+      state: {
+        sport,
+        roundType,
+        divisionMode,
+        minYear,
+        maxYear,
+        windowYears,
+        pinnedDivision,
+        pinnedTeam,
+        strikeMode,
+      },
     });
   }
 
@@ -63,12 +75,20 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
             How to Play
           </button>
         </div>
-        <button onClick={onBack} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Back</button>
+        <button
+          onClick={onBack}
+          className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+        >
+          Back
+        </button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
         {/* Settings panel */}
-        <section className={`${tab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel overflow-hidden shadow-2xl`} style={{ borderColor: 'rgba(112,190,91,0.3)' }}>
+        <section
+          className={`${tab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel overflow-hidden shadow-2xl`}
+          style={{ borderColor: 'rgba(112,190,91,0.3)' }}
+        >
           <div className="p-5 flex flex-col gap-4">
             {/* Header */}
             <div className="flex items-center">
@@ -81,7 +101,9 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
               <div className="flex-1 text-center">
                 <div className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 mb-0.5">TT</div>
                 <h2 className="capcrunch-title text-2xl text-[#70BE5B] leading-tight">Top Ten</h2>
-                <p className="capcrunch-kicker text-[9px] text-white/40">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
+                <p className="capcrunch-kicker text-[9px] text-white/40">
+                  {sport === 'nba' ? 'NBA' : 'NFL'} Edition
+                </p>
               </div>
               <div className="w-12" />
             </div>
@@ -91,7 +113,7 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
             {/* Settings */}
             <TopTenSettings
               sport={sport}
-              onSportChange={s => setSport(s)}
+              onSportChange={(s) => setSport(s)}
               showSportToggle={false}
               roundType={roundType}
               onRoundTypeChange={setRoundType}
@@ -113,9 +135,11 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
 
             {/* Mode */}
             <div>
-              <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mb-2">Mode</p>
+              <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mb-2">
+                Mode
+              </p>
               <div className="flex gap-2">
-                {(['strikes', 'infinite'] as const).map(m => (
+                {(['strikes', 'infinite'] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setStrikeMode(m)}
@@ -130,7 +154,9 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
                 ))}
               </div>
               {strikeMode === 'infinite' && (
-                <p className="capcrunch-kicker text-[9px] text-white/25 mt-1.5">Guess until you clear the board or give up.</p>
+                <p className="capcrunch-kicker text-[9px] text-white/25 mt-1.5">
+                  Guess until you clear the board or give up.
+                </p>
               )}
             </div>
 
@@ -169,27 +195,38 @@ export function TopTenSetup({ initialSport, onBack, soloOnly = false }: Props) {
         <aside className={`${tab !== 'rules' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
           <h3 className="capcrunch-title text-lg text-[#70BE5B] mb-4">How to Play</h3>
           <ul className="text-sm text-white/80 space-y-3 text-left">
-            <li><span className="text-[#70BE5B] font-bold">Goal:</span> Name all 10 players who ranked in the top 10 for a given stat category and season.</li>
             <li>
-              <span className="text-[#70BE5B] font-bold">League round:</span> Top 10 across the whole league for one randomly selected season within your year range.
+              <span className="text-[#70BE5B] font-bold">Goal:</span> Name all 10 players who ranked
+              in the top 10 for a given stat category and season.
             </li>
             <li>
-              <span className="text-[#70BE5B] font-bold">Division round:</span> Top 10 from players on teams within one division, accumulated over your chosen window (5, 10, 15, or 20 years).
+              <span className="text-[#70BE5B] font-bold">League round:</span> Top 10 across the
+              whole league for one randomly selected season within your year range.
             </li>
             <li>
-              <span className="text-[#70BE5B] font-bold">Team round:</span> Top 10 from a single franchise's history over the window.
+              <span className="text-[#70BE5B] font-bold">Division round:</span> Top 10 from players
+              on teams within one division, accumulated over your chosen window (5, 10, 15, or 20
+              years).
             </li>
             <li>
-              <span className="text-white/60 font-bold">Cumulative:</span> Stats are summed across every season in the window — rewards longevity.
+              <span className="text-[#70BE5B] font-bold">Team round:</span> Top 10 from a single
+              franchise's history over the window.
             </li>
             <li>
-              <span className="text-white/60 font-bold">Single Season:</span> Best individual season within the window counts — rewards peak performance.
+              <span className="text-white/60 font-bold">Cumulative:</span> Stats are summed across
+              every season in the window — rewards longevity.
             </li>
             <li>
-              <span className="text-red-400 font-bold">Strikes:</span> Each wrong guess costs a strike. 3 strikes and the round ends. Remaining players are revealed.
+              <span className="text-white/60 font-bold">Single Season:</span> Best individual season
+              within the window counts — rewards peak performance.
             </li>
             <li>
-              <span className="text-white/60 font-bold">Multiplayer:</span> Turn-based. Players alternate guessing — run out of strikes and you're eliminated. Last one standing wins.
+              <span className="text-red-400 font-bold">Strikes:</span> Each wrong guess costs a
+              strike. 3 strikes and the round ends. Remaining players are revealed.
+            </li>
+            <li>
+              <span className="text-white/60 font-bold">Multiplayer:</span> Turn-based. Players
+              alternate guessing — run out of strikes and you're eliminated. Last one standing wins.
             </li>
           </ul>
         </aside>

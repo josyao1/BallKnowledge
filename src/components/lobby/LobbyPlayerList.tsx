@@ -8,7 +8,12 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { renamePlayer, kickPlayer, getLobbyPlayers, setPlayerScoreMultiplier } from '../../services/lobby';
+import {
+  renamePlayer,
+  kickPlayer,
+  getLobbyPlayers,
+  setPlayerScoreMultiplier,
+} from '../../services/lobby';
 import { TEAM_COLORS } from '../../utils/teamUtils';
 
 const MULTIPLIERS = [1, 1.5, 2, 3, 4];
@@ -37,9 +42,16 @@ interface Props {
   onCycleTeam: (playerId: string, teamNumber: number | null) => void;
 }
 
-export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPlayersRefresh, onCycleTeam }: Props) {
+export function LobbyPlayerList({
+  players,
+  currentPlayerId,
+  isHost,
+  lobby,
+  onPlayersRefresh,
+  onCycleTeam,
+}: Props) {
   const [renamingPlayerId, setRenamingPlayerId] = useState<string | null>(null);
-  const [renameValue,      setRenameValue]      = useState('');
+  const [renameValue, setRenameValue] = useState('');
 
   const handleKick = async (targetPlayerId: string) => {
     await kickPlayer(lobby.id, targetPlayerId);
@@ -64,7 +76,15 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
 
   // Only Roster Royale uses team assignment
   const isTeamlessMode = lobby.game_type !== 'roster';
-  const isMultiplierlessMode = ['career', 'scramble', 'lineup-is-right', 'box-score', 'starting-lineup', 'face-reveal', 'top-ten'].includes(lobby.game_type);
+  const isMultiplierlessMode = [
+    'career',
+    'scramble',
+    'lineup-is-right',
+    'box-score',
+    'starting-lineup',
+    'face-reveal',
+    'top-ten',
+  ].includes(lobby.game_type);
 
   return (
     <motion.div
@@ -98,7 +118,9 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                       ? 'border-purple-500/50 bg-purple-900/20'
                       : 'border-white/10 bg-black/30'
                 }`}
-                style={teamColor ? { borderLeftWidth: '4px', borderLeftColor: teamColor.bg } : undefined}
+                style={
+                  teamColor ? { borderLeftWidth: '4px', borderLeftColor: teamColor.bg } : undefined
+                }
               >
                 {/* Host star */}
                 {player.is_host && (
@@ -113,29 +135,70 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 {renamingPlayerId === player.player_id ? (
                   <>
                     <input
-                      type="text" value={renameValue} maxLength={20} autoFocus
-                      onChange={e => setRenameValue(e.target.value)}
-                      onKeyDown={e => {
+                      type="text"
+                      value={renameValue}
+                      maxLength={20}
+                      autoFocus
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
                         if (e.key === 'Enter') handleConfirmRename();
-                        if (e.key === 'Escape') { setRenamingPlayerId(null); setRenameValue(''); }
+                        if (e.key === 'Escape') {
+                          setRenamingPlayerId(null);
+                          setRenameValue('');
+                        }
                       }}
                       className="flex-1 min-w-0 w-28 px-2 py-0.5 bg-black/40 border border-[#FDF100]/60 text-white text-sm capcrunch-kicker focus:outline-none"
                     />
-                    <button onClick={handleConfirmRename} className="text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0" title="Confirm">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <button
+                      onClick={handleConfirmRename}
+                      className="text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0"
+                      title="Confirm"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </button>
-                    <button onClick={() => { setRenamingPlayerId(null); setRenameValue(''); }} className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0" title="Cancel">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <button
+                      onClick={() => {
+                        setRenamingPlayerId(null);
+                        setRenameValue('');
+                      }}
+                      className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0"
+                      title="Cancel"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </>
                 ) : (
                   <span className="capcrunch-title text-sm text-white truncate flex-1 min-w-0">
                     {player.player_name}
-                    {isCurrentPlayer && <span className="capcrunch-kicker text-[9px] text-white/30 ml-1.5">(you)</span>}
+                    {isCurrentPlayer && (
+                      <span className="capcrunch-kicker text-[9px] text-white/30 ml-1.5">
+                        (you)
+                      </span>
+                    )}
                   </span>
                 )}
 
@@ -149,12 +212,25 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                       Kick
                     </button>
                     <button
-                      onClick={() => { setRenamingPlayerId(player.player_id); setRenameValue(player.player_name); }}
+                      onClick={() => {
+                        setRenamingPlayerId(player.player_id);
+                        setRenameValue(player.player_name);
+                      }}
                       className="flex-shrink-0 text-white/20 hover:text-[#FDF100] transition-colors"
                       title="Rename player"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        />
                       </svg>
                     </button>
                   </>
@@ -165,9 +241,19 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                   <button
                     onClick={() => onCycleTeam(player.player_id, player.team_number)}
                     className={`flex-shrink-0 px-2 py-0.5 capcrunch-kicker text-[9px] transition-all ${
-                      player.team_number ? 'text-white border' : 'text-white/40 border border-white/10 hover:border-white/30'
+                      player.team_number
+                        ? 'text-white border'
+                        : 'text-white/40 border border-white/10 hover:border-white/30'
                     }`}
-                    style={player.team_number ? { backgroundColor: teamColor!.bg + '40', borderColor: teamColor!.bg, color: teamColor!.bg } : undefined}
+                    style={
+                      player.team_number
+                        ? {
+                            backgroundColor: teamColor!.bg + '40',
+                            borderColor: teamColor!.bg,
+                            color: teamColor!.bg,
+                          }
+                        : undefined
+                    }
                   >
                     {player.team_number ? `T${player.team_number}` : 'Team'}
                   </button>
@@ -175,26 +261,33 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 {!isHost && player.team_number && !isTeamlessMode && (
                   <span
                     className="flex-shrink-0 capcrunch-kicker text-[9px] px-2 py-0.5 border"
-                    style={{ backgroundColor: teamColor!.bg + '40', borderColor: teamColor!.bg, color: teamColor!.bg }}
+                    style={{
+                      backgroundColor: teamColor!.bg + '40',
+                      borderColor: teamColor!.bg,
+                      color: teamColor!.bg,
+                    }}
                   >
                     T{player.team_number}
                   </span>
                 )}
 
                 {/* Score multiplier */}
-                {isHost && !player.is_host && lobby.status === 'waiting' && !isMultiplierlessMode && (
-                  <button
-                    onClick={() => handleCycleMultiplier(player.player_id, multiplier)}
-                    className={`flex-shrink-0 px-2 py-0.5 capcrunch-kicker text-[9px] transition-all ${
-                      multiplier > 1
-                        ? 'bg-purple-600 text-white border border-purple-400'
-                        : 'text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
-                    }`}
-                    title="Click to cycle score multiplier"
-                  >
-                    {multiplier > 1 ? `${multiplier}x` : '1x'}
-                  </button>
-                )}
+                {isHost &&
+                  !player.is_host &&
+                  lobby.status === 'waiting' &&
+                  !isMultiplierlessMode && (
+                    <button
+                      onClick={() => handleCycleMultiplier(player.player_id, multiplier)}
+                      className={`flex-shrink-0 px-2 py-0.5 capcrunch-kicker text-[9px] transition-all ${
+                        multiplier > 1
+                          ? 'bg-purple-600 text-white border border-purple-400'
+                          : 'text-white/40 border border-white/10 hover:border-purple-400 hover:text-purple-400'
+                      }`}
+                      title="Click to cycle score multiplier"
+                    >
+                      {multiplier > 1 ? `${multiplier}x` : '1x'}
+                    </button>
+                  )}
                 {multiplier > 1 && !isMultiplierlessMode && !isHost && (
                   <span className="flex-shrink-0 text-[10px] text-purple-400 capcrunch-kicker px-1.5 py-0.5 bg-purple-900/40 rounded">
                     {multiplier}x
@@ -202,11 +295,13 @@ export function LobbyPlayerList({ players, currentPlayerId, isHost, lobby, onPla
                 )}
 
                 {/* Ready badge */}
-                <div className={`flex-shrink-0 px-2.5 py-0.5 capcrunch-kicker text-[9px] ${
-                  player.is_ready
-                    ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
-                    : 'bg-black/40 text-white/30 border border-white/10'
-                }`}>
+                <div
+                  className={`flex-shrink-0 px-2.5 py-0.5 capcrunch-kicker text-[9px] ${
+                    player.is_ready
+                      ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700'
+                      : 'bg-black/40 text-white/30 border border-white/10'
+                  }`}
+                >
                   {player.is_ready ? 'Ready' : 'Waiting'}
                 </div>
               </motion.div>

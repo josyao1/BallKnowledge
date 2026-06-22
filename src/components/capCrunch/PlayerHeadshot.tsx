@@ -15,8 +15,11 @@ function loadNflHeadshots(): Promise<Record<string, string>> {
   if (_nflHeadshots) return Promise.resolve(_nflHeadshots);
   if (!_nflHeadshotsPromise) {
     _nflHeadshotsPromise = fetch('/data/nfl_headshots.json')
-      .then(r => r.json())
-      .then(data => { _nflHeadshots = data; return data; });
+      .then((r) => r.json())
+      .then((data) => {
+        _nflHeadshots = data;
+        return data;
+      });
   }
   return _nflHeadshotsPromise;
 }
@@ -39,14 +42,18 @@ function Silhouette({ className }: { className: string }) {
  * NFL: looks up GSIS ID in nfl_headshots.json (fetched once, cached in memory).
  * Falls back to a generic silhouette if no headshot is found.
  */
-export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-full object-cover shrink-0' }: Props) {
+export function PlayerHeadshot({
+  playerId,
+  sport,
+  className = 'w-7 h-7 rounded-full object-cover shrink-0',
+}: Props) {
   const [error, setError] = useState(false);
   const [nflUrl, setNflUrl] = useState<string | null>(null);
   const showCap = isGradWeek();
 
   useEffect(() => {
     if (sport !== 'nfl' || !playerId) return;
-    loadNflHeadshots().then(map => {
+    loadNflHeadshots().then((map) => {
       setNflUrl(map[String(playerId)] ?? null);
     });
   }, [sport, playerId]);
@@ -56,9 +63,10 @@ export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-f
 
   const renderInner = () => {
     if (!playerId || error) return <Silhouette className={innerClass} />;
-    const url = sport === 'nba'
-      ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
-      : nflUrl;
+    const url =
+      sport === 'nba'
+        ? `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`
+        : nflUrl;
     if (!url) return <Silhouette className={innerClass} />;
     return (
       <img
@@ -74,11 +82,23 @@ export function PlayerHeadshot({ playerId, sport, className = 'w-7 h-7 rounded-f
   if (!showCap) return renderInner();
 
   return (
-    <span className="relative inline-block shrink-0" style={{ lineHeight: 0, verticalAlign: 'middle' }}>
+    <span
+      className="relative inline-block shrink-0"
+      style={{ lineHeight: 0, verticalAlign: 'middle' }}
+    >
       {renderInner()}
       <span
         aria-hidden="true"
-        style={{ position: 'absolute', fontSize: '10px', top: '-6px', left: '50%', transform: 'translateX(-50%)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}
+        style={{
+          position: 'absolute',
+          fontSize: '10px',
+          top: '-6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          lineHeight: 1,
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
       >
         🎓
       </span>

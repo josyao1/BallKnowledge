@@ -29,9 +29,12 @@ export function useGuessInput() {
   }, []);
 
   return {
-    guessInput, setGuessInput,
-    feedbackMsg, setFeedbackMsg,
-    feedbackType, setFeedbackType,
+    guessInput,
+    setGuessInput,
+    feedbackMsg,
+    setFeedbackMsg,
+    feedbackType,
+    setFeedbackType,
     inputRef,
     clearFeedback,
     clearInput,

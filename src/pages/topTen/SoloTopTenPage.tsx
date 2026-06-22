@@ -3,8 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
-  isValidGuess, getCategoryDef, getPlayerSuggestions,
-  generateTopTenRound, getStatShortLabel,
+  isValidGuess,
+  getCategoryDef,
+  getPlayerSuggestions,
+  generateTopTenRound,
+  getStatShortLabel,
 } from '../../services/topTen';
 import type { TopTenEntry } from '../../services/topTen';
 import { TopTenEntryRow } from '../../components/topTen/TopTenEntryRow';
@@ -15,8 +18,10 @@ import { FeedbackMessage } from '../../components/topTen/FeedbackMessage';
 import { TopTenSettings } from '../../components/lobby/settings/TopTenSettings';
 
 const MAX_STRIKES = 3;
-const NBA_MIN = 1996; const NBA_MAX = 2025;
-const NFL_MIN = 1999; const NFL_MAX = 2025;
+const NBA_MIN = 1996;
+const NBA_MAX = 2025;
+const NFL_MIN = 1999;
+const NFL_MAX = 2025;
 
 type Status = 'setup' | 'loading' | 'playing' | 'done';
 
@@ -43,46 +48,61 @@ export function SoloTopTenPage() {
   const locState = (location.state as LocationState) ?? null;
   const { sport: storeSport } = useSettingsStore();
 
-  const defaultSport: 'nba' | 'nfl' = locState?.sport ?? ((storeSport === 'nba' || storeSport === 'nfl') ? storeSport : 'nba');
+  const defaultSport: 'nba' | 'nfl' =
+    locState?.sport ?? (storeSport === 'nba' || storeSport === 'nfl' ? storeSport : 'nba');
 
   const [setupSport, setSetupSport] = useState<'nba' | 'nfl'>(defaultSport);
-  const [strikeMode, setStrikeMode]     = useState<'strikes' | 'infinite'>(locState?.strikeMode ?? 'strikes');
-  const [roundType, setRoundType]       = useState<'league' | 'division' | 'team'>(locState?.roundType ?? 'league');
-  const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>(locState?.divisionMode ?? 'cumulative');
-  const [minYear, setMinYear]           = useState(locState?.minYear ?? NBA_MIN);
-  const [maxYear, setMaxYear]           = useState(locState?.maxYear ?? NBA_MAX);
-  const [windowYears, setWindowYears]   = useState(locState?.windowYears ?? 10);
-  const [pinnedDivision, setPinnedDivision] = useState<string | null>(locState?.pinnedDivision ?? null);
-  const [pinnedTeam, setPinnedTeam]         = useState<string | null>(locState?.pinnedTeam ?? null);
+  const [strikeMode, setStrikeMode] = useState<'strikes' | 'infinite'>(
+    locState?.strikeMode ?? 'strikes',
+  );
+  const [roundType, setRoundType] = useState<'league' | 'division' | 'team'>(
+    locState?.roundType ?? 'league',
+  );
+  const [divisionMode, setDivisionMode] = useState<'cumulative' | 'single_season'>(
+    locState?.divisionMode ?? 'cumulative',
+  );
+  const [minYear, setMinYear] = useState(locState?.minYear ?? NBA_MIN);
+  const [maxYear, setMaxYear] = useState(locState?.maxYear ?? NBA_MAX);
+  const [windowYears, setWindowYears] = useState(locState?.windowYears ?? 10);
+  const [pinnedDivision, setPinnedDivision] = useState<string | null>(
+    locState?.pinnedDivision ?? null,
+  );
+  const [pinnedTeam, setPinnedTeam] = useState<string | null>(locState?.pinnedTeam ?? null);
 
-  const [sport, setSport]           = useState<'nba' | 'nfl'>(defaultSport);
-  const [entries, setEntries]       = useState<TopTenEntry[]>([]);
-  const [category, setCategory]     = useState('');
+  const [sport, setSport] = useState<'nba' | 'nfl'>(defaultSport);
+  const [entries, setEntries] = useState<TopTenEntry[]>([]);
+  const [category, setCategory] = useState('');
   const [categoryLabel, setCategoryLabel] = useState('');
-  const [roundInfo, setRoundInfo]   = useState('');
+  const [roundInfo, setRoundInfo] = useState('');
   const [guessedIndices, setGuessedIndices] = useState<number[]>([]);
-  const [strikes, setStrikes]       = useState(0);
-  const [guess, setGuess]           = useState('');
-  const [feedback, setFeedback]     = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({ msg: '', type: '' });
-  const [status, setStatus]         = useState<Status>(locState ? 'loading' : 'setup');
-  const [hintLevel, setHintLevel]   = useState(0);
+  const [strikes, setStrikes] = useState(0);
+  const [guess, setGuess] = useState('');
+  const [feedback, setFeedback] = useState<{ msg: string; type: 'correct' | 'wrong' | '' }>({
+    msg: '',
+    type: '',
+  });
+  const [status, setStatus] = useState<Status>(locState ? 'loading' : 'setup');
+  const [hintLevel, setHintLevel] = useState(0);
   const [wrongGuesses, setWrongGuesses] = useState<string[]>([]);
   const [isDivisionRound, setIsDivisionRound] = useState(false);
-  const [isTeamRound, setIsTeamRound]         = useState(false);
-  const [isSingleSeason, setIsSingleSeason]   = useState(false);
-  const [teamAbbr, setTeamAbbr]               = useState('');
+  const [isTeamRound, setIsTeamRound] = useState(false);
+  const [isSingleSeason, setIsSingleSeason] = useState(false);
+  const [teamAbbr, setTeamAbbr] = useState('');
 
-  const [suggestions, setSuggestions]   = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showTeamsPanel, setShowTeamsPanel] = useState(false);
 
-  const inputRef      = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const suggestTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    if (suggestTimer.current)  clearTimeout(suggestTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+      if (suggestTimer.current) clearTimeout(suggestTimer.current);
+    },
+    [],
+  );
 
   const activeConfig = useRef({
     sport: defaultSport as 'nba' | 'nfl',
@@ -112,25 +132,67 @@ export function SoloTopTenPage() {
   }, [setupSport]);
 
   async function startGame() {
-    activeConfig.current = { sport: setupSport, roundType, divisionMode, minYear, maxYear, windowYears };
+    activeConfig.current = {
+      sport: setupSport,
+      roundType,
+      divisionMode,
+      minYear,
+      maxYear,
+      windowYears,
+    };
     setSport(setupSport);
     setStatus('loading');
     const pinned = {
       division: pinnedDivision ? decodeDivision(pinnedDivision) : undefined,
       team: pinnedTeam ?? undefined,
     };
-    try { await loadRound(pinned); } catch { setStatus('setup'); }
+    try {
+      await loadRound(pinned);
+    } catch {
+      setStatus('setup');
+    }
   }
 
   async function playAgain() {
     setStatus('loading');
-    try { await loadRound(); } catch { setStatus('setup'); }
+    try {
+      await loadRound();
+    } catch {
+      setStatus('setup');
+    }
   }
 
-  async function loadRound(pinned?: { division?: { conference: string; division: string }; team?: string }) {
-    const { sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy } = activeConfig.current;
-    const { entries: result, cat, catLabel, roundInfo: info, isDivisionRound: div, isTeamRound: team, isSingleSeason: ss, teamAbbr: ta } =
-      await generateTopTenRound({ sport: s, roundType: rt, divisionMode: dm, minYear: mn, maxYear: mx, windowYears: wy, pinnedDivision: pinned?.division, pinnedTeam: pinned?.team });
+  async function loadRound(pinned?: {
+    division?: { conference: string; division: string };
+    team?: string;
+  }) {
+    const {
+      sport: s,
+      roundType: rt,
+      divisionMode: dm,
+      minYear: mn,
+      maxYear: mx,
+      windowYears: wy,
+    } = activeConfig.current;
+    const {
+      entries: result,
+      cat,
+      catLabel,
+      roundInfo: info,
+      isDivisionRound: div,
+      isTeamRound: team,
+      isSingleSeason: ss,
+      teamAbbr: ta,
+    } = await generateTopTenRound({
+      sport: s,
+      roundType: rt,
+      divisionMode: dm,
+      minYear: mn,
+      maxYear: mx,
+      windowYears: wy,
+      pinnedDivision: pinned?.division,
+      pinnedTeam: pinned?.team,
+    });
     setCategory(cat.key);
     setCategoryLabel(catLabel);
     setEntries(result);
@@ -181,10 +243,13 @@ export function SoloTopTenPage() {
       }
       const n = strikes + 1;
       setStrikes(n);
-      setWrongGuesses(prev => [...prev, value.trim()]);
+      setWrongGuesses((prev) => [...prev, value.trim()]);
       setGuess('');
       const hitStrikeLimit = strikeMode === 'strikes' && n >= MAX_STRIKES;
-      setFeedback({ msg: hitStrikeLimit ? 'Strike 3 — game over!' : '✗ Not in the top 10', type: 'wrong' });
+      setFeedback({
+        msg: hitStrikeLimit ? 'Strike 3 — game over!' : '✗ Not in the top 10',
+        type: 'wrong',
+      });
       clearFeedback();
       if (hitStrikeLimit) setStatus('done');
     }
@@ -194,10 +259,13 @@ export function SoloTopTenPage() {
   function handleInputChange(val: string) {
     setGuess(val);
     if (suggestTimer.current) clearTimeout(suggestTimer.current);
-    if (val.length < 4) { setSuggestions([]); return; }
+    if (val.length < 4) {
+      setSuggestions([]);
+      return;
+    }
     suggestTimer.current = setTimeout(() => {
       getPlayerSuggestions(sport, val)
-        .then(s => setSuggestions(s))
+        .then((s) => setSuggestions(s))
         .catch(() => {});
     }, 120);
   }
@@ -207,53 +275,80 @@ export function SoloTopTenPage() {
     submitGuess(guess);
   }
 
-  const isDone            = status === 'done';
-  const catDef            = getCategoryDef(sport, category);
+  const isDone = status === 'done';
+  const catDef = getCategoryDef(sport, category);
   const isCumulativeRound = isDivisionRound || isTeamRound;
-  const statShortLabel    = getStatShortLabel(catDef);
-  const maxHintLevel      = (isDivisionRound || isTeamRound) ? 1 : 2;
-  const showTeamHint      = isDivisionRound || isSingleSeason || hintLevel >= 1;
-  const showInitialsHint  = (isDivisionRound || isTeamRound) ? hintLevel >= 1 : hintLevel >= 2;
+  const statShortLabel = getStatShortLabel(catDef);
+  const maxHintLevel = isDivisionRound || isTeamRound ? 1 : 2;
+  const showTeamHint = isDivisionRound || isSingleSeason || hintLevel >= 1;
+  const showInitialsHint = isDivisionRound || isTeamRound ? hintLevel >= 1 : hintLevel >= 2;
 
   // ── Setup screen (modal style) ────────────────────────────────────────────────
   if (status === 'setup') {
     return (
       <div className="min-h-screen home-chalkboard text-white flex flex-col">
         <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="text-white/30 hover:text-white/70 transition-colors">
+          <button
+            onClick={() => navigate('/')}
+            className="text-white/30 hover:text-white/70 transition-colors"
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
           </button>
           <h1 className="capcrunch-title text-xl text-[#70BE5B]">Top Ten</h1>
-          <span className="ml-auto capcrunch-kicker text-[9px] text-white/20 tracking-[0.25em]">Solo</span>
+          <span className="ml-auto capcrunch-kicker text-[9px] text-white/20 tracking-[0.25em]">
+            Solo
+          </span>
         </header>
 
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-sm">
             <div className="flex items-end gap-px mb-6 justify-center" aria-hidden>
-              {['1','2','3','4','5'].map((n, i) => (
-                <span key={n} className="capcrunch-title leading-none" style={{ fontSize: 34 - i * 4, color: '#70BE5B', opacity: 1 - i * 0.18 }}>
+              {['1', '2', '3', '4', '5'].map((n, i) => (
+                <span
+                  key={n}
+                  className="capcrunch-title leading-none"
+                  style={{ fontSize: 34 - i * 4, color: '#70BE5B', opacity: 1 - i * 0.18 }}
+                >
                   {n}
                 </span>
               ))}
             </div>
 
-            <div className="capcrunch-panel p-5 space-y-5" style={{ borderColor: 'rgba(112,190,91,0.3)' }}>
+            <div
+              className="capcrunch-panel p-5 space-y-5"
+              style={{ borderColor: 'rgba(112,190,91,0.3)' }}
+            >
               <TopTenSettings
-                sport={setupSport} onSportChange={setSetupSport}
-                roundType={roundType} onRoundTypeChange={setRoundType}
-                divisionMode={divisionMode} onDivisionModeChange={setDivisionMode}
-                minYear={minYear} onMinYearChange={setMinYear}
-                maxYear={maxYear} onMaxYearChange={setMaxYear}
-                windowYears={windowYears} onWindowYearsChange={setWindowYears}
-                pinnedDivision={pinnedDivision} onPinnedDivisionChange={setPinnedDivision}
-                pinnedTeam={pinnedTeam} onPinnedTeamChange={setPinnedTeam}
+                sport={setupSport}
+                onSportChange={setSetupSport}
+                roundType={roundType}
+                onRoundTypeChange={setRoundType}
+                divisionMode={divisionMode}
+                onDivisionModeChange={setDivisionMode}
+                minYear={minYear}
+                onMinYearChange={setMinYear}
+                maxYear={maxYear}
+                onMaxYearChange={setMaxYear}
+                windowYears={windowYears}
+                onWindowYearsChange={setWindowYears}
+                pinnedDivision={pinnedDivision}
+                onPinnedDivisionChange={setPinnedDivision}
+                pinnedTeam={pinnedTeam}
+                onPinnedTeamChange={setPinnedTeam}
               />
               <div className="border-t border-white/8 pt-4">
-                <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mb-2">Mode</p>
+                <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mb-2">
+                  Mode
+                </p>
                 <div className="flex gap-2">
-                  {(['strikes', 'infinite'] as const).map(m => (
+                  {(['strikes', 'infinite'] as const).map((m) => (
                     <button
                       key={m}
                       onClick={() => setStrikeMode(m)}
@@ -268,7 +363,9 @@ export function SoloTopTenPage() {
                   ))}
                 </div>
                 {strikeMode === 'infinite' && (
-                  <p className="capcrunch-kicker text-[9px] text-white/25 mt-1.5">Guess until you clear the board or give up.</p>
+                  <p className="capcrunch-kicker text-[9px] text-white/25 mt-1.5">
+                    Guess until you clear the board or give up.
+                  </p>
                 )}
               </div>
               <button
@@ -298,9 +395,17 @@ export function SoloTopTenPage() {
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col">
       <header className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
-        <button onClick={handleBackToSetup} className="text-white/30 hover:text-white/70 transition-colors">
+        <button
+          onClick={handleBackToSetup}
+          className="text-white/30 hover:text-white/70 transition-colors"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
         </button>
         <h1 className="capcrunch-title text-base text-[#70BE5B]">Top Ten</h1>
@@ -310,7 +415,7 @@ export function SoloTopTenPage() {
         <div className="ml-auto flex items-center gap-2">
           {!isDone && (
             <button
-              onClick={() => setShowTeamsPanel(v => !v)}
+              onClick={() => setShowTeamsPanel((v) => !v)}
               className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
                 showTeamsPanel
                   ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
@@ -322,7 +427,7 @@ export function SoloTopTenPage() {
           )}
           {!isDone && (
             <button
-              onClick={() => setHintLevel(l => l >= maxHintLevel ? 0 : l + 1)}
+              onClick={() => setHintLevel((l) => (l >= maxHintLevel ? 0 : l + 1))}
               className={`px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border transition-colors ${
                 hintLevel > 0
                   ? 'border-[#70BE5B]/60 text-[#70BE5B] bg-[#70BE5B]/8'
@@ -334,7 +439,10 @@ export function SoloTopTenPage() {
           )}
           {!isDone && (
             <button
-              onClick={() => { setStatus('loading'); loadRound().catch(() => setStatus('setup')); }}
+              onClick={() => {
+                setStatus('loading');
+                loadRound().catch(() => setStatus('setup'));
+              }}
               className="px-2.5 py-1 capcrunch-kicker text-[9px] tracking-[0.25em] border border-white/12 text-white/25 hover:border-white/30 hover:text-white/50 transition-colors"
             >
               Skip
@@ -351,7 +459,11 @@ export function SoloTopTenPage() {
         </div>
       </header>
 
-      <TeamsReferencePanel sport={sport} show={showTeamsPanel} onClose={() => setShowTeamsPanel(false)} />
+      <TeamsReferencePanel
+        sport={sport}
+        show={showTeamsPanel}
+        onClose={() => setShowTeamsPanel(false)}
+      />
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pb-10 flex flex-col gap-4">
         <TopTenCategoryHeader
@@ -365,22 +477,26 @@ export function SoloTopTenPage() {
         />
 
         {/* Strikes */}
-        {strikeMode === 'strikes' && <div className="flex justify-center gap-2.5">
-          {Array.from({ length: MAX_STRIKES }).map((_, i) => (
-            <motion.div
-              key={i}
-              animate={i === strikes - 1 ? { scale: [1, 1.35, 1] } : {}}
-              transition={{ duration: 0.28 }}
-              className={`w-9 h-9 flex items-center justify-center border transition-all ${
-                i < strikes
-                  ? 'bg-red-950/70 border-red-600/50'
-                  : 'bg-black/40 border-white/8'
-              }`}
-            >
-              <span className={`capcrunch-title text-sm transition-colors ${i < strikes ? 'text-red-400' : 'text-white/15'}`}>✕</span>
-            </motion.div>
-          ))}
-        </div>}
+        {strikeMode === 'strikes' && (
+          <div className="flex justify-center gap-2.5">
+            {Array.from({ length: MAX_STRIKES }).map((_, i) => (
+              <motion.div
+                key={i}
+                animate={i === strikes - 1 ? { scale: [1, 1.35, 1] } : {}}
+                transition={{ duration: 0.28 }}
+                className={`w-9 h-9 flex items-center justify-center border transition-all ${
+                  i < strikes ? 'bg-red-950/70 border-red-600/50' : 'bg-black/40 border-white/8'
+                }`}
+              >
+                <span
+                  className={`capcrunch-title text-sm transition-colors ${i < strikes ? 'text-red-400' : 'text-white/15'}`}
+                >
+                  ✕
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         <FeedbackMessage feedback={feedback} />
 
@@ -391,27 +507,27 @@ export function SoloTopTenPage() {
               <input
                 ref={inputRef}
                 value={guess}
-                onChange={e => handleInputChange(e.target.value)}
-                onKeyDown={e => e.key === 'Escape' && setSuggestions([])}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={(e) => e.key === 'Escape' && setSuggestions([])}
                 placeholder="Name a player..."
                 autoComplete="off"
                 className="flex-1 bg-black/40 border border-white/15 px-4 py-2.5 text-white capcrunch-kicker text-sm focus:outline-none focus:border-[#70BE5B]/50 placeholder-white/20 transition-colors"
               />
-              <button
-                type="submit"
-                className="capcrunch-btn-primary capcrunch-title text-sm px-5"
-              >
+              <button type="submit" className="capcrunch-btn-primary capcrunch-title text-sm px-5">
                 Guess
               </button>
             </form>
 
             {suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-[88px] mt-0.5 bg-black/90 border border-white/10 z-30 overflow-hidden">
-                {suggestions.map(name => (
+                {suggestions.map((name) => (
                   <button
                     key={name}
                     type="button"
-                    onMouseDown={e => { e.preventDefault(); submitGuess(name); }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      submitGuess(name);
+                    }}
                     className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white/60 hover:bg-white/5 hover:text-white border-b border-white/5 last:border-0 transition-colors"
                   >
                     {name}
@@ -439,7 +555,9 @@ export function SoloTopTenPage() {
               categoryKey={category}
               catDef={catDef}
               statShortLabel={statShortLabel}
-              justGuessed={guessedIndices.includes(i) && guessedIndices[guessedIndices.length - 1] === i}
+              justGuessed={
+                guessedIndices.includes(i) && guessedIndices[guessedIndices.length - 1] === i
+              }
             />
           ))}
         </div>
@@ -455,7 +573,9 @@ export function SoloTopTenPage() {
               className="capcrunch-title text-2xl"
               style={{ color: guessedIndices.length === entries.length ? '#70BE5B' : '#70BE5B' }}
             >
-              {guessedIndices.length === entries.length ? 'Perfect!' : `${guessedIndices.length} / ${entries.length} found`}
+              {guessedIndices.length === entries.length
+                ? 'Perfect!'
+                : `${guessedIndices.length} / ${entries.length} found`}
             </p>
             <div className="flex gap-2.5 justify-center">
               <button

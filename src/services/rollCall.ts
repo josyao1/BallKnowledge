@@ -11,7 +11,7 @@ import { getOrCreatePlayerId, getStoredPlayerName, createLobby } from './lobby';
 
 export async function submitEntry(
   lobbyId: string,
-  entryText: string
+  entryText: string,
 ): Promise<{ entry: RollCallEntry | null; error: string | null }> {
   if (!supabase) {
     return { entry: null, error: 'Multiplayer not available' };
@@ -41,7 +41,7 @@ export async function submitEntry(
 }
 
 export async function getEntries(
-  lobbyId: string
+  lobbyId: string,
 ): Promise<{ entries: RollCallEntry[]; error: string | null }> {
   if (!supabase) {
     return { entries: [], error: 'Multiplayer not available' };
@@ -60,30 +60,20 @@ export async function getEntries(
   return { entries: entries as RollCallEntry[], error: null };
 }
 
-export async function deleteAllEntries(
-  lobbyId: string
-): Promise<{ error: string | null }> {
+export async function deleteAllEntries(lobbyId: string): Promise<{ error: string | null }> {
   if (!supabase) {
     return { error: 'Multiplayer not available' };
   }
 
-  const { error } = await supabase
-    .from('roll_call_entries')
-    .delete()
-    .eq('lobby_id', lobbyId);
+  const { error } = await supabase.from('roll_call_entries').delete().eq('lobby_id', lobbyId);
 
   return { error: error?.message || null };
 }
 
-export async function deleteEntriesByIds(
-  entryIds: string[]
-): Promise<{ error: string | null }> {
+export async function deleteEntriesByIds(entryIds: string[]): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
-  const { error } = await supabase
-    .from('roll_call_entries')
-    .delete()
-    .in('id', entryIds);
+  const { error } = await supabase.from('roll_call_entries').delete().in('id', entryIds);
 
   return { error: error?.message || null };
 }
@@ -93,7 +83,7 @@ export async function saveMergeDecision(
   suggestionKey: string,
   entryIds: string[],
   canonical: string,
-  isDismissed: boolean
+  isDismissed: boolean,
 ): Promise<{ merge: RollCallMerge | null; error: string | null }> {
   if (!supabase) return { merge: null, error: 'Multiplayer not available' };
 
@@ -114,7 +104,7 @@ export async function saveMergeDecision(
 }
 
 export async function getMergeDecisions(
-  lobbyId: string
+  lobbyId: string,
 ): Promise<{ merges: RollCallMerge[]; error: string | null }> {
   if (!supabase) return { merges: [], error: 'Multiplayer not available' };
 
@@ -128,21 +118,16 @@ export async function getMergeDecisions(
   return { merges: data as RollCallMerge[], error: null };
 }
 
-export async function deleteAllMerges(
-  lobbyId: string
-): Promise<{ error: string | null }> {
+export async function deleteAllMerges(lobbyId: string): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Multiplayer not available' };
 
-  const { error } = await supabase
-    .from('roll_call_merges')
-    .delete()
-    .eq('lobby_id', lobbyId);
+  const { error } = await supabase.from('roll_call_merges').delete().eq('lobby_id', lobbyId);
 
   return { error: error?.message || null };
 }
 
 export async function createRollCallLobby(
-  hostName: string
+  hostName: string,
 ): Promise<{ lobby: Lobby | null; error: string | null }> {
   const result = await createLobby(
     hostName,
@@ -153,7 +138,7 @@ export async function createRollCallLobby(
     'manual',
     2000,
     2025,
-    'roll_call'
+    'roll_call',
   );
 
   if (result.error) {

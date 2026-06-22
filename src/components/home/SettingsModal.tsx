@@ -13,7 +13,16 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { timerDuration, yearRange, hideResultsDuringGame, showSeasonHints, setTimerDuration, setYearRange, setHideResultsDuringGame, setShowSeasonHints } = useSettingsStore();
+  const {
+    timerDuration,
+    yearRange,
+    hideResultsDuringGame,
+    showSeasonHints,
+    setTimerDuration,
+    setYearRange,
+    setHideResultsDuringGame,
+    setShowSeasonHints,
+  } = useSettingsStore();
 
   const timerOptions = [
     { label: '1:00', value: 60 },
@@ -33,14 +42,21 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             className="p-1 text-white/40 hover:text-white/70 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         {/* Timer duration */}
         <div className="mb-6">
-          <label className="block capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-2">Timer Duration</label>
+          <label className="block capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-2">
+            Timer Duration
+          </label>
           <div className="flex flex-wrap gap-2">
             {timerOptions.map((option) => (
               <button
@@ -60,10 +76,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
         {/* Year range */}
         <div className="mb-6">
-          <label className="block capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-2">Year Range for Random Mode</label>
+          <label className="block capcrunch-kicker text-[10px] text-white/40 tracking-widest uppercase mb-2">
+            Year Range for Random Mode
+          </label>
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className="block capcrunch-kicker text-[9px] text-white/30 mb-1">Min Year</label>
+              <label className="block capcrunch-kicker text-[9px] text-white/30 mb-1">
+                Min Year
+              </label>
               <input
                 type="number"
                 value={yearRange.min}
@@ -75,7 +95,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
             <span className="text-white/30 pt-5 capcrunch-kicker text-sm">to</span>
             <div className="flex-1">
-              <label className="block capcrunch-kicker text-[9px] text-white/30 mb-1">Max Year</label>
+              <label className="block capcrunch-kicker text-[9px] text-white/30 mb-1">
+                Max Year
+              </label>
               <input
                 type="number"
                 value={yearRange.max}
@@ -92,7 +114,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <label className="block capcrunch-kicker text-sm text-white/70">Hide Answers During Game</label>
+              <label className="block capcrunch-kicker text-sm text-white/70">
+                Hide Answers During Game
+              </label>
               <p className="capcrunch-kicker text-[10px] text-white/30 mt-1">
                 Don't reveal correct/incorrect until time runs out
               </p>
@@ -116,7 +140,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <label className="block capcrunch-kicker text-sm text-white/70">Show Season Hints</label>
+              <label className="block capcrunch-kicker text-sm text-white/70">
+                Show Season Hints
+              </label>
               <p className="capcrunch-kicker text-[10px] text-white/30 mt-1">
                 Display team's record for the season
               </p>

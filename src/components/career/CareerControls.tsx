@@ -29,10 +29,19 @@ interface Props {
 }
 
 export function CareerControls({
-  guessInput, onGuessChange, onGuess,
-  feedbackMessage, feedbackType, accentColor,
-  yearsRevealed, bioRevealed, initialsRevealed,
-  onRevealYears, onRevealBio, onRevealInitials, onGiveUp,
+  guessInput,
+  onGuessChange,
+  onGuess,
+  feedbackMessage,
+  feedbackType,
+  accentColor,
+  yearsRevealed,
+  bioRevealed,
+  initialsRevealed,
+  onRevealYears,
+  onRevealBio,
+  onRevealInitials,
+  onGiveUp,
   inputRef,
 }: Props) {
   return (
@@ -59,7 +68,9 @@ export function CareerControls({
       </div>
 
       {feedbackMessage && (
-        <div className={`text-center capcrunch-kicker text-sm ${feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
+        <div
+          className={`text-center capcrunch-kicker text-sm ${feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'}`}
+        >
           {feedbackMessage}
         </div>
       )}

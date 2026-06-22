@@ -18,7 +18,7 @@ export function AboutModal({ onClose }: Props) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         className="capcrunch-panel p-8 max-w-sm w-full mx-4 text-center"
       >
         <h2 className="capcrunch-title text-2xl text-white mb-2">BallKnowledge</h2>

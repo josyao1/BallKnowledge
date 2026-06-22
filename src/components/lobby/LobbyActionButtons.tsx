@@ -43,16 +43,39 @@ interface Props {
 }
 
 export function LobbyActionButtons({
-  lobby, players, currentPlayer, isHost, isLoadingRoster, allReady,
-  onReadyToggle, onManualStart, onCareerStart, onScrambleStart,
-  onLineupStart, onBoxScoreStart, onNBABoxScoreStart, onStartingLineupStart, onFaceRevealStart, onTopTenStart,
+  lobby,
+  players,
+  currentPlayer,
+  isHost,
+  isLoadingRoster,
+  allReady,
+  onReadyToggle,
+  onManualStart,
+  onCareerStart,
+  onScrambleStart,
+  onLineupStart,
+  onBoxScoreStart,
+  onNBABoxScoreStart,
+  onStartingLineupStart,
+  onFaceRevealStart,
+  onTopTenStart,
 }: Props) {
-  const readyCount = players.filter(p => p.is_ready).length;
-  const allPlayersReady = players.every(p => p.is_ready);
-  const canForceStart = isHost && players.length >= 2 && !allPlayersReady && lobby.status === 'waiting';
+  const readyCount = players.filter((p) => p.is_ready).length;
+  const allPlayersReady = players.every((p) => p.is_ready);
+  const canForceStart =
+    isHost && players.length >= 2 && !allPlayersReady && lobby.status === 'waiting';
 
   // Map game type to start handler, button label, and color classes
-  const gameStartConfig: Record<string, { onStart: () => void; label: string; loadingLabel: string; btnClass: string; forceHoverClass: string }> = {
+  const gameStartConfig: Record<
+    string,
+    {
+      onStart: () => void;
+      label: string;
+      loadingLabel: string;
+      btnClass: string;
+      forceHoverClass: string;
+    }
+  > = {
     scramble: {
       onStart: onScrambleStart,
       label: 'Start Name Scramble',
@@ -131,12 +154,21 @@ export function LobbyActionButtons({
               : 'capcrunch-btn-primary'
           }`}
         >
-          {isLoadingRoster ? 'Starting...' : currentPlayer.is_ready ? (
+          {isLoadingRoster ? (
+            'Starting...'
+          ) : currentPlayer.is_ready ? (
             <span className="flex flex-col items-center gap-0.5">
               <span>✓ Ready</span>
-              <span className="text-[10px] tracking-widest opacity-50 font-normal" style={{ fontFamily: 'inherit' }}>click to unready</span>
+              <span
+                className="text-[10px] tracking-widest opacity-50 font-normal"
+                style={{ fontFamily: 'inherit' }}
+              >
+                click to unready
+              </span>
             </span>
-          ) : 'Ready Up'}
+          ) : (
+            'Ready Up'
+          )}
         </button>
       )}
 
@@ -213,92 +245,168 @@ export function LobbyActionButtons({
 function HowToPlay({ gameType }: { gameType: string }) {
   const prose = 'space-y-2 text-white/50 capcrunch-kicker text-xs leading-relaxed';
 
-  if (gameType === 'roster') return (
-    <div className={prose}>
-      <p>A team and season are randomly selected. Players on that roster are shuffled into a deck of cards.</p>
-      <p>Each round a card is revealed — guess the player before the timer runs out to score a point.</p>
-      <p>Cards show hints like position, jersey number, and stats. The faster you buzz in, the better.</p>
-      <p className="text-[#FDF100]/50">🏆 Most correct guesses wins.</p>
-    </div>
-  );
+  if (gameType === 'roster')
+    return (
+      <div className={prose}>
+        <p>
+          A team and season are randomly selected. Players on that roster are shuffled into a deck
+          of cards.
+        </p>
+        <p>
+          Each round a card is revealed — guess the player before the timer runs out to score a
+          point.
+        </p>
+        <p>
+          Cards show hints like position, jersey number, and stats. The faster you buzz in, the
+          better.
+        </p>
+        <p className="text-[#FDF100]/50">🏆 Most correct guesses wins.</p>
+      </div>
+    );
 
-  if (gameType === 'career') return (
-    <div className={prose}>
-      <p>A mystery player is chosen. Their career stats are revealed year by year — team, stats, season.</p>
-      <p>Players race to identify the mystery player. Buzz in early for more points, but a wrong guess costs you.</p>
-      <p>The fewer clues revealed when you guess correctly, the higher your score.</p>
-      <p className="text-[#FDF100]/50">🏆 Most points across all rounds wins.</p>
-    </div>
-  );
+  if (gameType === 'career')
+    return (
+      <div className={prose}>
+        <p>
+          A mystery player is chosen. Their career stats are revealed year by year — team, stats,
+          season.
+        </p>
+        <p>
+          Players race to identify the mystery player. Buzz in early for more points, but a wrong
+          guess costs you.
+        </p>
+        <p>The fewer clues revealed when you guess correctly, the higher your score.</p>
+        <p className="text-[#FDF100]/50">🏆 Most points across all rounds wins.</p>
+      </div>
+    );
 
-  if (gameType === 'scramble') return (
-    <div className={prose}>
-      <p>A player's name is scrambled on screen. Type the correct name to score a point.</p>
-      <p>Multiple rounds — first to unscramble each name scores. Speed matters.</p>
-      <p>You can pass on a name if you're stuck, but the point goes to whoever gets it first.</p>
-      <p className="text-[#FDF100]/50">🏆 Most unscrambled names wins.</p>
-    </div>
-  );
+  if (gameType === 'scramble')
+    return (
+      <div className={prose}>
+        <p>A player's name is scrambled on screen. Type the correct name to score a point.</p>
+        <p>Multiple rounds — first to unscramble each name scores. Speed matters.</p>
+        <p>You can pass on a name if you're stuck, but the point goes to whoever gets it first.</p>
+        <p className="text-[#FDF100]/50">🏆 Most unscrambled names wins.</p>
+      </div>
+    );
 
-  if (gameType === 'box-score') return (
-    <div className={prose}>
-      <p>A real NFL game's box score is shown with all player names blacked out.</p>
-      <p>Fill in the names from memory — QBs, rushers, and receivers for both teams — within the time limit.</p>
-      <p>Use the search bar to find players and confirm matches. Correct guesses light up green.</p>
-      <p>You can also guess the Vegas spread for a bonus point.</p>
-      <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
-    </div>
-  );
+  if (gameType === 'box-score')
+    return (
+      <div className={prose}>
+        <p>A real NFL game's box score is shown with all player names blacked out.</p>
+        <p>
+          Fill in the names from memory — QBs, rushers, and receivers for both teams — within the
+          time limit.
+        </p>
+        <p>
+          Use the search bar to find players and confirm matches. Correct guesses light up green.
+        </p>
+        <p>You can also guess the Vegas spread for a bonus point.</p>
+        <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
+      </div>
+    );
 
-  if (gameType === 'nba-box-score') return (
-    <div className={prose}>
-      <p>A real NBA game's box score is shown with all player names blacked out.</p>
-      <p>Fill in the names from memory — all players for both teams — within the time limit.</p>
-      <p>Use the search bar to find players and confirm matches. Correct guesses light up green.</p>
-      <p>Request hints to reveal player initials — but all players must agree.</p>
-      <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
-    </div>
-  );
+  if (gameType === 'nba-box-score')
+    return (
+      <div className={prose}>
+        <p>A real NBA game's box score is shown with all player names blacked out.</p>
+        <p>Fill in the names from memory — all players for both teams — within the time limit.</p>
+        <p>
+          Use the search bar to find players and confirm matches. Correct guesses light up green.
+        </p>
+        <p>Request hints to reveal player initials — but all players must agree.</p>
+        <p className="text-[#f59e0b]/60">🏆 Most correct player names wins.</p>
+      </div>
+    );
 
-  if (gameType === 'lineup-is-right') return (
-    <div className={prose}>
-      <p>Each round everyone sees the same filter and a stat category. Filters can be a single franchise, a division, a college + pro conference combo (e.g. SEC + AFC), a teammate round, and more.</p>
-      <p><span className="text-white/70">Single-season stat:</span> Search any player and pick a year — their stat for that season counts.</p>
-      <p><span className="text-white/70">Total GP (NBA):</span> No year needed — their career games played with that specific team counts.</p>
-      <p><span className="text-white/70">Career stats (NFL):</span> No year needed — the team shown is just a qualifier (must have played there). Their full career total across all teams counts.</p>
-      <p>A pick that pushes you over the cap <span className="text-red-400">busts</span> — it scores 0 and your total reverts. You still play all 5 rounds. You <span className="text-white/70">cannot repeat a player</span> across rounds.</p>
-      <p>Tap the filter card if you need more info on a special round — conference filters show a "see schools" link.</p>
-      <p className="text-[#FDF100]/50">🏆 Closest to the target without busting wins. Tiebreaker: fewest busts, then oldest average pick year.</p>
-    </div>
-  );
+  if (gameType === 'lineup-is-right')
+    return (
+      <div className={prose}>
+        <p>
+          Each round everyone sees the same filter and a stat category. Filters can be a single
+          franchise, a division, a college + pro conference combo (e.g. SEC + AFC), a teammate
+          round, and more.
+        </p>
+        <p>
+          <span className="text-white/70">Single-season stat:</span> Search any player and pick a
+          year — their stat for that season counts.
+        </p>
+        <p>
+          <span className="text-white/70">Total GP (NBA):</span> No year needed — their career games
+          played with that specific team counts.
+        </p>
+        <p>
+          <span className="text-white/70">Career stats (NFL):</span> No year needed — the team shown
+          is just a qualifier (must have played there). Their full career total across all teams
+          counts.
+        </p>
+        <p>
+          A pick that pushes you over the cap <span className="text-red-400">busts</span> — it
+          scores 0 and your total reverts. You still play all 5 rounds. You{' '}
+          <span className="text-white/70">cannot repeat a player</span> across rounds.
+        </p>
+        <p>
+          Tap the filter card if you need more info on a special round — conference filters show a
+          "see schools" link.
+        </p>
+        <p className="text-[#FDF100]/50">
+          🏆 Closest to the target without busting wins. Tiebreaker: fewest busts, then oldest
+          average pick year.
+        </p>
+      </div>
+    );
 
-  if (gameType === 'starting-lineup') return (
-    <div className={prose}>
-      <p>A team's starting lineup is shown on a field or court — players hidden as college logos, jersey numbers, or draft picks.</p>
-      <p>Race to type the correct team name. Wrong guesses lock you out until everyone else is also wrong, then everyone unlocks.</p>
-      <p>Fewest wrong answers wins each round. Ties broken by who guessed first.</p>
-      <p className="text-[#16a34a]/70">🏆 First to the win target takes the match.</p>
-    </div>
-  );
+  if (gameType === 'starting-lineup')
+    return (
+      <div className={prose}>
+        <p>
+          A team's starting lineup is shown on a field or court — players hidden as college logos,
+          jersey numbers, or draft picks.
+        </p>
+        <p>
+          Race to type the correct team name. Wrong guesses lock you out until everyone else is also
+          wrong, then everyone unlocks.
+        </p>
+        <p>Fewest wrong answers wins each round. Ties broken by who guessed first.</p>
+        <p className="text-[#16a34a]/70">🏆 First to the win target takes the match.</p>
+      </div>
+    );
 
-  if (gameType === 'face-reveal') return (
-    <div className={prose}>
-      <p>A player's headshot is shown heavily zoomed in. After the timer runs out, it zooms out — and again.</p>
-      <p>Guess the player at any time. The first correct guess scores 3 pts; everyone else who gets it scores 1 pt.</p>
-      <p>Guess wrong? Keep trying — there's no penalty for wrong guesses.</p>
-      <p className="text-[#06b6d4]/70">🏆 First to the win target takes the match.</p>
-    </div>
-  );
+  if (gameType === 'face-reveal')
+    return (
+      <div className={prose}>
+        <p>
+          A player's headshot is shown heavily zoomed in. After the timer runs out, it zooms out —
+          and again.
+        </p>
+        <p>
+          Guess the player at any time. The first correct guess scores 3 pts; everyone else who gets
+          it scores 1 pt.
+        </p>
+        <p>Guess wrong? Keep trying — there's no penalty for wrong guesses.</p>
+        <p className="text-[#06b6d4]/70">🏆 First to the win target takes the match.</p>
+      </div>
+    );
 
-  if (gameType === 'top-ten') return (
-    <div className={prose}>
-      <p>A random stat category and season (or division window) is revealed. Name the top 10 players in that stat.</p>
-      <p>Players take turns — you have 45 seconds to name one player from the list. The team logo is shown as a hint.</p>
-      <p>Wrong guess or timeout = a strike. Reach max strikes and you're eliminated.</p>
-      <p>A round ends when all 10 slots are filled or everyone is eliminated. Most correct guesses wins the round.</p>
-      <p className="text-[#22c55e]/70">🏆 First to the win target takes the match.</p>
-    </div>
-  );
+  if (gameType === 'top-ten')
+    return (
+      <div className={prose}>
+        <p>
+          A random stat category and season (or division window) is revealed. Name the top 10
+          players in that stat.
+        </p>
+        <p>
+          Players take turns — you have 45 seconds to name one player from the list. The team logo
+          is shown as a hint.
+        </p>
+        <p>Wrong guess or timeout = a strike. Reach max strikes and you're eliminated.</p>
+        <p>
+          A round ends when all 10 slots are filled or everyone is eliminated. Most correct guesses
+          wins the round.
+        </p>
+        <p className="text-[#22c55e]/70">🏆 First to the win target takes the match.</p>
+      </div>
+    );
 
   return null;
 }

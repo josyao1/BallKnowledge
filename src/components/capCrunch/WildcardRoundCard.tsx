@@ -23,7 +23,8 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444)',
+          background:
+            'linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444)',
           zIndex: -1,
           margin: '-1px',
         }}
@@ -33,7 +34,8 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
       <p
         className={`capcrunch-kicker tracking-widest uppercase leading-none mb-0.5 opacity-60 ${size === 'lg' ? 'text-[8px] md:text-[10px]' : 'text-[8px]'}`}
         style={{
-          background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
+          background:
+            'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}
@@ -43,7 +45,8 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
       <p
         className={`capcrunch-title leading-none ${size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}
         style={{
-          background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
+          background:
+            'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}
@@ -52,7 +55,10 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
       </p>
 
       <button
-        onClick={e => { e.stopPropagation(); setShowPanel(v => !v); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowPanel((v) => !v);
+        }}
         className="absolute bottom-1.5 right-1.5 w-4 h-4 border border-white/30 text-white/40 text-[8px] flex items-center justify-center hover:border-white/60 hover:text-white/70 transition-colors"
       >
         ?
@@ -83,7 +89,8 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: 'linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
+                    background:
+                      'linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
                     zIndex: -1,
                     margin: '-1px',
                   }}
@@ -91,11 +98,14 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
                 <div className="absolute inset-[1px] bg-[#0d0d0d]" style={{ zIndex: -1 }} />
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Free Pick</p>
+                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">
+                      Free Pick
+                    </p>
                     <p
                       className="capcrunch-title text-sm"
                       style={{
-                        background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
+                        background:
+                          'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
@@ -111,7 +121,8 @@ export function WildcardRoundCard({ size = 'sm' }: Props) {
                   </button>
                 </div>
                 <p className="capcrunch-kicker text-[10px] text-white/60 leading-relaxed">
-                  Pick anything! No team, conference, or name constraints — any player, any season counts.
+                  Pick anything! No team, conference, or name constraints — any player, any season
+                  counts.
                 </p>
               </motion.div>
             </>

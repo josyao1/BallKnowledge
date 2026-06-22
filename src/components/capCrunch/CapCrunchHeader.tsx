@@ -11,8 +11,25 @@ import { SpinningNumber, getTotalColor, getRemainingColor } from './SpinningNumb
 import { TeamSlotMachine } from './TeamSlotMachine';
 import { ConferenceRoundCard } from './ConferenceRoundCard';
 import { HomeButton } from '../multiplayer/HomeButton';
-import { isDivisionRound, isConferenceRound, parseConferenceRound, isDivisionDraftRound, parseDivisionDraftRound, isTeammateRound, parseTeammateRound, isNameMatchRound, parseNameRound, isWildcardRound, NFL_DIVISIONS, formatHeightInches } from '../../services/capCrunch';
-import { HEIGHT_THRESHOLD_NBA, HEIGHT_THRESHOLD_NFL, WEIGHT_THRESHOLD } from '../../services/capCrunchData';
+import {
+  isDivisionRound,
+  isConferenceRound,
+  parseConferenceRound,
+  isDivisionDraftRound,
+  parseDivisionDraftRound,
+  isTeammateRound,
+  parseTeammateRound,
+  isNameMatchRound,
+  parseNameRound,
+  isWildcardRound,
+  NFL_DIVISIONS,
+  formatHeightInches,
+} from '../../services/capCrunch';
+import {
+  HEIGHT_THRESHOLD_NBA,
+  HEIGHT_THRESHOLD_NFL,
+  WEIGHT_THRESHOLD,
+} from '../../services/capCrunchData';
 import type { HWFilter } from '../../services/capCrunch';
 import { DivisionDraftRoundCard } from './DivisionDraftRoundCard';
 import { TeammateRoundCard } from './TeammateRoundCard';
@@ -56,10 +73,23 @@ interface Props {
 }
 
 export function CapCrunchHeader({
-  hardMode, currentPickerId, currentPlayerId, players,
-  currentRound, totalRounds, currentTeam, selectedSport,
-  targetCap, statCategory, myLineup, badFlashKey, isCareerStatRound, blindMode = false,
-  isHost = false, onEndGame, hwFilter,
+  hardMode,
+  currentPickerId,
+  currentPlayerId,
+  players,
+  currentRound,
+  totalRounds,
+  currentTeam,
+  selectedSport,
+  targetCap,
+  statCategory,
+  myLineup,
+  badFlashKey,
+  isCareerStatRound,
+  blindMode = false,
+  isHost = false,
+  onEndGame,
+  hwFilter,
 }: Props) {
   const pressureColor = getTotalColor(myLineup?.totalStat ?? 0, targetCap);
   const gradWeek = isGradWeek();
@@ -71,61 +101,77 @@ export function CapCrunchHeader({
     >
       <div className="px-3 sm:px-4 py-2 flex flex-col gap-2 border-b border-white/5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3 min-w-0 sm:justify-start">
-          <h1 className="capcrunch-title text-lg sm:text-xl text-[#FDF100] truncate">Cap Crunch{gradWeek ? ' 🎓' : ''}</h1>
+          <h1 className="capcrunch-title text-lg sm:text-xl text-[#FDF100] truncate">
+            Cap Crunch{gradWeek ? ' 🎓' : ''}
+          </h1>
           <HomeButton isHost={isHost} onEndGame={onEndGame} />
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {hardMode && (
-            <div className={`px-2.5 py-1 border max-w-full ${
-              currentPickerId === currentPlayerId
-                ? 'bg-[#FDF100]/14 border-[#FDF100]/60'
-                : 'bg-black/40 border-white/20'
-            }`}>
-              <span className={`capcrunch-kicker text-[10px] sm:text-xs ${
-                currentPickerId === currentPlayerId ? 'text-[#FDF100]' : 'text-white/50'
-              }`}>
+            <div
+              className={`px-2.5 py-1 border max-w-full ${
+                currentPickerId === currentPlayerId
+                  ? 'bg-[#FDF100]/14 border-[#FDF100]/60'
+                  : 'bg-black/40 border-white/20'
+              }`}
+            >
+              <span
+                className={`capcrunch-kicker text-[10px] sm:text-xs ${
+                  currentPickerId === currentPlayerId ? 'text-[#FDF100]' : 'text-white/50'
+                }`}
+              >
                 {currentPickerId === currentPlayerId
                   ? 'Your Turn'
-                  : `${players.find(p => p.player_id === currentPickerId)?.player_name ?? '...'}'s Turn`}
+                  : `${players.find((p) => p.player_id === currentPickerId)?.player_name ?? '...'}'s Turn`}
               </span>
             </div>
           )}
           <div className="px-2.5 py-1 bg-[#E2008A]/18 border border-[#E2008A]/50">
-            <span className="capcrunch-kicker text-[10px] sm:text-sm text-[#E2008A]">Round {currentRound} / {totalRounds}</span>
+            <span className="capcrunch-kicker text-[10px] sm:text-sm text-[#E2008A]">
+              Round {currentRound} / {totalRounds}
+            </span>
           </div>
         </div>
       </div>
 
-
       {/* Team + compact stats row */}
       <div className="flex flex-col gap-3 px-3 sm:px-4 py-2 lg:flex-row lg:items-center">
-        {isDivisionDraftRound(currentTeam) ? (() => {
-          const { division, draftRound } = parseDivisionDraftRound(currentTeam);
-          return (
-            <motion.div
-              key={currentTeam + currentRound}
-              initial={{ opacity: 0, rotateY: -90 }}
-              animate={{ opacity: 1, rotateY: 0 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}
-              style={{ perspective: 600 }}
-            >
-              <DivisionDraftRoundCard division={division} draftRound={draftRound} sport={selectedSport ?? 'nfl'} size="sm" />
-            </motion.div>
-          );
-        })() : isConferenceRound(currentTeam) ? (() => {
-          const { college: confName, nflConf } = parseConferenceRound(currentTeam);
-          return (
-            <motion.div
-              key={currentTeam + currentRound}
-              initial={{ opacity: 0, rotateY: -90 }}
-              animate={{ opacity: 1, rotateY: 0 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}
-              style={{ perspective: 600 }}
-            >
-              <ConferenceRoundCard confName={confName} nflConf={nflConf} size="sm" />
-            </motion.div>
-          );
-        })() : isDivisionRound(currentTeam) ? (
+        {isDivisionDraftRound(currentTeam) ? (
+          (() => {
+            const { division, draftRound } = parseDivisionDraftRound(currentTeam);
+            return (
+              <motion.div
+                key={currentTeam + currentRound}
+                initial={{ opacity: 0, rotateY: -90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ perspective: 600 }}
+              >
+                <DivisionDraftRoundCard
+                  division={division}
+                  draftRound={draftRound}
+                  sport={selectedSport ?? 'nfl'}
+                  size="sm"
+                />
+              </motion.div>
+            );
+          })()
+        ) : isConferenceRound(currentTeam) ? (
+          (() => {
+            const { college: confName, nflConf } = parseConferenceRound(currentTeam);
+            return (
+              <motion.div
+                key={currentTeam + currentRound}
+                initial={{ opacity: 0, rotateY: -90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ perspective: 600 }}
+              >
+                <ConferenceRoundCard confName={confName} nflConf={nflConf} size="sm" />
+              </motion.div>
+            );
+          })()
+        ) : isDivisionRound(currentTeam) ? (
           <motion.div
             key={currentTeam + currentRound}
             initial={{ opacity: 0, rotateY: -90 }}
@@ -135,7 +181,9 @@ export function CapCrunchHeader({
             style={{ perspective: 600 }}
             className="px-5 py-2 border bg-black/40 border-[#FDF100]/70 shadow-[0_0_16px_rgba(253,241,0,0.18)]"
           >
-            <p className="capcrunch-kicker text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">Division</p>
+            <p className="capcrunch-kicker text-[8px] text-white/50 tracking-widest uppercase leading-none mb-0.5">
+              Division
+            </p>
             <p className="capcrunch-title text-2xl md:text-3xl text-[#FDF100] leading-tight">
               {currentTeam}
             </p>
@@ -143,23 +191,40 @@ export function CapCrunchHeader({
               {(NFL_DIVISIONS[currentTeam] ?? []).join(' · ')}
             </p>
           </motion.div>
-        ) : isNameMatchRound(currentTeam) ? (() => {
-          const { type, pickIndex, proConf } = parseNameRound(currentTeam);
-          return <NameMatchRoundCard key={currentTeam + currentRound} nameType={type} pickIndex={pickIndex} proConf={proConf} size="sm" />;
-        })() : isTeammateRound(currentTeam) ? (() => {
-          const { pickIndex } = parseTeammateRound(currentTeam);
-          return <TeammateRoundCard key={currentTeam + currentRound} pickIndex={pickIndex} size="sm" />;
-        })() : isWildcardRound(currentTeam) ? (
+        ) : isNameMatchRound(currentTeam) ? (
+          (() => {
+            const { type, pickIndex, proConf } = parseNameRound(currentTeam);
+            return (
+              <NameMatchRoundCard
+                key={currentTeam + currentRound}
+                nameType={type}
+                pickIndex={pickIndex}
+                proConf={proConf}
+                size="sm"
+              />
+            );
+          })()
+        ) : isTeammateRound(currentTeam) ? (
+          (() => {
+            const { pickIndex } = parseTeammateRound(currentTeam);
+            return (
+              <TeammateRoundCard key={currentTeam + currentRound} pickIndex={pickIndex} size="sm" />
+            );
+          })()
+        ) : isWildcardRound(currentTeam) ? (
           <WildcardRoundCard key={currentTeam + currentRound} size="sm" />
         ) : (
           <div className="flex flex-col items-center gap-1 self-center lg:self-auto">
             <TeamSlotMachine sport={selectedSport as 'nba' | 'nfl'} team={currentTeam} size="sm" />
             {hwFilter && (
               <div className="px-2 py-0.5 border border-[#68BBE5]/40 bg-[#68BBE5]/10 text-[#68BBE5] capcrunch-kicker text-[8px] text-center">
-                {hwFilter === 'height_above' ? `Above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
-                : hwFilter === 'height_below' ? `Below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
-                : hwFilter === 'weight_above' ? `Above ${WEIGHT_THRESHOLD} lbs`
-                : `Below ${WEIGHT_THRESHOLD} lbs`}
+                {hwFilter === 'height_above'
+                  ? `Above ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
+                  : hwFilter === 'height_below'
+                    ? `Below ${formatHeightInches(selectedSport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)}`
+                    : hwFilter === 'weight_above'
+                      ? `Above ${WEIGHT_THRESHOLD} lbs`
+                      : `Below ${WEIGHT_THRESHOLD} lbs`}
               </div>
             )}
           </div>
@@ -169,11 +234,17 @@ export function CapCrunchHeader({
         <div className="hidden md:grid md:grid-cols-4 gap-1.5 md:gap-2 w-full lg:w-auto lg:ml-auto">
           <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
             <div className="capcrunch-kicker text-[7px] text-white/35">Target</div>
-            <p className="capcrunch-title text-sm md:text-lg text-white leading-none">{targetCap}</p>
+            <p className="capcrunch-title text-sm md:text-lg text-white leading-none">
+              {targetCap}
+            </p>
           </div>
           <div className="capcrunch-panel-soft px-2 md:px-3 py-1 md:py-1.5 text-center">
-            <div className="capcrunch-kicker text-[7px] text-white/35">{isCareerStatRound ? 'Career' : 'Stat'}</div>
-            <p className="capcrunch-title text-xs md:text-sm text-white leading-none">{getCategoryAbbr(statCategory)}</p>
+            <div className="capcrunch-kicker text-[7px] text-white/35">
+              {isCareerStatRound ? 'Career' : 'Stat'}
+            </div>
+            <p className="capcrunch-title text-xs md:text-sm text-white leading-none">
+              {getCategoryAbbr(statCategory)}
+            </p>
           </div>
           {!blindMode && (
             <>
@@ -208,22 +279,34 @@ export function CapCrunchHeader({
 
       {/* Mobile stat strip — matches solo's compact 4-column accent-border layout */}
       <div className="md:hidden grid grid-cols-4 border-t border-white/10">
-        <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#FDF100' }}>
+        <div
+          className="px-2 py-2 text-center border-r border-white/10"
+          style={{ borderLeftWidth: 3, borderLeftColor: '#FDF100' }}
+        >
           <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Target</div>
           <p className="capcrunch-title text-sm text-white leading-none">{targetCap}</p>
         </div>
-        <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#68BBE5' }}>
-          {isCareerStatRound
-            ? <div className="capcrunch-kicker text-[6px] text-[#68BBE5] mb-0.5">Career</div>
-            : <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Stat</div>
-          }
+        <div
+          className="px-2 py-2 text-center border-r border-white/10"
+          style={{ borderLeftWidth: 3, borderLeftColor: '#68BBE5' }}
+        >
+          {isCareerStatRound ? (
+            <div className="capcrunch-kicker text-[6px] text-[#68BBE5] mb-0.5">Career</div>
+          ) : (
+            <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Stat</div>
+          )}
           <p className="capcrunch-title text-sm text-white leading-none">
-            {isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)}
+            {isCareerStatRound
+              ? getCategoryAbbr(statCategory).replace('CAREER ', '')
+              : getCategoryAbbr(statCategory)}
           </p>
         </div>
         {!blindMode && (
           <>
-            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}>
+            <div
+              className="px-2 py-2 text-center border-r border-white/10"
+              style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}
+            >
               <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">You</div>
               <SpinningNumber
                 value={fmt(myLineup?.totalStat ?? 0)}
@@ -232,7 +315,10 @@ export function CapCrunchHeader({
                 flashKey={badFlashKey}
               />
             </div>
-            <div className="px-2 py-2 text-center" style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}>
+            <div
+              className="px-2 py-2 text-center"
+              style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}
+            >
               <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Left</div>
               <SpinningNumber
                 value={fmt(targetCap - (myLineup?.totalStat ?? 0))}
@@ -245,11 +331,17 @@ export function CapCrunchHeader({
         )}
         {blindMode && (
           <>
-            <div className="px-2 py-2 text-center border-r border-white/10" style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}>
+            <div
+              className="px-2 py-2 text-center border-r border-white/10"
+              style={{ borderLeftWidth: 3, borderLeftColor: '#E2008A' }}
+            >
               <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">You</div>
               <p className="capcrunch-title text-sm leading-none text-[#4E53A5]">?</p>
             </div>
-            <div className="px-2 py-2 text-center" style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}>
+            <div
+              className="px-2 py-2 text-center"
+              style={{ borderLeftWidth: 3, borderLeftColor: '#70BE5B' }}
+            >
               <div className="capcrunch-kicker text-[7px] text-white/30 mb-0.5">Left</div>
               <p className="capcrunch-title text-sm leading-none text-[#4E53A5]">?</p>
             </div>

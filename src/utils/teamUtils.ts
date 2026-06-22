@@ -19,7 +19,7 @@ export const TEAM_COLORS = [
 
 export interface TeamEntity {
   teamNumber: number;
-  color: typeof TEAM_COLORS[number];
+  color: (typeof TEAM_COLORS)[number];
   members: LobbyPlayer[];
   combinedScore: number;
   combinedGuessedPlayers: string[];
@@ -53,9 +53,9 @@ export function buildScoringEntities(players: LobbyPlayer[]): ScoringEntity[] {
   const entities: ScoringEntity[] = [];
 
   for (const [teamNum, members] of teamMap.entries()) {
-    const allGuessed = members.flatMap(m => m.guessed_players || []);
+    const allGuessed = members.flatMap((m) => m.guessed_players || []);
     const uniqueGuessed = [...new Set(allGuessed)];
-    const allIncorrect = members.flatMap(m => m.incorrect_guesses || []);
+    const allIncorrect = members.flatMap((m) => m.incorrect_guesses || []);
     const uniqueIncorrect = [...new Set(allIncorrect)];
     // Team score = sum of each member's individual score weighted by their multiplier
     const weightedScore = members.reduce((sum, m) => sum + m.score * (m.score_multiplier ?? 1), 0);
@@ -92,13 +92,13 @@ export function buildScoringEntities(players: LobbyPlayer[]): ScoringEntity[] {
 export function getTeammateGuessedPlayers(
   players: LobbyPlayer[],
   currentPlayerId: string,
-  currentTeamNumber: number | null
+  currentTeamNumber: number | null,
 ): string[] {
   if (currentTeamNumber == null) return [];
 
   return players
-    .filter(p => p.team_number === currentTeamNumber && p.player_id !== currentPlayerId)
-    .flatMap(p => p.guessed_players || []);
+    .filter((p) => p.team_number === currentTeamNumber && p.player_id !== currentPlayerId)
+    .flatMap((p) => p.guessed_players || []);
 }
 
 /**
@@ -109,15 +109,16 @@ export function computeEntityBonuses(entities: ScoringEntity[]): Map<string, num
   const bonuses = new Map<string, number>();
 
   if (entities.length < 3) {
-    entities.forEach(e => bonuses.set(e.entityId, 0));
+    entities.forEach((e) => bonuses.set(e.entityId, 0));
     return bonuses;
   }
 
   const guessCount: Record<string, number> = {};
   for (const entity of entities) {
-    const guesses = entity.type === 'team'
-      ? entity.team.combinedGuessedPlayers
-      : (entity.player.guessed_players || []);
+    const guesses =
+      entity.type === 'team'
+        ? entity.team.combinedGuessedPlayers
+        : entity.player.guessed_players || [];
 
     const uniqueGuesses = [...new Set(guesses)];
     for (const name of uniqueGuesses) {
@@ -126,12 +127,13 @@ export function computeEntityBonuses(entities: ScoringEntity[]): Map<string, num
   }
 
   for (const entity of entities) {
-    const guesses = entity.type === 'team'
-      ? entity.team.combinedGuessedPlayers
-      : (entity.player.guessed_players || []);
+    const guesses =
+      entity.type === 'team'
+        ? entity.team.combinedGuessedPlayers
+        : entity.player.guessed_players || [];
 
     const uniqueGuesses = [...new Set(guesses)];
-    const bonus = uniqueGuesses.filter(name => guessCount[name] === 1).length;
+    const bonus = uniqueGuesses.filter((name) => guessCount[name] === 1).length;
     bonuses.set(entity.entityId, bonus);
   }
 
@@ -142,7 +144,7 @@ export function computeEntityBonuses(entities: ScoringEntity[]): Map<string, num
  * Check if teams are active in this lobby.
  */
 export function hasTeams(players: LobbyPlayer[]): boolean {
-  return players.some(p => p.team_number != null);
+  return players.some((p) => p.team_number != null);
 }
 
 /**
@@ -150,7 +152,7 @@ export function hasTeams(players: LobbyPlayer[]): boolean {
  */
 export function getEntityDisplayName(entity: ScoringEntity): string {
   if (entity.type === 'solo') return entity.player.player_name;
-  return entity.team.members.map(m => m.player_name).join(' & ');
+  return entity.team.members.map((m) => m.player_name).join(' & ');
 }
 
 /**
@@ -182,5 +184,5 @@ export function getEntityIncorrectGuesses(entity: ScoringEntity): string[] {
  */
 export function isCurrentPlayerInEntity(entity: ScoringEntity, currentPlayerId: string): boolean {
   if (entity.type === 'solo') return entity.player.player_id === currentPlayerId;
-  return entity.team.members.some(m => m.player_id === currentPlayerId);
+  return entity.team.members.some((m) => m.player_id === currentPlayerId);
 }
