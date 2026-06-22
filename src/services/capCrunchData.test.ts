@@ -98,13 +98,13 @@ describe('division structure', () => {
   });
 
   it('each NBA division has 5 teams', () => {
-    for (const [div, teams] of Object.entries(NBA_DIVISIONS)) {
+    for (const [, teams] of Object.entries(NBA_DIVISIONS)) {
       expect(teams).toHaveLength(5);
     }
   });
 
   it('each NFL division has 4 teams', () => {
-    for (const [div, teams] of Object.entries(NFL_DIVISIONS)) {
+    for (const [, teams] of Object.entries(NFL_DIVISIONS)) {
       expect(teams).toHaveLength(4);
     }
   });

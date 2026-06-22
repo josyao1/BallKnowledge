@@ -21,7 +21,6 @@ import {
   createPlayerLineup,
   isHWFilter,
   formatHeightInches,
-  type SpecialRoundType,
 } from './capCrunch';
 
 describe('generateTargetCap', () => {
@@ -318,7 +317,7 @@ describe('advanceSpecialRoundCycle', () => {
   });
 
   it('resets cycle when all 5 types seen', () => {
-    const all: SpecialRoundType[] = ['division_draft', 'division', 'conference', 'hw_filter', 'teammate'];
+    // all 5 types represented in history + current
     const result = advanceSpecialRoundCycle(
       ['division_draft', 'division', 'conference', 'hw_filter'],
       'teammate'
