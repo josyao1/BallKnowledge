@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default tseslint.config(
-  { ignores: ['dist', 'public/data', 'scripts'] },
+  { ignores: ['dist', 'public/data', 'scripts', 'coverage'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
