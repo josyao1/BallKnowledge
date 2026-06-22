@@ -65,10 +65,16 @@ interface StartingLineupState {
 }
 
 function normalizeInput(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '')
+    .trim();
 }
 
-function teamMatchesInput(input: string, team: { name: string; city: string; abbreviation: string }): boolean {
+function teamMatchesInput(
+  input: string,
+  team: { name: string; city: string; abbreviation: string },
+): boolean {
   const norm = normalizeInput(input);
   if (!norm) return false;
   const name = normalizeInput(team.name);
@@ -78,7 +84,7 @@ function teamMatchesInput(input: string, team: { name: string; city: string; abb
     name.includes(norm) ||
     city.includes(norm) ||
     abbr === norm ||
-    name.split(' ').some(w => w.startsWith(norm) && norm.length >= 3)
+    name.split(' ').some((w) => w.startsWith(norm) && norm.length >= 3)
   );
 }
 
@@ -99,7 +105,9 @@ export function MultiplayerStartingLineupPage() {
 
   // ── Local state ──
   const [guessInput, setGuessInput] = useState('');
-  const [suggestions, setSuggestions] = useState<Array<{ abbreviation: string; name: string; colors: { primary: string } }>>([]);
+  const [suggestions, setSuggestions] = useState<
+    Array<{ abbreviation: string; name: string; colors: { primary: string } }>
+  >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [localIncorrect, setLocalIncorrect] = useState<string[]>([]);
   const [feedbackMsg, setFeedbackMsg] = useState('');
@@ -121,14 +129,17 @@ export function MultiplayerStartingLineupPage() {
 
   // ── Load lobby on mount ──
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
 
     function loadStarters(cs: StartingLineupState | null) {
       const sport = cs?.sport || 'nfl';
       const loader = sport === 'nba' ? loadNBAStarters() : loadNFLStarters();
       loader
         .then(setStartersData)
-        .catch(err => console.error('[StartingLineup] Failed to load starters data:', err));
+        .catch((err) => console.error('[StartingLineup] Failed to load starters data:', err));
     }
 
     if (lobby?.career_state) {
@@ -136,11 +147,17 @@ export function MultiplayerStartingLineupPage() {
       return;
     }
 
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
-      if (result.lobby.status !== 'playing') { navigate(`/lobby/${code}`); return; }
+    findLobbyByCode(code).then((result) => {
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
+      if (result.lobby.status !== 'playing') {
+        navigate(`/lobby/${code}`);
+        return;
+      }
       setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
+      getLobbyPlayers(result.lobby.id).then((pr) => {
         if (pr.players) setPlayers(pr.players);
       });
       loadStarters(result.lobby.career_state as StartingLineupState | null);
@@ -178,8 +195,14 @@ export function MultiplayerStartingLineupPage() {
       setPressureTimeLeft(null);
       hasSubmittedRef.current = false;
       hasAdvancedRef.current = false;
-      if (pressureTimerRef.current) { clearTimeout(pressureTimerRef.current); pressureTimerRef.current = null; }
-      if (pressureIntervalRef.current) { clearInterval(pressureIntervalRef.current); pressureIntervalRef.current = null; }
+      if (pressureTimerRef.current) {
+        clearTimeout(pressureTimerRef.current);
+        pressureTimerRef.current = null;
+      }
+      if (pressureIntervalRef.current) {
+        clearInterval(pressureIntervalRef.current);
+        pressureIntervalRef.current = null;
+      }
       setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [careerState?.round]);
@@ -199,7 +222,7 @@ export function MultiplayerStartingLineupPage() {
   });
 
   // ── Check if current player is locked ──
-  const currentPlayer = players.find(p => p.player_id === currentPlayerId);
+  const currentPlayer = players.find((p) => p.player_id === currentPlayerId);
   const myIncorrectCount = currentPlayer?.incorrect_guesses?.length ?? 0;
   const unlockEpoch = careerState?.unlock_epoch ?? 0;
   const isLocked = myIncorrectCount > unlockEpoch;
@@ -207,16 +230,18 @@ export function MultiplayerStartingLineupPage() {
   // ── Host: auto-increment unlock_epoch when all active players are locked ──
   useEffect(() => {
     if (!isHost || !lobby || !careerState) return;
-    const connectedPlayers = players.filter(p => p.is_connected !== false);
+    const connectedPlayers = players.filter((p) => p.is_connected !== false);
     if (connectedPlayers.length === 0) return;
 
     const gaveUpIds = new Set(careerState.giveUps || []);
     // Only check players who haven't finished (correct or gave up)
-    const activePlayers = connectedPlayers.filter(p => !p.finished_at && !gaveUpIds.has(p.player_id));
-
-    const allLocked = activePlayers.length > 0 && activePlayers.every(
-      p => (p.incorrect_guesses?.length ?? 0) > careerState.unlock_epoch
+    const activePlayers = connectedPlayers.filter(
+      (p) => !p.finished_at && !gaveUpIds.has(p.player_id),
     );
+
+    const allLocked =
+      activePlayers.length > 0 &&
+      activePlayers.every((p) => (p.incorrect_guesses?.length ?? 0) > careerState.unlock_epoch);
 
     if (allLocked && !hasAdvancedRef.current) {
       if (careerState.firstCorrectAt) {
@@ -235,45 +260,49 @@ export function MultiplayerStartingLineupPage() {
 
   // ── Host: detect first correct answer or all-gave-up ──
   useEffect(() => {
-    if (!isHost || !lobby || !careerState || hasAdvancedRef.current || careerState.firstCorrectAt) return;
+    if (!isHost || !lobby || !careerState || hasAdvancedRef.current || careerState.firstCorrectAt)
+      return;
     const gaveUpIds = new Set(careerState.giveUps || []);
-    const connected = players.filter(p => p.is_connected !== false);
+    const connected = players.filter((p) => p.is_connected !== false);
     if (connected.length === 0) return;
 
     // Guard against transitional state: new career_state (giveUps=[]) arrived before
     // lobby_players were reset — stale finished_at from the previous round would
     // cause us to incorrectly score players. Skip until all finished_at are cleared.
     const roundStart = roundStartTimeRef.current;
-    if (roundStart && connected.some(p => p.finished_at && p.finished_at < roundStart)) {
+    if (roundStart && connected.some((p) => p.finished_at && p.finished_at < roundStart)) {
       return;
     }
 
-    const allGaveUp = connected.every(p => gaveUpIds.has(p.player_id));
+    const allGaveUp = connected.every((p) => gaveUpIds.has(p.player_id));
     if (allGaveUp) {
       hasAdvancedRef.current = true;
       advanceRound();
       return;
     }
 
-    const firstCorrect = players.find(p => p.finished_at && !gaveUpIds.has(p.player_id));
+    const firstCorrect = players.find((p) => p.finished_at && !gaveUpIds.has(p.player_id));
     if (firstCorrect) {
       const newState = { ...careerState, firstCorrectAt: new Date().toISOString() };
       updateCareerState(lobby.id, newState);
       setLobby({ ...lobby, career_state: newState });
     }
-  }, [players.map(p => p.finished_at).join(','), careerState?.giveUps?.join(',')]);
+  }, [players.map((p) => p.finished_at).join(','), careerState?.giveUps?.join(',')]);
 
   // ── Host: 30-second pressure timer after first correct answer ──
   useEffect(() => {
     if (!isHost || !lobby || !careerState?.firstCorrectAt || hasAdvancedRef.current) return;
 
     const gaveUpIds = new Set(careerState.giveUps || []);
-    const connected = players.filter(p => p.is_connected !== false);
-    const allDone = connected.every(p => p.finished_at || gaveUpIds.has(p.player_id));
+    const connected = players.filter((p) => p.is_connected !== false);
+    const allDone = connected.every((p) => p.finished_at || gaveUpIds.has(p.player_id));
 
     if (allDone) {
       if (!hasAdvancedRef.current) {
-        if (pressureTimerRef.current) { clearTimeout(pressureTimerRef.current); pressureTimerRef.current = null; }
+        if (pressureTimerRef.current) {
+          clearTimeout(pressureTimerRef.current);
+          pressureTimerRef.current = null;
+        }
         hasAdvancedRef.current = true;
         advanceRound();
       }
@@ -287,7 +316,7 @@ export function MultiplayerStartingLineupPage() {
         advanceRound();
       }
     }, 30000);
-  }, [careerState?.firstCorrectAt, players.map(p => p.finished_at).join(',')]);
+  }, [careerState?.firstCorrectAt, players.map((p) => p.finished_at).join(',')]);
 
   // ── All clients: countdown display from firstCorrectAt ──
   useEffect(() => {
@@ -296,10 +325,13 @@ export function MultiplayerStartingLineupPage() {
       return;
     }
     const start = new Date(careerState.firstCorrectAt).getTime();
-    const tick = () => setPressureTimeLeft(Math.max(0, Math.ceil((30000 - (Date.now() - start)) / 1000)));
+    const tick = () =>
+      setPressureTimeLeft(Math.max(0, Math.ceil((30000 - (Date.now() - start)) / 1000)));
     tick();
     pressureIntervalRef.current = setInterval(tick, 500);
-    return () => { if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current); };
+    return () => {
+      if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current);
+    };
   }, [careerState?.firstCorrectAt]);
 
   async function advanceRound() {
@@ -307,12 +339,13 @@ export function MultiplayerStartingLineupPage() {
     setIsAdvancing(true);
     try {
       const gaveUpIds = new Set(careerState.giveUps || []);
-      const connectedPlayers = players.filter(p => p.is_connected !== false);
-      const everyoneGaveUp = connectedPlayers.length > 0 && connectedPlayers.every(p => gaveUpIds.has(p.player_id));
+      const connectedPlayers = players.filter((p) => p.is_connected !== false);
+      const everyoneGaveUp =
+        connectedPlayers.length > 0 && connectedPlayers.every((p) => gaveUpIds.has(p.player_id));
 
       // Rank players who answered correctly: fewest wrong first, then earliest finished_at
       const finished = players
-        .filter(p => p.finished_at && !gaveUpIds.has(p.player_id))
+        .filter((p) => p.finished_at && !gaveUpIds.has(p.player_id))
         .sort((a, b) => {
           const wrongA = a.incorrect_guesses?.length ?? 0;
           const wrongB = b.incorrect_guesses?.length ?? 0;
@@ -328,7 +361,7 @@ export function MultiplayerStartingLineupPage() {
       // Check if anyone won
       const updatedPlayers = await getLobbyPlayers(lobby.id);
       const winTarget = careerState.win_target;
-      const winner = (updatedPlayers.players || []).find(p => (p.points ?? 0) >= winTarget);
+      const winner = (updatedPlayers.players || []).find((p) => (p.points ?? 0) >= winTarget);
 
       if (winner) {
         // Award session win to the match winner
@@ -412,7 +445,7 @@ export function MultiplayerStartingLineupPage() {
       return;
     }
     const teamList = (careerState.sport || 'nfl') === 'nba' ? nbaTeams : nflTeams;
-    const matches = teamList.filter(t => teamMatchesInput(value, t as any)).slice(0, 5);
+    const matches = teamList.filter((t) => teamMatchesInput(value, t as any)).slice(0, 5);
     setSuggestions(matches as any[]);
     setShowSuggestions(matches.length > 0);
   }
@@ -425,17 +458,19 @@ export function MultiplayerStartingLineupPage() {
 
     const sport = careerState.sport || 'nfl';
     const teamList = sport === 'nba' ? nbaTeams : nflTeams;
-    const correctTeam = teamList.find(t => t.abbreviation === careerState.team);
+    const correctTeam = teamList.find((t) => t.abbreviation === careerState.team);
     if (!correctTeam) return;
 
     const inputVal = guessedAbbr
-      ? teamList.find(t => t.abbreviation === guessedAbbr)?.name || guessInput
+      ? teamList.find((t) => t.abbreviation === guessedAbbr)?.name || guessInput
       : guessInput;
 
-    const correct = guessedAbbr === careerState.team ||
+    const correct =
+      guessedAbbr === careerState.team ||
       (!guessedAbbr &&
-        teamList.filter(t => teamMatchesInput(inputVal, t as any)).length === 1 &&
-        teamList.filter(t => teamMatchesInput(inputVal, t as any))[0].abbreviation === careerState.team);
+        teamList.filter((t) => teamMatchesInput(inputVal, t as any)).length === 1 &&
+        teamList.filter((t) => teamMatchesInput(inputVal, t as any))[0].abbreviation ===
+          careerState.team);
 
     if (correct) {
       hasSubmittedRef.current = true;
@@ -457,7 +492,15 @@ export function MultiplayerStartingLineupPage() {
   }
 
   async function handleGiveUp() {
-    if (!careerState || !lobby || !currentPlayerId || isCorrect || hasGivenUp || hasSubmittedRef.current) return;
+    if (
+      !careerState ||
+      !lobby ||
+      !currentPlayerId ||
+      isCorrect ||
+      hasGivenUp ||
+      hasSubmittedRef.current
+    )
+      return;
     hasSubmittedRef.current = true;
     setHasGivenUp(true);
     setShowSuggestions(false);
@@ -487,16 +530,18 @@ export function MultiplayerStartingLineupPage() {
   const allGaveUp = !!careerState.allGaveUp;
   const isResultsPhase = careerState.phase === 'results';
   const correctTeamObj = isNBA
-    ? nbaTeams.find(t => t.abbreviation === careerState.team)
-    : nflTeams.find(t => t.abbreviation === careerState.team);
-  const encodingLabel = { college: 'college logos', number: 'jersey #s', draft: 'draft picks' }[careerState.encoding];
-  const connectedCount = players.filter(p => p.is_connected !== false).length;
-  const finishedCount = players.filter(p => p.finished_at !== null).length;
+    ? nbaTeams.find((t) => t.abbreviation === careerState.team)
+    : nflTeams.find((t) => t.abbreviation === careerState.team);
+  const encodingLabel = { college: 'college logos', number: 'jersey #s', draft: 'draft picks' }[
+    careerState.encoding
+  ];
+  const connectedCount = players.filter((p) => p.is_connected !== false).length;
+  const finishedCount = players.filter((p) => p.finished_at !== null).length;
 
   // Consensus initials hint
   const hintRequests = careerState.hintRequests || [];
   const myHintRequested = !!currentPlayerId && hintRequests.includes(currentPlayerId);
-  const hintVotes = players.filter(p => hintRequests.includes(p.player_id)).length;
+  const hintVotes = players.filter((p) => hintRequests.includes(p.player_id)).length;
   const hintGranted = connectedCount > 0 && hintVotes >= connectedCount;
 
   async function requestHint() {
@@ -516,23 +561,35 @@ export function MultiplayerStartingLineupPage() {
             <h1 className="capcrunch-title text-lg text-[#ea580c]">Starting Lineup</h1>
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
           </div>
-          <div className="text-[9px] text-white/30 capcrunch-kicker">Round {careerState.round} · Race to {careerState.win_target} pts</div>
+          <div className="text-[9px] text-white/30 capcrunch-kicker">
+            Round {careerState.round} · Race to {careerState.win_target} pts
+          </div>
         </div>
         <div className="text-center">
           {pressureTimeLeft !== null ? (
-            <div className={`capcrunch-title text-xl ${pressureTimeLeft <= 10 ? 'text-red-400' : 'text-[#fdb927]'}`}>
+            <div
+              className={`capcrunch-title text-xl ${pressureTimeLeft <= 10 ? 'text-red-400' : 'text-[#fdb927]'}`}
+            >
               {pressureTimeLeft}s
             </div>
           ) : (
-            <div className="text-[9px] text-white/30 capcrunch-kicker">{finishedCount}/{connectedCount} done</div>
+            <div className="text-[9px] text-white/30 capcrunch-kicker">
+              {finishedCount}/{connectedCount} done
+            </div>
           )}
         </div>
         {/* Scores */}
         <div className="flex gap-2">
-          {players.slice(0, 4).map(p => (
+          {players.slice(0, 4).map((p) => (
             <div key={p.player_id} className="text-center min-w-[36px]">
-              <div className="text-[9px] text-white/40 capcrunch-kicker truncate max-w-[40px]">{p.player_name.split(' ')[0]}</div>
-              <div className={`capcrunch-title text-sm ${p.player_id === currentPlayerId ? 'text-[#fdb927]' : 'text-white/60'}`}>{p.points ?? 0}</div>
+              <div className="text-[9px] text-white/40 capcrunch-kicker truncate max-w-[40px]">
+                {p.player_name.split(' ')[0]}
+              </div>
+              <div
+                className={`capcrunch-title text-sm ${p.player_id === currentPlayerId ? 'text-[#fdb927]' : 'text-white/60'}`}
+              >
+                {p.points ?? 0}
+              </div>
             </div>
           ))}
         </div>
@@ -568,7 +625,9 @@ export function MultiplayerStartingLineupPage() {
             {isCorrect ? (
               <div className="px-4 py-2.5 bg-green-900/25 border border-green-700/40 flex items-center justify-between">
                 <span className="capcrunch-kicker text-sm text-green-400">You got it!</span>
-                <span className="capcrunch-title text-base text-[#fdb927]">{wasFirstCorrect ? '+3' : '+1'}</span>
+                <span className="capcrunch-title text-base text-[#fdb927]">
+                  {wasFirstCorrect ? '+3' : '+1'}
+                </span>
               </div>
             ) : (
               <div className="px-4 py-2.5 bg-black/40 border border-white/10">
@@ -586,36 +645,44 @@ export function MultiplayerStartingLineupPage() {
                 </div>
                 <div className="capcrunch-title text-2xl text-white">{correctTeamObj.name}</div>
                 <div className="text-[10px] text-white/30 capcrunch-kicker mt-1">
-                  {!isNBA && careerState.side ? `${careerState.side} · ` : ''}{encodingLabel}
+                  {!isNBA && careerState.side ? `${careerState.side} · ` : ''}
+                  {encodingLabel}
                 </div>
               </div>
             )}
 
             {/* Round scoring breakdown */}
-            {!allGaveUp && (() => {
-              const gaveUpIds = new Set(careerState.giveUps || []);
-              const correctPlayers = [...players]
-                .filter(p => p.finished_at && !gaveUpIds.has(p.player_id))
-                .sort((a, b) => {
-                  const wrongA = a.incorrect_guesses?.length ?? 0;
-                  const wrongB = b.incorrect_guesses?.length ?? 0;
-                  if (wrongA !== wrongB) return wrongA - wrongB;
-                  return (a.finished_at || '').localeCompare(b.finished_at || '');
-                });
-              return (
-                <div className="px-3 py-2.5 bg-green-900/20 border border-green-900/30 space-y-1.5">
-                  {correctPlayers.map((p, i) => (
-                    <div key={p.player_id} className="flex items-center justify-between">
-                      <span className="capcrunch-kicker text-sm text-green-400">{p.player_name}</span>
-                      <span className="capcrunch-title text-base text-[#fdb927]">{i === 0 ? '+3' : '+1'}</span>
-                    </div>
-                  ))}
-                  {correctPlayers.length === 0 && (
-                    <div className="capcrunch-kicker text-sm text-white/30 text-center">No correct answers</div>
-                  )}
-                </div>
-              );
-            })()}
+            {!allGaveUp &&
+              (() => {
+                const gaveUpIds = new Set(careerState.giveUps || []);
+                const correctPlayers = [...players]
+                  .filter((p) => p.finished_at && !gaveUpIds.has(p.player_id))
+                  .sort((a, b) => {
+                    const wrongA = a.incorrect_guesses?.length ?? 0;
+                    const wrongB = b.incorrect_guesses?.length ?? 0;
+                    if (wrongA !== wrongB) return wrongA - wrongB;
+                    return (a.finished_at || '').localeCompare(b.finished_at || '');
+                  });
+                return (
+                  <div className="px-3 py-2.5 bg-green-900/20 border border-green-900/30 space-y-1.5">
+                    {correctPlayers.map((p, i) => (
+                      <div key={p.player_id} className="flex items-center justify-between">
+                        <span className="capcrunch-kicker text-sm text-green-400">
+                          {p.player_name}
+                        </span>
+                        <span className="capcrunch-title text-base text-[#fdb927]">
+                          {i === 0 ? '+3' : '+1'}
+                        </span>
+                      </div>
+                    ))}
+                    {correctPlayers.length === 0 && (
+                      <div className="capcrunch-kicker text-sm text-white/30 text-center">
+                        No correct answers
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
             {/* Host: next round button / Non-host: waiting */}
             {isHost ? (
@@ -632,7 +699,6 @@ export function MultiplayerStartingLineupPage() {
               </div>
             )}
           </motion.div>
-
         ) : (
           /* ── Playing phase ────────────────────────────────────────── */
           <>
@@ -645,10 +711,16 @@ export function MultiplayerStartingLineupPage() {
                   className="px-4 py-3 bg-green-900/30 border border-green-700/50 flex items-center justify-between"
                 >
                   <div>
-                    <div className="text-[9px] text-green-400/60 capcrunch-kicker uppercase tracking-widest">Correct!</div>
-                    <div className="capcrunch-title text-xl text-[#fdb927]">{correctTeamObj.name}</div>
+                    <div className="text-[9px] text-green-400/60 capcrunch-kicker uppercase tracking-widest">
+                      Correct!
+                    </div>
+                    <div className="capcrunch-title text-xl text-[#fdb927]">
+                      {correctTeamObj.name}
+                    </div>
                   </div>
-                  <div className="text-xs text-green-400/60 capcrunch-kicker">{wasFirstCorrect ? '+3 pts' : '+1 pt'}</div>
+                  <div className="text-xs text-green-400/60 capcrunch-kicker">
+                    {wasFirstCorrect ? '+3 pts' : '+1 pt'}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -660,8 +732,12 @@ export function MultiplayerStartingLineupPage() {
                 animate={{ opacity: 1 }}
                 className="px-4 py-3 bg-red-900/20 border border-red-800/40 text-center"
               >
-                <div className="capcrunch-kicker text-sm text-red-400">Locked out — waiting for others...</div>
-                <div className="text-[10px] text-red-400/50 mt-1 capcrunch-kicker">Will unlock when all players make wrong guess</div>
+                <div className="capcrunch-kicker text-sm text-red-400">
+                  Locked out — waiting for others...
+                </div>
+                <div className="text-[10px] text-red-400/50 mt-1 capcrunch-kicker">
+                  Will unlock when all players make wrong guess
+                </div>
               </motion.div>
             )}
 
@@ -672,7 +748,9 @@ export function MultiplayerStartingLineupPage() {
                 animate={{ opacity: 1 }}
                 className="px-4 py-3 bg-black/40 border border-white/10 text-center"
               >
-                <div className="capcrunch-kicker text-sm text-white/40">You gave up — waiting for others...</div>
+                <div className="capcrunch-kicker text-sm text-white/40">
+                  You gave up — waiting for others...
+                </div>
               </motion.div>
             )}
 
@@ -680,7 +758,8 @@ export function MultiplayerStartingLineupPage() {
             {!isCorrect && !isLocked && !hasGivenUp && (
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] text-white/40 capcrunch-kicker tracking-wider">
-                  Guess the {isNBA ? 'NBA' : 'NFL'} team{!isNBA && careerState.side ? ` · ${careerState.side}` : ''} · {encodingLabel}
+                  Guess the {isNBA ? 'NBA' : 'NFL'} team
+                  {!isNBA && careerState.side ? ` · ${careerState.side}` : ''} · {encodingLabel}
                 </p>
                 {hintGranted ? (
                   <span className="shrink-0 px-2 py-0.5 text-[10px] capcrunch-kicker border border-[#fdb927]/50 text-[#fdb927] bg-[#fdb927]/10">
@@ -699,7 +778,8 @@ export function MultiplayerStartingLineupPage() {
                         : 'border-white/10 text-white/30 hover:border-white/20 hover:text-white/50'
                     }`}
                   >
-                    {isNBA ? 'PPG?' : 'INITIALS?'}{hintVotes > 0 ? ` (${hintVotes}/${connectedCount})` : ''}
+                    {isNBA ? 'PPG?' : 'INITIALS?'}
+                    {hintVotes > 0 ? ` (${hintVotes}/${connectedCount})` : ''}
                   </button>
                 )}
               </div>
@@ -709,7 +789,12 @@ export function MultiplayerStartingLineupPage() {
             {localIncorrect.length > 0 && !isCorrect && (
               <div className="flex flex-wrap gap-1.5 justify-center">
                 {localIncorrect.map((g, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-red-900/20 border border-red-800/40 text-xs capcrunch-kicker text-red-400">✗ {g}</span>
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 bg-red-900/20 border border-red-800/40 text-xs capcrunch-kicker text-red-400"
+                  >
+                    ✗ {g}
+                  </span>
                 ))}
               </div>
             )}
@@ -726,10 +811,13 @@ export function MultiplayerStartingLineupPage() {
                     ref={inputRef}
                     type="text"
                     value={guessInput}
-                    onChange={e => handleGuessInput(e.target.value)}
-                    onKeyDown={e => {
+                    onChange={(e) => handleGuessInput(e.target.value)}
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter' && guessInput.trim()) submitGuess();
-                      if (e.key === 'Escape') { setShowSuggestions(false); setGuessInput(''); }
+                      if (e.key === 'Escape') {
+                        setShowSuggestions(false);
+                        setGuessInput('');
+                      }
                     }}
                     onFocus={() => guessInput.trim().length >= 2 && setShowSuggestions(true)}
                     placeholder="Type team name..."
@@ -753,13 +841,19 @@ export function MultiplayerStartingLineupPage() {
                       exit={{ opacity: 0 }}
                       className="absolute top-full left-0 right-0 mt-1 bg-black/90 border border-white/10 overflow-hidden z-20 shadow-xl"
                     >
-                      {suggestions.map(t => (
+                      {suggestions.map((t) => (
                         <button
                           key={t.abbreviation}
-                          onMouseDown={e => { e.preventDefault(); submitGuess(t.abbreviation); }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            submitGuess(t.abbreviation);
+                          }}
                           className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                         >
-                          <span className="w-8 h-5 text-[9px] font-bold flex items-center justify-center text-white" style={{ background: t.colors.primary }}>
+                          <span
+                            className="w-8 h-5 text-[9px] font-bold flex items-center justify-center text-white"
+                            style={{ background: t.colors.primary }}
+                          >
                             {t.abbreviation}
                           </span>
                           {t.name}
@@ -813,20 +907,32 @@ export function MultiplayerStartingLineupPage() {
 
         {/* Live scoreboard */}
         <div className="mt-auto">
-          <div className="text-[9px] text-white/30 capcrunch-kicker tracking-widest uppercase mb-2">Leaderboard</div>
+          <div className="text-[9px] text-white/30 capcrunch-kicker tracking-widest uppercase mb-2">
+            Leaderboard
+          </div>
           <div className="flex flex-col gap-1.5">
             {[...players]
               .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
               .map((p, i) => (
-                <div key={p.player_id} className={`flex items-center gap-3 px-3 py-2 border ${p.player_id === currentPlayerId ? 'bg-white/5 border-white/15' : 'bg-black/30 border-white/5'}`}>
+                <div
+                  key={p.player_id}
+                  className={`flex items-center gap-3 px-3 py-2 border ${p.player_id === currentPlayerId ? 'bg-white/5 border-white/15' : 'bg-black/30 border-white/5'}`}
+                >
                   <span className="capcrunch-title text-sm text-white/30 w-4">{i + 1}</span>
-                  <span className="flex-1 capcrunch-kicker text-sm text-white/80 truncate">{p.player_name}</span>
-                  {p.finished_at && !(careerState?.giveUps || []).includes(p.player_id) && <span className="text-green-400 text-xs">✓</span>}
-                  {(careerState?.giveUps || []).includes(p.player_id) && <span className="text-white/30 text-xs capcrunch-kicker">gave up</span>}
-                  {(p.incorrect_guesses?.length ?? 0) > (careerState?.unlock_epoch ?? 0) && !p.finished_at && (
-                    <span className="text-red-400 text-xs">🔒</span>
+                  <span className="flex-1 capcrunch-kicker text-sm text-white/80 truncate">
+                    {p.player_name}
+                  </span>
+                  {p.finished_at && !(careerState?.giveUps || []).includes(p.player_id) && (
+                    <span className="text-green-400 text-xs">✓</span>
                   )}
-                  <span className="capcrunch-title text-sm text-[#fdb927] w-8 text-right">{p.points ?? 0}</span>
+                  {(careerState?.giveUps || []).includes(p.player_id) && (
+                    <span className="text-white/30 text-xs capcrunch-kicker">gave up</span>
+                  )}
+                  {(p.incorrect_guesses?.length ?? 0) > (careerState?.unlock_epoch ?? 0) &&
+                    !p.finished_at && <span className="text-red-400 text-xs">🔒</span>}
+                  <span className="capcrunch-title text-sm text-[#fdb927] w-8 text-right">
+                    {p.points ?? 0}
+                  </span>
                 </div>
               ))}
           </div>

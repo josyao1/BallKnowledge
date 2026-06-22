@@ -83,7 +83,16 @@ interface GameState {
   score: number;
 
   // Actions
-  setGameConfig: (sport: Sport, team: GenericTeam, season: string, mode: GameMode, duration: number, roster: GenericPlayer[], leaguePlayers?: LeaguePlayer[], hideResultsDuringGame?: boolean) => void;
+  setGameConfig: (
+    sport: Sport,
+    team: GenericTeam,
+    season: string,
+    mode: GameMode,
+    duration: number,
+    roster: GenericPlayer[],
+    leaguePlayers?: LeaguePlayer[],
+    hideResultsDuringGame?: boolean,
+  ) => void;
   setDivisionRosters: (rosters: Record<string, GenericPlayer[]>, teams: string[]) => void;
   startGame: () => void;
   makeGuess: (playerName: string, teammateGuessedNames?: string[]) => GuessResult;
@@ -135,7 +144,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   score: 0,
 
   // 8 params — intentionally wide as a one-shot config setter for all game options
-  setGameConfig: (sport, team, season, mode, duration, roster, leaguePlayers = [], hideResultsDuringGame = false) => {
+  setGameConfig: (
+    sport,
+    team,
+    season,
+    mode,
+    duration,
+    roster,
+    leaguePlayers = [],
+    hideResultsDuringGame = false,
+  ) => {
     set({
       sport,
       selectedTeam: team,
@@ -179,7 +197,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Check if a teammate already guessed this player (team mode)
     if (teammateGuessedNames && teammateGuessedNames.length > 0) {
       const guessedByTeammate = teammateGuessedNames.some(
-        (name) => normalizePlayerName(name) === normalizedGuess
+        (name) => normalizePlayerName(name) === normalizedGuess,
       );
       if (guessedByTeammate) {
         return { isCorrect: false, alreadyGuessed: true };
@@ -191,7 +209,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (state.hideResultsDuringGame) {
       // Check if already guessed (pending guesses)
       const alreadyGuessed = state.pendingGuesses.some(
-        (g) => normalizePlayerName(g) === normalizedGuess
+        (g) => normalizePlayerName(g) === normalizedGuess,
       );
       if (alreadyGuessed) {
         return { isCorrect: false, alreadyGuessed: true };
@@ -209,7 +227,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Standard mode: show results immediately (original behavior)
     // Check if already guessed correctly
     const alreadyGuessedCorrectly = state.guessedPlayers.some(
-      (p) => normalizePlayerName(p.name) === normalizedGuess
+      (p) => normalizePlayerName(p.name) === normalizedGuess,
     );
     if (alreadyGuessedCorrectly) {
       return { isCorrect: false, alreadyGuessed: true };
@@ -217,7 +235,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Check if already guessed incorrectly
     const alreadyGuessedIncorrectly = state.incorrectGuesses.some(
-      (g) => normalizePlayerName(g) === normalizedGuess
+      (g) => normalizePlayerName(g) === normalizedGuess,
     );
     if (alreadyGuessedIncorrectly) {
       return { isCorrect: false, alreadyGuessed: true };
@@ -225,7 +243,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Check against current roster
     const matchedPlayer = state.currentRoster.find(
-      (p) => normalizePlayerName(p.name) === normalizedGuess
+      (p) => normalizePlayerName(p.name) === normalizedGuess,
     );
 
     if (matchedPlayer) {
@@ -270,10 +288,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     for (const guess of state.pendingGuesses) {
       const normalizedGuess = normalizePlayerName(guess);
       const matchedPlayer = state.currentRoster.find(
-        (p) => normalizePlayerName(p.name) === normalizedGuess
+        (p) => normalizePlayerName(p.name) === normalizedGuess,
       );
 
-      if (matchedPlayer && !correct.some(p => p.id === matchedPlayer.id)) {
+      if (matchedPlayer && !correct.some((p) => p.id === matchedPlayer.id)) {
         correct.push(matchedPlayer);
       } else if (!matchedPlayer) {
         incorrect.push(guess);
@@ -293,16 +311,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
 
     // Find the player to assign this guess to
-    const targetPlayer = state.currentRoster.find(p => p.id === correctPlayerId);
+    const targetPlayer = state.currentRoster.find((p) => p.id === correctPlayerId);
     if (!targetPlayer) return false;
 
     // Check if this player was already guessed correctly
-    if (state.guessedPlayers.some(p => p.id === correctPlayerId)) {
+    if (state.guessedPlayers.some((p) => p.id === correctPlayerId)) {
       return false;
     }
 
     // Remove from incorrect guesses and add to correct
-    const newIncorrect = state.incorrectGuesses.filter(g => g !== incorrectGuess);
+    const newIncorrect = state.incorrectGuesses.filter((g) => g !== incorrectGuess);
     const newCorrect = [...state.guessedPlayers, targetPlayer];
 
     set({

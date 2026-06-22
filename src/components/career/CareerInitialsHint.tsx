@@ -19,7 +19,9 @@ export function CareerInitialsHint({ revealed, initials }: Props) {
           animate={{ opacity: 1, y: 0 }}
           className="mb-3 flex items-center justify-center gap-3"
         >
-          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Initials</div>
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">
+            Initials
+          </div>
           <div className="capcrunch-title text-2xl text-[#d4af37] tracking-widest">{initials}</div>
         </motion.div>
       )}

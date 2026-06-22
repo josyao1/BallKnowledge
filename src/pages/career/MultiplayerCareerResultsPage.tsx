@@ -20,9 +20,17 @@ export function MultiplayerCareerResultsPage() {
   const { code } = useParams<{ code: string }>();
   const location = useLocation();
   const {
-    lobby, players, isHost, currentPlayerId,
-    sortedPlayers, matchWinner, isWinner,
-    isLeaving, isResetting, handlePlayAgain, handleLeave,
+    lobby,
+    players,
+    isHost,
+    currentPlayerId,
+    sortedPlayers,
+    matchWinner,
+    isWinner,
+    isLeaving,
+    isResetting,
+    handlePlayAgain,
+    handleLeave,
   } = useMultiplayerResults({ code, defaultWinTarget: 3, includeCareerFrom: true });
 
   const roundHistory: RoundSummary[] = (location.state as any)?.roundHistory ?? [];
@@ -35,7 +43,9 @@ export function MultiplayerCareerResultsPage() {
       <div className="min-h-screen home-chalkboard flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="capcrunch-kicker text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">Loading results</p>
+          <p className="capcrunch-kicker text-[10px] text-[#d4af37]/50 tracking-[0.3em] uppercase">
+            Loading results
+          </p>
         </div>
       </div>
     );
@@ -45,7 +55,9 @@ export function MultiplayerCareerResultsPage() {
     <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6 relative overflow-hidden">
       {/* Header */}
       <header className="text-center mb-8 mt-4">
-        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">Match Complete</div>
+        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-[0.4em] uppercase mb-2">
+          Match Complete
+        </div>
         <h1 className="capcrunch-title text-4xl md:text-5xl text-[#d4af37]">Career Mode</h1>
         <div className="capcrunch-kicker text-[10px] text-[#555] tracking-widest mt-1 uppercase">
           {lobby.sport.toUpperCase()} · First to {winTarget}
@@ -104,14 +116,22 @@ export function MultiplayerCareerResultsPage() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`capcrunch-title text-lg w-8 text-center ${
-                      rank === 0 ? 'text-[#d4af37]' : 'text-[#555]'
-                    }`}>
+                    <span
+                      className={`capcrunch-title text-lg w-8 text-center ${
+                        rank === 0 ? 'text-[#d4af37]' : 'text-[#555]'
+                      }`}
+                    >
                       #{rank + 1}
                     </span>
                     <div>
-                      <span className="capcrunch-kicker text-sm text-white/90">{player.player_name}</span>
-                      {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">(you)</span>}
+                      <span className="capcrunch-kicker text-sm text-white/90">
+                        {player.player_name}
+                      </span>
+                      {isMe && (
+                        <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">
+                          (you)
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -150,33 +170,44 @@ export function MultiplayerCareerResultsPage() {
             </div>
             <div className="space-y-3">
               {roundHistory.map((round) => {
-                const topScore = Math.max(0, ...players.map(p => round.scores[p.player_id] ?? 0));
-                const topScorers = topScore > 0 ? players.filter(p => (round.scores[p.player_id] ?? 0) === topScore) : [];
-                const isTiebreaker = topScorers.length > 1 && topScorers.every(p => round.finishedAt[p.player_id]);
+                const topScore = Math.max(0, ...players.map((p) => round.scores[p.player_id] ?? 0));
+                const topScorers =
+                  topScore > 0
+                    ? players.filter((p) => (round.scores[p.player_id] ?? 0) === topScore)
+                    : [];
+                const isTiebreaker =
+                  topScorers.length > 1 && topScorers.every((p) => round.finishedAt[p.player_id]);
                 const sortedTopScorers = isTiebreaker
-                  ? [...topScorers].sort((a, b) =>
-                      new Date(round.finishedAt[a.player_id]!).getTime() - new Date(round.finishedAt[b.player_id]!).getTime()
+                  ? [...topScorers].sort(
+                      (a, b) =>
+                        new Date(round.finishedAt[a.player_id]!).getTime() -
+                        new Date(round.finishedAt[b.player_id]!).getTime(),
                     )
                   : topScorers;
                 const roundWinnerId = sortedTopScorers[0]?.player_id;
                 const finisherMs = players
-                  .map(p => round.finishedAt[p.player_id])
+                  .map((p) => round.finishedAt[p.player_id])
                   .filter((t): t is string => !!t)
-                  .map(t => new Date(t).getTime());
+                  .map((t) => new Date(t).getTime());
                 const firstMs = finisherMs.length > 0 ? Math.min(...finisherMs) : null;
 
                 return (
                   <div key={round.round} className="border border-white/10 overflow-hidden">
                     {/* Round header */}
                     <div className="flex items-center justify-between px-3 py-2 bg-black/40">
-                      <span className="capcrunch-kicker text-[10px] text-[#666] tracking-wider uppercase">Round {round.round}</span>
+                      <span className="capcrunch-kicker text-[10px] text-[#666] tracking-wider uppercase">
+                        Round {round.round}
+                      </span>
                       <span className="capcrunch-kicker text-xs text-white/80">{round.answer}</span>
                     </div>
                     {/* Player rows */}
                     <div className="divide-y divide-[#222]">
                       {[...players]
-                        .sort((a, b) => (round.scores[b.player_id] ?? 0) - (round.scores[a.player_id] ?? 0))
-                        .map(player => {
+                        .sort(
+                          (a, b) =>
+                            (round.scores[b.player_id] ?? 0) - (round.scores[a.player_id] ?? 0),
+                        )
+                        .map((player) => {
                           const score = round.scores[player.player_id] ?? 0;
                           const isMe = player.player_id === currentPlayerId;
                           const isWinner = player.player_id === roundWinnerId && topScore > 0;
@@ -184,14 +215,17 @@ export function MultiplayerCareerResultsPage() {
                           const finMs = round.finishedAt[player.player_id]
                             ? new Date(round.finishedAt[player.player_id]!).getTime()
                             : null;
-                          const offsetMs = finMs !== null && firstMs !== null ? finMs - firstMs : null;
+                          const offsetMs =
+                            finMs !== null && firstMs !== null ? finMs - firstMs : null;
                           return (
                             <div
                               key={player.player_id}
                               className={`flex items-center justify-between px-3 py-2 ${isMe ? 'bg-[#d4af37]/5' : ''}`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className={`capcrunch-kicker text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}>
+                                <span
+                                  className={`capcrunch-kicker text-xs ${gotIt ? 'text-white/80' : 'text-white/30'}`}
+                                >
                                   {player.player_name}
                                   {isMe && <span className="text-white/30 ml-1">(you)</span>}
                                 </span>
@@ -202,11 +236,16 @@ export function MultiplayerCareerResultsPage() {
                                 )}
                                 {offsetMs !== null && offsetMs > 0 && (
                                   <span className="capcrunch-kicker text-[9px] text-[#d4af37]">
-                                    +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                                    +
+                                    {offsetMs < 1000
+                                      ? `${offsetMs}ms`
+                                      : `${(offsetMs / 1000).toFixed(1)}s`}
                                   </span>
                                 )}
                               </div>
-                              <span className={`capcrunch-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}>
+                              <span
+                                className={`capcrunch-title text-base ${gotIt ? 'text-white' : 'text-[#444]'}`}
+                              >
                                 {gotIt ? score : '—'}
                               </span>
                             </div>

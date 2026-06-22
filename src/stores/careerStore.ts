@@ -64,7 +64,6 @@ interface CareerGameState {
   resetGame: () => void;
 }
 
-
 export const useCareerStore = create<CareerGameState>((set, get) => ({
   playerId: '',
   playerName: '',

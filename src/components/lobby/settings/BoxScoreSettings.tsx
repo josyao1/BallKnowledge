@@ -22,20 +22,37 @@ interface Props {
 const AMBER = '#f59e0b';
 
 export function BoxScoreSettings({
-  sport, onSportChange,
-  boxMinYear, onBoxMinYearChange, boxMaxYear, onBoxMaxYearChange,
-  boxTeam, onBoxTeamChange, timer, customTimer, onTimerSelect, onCustomTimerChange,
+  sport,
+  onSportChange,
+  boxMinYear,
+  onBoxMinYearChange,
+  boxMaxYear,
+  onBoxMaxYearChange,
+  boxTeam,
+  onBoxTeamChange,
+  timer,
+  customTimer,
+  onTimerSelect,
+  onCustomTimerChange,
 }: Props) {
-  const years    = sport === 'nba' ? ALL_NBA_BOX_SCORE_YEARS : ALL_BOX_SCORE_YEARS;
+  const years = sport === 'nba' ? ALL_NBA_BOX_SCORE_YEARS : ALL_BOX_SCORE_YEARS;
   const teamList = sport === 'nba' ? nbaTeams : nflTeams;
 
   return (
     <div className="space-y-2.5">
       <Row label="League">
         <Chips>
-          {(['nfl', 'nba'] as const).map(s => (
-            <Chip key={s} active={sport === s} activeBg={AMBER} activeText="#000"
-              onClick={() => { onSportChange(s); onBoxTeamChange(null); }}>
+          {(['nfl', 'nba'] as const).map((s) => (
+            <Chip
+              key={s}
+              active={sport === s}
+              activeBg={AMBER}
+              activeText="#000"
+              onClick={() => {
+                onSportChange(s);
+                onBoxTeamChange(null);
+              }}
+            >
               {s.toUpperCase()}
             </Chip>
           ))}
@@ -46,18 +63,34 @@ export function BoxScoreSettings({
         <div className="flex items-center gap-1.5">
           <select
             value={boxMinYear}
-            onChange={e => { const v = +e.target.value; onBoxMinYearChange(v); if (v > boxMaxYear) onBoxMaxYearChange(v); }}
+            onChange={(e) => {
+              const v = +e.target.value;
+              onBoxMinYearChange(v);
+              if (v > boxMaxYear) onBoxMaxYearChange(v);
+            }}
             className={selectCls}
           >
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </select>
           <span className="capcrunch-kicker text-[9px] text-[#333]">→</span>
           <select
             value={boxMaxYear}
-            onChange={e => { const v = +e.target.value; onBoxMaxYearChange(v); if (v < boxMinYear) onBoxMinYearChange(v); }}
+            onChange={(e) => {
+              const v = +e.target.value;
+              onBoxMaxYearChange(v);
+              if (v < boxMinYear) onBoxMinYearChange(v);
+            }}
             className={selectCls}
           >
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </select>
         </div>
       </Row>
@@ -65,16 +98,21 @@ export function BoxScoreSettings({
       <Row label="Team">
         <select
           value={boxTeam || ''}
-          onChange={e => onBoxTeamChange(e.target.value || null)}
+          onChange={(e) => onBoxTeamChange(e.target.value || null)}
           className={selectCls}
         >
           <option value="">Any Team</option>
-          {teamList.map(t => <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>)}
+          {teamList.map((t) => (
+            <option key={t.abbreviation} value={t.abbreviation}>
+              {t.name}
+            </option>
+          ))}
         </select>
       </Row>
 
       <TimerPicker
-        timer={timer} customTimer={customTimer}
+        timer={timer}
+        customTimer={customTimer}
         presets={[90, 120, 150, 180, 240]}
         activeColor="bg-[#f59e0b] text-black"
         onSelect={onTimerSelect}

@@ -20,13 +20,19 @@ export function MultiplayerStartingLineupResultsPage() {
   useLobbySubscription(lobby?.id || null);
 
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
     if (lobby?.id) return;
 
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
+    findLobbyByCode(code).then((result) => {
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
       setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
+      getLobbyPlayers(result.lobby.id).then((pr) => {
         if (pr.players) setPlayers(pr.players);
       });
     });
@@ -53,8 +59,18 @@ export function MultiplayerStartingLineupResultsPage() {
     <div className="min-h-screen home-chalkboard text-white flex flex-col">
       <header className="flex items-center px-4 py-3 border-b border-white/10">
         <button onClick={() => navigate('/')} className="p-2 hover:bg-white/10 transition-colors">
-          <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            className="w-5 h-5 text-white/50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
         </button>
         <h1 className="capcrunch-title text-xl text-[#ea580c] ml-3">Starting Lineup</h1>
@@ -68,7 +84,9 @@ export function MultiplayerStartingLineupResultsPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <div className="capcrunch-kicker text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">Winner</div>
+            <div className="capcrunch-kicker text-[10px] text-white/30 tracking-[0.4em] uppercase mb-2">
+              Winner
+            </div>
             <div className="capcrunch-title text-4xl text-[#ea580c] mb-1">{winner.player_name}</div>
             <div className="capcrunch-title text-2xl text-[#fdb927]">{winner.points ?? 0} pts</div>
           </motion.div>
@@ -76,7 +94,9 @@ export function MultiplayerStartingLineupResultsPage() {
 
         {/* Final standings */}
         <div className="w-full">
-          <div className="capcrunch-kicker text-[9px] text-white/30 tracking-widest uppercase mb-3">Final Standings</div>
+          <div className="capcrunch-kicker text-[9px] text-white/30 tracking-widest uppercase mb-3">
+            Final Standings
+          </div>
           <div className="flex flex-col gap-2">
             {sorted.map((p, i) => (
               <motion.div

@@ -46,7 +46,7 @@ const NBA_API_MAP: Record<string, AbbreviationEra[]> = {
 export function getApiAbbreviation(
   abbreviation: string,
   year: number,
-  sport: 'nba' | 'nfl'
+  sport: 'nba' | 'nfl',
 ): string {
   if (sport === 'nfl') return abbreviation;
 

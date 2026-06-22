@@ -47,7 +47,7 @@ export function useLobbySubscription(lobbyId: string | null) {
           } else if (payload.eventType === 'DELETE') {
             setLobby(null);
           }
-        }
+        },
       )
       // Listen for player changes
       .on(
@@ -79,7 +79,7 @@ export function useLobbySubscription(lobbyId: string | null) {
               removePlayer(deleted.player_id);
             }
           }
-        }
+        },
       )
       .subscribe();
 

@@ -16,7 +16,7 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'team' | 'global'>(
-    teamAbbreviation && season ? 'team' : 'global'
+    teamAbbreviation && season ? 'team' : 'global',
   );
 
   useEffect(() => {
@@ -24,9 +24,10 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
       setLoading(true);
       setError(null);
 
-      const result = view === 'team' && teamAbbreviation && season
-        ? await getLeaderboard(teamAbbreviation, season)
-        : await getGlobalLeaderboard();
+      const result =
+        view === 'team' && teamAbbreviation && season
+          ? await getLeaderboard(teamAbbreviation, season)
+          : await getGlobalLeaderboard();
 
       if (result.error) {
         setError(result.error);
@@ -62,9 +63,7 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
       className="capcrunch-panel p-6"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="capcrunch-title text-xl text-white">
-          {title || 'Leaderboard'}
-        </h3>
+        <h3 className="capcrunch-title text-xl text-white">{title || 'Leaderboard'}</h3>
 
         {teamAbbreviation && season && (
           <div className="flex gap-2">
@@ -97,14 +96,9 @@ export function Leaderboard({ teamAbbreviation, season, title }: LeaderboardProp
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
         </div>
       ) : error ? (
-        <div className="text-center text-red-400 py-8">
-          {error}
-        </div>
+        <div className="text-center text-red-400 py-8">{error}</div>
       ) : (
-        <LeaderboardTable
-          entries={entries}
-          showTeam={view === 'global'}
-        />
+        <LeaderboardTable entries={entries} showTeam={view === 'global'} />
       )}
     </motion.div>
   );

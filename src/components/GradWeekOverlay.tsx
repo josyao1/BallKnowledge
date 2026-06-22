@@ -1,10 +1,24 @@
-const COLORS = ['#f59e0b','#ec4899','#60a5fa','#34d399','#a78bfa','#fb923c','#f87171','#a3e635'];
+const COLORS = [
+  '#f59e0b',
+  '#ec4899',
+  '#60a5fa',
+  '#34d399',
+  '#a78bfa',
+  '#fb923c',
+  '#f87171',
+  '#a3e635',
+];
 
 export function isGradWeek(): boolean {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).formatToParts(new Date());
-  const d = Object.fromEntries(parts.filter(p => p.type !== 'literal').map(p => [p.type, +p.value]));
+  const d = Object.fromEntries(
+    parts.filter((p) => p.type !== 'literal').map((p) => [p.type, +p.value]),
+  );
   return d.year === 2026 && d.month === 6 && d.day >= 13 && d.day <= 15;
 }
 

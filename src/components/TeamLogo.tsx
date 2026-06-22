@@ -8,7 +8,7 @@ import { getTeamLogoUrl } from '../utils/teamLogos';
 interface TeamLogoProps {
   sport: 'nba' | 'nfl';
   abbr: string;
-  size?: number;        // px — applied to both width and height
+  size?: number; // px — applied to both width and height
   className?: string;
 }
 

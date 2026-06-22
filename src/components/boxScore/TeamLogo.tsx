@@ -18,7 +18,9 @@ export function TeamLogo({ abbr, className, imgStyle }: Props) {
       alt={abbr}
       className={className ?? 'w-16 h-16 object-contain'}
       style={imgStyle}
-      onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.opacity = '0';
+      }}
     />
   );
 }

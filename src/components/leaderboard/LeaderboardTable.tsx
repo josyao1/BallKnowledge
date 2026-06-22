@@ -8,7 +8,11 @@ interface LeaderboardTableProps {
   showTeam?: boolean;
 }
 
-export function LeaderboardTable({ entries, highlightUserId, showTeam = true }: LeaderboardTableProps) {
+export function LeaderboardTable({
+  entries,
+  highlightUserId,
+  showTeam = true,
+}: LeaderboardTableProps) {
   if (entries.length === 0) {
     return (
       <div className="text-center text-white/40 capcrunch-kicker py-8">
@@ -45,12 +49,17 @@ export function LeaderboardTable({ entries, highlightUserId, showTeam = true }: 
                 }`}
               >
                 <td className="px-4 py-3">
-                  <span className={`capcrunch-title font-bold ${
-                    entry.rank === 1 ? 'text-[#d4af37]' :
-                    entry.rank === 2 ? 'text-white/60' :
-                    entry.rank === 3 ? 'text-amber-600' :
-                    'text-white/30'
-                  }`}>
+                  <span
+                    className={`capcrunch-title font-bold ${
+                      entry.rank === 1
+                        ? 'text-[#d4af37]'
+                        : entry.rank === 2
+                          ? 'text-white/60'
+                          : entry.rank === 3
+                            ? 'text-amber-600'
+                            : 'text-white/30'
+                    }`}
+                  >
                     {entry.rank}
                   </span>
                 </td>
@@ -72,9 +81,7 @@ export function LeaderboardTable({ entries, highlightUserId, showTeam = true }: 
                     </div>
                   </td>
                 )}
-                <td className="px-4 py-3 text-right capcrunch-title text-white">
-                  {entry.score}
-                </td>
+                <td className="px-4 py-3 text-right capcrunch-title text-white">{entry.score}</td>
                 <td className="px-4 py-3 text-right capcrunch-kicker text-white/40">
                   {Math.round(entry.percentage)}%
                 </td>

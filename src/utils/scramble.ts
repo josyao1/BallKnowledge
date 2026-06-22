@@ -14,7 +14,7 @@
 export function scrambleName(name: string): string {
   return name
     .split(' ')
-    .map(word => {
+    .map((word) => {
       if (word.length <= 2) return word;
 
       const letters = word.split('');

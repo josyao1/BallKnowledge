@@ -17,9 +17,12 @@ import type { GenericTeam, LoadingStatus } from '../../data/homeGames';
 import type { GameMode } from '../../types';
 
 const NFL_BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
-const NBA_BOX_SCORE_YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+const NBA_BOX_SCORE_YEARS = [
+  2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025,
+];
 
-const selectCls = 'bg-black/40 text-white/70 px-3 py-2 border border-white/15 capcrunch-kicker text-xs focus:outline-none focus:border-white/30 hover:border-white/25 appearance-none cursor-pointer transition-colors';
+const selectCls =
+  'bg-black/40 text-white/70 px-3 py-2 border border-white/15 capcrunch-kicker text-xs focus:outline-none focus:border-white/30 hover:border-white/25 appearance-none cursor-pointer transition-colors';
 
 interface Props {
   sport: 'nba' | 'nfl';
@@ -56,18 +59,35 @@ interface Props {
   soloOnly?: boolean;
 }
 
-
 export function RosterRoyaleSetup({
-  sport, deckArt: _deckArt,
-  rosterSubMode, setRosterSubMode,
-  boxScoreMinYear, boxScoreMaxYear, boxScoreTeam,
-  setBoxScoreMinYear, setBoxScoreMaxYear, setBoxScoreTeam,
-  gameMode, setGameMode,
-  selectedTeam, setSelectedTeam,
-  selectedYear, setSelectedYear,
-  randomMinYear, randomMaxYear, setRandomMinYear, setRandomMaxYear,
-  timerDuration, setTimerDuration, loadingStatus, statusMessage, setLoadingStatus,
-  onBack, onStartGame, soloOnly = false,
+  sport,
+  deckArt: _deckArt,
+  rosterSubMode,
+  setRosterSubMode,
+  boxScoreMinYear,
+  boxScoreMaxYear,
+  boxScoreTeam,
+  setBoxScoreMinYear,
+  setBoxScoreMaxYear,
+  setBoxScoreTeam,
+  gameMode,
+  setGameMode,
+  selectedTeam,
+  setSelectedTeam,
+  selectedYear,
+  setSelectedYear,
+  randomMinYear,
+  randomMaxYear,
+  setRandomMinYear,
+  setRandomMaxYear,
+  timerDuration,
+  setTimerDuration,
+  loadingStatus,
+  statusMessage,
+  setLoadingStatus,
+  onBack,
+  onStartGame,
+  soloOnly = false,
 }: Props) {
   const navigate = useNavigate();
   const [showTimerPicker, setShowTimerPicker] = useState(false);
@@ -96,7 +116,9 @@ export function RosterRoyaleSetup({
             <div className="flex-1 text-center">
               <div className="capcrunch-kicker text-[9px] text-white/30 mb-0.5">RR</div>
               <h2 className="capcrunch-title text-2xl text-white leading-tight">Roster Royale</h2>
-              <p className="capcrunch-kicker text-[9px] text-white/40">{sport === 'nba' ? 'NBA' : 'NFL'} Edition</p>
+              <p className="capcrunch-kicker text-[9px] text-white/40">
+                {sport === 'nba' ? 'NBA' : 'NFL'} Edition
+              </p>
             </div>
             <div className="w-12" />
           </div>
@@ -106,7 +128,7 @@ export function RosterRoyaleSetup({
             <>
               {/* Sub-mode toggle: Roster Royale vs Box Score */}
               <div className="flex gap-2 justify-center">
-                {(['roster', 'box-score'] as const).map(m => (
+                {(['roster', 'box-score'] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setRosterSubMode(m)}
@@ -130,36 +152,58 @@ export function RosterRoyaleSetup({
                   return (
                     <>
                       <div className="flex flex-col gap-2">
-                        <div className="capcrunch-kicker text-[9px] text-white/40 text-center">Year Range</div>
+                        <div className="capcrunch-kicker text-[9px] text-white/40 text-center">
+                          Year Range
+                        </div>
                         <div className="flex items-center gap-2">
                           <select
                             value={boxScoreMinYear}
-                            onChange={e => { const v = parseInt(e.target.value); setBoxScoreMinYear(v); if (v > boxScoreMaxYear) setBoxScoreMaxYear(v); }}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value);
+                              setBoxScoreMinYear(v);
+                              if (v > boxScoreMaxYear) setBoxScoreMaxYear(v);
+                            }}
                             className={`flex-1 ${selectCls}`}
                           >
-                            {bsYears.map(y => <option key={y} value={y}>{y}</option>)}
+                            {bsYears.map((y) => (
+                              <option key={y} value={y}>
+                                {y}
+                              </option>
+                            ))}
                           </select>
                           <span className="text-white/30 capcrunch-kicker text-xs">to</span>
                           <select
                             value={boxScoreMaxYear}
-                            onChange={e => { const v = parseInt(e.target.value); setBoxScoreMaxYear(v); if (v < boxScoreMinYear) setBoxScoreMinYear(v); }}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value);
+                              setBoxScoreMaxYear(v);
+                              if (v < boxScoreMinYear) setBoxScoreMinYear(v);
+                            }}
                             className={`flex-1 ${selectCls}`}
                           >
-                            {bsYears.map(y => <option key={y} value={y}>{y}</option>)}
+                            {bsYears.map((y) => (
+                              <option key={y} value={y}>
+                                {y}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <div className="capcrunch-kicker text-[9px] text-white/40 text-center">Team Filter</div>
+                        <div className="capcrunch-kicker text-[9px] text-white/40 text-center">
+                          Team Filter
+                        </div>
                         <select
                           value={boxScoreTeam ?? ''}
-                          onChange={e => setBoxScoreTeam(e.target.value || null)}
+                          onChange={(e) => setBoxScoreTeam(e.target.value || null)}
                           className={`w-full ${selectCls}`}
                         >
                           <option value="">Any Team</option>
-                          {teamList.map(t => (
-                            <option key={t.abbreviation} value={t.abbreviation}>{t.name}</option>
+                          {teamList.map((t) => (
+                            <option key={t.abbreviation} value={t.abbreviation}>
+                              {t.name}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -167,14 +211,28 @@ export function RosterRoyaleSetup({
                       <div className="border-t border-white/10" />
                       <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() => navigate(soloPath, { state: { minYear: boxScoreMinYear, maxYear: boxScoreMaxYear, team: boxScoreTeam } })}
+                          onClick={() =>
+                            navigate(soloPath, {
+                              state: {
+                                minYear: boxScoreMinYear,
+                                maxYear: boxScoreMaxYear,
+                                team: boxScoreTeam,
+                              },
+                            })
+                          }
                           className="capcrunch-btn-primary capcrunch-title px-8 py-2.5 text-base"
                         >
                           Start Solo
                         </button>
                         {!soloOnly && (
                           <button
-                            onClick={() => navigate('/lobby/create', { state: { gameType: sport === 'nba' ? 'nba-box-score' : 'box-score' } })}
+                            onClick={() =>
+                              navigate('/lobby/create', {
+                                state: {
+                                  gameType: sport === 'nba' ? 'nba-box-score' : 'box-score',
+                                },
+                              })
+                            }
                             className="capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs"
                           >
                             Lobby
@@ -189,7 +247,7 @@ export function RosterRoyaleSetup({
                 <>
                   {/* Random vs Manual toggle */}
                   <div className="flex gap-2 justify-center">
-                    {(['random', 'manual'] as const).map(m => (
+                    {(['random', 'manual'] as const).map((m) => (
                       <button
                         key={m}
                         onClick={() => setGameMode(m)}
@@ -206,27 +264,47 @@ export function RosterRoyaleSetup({
 
                   {gameMode === 'manual' ? (
                     <div className="flex flex-col gap-3">
-                      <TeamSelector selectedTeam={selectedTeam} onSelect={setSelectedTeam} sport={sport} />
-                      <YearSelector selectedYear={selectedYear} onSelect={setSelectedYear} minYear={2000} maxYear={2025} sport={sport} />
+                      <TeamSelector
+                        selectedTeam={selectedTeam}
+                        onSelect={setSelectedTeam}
+                        sport={sport}
+                      />
+                      <YearSelector
+                        selectedYear={selectedYear}
+                        onSelect={setSelectedYear}
+                        minYear={2000}
+                        maxYear={2025}
+                        sport={sport}
+                      />
                     </div>
                   ) : (
                     <div className="capcrunch-panel p-3 text-center">
-                      <div className="capcrunch-kicker text-[9px] text-white/40 mb-2">Year Range</div>
+                      <div className="capcrunch-kicker text-[9px] text-white/40 mb-2">
+                        Year Range
+                      </div>
                       <div className="flex items-center justify-center gap-2">
                         <select
                           value={randomMinYear}
-                          onChange={e => setRandomMinYear(+e.target.value)}
+                          onChange={(e) => setRandomMinYear(+e.target.value)}
                           className={selectCls}
                         >
-                          {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                          {Array.from({ length: 26 }, (_, i) => 2000 + i).map((y) => (
+                            <option key={y} value={y}>
+                              {y}
+                            </option>
+                          ))}
                         </select>
                         <span className="text-white/30 capcrunch-kicker text-xs">to</span>
                         <select
                           value={randomMaxYear}
-                          onChange={e => setRandomMaxYear(+e.target.value)}
+                          onChange={(e) => setRandomMaxYear(+e.target.value)}
                           className={selectCls}
                         >
-                          {Array.from({ length: 26 }, (_, i) => 2000 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                          {Array.from({ length: 26 }, (_, i) => 2000 + i).map((y) => (
+                            <option key={y} value={y}>
+                              {y}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -235,18 +313,39 @@ export function RosterRoyaleSetup({
                   {/* Timer */}
                   <div className="capcrunch-panel border-white/10 px-4 py-2.5">
                     <button
-                      onClick={() => setShowTimerPicker(p => !p)}
+                      onClick={() => setShowTimerPicker((p) => !p)}
                       className="flex items-center justify-center gap-2 w-full"
                     >
-                      <svg className="w-3.5 h-3.5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="w-3.5 h-3.5 text-white/40"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                       <span className="capcrunch-title text-sm text-white">
-                        {Math.floor(timerDuration / 60)}:{String(timerDuration % 60).padStart(2, '0')}
+                        {Math.floor(timerDuration / 60)}:
+                        {String(timerDuration % 60).padStart(2, '0')}
                       </span>
                       <span className="capcrunch-kicker text-[9px] text-white/40">Timer</span>
-                      <svg className="w-3 h-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      <svg
+                        className="w-3 h-3 text-white/30"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        />
                       </svg>
                     </button>
                     {showTimerPicker && (
@@ -258,7 +357,7 @@ export function RosterRoyaleSetup({
                             min={0}
                             max={99}
                             value={timerMins}
-                            onChange={e => {
+                            onChange={(e) => {
                               const m = Math.max(0, Math.min(99, parseInt(e.target.value) || 0));
                               setTimerMins(m);
                               const total = m * 60 + timerSecs;
@@ -275,7 +374,7 @@ export function RosterRoyaleSetup({
                             min={0}
                             max={59}
                             value={timerSecs}
-                            onChange={e => {
+                            onChange={(e) => {
                               const s = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
                               setTimerSecs(s);
                               const total = timerMins * 60 + s;
@@ -306,7 +405,9 @@ export function RosterRoyaleSetup({
                     {!soloOnly && (
                       <>
                         <button
-                          onClick={() => navigate('/lobby/create', { state: { gameType: 'roster' } })}
+                          onClick={() =>
+                            navigate('/lobby/create', { state: { gameType: 'roster' } })
+                          }
                           className={`capcrunch-btn-secondary capcrunch-kicker px-4 py-2.5 text-xs ${
                             sport === 'nba'
                               ? 'border-[var(--nba-orange)] text-[var(--nba-orange)] hover:bg-[var(--nba-orange)] hover:text-white'
@@ -333,7 +434,12 @@ export function RosterRoyaleSetup({
               <div className="w-8 h-8 border-4 border-[#FDF100] border-t-transparent rounded-full animate-spin" />
               <span className="capcrunch-kicker text-sm text-white/70">{statusMessage}</span>
               {loadingStatus === 'error' && (
-                <button onClick={() => setLoadingStatus('idle')} className="capcrunch-kicker text-xs text-red-400 underline">Back</button>
+                <button
+                  onClick={() => setLoadingStatus('idle')}
+                  className="capcrunch-kicker text-xs text-red-400 underline"
+                >
+                  Back
+                </button>
               )}
             </div>
           )}

@@ -44,7 +44,7 @@ describe('buildScoringEntities', () => {
     ];
     const entities = buildScoringEntities(players);
     expect(entities).toHaveLength(2);
-    expect(entities.every(e => e.type === 'solo')).toBe(true);
+    expect(entities.every((e) => e.type === 'solo')).toBe(true);
   });
 
   it('groups players with same team_number into team entities', () => {
@@ -55,7 +55,7 @@ describe('buildScoringEntities', () => {
     ];
     const entities = buildScoringEntities(players);
     expect(entities).toHaveLength(2); // 1 team + 1 solo
-    const teamEntity = entities.find(e => e.type === 'team');
+    const teamEntity = entities.find((e) => e.type === 'team');
     expect(teamEntity).toBeDefined();
     if (teamEntity?.type === 'team') {
       expect(teamEntity.team.members).toHaveLength(2);
@@ -66,19 +66,21 @@ describe('buildScoringEntities', () => {
   it('deduplicates guessed players across team members', () => {
     const players = [
       makeLobbyPlayer({
-        player_id: 'p1', team_number: 1,
+        player_id: 'p1',
+        team_number: 1,
         guessed_players: ['LeBron', 'Curry'],
       }),
       makeLobbyPlayer({
-        player_id: 'p2', team_number: 1,
+        player_id: 'p2',
+        team_number: 1,
         guessed_players: ['Curry', 'Durant'],
       }),
     ];
     const entities = buildScoringEntities(players);
-    const teamEntity = entities.find(e => e.type === 'team');
+    const teamEntity = entities.find((e) => e.type === 'team');
     if (teamEntity?.type === 'team') {
       expect(teamEntity.team.combinedGuessedPlayers).toEqual(
-        expect.arrayContaining(['LeBron', 'Curry', 'Durant'])
+        expect.arrayContaining(['LeBron', 'Curry', 'Durant']),
       );
       expect(teamEntity.team.combinedGuessedCount).toBe(3);
     }
@@ -90,7 +92,7 @@ describe('buildScoringEntities', () => {
       makeLobbyPlayer({ player_id: 'p2', team_number: 1, score: 5, score_multiplier: 1 }),
     ];
     const entities = buildScoringEntities(players);
-    const teamEntity = entities.find(e => e.type === 'team');
+    const teamEntity = entities.find((e) => e.type === 'team');
     if (teamEntity?.type === 'team') {
       expect(teamEntity.team.combinedScore).toBe(25); // 10*2 + 5*1
     }
@@ -105,7 +107,7 @@ describe('computeEntityBonuses', () => {
     ];
     const entities = buildScoringEntities(players);
     const bonuses = computeEntityBonuses(entities);
-    expect(Array.from(bonuses.values()).every(b => b === 0)).toBe(true);
+    expect(Array.from(bonuses.values()).every((b) => b === 0)).toBe(true);
   });
 
   it('awards +1 per uniquely guessed player with 3+ entities', () => {
@@ -160,9 +162,7 @@ describe('getTeammateGuessedPlayers', () => {
 
 describe('hasTeams', () => {
   it('returns false when no players have team_number', () => {
-    const players = [
-      makeLobbyPlayer({ team_number: null }),
-    ];
+    const players = [makeLobbyPlayer({ team_number: null })];
     expect(hasTeams(players)).toBe(false);
   });
 
@@ -177,9 +177,7 @@ describe('hasTeams', () => {
 
 describe('entity helpers', () => {
   it('getEntityDisplayName returns player name for solo', () => {
-    const entities = buildScoringEntities([
-      makeLobbyPlayer({ player_name: 'Alice' }),
-    ]);
+    const entities = buildScoringEntities([makeLobbyPlayer({ player_name: 'Alice' })]);
     expect(getEntityDisplayName(entities[0])).toBe('Alice');
   });
 
@@ -193,30 +191,22 @@ describe('entity helpers', () => {
   });
 
   it('getEntityScore returns player score for solo', () => {
-    const entities = buildScoringEntities([
-      makeLobbyPlayer({ score: 42 }),
-    ]);
+    const entities = buildScoringEntities([makeLobbyPlayer({ score: 42 })]);
     expect(getEntityScore(entities[0])).toBe(42);
   });
 
   it('getEntityGuessedCount returns guessed_count for solo', () => {
-    const entities = buildScoringEntities([
-      makeLobbyPlayer({ guessed_count: 7 }),
-    ]);
+    const entities = buildScoringEntities([makeLobbyPlayer({ guessed_count: 7 })]);
     expect(getEntityGuessedCount(entities[0])).toBe(7);
   });
 
   it('getEntityIncorrectGuesses returns incorrect_guesses for solo', () => {
-    const entities = buildScoringEntities([
-      makeLobbyPlayer({ incorrect_guesses: ['X', 'Y'] }),
-    ]);
+    const entities = buildScoringEntities([makeLobbyPlayer({ incorrect_guesses: ['X', 'Y'] })]);
     expect(getEntityIncorrectGuesses(entities[0])).toEqual(['X', 'Y']);
   });
 
   it('isCurrentPlayerInEntity identifies solo player', () => {
-    const entities = buildScoringEntities([
-      makeLobbyPlayer({ player_id: 'p1' }),
-    ]);
+    const entities = buildScoringEntities([makeLobbyPlayer({ player_id: 'p1' })]);
     expect(isCurrentPlayerInEntity(entities[0], 'p1')).toBe(true);
     expect(isCurrentPlayerInEntity(entities[0], 'p2')).toBe(false);
   });

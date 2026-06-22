@@ -302,17 +302,17 @@ export const nflTeams: NFLTeam[] = [
 
 // Get a team by abbreviation
 export function getNFLTeamByAbbreviation(abbreviation: string): NFLTeam | undefined {
-  return nflTeams.find(t => t.abbreviation === abbreviation);
+  return nflTeams.find((t) => t.abbreviation === abbreviation);
 }
 
 // Get teams by conference
 export function getNFLTeamsByConference(conference: 'AFC' | 'NFC'): NFLTeam[] {
-  return nflTeams.filter(t => t.conference === conference);
+  return nflTeams.filter((t) => t.conference === conference);
 }
 
 // Get teams by division
 export function getNFLTeamsByDivision(conference: 'AFC' | 'NFC', division: string): NFLTeam[] {
-  return nflTeams.filter(t => t.conference === conference && t.division === division);
+  return nflTeams.filter((t) => t.conference === conference && t.division === division);
 }
 
 export function getNFLDivisions(): { conference: string; division: string }[] {

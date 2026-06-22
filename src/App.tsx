@@ -7,42 +7,42 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-import { GamePage }             from './pages/roster/GamePage';
-import { ResultsPage }          from './pages/roster/ResultsPage';
+import { GamePage } from './pages/roster/GamePage';
+import { ResultsPage } from './pages/roster/ResultsPage';
 import { MultiplayerResultsPage } from './pages/roster/MultiplayerResultsPage';
-import { LobbyCreatePage }      from './pages/lobby/LobbyCreatePage';
-import { LobbyJoinPage }        from './pages/lobby/LobbyJoinPage';
-import { LobbyWaitingPage }     from './pages/lobby/LobbyWaitingPage';
-import { RollCallCreatePage }   from './pages/rollcall/RollCallCreatePage';
-import { RollCallSessionPage }  from './pages/rollcall/RollCallSessionPage';
-import { RollCallResultsPage }  from './pages/rollcall/RollCallResultsPage';
-import { CareerGamePage }                from './pages/career/CareerGamePage';
-import { CareerResultsPage }             from './pages/career/CareerResultsPage';
-import { MultiplayerCareerPage }         from './pages/career/MultiplayerCareerPage';
-import { MultiplayerCareerResultsPage }  from './pages/career/MultiplayerCareerResultsPage';
-import { SoloScramblePage }                    from './pages/scramble/SoloScramblePage';
-import { MultiplayerNameScramblePage }         from './pages/scramble/MultiplayerNameScramblePage';
-import { MultiplayerNameScrambleResultsPage }  from './pages/scramble/MultiplayerNameScrambleResultsPage';
-import { SoloCapCrunchPage }               from './pages/capCrunch/SoloCapCrunchPage';
-import { MultiplayerCapCrunchPage }        from './pages/capCrunch/MultiplayerCapCrunchPage';
+import { LobbyCreatePage } from './pages/lobby/LobbyCreatePage';
+import { LobbyJoinPage } from './pages/lobby/LobbyJoinPage';
+import { LobbyWaitingPage } from './pages/lobby/LobbyWaitingPage';
+import { RollCallCreatePage } from './pages/rollcall/RollCallCreatePage';
+import { RollCallSessionPage } from './pages/rollcall/RollCallSessionPage';
+import { RollCallResultsPage } from './pages/rollcall/RollCallResultsPage';
+import { CareerGamePage } from './pages/career/CareerGamePage';
+import { CareerResultsPage } from './pages/career/CareerResultsPage';
+import { MultiplayerCareerPage } from './pages/career/MultiplayerCareerPage';
+import { MultiplayerCareerResultsPage } from './pages/career/MultiplayerCareerResultsPage';
+import { SoloScramblePage } from './pages/scramble/SoloScramblePage';
+import { MultiplayerNameScramblePage } from './pages/scramble/MultiplayerNameScramblePage';
+import { MultiplayerNameScrambleResultsPage } from './pages/scramble/MultiplayerNameScrambleResultsPage';
+import { SoloCapCrunchPage } from './pages/capCrunch/SoloCapCrunchPage';
+import { MultiplayerCapCrunchPage } from './pages/capCrunch/MultiplayerCapCrunchPage';
 import { MultiplayerCapCrunchResultsPage } from './pages/capCrunch/MultiplayerCapCrunchResultsPage';
-import { BoxScoreGamePage }                from './pages/boxScore/BoxScoreGamePage';
-import { BoxScoreResultsPage }             from './pages/boxScore/BoxScoreResultsPage';
-import { MultiplayerBoxScorePage }         from './pages/boxScore/MultiplayerBoxScorePage';
-import { MultiplayerBoxScoreResultsPage }  from './pages/boxScore/MultiplayerBoxScoreResultsPage';
-import { NBABoxScoreGamePage }             from './pages/boxScore/NBABoxScoreGamePage';
-import { NBABoxScoreResultsPage }          from './pages/boxScore/NBABoxScoreResultsPage';
-import { NBAMultiplayerBoxScorePage }      from './pages/boxScore/NBAMultiplayerBoxScorePage';
+import { BoxScoreGamePage } from './pages/boxScore/BoxScoreGamePage';
+import { BoxScoreResultsPage } from './pages/boxScore/BoxScoreResultsPage';
+import { MultiplayerBoxScorePage } from './pages/boxScore/MultiplayerBoxScorePage';
+import { MultiplayerBoxScoreResultsPage } from './pages/boxScore/MultiplayerBoxScoreResultsPage';
+import { NBABoxScoreGamePage } from './pages/boxScore/NBABoxScoreGamePage';
+import { NBABoxScoreResultsPage } from './pages/boxScore/NBABoxScoreResultsPage';
+import { NBAMultiplayerBoxScorePage } from './pages/boxScore/NBAMultiplayerBoxScorePage';
 import { NBAMultiplayerBoxScoreResultsPage } from './pages/boxScore/NBAMultiplayerBoxScoreResultsPage';
-import { SoloStartingLineupPage }                   from './pages/startingLineup/SoloStartingLineupPage';
-import { MultiplayerStartingLineupPage }            from './pages/startingLineup/MultiplayerStartingLineupPage';
-import { MultiplayerStartingLineupResultsPage }     from './pages/startingLineup/MultiplayerStartingLineupResultsPage';
-import { SoloFaceRevealPage }                   from './pages/faceReveal/SoloFaceRevealPage';
-import { MultiplayerFaceRevealPage }            from './pages/faceReveal/MultiplayerFaceRevealPage';
-import { MultiplayerFaceRevealResultsPage }     from './pages/faceReveal/MultiplayerFaceRevealResultsPage';
-import { SoloTopTenPage }                       from './pages/topTen/SoloTopTenPage';
-import { MultiplayerTopTenPage }                from './pages/topTen/MultiplayerTopTenPage';
-import { MultiplayerTopTenResultsPage }         from './pages/topTen/MultiplayerTopTenResultsPage';
+import { SoloStartingLineupPage } from './pages/startingLineup/SoloStartingLineupPage';
+import { MultiplayerStartingLineupPage } from './pages/startingLineup/MultiplayerStartingLineupPage';
+import { MultiplayerStartingLineupResultsPage } from './pages/startingLineup/MultiplayerStartingLineupResultsPage';
+import { SoloFaceRevealPage } from './pages/faceReveal/SoloFaceRevealPage';
+import { MultiplayerFaceRevealPage } from './pages/faceReveal/MultiplayerFaceRevealPage';
+import { MultiplayerFaceRevealResultsPage } from './pages/faceReveal/MultiplayerFaceRevealResultsPage';
+import { SoloTopTenPage } from './pages/topTen/SoloTopTenPage';
+import { MultiplayerTopTenPage } from './pages/topTen/MultiplayerTopTenPage';
+import { MultiplayerTopTenResultsPage } from './pages/topTen/MultiplayerTopTenResultsPage';
 
 function App() {
   return (
@@ -75,10 +75,16 @@ function App() {
         <Route path="/lineup-is-right" element={<SoloCapCrunchPage />} />
         {/* Name Scramble routes */}
         <Route path="/lobby/:code/scramble" element={<MultiplayerNameScramblePage />} />
-        <Route path="/lobby/:code/scramble/results" element={<MultiplayerNameScrambleResultsPage />} />
+        <Route
+          path="/lobby/:code/scramble/results"
+          element={<MultiplayerNameScrambleResultsPage />}
+        />
         {/* Cap Crunch routes */}
         <Route path="/lobby/:code/lineup-is-right" element={<MultiplayerCapCrunchPage />} />
-        <Route path="/lobby/:code/lineup-is-right/results" element={<MultiplayerCapCrunchResultsPage />} />
+        <Route
+          path="/lobby/:code/lineup-is-right/results"
+          element={<MultiplayerCapCrunchResultsPage />}
+        />
         {/* Box Score routes */}
         <Route path="/box-score" element={<BoxScoreGamePage />} />
         <Route path="/box-score/results" element={<BoxScoreResultsPage />} />
@@ -87,15 +93,24 @@ function App() {
         <Route path="/nba-box-score" element={<NBABoxScoreGamePage />} />
         <Route path="/nba-box-score/results" element={<NBABoxScoreResultsPage />} />
         <Route path="/lobby/:code/nba-box-score" element={<NBAMultiplayerBoxScorePage />} />
-        <Route path="/lobby/:code/nba-box-score/results" element={<NBAMultiplayerBoxScoreResultsPage />} />
+        <Route
+          path="/lobby/:code/nba-box-score/results"
+          element={<NBAMultiplayerBoxScoreResultsPage />}
+        />
         {/* Starting Lineup routes */}
         <Route path="/starting-lineup" element={<SoloStartingLineupPage />} />
         <Route path="/lobby/:code/starting-lineup" element={<MultiplayerStartingLineupPage />} />
-        <Route path="/lobby/:code/starting-lineup/results" element={<MultiplayerStartingLineupResultsPage />} />
+        <Route
+          path="/lobby/:code/starting-lineup/results"
+          element={<MultiplayerStartingLineupResultsPage />}
+        />
         {/* Face Reveal routes */}
         <Route path="/face-reveal" element={<SoloFaceRevealPage />} />
         <Route path="/lobby/:code/face-reveal" element={<MultiplayerFaceRevealPage />} />
-        <Route path="/lobby/:code/face-reveal/results" element={<MultiplayerFaceRevealResultsPage />} />
+        <Route
+          path="/lobby/:code/face-reveal/results"
+          element={<MultiplayerFaceRevealResultsPage />}
+        />
         {/* Top Ten routes */}
         <Route path="/top-ten" element={<SoloTopTenPage />} />
         <Route path="/lobby/:code/top-ten" element={<MultiplayerTopTenPage />} />

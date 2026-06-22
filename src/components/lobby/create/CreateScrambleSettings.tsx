@@ -12,7 +12,12 @@ interface Props {
   onCareerToChange: (n: number) => void;
 }
 
-export function CreateScrambleSettings({ winTarget, onWinTargetChange, careerTo, onCareerToChange }: Props) {
+export function CreateScrambleSettings({
+  winTarget,
+  onWinTargetChange,
+  careerTo,
+  onCareerToChange,
+}: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -52,8 +57,10 @@ export function CreateScrambleSettings({ winTarget, onWinTargetChange, careerTo,
           className="w-full bg-black/40 text-white px-3 py-2 border border-white/10 capcrunch-kicker text-sm focus:outline-none focus:border-[#3b82f6]"
         >
           <option value={0}>Any Era</option>
-          {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map(y => (
-            <option key={y} value={y}>Active into {y}+</option>
+          {Array.from({ length: 2024 - 2000 + 1 }, (_, i) => 2000 + i).map((y) => (
+            <option key={y} value={y}>
+              Active into {y}+
+            </option>
           ))}
         </select>
       </div>

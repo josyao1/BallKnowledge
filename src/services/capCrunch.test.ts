@@ -320,7 +320,7 @@ describe('advanceSpecialRoundCycle', () => {
     // all 5 types represented in history + current
     const result = advanceSpecialRoundCycle(
       ['division_draft', 'division', 'conference', 'hw_filter'],
-      'teammate'
+      'teammate',
     );
     expect(result).toEqual([]); // cycle resets
   });

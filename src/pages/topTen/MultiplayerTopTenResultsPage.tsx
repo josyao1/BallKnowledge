@@ -10,9 +10,14 @@ export function MultiplayerTopTenResultsPage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const {
-    lobby, players, isHost, currentPlayerId,
-    isLeaving, isResetting,
-    handlePlayAgain, handleLeave,
+    lobby,
+    players,
+    isHost,
+    currentPlayerId,
+    isLeaving,
+    isResetting,
+    handlePlayAgain,
+    handleLeave,
   } = useMultiplayerResults({
     code,
     defaultWinTarget: 1,
@@ -41,35 +46,45 @@ export function MultiplayerTopTenResultsPage() {
   }, [lobby?.status]);
 
   const cs = (lobby?.career_state as any) || {};
-  const entries: TopTenEntry[]                    = cs.top10_entries || [];
-  const guessedIndices: number[]                  = cs.guessed_indices || [];
-  const guessAttribution: Record<string, number>  = cs.guess_attribution || {};
-  const playerStrikes: Record<string, number>     = cs.player_strikes || {};
-  const maxStrikes: number                        = cs.max_strikes || 2;
-  const sport: 'nba' | 'nfl'                     = (cs.sport as 'nba' | 'nfl') || 'nba';
-  const categoryKey: string                       = cs.category || '';
-  const categoryLabel: string                     = cs.category_label || '';
-  const roundInfo: string                         = cs.round_info || '';
-  const winnerIds: string[]                       = cs.winner_ids || (cs.winner_id ? [cs.winner_id] : []);
+  const entries: TopTenEntry[] = cs.top10_entries || [];
+  const guessedIndices: number[] = cs.guessed_indices || [];
+  const guessAttribution: Record<string, number> = cs.guess_attribution || {};
+  const playerStrikes: Record<string, number> = cs.player_strikes || {};
+  const maxStrikes: number = cs.max_strikes || 2;
+  const sport: 'nba' | 'nfl' = (cs.sport as 'nba' | 'nfl') || 'nba';
+  const categoryKey: string = cs.category || '';
+  const categoryLabel: string = cs.category_label || '';
+  const roundInfo: string = cs.round_info || '';
+  const winnerIds: string[] = cs.winner_ids || (cs.winner_id ? [cs.winner_id] : []);
 
-  const catDef                                    = getCategoryDef(sport, categoryKey);
-  const statShortLabel                            = getStatShortLabel(catDef);
+  const catDef = getCategoryDef(sport, categoryKey);
+  const statShortLabel = getStatShortLabel(catDef);
 
   const sortedPlayers = [...players].sort((a, b) => {
     const ga = guessAttribution[a.player_id] || 0;
     const gb = guessAttribution[b.player_id] || 0;
     if (gb !== ga) return gb - ga;
-    return (maxStrikes - (playerStrikes[b.player_id] || 0)) - (maxStrikes - (playerStrikes[a.player_id] || 0));
+    return (
+      maxStrikes -
+      (playerStrikes[b.player_id] || 0) -
+      (maxStrikes - (playerStrikes[a.player_id] || 0))
+    );
   });
 
-  const winnerName = winnerIds.length === 1
-    ? (sortedPlayers.find(p => winnerIds.includes(p.player_id))?.player_name ?? '')
-    : sortedPlayers.filter(p => winnerIds.includes(p.player_id)).map(p => p.player_name).join(' · ');
+  const winnerName =
+    winnerIds.length === 1
+      ? (sortedPlayers.find((p) => winnerIds.includes(p.player_id))?.player_name ?? '')
+      : sortedPlayers
+          .filter((p) => winnerIds.includes(p.player_id))
+          .map((p) => p.player_name)
+          .join(' · ');
 
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col relative overflow-hidden">
       <header className="relative z-10 px-4 py-3 border-b border-white/10 flex flex-col items-center">
-        <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.4em] mb-1">Match Complete</p>
+        <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.4em] mb-1">
+          Match Complete
+        </p>
         <h1 className="capcrunch-title text-2xl text-[#70BE5B]">Top Ten</h1>
         {categoryLabel && (
           <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.25em] mt-1">
@@ -101,11 +116,13 @@ export function MultiplayerTopTenResultsPage() {
 
         {/* Standings */}
         <div className="space-y-1.5">
-          <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em]">Final Standings</p>
+          <p className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.3em]">
+            Final Standings
+          </p>
           {sortedPlayers.map((p, i) => {
-            const guesses  = guessAttribution[p.player_id] || 0;
+            const guesses = guessAttribution[p.player_id] || 0;
             const isWinner = winnerIds.includes(p.player_id);
-            const isMe     = p.player_id === currentPlayerId;
+            const isMe = p.player_id === currentPlayerId;
             return (
               <motion.div
                 key={p.player_id}
@@ -113,15 +130,25 @@ export function MultiplayerTopTenResultsPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.06 }}
                 className={`flex items-center gap-3 p-3 border ${
-                  isWinner ? 'border-[#70BE5B]/40 bg-[#70BE5B]/6'
-                  : isMe   ? 'border-[#70BE5B]/25 bg-[#70BE5B]/4'
-                  :          'border-white/8 bg-black/30'
+                  isWinner
+                    ? 'border-[#70BE5B]/40 bg-[#70BE5B]/6'
+                    : isMe
+                      ? 'border-[#70BE5B]/25 bg-[#70BE5B]/4'
+                      : 'border-white/8 bg-black/30'
                 }`}
               >
-                <span className={`capcrunch-title text-xl w-6 ${isWinner ? 'text-[#70BE5B]' : 'text-white/20'}`}>{i + 1}</span>
+                <span
+                  className={`capcrunch-title text-xl w-6 ${isWinner ? 'text-[#70BE5B]' : 'text-white/20'}`}
+                >
+                  {i + 1}
+                </span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className={`capcrunch-title text-base ${isWinner ? 'text-[#70BE5B]' : 'text-white/80'}`}>{p.player_name}</p>
+                    <p
+                      className={`capcrunch-title text-base ${isWinner ? 'text-[#70BE5B]' : 'text-white/80'}`}
+                    >
+                      {p.player_name}
+                    </p>
                     {isWinner && (
                       <span className="capcrunch-kicker text-[9px] text-[#70BE5B]/60 tracking-[0.25em]">
                         {winnerIds.length > 1 ? 'Tied' : 'Winner'}
@@ -130,7 +157,8 @@ export function MultiplayerTopTenResultsPage() {
                   </div>
                   <p className="capcrunch-kicker text-[10px] text-white/35">
                     {guesses} correct {guesses === 1 ? 'guess' : 'guesses'}
-                    {' · '}{maxStrikes - (playerStrikes[p.player_id] || 0)} strikes left
+                    {' · '}
+                    {maxStrikes - (playerStrikes[p.player_id] || 0)} strikes left
                   </p>
                 </div>
               </motion.div>

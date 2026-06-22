@@ -24,19 +24,25 @@ import {
 import { getNextGame, startPrefetch } from '../../services/careerPrefetch';
 import { areSimilarNames } from '../../utils/fuzzyDedup';
 import { getColumns } from '../../components/career/careerColumns';
-import { CareerStatsTable }   from '../../components/career/CareerStatsTable';
-import { CareerBioPanel }     from '../../components/career/CareerBioPanel';
+import { CareerStatsTable } from '../../components/career/CareerStatsTable';
+import { CareerBioPanel } from '../../components/career/CareerBioPanel';
 import { CareerWrongGuesses } from '../../components/career/CareerWrongGuesses';
 import { CareerInitialsHint } from '../../components/career/CareerInitialsHint';
-import { CareerControls }     from '../../components/career/CareerControls';
-import { PlayerHeadshot }     from '../../components/capCrunch/PlayerHeadshot';
+import { CareerControls } from '../../components/career/CareerControls';
+import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import type { Sport } from '../../types';
 import { useGameAbandonment } from '../../hooks/useGameAbandonment';
 
 const POSITION_NAMES: Record<string, string> = {
-  PG: 'Point Guard', SG: 'Shooting Guard', SF: 'Small Forward',
-  PF: 'Power Forward', C: 'Center',
-  QB: 'Quarterback', RB: 'Running Back', WR: 'Wide Receiver', TE: 'Tight End',
+  PG: 'Point Guard',
+  SG: 'Shooting Guard',
+  SF: 'Small Forward',
+  PF: 'Power Forward',
+  C: 'Center',
+  QB: 'Quarterback',
+  RB: 'Running Back',
+  WR: 'Wide Receiver',
+  TE: 'Tight End',
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -75,7 +81,8 @@ export function MultiplayerCareerPage() {
   const [yearsRevealed, setYearsRevealed] = useState(false);
   const [bioRevealed, setBioRevealed] = useState(false);
   const [initialsRevealed, setInitialsRevealed] = useState(false);
-  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } = useGuessInput();
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } =
+    useGuessInput();
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
 
@@ -93,7 +100,9 @@ export function MultiplayerCareerPage() {
   // Snapshot of round scores taken when allPlayersFinished goes true (playing phase).
   // Avoids race conditions where post-round DB writes (wins increment, next-round
   // score reset) arrive via realtime before the summary capture effect fires.
-  const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
+  const roundScoresSnapshotRef = useRef<
+    Record<string, { score: number; finishedAt: string | null }>
+  >({});
 
   // ── Handle lobby status transitions ──
   useEffect(() => {
@@ -103,12 +112,16 @@ export function MultiplayerCareerPage() {
     prevStatusRef.current = lobby.status;
 
     // Capture round summary whenever a round ends (playing → waiting OR playing → finished)
-    if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState) {
+    if (
+      prev === 'playing' &&
+      (lobby.status === 'waiting' || lobby.status === 'finished') &&
+      careerState
+    ) {
       const scores: Record<string, number> = {};
       const finishedAt: Record<string, string | null> = {};
       // Prefer the snapshot (taken when allPlayersFinished during 'playing' phase)
       // over live players state, which may have been mutated by post-round realtime events.
-      players.forEach(p => {
+      players.forEach((p) => {
         const snap = roundScoresSnapshotRef.current[p.player_id];
         scores[p.player_id] = snap?.score ?? p.score ?? 0;
         finishedAt[p.player_id] = snap?.finishedAt ?? p.finished_at;
@@ -125,7 +138,9 @@ export function MultiplayerCareerPage() {
     }
 
     if (lobby.status === 'finished') {
-      navigate(`/lobby/${code}/career/results`, { state: { roundHistory: roundHistoryRef.current } });
+      navigate(`/lobby/${code}/career/results`, {
+        state: { roundHistory: roundHistoryRef.current },
+      });
     }
   }, [lobby?.status]);
 
@@ -160,21 +175,24 @@ export function MultiplayerCareerPage() {
   // This guards against the race condition where the lobby status event arrives
   // before the player reset events, causing stale finished_at to look like all done.
   useEffect(() => {
-    if (players.some(p => p.finished_at === null)) {
+    if (players.some((p) => p.finished_at === null)) {
       atLeastOnePlayerWasActiveRef.current = true;
     }
   }, [players]);
 
   // ── HOST: Advance round when all players genuinely finish ──
-  const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
+  const allPlayersFinished = players.length > 0 && players.every((p) => p.finished_at !== null);
 
   // Snapshot round scores the moment all players finish (still in 'playing' phase).
   // This prevents post-round realtime events (wins increment, next-round score reset)
   // from corrupting the interstitial's ROUND column.
   useEffect(() => {
     if (allPlayersFinished && lobby?.status === 'playing' && atLeastOnePlayerWasActiveRef.current) {
-      players.forEach(p => {
-        roundScoresSnapshotRef.current[p.player_id] = { score: p.score || 0, finishedAt: p.finished_at };
+      players.forEach((p) => {
+        roundScoresSnapshotRef.current[p.player_id] = {
+          score: p.score || 0,
+          finishedAt: p.finished_at,
+        };
       });
     }
   }, [allPlayersFinished, lobby?.status]);
@@ -201,7 +219,7 @@ export function MultiplayerCareerPage() {
     const freshResult = await getLobbyPlayers(lobby.id);
     const freshPlayers = freshResult.players || [];
     const winTarget = careerState.win_target || 3;
-    const gameWinner = freshPlayers.find(p => (p.points ?? 0) >= winTarget);
+    const gameWinner = freshPlayers.find((p) => (p.points ?? 0) >= winTarget);
 
     if (gameWinner) {
       // Award session win to the match winner
@@ -213,7 +231,8 @@ export function MultiplayerCareerPage() {
   }, [lobby, careerState, players]);
 
   useEffect(() => {
-    if (!isHost || !allPlayersFinished || lobby?.status !== 'playing' || hasAdvancedRef.current) return;
+    if (!isHost || !allPlayersFinished || lobby?.status !== 'playing' || hasAdvancedRef.current)
+      return;
     // Don't advance until we've seen at least one player with finished_at===null
     // (confirms the player resets have propagated)
     if (!atLeastOnePlayerWasActiveRef.current) return;
@@ -243,7 +262,10 @@ export function MultiplayerCareerPage() {
       setLocalGuesses(newGuesses);
       setFeedbackMsg(`"${name}" is wrong`);
       setFeedbackType('wrong');
-      setTimeout(() => { setFeedbackMsg(''); setFeedbackType(''); }, 2000);
+      setTimeout(() => {
+        setFeedbackMsg('');
+        setFeedbackType('');
+      }, 2000);
 
       if (newScore === 0) {
         setLocalStatus('done');
@@ -267,19 +289,19 @@ export function MultiplayerCareerPage() {
   function handleRevealYears() {
     if (yearsRevealed || localStatus !== 'playing') return;
     setYearsRevealed(true);
-    setLocalScore(prev => Math.max(0, prev - 3));
+    setLocalScore((prev) => Math.max(0, prev - 3));
   }
 
   function handleRevealBio() {
     if (bioRevealed || localStatus !== 'playing') return;
     setBioRevealed(true);
-    setLocalScore(prev => Math.max(0, prev - 3));
+    setLocalScore((prev) => Math.max(0, prev - 3));
   }
 
   function handleRevealInitials() {
     if (initialsRevealed || localStatus !== 'playing') return;
     setInitialsRevealed(true);
-    setLocalScore(prev => Math.max(0, prev - 10));
+    setLocalScore((prev) => Math.max(0, prev - 10));
   }
 
   // Derive initials from playerName (first letter of first + last word)
@@ -298,12 +320,15 @@ export function MultiplayerCareerPage() {
 
     const sport = (careerState.sport || lobby.sport) as Sport;
     const careerFrom = (careerState as any).career_from || 0;
-    const careerTo   = (careerState as any).career_to   || 0;
-    const minMpg     = (careerState as any).min_mpg     || 0;
-    const minYards   = (careerState as any).min_yards   || 0;
+    const careerTo = (careerState as any).career_to || 0;
+    const minMpg = (careerState as any).min_mpg || 0;
+    const minYards = (careerState as any).min_yards || 0;
     try {
       const game = await getNextGame(sport, { careerFrom, careerTo, minMpg, minYards });
-      if (!game) { setIsLoadingNext(false); return; }
+      if (!game) {
+        setIsLoadingNext(false);
+        return;
+      }
 
       const newState = {
         ...game.data,
@@ -359,7 +384,9 @@ export function MultiplayerCareerPage() {
       <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
           <div>
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">
+              Round Complete
+            </div>
             <h1 className="capcrunch-title text-2xl text-white">
               Round {summary?.round ?? careerState.round}
             </h1>
@@ -382,7 +409,9 @@ export function MultiplayerCareerPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="mb-6 p-6 bg-black/40 border-2 border-[#d4af37]/50 text-center"
           >
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase">The Answer Was</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-3 uppercase">
+              The Answer Was
+            </div>
             <div className="flex items-center justify-center gap-3">
               <PlayerHeadshot
                 playerId={careerState.playerId ?? undefined}
@@ -408,9 +437,11 @@ export function MultiplayerCareerPage() {
             {(() => {
               const scores = summary?.scores ?? {};
               const finishedAt = summary?.finishedAt ?? {};
-              const topScore = Math.max(0, ...players.map(p => scores[p.player_id] ?? 0));
-              const topScorers = topScore > 0 ? players.filter(p => (scores[p.player_id] ?? 0) === topScore) : [];
-              const isTiebreaker = topScorers.length > 1 && topScorers.every(p => finishedAt[p.player_id]);
+              const topScore = Math.max(0, ...players.map((p) => scores[p.player_id] ?? 0));
+              const topScorers =
+                topScore > 0 ? players.filter((p) => (scores[p.player_id] ?? 0) === topScore) : [];
+              const isTiebreaker =
+                topScorers.length > 1 && topScorers.every((p) => finishedAt[p.player_id]);
               const roundWinnerId = isTiebreaker
                 ? [...topScorers].sort((a, b) => {
                     const aT = new Date(finishedAt[a.player_id]!).getTime();
@@ -418,20 +449,26 @@ export function MultiplayerCareerPage() {
                     return aT - bT;
                   })[0]?.player_id
                 : topScorers[0]?.player_id;
-              const timeDiffMs = isTiebreaker && topScorers.length >= 2
-                ? (() => {
-                    const sorted = [...topScorers].sort((a, b) =>
-                      new Date(finishedAt[a.player_id]!).getTime() - new Date(finishedAt[b.player_id]!).getTime()
-                    );
-                    return new Date(finishedAt[sorted[1].player_id]!).getTime() - new Date(finishedAt[sorted[0].player_id]!).getTime();
-                  })()
-                : 0;
+              const timeDiffMs =
+                isTiebreaker && topScorers.length >= 2
+                  ? (() => {
+                      const sorted = [...topScorers].sort(
+                        (a, b) =>
+                          new Date(finishedAt[a.player_id]!).getTime() -
+                          new Date(finishedAt[b.player_id]!).getTime(),
+                      );
+                      return (
+                        new Date(finishedAt[sorted[1].player_id]!).getTime() -
+                        new Date(finishedAt[sorted[0].player_id]!).getTime()
+                      );
+                    })()
+                  : 0;
 
               return (
                 <>
                   {[...players]
                     .sort((a, b) => (scores[b.player_id] ?? 0) - (scores[a.player_id] ?? 0))
-                    .map(player => {
+                    .map((player) => {
                       const score = scores[player.player_id] ?? 0;
                       const isMe = player.player_id === currentPlayerId;
                       const isRoundWinner = player.player_id === roundWinnerId;
@@ -443,8 +480,14 @@ export function MultiplayerCareerPage() {
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="capcrunch-kicker text-sm text-white/80">{player.player_name}</span>
-                            {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker">(you)</span>}
+                            <span className="capcrunch-kicker text-sm text-white/80">
+                              {player.player_name}
+                            </span>
+                            {isMe && (
+                              <span className="text-[10px] text-white/40 capcrunch-kicker">
+                                (you)
+                              </span>
+                            )}
                             {isRoundWinner && topScore > 0 && (
                               <span className="text-[10px] capcrunch-kicker text-[#d4af37] tracking-wider">
                                 {isTiebreaker ? '⚡ FASTEST' : '★ WINNER'}
@@ -453,12 +496,22 @@ export function MultiplayerCareerPage() {
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
-                              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">ROUND</div>
-                              <div className={`capcrunch-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}>{score}</div>
+                              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">
+                                ROUND
+                              </div>
+                              <div
+                                className={`capcrunch-title text-lg ${score > 0 ? 'text-white' : 'text-[#555]'}`}
+                              >
+                                {score}
+                              </div>
                             </div>
                             <div className="text-right">
-                              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">WINS</div>
-                              <div className="capcrunch-title text-lg text-[#d4af37]">{player.points ?? 0}</div>
+                              <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">
+                                WINS
+                              </div>
+                              <div className="capcrunch-title text-lg text-[#d4af37]">
+                                {player.points ?? 0}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -466,11 +519,13 @@ export function MultiplayerCareerPage() {
                     })}
                   {isTiebreaker && timeDiffMs > 0 && (
                     <div className="mt-2 pt-2 border-t border-white/10 text-center capcrunch-kicker text-[10px] text-[#888]">
-                      Tiebreaker — {players.find(p => p.player_id === roundWinnerId)?.player_name} was{' '}
+                      Tiebreaker — {players.find((p) => p.player_id === roundWinnerId)?.player_name}{' '}
+                      was{' '}
                       <span className="text-[#d4af37]">
                         {timeDiffMs < 1000
                           ? `${timeDiffMs}ms`
-                          : `${(timeDiffMs / 1000).toFixed(1)}s`} faster
+                          : `${(timeDiffMs / 1000).toFixed(1)}s`}{' '}
+                        faster
                       </span>
                     </div>
                   )}
@@ -487,21 +542,27 @@ export function MultiplayerCareerPage() {
           transition={{ delay: 0.2 }}
           className="mb-6 flex justify-center gap-6 flex-wrap"
         >
-          {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => (
-            <div key={player.player_id} className="text-center">
-              <div className="capcrunch-kicker text-[10px] text-[#888] tracking-wider mb-1">{player.player_name}</div>
-              <div className="flex gap-1 justify-center">
-                {Array.from({ length: winTarget }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-4 h-4 rounded-full border-2 ${
-                      i < (player.points ?? 0) ? 'bg-[#d4af37] border-[#d4af37]' : 'bg-transparent border-white/10'
-                    }`}
-                  />
-                ))}
+          {[...players]
+            .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+            .map((player) => (
+              <div key={player.player_id} className="text-center">
+                <div className="capcrunch-kicker text-[10px] text-[#888] tracking-wider mb-1">
+                  {player.player_name}
+                </div>
+                <div className="flex gap-1 justify-center">
+                  {Array.from({ length: winTarget }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        i < (player.points ?? 0)
+                          ? 'bg-[#d4af37] border-[#d4af37]'
+                          : 'bg-transparent border-white/10'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </motion.div>
 
         {isHost ? (
@@ -523,19 +584,26 @@ export function MultiplayerCareerPage() {
 
   // ── GAMEPLAY ──
   const isDone = localStatus === 'done';
-  const doneCount = players.filter(p => p.finished_at !== null).length;
+  const doneCount = players.filter((p) => p.finished_at !== null).length;
   const totalCount = players.length;
 
-  const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+  const currentPlayerName = players.find((p) => p.player_id === currentPlayerId)?.player_name;
 
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
-      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
+      <EmoteOverlay
+        lobbyId={lobby?.id}
+        currentPlayerId={currentPlayerId}
+        currentPlayerName={currentPlayerName}
+      />
       {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider text-white" style={{ backgroundColor: accentColor }}>
+            <span
+              className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider text-white"
+              style={{ backgroundColor: accentColor }}
+            >
               {sport.toUpperCase()}
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider bg-black/40 text-[#888]">
@@ -544,7 +612,10 @@ export function MultiplayerCareerPage() {
           </div>
           {careerState.position && (
             <div className="capcrunch-kicker text-sm text-white/70 tracking-wider">
-              Guess the <span className="text-white font-bold">{POSITION_NAMES[careerState.position] ?? careerState.position}</span>
+              Guess the{' '}
+              <span className="text-white font-bold">
+                {POSITION_NAMES[careerState.position] ?? careerState.position}
+              </span>
             </div>
           )}
         </div>
@@ -553,34 +624,51 @@ export function MultiplayerCareerPage() {
           <HomeButton isHost={isHost} onEndGame={handleEndGame} />
           <div className="bg-black/40 border border-white/10 px-4 py-2 text-center">
             <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">SCORE</div>
-            <div className="capcrunch-title text-2xl" style={{ color: localScore > 10 ? '#22c55e' : localScore > 5 ? '#eab308' : '#ef4444' }}>
+            <div
+              className="capcrunch-title text-2xl"
+              style={{
+                color: localScore > 10 ? '#22c55e' : localScore > 5 ? '#eab308' : '#ef4444',
+              }}
+            >
               {localScore}
             </div>
           </div>
           <div className="bg-black/40 border border-white/10 px-4 py-2 text-center">
             <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">DONE</div>
-            <div className="capcrunch-title text-2xl text-white">{doneCount}/{totalCount}</div>
+            <div className="capcrunch-title text-2xl text-white">
+              {doneCount}/{totalCount}
+            </div>
           </div>
         </div>
       </header>
 
       {/* Win progress dots */}
       <div className="flex gap-4 mb-4 flex-wrap">
-        {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => (
-          <div key={player.player_id} className={`flex items-center gap-1.5 px-2 py-1 rounded ${player.player_id === currentPlayerId ? 'bg-[#d4af37]/10' : ''}`}>
-            <span className="capcrunch-kicker text-[10px] text-white/60">{player.player_name}</span>
-            <div className="flex gap-0.5">
-              {Array.from({ length: winTarget }).map((_, i) => (
-                <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (player.points ?? 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`} />
-              ))}
+        {[...players]
+          .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+          .map((player) => (
+            <div
+              key={player.player_id}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded ${player.player_id === currentPlayerId ? 'bg-[#d4af37]/10' : ''}`}
+            >
+              <span className="capcrunch-kicker text-[10px] text-white/60">
+                {player.player_name}
+              </span>
+              <div className="flex gap-0.5">
+                {Array.from({ length: winTarget }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2.5 h-2.5 rounded-full ${i < (player.points ?? 0) ? 'bg-[#d4af37]' : 'bg-[#333]'}`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Live player status panel */}
       <div className="mb-4 flex gap-2 flex-wrap">
-        {players.map(player => {
+        {players.map((player) => {
           const isMe = player.player_id === currentPlayerId;
           const finished = player.finished_at !== null;
           const score = player.score || 0;
@@ -592,11 +680,14 @@ export function MultiplayerCareerPage() {
                 gotIt
                   ? 'bg-green-900/20 border-green-700/40 text-green-300'
                   : finished
-                  ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                  : 'bg-black/40 border-white/10 text-white/60'
+                    ? 'bg-red-900/20 border-red-900/40 text-red-400'
+                    : 'bg-black/40 border-white/10 text-white/60'
               }`}
             >
-              <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
+              <span>
+                {player.player_name}
+                {isMe ? ' (you)' : ''}
+              </span>
               {gotIt && <span className="text-green-400">✓ {score}pts</span>}
               {finished && !gotIt && <span>✗</span>}
               {!finished && (

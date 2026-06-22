@@ -39,10 +39,7 @@ export function Chips({ children }: { children: ReactNode }) {
 /** Horizontally scrollable strip — shows ~4 chips at a time, hides scrollbar. */
 export function ScrollStrip({ children }: { children: ReactNode }) {
   return (
-    <div
-      className="flex gap-1 overflow-x-auto"
-      style={{ scrollbarWidth: 'none' }}
-    >
+    <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
       {children}
     </div>
   );
@@ -75,14 +72,18 @@ export function Chip({
         active
           ? ''
           : dim
-          ? 'bg-black/20 text-white/15 border border-white/6 line-through'
-          : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/22 hover:text-white/60'
+            ? 'bg-black/20 text-white/15 border border-white/6 line-through'
+            : 'bg-black/40 text-white/40 border border-white/10 hover:border-white/22 hover:text-white/60'
       }`}
-      style={active ? {
-        background: activeBg,
-        color: activeText,
-        boxShadow: '0 1px 0 rgba(0,0,0,0.35)',
-      } : undefined}
+      style={
+        active
+          ? {
+              background: activeBg,
+              color: activeText,
+              boxShadow: '0 1px 0 rgba(0,0,0,0.35)',
+            }
+          : undefined
+      }
     >
       {children}
     </button>
@@ -91,16 +92,29 @@ export function Chip({
 
 /** − N + numeric stepper. */
 export function Stepper({
-  value, min, max, onChange,
+  value,
+  min,
+  max,
+  onChange,
 }: {
-  value: number; min: number; max: number; onChange: (n: number) => void;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (n: number) => void;
 }) {
-  const btn = 'w-6 h-6 flex items-center justify-center capcrunch-kicker text-sm text-white/40 hover:text-white border border-white/10 hover:border-white/25 transition-colors';
+  const btn =
+    'w-6 h-6 flex items-center justify-center capcrunch-kicker text-sm text-white/40 hover:text-white border border-white/10 hover:border-white/25 transition-colors';
   return (
     <div className="flex items-center gap-2">
-      <button onClick={() => onChange(Math.max(min, value - 1))} className={btn}>−</button>
-      <span className="capcrunch-title text-sm text-white tabular-nums w-5 text-center">{value}</span>
-      <button onClick={() => onChange(Math.min(max, value + 1))} className={btn}>+</button>
+      <button onClick={() => onChange(Math.max(min, value - 1))} className={btn}>
+        −
+      </button>
+      <span className="capcrunch-title text-sm text-white tabular-nums w-5 text-center">
+        {value}
+      </span>
+      <button onClick={() => onChange(Math.min(max, value + 1))} className={btn}>
+        +
+      </button>
     </div>
   );
 }
@@ -111,7 +125,7 @@ export function SportToggle({ sport, onChange }: { sport: string; onChange: (s: 
   return (
     <Row label="Sport">
       <Chips>
-        {(['nba', 'nfl'] as const).map(s => (
+        {(['nba', 'nfl'] as const).map((s) => (
           <Chip
             key={s}
             active={sport === s}
@@ -138,13 +152,20 @@ interface TimerPickerProps {
   onCustomChange: (raw: string, clamped: number) => void;
 }
 
-export function TimerPicker({ timer, customTimer, presets, activeColor, onSelect, onCustomChange }: TimerPickerProps) {
+export function TimerPicker({
+  timer,
+  customTimer,
+  presets,
+  activeColor,
+  onSelect,
+  onCustomChange,
+}: TimerPickerProps) {
   const activeBg = activeColor.includes('f59e0b') ? '#f59e0b' : '#FDF100';
   return (
     <div className="space-y-2">
       <Row label="Timer">
         <ScrollStrip>
-          {presets.map(s => (
+          {presets.map((s) => (
             <Chip
               key={s}
               active={timer === s && !customTimer}
@@ -161,12 +182,14 @@ export function TimerPicker({ timer, customTimer, presets, activeColor, onSelect
           <input
             type="number"
             value={customTimer}
-            onChange={e => {
+            onChange={(e) => {
               const raw = e.target.value;
               const clamped = Math.max(10, Math.min(600, parseInt(raw) || 90));
               onCustomChange(raw, clamped);
             }}
-            placeholder="sec" min={10} max={600}
+            placeholder="sec"
+            min={10}
+            max={600}
             className="w-16 px-2 py-1 bg-black/40 border border-white/10 text-white/60 text-center capcrunch-kicker text-[10px] focus:outline-none focus:border-white/25"
           />
           {customTimer && (

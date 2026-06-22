@@ -17,21 +17,21 @@ import { supabase } from '../../lib/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 const EMOTES = ['💩', '👅', '🍆', '😰', '💀'];
-const EMOTE_COOLDOWN_MS  = 10_000;
-const CHAT_COOLDOWN_MS   = 5_000;
-const EMOTE_DISPLAY_MS   = 2_500;
+const EMOTE_COOLDOWN_MS = 10_000;
+const CHAT_COOLDOWN_MS = 5_000;
+const EMOTE_DISPLAY_MS = 2_500;
 const CHAT_ANIM_DURATION = 3_200;
 const MAX_CHAT_ON_SCREEN = 4;
 
 const randBetween = (min: number, max: number) => Math.random() * (max - min) + min;
 
 const ZONES = [
-  { left: '5%',  top: '8%',  initX: -180, initY: 0    },
-  { left: '38%', top: '4%',  initX: 0,    initY: -180 },
-  { left: '68%', top: '8%',  initX: 180,  initY: 0    },
-  { left: '4%',  top: '33%', initX: -180, initY: 0    },
-  { left: '70%', top: '33%', initX: 180,  initY: 0    },
-  { left: '36%', top: '20%', initX: 0,    initY: -180 },
+  { left: '5%', top: '8%', initX: -180, initY: 0 },
+  { left: '38%', top: '4%', initX: 0, initY: -180 },
+  { left: '68%', top: '8%', initX: 180, initY: 0 },
+  { left: '4%', top: '33%', initX: -180, initY: 0 },
+  { left: '70%', top: '33%', initX: 180, initY: 0 },
+  { left: '36%', top: '20%', initX: 0, initY: -180 },
 ] as const;
 
 interface ActiveEmote {
@@ -46,8 +46,8 @@ interface ActiveChat {
   text: string;
   senderName: string;
   isOwn: boolean;
-  startX: number;  // left position as vw %
-  driftX: number;  // total horizontal drift in px
+  startX: number; // left position as vw %
+  driftX: number; // total horizontal drift in px
 }
 
 interface EmoteOverlayProps {
@@ -62,19 +62,19 @@ function makeChatEntry(fields: Omit<ActiveChat, 'startX' | 'driftX'>): ActiveCha
 
 export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: EmoteOverlayProps) {
   const [activeEmotes, setActiveEmotes] = useState<ActiveEmote[]>([]);
-  const [activeChats, setActiveChats]   = useState<ActiveChat[]>([]);
+  const [activeChats, setActiveChats] = useState<ActiveChat[]>([]);
   const [emoteCooldown, setEmoteCooldown] = useState(false);
-  const [chatCooldown, setChatCooldown]   = useState(false);
+  const [chatCooldown, setChatCooldown] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatText, setChatText] = useState('');
 
-  const channelRef  = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
   const nextZoneRef = useRef(0);
-  const sendingRef  = useRef(false); // Bug 3 fix: guard against Enter-repeat double-send
+  const sendingRef = useRef(false); // Bug 3 fix: guard against Enter-repeat double-send
 
   const removeChat = useCallback((id: string) => {
-    setActiveChats(prev => prev.filter(c => c.id !== id));
+    setActiveChats((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
   useEffect(() => {
@@ -89,23 +89,33 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
         nextZoneRef.current += 1;
 
         const id = Math.random().toString(36).slice(2);
-        setActiveEmotes(prev => [...prev, { id, emoji: payload.emoji, senderName: payload.senderName ?? 'Someone', zoneIdx }]);
-        setTimeout(() => setActiveEmotes(prev => prev.filter(e => e.id !== id)), EMOTE_DISPLAY_MS + 600);
+        setActiveEmotes((prev) => [
+          ...prev,
+          { id, emoji: payload.emoji, senderName: payload.senderName ?? 'Someone', zoneIdx },
+        ]);
+        setTimeout(
+          () => setActiveEmotes((prev) => prev.filter((e) => e.id !== id)),
+          EMOTE_DISPLAY_MS + 600,
+        );
       })
       .on('broadcast', { event: 'chat' }, ({ payload }) => {
         if (payload.senderId === currentPlayerId) return;
 
         // Sanitize untrusted broadcast payload at the boundary
-        const rawText = typeof payload.text === 'string' ? payload.text : String(payload.text ?? '');
+        const rawText =
+          typeof payload.text === 'string' ? payload.text : String(payload.text ?? '');
         const text = rawText.slice(0, 100).trim();
         if (!text) return;
 
-        const senderName = typeof payload.senderName === 'string'
-          ? payload.senderName.slice(0, 50)
-          : 'Someone';
+        const senderName =
+          typeof payload.senderName === 'string' ? payload.senderName.slice(0, 50) : 'Someone';
 
         const id = Math.random().toString(36).slice(2);
-        setActiveChats(prev => [...prev, makeChatEntry({ id, text, senderName, isOwn: false })].slice(-MAX_CHAT_ON_SCREEN));
+        setActiveChats((prev) =>
+          [...prev, makeChatEntry({ id, text, senderName, isOwn: false })].slice(
+            -MAX_CHAT_ON_SCREEN,
+          ),
+        );
         // Bug 2 fix: backstop removal in case onAnimationComplete doesn't fire (e.g. mid-unmount)
         setTimeout(() => removeChat(id), CHAT_ANIM_DURATION + 500);
       })
@@ -119,21 +129,25 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
     };
   }, [lobbyId, currentPlayerId, removeChat]);
 
-  const sendEmote = useCallback((emoji: string) => {
-    if (!supabase || !lobbyId || !channelRef.current || emoteCooldown) return;
-    channelRef.current.send({
-      type: 'broadcast',
-      event: 'emote',
-      payload: { emoji, senderName: currentPlayerName ?? 'Someone', senderId: currentPlayerId },
-    });
-    setEmoteCooldown(true);
-    setTimeout(() => setEmoteCooldown(false), EMOTE_COOLDOWN_MS);
-  }, [lobbyId, currentPlayerId, currentPlayerName, emoteCooldown]);
+  const sendEmote = useCallback(
+    (emoji: string) => {
+      if (!supabase || !lobbyId || !channelRef.current || emoteCooldown) return;
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'emote',
+        payload: { emoji, senderName: currentPlayerName ?? 'Someone', senderId: currentPlayerId },
+      });
+      setEmoteCooldown(true);
+      setTimeout(() => setEmoteCooldown(false), EMOTE_COOLDOWN_MS);
+    },
+    [lobbyId, currentPlayerId, currentPlayerName, emoteCooldown],
+  );
 
   const sendChat = useCallback(() => {
     const text = chatText.trim();
     // Bug 3 fix: synchronous re-entry guard prevents Enter-repeat double-send
-    if (!supabase || !lobbyId || !channelRef.current || chatCooldown || !text || sendingRef.current) return;
+    if (!supabase || !lobbyId || !channelRef.current || chatCooldown || !text || sendingRef.current)
+      return;
     sendingRef.current = true;
 
     channelRef.current.send({
@@ -143,7 +157,12 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
     });
 
     const id = Math.random().toString(36).slice(2);
-    setActiveChats(prev => [...prev, makeChatEntry({ id, text, senderName: currentPlayerName ?? 'You', isOwn: true })].slice(-MAX_CHAT_ON_SCREEN));
+    setActiveChats((prev) =>
+      [
+        ...prev,
+        makeChatEntry({ id, text, senderName: currentPlayerName ?? 'You', isOwn: true }),
+      ].slice(-MAX_CHAT_ON_SCREEN),
+    );
     setTimeout(() => removeChat(id), CHAT_ANIM_DURATION + 500);
 
     setChatText('');
@@ -153,12 +172,17 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
     setTimeout(() => setChatCooldown(false), CHAT_COOLDOWN_MS);
 
     // Release the re-entry guard after React has committed the state changes
-    setTimeout(() => { sendingRef.current = false; }, 0);
+    setTimeout(() => {
+      sendingRef.current = false;
+    }, 0);
   }, [lobbyId, currentPlayerId, currentPlayerName, chatCooldown, chatText, removeChat]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') sendChat();
-    if (e.key === 'Escape') { setChatOpen(false); setChatText(''); }
+    if (e.key === 'Escape') {
+      setChatOpen(false);
+      setChatText('');
+    }
   };
 
   const handleClose = () => {
@@ -171,7 +195,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
     <>
       {/* ── Incoming emotes ── */}
       <AnimatePresence>
-        {activeEmotes.map(emote => {
+        {activeEmotes.map((emote) => {
           const zone = ZONES[emote.zoneIdx % ZONES.length];
           return (
             <motion.div
@@ -183,7 +207,9 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               className="fixed pointer-events-none z-50 flex flex-col items-center"
               style={{ left: zone.left, top: zone.top }}
             >
-              <span style={{ fontSize: 'clamp(48px, 14vw, 72px)', lineHeight: 1, display: 'block' }}>
+              <span
+                style={{ fontSize: 'clamp(48px, 14vw, 72px)', lineHeight: 1, display: 'block' }}
+              >
                 {emote.emoji}
               </span>
               <span className="capcrunch-kicker text-white text-[11px] mt-1.5 bg-black/75 px-2.5 py-0.5 rounded-full whitespace-nowrap max-w-[100px] truncate block text-center">
@@ -195,7 +221,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
       </AnimatePresence>
 
       {/* ── Floating chat messages — diagonal drift from random bottom position, fade out ── */}
-      {activeChats.map(msg => (
+      {activeChats.map((msg) => (
         <motion.div
           key={msg.id}
           initial={{ opacity: 0, x: 0, y: 0 }}
@@ -204,12 +230,14 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
             x: [0, msg.driftX * 0.4, msg.driftX * 0.75, msg.driftX],
             y: [0, -40, -95, -150],
           }}
-          transition={{ duration: CHAT_ANIM_DURATION / 1000, ease: 'easeOut', times: [0, 0.08, 0.55, 1] }}
+          transition={{
+            duration: CHAT_ANIM_DURATION / 1000,
+            ease: 'easeOut',
+            times: [0, 0.08, 0.55, 1],
+          }}
           onAnimationComplete={() => removeChat(msg.id)}
           className={`fixed z-50 pointer-events-none px-3.5 py-2.5 rounded-xl shadow-lg ${
-            msg.isOwn
-              ? 'bg-black/70 border border-white/25'
-              : 'bg-black/80 border border-white/15'
+            msg.isOwn ? 'bg-black/70 border border-white/25' : 'bg-black/80 border border-white/15'
           }`}
           style={{
             left: `${msg.startX}%`,
@@ -217,7 +245,9 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
             maxWidth: 'min(260px, 70vw)',
           }}
         >
-          <p className={`capcrunch-kicker text-[9px] tracking-widest uppercase leading-none mb-1 ${msg.isOwn ? 'text-white/50' : 'text-[#d4af37]/70'}`}>
+          <p
+            className={`capcrunch-kicker text-[9px] tracking-widest uppercase leading-none mb-1 ${msg.isOwn ? 'text-white/50' : 'text-[#d4af37]/70'}`}
+          >
             {msg.senderName}
           </p>
           <p className="text-white text-sm leading-snug break-words">{msg.text}</p>
@@ -239,10 +269,13 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
               transition={{ duration: 0.18 }}
               className="flex gap-1 overflow-hidden"
             >
-              {EMOTES.map(emoji => (
+              {EMOTES.map((emoji) => (
                 <button
                   key={emoji}
-                  onClick={() => { sendEmote(emoji); setExpanded(false); }}
+                  onClick={() => {
+                    sendEmote(emoji);
+                    setExpanded(false);
+                  }}
                   disabled={emoteCooldown}
                   className="w-11 h-11 text-xl flex items-center justify-center rounded-lg transition-all active:scale-90 active:bg-white/10 hover:bg-white/10 disabled:opacity-25"
                 >
@@ -274,7 +307,7 @@ export function EmoteOverlay({ lobbyId, currentPlayerId, currentPlayerName }: Em
                 autoFocus
                 type="text"
                 value={chatText}
-                onChange={e => setChatText(e.target.value)}
+                onChange={(e) => setChatText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 maxLength={100}
                 placeholder="say something..."

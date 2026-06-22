@@ -42,9 +42,7 @@ export async function submitScore(session: GameSessionInput): Promise<{
   }
 
   try {
-    const { error } = await supabase
-      .from('game_sessions')
-      .insert(session);
+    const { error } = await supabase.from('game_sessions').insert(session);
 
     if (error) {
       console.error('Error submitting score:', error);
@@ -64,7 +62,7 @@ export async function submitScore(session: GameSessionInput): Promise<{
 export async function getLeaderboard(
   teamAbbreviation: string,
   season: string,
-  limit = 10
+  limit = 10,
 ): Promise<{ data: LeaderboardEntry[] | null; error?: string }> {
   if (!isSupabaseEnabled || !supabase) {
     return { data: null, error: 'Leaderboard not available' };
@@ -153,7 +151,7 @@ export async function getGlobalLeaderboard(limit = 10): Promise<{
  */
 export async function getUserBestScores(
   userId: string,
-  limit = 10
+  limit = 10,
 ): Promise<{ data: LeaderboardEntry[] | null; error?: string }> {
   if (!isSupabaseEnabled || !supabase) {
     return { data: null, error: 'Leaderboard not available' };

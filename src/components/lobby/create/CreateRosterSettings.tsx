@@ -40,11 +40,24 @@ interface Props {
 }
 
 export function CreateRosterSettings({
-  sport, gameMode, onGameModeChange,
-  selectionScope, onSelectionScopeChange,
-  selectedTeam, onTeamSelect, selectedYear, onYearSelect,
-  randomMinYear, onRandomMinYearChange, randomMaxYear, onRandomMaxYearChange,
-  timerDuration, customTimerInput, selectedPreset, onPresetSelect, onCustomTimerChange,
+  sport,
+  gameMode,
+  onGameModeChange,
+  selectionScope,
+  onSelectionScopeChange,
+  selectedTeam,
+  onTeamSelect,
+  selectedYear,
+  onYearSelect,
+  randomMinYear,
+  onRandomMinYearChange,
+  randomMaxYear,
+  onRandomMaxYearChange,
+  timerDuration,
+  customTimerInput,
+  selectedPreset,
+  onPresetSelect,
+  onCustomTimerChange,
 }: Props) {
   const yearOptions = Array.from({ length: 2025 - 2000 + 1 }, (_, i) => 2000 + i);
 
@@ -122,7 +135,11 @@ export function CreateRosterSettings({
               }}
               className="bg-black/40 text-white px-3 py-2 border border-white/10 capcrunch-kicker focus:outline-none focus:border-[#d4af37]"
             >
-              {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
             </select>
             <span className="text-white/40 capcrunch-kicker">to</span>
             <select
@@ -134,7 +151,11 @@ export function CreateRosterSettings({
               }}
               className="bg-black/40 text-white px-3 py-2 border border-white/10 capcrunch-kicker focus:outline-none focus:border-[#d4af37]"
             >
-              {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -144,7 +165,13 @@ export function CreateRosterSettings({
       {gameMode === 'manual' && (
         <div className="space-y-4">
           <TeamSelector selectedTeam={selectedTeam} onSelect={onTeamSelect} sport={sport} />
-          <YearSelector selectedYear={selectedYear} onSelect={onYearSelect} minYear={2000} maxYear={2025} sport={sport} />
+          <YearSelector
+            selectedYear={selectedYear}
+            onSelect={onYearSelect}
+            minYear={2000}
+            maxYear={2025}
+            sport={sport}
+          />
         </div>
       )}
 

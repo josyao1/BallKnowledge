@@ -21,14 +21,16 @@ import type { RollCallMerge } from '../../types/database';
 export function RollCallSessionPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
+  const { lobby, players, isHost, currentPlayerId, setLobby, setPlayers, leaveLobby } =
+    useLobbyStore();
   const {
-    lobby, players, isHost, currentPlayerId,
-    setLobby, setPlayers, leaveLobby,
-  } = useLobbyStore();
-  const {
-    entries, mergeDecisions,
-    submitEntry, fetchEntries, fetchMergeDecisions,
-    confirmMerge, dismissSuggestion,
+    entries,
+    mergeDecisions,
+    submitEntry,
+    fetchEntries,
+    fetchMergeDecisions,
+    confirmMerge,
+    dismissSuggestion,
     reset: resetEntries,
   } = useRollCallStore();
 
@@ -45,12 +47,18 @@ export function RollCallSessionPage() {
 
   // Load lobby on mount
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
 
     const loadLobby = async () => {
       setIsLoadingLobby(true);
       const result = await findLobbyByCode(code);
-      if (!result.lobby) { navigate('/'); return; }
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
 
       setLobby(result.lobby);
       const playersResult = await getLobbyPlayers(result.lobby.id);
@@ -61,7 +69,9 @@ export function RollCallSessionPage() {
     };
 
     loadLobby();
-    return () => { resetEntries(); };
+    return () => {
+      resetEntries();
+    };
   }, [code, navigate, setLobby, setPlayers, fetchEntries, fetchMergeDecisions, resetEntries]);
 
   // Navigate to results when finished
@@ -81,24 +91,21 @@ export function RollCallSessionPage() {
   // Derive merge keys from DB decisions
   const { confirmedKeys, dismissedKeys, confirmedMerges } = useMemo(
     () => deriveMergeState(mergeDecisions),
-    [mergeDecisions]
+    [mergeDecisions],
   );
 
   const suggestions = useMemo(
     () => findSuggestions(entries, confirmedKeys, dismissedKeys),
-    [entries, confirmedKeys, dismissedKeys]
+    [entries, confirmedKeys, dismissedKeys],
   );
 
-  const groups = useMemo(
-    () => applyMerges(entries, confirmedMerges),
-    [entries, confirmedMerges]
-  );
+  const groups = useMemo(() => applyMerges(entries, confirmedMerges), [entries, confirmedMerges]);
 
   const handleSubmitEntry = async () => {
     if (!inputText.trim() || !lobby || isSubmitting) return;
 
     const normalizedInput = normalize(inputText.trim());
-    const alreadyExists = entries.some(e => normalize(e.entry_text) === normalizedInput);
+    const alreadyExists = entries.some((e) => normalize(e.entry_text) === normalizedInput);
     if (alreadyExists) {
       setDupeWarning(true);
       setTimeout(() => setDupeWarning(false), 2000);
@@ -159,8 +166,18 @@ export function RollCallSessionPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={handleLeave} className="p-2 hover:bg-white/10 transition-colors">
-              <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <svg
+                className="w-5 h-5 text-white/60"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
               </svg>
             </button>
             <div>
@@ -174,7 +191,9 @@ export function RollCallSessionPage() {
             onClick={handleCopyCode}
             className="flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 hover:border-[#d4af37] transition-colors"
           >
-            <span className="font-mono text-lg tracking-widest text-[#d4af37]">{lobby.join_code}</span>
+            <span className="font-mono text-lg tracking-widest text-[#d4af37]">
+              {lobby.join_code}
+            </span>
             {copied && <span className="text-emerald-400 text-xs capcrunch-kicker">Copied!</span>}
           </button>
         </div>
@@ -251,7 +270,11 @@ function deriveMergeState(decisions: RollCallMerge[]) {
 // --- Waiting Phase ---
 
 function WaitingPhase({
-  players, currentPlayerId, isHost, playerCount, onStart,
+  players,
+  currentPlayerId,
+  isHost,
+  playerCount,
+  onStart,
 }: {
   players: { player_id: string; player_name: string; is_host: boolean }[];
   currentPlayerId: string;
@@ -328,7 +351,11 @@ interface PlayingPhaseProps {
   isSubmitting: boolean;
   dupeWarning: boolean;
   entries: { id: string; entry_text: string; player_name: string; submitted_at: string }[];
-  groups: { canonical: string; variants: { text: string; submitter: string }[]; uniqueSubmitters: number }[];
+  groups: {
+    canonical: string;
+    variants: { text: string; submitter: string }[];
+    uniqueSubmitters: number;
+  }[];
   confirmedMerges: string[][];
   uniqueCount: number;
   suggestionCount: number;
@@ -341,8 +368,20 @@ interface PlayingPhaseProps {
 }
 
 function PlayingPhase({
-  inputText, isSubmitting, dupeWarning, entries, groups, confirmedMerges, uniqueCount, suggestionCount,
-  isHost, inputRef, onInputChange, onSubmit, onEnd, onShowSuggestions,
+  inputText,
+  isSubmitting,
+  dupeWarning,
+  entries,
+  groups,
+  confirmedMerges,
+  uniqueCount,
+  suggestionCount,
+  isHost,
+  inputRef,
+  onInputChange,
+  onSubmit,
+  onEnd,
+  onShowSuggestions,
 }: PlayingPhaseProps) {
   // Build a set of entry IDs that have been merged, so we can skip them in the raw feed
   const mergedEntryIds = useMemo(() => {
@@ -356,37 +395,47 @@ function PlayingPhase({
   // Build merged groups with their earliest timestamp for ordering
   const mergedGroups = useMemo(() => {
     return groups
-      .filter(g => g.variants.length > 1)
-      .map(g => {
-        const earliestEntry = entries.find(e => e.entry_text === g.variants[0]?.text);
+      .filter((g) => g.variants.length > 1)
+      .map((g) => {
+        const earliestEntry = entries.find((e) => e.entry_text === g.variants[0]?.text);
         return { ...g, timestamp: earliestEntry?.submitted_at || '' };
       });
   }, [groups, entries]);
 
   // Interleave: unmerged entries + merged groups, sorted by time (newest first)
   const feedItems = useMemo(() => {
-    const items: { type: 'entry'; entry: typeof entries[0] }[] | { type: 'group'; group: typeof mergedGroups[0] }[] = [];
+    const items:
+      | { type: 'entry'; entry: (typeof entries)[0] }[]
+      | { type: 'group'; group: (typeof mergedGroups)[0] }[] = [];
 
     // Unmerged individual entries
     for (const entry of entries) {
       if (!mergedEntryIds.has(entry.id)) {
-        (items as { type: 'entry'; entry: typeof entries[0] }[]).push({ type: 'entry', entry });
+        (items as { type: 'entry'; entry: (typeof entries)[0] }[]).push({ type: 'entry', entry });
       }
     }
 
     // Merged groups — use the earliest entry's timestamp
     for (const group of mergedGroups) {
-      (items as { type: 'group'; group: typeof mergedGroups[0] }[]).push({ type: 'group', group });
+      (items as { type: 'group'; group: (typeof mergedGroups)[0] }[]).push({
+        type: 'group',
+        group,
+      });
     }
 
     // Sort newest first
-    (items as { type: string; entry?: typeof entries[0]; group?: typeof mergedGroups[0] }[]).sort((a, b) => {
+    (
+      items as { type: string; entry?: (typeof entries)[0]; group?: (typeof mergedGroups)[0] }[]
+    ).sort((a, b) => {
       const timeA = a.type === 'entry' ? a.entry!.submitted_at : a.group!.timestamp;
       const timeB = b.type === 'entry' ? b.entry!.submitted_at : b.group!.timestamp;
       return timeB.localeCompare(timeA);
     });
 
-    return items as ({ type: 'entry'; entry: typeof entries[0] } | { type: 'group'; group: typeof mergedGroups[0] })[];
+    return items as (
+      | { type: 'entry'; entry: (typeof entries)[0] }
+      | { type: 'group'; group: (typeof mergedGroups)[0] }
+    )[];
   }, [entries, mergedEntryIds, mergedGroups]);
 
   return (
@@ -470,8 +519,12 @@ function PlayingPhase({
                     animate={{ opacity: 1, x: 0 }}
                     className="flex items-center justify-between py-1.5 px-2 bg-black/30 border border-white/5"
                   >
-                    <span className="text-white/90 capcrunch-kicker text-sm">{item.entry.entry_text}</span>
-                    <span className="text-white/30 capcrunch-kicker text-[10px] tracking-wider">{item.entry.player_name}</span>
+                    <span className="text-white/90 capcrunch-kicker text-sm">
+                      {item.entry.entry_text}
+                    </span>
+                    <span className="text-white/30 capcrunch-kicker text-[10px] tracking-wider">
+                      {item.entry.player_name}
+                    </span>
                   </motion.div>
                 );
               }
@@ -483,9 +536,11 @@ function PlayingPhase({
                   animate={{ opacity: 1, x: 0 }}
                   className="flex items-center justify-between py-1.5 px-2 bg-black/30 border border-white/5"
                 >
-                  <span className="text-white/90 capcrunch-kicker text-sm">{item.group.canonical}</span>
+                  <span className="text-white/90 capcrunch-kicker text-sm">
+                    {item.group.canonical}
+                  </span>
                   <span className="text-white/30 capcrunch-kicker text-[10px] tracking-wider">
-                    {item.group.variants.map(v => v.submitter).join(', ')}
+                    {item.group.variants.map((v) => v.submitter).join(', ')}
                   </span>
                 </motion.div>
               );
@@ -515,9 +570,16 @@ function PlayingPhase({
 // --- Merge Suggestion Panel (slide-up overlay) ---
 
 function MergeSuggestionPanel({
-  suggestions, onConfirm, onDismiss, onClose,
+  suggestions,
+  onConfirm,
+  onDismiss,
+  onClose,
 }: {
-  suggestions: { key: string; canonical: string; entries: { id: string; text: string; submitter: string }[] }[];
+  suggestions: {
+    key: string;
+    canonical: string;
+    entries: { id: string; text: string; submitter: string }[];
+  }[];
   onConfirm: (key: string, entryIds: string[], canonical: string) => void;
   onDismiss: (key: string, entryIds: string[], canonical: string) => void;
   onClose: () => void;
@@ -542,12 +604,19 @@ function MergeSuggestionPanel({
               Merge similar entries or dismiss
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 transition-colors"
-          >
-            <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <button onClick={onClose} className="p-2 hover:bg-white/10 transition-colors">
+            <svg
+              className="w-5 h-5 text-white/50"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -563,8 +632,20 @@ function MergeSuggestionPanel({
               <SuggestionCard
                 key={s.key}
                 suggestion={s}
-                onConfirm={() => onConfirm(s.key, s.entries.map(e => e.id), s.canonical)}
-                onDismiss={() => onDismiss(s.key, s.entries.map(e => e.id), s.canonical)}
+                onConfirm={() =>
+                  onConfirm(
+                    s.key,
+                    s.entries.map((e) => e.id),
+                    s.canonical,
+                  )
+                }
+                onDismiss={() =>
+                  onDismiss(
+                    s.key,
+                    s.entries.map((e) => e.id),
+                    s.canonical,
+                  )
+                }
               />
             ))
           )}
@@ -575,7 +656,9 @@ function MergeSuggestionPanel({
 }
 
 function SuggestionCard({
-  suggestion, onConfirm, onDismiss,
+  suggestion,
+  onConfirm,
+  onDismiss,
 }: {
   suggestion: { canonical: string; entries: { id: string; text: string; submitter: string }[] };
   onConfirm: () => void;

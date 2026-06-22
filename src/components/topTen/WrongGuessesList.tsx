@@ -16,7 +16,8 @@ export function WrongGuessesList({ wrongGuesses }: Props) {
   if (wrongGuesses.length === 0) return null;
 
   const shouldCollapse = wrongGuesses.length > COLLAPSE_THRESHOLD;
-  const visible = shouldCollapse && !expanded ? wrongGuesses.slice(0, COLLAPSE_THRESHOLD) : wrongGuesses;
+  const visible =
+    shouldCollapse && !expanded ? wrongGuesses.slice(0, COLLAPSE_THRESHOLD) : wrongGuesses;
   const hiddenCount = wrongGuesses.length - COLLAPSE_THRESHOLD;
 
   return (

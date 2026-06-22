@@ -20,8 +20,15 @@ export function RollCallCreatePage() {
     if (!hostName.trim()) return;
 
     const lobby = await createLobby(
-      hostName.trim(), 'nba', 'ALL', 'all-time',
-      0, 'manual', 2000, 2024, 'roll_call'
+      hostName.trim(),
+      'nba',
+      'ALL',
+      'all-time',
+      0,
+      'manual',
+      2000,
+      2024,
+      'roll_call',
     );
 
     if (lobby) {
@@ -33,17 +40,26 @@ export function RollCallCreatePage() {
     <div className="min-h-screen home-chalkboard flex flex-col text-white">
       <header className="p-6 border-b border-white/10">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-white/10 transition-colors"
-          >
-            <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <button onClick={() => navigate('/')} className="p-2 hover:bg-white/10 transition-colors">
+            <svg
+              className="w-6 h-6 text-white/60"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
           </button>
           <div>
             <h1 className="capcrunch-title text-3xl text-[#d4af37]">Roll Call</h1>
-            <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.4em] uppercase">Name Every Player You Know</p>
+            <p className="capcrunch-kicker text-[9px] text-white/30 tracking-[0.4em] uppercase">
+              Name Every Player You Know
+            </p>
           </div>
         </div>
       </header>
@@ -74,10 +90,12 @@ export function RollCallCreatePage() {
           transition={{ delay: 0.05 }}
           className="capcrunch-panel p-4 text-center"
         >
-          <div className="capcrunch-kicker text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">How It Works</div>
+          <div className="capcrunch-kicker text-[10px] text-white/40 mb-2 tracking-[0.3em] uppercase">
+            How It Works
+          </div>
           <p className="text-white/60 text-sm capcrunch-kicker leading-relaxed">
-            Name as many sports players as you can with your friends.
-            No roster — just your memory. Fuzzy matching groups similar entries automatically.
+            Name as many sports players as you can with your friends. No roster — just your memory.
+            Fuzzy matching groups similar entries automatically.
           </p>
         </motion.div>
 

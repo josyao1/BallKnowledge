@@ -15,8 +15,8 @@ import { NFL_DIVISIONS, NBA_DIVISIONS } from '../../services/capCrunch';
 import { TeamLogo } from '../TeamLogo';
 
 function draftLabel(code: string): string {
-  if (code === 'R1')  return '1st Round';
-  if (code === 'R2')  return '2nd Round';
+  if (code === 'R1') return '1st Round';
+  if (code === 'R2') return '2nd Round';
   if (code === 'R23') return '2nd–3rd Round';
   if (code === 'R47') return '4th Round+';
   return code;
@@ -33,24 +33,25 @@ interface Props {
 export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm' }: Props) {
   const [showPanel, setShowPanel] = useState(false);
 
-  const divTeams = sport === 'nfl'
-    ? (NFL_DIVISIONS[division] ?? [])
-    : (NBA_DIVISIONS[division] ?? []);
+  const divTeams =
+    sport === 'nfl' ? (NFL_DIVISIONS[division] ?? []) : (NBA_DIVISIONS[division] ?? []);
 
   const divisionSize = size === 'lg' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl';
-  const roundSize    = size === 'lg' ? 'text-base md:text-lg' : 'text-sm md:text-base';
+  const roundSize = size === 'lg' ? 'text-base md:text-lg' : 'text-sm md:text-base';
 
   return (
     <div className="px-5 py-2 border bg-black/60 border-[#a855f7]/70 shadow-[0_0_16px_rgba(168,85,247,0.18)]">
       {/* Division name + draft round side by side */}
       <div className="flex items-center gap-3 flex-wrap">
-        <p className={`capcrunch-title text-[#FDF100] leading-tight ${divisionSize}`}>
-          {division}
-        </p>
+        <p className={`capcrunch-title text-[#FDF100] leading-tight ${divisionSize}`}>{division}</p>
         <div className="flex items-center gap-1.5">
           <span className="capcrunch-kicker text-[9px] text-white/30">+</span>
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#a855f7]/20 border border-[#a855f7]/50">
-            <img src="/draftlogo.png" alt="Draft" className={size === 'lg' ? 'h-5 object-contain' : 'h-4 object-contain'} />
+            <img
+              src="/draftlogo.png"
+              alt="Draft"
+              className={size === 'lg' ? 'h-5 object-contain' : 'h-4 object-contain'}
+            />
             <span className={`capcrunch-title text-[#a855f7] leading-none ${roundSize}`}>
               {draftLabel(draftRound)}
             </span>
@@ -60,7 +61,7 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
 
       {/* See teams trigger */}
       <button
-        onClick={() => setShowPanel(v => !v)}
+        onClick={() => setShowPanel((v) => !v)}
         className="mt-1.5 capcrunch-kicker text-[8px] text-[#a855f7]/60 hover:text-[#a855f7] transition-colors"
       >
         {showPanel ? 'hide teams ▲' : 'see teams ▼'}
@@ -94,7 +95,9 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">Division Teams</p>
+                    <p className="capcrunch-kicker text-[8px] text-white/40 tracking-widest uppercase leading-none mb-0.5">
+                      Division Teams
+                    </p>
                     <p className="capcrunch-title text-sm text-[#FDF100]">{division}</p>
                   </div>
                   <button
@@ -107,7 +110,7 @@ export function DivisionDraftRoundCard({ division, draftRound, sport, size = 'sm
 
                 {/* Team logos grid */}
                 <div className="flex justify-center gap-6 flex-wrap">
-                  {divTeams.map(abbr => (
+                  {divTeams.map((abbr) => (
                     <div key={abbr} className="flex flex-col items-center gap-1.5">
                       <TeamLogo sport={sport} abbr={abbr} size={52} />
                       <span className="capcrunch-kicker text-[9px] text-white/40">{abbr}</span>

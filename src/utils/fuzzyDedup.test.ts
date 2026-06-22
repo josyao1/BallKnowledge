@@ -157,7 +157,7 @@ describe('applyMerges', () => {
     const result = applyMerges(entries, [['1', '2']]);
     // Should have 2 groups: merged LeBron + solo Curry
     expect(result).toHaveLength(2);
-    const lebronGroup = result.find(g => g.canonical === 'LeBron James');
+    const lebronGroup = result.find((g) => g.canonical === 'LeBron James');
     expect(lebronGroup).toBeDefined();
     expect(lebronGroup!.variants).toHaveLength(2);
     expect(lebronGroup!.uniqueSubmitters).toBe(2);
@@ -171,7 +171,7 @@ describe('applyMerges', () => {
     ];
     const result = applyMerges(entries, [['1', '2']]);
     expect(result[0].canonical).toBe('Alpha Player'); // 2 submitters
-    expect(result[1].canonical).toBe('Beta Player');   // 1 submitter
+    expect(result[1].canonical).toBe('Beta Player'); // 1 submitter
   });
 
   it('handles merge IDs that do not exist in entries', () => {

@@ -3,17 +3,20 @@ import { TeamLogo } from '../TeamLogo';
 import { teams } from '../../data/teams';
 import { nflTeams } from '../../data/nfl-teams';
 
-export const NBA_BY_DIVISION = (['Eastern', 'Western'] as const).flatMap(conf =>
+export const NBA_BY_DIVISION = (['Eastern', 'Western'] as const).flatMap((conf) =>
   (['Atlantic', 'Central', 'Southeast', 'Northwest', 'Pacific', 'Southwest'] as const)
-    .map(div => ({ label: `${conf === 'Eastern' ? 'East' : 'West'} · ${div}`, divTeams: teams.filter(t => t.conference === conf && t.division === div) }))
-    .filter(g => g.divTeams.length > 0)
+    .map((div) => ({
+      label: `${conf === 'Eastern' ? 'East' : 'West'} · ${div}`,
+      divTeams: teams.filter((t) => t.conference === conf && t.division === div),
+    }))
+    .filter((g) => g.divTeams.length > 0),
 );
 
-export const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap(conf =>
-  (['East', 'North', 'South', 'West'] as const).map(div => ({
+export const NFL_BY_DIVISION = (['AFC', 'NFC'] as const).flatMap((conf) =>
+  (['East', 'North', 'South', 'West'] as const).map((div) => ({
     label: `${conf} ${div}`,
-    divTeams: nflTeams.filter(t => t.conference === conf && t.division === div),
-  }))
+    divTeams: nflTeams.filter((t) => t.conference === conf && t.division === div),
+  })),
 );
 
 interface Props {
@@ -38,12 +41,16 @@ export function TeamsReferencePanel({ sport, show, onClose }: Props) {
           <div className="max-w-lg mx-auto grid grid-cols-2 gap-x-6 gap-y-2">
             {groups.map(({ label, divTeams }) => (
               <div key={label}>
-                <p className="capcrunch-kicker text-[8px] text-white/20 tracking-[0.3em] mb-1">{label}</p>
+                <p className="capcrunch-kicker text-[8px] text-white/20 tracking-[0.3em] mb-1">
+                  {label}
+                </p>
                 <div className="flex gap-2 flex-wrap">
-                  {divTeams.map(t => (
+                  {divTeams.map((t) => (
                     <div key={t.abbreviation} className="flex items-center gap-1">
                       <TeamLogo abbr={t.abbreviation} sport={sport} size={18} />
-                      <span className="capcrunch-kicker text-[9px] text-white/40">{t.abbreviation}</span>
+                      <span className="capcrunch-kicker text-[9px] text-white/40">
+                        {t.abbreviation}
+                      </span>
                     </div>
                   ))}
                 </div>

@@ -8,11 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface Bio {
   height?: string;
   weight?: number;
-  school?: string;   // NBA field
-  college?: string;  // NFL field — same concept as school, different key
-  draftYear?: number;              // NBA: year drafted
-  draftClub?: string;              // NFL: drafting team
-  draftNumber?: number;            // NFL: overall pick number
+  school?: string; // NBA field
+  college?: string; // NFL field — same concept as school, different key
+  draftYear?: number; // NBA: year drafted
+  draftClub?: string; // NFL: drafting team
+  draftNumber?: number; // NFL: overall pick number
 }
 
 interface Props {
@@ -30,7 +30,9 @@ export function CareerBioPanel({ bio, revealed }: Props) {
           exit={{ opacity: 0, height: 0 }}
           className="mb-4 bg-black/40 border border-white/10 p-4"
         >
-          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">Player Bio</div>
+          <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">
+            Player Bio
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {bio.height && (
               <div>
@@ -47,7 +49,9 @@ export function CareerBioPanel({ bio, revealed }: Props) {
             {(bio.school || bio.college) && (
               <div>
                 <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">SCHOOL</div>
-                <div className="capcrunch-kicker text-sm text-white/80">{bio.school || bio.college}</div>
+                <div className="capcrunch-kicker text-sm text-white/80">
+                  {bio.school || bio.college}
+                </div>
               </div>
             )}
             {bio.draftYear ? (

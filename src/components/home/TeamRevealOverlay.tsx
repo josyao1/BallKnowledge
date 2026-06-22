@@ -16,15 +16,21 @@ interface Props {
   onReroll?: () => void;
 }
 
-const TEASE_MS   = 3600; // how long the ticker scrolls before landing
-const FLASH_MS   = 180;  // white flash duration
-const TICK_MS    = 850;  // countdown tick speed
+const TEASE_MS = 3600; // how long the ticker scrolls before landing
+const FLASH_MS = 180; // white flash duration
+const TICK_MS = 850; // countdown tick speed
 const SOLO_REVEAL_HOLD_MS = 500;
 
 export function TeamRevealOverlay({
-  winningTeam, winningYear, winningLabel = 'TEAM',
-  sport, winningTeamData, skipAnimation,
-  canSkip = true, onComplete, onReroll,
+  winningTeam,
+  winningYear,
+  winningLabel = 'TEAM',
+  sport,
+  winningTeamData,
+  skipAnimation,
+  canSkip = true,
+  onComplete,
+  onReroll,
 }: Props) {
   const [phase, setPhase] = useState<'tease' | 'revealed'>('tease');
   const [flash, setFlash] = useState(false);
@@ -42,7 +48,10 @@ export function TeamRevealOverlay({
 
   // Tease → flash → reveal
   useEffect(() => {
-    if (skipAnimation) { complete(); return; }
+    if (skipAnimation) {
+      complete();
+      return;
+    }
     const t = setTimeout(() => {
       setFlash(true);
       setTimeout(() => setFlash(false), FLASH_MS);
@@ -55,18 +64,16 @@ export function TeamRevealOverlay({
   useEffect(() => {
     if (skipAnimation || phase !== 'revealed' || onReroll || !countdownReady) return;
     if (count > 0) {
-      const t = setTimeout(() => setCount(c => c - 1), TICK_MS);
+      const t = setTimeout(() => setCount((c) => c - 1), TICK_MS);
       return () => clearTimeout(t);
     }
     complete();
   }, [phase, count, skipAnimation, onReroll, countdownReady]);
 
-  if (skipAnimation) return null;
-
-  const abbr      = winningTeamData?.abbreviation;
+  const abbr = winningTeamData?.abbreviation;
   const isDivision = winningLabel === 'DIVISION';
-  const isTeasing  = phase === 'tease';
-  const allTeams = (sport === 'nba' ? teams : nflTeams).map(team => ({
+  const isTeasing = phase === 'tease';
+  const allTeams = (sport === 'nba' ? teams : nflTeams).map((team) => ({
     abbr: team.abbreviation,
     label: team.name,
   }));
@@ -75,10 +82,13 @@ export function TeamRevealOverlay({
     return sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : String(year);
   });
   const teamIndex = Math.max(
-    allTeams.findIndex(team => team.abbr === abbr || team.label === winningTeam),
+    allTeams.findIndex((team) => team.abbr === abbr || team.label === winningTeam),
     0,
   );
-  const yearIndex = Math.max(allYears.findIndex(year => year === winningYear), 0);
+  const yearIndex = Math.max(
+    allYears.findIndex((year) => year === winningYear),
+    0,
+  );
 
   useEffect(() => {
     if (skipAnimation || phase !== 'tease') return;
@@ -87,16 +97,18 @@ export function TeamRevealOverlay({
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const runTick = () => {
       tick += 1;
-      const nextTeam = tick < 10
-        ? Math.floor(Math.random() * allTeams.length)
-        : tick < 13
-          ? (teamIndex - (13 - tick) + allTeams.length) % allTeams.length
-          : teamIndex;
-      const nextYear = tick < 10
-        ? Math.floor(Math.random() * allYears.length)
-        : tick < 13
-          ? (yearIndex - (13 - tick) + allYears.length) % allYears.length
-          : yearIndex;
+      const nextTeam =
+        tick < 10
+          ? Math.floor(Math.random() * allTeams.length)
+          : tick < 13
+            ? (teamIndex - (13 - tick) + allTeams.length) % allTeams.length
+            : teamIndex;
+      const nextYear =
+        tick < 10
+          ? Math.floor(Math.random() * allYears.length)
+          : tick < 13
+            ? (yearIndex - (13 - tick) + allYears.length) % allYears.length
+            : yearIndex;
       setDisplayTeamIndex(nextTeam);
       setDisplayYearIndex(nextYear);
       if (tick < delays.length) {
@@ -118,9 +130,10 @@ export function TeamRevealOverlay({
     return () => clearTimeout(timer);
   }, [skipAnimation, phase, onReroll]);
 
+  if (skipAnimation) return null;
+
   return (
     <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center overflow-hidden">
-
       {/* Flash overlay */}
       <AnimatePresence>
         {flash && (
@@ -148,7 +161,9 @@ export function TeamRevealOverlay({
       {isTeasing && (
         <motion.div
           className="absolute w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(253,241,0,0.12) 0%, transparent 70%)' }}
+          style={{
+            background: 'radial-gradient(circle, rgba(253,241,0,0.12) 0%, transparent 70%)',
+          }}
           animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
         />
@@ -157,21 +172,19 @@ export function TeamRevealOverlay({
       {/* Main content */}
       <motion.div
         className="flex flex-col items-center gap-5 relative z-[5] w-full max-w-4xl px-4"
-        animate={isTeasing
-          ? { opacity: 0.82 }
-          : { opacity: 1 }
-        }
+        animate={isTeasing ? { opacity: 0.82 } : { opacity: 1 }}
         transition={{ duration: 0.35 }}
       >
         <div className="w-full max-w-xl flex flex-col gap-4">
-          <FlashBox
-            label={winningLabel}
-            accent="#FDF100"
-            active={isTeasing}
-          >
+          <FlashBox label={winningLabel} accent="#FDF100" active={isTeasing}>
             {!isDivision ? (
               <>
-                <TeamLogo sport={sport} abbr={allTeams[displayTeamIndex]?.abbr ?? abbr} size={72} className="md:!w-20 md:!h-20" />
+                <TeamLogo
+                  sport={sport}
+                  abbr={allTeams[displayTeamIndex]?.abbr ?? abbr}
+                  size={72}
+                  className="md:!w-20 md:!h-20"
+                />
                 <span className="capcrunch-title text-lg md:text-2xl text-white text-center leading-none">
                   {allTeams[displayTeamIndex]?.label ?? winningTeam}
                 </span>
@@ -183,11 +196,7 @@ export function TeamRevealOverlay({
             )}
           </FlashBox>
 
-          <FlashBox
-            label="Season"
-            accent="#68BBE5"
-            active={isTeasing}
-          >
+          <FlashBox label="Season" accent="#68BBE5" active={isTeasing}>
             <span className="capcrunch-title text-2xl md:text-4xl text-white text-center leading-none">
               {allYears[displayYearIndex] ?? winningYear}
             </span>
@@ -225,7 +234,10 @@ export function TeamRevealOverlay({
               canSkip ? (
                 <div className="flex gap-3">
                   <button
-                    onClick={() => { hasCompleted.current = false; onReroll(); }}
+                    onClick={() => {
+                      hasCompleted.current = false;
+                      onReroll();
+                    }}
                     className="capcrunch-btn-secondary capcrunch-kicker px-5 py-2.5 text-xs"
                   >
                     Reroll
@@ -249,7 +261,9 @@ export function TeamRevealOverlay({
             ) : (
               /* Solo countdown */
               <div className="flex flex-col items-center gap-1">
-                <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.5em]">GET READY</span>
+                <span className="capcrunch-kicker text-[9px] text-white/25 tracking-[0.5em]">
+                  GET READY
+                </span>
                 {countdownReady ? (
                   <AnimatePresence mode="popLayout">
                     <motion.span
@@ -297,24 +311,30 @@ function FlashBox({
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
-        <span className="capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.3em] uppercase text-white/40">{label}</span>
+        <span className="capcrunch-kicker text-[8px] md:text-[10px] tracking-[0.3em] uppercase text-white/40">
+          {label}
+        </span>
         <span className="w-12 h-px" style={{ backgroundColor: accent, opacity: 0.45 }} />
       </div>
       <motion.div
         className="relative overflow-hidden border border-white/10 bg-black/30 py-5 md:py-6 px-4 flex flex-col items-center justify-center min-h-[132px] md:min-h-[152px]"
-        animate={active ? { scale: [1, 1.015, 1], opacity: [0.82, 1, 0.82] } : { scale: 1, opacity: 1 }}
-        transition={active ? { duration: 0.35, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
+        animate={
+          active ? { scale: [1, 1.015, 1], opacity: [0.82, 1, 0.82] } : { scale: 1, opacity: 1 }
+        }
+        transition={
+          active ? { duration: 0.35, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }
+        }
         style={{ boxShadow: active ? `0 0 28px ${accent}22` : undefined }}
       >
         <motion.div
           className="absolute inset-0 pointer-events-none"
           animate={active ? { opacity: [0.05, 0.14, 0.05] } : { opacity: 0.06 }}
           transition={{ duration: 0.3, repeat: Infinity }}
-          style={{ background: `linear-gradient(135deg, ${accent}22, transparent 40%, ${accent}12)` }}
+          style={{
+            background: `linear-gradient(135deg, ${accent}22, transparent 40%, ${accent}12)`,
+          }}
         />
-        <div className="relative z-[1] flex flex-col items-center gap-3">
-          {children}
-        </div>
+        <div className="relative z-[1] flex flex-col items-center gap-3">{children}</div>
       </motion.div>
     </div>
   );

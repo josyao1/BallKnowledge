@@ -70,7 +70,8 @@ export function MultiplayerNameScramblePage() {
 
   // ── Local state ──
   const [localStatus, setLocalStatus] = useState<'playing' | 'done'>('playing');
-  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } = useGuessInput();
+  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType } =
+    useGuessInput();
   const [pressureTimer, setPressureTimer] = useState(30);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
@@ -86,10 +87,13 @@ export function MultiplayerNameScramblePage() {
   const roundHistoryRef = useRef<RoundSummary[]>([]);
   // Snapshot of round scores taken when allPlayersFinished (still in 'playing' phase).
   // Prevents post-round realtime events from corrupting the interstitial ptsMap.
-  const roundScoresSnapshotRef = useRef<Record<string, { score: number; finishedAt: string | null }>>({});
+  const roundScoresSnapshotRef = useRef<
+    Record<string, { score: number; finishedAt: string | null }>
+  >({});
 
   // pressureActive is derived from the shared timestamp so all clients agree on when it's running
-  const pressureActive = !!careerState?.firstCorrectAt && pressureTimer > 0 && localStatus === 'playing';
+  const pressureActive =
+    !!careerState?.firstCorrectAt && pressureTimer > 0 && localStatus === 'playing';
 
   // ── HOST: write firstCorrectAt to career_state when the first answer arrives ──
   // Capture stable values so the closure doesn't go stale between renders.
@@ -99,11 +103,19 @@ export function MultiplayerNameScramblePage() {
     if (!isHost || !lobbyIdForFirstCorrect || !careerStateForFirstCorrect) return;
     if (careerStateForFirstCorrect.firstCorrectAt || hasWrittenFirstCorrectAtRef.current) return;
     if (!atLeastOnePlayerWasActiveRef.current) return;
-    const firstCorrect = players.some(p => p.finished_at !== null && (p.score || 0) > 0);
+    const firstCorrect = players.some((p) => p.finished_at !== null && (p.score || 0) > 0);
     if (!firstCorrect) return;
     hasWrittenFirstCorrectAtRef.current = true;
-    updateCareerState(lobbyIdForFirstCorrect, { ...careerStateForFirstCorrect, firstCorrectAt: new Date().toISOString() });
-  }, [players.map(p => p.finished_at).join(','), isHost, lobbyIdForFirstCorrect, careerStateForFirstCorrect]);
+    updateCareerState(lobbyIdForFirstCorrect, {
+      ...careerStateForFirstCorrect,
+      firstCorrectAt: new Date().toISOString(),
+    });
+  }, [
+    players.map((p) => p.finished_at).join(','),
+    isHost,
+    lobbyIdForFirstCorrect,
+    careerStateForFirstCorrect,
+  ]);
 
   // ── ALL CLIENTS: compute pressure countdown from the shared firstCorrectAt timestamp ──
   useEffect(() => {
@@ -113,7 +125,9 @@ export function MultiplayerNameScramblePage() {
     const tick = () => setPressureTimer(Math.max(0, 30 - Math.floor((Date.now() - anchor) / 1000)));
     tick();
     pressureIntervalRef.current = setInterval(tick, 500);
-    return () => { if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current); };
+    return () => {
+      if (pressureIntervalRef.current) clearInterval(pressureIntervalRef.current);
+    };
   }, [careerState?.firstCorrectAt]);
 
   // ── Auto give-up when timer hits 0 ──
@@ -135,28 +149,39 @@ export function MultiplayerNameScramblePage() {
     prevStatusRef.current = lobby.status;
 
     // Capture round summary when round ends
-    if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState) {
+    if (
+      prev === 'playing' &&
+      (lobby.status === 'waiting' || lobby.status === 'finished') &&
+      careerState
+    ) {
       const ptsMap: Record<string, number> = {};
       const finishedAt: Record<string, string | null> = {};
 
       // Use the snapshot taken when allPlayersFinished (before post-round realtime events
       // could corrupt scores). Fall back to live players state if no snapshot available.
-      const snapOrLive = (p: { player_id: string; score: number | null; finished_at: string | null }) => {
+      const snapOrLive = (p: {
+        player_id: string;
+        score: number | null;
+        finished_at: string | null;
+      }) => {
         const snap = roundScoresSnapshotRef.current[p.player_id];
         return snap ?? { score: p.score || 0, finishedAt: p.finished_at };
       };
 
       // Compute positional pts: sort correct players by finished_at, assign 5/3/2/1
       const correctPlayers = [...players]
-        .filter(p => { const s = snapOrLive(p); return (s.score || 0) > 0 && s.finishedAt !== null; })
+        .filter((p) => {
+          const s = snapOrLive(p);
+          return (s.score || 0) > 0 && s.finishedAt !== null;
+        })
         .sort((a, b) => {
           const aT = new Date(snapOrLive(a).finishedAt!).getTime();
           const bT = new Date(snapOrLive(b).finishedAt!).getTime();
           return aT - bT;
         });
 
-      players.forEach(p => {
-        const posIdx = correctPlayers.findIndex(cp => cp.player_id === p.player_id);
+      players.forEach((p) => {
+        const posIdx = correctPlayers.findIndex((cp) => cp.player_id === p.player_id);
         ptsMap[p.player_id] = posIdx >= 0 ? (POSITION_PTS[posIdx] ?? 1) : 0;
         finishedAt[p.player_id] = snapOrLive(p).finishedAt;
       });
@@ -175,7 +200,9 @@ export function MultiplayerNameScramblePage() {
     }
 
     if (lobby.status === 'finished') {
-      navigate(`/lobby/${code}/scramble/results`, { state: { roundHistory: roundHistoryRef.current } });
+      navigate(`/lobby/${code}/scramble/results`, {
+        state: { roundHistory: roundHistoryRef.current },
+      });
     }
   }, [lobby?.status]);
 
@@ -212,21 +239,24 @@ export function MultiplayerNameScramblePage() {
 
   // ── Track when players are active ──
   useEffect(() => {
-    if (players.some(p => p.finished_at === null)) {
+    if (players.some((p) => p.finished_at === null)) {
       atLeastOnePlayerWasActiveRef.current = true;
     }
   }, [players]);
 
   // ── HOST: Advance round when all players finish ──
-  const allPlayersFinished = players.length > 0 && players.every(p => p.finished_at !== null);
+  const allPlayersFinished = players.length > 0 && players.every((p) => p.finished_at !== null);
 
   // Snapshot round scores the moment all players finish (still in 'playing' phase).
   // Prevents addCareerPoints / next-round score reset realtime events from
   // corrupting the interstitial's ptsMap computation.
   useEffect(() => {
     if (allPlayersFinished && lobby?.status === 'playing' && atLeastOnePlayerWasActiveRef.current) {
-      players.forEach(p => {
-        roundScoresSnapshotRef.current[p.player_id] = { score: p.score || 0, finishedAt: p.finished_at };
+      players.forEach((p) => {
+        roundScoresSnapshotRef.current[p.player_id] = {
+          score: p.score || 0,
+          finishedAt: p.finished_at,
+        };
       });
     }
   }, [allPlayersFinished, lobby?.status]);
@@ -237,20 +267,20 @@ export function MultiplayerNameScramblePage() {
 
     // Award positional pts (5/3/2/1) to correct players sorted by finish time
     const correctPlayers = [...players]
-      .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
+      .filter((p) => (p.score || 0) > 0 && p.finished_at !== null)
       .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
 
     await Promise.all(
-      correctPlayers.slice(0, POSITION_PTS.length).map((p, i) =>
-        addCareerPoints(lobby.id, p.player_id, POSITION_PTS[i])
-      )
+      correctPlayers
+        .slice(0, POSITION_PTS.length)
+        .map((p, i) => addCareerPoints(lobby.id, p.player_id, POSITION_PTS[i])),
     );
 
     // Check win condition with fresh data
     const freshResult = await getLobbyPlayers(lobby.id);
     const freshPlayers = freshResult.players || [];
     const winTarget = careerState.win_target || 20;
-    const gameWinner = freshPlayers.find(p => (p.points ?? 0) >= winTarget);
+    const gameWinner = freshPlayers.find((p) => (p.points ?? 0) >= winTarget);
 
     if (gameWinner) {
       // Award session win to the match winner
@@ -262,7 +292,8 @@ export function MultiplayerNameScramblePage() {
   }, [lobby, careerState, players]);
 
   useEffect(() => {
-    if (!isHost || !allPlayersFinished || lobby?.status !== 'playing' || hasAdvancedRef.current) return;
+    if (!isHost || !allPlayersFinished || lobby?.status !== 'playing' || hasAdvancedRef.current)
+      return;
     if (!atLeastOnePlayerWasActiveRef.current) return;
     advanceRound();
   }, [allPlayersFinished, lobby?.status, isHost]);
@@ -287,7 +318,10 @@ export function MultiplayerNameScramblePage() {
     } else {
       setFeedbackMsg(`"${name}" — try again`);
       setFeedbackType('wrong');
-      setTimeout(() => { setFeedbackMsg(''); setFeedbackType(''); }, 1800);
+      setTimeout(() => {
+        setFeedbackMsg('');
+        setFeedbackType('');
+      }, 1800);
     }
   }
 
@@ -305,17 +339,24 @@ export function MultiplayerNameScramblePage() {
 
     try {
       const sport = (careerState.sport || lobby.sport) as Sport;
-      const careerTo       = careerState.career_to      || 0;
-      const minMpg         = careerState.min_mpg        || 0;
-      const minYards       = careerState.min_yards      || 0;
+      const careerTo = careerState.career_to || 0;
+      const minMpg = careerState.min_mpg || 0;
+      const minYards = careerState.min_yards || 0;
       const includeDefense = careerState.include_defense !== false;
-      const filters = (careerTo || minMpg || minYards || !includeDefense) ? { careerTo, minMpg, minYards, includeDefense } : undefined;
+      const filters =
+        careerTo || minMpg || minYards || !includeDefense
+          ? { careerTo, minMpg, minYards, includeDefense }
+          : undefined;
 
-      const player = sport === 'nba'
-        ? await getRandomNBAScramblePlayer(filters)
-        : await getRandomNFLScramblePlayer(filters);
+      const player =
+        sport === 'nba'
+          ? await getRandomNBAScramblePlayer(filters)
+          : await getRandomNFLScramblePlayer(filters);
 
-      if (!player) { setIsLoadingNext(false); return; }
+      if (!player) {
+        setIsLoadingNext(false);
+        return;
+      }
 
       const playerName = player.player_name;
       const scrambled = scrambleName(playerName);
@@ -351,7 +392,7 @@ export function MultiplayerNameScramblePage() {
   }
 
   const winTarget = careerState.win_target || 20;
-  const doneCount = players.filter(p => p.finished_at !== null).length;
+  const doneCount = players.filter((p) => p.finished_at !== null).length;
   const totalCount = players.length;
   const isDone = localStatus === 'done';
 
@@ -363,7 +404,9 @@ export function MultiplayerNameScramblePage() {
       <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
           <div>
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">
+              Round Complete
+            </div>
             <h1 className="capcrunch-title text-2xl text-white">
               Round {summary?.round ?? careerState.round}
             </h1>
@@ -381,9 +424,13 @@ export function MultiplayerNameScramblePage() {
             animate={{ opacity: 1, scale: 1 }}
             className="mb-6 p-6 bg-black/40 border-2 border-[#d4af37]/50 text-center space-y-2"
           >
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">The Scramble Was</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">
+              The Scramble Was
+            </div>
             <div className="capcrunch-title text-2xl text-[#3b82f6]">{summary.scrambledName}</div>
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase mt-2">The Answer Was</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase mt-2">
+              The Answer Was
+            </div>
             <div className="flex items-center justify-center gap-3 mt-1">
               <PlayerHeadshot
                 playerId={summary.playerId ?? undefined}
@@ -413,8 +460,12 @@ export function MultiplayerNameScramblePage() {
               const sorted = [...players].sort((a, b) => {
                 const diff = (ptsMap[b.player_id] ?? 0) - (ptsMap[a.player_id] ?? 0);
                 if (diff !== 0) return diff;
-                const aT = finishedAt[a.player_id] ? new Date(finishedAt[a.player_id]!).getTime() : Infinity;
-                const bT = finishedAt[b.player_id] ? new Date(finishedAt[b.player_id]!).getTime() : Infinity;
+                const aT = finishedAt[a.player_id]
+                  ? new Date(finishedAt[a.player_id]!).getTime()
+                  : Infinity;
+                const bT = finishedAt[b.player_id]
+                  ? new Date(finishedAt[b.player_id]!).getTime()
+                  : Infinity;
                 return aT - bT;
               });
 
@@ -437,20 +488,34 @@ export function MultiplayerNameScramblePage() {
                     <div className="flex items-center gap-3">
                       <span className="text-xl w-8 text-center">{badge}</span>
                       <div>
-                        <span className="capcrunch-kicker text-sm text-white/80">{player.player_name}</span>
-                        {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">(you)</span>}
+                        <span className="capcrunch-kicker text-sm text-white/80">
+                          {player.player_name}
+                        </span>
+                        {isMe && (
+                          <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">
+                            (you)
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">PTS</div>
-                        <div className={`capcrunch-title text-lg ${gotIt ? 'text-[#d4af37]' : 'text-[#555]'}`}>
+                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">
+                          PTS
+                        </div>
+                        <div
+                          className={`capcrunch-title text-lg ${gotIt ? 'text-[#d4af37]' : 'text-[#555]'}`}
+                        >
                           {ptsLabel}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">TOTAL</div>
-                        <div className="capcrunch-title text-lg text-[#3b82f6]">{player.points ?? 0}</div>
+                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">
+                          TOTAL
+                        </div>
+                        <div className="capcrunch-title text-lg text-[#3b82f6]">
+                          {player.points ?? 0}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -471,29 +536,34 @@ export function MultiplayerNameScramblePage() {
             Race to {winTarget} pts
           </div>
           <div className="space-y-3">
-            {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => {
-              const pts = player.points ?? 0;
-              const pct = Math.min(100, (pts / winTarget) * 100);
-              const isMe = player.player_id === currentPlayerId;
-              return (
-                <div key={player.player_id}>
-                  <div className="flex justify-between mb-1">
-                    <span className={`capcrunch-kicker text-xs ${isMe ? 'text-white' : 'text-white/60'}`}>
-                      {player.player_name}{isMe ? ' (you)' : ''}
-                    </span>
-                    <span className="capcrunch-title text-sm text-[#3b82f6]">{pts}</span>
+            {[...players]
+              .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+              .map((player) => {
+                const pts = player.points ?? 0;
+                const pct = Math.min(100, (pts / winTarget) * 100);
+                const isMe = player.player_id === currentPlayerId;
+                return (
+                  <div key={player.player_id}>
+                    <div className="flex justify-between mb-1">
+                      <span
+                        className={`capcrunch-kicker text-xs ${isMe ? 'text-white' : 'text-white/60'}`}
+                      >
+                        {player.player_name}
+                        {isMe ? ' (you)' : ''}
+                      </span>
+                      <span className="capcrunch-title text-sm text-[#3b82f6]">{pts}</span>
+                    </div>
+                    <div className="h-2 bg-[#222] rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-[#222] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.6, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </motion.div>
 
@@ -518,11 +588,15 @@ export function MultiplayerNameScramblePage() {
   // Layout: fixed-height container so the mobile keyboard doesn't scroll the
   // scrambled name off screen. Name is pinned at top, input pinned at bottom,
   // everything else scrolls in the middle.
-  const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+  const currentPlayerName = players.find((p) => p.player_id === currentPlayerId)?.player_name;
 
   return (
     <div className="fixed inset-0 home-chalkboard text-white flex flex-col overflow-hidden">
-      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
+      <EmoteOverlay
+        lobbyId={lobby?.id}
+        currentPlayerId={currentPlayerId}
+        currentPlayerName={currentPlayerName}
+      />
 
       {/* ── PINNED TOP: always visible even when keyboard is open ── */}
       <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 home-chalkboard">
@@ -540,7 +614,9 @@ export function MultiplayerNameScramblePage() {
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
             <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-1 text-center">
               <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">DONE</div>
-              <div className="capcrunch-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
+              <div className="capcrunch-title text-lg text-white leading-none">
+                {doneCount}/{totalCount}
+              </div>
             </div>
           </div>
         </div>
@@ -574,8 +650,8 @@ export function MultiplayerNameScramblePage() {
                 pressureTimer <= 10
                   ? 'bg-red-900/30 border-red-500 text-red-400'
                   : pressureTimer <= 20
-                  ? 'bg-yellow-900/20 border-yellow-600 text-yellow-400'
-                  : 'bg-black/40 border-[#3b82f6] text-[#3b82f6]'
+                    ? 'bg-yellow-900/20 border-yellow-600 text-yellow-400'
+                    : 'bg-black/40 border-[#3b82f6] text-[#3b82f6]'
               }`}
             >
               <span className="capcrunch-title text-xl">{pressureTimer}s</span>
@@ -589,31 +665,37 @@ export function MultiplayerNameScramblePage() {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {/* Points progress bars */}
         <div className="space-y-2">
-          {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => {
-            const pts = player.points ?? 0;
-            const pct = Math.min(100, (pts / winTarget) * 100);
-            const isMe = player.player_id === currentPlayerId;
-            return (
-              <div key={player.player_id} className="flex items-center gap-2">
-                <span className={`capcrunch-kicker text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
-                  {player.player_name}
-                </span>
-                <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.4 }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
-                  />
+          {[...players]
+            .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+            .map((player) => {
+              const pts = player.points ?? 0;
+              const pct = Math.min(100, (pts / winTarget) * 100);
+              const isMe = player.player_id === currentPlayerId;
+              return (
+                <div key={player.player_id} className="flex items-center gap-2">
+                  <span
+                    className={`capcrunch-kicker text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}
+                  >
+                    {player.player_name}
+                  </span>
+                  <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
+                    <motion.div
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.4 }}
+                      className="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#60a5fa]"
+                    />
+                  </div>
+                  <span className="capcrunch-title text-sm text-[#3b82f6] w-8 text-right flex-shrink-0">
+                    {pts}
+                  </span>
                 </div>
-                <span className="capcrunch-title text-sm text-[#3b82f6] w-8 text-right flex-shrink-0">{pts}</span>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* Live player status */}
         <div className="flex gap-2 flex-wrap">
-          {players.map(player => {
+          {players.map((player) => {
             const isMe = player.player_id === currentPlayerId;
             const finished = player.finished_at !== null;
             const gotIt = finished && (player.score || 0) > 0;
@@ -624,11 +706,14 @@ export function MultiplayerNameScramblePage() {
                   gotIt
                     ? 'bg-green-900/20 border-green-700/40 text-green-300'
                     : finished
-                    ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                    : 'bg-black/40 border-white/10 text-white/60'
+                      ? 'bg-red-900/20 border-red-900/40 text-red-400'
+                      : 'bg-black/40 border-white/10 text-white/60'
                 }`}
               >
-                <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
+                <span>
+                  {player.player_name}
+                  {isMe ? ' (you)' : ''}
+                </span>
                 {gotIt && <span className="text-green-400">✓</span>}
                 {finished && !gotIt && <span>✗</span>}
                 {!finished && (
@@ -679,8 +764,8 @@ export function MultiplayerNameScramblePage() {
             <input
               type="text"
               value={guessInput}
-              onChange={e => setGuessInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleGuess()}
+              onChange={(e) => setGuessInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleGuess()}
               placeholder="Type the player's name..."
               className="flex-1 bg-black/40 border border-white/10 px-4 py-3 capcrunch-kicker text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#3b82f6]"
             />

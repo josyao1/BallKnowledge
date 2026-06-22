@@ -5,12 +5,12 @@ import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 export interface PlayerEntry {
   player_id: string | number;
   player_name: string;
-  position?: string;    // NFL only; used for pick weighting
+  position?: string; // NFL only; used for pick weighting
   longestTeam?: string; // most-season team abbreviation; shown at zoom level 4
 }
 
 export const NFL_OFF_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
-export const NFL_ST_POSITIONS  = new Set(['K', 'P', 'LS']);
+export const NFL_ST_POSITIONS = new Set(['K', 'P', 'LS']);
 
 /** Team abbreviation a player spent the most seasons with. Slash seasons use the first team. */
 export function longestTenuredTeam(seasons: Array<{ team: string }>): string {
@@ -24,13 +24,19 @@ export function longestTenuredTeam(seasons: Array<{ team: string }>): string {
 
 /** First letter of each space-separated word in uppercase. */
 export function getInitials(name: string): string {
-  return name.split(' ').map(w => w[0] ?? '').join('').toUpperCase();
+  return name
+    .split(' ')
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase();
 }
 
 /** Offensive positions are weighted 3×; all others 1×. */
 export function weightedRandom(candidates: PlayerEntry[]): PlayerEntry {
-  const total = candidates.reduce((sum, p) =>
-    sum + (p.position && NFL_OFF_POSITIONS.has(p.position) ? 3 : 1), 0);
+  const total = candidates.reduce(
+    (sum, p) => sum + (p.position && NFL_OFF_POSITIONS.has(p.position) ? 3 : 1),
+    0,
+  );
   let r = Math.random() * total;
   for (const p of candidates) {
     r -= p.position && NFL_OFF_POSITIONS.has(p.position) ? 3 : 1;
@@ -55,24 +61,27 @@ export function getSuggestions(input: string, pool: PlayerEntry[], limit = 5): P
     const pWords = pNorm.split(' ');
     if (pNorm.startsWith(norm)) {
       scored.push({ entry: p, score: 100 });
-    } else if (normWords.every(iw => pWords.some(pw => pw.startsWith(iw)))) {
+    } else if (normWords.every((iw) => pWords.some((pw) => pw.startsWith(iw)))) {
       scored.push({ entry: p, score: 80 });
     } else if (normWords[0]?.length >= 3 && pWords[0]?.startsWith(normWords[0])) {
       scored.push({ entry: p, score: 60 });
     }
   }
-  return scored.sort((a, b) => b.score - a.score).slice(0, limit).map(s => s.entry);
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((s) => s.entry);
 }
 
 /** Last season year from an NBA player's seasons array. */
 export function nbaEndYear(p: NBACareerPlayer): number {
-  const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
+  const years = p.seasons.map((s) => parseInt(s.season)).filter(Boolean);
   return years.length ? Math.max(...years) : 0;
 }
 
 /** Last season year from an NFL player's seasons array. */
 export function nflEndYear(p: NFLCareerPlayer): number {
-  const years = p.seasons.map(s => parseInt(s.season)).filter(Boolean);
+  const years = p.seasons.map((s) => parseInt(s.season)).filter(Boolean);
   return years.length ? Math.max(...years) : 0;
 }
 
@@ -81,12 +90,16 @@ export function nflEndYear(p: NFLCareerPlayer): number {
  * K/P/LS are always excluded. Offense requires minYards peak (0 = any).
  * Defense: 'known' = curated DEFENSE_ALLOWLIST only; 'all' = all non-ST.
  */
-export function nflInPool(p: NFLCareerPlayer, minYards: number, defenseMode: 'known' | 'all'): boolean {
+export function nflInPool(
+  p: NFLCareerPlayer,
+  minYards: number,
+  defenseMode: 'known' | 'all',
+): boolean {
   if (NFL_ST_POSITIONS.has(p.position)) return false;
   if (NFL_OFF_POSITIONS.has(p.position)) {
     if (minYards === 0) return true;
     return p.seasons.some(
-      s => (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >= minYards
+      (s) => (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >= minYards,
     );
   }
   return defenseMode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));

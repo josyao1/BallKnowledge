@@ -12,7 +12,10 @@ export function CareerWrongGuesses({ guesses }: Props) {
   return (
     <div className="mb-4 flex flex-wrap gap-2">
       {guesses.map((g, i) => (
-        <span key={i} className="px-2 py-1 bg-red-900/30 border border-red-800/50 rounded text-xs capcrunch-kicker text-red-300">
+        <span
+          key={i}
+          className="px-2 py-1 bg-red-900/30 border border-red-800/50 rounded text-xs capcrunch-kicker text-red-300"
+        >
           {g}
         </span>
       ))}

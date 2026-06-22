@@ -56,9 +56,12 @@ export const NFL_WR_TE_COLUMNS = [
 export function getColumns(sport: Sport, position: string) {
   if (sport === 'nba') return NBA_COLUMNS;
   switch (position) {
-    case 'QB': return NFL_QB_COLUMNS;
-    case 'RB': return NFL_RB_COLUMNS;
-    default:   return NFL_WR_TE_COLUMNS;
+    case 'QB':
+      return NFL_QB_COLUMNS;
+    case 'RB':
+      return NFL_RB_COLUMNS;
+    default:
+      return NFL_WR_TE_COLUMNS;
   }
 }
 

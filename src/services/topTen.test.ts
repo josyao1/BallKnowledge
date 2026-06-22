@@ -8,7 +8,7 @@ describe('stat category definitions', () => {
     });
 
     it('all have sport set to nba', () => {
-      expect(NBA_STAT_CATEGORIES.every(c => c.sport === 'nba')).toBe(true);
+      expect(NBA_STAT_CATEGORIES.every((c) => c.sport === 'nba')).toBe(true);
     });
 
     it('all have required fields', () => {
@@ -20,7 +20,7 @@ describe('stat category definitions', () => {
     });
 
     it('includes key stat categories', () => {
-      const keys = NBA_STAT_CATEGORIES.map(c => c.key);
+      const keys = NBA_STAT_CATEGORIES.map((c) => c.key);
       expect(keys).toContain('total_pts');
       expect(keys).toContain('total_reb');
       expect(keys).toContain('total_ast');
@@ -35,11 +35,11 @@ describe('stat category definitions', () => {
     });
 
     it('all have sport set to nfl', () => {
-      expect(NFL_STAT_CATEGORIES.every(c => c.sport === 'nfl')).toBe(true);
+      expect(NFL_STAT_CATEGORIES.every((c) => c.sport === 'nfl')).toBe(true);
     });
 
     it('includes fantasy points categories by position', () => {
-      const keys = NFL_STAT_CATEGORIES.map(c => c.key);
+      const keys = NFL_STAT_CATEGORIES.map((c) => c.key);
       expect(keys).toContain('fantasy_pts_qb');
       expect(keys).toContain('fantasy_pts_rb');
       expect(keys).toContain('fantasy_pts_wr');
@@ -47,19 +47,19 @@ describe('stat category definitions', () => {
     });
 
     it('includes award categories', () => {
-      const keys = NFL_STAT_CATEGORIES.map(c => c.key);
+      const keys = NFL_STAT_CATEGORIES.map((c) => c.key);
       expect(keys).toContain('award_mvp');
     });
   });
 
   describe('NFL team categories', () => {
     it('has a combined fantasy_pts category', () => {
-      const keys = NFL_TEAM_STAT_CATEGORIES.map(c => c.key);
+      const keys = NFL_TEAM_STAT_CATEGORIES.map((c) => c.key);
       expect(keys).toContain('fantasy_pts');
     });
 
     it('includes core offensive stats', () => {
-      const keys = NFL_TEAM_STAT_CATEGORIES.map(c => c.key);
+      const keys = NFL_TEAM_STAT_CATEGORIES.map((c) => c.key);
       expect(keys).toContain('passing_yards');
       expect(keys).toContain('rushing_yards');
       expect(keys).toContain('receiving_yards');

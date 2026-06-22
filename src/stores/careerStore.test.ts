@@ -114,8 +114,8 @@ describe('careerStore', () => {
     it('score cannot go below 0', () => {
       // Score starts at 20. Reveal initials (-10), then years (-3), then bio (-3) = 4
       useCareerStore.getState().revealInitials(); // 10
-      useCareerStore.getState().revealYears();    // 7
-      useCareerStore.getState().revealBio();      // 4
+      useCareerStore.getState().revealYears(); // 7
+      useCareerStore.getState().revealBio(); // 4
       expect(useCareerStore.getState().score).toBe(4);
     });
 

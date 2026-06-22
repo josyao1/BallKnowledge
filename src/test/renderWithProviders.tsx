@@ -12,7 +12,7 @@ function AllProviders({ children }: WrapperProps) {
 
 export function renderWithProviders(
   ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
+  options?: Omit<RenderOptions, 'wrapper'>,
 ) {
   return render(ui, { wrapper: AllProviders, ...options });
 }

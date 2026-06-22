@@ -26,10 +26,7 @@ describe('longestTenuredTeam', () => {
   });
 
   it('uses first team in slash-separated season', () => {
-    const seasons = [
-      { team: 'ORL/DEN' },
-      { team: 'ORL' },
-    ];
+    const seasons = [{ team: 'ORL/DEN' }, { team: 'ORL' }];
     expect(longestTenuredTeam(seasons)).toBe('ORL');
   });
 
@@ -86,13 +83,13 @@ describe('getSuggestions', () => {
 
   it('matches when all input words match name-word prefixes (score 80)', () => {
     const results = getSuggestions('Kev Dur', pool);
-    expect(results.some(r => r.player_name === 'Kevin Durant')).toBe(true);
+    expect(results.some((r) => r.player_name === 'Kevin Durant')).toBe(true);
   });
 
   it('matches on first-token prefix (score 60)', () => {
     const results = getSuggestions('Ste', pool);
-    expect(results.some(r => r.player_name === 'Stephen Curry')).toBe(true);
-    expect(results.some(r => r.player_name === 'Steve Nash')).toBe(true);
+    expect(results.some((r) => r.player_name === 'Stephen Curry')).toBe(true);
+    expect(results.some((r) => r.player_name === 'Steve Nash')).toBe(true);
   });
 
   it('limits results to specified count', () => {
@@ -210,7 +207,7 @@ describe('nflInPool', () => {
         { season: '2024', passing_yards: 0, rushing_yards: 0, receiving_yards: 800 },
       ],
     } as unknown as NFLCareerPlayer;
-    expect(nflInPool(player, 500, 'known')).toBe(true);  // 800 >= 500
+    expect(nflInPool(player, 500, 'known')).toBe(true); // 800 >= 500
     expect(nflInPool(player, 1000, 'known')).toBe(false); // max is 800
   });
 

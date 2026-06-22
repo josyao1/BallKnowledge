@@ -31,7 +31,9 @@ export function useRollCallSubscription(lobbyId: string | null) {
           table: 'roll_call_entries',
           filter: `lobby_id=eq.${lobbyId}`,
         },
-        () => { fetchEntries(lobbyId); }
+        () => {
+          fetchEntries(lobbyId);
+        },
       )
       .on(
         'postgres_changes',
@@ -41,7 +43,9 @@ export function useRollCallSubscription(lobbyId: string | null) {
           table: 'roll_call_merges',
           filter: `lobby_id=eq.${lobbyId}`,
         },
-        () => { fetchMergeDecisions(lobbyId); }
+        () => {
+          fetchMergeDecisions(lobbyId);
+        },
       )
       .subscribe();
 

@@ -13,7 +13,12 @@ import { useGameStore } from '../../stores/gameStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { teams } from '../../data/teams';
 import { nflTeams } from '../../data/nfl-teams';
-import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../../services/roster';
+import {
+  fetchTeamRoster,
+  fetchStaticNFLRoster,
+  fetchStaticSeasonPlayers,
+  fetchStaticNFLSeasonPlayers,
+} from '../../services/roster';
 
 export function ResultsPage() {
   const navigate = useNavigate();
@@ -47,10 +52,9 @@ export function ResultsPage() {
   // Accuracy = correct guesses / total guess attempts (correct + incorrect).
   // This measures naming precision, not roster coverage.
   const totalNamingAttempts = guessedPlayers.length + incorrectGuesses.length;
-  const accuracy = totalNamingAttempts > 0
-    ? Math.round((guessedPlayers.length / totalNamingAttempts) * 100)
-    : 0;
-  
+  const accuracy =
+    totalNamingAttempts > 0 ? Math.round((guessedPlayers.length / totalNamingAttempts) * 100) : 0;
+
   const timeTaken = timerDuration - timeRemaining;
   const guessedIds = new Set(guessedPlayers.map((p) => p.id));
 
@@ -81,15 +85,25 @@ export function ResultsPage() {
             const result = await fetchTeamRoster(team.abbreviation, season);
             rosterPlayers = result.players;
           } else {
-            rosterPlayers = await fetchStaticNFLRoster(team.abbreviation, year) ?? [];
+            rosterPlayers = (await fetchStaticNFLRoster(team.abbreviation, year)) ?? [];
           }
 
           if (rosterPlayers.length) {
-            const leaguePlayers = sport === 'nba'
-              ? await fetchStaticSeasonPlayers(season) ?? []
-              : await fetchStaticNFLSeasonPlayers(year) ?? [];
+            const leaguePlayers =
+              sport === 'nba'
+                ? ((await fetchStaticSeasonPlayers(season)) ?? [])
+                : ((await fetchStaticNFLSeasonPlayers(year)) ?? []);
 
-            setGameConfig(sport, team, season, 'random', timerDuration, rosterPlayers, leaguePlayers, hideResultsDuringGame);
+            setGameConfig(
+              sport,
+              team,
+              season,
+              'random',
+              timerDuration,
+              rosterPlayers,
+              leaguePlayers,
+              hideResultsDuringGame,
+            );
             navigate('/game');
             return;
           }
@@ -114,7 +128,6 @@ export function ResultsPage() {
 
   return (
     <div className="min-h-screen home-chalkboard text-white flex flex-col relative overflow-hidden p-4 md:p-6">
-      
       {/* 1. DEALER SWEEP OVERLAY */}
       <AnimatePresence>
         {isExiting && (
@@ -127,11 +140,12 @@ export function ResultsPage() {
                 transition={{ duration: 0.8, delay: i * 0.08, ease: [0.645, 0.045, 0.355, 1] }}
                 className="absolute inset-y-0 w-full shadow-[20px_0_40px_rgba(0,0,0,0.6)] border-r border-white/10"
                 style={{
-                  background: i % 2 === 0 
-                    ? `linear-gradient(90deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`
-                    : '#111',
+                  background:
+                    i % 2 === 0
+                      ? `linear-gradient(90deg, ${selectedTeam.colors.primary}, ${selectedTeam.colors.secondary})`
+                      : '#111',
                   left: `${i * 8}%`,
-                  zIndex: 100 - i
+                  zIndex: 100 - i,
                 }}
               />
             ))}
@@ -140,41 +154,53 @@ export function ResultsPage() {
       </AnimatePresence>
 
       {/* 3. MAIN UI INTERFACE */}
-      <motion.div 
-        animate={isExiting ? { opacity: 0, scale: 0.95, filter: 'blur(10px)' } : { opacity: 1, scale: 1 }}
+      <motion.div
+        animate={
+          isExiting ? { opacity: 0, scale: 0.95, filter: 'blur(10px)' } : { opacity: 1, scale: 1 }
+        }
         className="relative z-10 flex flex-col h-full max-w-7xl mx-auto w-full"
       >
         {/* HEADER - Responsive sizing */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b border-white/10 pb-4 gap-4">
           <div>
-            <div className="capcrunch-kicker text-[8px] md:text-[10px] text-white/30">Vault Record // Settlement</div>
-            <h1 className="capcrunch-title text-4xl md:text-6xl text-white leading-none">The Final Tab</h1>
+            <div className="capcrunch-kicker text-[8px] md:text-[10px] text-white/30">
+              Vault Record // Settlement
+            </div>
+            <h1 className="capcrunch-title text-4xl md:text-6xl text-white leading-none">
+              The Final Tab
+            </h1>
           </div>
           <div className="flex flex-col items-start md:items-end w-full md:w-auto">
-             <div className="capcrunch-panel border-white/20 px-4 py-1 mb-1 w-full md:w-auto text-center">
-               <span className="capcrunch-kicker text-xs md:text-sm text-white/80">
-                 {selectedTeam.abbreviation} • {selectedSeason}
-               </span>
-             </div>
+            <div className="capcrunch-panel border-white/20 px-4 py-1 mb-1 w-full md:w-auto text-center">
+              <span className="capcrunch-kicker text-xs md:text-sm text-white/80">
+                {selectedTeam.abbreviation} • {selectedSeason}
+              </span>
+            </div>
           </div>
         </header>
 
         {/* MAIN PIT DASHBOARD - Grid to Flex-Col on Mobile */}
         <main className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-6 min-h-0 overflow-visible lg:overflow-hidden">
-          
           {/* LEFT COLUMN (3/12 Desktop, Full Mobile) */}
           <div className="lg:col-span-3 flex flex-col gap-4 md:gap-6">
-            
             {/* STATS GRID - 2x2 */}
             <div className="grid grid-cols-2 gap-2 md:gap-3">
               {[
                 { label: 'BANKED', value: score },
                 { label: 'ACCURACY', value: `${accuracy}%` },
                 { label: 'COLLECTED', value: `${guessedPlayers.length}/${currentRoster.length}` },
-                { label: 'CLOCK', value: `${Math.floor(timeTaken / 60)}:${String(timeTaken % 60).padStart(2, '0')}` }
+                {
+                  label: 'CLOCK',
+                  value: `${Math.floor(timeTaken / 60)}:${String(timeTaken % 60).padStart(2, '0')}`,
+                },
               ].map((stat) => (
-                <div key={stat.label} className="capcrunch-panel p-3 md:p-4 shadow-xl relative overflow-hidden">
-                  <div className="capcrunch-kicker text-[7px] md:text-[8px] text-white/30 mb-1">{stat.label}</div>
+                <div
+                  key={stat.label}
+                  className="capcrunch-panel p-3 md:p-4 shadow-xl relative overflow-hidden"
+                >
+                  <div className="capcrunch-kicker text-[7px] md:text-[8px] text-white/30 mb-1">
+                    {stat.label}
+                  </div>
                   <div className="capcrunch-title text-xl md:text-2xl text-white">{stat.value}</div>
                 </div>
               ))}
@@ -203,10 +229,15 @@ export function ResultsPage() {
 
             {/* DEAD BETS - Collapsible height on mobile */}
             <div className="h-32 md:h-48 lg:flex-1 capcrunch-panel border-white/5 p-4 flex flex-col overflow-hidden">
-              <h2 className="capcrunch-kicker text-[9px] text-white/40 mb-3 flex justify-between">Dead Bets <span>// {incorrectGuesses.length}</span></h2>
+              <h2 className="capcrunch-kicker text-[9px] text-white/40 mb-3 flex justify-between">
+                Dead Bets <span>// {incorrectGuesses.length}</span>
+              </h2>
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-wrap content-start gap-2 pb-2">
                 {incorrectGuesses.map((guess, index) => (
-                  <span key={index} className="px-2 py-1 bg-[#f0f0f0] text-black capcrunch-kicker text-[9px] font-bold uppercase border-b-2 border-gray-400">
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-[#f0f0f0] text-black capcrunch-kicker text-[9px] font-bold uppercase border-b-2 border-gray-400"
+                  >
                     {guess}
                   </span>
                 ))}
@@ -220,14 +251,16 @@ export function ResultsPage() {
               <span className="capcrunch-kicker text-[9px] text-white/40">Roster Ledger</span>
               <span className="capcrunch-kicker text-[9px] text-white/20">Odds: 1:1</span>
             </div>
-            
+
             {/* GRID ADJUSTMENT: 1 col mobile, 2 col tablet, 3 col desktop */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar max-h-[50vh] lg:max-h-none">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {currentRoster.map((player) => {
                   const wasGuessed = guessedIds.has(player.id);
-                  const teamGradient = wasGuessed 
-                    ? { background: `linear-gradient(135deg, ${selectedTeam.colors.primary}33 0%, ${selectedTeam.colors.secondary}33 100%)` }
+                  const teamGradient = wasGuessed
+                    ? {
+                        background: `linear-gradient(135deg, ${selectedTeam.colors.primary}33 0%, ${selectedTeam.colors.secondary}33 100%)`,
+                      }
                     : { background: 'transparent' };
 
                   return (
@@ -238,15 +271,21 @@ export function ResultsPage() {
                     >
                       <div className="flex justify-between items-center relative z-10">
                         <div className="overflow-hidden">
-                          <div className={`capcrunch-kicker text-[7px] md:text-[8px] ${wasGuessed ? 'text-white/50' : 'text-white/20'}`}>
+                          <div
+                            className={`capcrunch-kicker text-[7px] md:text-[8px] ${wasGuessed ? 'text-white/50' : 'text-white/20'}`}
+                          >
                             #{player.number || '??'} // {player.position}
                           </div>
-                          <div className={`capcrunch-title text-sm md:text-base truncate ${wasGuessed ? 'text-white' : 'text-white/40'}`}>
+                          <div
+                            className={`capcrunch-title text-sm md:text-base truncate ${wasGuessed ? 'text-white' : 'text-white/40'}`}
+                          >
                             {player.name}
                           </div>
                         </div>
                         {wasGuessed && (
-                          <div className="bg-white text-black text-[7px] px-1 py-0.5 capcrunch-kicker font-bold shadow-sm">FOUND</div>
+                          <div className="bg-white text-black text-[7px] px-1 py-0.5 capcrunch-kicker font-bold shadow-sm">
+                            FOUND
+                          </div>
                         )}
                       </div>
                     </div>

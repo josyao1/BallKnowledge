@@ -34,7 +34,10 @@ export function HomeButton({ isHost = false, onEndGame }: Props) {
           <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">Leave?</span>
           {isHost && onEndGame && (
             <button
-              onClick={() => { setConfirming(false); onEndGame(); }}
+              onClick={() => {
+                setConfirming(false);
+                onEndGame();
+              }}
               className="px-2.5 py-1 capcrunch-title text-xs text-white bg-orange-700/80 hover:bg-orange-600 border border-orange-500 transition-colors whitespace-nowrap"
             >
               Send to Lobby

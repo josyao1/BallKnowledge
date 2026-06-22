@@ -10,7 +10,15 @@ interface Props {
   sport: 'nba' | 'nfl';
 }
 
-export function TopTenCategoryHeader({ categoryLabel, roundInfo, isTeamRound, teamAbbr, isCumulativeRound, isSingleSeason, sport }: Props) {
+export function TopTenCategoryHeader({
+  categoryLabel,
+  roundInfo,
+  isTeamRound,
+  teamAbbr,
+  isCumulativeRound,
+  isSingleSeason,
+  sport,
+}: Props) {
   return (
     <div className="text-center pt-5 pb-1">
       <h2
@@ -20,9 +28,7 @@ export function TopTenCategoryHeader({ categoryLabel, roundInfo, isTeamRound, te
         {categoryLabel}
       </h2>
       <div className="flex items-center justify-center gap-1.5 mt-1.5">
-        {isTeamRound && teamAbbr && (
-          <TeamLogo abbr={teamAbbr} sport={sport} size={16} />
-        )}
+        {isTeamRound && teamAbbr && <TeamLogo abbr={teamAbbr} sport={sport} size={16} />}
         <p className="capcrunch-kicker text-[10px] text-white/50 tracking-[0.3em]">{roundInfo}</p>
       </div>
       {isCumulativeRound && (

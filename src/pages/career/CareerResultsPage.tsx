@@ -63,9 +63,12 @@ const NFL_WR_TE_COLUMNS = [
 function getColumns(sport: Sport, position: string) {
   if (sport === 'nba') return NBA_COLUMNS;
   switch (position) {
-    case 'QB': return NFL_QB_COLUMNS;
-    case 'RB': return NFL_RB_COLUMNS;
-    default: return NFL_WR_TE_COLUMNS;
+    case 'QB':
+      return NFL_QB_COLUMNS;
+    case 'RB':
+      return NFL_RB_COLUMNS;
+    default:
+      return NFL_WR_TE_COLUMNS;
   }
 }
 
@@ -105,7 +108,10 @@ export function CareerResultsPage() {
 
     try {
       const game = await getNextGame(sport, careerFilters);
-      if (!game) { setIsLoadingNew(false); return; }
+      if (!game) {
+        setIsLoadingNew(false);
+        return;
+      }
 
       store.initGame(game.data, game.sport);
       navigate('/career', { state: location.state });
@@ -131,7 +137,10 @@ export function CareerResultsPage() {
             {store.playerName}
           </h1>
           {store.position && (
-            <span className="px-3 py-1 rounded text-xs capcrunch-kicker tracking-wider text-white" style={{ backgroundColor: accentColor }}>
+            <span
+              className="px-3 py-1 rounded text-xs capcrunch-kicker tracking-wider text-white"
+              style={{ backgroundColor: accentColor }}
+            >
               {store.position}
             </span>
           )}
@@ -155,14 +164,20 @@ export function CareerResultsPage() {
           <div className="capcrunch-title text-xl text-white/90">{store.seasons.length}</div>
         </div>
         <div className="capcrunch-panel p-3 text-center">
-          <div className="capcrunch-kicker text-[8px] text-[#666] tracking-widest">HINTS / MISSES</div>
-          <div className="capcrunch-title text-xl text-white/90">{hintsUsed} / {store.guesses.length}</div>
+          <div className="capcrunch-kicker text-[8px] text-[#666] tracking-widest">
+            HINTS / MISSES
+          </div>
+          <div className="capcrunch-title text-xl text-white/90">
+            {hintsUsed} / {store.guesses.length}
+          </div>
         </div>
       </div>
 
       {/* Bio */}
       <div className="mb-6 capcrunch-panel p-4 max-w-2xl mx-auto w-full">
-        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">Player Bio</div>
+        <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest mb-2 uppercase">
+          Player Bio
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {store.bio.height && (
             <div>
@@ -179,7 +194,9 @@ export function CareerResultsPage() {
           {(store.bio.school || store.bio.college) && (
             <div>
               <div className="capcrunch-kicker text-[8px] text-[#666] tracking-wider">SCHOOL</div>
-              <div className="capcrunch-kicker text-sm text-white/80">{store.bio.school || store.bio.college}</div>
+              <div className="capcrunch-kicker text-sm text-white/80">
+                {store.bio.school || store.bio.college}
+              </div>
             </div>
           )}
           {store.bio.draftYear ? (
@@ -203,8 +220,11 @@ export function CareerResultsPage() {
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="border-b border-white/10">
-              {columns.map(col => (
-                <th key={col.key} className="px-3 py-2 text-left capcrunch-kicker text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className="px-3 py-2 text-left capcrunch-kicker text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap"
+                >
                   {col.label}
                 </th>
               ))}
@@ -213,8 +233,11 @@ export function CareerResultsPage() {
           <tbody>
             {store.seasons.map((season, idx) => (
               <tr key={season.season + idx} className="border-b border-white/5 hover:bg-white/5">
-                {columns.map(col => (
-                  <td key={col.key} className="px-3 py-2 capcrunch-kicker text-xs text-white/80 whitespace-nowrap">
+                {columns.map((col) => (
+                  <td
+                    key={col.key}
+                    className="px-3 py-2 capcrunch-kicker text-xs text-white/80 whitespace-nowrap"
+                  >
                     {formatStat(col.key, season[col.key])}
                   </td>
                 ))}
@@ -239,7 +262,9 @@ export function CareerResultsPage() {
           onClick={handleHome}
           className="group relative bg-black/40 border border-white/10 py-3 hover:border-white/20 transition-colors"
         >
-          <span className="capcrunch-title text-lg text-white/70 uppercase tracking-widest">Back to Home</span>
+          <span className="capcrunch-title text-lg text-white/70 uppercase tracking-widest">
+            Back to Home
+          </span>
         </button>
       </div>
     </div>

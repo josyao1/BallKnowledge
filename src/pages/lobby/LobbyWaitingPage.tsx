@@ -18,26 +18,57 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { useGameStore } from '../../stores/gameStore';
-import { fetchTeamRoster, fetchDivisionRosters, fetchStaticSeasonPlayers, fetchStaticNFLRoster, fetchStaticNFLSeasonPlayers } from '../../services/roster';
+import {
+  fetchTeamRoster,
+  fetchDivisionRosters,
+  fetchStaticSeasonPlayers,
+  fetchStaticNFLRoster,
+  fetchStaticNFLSeasonPlayers,
+} from '../../services/roster';
 import { teams, getNBADivisions, getNBATeamsByDivision } from '../../data/teams';
 import { nflTeams, getNFLDivisions, getNFLTeamsByDivision } from '../../data/nfl-teams';
-import { findLobbyByCode, getLobbyPlayers, updateLobbyStatus, getStoredPlayerName, startCareerRound } from '../../services/lobby';
+import {
+  findLobbyByCode,
+  getLobbyPlayers,
+  updateLobbyStatus,
+  getStoredPlayerName,
+  startCareerRound,
+} from '../../services/lobby';
 import { getNextGame, startPrefetch } from '../../services/careerPrefetch';
-import { selectRandomStatCategory, selectRandomHWFilter, generateTargetCap, assignRandomTeam, classifySpecialRoundType, advanceSpecialRoundCycle } from '../../services/capCrunch';
-import { getRandomNBAScramblePlayer, getRandomNFLScramblePlayer, loadNBALineupPool, loadNFLLineupPool } from '../../services/careerData';
+import {
+  selectRandomStatCategory,
+  selectRandomHWFilter,
+  generateTargetCap,
+  assignRandomTeam,
+  classifySpecialRoundType,
+  advanceSpecialRoundCycle,
+} from '../../services/capCrunch';
+import {
+  getRandomNBAScramblePlayer,
+  getRandomNFLScramblePlayer,
+  loadNBALineupPool,
+  loadNFLLineupPool,
+} from '../../services/careerData';
 import type { NBACareerPlayer, NFLCareerPlayer } from '../../services/careerData';
 import { DEFENSE_ALLOWLIST } from '../../data/faceRevealDefenseAllowlist';
 import { longestTenuredTeam } from '../faceReveal/faceRevealUtils';
 import { getRandomBoxScoreGame, ALL_BOX_SCORE_YEARS } from '../../services/boxScoreData';
 import { generateTopTenRound } from '../../services/topTen';
 import { getRandomNBABoxScoreGame, ALL_NBA_BOX_SCORE_YEARS } from '../../services/nbaBoxScoreData';
-import { loadNFLStarters, getRandomNFLTeamAndSide, getRandomEncoding, pickBestEncoding, loadNBAStarters, getRandomNBATeam } from '../../services/startingLineupData';
+import {
+  loadNFLStarters,
+  getRandomNFLTeamAndSide,
+  getRandomEncoding,
+  pickBestEncoding,
+  loadNBAStarters,
+  getRandomNBATeam,
+} from '../../services/startingLineupData';
 import { scrambleName } from '../../utils/scramble';
 import { TeamRevealOverlay } from '../../components/home/TeamRevealOverlay';
-import { LobbyJoinPrompt }    from '../../components/lobby/LobbyJoinPrompt';
-import { LobbyGameInfo }      from '../../components/lobby/LobbyGameInfo';
-import { LobbyHostSettings }  from '../../components/lobby/LobbyHostSettings';
-import { LobbyPlayerList }    from '../../components/lobby/LobbyPlayerList';
+import { LobbyJoinPrompt } from '../../components/lobby/LobbyJoinPrompt';
+import { LobbyGameInfo } from '../../components/lobby/LobbyGameInfo';
+import { LobbyHostSettings } from '../../components/lobby/LobbyHostSettings';
+import { LobbyPlayerList } from '../../components/lobby/LobbyPlayerList';
 import { LobbyActionButtons } from '../../components/lobby/LobbyActionButtons';
 import type { HostFormValues, SettingsRef } from '../../components/lobby/LobbyHostSettings';
 import type { Sport } from '../../types';
@@ -46,32 +77,42 @@ export function LobbyWaitingPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const {
-    lobby, players, isHost, currentPlayerId,
-    setLobby, setPlayers, leaveLobby, setReady, startGame,
-    updateSettings, assignTeam, joinExistingLobby, updateCareerState,
+    lobby,
+    players,
+    isHost,
+    currentPlayerId,
+    setLobby,
+    setPlayers,
+    leaveLobby,
+    setReady,
+    startGame,
+    updateSettings,
+    assignTeam,
+    joinExistingLobby,
+    updateCareerState,
   } = useLobbyStore();
-  const setGameConfig      = useGameStore(s => s.setGameConfig);
-  const setDivisionRosters = useGameStore(s => s.setDivisionRosters);
+  const setGameConfig = useGameStore((s) => s.setGameConfig);
+  const setDivisionRosters = useGameStore((s) => s.setDivisionRosters);
 
   // ── Core state ────────────────────────────────────────────────────────────
-  const [isLoadingRoster,      setIsLoadingRoster]      = useState(false);
-  const [isLoadingLobby,       setIsLoadingLobby]       = useState(true);
-  const [copied,               setCopied]               = useState(false);
+  const [isLoadingRoster, setIsLoadingRoster] = useState(false);
+  const [isLoadingLobby, setIsLoadingLobby] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [showDealingAnimation, setShowDealingAnimation] = useState(false);
-  const [rerollCount,          setRerollCount]          = useState(0);
-  const [showSettings,         setShowSettings]         = useState(false);
+  const [rerollCount, setRerollCount] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Join prompt (for players arriving via direct link)
-  const [joinName,  setJoinName]  = useState(getStoredPlayerName() || '');
+  const [joinName, setJoinName] = useState(getStoredPlayerName() || '');
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   // Refs to prevent duplicate game-start side-effects
-  const hasStartedGame  = useRef(false);
-  const hasAutoStarted  = useRef(false);
-  const prevTeamRef     = useRef<string | null>(null);
-  const prevSeasonRef   = useRef<string | null>(null);
-  const settingsRef     = useRef<SettingsRef>(null);
+  const hasStartedGame = useRef(false);
+  const hasAutoStarted = useRef(false);
+  const prevTeamRef = useRef<string | null>(null);
+  const prevSeasonRef = useRef<string | null>(null);
+  const settingsRef = useRef<SettingsRef>(null);
 
   useLobbySubscription(lobby?.id || null);
 
@@ -80,14 +121,19 @@ export function LobbyWaitingPage() {
   // Stuck detection: if lobby hasn't loaded within 8s, force a reload
   useEffect(() => {
     if (!isLoadingLobby && lobby) return;
-    const t = setTimeout(() => { if (isLoadingLobby || !lobby) window.location.reload(); }, 8000);
+    const t = setTimeout(() => {
+      if (isLoadingLobby || !lobby) window.location.reload();
+    }, 8000);
     return () => clearTimeout(t);
   }, [isLoadingLobby, lobby]);
 
   // Initial lobby load
   useEffect(() => {
     const loadLobby = async () => {
-      if (!code) { navigate('/'); return; }
+      if (!code) {
+        navigate('/');
+        return;
+      }
       setIsLoadingLobby(true);
       hasStartedGame.current = false;
       hasAutoStarted.current = false;
@@ -142,48 +188,82 @@ export function LobbyWaitingPage() {
       const freshLobby = freshLobbyResult.lobby || lobby;
       const lobbySport = freshLobby.sport as Sport;
       const lobbyTeamList = lobbySport === 'nba' ? teams : nflTeams;
-      const lobbyTeam = lobbyTeamList.find(t => t.abbreviation === freshLobby.team_abbreviation);
+      const lobbyTeam = lobbyTeamList.find((t) => t.abbreviation === freshLobby.team_abbreviation);
 
-      if (!lobbyTeam) { console.error('Team not found:', freshLobby.team_abbreviation); setIsLoadingRoster(false); return; }
+      if (!lobbyTeam) {
+        console.error('Team not found:', freshLobby.team_abbreviation);
+        setIsLoadingRoster(false);
+        return;
+      }
 
       let rosterPlayers: any[] = [];
       let leaguePlayers: any[] = [];
-      const isDivisionMode = freshLobby.selection_scope === 'division' && freshLobby.division_conference && freshLobby.division_name;
+      const isDivisionMode =
+        freshLobby.selection_scope === 'division' &&
+        freshLobby.division_conference &&
+        freshLobby.division_name;
 
       if (isDivisionMode) {
-        const divTeams = lobbySport === 'nba'
-          ? getNBATeamsByDivision(freshLobby.division_conference!, freshLobby.division_name!)
-          : getNFLTeamsByDivision(freshLobby.division_conference! as 'AFC' | 'NFC', freshLobby.division_name!);
-        const divResult = await fetchDivisionRosters(lobbySport, divTeams.map(t => t.abbreviation), freshLobby.season);
+        const divTeams =
+          lobbySport === 'nba'
+            ? getNBATeamsByDivision(freshLobby.division_conference!, freshLobby.division_name!)
+            : getNFLTeamsByDivision(
+                freshLobby.division_conference! as 'AFC' | 'NFC',
+                freshLobby.division_name!,
+              );
+        const divResult = await fetchDivisionRosters(
+          lobbySport,
+          divTeams.map((t) => t.abbreviation),
+          freshLobby.season,
+        );
         rosterPlayers = divResult.combined;
-        setDivisionRosters(divResult.byTeam, divTeams.map(t => t.abbreviation));
-        leaguePlayers = lobbySport === 'nba'
-          ? await fetchStaticSeasonPlayers(freshLobby.season) ?? []
-          : await fetchStaticNFLSeasonPlayers(parseInt(freshLobby.season)) ?? [];
+        setDivisionRosters(
+          divResult.byTeam,
+          divTeams.map((t) => t.abbreviation),
+        );
+        leaguePlayers =
+          lobbySport === 'nba'
+            ? ((await fetchStaticSeasonPlayers(freshLobby.season)) ?? [])
+            : ((await fetchStaticNFLSeasonPlayers(parseInt(freshLobby.season))) ?? []);
       } else if (lobbySport === 'nba') {
         const result = await fetchTeamRoster(lobbyTeam.abbreviation, freshLobby.season);
         rosterPlayers = result.players;
-        leaguePlayers = await fetchStaticSeasonPlayers(freshLobby.season) ?? [];
+        leaguePlayers = (await fetchStaticSeasonPlayers(freshLobby.season)) ?? [];
       } else {
-        rosterPlayers = await fetchStaticNFLRoster(lobbyTeam.abbreviation, parseInt(freshLobby.season)) ?? [];
-        leaguePlayers = await fetchStaticNFLSeasonPlayers(parseInt(freshLobby.season)) ?? [];
+        rosterPlayers =
+          (await fetchStaticNFLRoster(lobbyTeam.abbreviation, parseInt(freshLobby.season))) ?? [];
+        leaguePlayers = (await fetchStaticNFLSeasonPlayers(parseInt(freshLobby.season))) ?? [];
       }
 
-      setGameConfig(lobbySport, lobbyTeam, freshLobby.season, 'manual', freshLobby.timer_duration, rosterPlayers, leaguePlayers, false);
+      setGameConfig(
+        lobbySport,
+        lobbyTeam,
+        freshLobby.season,
+        'manual',
+        freshLobby.timer_duration,
+        rosterPlayers,
+        leaguePlayers,
+        false,
+      );
       // Persist game config so a mid-game reload can reconstruct state instead
       // of dropping the player to the home screen.
-      sessionStorage.setItem('bk_roster_mp', JSON.stringify({
-        code: freshLobby.join_code,
-        sport: lobbySport,
-        team: lobbyTeam.abbreviation,
-        season: freshLobby.season,
-        timerDuration: freshLobby.timer_duration,
-        startedAt: freshLobby.started_at,
-        scope: freshLobby.selection_scope,
-        divConf: freshLobby.division_conference || null,
-        divName: freshLobby.division_name || null,
-      }));
-      navigate('/game', { state: { multiplayer: true, lobbyId: freshLobby.id, startedAt: freshLobby.started_at } });
+      sessionStorage.setItem(
+        'bk_roster_mp',
+        JSON.stringify({
+          code: freshLobby.join_code,
+          sport: lobbySport,
+          team: lobbyTeam.abbreviation,
+          season: freshLobby.season,
+          timerDuration: freshLobby.timer_duration,
+          startedAt: freshLobby.started_at,
+          scope: freshLobby.selection_scope,
+          divConf: freshLobby.division_conference || null,
+          divName: freshLobby.division_name || null,
+        }),
+      );
+      navigate('/game', {
+        state: { multiplayer: true, lobbyId: freshLobby.id, startedAt: freshLobby.started_at },
+      });
     } catch (err) {
       console.error('Error loading roster:', err);
     } finally {
@@ -200,26 +280,55 @@ export function LobbyWaitingPage() {
       hasStartedGame.current = false;
       hasAutoStarted.current = false;
     } else if (lobby.status === 'countdown') {
-      if (lobby.game_type !== 'career' && lobby.game_type !== 'scramble' && lobby.game_type !== 'starting-lineup' && lobby.game_type !== 'nba-box-score') {
+      if (
+        lobby.game_type !== 'career' &&
+        lobby.game_type !== 'scramble' &&
+        lobby.game_type !== 'starting-lineup' &&
+        lobby.game_type !== 'nba-box-score'
+      ) {
         setShowDealingAnimation(true);
       }
     } else if (lobby.status === 'playing') {
       if (lobby.game_type === 'scramble') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/scramble`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/scramble`);
+        }
       } else if (lobby.game_type === 'career') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/career`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/career`);
+        }
       } else if (lobby.game_type === 'lineup-is-right') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/lineup-is-right`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/lineup-is-right`);
+        }
       } else if (lobby.game_type === 'box-score') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/box-score`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/box-score`);
+        }
       } else if (lobby.game_type === 'nba-box-score') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/nba-box-score`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/nba-box-score`);
+        }
       } else if (lobby.game_type === 'starting-lineup') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/starting-lineup`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/starting-lineup`);
+        }
       } else if (lobby.game_type === 'face-reveal') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/face-reveal`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/face-reveal`);
+        }
       } else if (lobby.game_type === 'top-ten') {
-        if (!hasStartedGame.current) { hasStartedGame.current = true; navigate(`/lobby/${code}/top-ten`); }
+        if (!hasStartedGame.current) {
+          hasStartedGame.current = true;
+          navigate(`/lobby/${code}/top-ten`);
+        }
       } else {
         // Roster mode: trigger dealing animation; non-hosts jump straight to game load
         if (!hasStartedGame.current) {
@@ -244,10 +353,10 @@ export function LobbyWaitingPage() {
 
   // Revert to waiting if players un-ready before host force-started
   useEffect(() => {
-    const allReady = players.length > 1 && players.every(p => p.is_ready);
+    const allReady = players.length > 1 && players.every((p) => p.is_ready);
     if (lobby?.status === 'countdown' && !allReady && isHost && !hasAutoStarted.current) {
-      updateLobbyStatus(lobby.id, 'waiting').catch(err =>
-        console.error('[LobbyWaitingPage] Failed to revert lobby to waiting:', err)
+      updateLobbyStatus(lobby.id, 'waiting').catch((err) =>
+        console.error('[LobbyWaitingPage] Failed to revert lobby to waiting:', err),
       );
     }
   }, [players, lobby?.status, isHost]);
@@ -256,9 +365,17 @@ export function LobbyWaitingPage() {
   useEffect(() => {
     if (!lobby) return;
     const { team_abbreviation: teamAbbr, season } = lobby;
-    if (prevTeamRef.current === null) { prevTeamRef.current = teamAbbr; prevSeasonRef.current = season; return; }
-    if (showDealingAnimation && !isHost && (teamAbbr !== prevTeamRef.current || season !== prevSeasonRef.current)) {
-      setRerollCount(prev => prev + 1);
+    if (prevTeamRef.current === null) {
+      prevTeamRef.current = teamAbbr;
+      prevSeasonRef.current = season;
+      return;
+    }
+    if (
+      showDealingAnimation &&
+      !isHost &&
+      (teamAbbr !== prevTeamRef.current || season !== prevSeasonRef.current)
+    ) {
+      setRerollCount((prev) => prev + 1);
     }
     prevTeamRef.current = teamAbbr;
     prevSeasonRef.current = season;
@@ -278,9 +395,26 @@ export function LobbyWaitingPage() {
     const sport = lobby.sport as Sport;
     try {
       const cs = (lobby.career_state as any) || {};
-      const game = await getNextGame(sport, { careerFrom: cs.career_from || 0, careerTo: cs.career_to || 0, minMpg: cs.min_mpg || 0, minYards: cs.min_yards || 0 });
-      if (!game) { setIsLoadingRoster(false); return; }
-      const newState = { ...game.data, sport: game.sport, round: 1, win_target: cs.win_target || 3, career_from: cs.career_from || 0, career_to: cs.career_to || 0, min_mpg: cs.min_mpg || 0, min_yards: cs.min_yards || 0 };
+      const game = await getNextGame(sport, {
+        careerFrom: cs.career_from || 0,
+        careerTo: cs.career_to || 0,
+        minMpg: cs.min_mpg || 0,
+        minYards: cs.min_yards || 0,
+      });
+      if (!game) {
+        setIsLoadingRoster(false);
+        return;
+      }
+      const newState = {
+        ...game.data,
+        sport: game.sport,
+        round: 1,
+        win_target: cs.win_target || 3,
+        career_from: cs.career_from || 0,
+        career_to: cs.career_to || 0,
+        min_mpg: cs.min_mpg || 0,
+        min_yards: cs.min_yards || 0,
+      };
       await startCareerRound(lobby.id, newState);
       startPrefetch(sport);
       hasStartedGame.current = true;
@@ -299,10 +433,34 @@ export function LobbyWaitingPage() {
       const cs = (lobby.career_state as any) || {};
       const sport = lobby.sport as Sport;
       const includeDefense = cs.include_defense !== false;
-      const filters = (cs.career_to || cs.min_mpg || cs.min_yards || !includeDefense) ? { careerTo: cs.career_to || 0, minMpg: cs.min_mpg || 0, minYards: cs.min_yards || 0, includeDefense } : undefined;
-      const player = sport === 'nba' ? await getRandomNBAScramblePlayer(filters) : await getRandomNFLScramblePlayer(filters);
-      if (!player) { setIsLoadingRoster(false); return; }
-      const newState = { playerName: player.player_name, scrambledName: scrambleName(player.player_name), sport, round: 1, win_target: cs.win_target || 20, career_to: cs.career_to || 0, min_mpg: cs.min_mpg || 0, min_yards: cs.min_yards || 0, include_defense: includeDefense };
+      const filters =
+        cs.career_to || cs.min_mpg || cs.min_yards || !includeDefense
+          ? {
+              careerTo: cs.career_to || 0,
+              minMpg: cs.min_mpg || 0,
+              minYards: cs.min_yards || 0,
+              includeDefense,
+            }
+          : undefined;
+      const player =
+        sport === 'nba'
+          ? await getRandomNBAScramblePlayer(filters)
+          : await getRandomNFLScramblePlayer(filters);
+      if (!player) {
+        setIsLoadingRoster(false);
+        return;
+      }
+      const newState = {
+        playerName: player.player_name,
+        scrambledName: scrambleName(player.player_name),
+        sport,
+        round: 1,
+        win_target: cs.win_target || 20,
+        career_to: cs.career_to || 0,
+        min_mpg: cs.min_mpg || 0,
+        min_yards: cs.min_yards || 0,
+        include_defense: includeDefense,
+      };
       await startCareerRound(lobby.id, newState);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
@@ -328,16 +486,31 @@ export function LobbyWaitingPage() {
       const cs = (currentLobby.career_state as any) || {};
       const sport = currentLobby.sport as Sport;
       const forcedStat = cs.forcedStatCategory as string | null;
-      const statCategory = (forcedStat && forcedStat !== 'random') ? forcedStat as any : selectRandomStatCategory(sport);
+      const statCategory =
+        forcedStat && forcedStat !== 'random'
+          ? (forcedStat as any)
+          : selectRandomStatCategory(sport);
       const forcedCap = cs.forcedTargetCap as number | null;
-      const targetCap = (forcedCap && forcedCap > 0) ? forcedCap : generateTargetCap(sport, statCategory, cs.totalRounds || 5);
-      const disabledRoundTypes = (cs.disabledRoundTypes as import('../../services/capCrunch').SpecialRoundType[]) || [];
+      const targetCap =
+        forcedCap && forcedCap > 0
+          ? forcedCap
+          : generateTargetCap(sport, statCategory, cs.totalRounds || 5);
+      const disabledRoundTypes =
+        (cs.disabledRoundTypes as import('../../services/capCrunch').SpecialRoundType[]) || [];
 
       const playersResult = await getLobbyPlayers(currentLobby.id);
       const lobbyPlayers = playersResult.players || [];
       const initialLineups: Record<string, object> = {};
-      lobbyPlayers.forEach(p => {
-        initialLineups[p.player_id] = { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, isBusted: false, isFinished: false, hasPickedThisRound: false };
+      lobbyPlayers.forEach((p) => {
+        initialLineups[p.player_id] = {
+          playerId: p.player_id,
+          playerName: p.player_name,
+          selectedPlayers: [],
+          totalStat: 0,
+          isBusted: false,
+          isFinished: false,
+          hasPickedThisRound: false,
+        };
       });
 
       const hardMode = cs.hardMode || false;
@@ -349,20 +522,49 @@ export function LobbyWaitingPage() {
         if (idx > 0) playerOrder = [...playerOrder.slice(idx), ...playerOrder.slice(0, idx)];
       }
 
-      const firstTeam = assignRandomTeam(sport, statCategory, undefined, [], undefined, undefined, disabledRoundTypes);
+      const firstTeam = assignRandomTeam(
+        sport,
+        statCategory,
+        undefined,
+        [],
+        undefined,
+        undefined,
+        disabledRoundTypes,
+      );
       const hwFilter = selectRandomHWFilter(sport, firstTeam, statCategory, [], disabledRoundTypes);
-      const initialUsedSpecial = advanceSpecialRoundCycle([], classifySpecialRoundType(firstTeam, hwFilter));
+      const initialUsedSpecial = advanceSpecialRoundCycle(
+        [],
+        classifySpecialRoundType(firstTeam, hwFilter),
+      );
       const newState = {
-        sport, win_target: cs.win_target || 3, statCategory, targetCap, hwFilter,
-        allLineups: initialLineups, currentRound: 1, totalRounds: cs.totalRounds || 5,
-        currentTeam: firstTeam, usedTeams: [firstTeam], usedSpecialTypes: initialUsedSpecial,
-        phase: 'picking', hardMode, blindMode, pickTimer,
+        sport,
+        win_target: cs.win_target || 3,
+        statCategory,
+        targetCap,
+        hwFilter,
+        allLineups: initialLineups,
+        currentRound: 1,
+        totalRounds: cs.totalRounds || 5,
+        currentTeam: firstTeam,
+        usedTeams: [firstTeam],
+        usedSpecialTypes: initialUsedSpecial,
+        phase: 'picking',
+        hardMode,
+        blindMode,
+        pickTimer,
         currentPickerId: hardMode && playerOrder.length > 0 ? playerOrder[0] : null,
-        roundStartPickerIndex: 0, playerOrder, pickedPlayerSeasons: [], disabledRoundTypes,
+        roundStartPickerIndex: 0,
+        playerOrder,
+        pickedPlayerSeasons: [],
+        disabledRoundTypes,
       };
       await startCareerRound(currentLobby.id, newState);
       hasStartedGame.current = true;
-      setLobby({ ...useLobbyStore.getState().lobby ?? currentLobby, career_state: newState, status: 'playing' });
+      setLobby({
+        ...(useLobbyStore.getState().lobby ?? currentLobby),
+        career_state: newState,
+        status: 'playing',
+      });
       navigate(`/lobby/${code}/lineup-is-right`);
     } catch (err) {
       console.error('[handleLineupIsRightStart] Failed to start game:', err);
@@ -377,13 +579,37 @@ export function LobbyWaitingPage() {
       const cs = (lobby.career_state as any) || {};
       const minYear = cs.min_year || 2015;
       const maxYear = cs.max_year || 2025;
-      const filteredYears = ALL_BOX_SCORE_YEARS.filter(y => y >= minYear && y <= maxYear);
-      const game = await getRandomBoxScoreGame({ years: filteredYears.length > 0 ? filteredYears : undefined, team: cs.team || null });
-      const newState = { type: 'box_score', game_id: game.game_id, season: game.season, min_year: minYear, max_year: maxYear, team: cs.team || null };
+      const filteredYears = ALL_BOX_SCORE_YEARS.filter((y) => y >= minYear && y <= maxYear);
+      const game = await getRandomBoxScoreGame({
+        years: filteredYears.length > 0 ? filteredYears : undefined,
+        team: cs.team || null,
+      });
+      const newState = {
+        type: 'box_score',
+        game_id: game.game_id,
+        season: game.season,
+        min_year: minYear,
+        max_year: maxYear,
+        team: cs.team || null,
+      };
       await startCareerRound(lobby.id, newState);
       hasStartedGame.current = true;
-      setPlayers(players.map(p => ({ ...p, finished_at: null, score: 0, guessed_count: 0, guessed_players: [], incorrect_guesses: [] })));
-      setLobby({ ...lobby, career_state: newState, status: 'playing', started_at: new Date().toISOString() });
+      setPlayers(
+        players.map((p) => ({
+          ...p,
+          finished_at: null,
+          score: 0,
+          guessed_count: 0,
+          guessed_players: [],
+          incorrect_guesses: [],
+        })),
+      );
+      setLobby({
+        ...lobby,
+        career_state: newState,
+        status: 'playing',
+        started_at: new Date().toISOString(),
+      });
       navigate(`/lobby/${code}/box-score`);
     } catch (err) {
       console.error('[handleBoxScoreStart] Failed to start game:', err);
@@ -398,13 +624,37 @@ export function LobbyWaitingPage() {
       const cs = (lobby.career_state as any) || {};
       const minYear = cs.min_year || 2014;
       const maxYear = cs.max_year || 2025;
-      const filteredYears = ALL_NBA_BOX_SCORE_YEARS.filter(y => y >= minYear && y <= maxYear);
-      const game = await getRandomNBABoxScoreGame({ years: filteredYears.length > 0 ? filteredYears : undefined, team: cs.team || null });
-      const newState = { type: 'nba_box_score', game_id: game.game_id, season: game.season, min_year: minYear, max_year: maxYear, team: cs.team || null };
+      const filteredYears = ALL_NBA_BOX_SCORE_YEARS.filter((y) => y >= minYear && y <= maxYear);
+      const game = await getRandomNBABoxScoreGame({
+        years: filteredYears.length > 0 ? filteredYears : undefined,
+        team: cs.team || null,
+      });
+      const newState = {
+        type: 'nba_box_score',
+        game_id: game.game_id,
+        season: game.season,
+        min_year: minYear,
+        max_year: maxYear,
+        team: cs.team || null,
+      };
       await startCareerRound(lobby.id, newState);
       hasStartedGame.current = true;
-      setPlayers(players.map(p => ({ ...p, finished_at: null, score: 0, guessed_count: 0, guessed_players: [], incorrect_guesses: [] })));
-      setLobby({ ...lobby, career_state: newState, status: 'playing', started_at: new Date().toISOString() });
+      setPlayers(
+        players.map((p) => ({
+          ...p,
+          finished_at: null,
+          score: 0,
+          guessed_count: 0,
+          guessed_players: [],
+          incorrect_guesses: [],
+        })),
+      );
+      setLobby({
+        ...lobby,
+        career_state: newState,
+        status: 'playing',
+        started_at: new Date().toISOString(),
+      });
       navigate(`/lobby/${code}/nba-box-score`);
     } catch (err) {
       console.error('[handleNBABoxScoreStart] Failed to start game:', err);
@@ -430,10 +680,22 @@ export function LobbyWaitingPage() {
       }
 
       let enc = getRandomEncoding();
-      const hasEncodingData = (p: any): boolean => enc === 'college' ? p.college_espn_id != null : enc === 'number' ? p.number != null : p.draft_pick != null;
+      const hasEncodingData = (p: any): boolean =>
+        enc === 'college'
+          ? p.college_espn_id != null
+          : enc === 'number'
+            ? p.number != null
+            : p.draft_pick != null;
       if (pick.players.filter(hasEncodingData).length < 5) enc = pickBestEncoding(pick.players);
 
-      const newState: Record<string, unknown> = { sport, team: pick.team, encoding: enc, round: 1, win_target: cs.win_target || 10, unlock_epoch: 0 };
+      const newState: Record<string, unknown> = {
+        sport,
+        team: pick.team,
+        encoding: enc,
+        round: 1,
+        win_target: cs.win_target || 10,
+        unlock_epoch: 0,
+      };
       if (side !== undefined) newState.side = side;
 
       await startCareerRound(lobby.id, newState);
@@ -455,20 +717,21 @@ export function LobbyWaitingPage() {
       const careerTo: number = cs.career_to || 0;
       const timerSecs: number = cs.timer || 60;
       const winTarget: number = cs.win_target || 30;
-      const minYards: number    = cs.min_yards || 0;
-      const minMpg: number      = cs.min_mpg   || 0;
+      const minYards: number = cs.min_yards || 0;
+      const minMpg: number = cs.min_mpg || 0;
       const defenseMode: string = cs.defense_mode || 'known';
-
 
       // NFL pool filter: ST always out; offense filtered by yards; defense by mode.
       const NFL_OFF = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
-      const NFL_ST  = new Set(['K', 'P', 'LS']);
+      const NFL_ST = new Set(['K', 'P', 'LS']);
       const nflInPool = (p: NFLCareerPlayer) => {
         if (NFL_ST.has(p.position)) return false;
         if (NFL_OFF.has(p.position)) {
           if (minYards === 0) return true;
           return p.seasons.some(
-            (s: any) => (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >= minYards
+            (s: any) =>
+              (s.passing_yards || 0) + (s.rushing_yards || 0) + (s.receiving_yards || 0) >=
+              minYards,
           );
         }
         return defenseMode === 'all' || DEFENSE_ALLOWLIST.has(String(p.player_id));
@@ -487,7 +750,7 @@ export function LobbyWaitingPage() {
         }
         if (minMpg) {
           filtered = filtered.filter((p: NBACareerPlayer) =>
-            p.seasons.some((s: any) => (s.min ?? 0) >= minMpg)
+            p.seasons.some((s: any) => (s.min ?? 0) >= minMpg),
           );
         }
         pool = filtered.map((p: NBACareerPlayer) => ({
@@ -505,23 +768,35 @@ export function LobbyWaitingPage() {
           });
         }
         filtered = filtered.filter(nflInPool);
-        pool = filtered.map((p: NFLCareerPlayer) => ({
-          player_id: p.player_id,
-          player_name: p.player_name,
-          position: p.position,
-          longestTeam: longestTenuredTeam(p.seasons),
-        } as any));
+        pool = filtered.map(
+          (p: NFLCareerPlayer) =>
+            ({
+              player_id: p.player_id,
+              player_name: p.player_name,
+              position: p.position,
+              longestTeam: longestTenuredTeam(p.seasons),
+            }) as any,
+        );
       }
 
-      if (!pool.length) { setIsLoadingRoster(false); return; }
+      if (!pool.length) {
+        setIsLoadingRoster(false);
+        return;
+      }
 
       // Weighted pick: NFL offensive positions 3×, others 1×.
-      const totalWeight = pool.reduce((s: number, p: any) => s + (NFL_OFF.has(p.position) ? 3 : 1), 0);
+      const totalWeight = pool.reduce(
+        (s: number, p: any) => s + (NFL_OFF.has(p.position) ? 3 : 1),
+        0,
+      );
       let r = Math.random() * totalWeight;
       let chosen = pool[pool.length - 1];
       for (const p of pool) {
         r -= NFL_OFF.has((p as any).position) ? 3 : 1;
-        if (r <= 0) { chosen = p; break; }
+        if (r <= 0) {
+          chosen = p;
+          break;
+        }
       }
       const focalX = Math.round(38 + Math.random() * 24);
       const focalY = Math.round(20 + Math.random() * 16);
@@ -575,21 +850,36 @@ export function LobbyWaitingPage() {
 
       const pinnedDivisionRaw: string | null = cs.top_ten_pinned_division || null;
       const pinnedDivision = pinnedDivisionRaw
-        ? (() => { const [conference, division] = pinnedDivisionRaw.split('|'); return { conference, division }; })()
+        ? (() => {
+            const [conference, division] = pinnedDivisionRaw.split('|');
+            return { conference, division };
+          })()
         : undefined;
 
-      const { entries, cat, catLabel: categoryLabel, roundInfo, isDivisionRound, isTeamRound, isSingleSeason, teamAbbr } =
-        await generateTopTenRound({
-          sport, roundType,
-          minYear: cs.top_ten_min_year,
-          maxYear: cs.top_ten_max_year,
-          windowYears: cs.top_ten_window_years || 10,
-          divisionMode: (cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative',
-          pinnedDivision,
-          pinnedTeam: cs.top_ten_pinned_team || undefined,
-        });
+      const {
+        entries,
+        cat,
+        catLabel: categoryLabel,
+        roundInfo,
+        isDivisionRound,
+        isTeamRound,
+        isSingleSeason,
+        teamAbbr,
+      } = await generateTopTenRound({
+        sport,
+        roundType,
+        minYear: cs.top_ten_min_year,
+        maxYear: cs.top_ten_max_year,
+        windowYears: cs.top_ten_window_years || 10,
+        divisionMode: (cs.top_ten_division_mode as 'cumulative' | 'single_season') || 'cumulative',
+        pinnedDivision,
+        pinnedTeam: cs.top_ten_pinned_team || undefined,
+      });
 
-      if (entries.length === 0) { setIsLoadingRoster(false); return; }
+      if (entries.length === 0) {
+        setIsLoadingRoster(false);
+        return;
+      }
 
       const deadline = new Date(Date.now() + turnTimer * 1000).toISOString();
       const newState = {
@@ -643,21 +933,30 @@ export function LobbyWaitingPage() {
     const minYear = Math.max(lobby.min_year || 2000, 2000);
     const maxYear = Math.min(lobby.max_year || 2025, 2025);
     const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
-    const newSeason = currentSport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
+    const newSeason =
+      currentSport === 'nba'
+        ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+        : `${randomYear}`;
 
     if (lobby.selection_scope === 'division') {
       const allDivisions = currentSport === 'nba' ? getNBADivisions() : getNFLDivisions();
       const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
-      const divTeams = currentSport === 'nba'
-        ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
-        : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
-      await updateSettings({ teamAbbreviation: divTeams[0]?.abbreviation || lobby.team_abbreviation, season: newSeason, divisionConference: randomDiv.conference, divisionName: randomDiv.division });
+      const divTeams =
+        currentSport === 'nba'
+          ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+          : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+      await updateSettings({
+        teamAbbreviation: divTeams[0]?.abbreviation || lobby.team_abbreviation,
+        season: newSeason,
+        divisionConference: randomDiv.conference,
+        divisionName: randomDiv.division,
+      });
     } else {
       const currentTeamList = currentSport === 'nba' ? teams : nflTeams;
       const randomTeam = currentTeamList[Math.floor(Math.random() * currentTeamList.length)];
       await updateSettings({ teamAbbreviation: randomTeam.abbreviation, season: newSeason });
     }
-    setRerollCount(prev => prev + 1);
+    setRerollCount((prev) => prev + 1);
   }, [isHost, lobby, updateSettings]);
 
   // ── Settings apply (called from LobbyHostSettings via HostFormValues) ─────
@@ -676,27 +975,64 @@ export function LobbyWaitingPage() {
     const fresh = () => useLobbyStore.getState().lobby ?? baseLobby;
 
     if (v.gameType === 'scramble') {
-      const newState = { ...baseState, win_target: v.winTarget, career_to: v.careerTo, min_mpg: v.minMpg, min_yards: v.minYards, include_defense: v.scrambleIncludeDefense };
+      const newState = {
+        ...baseState,
+        win_target: v.winTarget,
+        career_to: v.careerTo,
+        min_mpg: v.minMpg,
+        min_yards: v.minYards,
+        include_defense: v.scrambleIncludeDefense,
+      };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'career') {
-      const newState = { ...baseState, win_target: v.winTarget, career_from: v.careerFrom, career_to: v.careerTo, min_mpg: v.minMpg, min_yards: v.minYards };
+      const newState = {
+        ...baseState,
+        win_target: v.winTarget,
+        career_from: v.careerFrom,
+        career_to: v.careerTo,
+        min_mpg: v.minMpg,
+        min_yards: v.minYards,
+      };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'lineup-is-right') {
-      const newState = { ...baseState, sport: v.sport, forcedStatCategory: v.lineupStat === 'random' ? null : v.lineupStat, forcedTargetCap: (v.lineupStat !== 'random' && v.customCap) ? v.customCap : null, hardMode: v.hardMode, blindMode: v.blindMode, pickTimer: v.pickTimer ?? null, firstPickerId: v.hardMode ? v.firstPickerId : null, totalRounds: v.totalRounds, disabledRoundTypes: v.disabledRoundTypes || [] };
+      const newState = {
+        ...baseState,
+        sport: v.sport,
+        forcedStatCategory: v.lineupStat === 'random' ? null : v.lineupStat,
+        forcedTargetCap: v.lineupStat !== 'random' && v.customCap ? v.customCap : null,
+        hardMode: v.hardMode,
+        blindMode: v.blindMode,
+        pickTimer: v.pickTimer ?? null,
+        firstPickerId: v.hardMode ? v.firstPickerId : null,
+        totalRounds: v.totalRounds,
+        disabledRoundTypes: v.disabledRoundTypes || [],
+      };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'box-score') {
-      const newState = { ...baseState, type: 'box_score', min_year: v.boxMinYear, max_year: v.boxMaxYear, team: v.boxTeam };
+      const newState = {
+        ...baseState,
+        type: 'box_score',
+        min_year: v.boxMinYear,
+        max_year: v.boxMaxYear,
+        team: v.boxTeam,
+      };
       await updateCareerState(newState);
       await updateSettings({ timerDuration: v.timer });
       setLobby({ ...fresh(), career_state: newState });
     } else if (v.gameType === 'nba-box-score') {
-      const newState = { ...baseState, type: 'nba_box_score', min_year: v.boxMinYear, max_year: v.boxMaxYear, team: v.boxTeam };
+      const newState = {
+        ...baseState,
+        type: 'nba_box_score',
+        min_year: v.boxMinYear,
+        max_year: v.boxMaxYear,
+        team: v.boxTeam,
+      };
       await updateCareerState(newState);
       await updateSettings({ timerDuration: v.timer, gameType: 'nba-box-score' });
       setLobby({ ...fresh(), career_state: newState });
@@ -705,12 +1041,34 @@ export function LobbyWaitingPage() {
       await updateCareerState(newState);
       setLobby({ ...fresh(), career_state: newState });
     } else if (v.gameType === 'face-reveal') {
-      const newState = { ...baseState, win_target: v.winTarget, career_to: v.careerTo, timer: v.faceRevealTimer, min_yards: v.faceRevealMinYards, min_mpg: v.faceRevealMinMpg, defense_mode: v.faceRevealDefenseMode };
+      const newState = {
+        ...baseState,
+        win_target: v.winTarget,
+        career_to: v.careerTo,
+        timer: v.faceRevealTimer,
+        min_yards: v.faceRevealMinYards,
+        min_mpg: v.faceRevealMinMpg,
+        defense_mode: v.faceRevealDefenseMode,
+      };
       await updateCareerState(newState);
       await updateSettings({ sport: v.sport });
       setLobby({ ...fresh(), career_state: newState, sport: v.sport });
     } else if (v.gameType === 'top-ten') {
-      const newState = { ...baseState, top_ten_sport: v.topTenSport, top_ten_round_type: v.topTenRoundType, top_ten_division_mode: v.topTenDivisionMode, top_ten_min_year: v.topTenMinYear, top_ten_max_year: v.topTenMaxYear, top_ten_window_years: v.topTenWindowYears, max_strikes: v.topTenMaxStrikes, turn_timer: v.topTenTimer, top_ten_pinned_division: v.topTenPinnedDivision || null, top_ten_pinned_team: v.topTenPinnedTeam || null, top_ten_game_mode: v.topTenGameMode, race_target: v.topTenRaceTarget };
+      const newState = {
+        ...baseState,
+        top_ten_sport: v.topTenSport,
+        top_ten_round_type: v.topTenRoundType,
+        top_ten_division_mode: v.topTenDivisionMode,
+        top_ten_min_year: v.topTenMinYear,
+        top_ten_max_year: v.topTenMaxYear,
+        top_ten_window_years: v.topTenWindowYears,
+        max_strikes: v.topTenMaxStrikes,
+        turn_timer: v.topTenTimer,
+        top_ten_pinned_division: v.topTenPinnedDivision || null,
+        top_ten_pinned_team: v.topTenPinnedTeam || null,
+        top_ten_game_mode: v.topTenGameMode,
+        race_target: v.topTenRaceTarget,
+      };
       await updateCareerState(newState);
       await updateSettings({ sport: v.topTenSport });
       setLobby({ ...fresh(), career_state: newState, sport: v.topTenSport });
@@ -725,14 +1083,22 @@ export function LobbyWaitingPage() {
 
       if (finalGameMode === 'manual' && v.team && !v.randomSport) {
         newTeamAbbreviation = v.team.abbreviation;
-        newSeason = finalSport === 'nba' && v.year ? `${v.year}-${String(v.year + 1).slice(-2)}` : v.year ? `${v.year}` : lobby.season;
+        newSeason =
+          finalSport === 'nba' && v.year
+            ? `${v.year}-${String(v.year + 1).slice(-2)}`
+            : v.year
+              ? `${v.year}`
+              : lobby.season;
       } else {
         const randomTeam = newTeamList[Math.floor(Math.random() * newTeamList.length)];
         newTeamAbbreviation = randomTeam.abbreviation;
         const minYear = Math.max(v.minYear, 2000);
         const maxYear = Math.min(v.maxYear, 2025);
         const randomYear = Math.floor(Math.random() * (maxYear - minYear + 1)) + minYear;
-        newSeason = finalSport === 'nba' ? `${randomYear}-${String(randomYear + 1).slice(-2)}` : `${randomYear}`;
+        newSeason =
+          finalSport === 'nba'
+            ? `${randomYear}-${String(randomYear + 1).slice(-2)}`
+            : `${randomYear}`;
       }
 
       let divisionConference: string | null = null;
@@ -742,13 +1108,25 @@ export function LobbyWaitingPage() {
         const randomDiv = allDivisions[Math.floor(Math.random() * allDivisions.length)];
         divisionConference = randomDiv.conference;
         divisionNameVal = randomDiv.division;
-        const divTeams = finalSport === 'nba'
-          ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
-          : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
+        const divTeams =
+          finalSport === 'nba'
+            ? getNBATeamsByDivision(randomDiv.conference, randomDiv.division)
+            : getNFLTeamsByDivision(randomDiv.conference as 'AFC' | 'NFC', randomDiv.division);
         newTeamAbbreviation = divTeams[0]?.abbreviation || newTeamAbbreviation;
       }
 
-      await updateSettings({ sport: finalSport, teamAbbreviation: newTeamAbbreviation, season: newSeason, timerDuration: v.timer, gameMode: finalGameMode, minYear: v.minYear, maxYear: v.maxYear, selectionScope: finalScope, divisionConference, divisionName: divisionNameVal });
+      await updateSettings({
+        sport: finalSport,
+        teamAbbreviation: newTeamAbbreviation,
+        season: newSeason,
+        timerDuration: v.timer,
+        gameMode: finalGameMode,
+        minYear: v.minYear,
+        maxYear: v.maxYear,
+        selectionScope: finalScope,
+        divisionConference,
+        divisionName: divisionNameVal,
+      });
     }
 
     setShowSettings(false);
@@ -757,7 +1135,11 @@ export function LobbyWaitingPage() {
   // ── Misc handlers ─────────────────────────────────────────────────────────
 
   const handleLeave = async () => {
-    try { await leaveLobby(); } catch (err) { console.error('[handleLeave] Failed to cleanly leave lobby:', err); }
+    try {
+      await leaveLobby();
+    } catch (err) {
+      console.error('[handleLeave] Failed to cleanly leave lobby:', err);
+    }
     navigate('/');
   };
 
@@ -771,7 +1153,8 @@ export function LobbyWaitingPage() {
 
   const handleCycleTeam = async (playerId: string, currentTeamNumber: number | null) => {
     if (!isHost || lobby?.status !== 'waiting') return;
-    const nextTeam = currentTeamNumber === null ? 1 : currentTeamNumber >= 4 ? null : currentTeamNumber + 1;
+    const nextTeam =
+      currentTeamNumber === null ? 1 : currentTeamNumber >= 4 ? null : currentTeamNumber + 1;
     await assignTeam(playerId, nextTeam);
   };
 
@@ -790,17 +1173,17 @@ export function LobbyWaitingPage() {
   };
 
   // ── Derived values ────────────────────────────────────────────────────────
-  const currentPlayer = players.find(p => p.player_id === currentPlayerId);
-  const isSpectator   = !isLoadingLobby && lobby && !currentPlayer;
-  const allReady      = players.length > 1 && players.every(p => p.is_ready);
-  const sport         = (lobby?.sport as Sport) || 'nba';
-  const teamList      = sport === 'nba' ? teams : nflTeams;
-  let   team          = lobby ? teamList.find(t => t.abbreviation === lobby.team_abbreviation) : null;
+  const currentPlayer = players.find((p) => p.player_id === currentPlayerId);
+  const isSpectator = !isLoadingLobby && lobby && !currentPlayer;
+  const allReady = players.length > 1 && players.every((p) => p.is_ready);
+  const sport = (lobby?.sport as Sport) || 'nba';
+  const teamList = sport === 'nba' ? teams : nflTeams;
+  let team = lobby ? teamList.find((t) => t.abbreviation === lobby.team_abbreviation) : null;
 
   // Fallback: sport may have changed before team_abbreviation synced
   if (!team && lobby) {
     const otherList = sport === 'nba' ? nflTeams : teams;
-    team = otherList.find(t => t.abbreviation === lobby.team_abbreviation) ?? teamList[0];
+    team = otherList.find((t) => t.abbreviation === lobby.team_abbreviation) ?? teamList[0];
   }
 
   // ── Early returns ─────────────────────────────────────────────────────────
@@ -830,7 +1213,6 @@ export function LobbyWaitingPage() {
   // ── Main render ───────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col home-chalkboard text-white relative overflow-hidden">
-
       {/* Dealing animation overlay */}
       {showDealingAnimation && lobby && team && (
         <TeamRevealOverlay
@@ -861,7 +1243,9 @@ export function LobbyWaitingPage() {
               ← Leave
             </button>
             <div className="min-w-0">
-              <h1 className="capcrunch-title text-xl sm:text-2xl text-white leading-none">Private Table</h1>
+              <h1 className="capcrunch-title text-xl sm:text-2xl text-white leading-none">
+                Private Table
+              </h1>
               <p className="capcrunch-kicker text-[9px] text-white/30">Waiting for Players</p>
             </div>
           </div>
@@ -871,11 +1255,27 @@ export function LobbyWaitingPage() {
             onClick={handleCopyCode}
             className="flex w-full sm:w-auto items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-black/40 border border-white/20 hover:border-[#FDF100] transition-colors min-w-0"
           >
-            <span className="font-mono text-lg sm:text-xl tracking-[0.2em] sm:tracking-widest text-[#FDF100] truncate">{lobby.join_code}</span>
-            <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <span className="font-mono text-lg sm:text-xl tracking-[0.2em] sm:tracking-widest text-[#FDF100] truncate">
+              {lobby.join_code}
+            </span>
+            <svg
+              className="w-5 h-5 text-white/40"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
-            {copied && <span className="text-emerald-400 text-xs sm:text-sm capcrunch-kicker shrink-0">Copied!</span>}
+            {copied && (
+              <span className="text-emerald-400 text-xs sm:text-sm capcrunch-kicker shrink-0">
+                Copied!
+              </span>
+            )}
           </button>
         </div>
       </header>
@@ -885,7 +1285,7 @@ export function LobbyWaitingPage() {
           lobby={lobby}
           players={players}
           isHost={isHost}
-          onToggleSettings={() => setShowSettings(s => !s)}
+          onToggleSettings={() => setShowSettings((s) => !s)}
         />
 
         {isHost && showSettings && lobby.status === 'waiting' && (

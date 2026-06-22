@@ -36,25 +36,34 @@ import {
 } from './capCrunchData';
 
 // Re-export static data so existing importers don't need to update their import paths.
-export { NFL_DIVISIONS, NBA_DIVISIONS, P4_CONFERENCES, CONFERENCE_LOGOS, NBA_TEAMS, NFL_TEAMS } from './capCrunchData';
+export {
+  NFL_DIVISIONS,
+  NBA_DIVISIONS,
+  P4_CONFERENCES,
+  CONFERENCE_LOGOS,
+  NBA_TEAMS,
+  NFL_TEAMS,
+} from './capCrunchData';
 // Re-export HWFilter type so importers only need to reference capCrunch.ts
 export type { HWFilter } from '../types/capCrunch';
 
 /** Strip diacritics, periods, and lowercase so names like "T.Y. Hilton" match query "ty hilton". */
 function normalizeStr(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.'`']/g, '').toLowerCase();
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[.'`']/g, '')
+    .toLowerCase();
 }
 
 // ─── Position Templates ──────────────────────────────────────────────────────
 
 // No longer used - players are selected freely without position restrictions
 
-
 function nflTeamMatches(dataTeam: string, targetTeam: string): boolean {
   const aliases = NFL_FRANCHISE_ALIASES[targetTeam];
   return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;
 }
-
 
 /**
  * Returns true if a season's team value matches the target team abbreviation.
@@ -69,7 +78,7 @@ function nbaTeamMatches(dataTeam: string, targetTeam: string, depth = 0): boolea
       console.error('[nbaTeamMatches] Unexpected depth; dataTeam:', dataTeam);
       return false;
     }
-    return dataTeam.split('/').some(part => nbaTeamMatches(part.trim(), targetTeam, depth + 1));
+    return dataTeam.split('/').some((part) => nbaTeamMatches(part.trim(), targetTeam, depth + 1));
   }
   const aliases = NBA_FRANCHISE_ALIASES[targetTeam];
   return aliases ? aliases.includes(dataTeam) : dataTeam === targetTeam;
@@ -90,17 +99,16 @@ const TEST_NFL_TEAMS: string[] | null = null;
 // ── Test flag — restrict NBA team pool for targeted testing. Set to null in production. ─
 const TEST_NBA_TEAMS: string[] | null = null;
 
-
 /** Compute a derived NBA season stat from a raw season object. */
 function computeNbaStat(season: any, statCategory: string): number {
   if (statCategory === 'pra') return (season.pts ?? 0) + (season.reb ?? 0) + (season.ast ?? 0);
-  if (statCategory === 'total_pts') return Math.round((season.pts   ?? 0) * (season.gp ?? 0));
-  if (statCategory === 'total_reb') return Math.round((season.reb   ?? 0) * (season.gp ?? 0));
-  if (statCategory === 'total_ast') return Math.round((season.ast   ?? 0) * (season.gp ?? 0));
-  if (statCategory === 'total_blk') return Math.round((season.blk   ?? 0) * (season.gp ?? 0));
-  if (statCategory === 'total_3pm') return Math.round((season.fg3m  ?? 0) * (season.gp ?? 0));
-  if (statCategory === 'total_ftm') return Math.round((season.ftm   ?? 0) * (season.gp ?? 0));
-  if (statCategory === 'total_pf')  return Math.round((season.pf    ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_pts') return Math.round((season.pts ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_reb') return Math.round((season.reb ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_ast') return Math.round((season.ast ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_blk') return Math.round((season.blk ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_3pm') return Math.round((season.fg3m ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_ftm') return Math.round((season.ftm ?? 0) * (season.gp ?? 0));
+  if (statCategory === 'total_pf') return Math.round((season.pf ?? 0) * (season.gp ?? 0));
   return (season[statCategory] as number) ?? 0;
 }
 
@@ -109,51 +117,71 @@ function computeNflStat(season: any, statCategory: string): number {
   if (statCategory === 'fpts') {
     // Kicker season: fg_made field is only present on kicker pool entries
     if (season.fg_made != null) {
-      const fgShort = Math.max((season.fg_made ?? 0) - (season.fg_made_40_49 ?? 0) - (season.fg_made_50p ?? 0), 0);
-      return parseFloat((
-        fgShort                     * 3 +   // FG 0-39 yds: 3 pts
-        (season.fg_made_40_49 ?? 0) * 4 +   // FG 40-49 yds: 4 pts
-        (season.fg_made_50p   ?? 0) * 5 +   // FG 50+ yds: 5 pts
-        (season.pat_made      ?? 0) * 1     // XP: 1 pt
-      ).toFixed(1));
+      const fgShort = Math.max(
+        (season.fg_made ?? 0) - (season.fg_made_40_49 ?? 0) - (season.fg_made_50p ?? 0),
+        0,
+      );
+      return parseFloat(
+        (
+          fgShort * 3 + // FG 0-39 yds: 3 pts
+          (season.fg_made_40_49 ?? 0) * 4 + // FG 40-49 yds: 4 pts
+          (season.fg_made_50p ?? 0) * 5 + // FG 50+ yds: 5 pts
+          (season.pat_made ?? 0) * 1
+        ) // XP: 1 pt
+          .toFixed(1),
+      );
     }
     // Skill position FPTS (PPR)
-    return parseFloat((
-      (season.passing_yards ?? 0) * 0.04 +
-      (season.passing_tds ?? 0) * 4 +
-      (season.rushing_yards ?? 0) * 0.1 +
-      (season.rushing_tds ?? 0) * 6 +
-      (season.receiving_yards ?? 0) * 0.1 +
-      (season.receiving_tds ?? 0) * 6 +
-      (season.receptions ?? 0) * 1
-    ).toFixed(1));
+    return parseFloat(
+      (
+        (season.passing_yards ?? 0) * 0.04 +
+        (season.passing_tds ?? 0) * 4 +
+        (season.rushing_yards ?? 0) * 0.1 +
+        (season.rushing_tds ?? 0) * 6 +
+        (season.receiving_yards ?? 0) * 0.1 +
+        (season.receiving_tds ?? 0) * 6 +
+        (season.receptions ?? 0) * 1
+      ).toFixed(1),
+    );
   }
   return (season[statCategory] as number) ?? 0;
 }
 
 /** Returns true if `val` is a height/weight eligibility filter. */
 export function isHWFilter(val: HWFilter | null | undefined): val is HWFilter {
-  return val === 'height_above' || val === 'height_below' ||
-         val === 'weight_above' || val === 'weight_below';
+  return (
+    val === 'height_above' ||
+    val === 'height_below' ||
+    val === 'weight_above' ||
+    val === 'weight_below'
+  );
 }
 
 /**
  * The four "special" round types that must each appear before any can repeat.
  * Plain team (no filter) is unrestricted and sits outside this cycle.
  */
-export type SpecialRoundType = 'division_draft' | 'division' | 'conference' | 'hw_filter' | 'teammate';
+export type SpecialRoundType =
+  | 'division_draft'
+  | 'division'
+  | 'conference'
+  | 'hw_filter'
+  | 'teammate';
 
 /**
  * Classify which special round type a round is, or null for plain team (no filter).
  * Used to track the rotation cycle.
  */
-export function classifySpecialRoundType(team: string, hwFilter: HWFilter | null): SpecialRoundType | null {
-  if (isNameMatchRound(team))     return 'teammate'; // name-match shares the teammate cycle slot
-  if (isTeammateRound(team))      return 'teammate';
+export function classifySpecialRoundType(
+  team: string,
+  hwFilter: HWFilter | null,
+): SpecialRoundType | null {
+  if (isNameMatchRound(team)) return 'teammate'; // name-match shares the teammate cycle slot
+  if (isTeammateRound(team)) return 'teammate';
   if (isDivisionDraftRound(team)) return 'division_draft';
-  if (isDivisionRound(team))      return 'division';
-  if (isConferenceRound(team))    return 'conference';
-  if (hwFilter !== null)          return 'hw_filter';
+  if (isDivisionRound(team)) return 'division';
+  if (isConferenceRound(team)) return 'conference';
+  if (hwFilter !== null) return 'hw_filter';
   return null;
 }
 
@@ -180,7 +208,7 @@ function extractFirstName(name: string): string {
 /** Extract the last name token from a player's full name, stripping common suffixes. */
 function extractLastName(name: string): string {
   const parts = name.trim().split(' ');
-  const filtered = parts.filter(p => !NAME_SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
+  const filtered = parts.filter((p) => !NAME_SUFFIXES.has(p.toLowerCase().replace(/\.$/, '')));
   return normalizeStr(filtered[filtered.length - 1] ?? parts[parts.length - 1] ?? '');
 }
 
@@ -205,7 +233,15 @@ export function selectRandomHWFilter(
 ): HWFilter | null {
   if (FORCE_HW_FILTER) return FORCE_HW_FILTER;
   // Only applies to plain team rounds (not division, conference, or draft special rounds)
-  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team) || isTeammateRound(team) || isNameMatchRound(team) || isWildcardRound(team)) return null;
+  if (
+    isDivisionRound(team) ||
+    isConferenceRound(team) ||
+    isDivisionDraftRound(team) ||
+    isTeammateRound(team) ||
+    isNameMatchRound(team) ||
+    isWildcardRound(team)
+  )
+    return null;
   // Only applies to per-season stats — not career totals or total_gp
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
   // Block if disabled by host settings or already appeared this cycle
@@ -231,21 +267,33 @@ export function formatHeightInches(inches: number): string {
 
 /** Career stat categories: sum all seasons across ALL teams — no team/year selection needed. */
 export function isCareerStat(cat: StatCategory): boolean {
-  return cat === 'career_passing_yards' || cat === 'career_passing_tds' ||
-         cat === 'career_rushing_yards'  || cat === 'career_rushing_tds'  ||
-         cat === 'career_receiving_yards'|| cat === 'career_receiving_tds';
+  return (
+    cat === 'career_passing_yards' ||
+    cat === 'career_passing_tds' ||
+    cat === 'career_rushing_yards' ||
+    cat === 'career_rushing_tds' ||
+    cat === 'career_receiving_yards' ||
+    cat === 'career_receiving_tds'
+  );
 }
 
 /** The underlying per-season stat field for a career stat category. */
 function careerStatField(cat: StatCategory): string {
   switch (cat) {
-    case 'career_passing_yards':   return 'passing_yards';
-    case 'career_passing_tds':     return 'passing_tds';
-    case 'career_rushing_yards':   return 'rushing_yards';
-    case 'career_rushing_tds':     return 'rushing_tds';
-    case 'career_receiving_yards': return 'receiving_yards';
-    case 'career_receiving_tds':   return 'receiving_tds';
-    default: throw new Error(`careerStatField: unrecognized career category "${cat}"`);
+    case 'career_passing_yards':
+      return 'passing_yards';
+    case 'career_passing_tds':
+      return 'passing_tds';
+    case 'career_rushing_yards':
+      return 'rushing_yards';
+    case 'career_rushing_tds':
+      return 'rushing_tds';
+    case 'career_receiving_yards':
+      return 'receiving_yards';
+    case 'career_receiving_tds':
+      return 'receiving_tds';
+    default:
+      throw new Error(`careerStatField: unrecognized career category "${cat}"`);
   }
 }
 
@@ -254,7 +302,11 @@ function careerStatField(cat: StatCategory): string {
 /**
  * Generate a reasonable target cap based on the stat category and sport.
  */
-export function generateTargetCap(sport: Sport, statCategory: StatCategory, _totalRounds: number = 5): number {
+export function generateTargetCap(
+  sport: Sport,
+  statCategory: StatCategory,
+  _totalRounds: number = 5,
+): number {
   const r = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 
   if (sport === 'nba') {
@@ -263,23 +315,37 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory, _tot
     //   3 good picks (avg starter) puts you near the middle of the range,
     //   5 elite picks risks a bust.
     switch (statCategory) {
-      case 'pts': return r(75, 120);   // 5× avg starter ~20 PPG = 100
-      case 'ast': return r(22, 40);    // 5× avg starter ~6 APG = 30
-      case 'reb': return r(30, 50);    // 5× avg starter ~8 RPG = 40
-      case 'min': return r(130, 175);  // 5× avg starter ~34 MPG = 170
-      case 'pra': return r(120, 225);  // 5× avg starter ~22+7+5=34 PRA; elite ~45+ PRA
-      case 'total_pts': return r(3500, 10000); // 5× season totals; good scorer ~1200 pts/yr (15 PPG × 80), elite ~2400 (LeBron, Kobe)
-      case 'total_reb': return r(2000, 4000); // 5× season totals; good big ~700 reb/yr (9 RPG × 78), elite ~1100 (Dwight, Gobert)
-      case 'total_ast': return r(900,  3000); // 5× season totals; good PG ~500 ast/yr (7 APG × 72), elite ~1164 (Stockton '90-91)
-      case 'total_blk': return r(200, 1050);  // 5× season totals; good blocker ~120 blk/yr (1.5 BPG × 80), elite ~456 (Mark Eaton '85)
+      case 'pts':
+        return r(75, 120); // 5× avg starter ~20 PPG = 100
+      case 'ast':
+        return r(22, 40); // 5× avg starter ~6 APG = 30
+      case 'reb':
+        return r(30, 50); // 5× avg starter ~8 RPG = 40
+      case 'min':
+        return r(130, 175); // 5× avg starter ~34 MPG = 170
+      case 'pra':
+        return r(120, 225); // 5× avg starter ~22+7+5=34 PRA; elite ~45+ PRA
+      case 'total_pts':
+        return r(3500, 10000); // 5× season totals; good scorer ~1200 pts/yr (15 PPG × 80), elite ~2400 (LeBron, Kobe)
+      case 'total_reb':
+        return r(2000, 4000); // 5× season totals; good big ~700 reb/yr (9 RPG × 78), elite ~1100 (Dwight, Gobert)
+      case 'total_ast':
+        return r(900, 3000); // 5× season totals; good PG ~500 ast/yr (7 APG × 72), elite ~1164 (Stockton '90-91)
+      case 'total_blk':
+        return r(200, 1050); // 5× season totals; good blocker ~120 blk/yr (1.5 BPG × 80), elite ~456 (Mark Eaton '85)
       // total_3pm: elite shooter ~200/yr (Curry '15-16: 402); good shooter ~100/yr; role player ~30
-      case 'total_3pm': return r(100, 2000);  // 5 picks avg ~100-200 each; Curry '15-16: 402 alone
+      case 'total_3pm':
+        return r(100, 2000); // 5 picks avg ~100-200 each; Curry '15-16: 402 alone
       // total_ftm: elite FT shooter ~700/yr (Harden '18-19: 702); good player ~300/yr; role ~100
-      case 'total_ftm': return r(200, 2100); // 5 picks avg ~300 each = 1500 mid-range
+      case 'total_ftm':
+        return r(200, 2100); // 5 picks avg ~300 each = 1500 mid-range
       // total_pf: heavy fouler ~300/yr (3.8 PF/G × 80); guard ~150/yr; 5 picks avg ~220 = 1100
-      case 'total_pf':  return r(600,  1500); // 5 picks avg ~220 each = 1100 mid-range
-      case 'total_gp': return r(700, 2000); // 5 picks of career GP with one team; franchise guy ~300-500+ GP
-      default: return 100;
+      case 'total_pf':
+        return r(600, 1500); // 5 picks avg ~220 each = 1100 mid-range
+      case 'total_gp':
+        return r(700, 2000); // 5 picks of career GP with one team; franchise guy ~300-500+ GP
+      default:
+        return 100;
     }
   } else {
     // NFL stats are season totals.
@@ -289,29 +355,46 @@ export function generateTargetCap(sport: Sport, statCategory: StatCategory, _tot
     //   WR/TE:~1100 rec yds  / ~9 rec TDs
     // Ranges are tuned so 3 good picks land mid-range, 5 elite picks risk a bust.
     switch (statCategory) {
-      case 'passing_yards': return r(12000, 20000); // 3× 4000 = 12000; 5 elite = 20000+
-      case 'passing_tds':   return r(80,   140);    // 3× 30   = 90;  5 elite = 180
+      case 'passing_yards':
+        return r(12000, 20000); // 3× 4000 = 12000; 5 elite = 20000+
+      case 'passing_tds':
+        return r(80, 140); // 3× 30   = 90;  5 elite = 180
       // interceptions: avg ~9/yr, bad QBs 20+. 3 avg = 27; 5 bad = 75+
-      case 'interceptions': return r(25,   55);
-      case 'rushing_yards': return r(4000, 7500);   // 3× 1200 = 3600; 5 elite = 8000
-      case 'rushing_tds':   return r(35,   65);     // 3× 10   = 30;  5 elite = 75
-      case 'receiving_yards': return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
-      case 'receiving_tds':   return r(28,   50);   // 3× 9    = 27;  5 elite = 55
+      case 'interceptions':
+        return r(25, 55);
+      case 'rushing_yards':
+        return r(4000, 7500); // 3× 1200 = 3600; 5 elite = 8000
+      case 'rushing_tds':
+        return r(35, 65); // 3× 10   = 30;  5 elite = 75
+      case 'receiving_yards':
+        return r(3500, 6000); // 3× 1100 = 3300; 5 elite = 7000
+      case 'receiving_tds':
+        return r(28, 50); // 3× 9    = 27;  5 elite = 55
       // receptions: avg ~35/yr, elite 100+. 3 avg = 105; 5 elite = 500+
-      case 'receptions':      return r(220, 500);
+      case 'receptions':
+        return r(220, 500);
       // fpts (PPR): QB ~350-450, WR/TE ~200-300, RB ~200-300 in a good season.
       // 5 picks averaging ~200 each = 1000. Elite 5-stack = 1500+.
-      case 'fpts':            return r(650, 1750);
+      case 'fpts':
+        return r(650, 1750);
       // total_gp: career GP with one team. Franchise guys hit 100-200, avg starter 30-80.
       // 5 picks averaging ~50 GP each = 250. Range creates tension.
-      case 'total_gp':        return r(225, 450);
-      case 'career_passing_yards':   return r(55000,  184000);
-      case 'career_passing_tds':     return r(300,    800);
-      case 'career_rushing_yards':   return r(18000,  51000);
-      case 'career_rushing_tds':     return r(130,     450);
-      case 'career_receiving_yards': return r(18000,  51000);
-      case 'career_receiving_tds':   return r(130,     450);
-      default: return 500;
+      case 'total_gp':
+        return r(225, 450);
+      case 'career_passing_yards':
+        return r(55000, 184000);
+      case 'career_passing_tds':
+        return r(300, 800);
+      case 'career_rushing_yards':
+        return r(18000, 51000);
+      case 'career_rushing_tds':
+        return r(130, 450);
+      case 'career_receiving_yards':
+        return r(18000, 51000);
+      case 'career_receiving_tds':
+        return r(130, 450);
+      default:
+        return 500;
     }
   }
 }
@@ -347,10 +430,7 @@ export function getStatLabel(statCategory: StatCategory): string {
 /**
  * Create initial lineup with empty 5-player slots.
  */
-export function createPlayerLineup(
-  playerId: string,
-  playerName: string
-): PlayerLineup {
+export function createPlayerLineup(playerId: string, playerName: string): PlayerLineup {
   return {
     playerId,
     playerName,
@@ -363,12 +443,10 @@ export function createPlayerLineup(
 
 // ─── Team Assignment ────────────────────────────────────────────────────────
 
-
 /** Returns true if the string is a division label rather than a team abbreviation. */
 export function isDivisionRound(teamOrDiv: string): boolean {
   return teamOrDiv in NFL_DIVISIONS;
 }
-
 
 /**
  * Returns true if a season's team value (including "ORL/DEN" slash strings)
@@ -379,15 +457,14 @@ function nbaConferenceMatches(dataTeam: string, conf: string): boolean {
   const set = conf === 'East' ? NBA_EAST_TEAMS : NBA_WEST_TEAMS;
   // Slash-separated traded seasons: qualify if any component is in the conference
   const parts = dataTeam.includes('/') ? dataTeam.split('/') : [dataTeam];
-  return parts.some(part => {
+  return parts.some((part) => {
     const t = part.trim();
     if (set.has(t)) return true;
     // Also resolve through franchise aliases
     const aliases = NBA_FRANCHISE_ALIASES[t];
-    return aliases ? aliases.some(a => set.has(a)) : false;
+    return aliases ? aliases.some((a) => set.has(a)) : false;
   });
 }
-
 
 /** Returns true if dataTeam played in the given NFL conference ('AFC' or 'NFC'). */
 function nflConferenceMatches(dataTeam: string, nflConf: string): boolean {
@@ -397,17 +474,18 @@ function nflConferenceMatches(dataTeam: string, nflConf: string): boolean {
   if (set.has(dataTeam)) return true;
   // Also resolve through franchise alias map in case data uses a different abbreviation
   const aliases = NFL_FRANCHISE_ALIASES[dataTeam];
-  return aliases ? aliases.some(a => set.has(a)) : false;
+  return aliases ? aliases.some((a) => set.has(a)) : false;
 }
 
 function teamInDivision(dataTeam: string, division: string): boolean {
   const divTeams = NFL_DIVISIONS[division] ?? [];
-  return divTeams.some(t => nflTeamMatches(dataTeam, t));
+  return divTeams.some((t) => nflTeamMatches(dataTeam, t));
 }
 
-
 const ALL_P4_SCHOOLS = new Set<string>(
-  Object.values(P4_CONFERENCES).flat().map(s => s.toLowerCase())
+  Object.values(P4_CONFERENCES)
+    .flat()
+    .map((s) => s.toLowerCase()),
 );
 
 const COLLEGE_TO_CONF: Record<string, string> = {};
@@ -416,7 +494,6 @@ for (const [conf, schools] of Object.entries(P4_CONFERENCES)) {
     COLLEGE_TO_CONF[school.toLowerCase()] = conf;
   }
 }
-
 
 /**
  * Returns true if the string is a P4 conference round.
@@ -447,11 +524,14 @@ function playerCollegeInConference(bio: any, conference: string): boolean {
   // NBA uses bio.school (single value); NFL uses bio.college (semicolon-separated)
   const raw = (bio?.college ?? bio?.school ?? '') as string;
   if (!raw.trim()) return conference === 'Non-P4';
-  const colleges = raw.split(';').map(c => c.trim()).filter(Boolean);
+  const colleges = raw
+    .split(';')
+    .map((c) => c.trim())
+    .filter(Boolean);
   if (conference === 'Non-P4') {
-    return colleges.some(c => !ALL_P4_SCHOOLS.has(c.toLowerCase()));
+    return colleges.some((c) => !ALL_P4_SCHOOLS.has(c.toLowerCase()));
   }
-  return colleges.some(c => COLLEGE_TO_CONF[c.toLowerCase()] === conference);
+  return colleges.some((c) => COLLEGE_TO_CONF[c.toLowerCase()] === conference);
 }
 
 // ─── Division + Draft Round helpers ─────────────────────────────────────────
@@ -515,7 +595,11 @@ export function isWildcardRound(s: string): boolean {
  * Parse "FNAME:1|AFC" → { type: 'first', pickIndex: 1, proConf: 'AFC' }
  * Parse "LNAME:2"     → { type: 'last',  pickIndex: 2, proConf: undefined }
  */
-export function parseNameRound(s: string): { type: 'first' | 'last'; pickIndex: number; proConf?: string } {
+export function parseNameRound(s: string): {
+  type: 'first' | 'last';
+  pickIndex: number;
+  proConf?: string;
+} {
   const type: 'first' | 'last' = s.startsWith('FNAME:') ? 'first' : 'last';
   const [indexStr, proConf] = s.slice(6).split('|');
   return { type, pickIndex: parseInt(indexStr), proConf };
@@ -523,10 +607,10 @@ export function parseNameRound(s: string): { type: 'first' | 'last'; pickIndex: 
 
 /** Human-readable label for a draft round code. */
 function draftRoundLabel(code: string): string {
-  if (code === 'R1')  return '1st Round';
+  if (code === 'R1') return '1st Round';
   if (code === 'R23') return '2nd-3rd Round';
   if (code === 'R47') return '4th Round+';
-  if (code === 'R2')  return '2nd Round';
+  if (code === 'R2') return '2nd Round';
   return code;
 }
 
@@ -550,7 +634,7 @@ function draftRoundWithPick(bio: any, sport: 'nba' | 'nfl'): string | undefined 
 function nflDraftRoundCode(bio: any): string | null {
   const pick = bio?.draft_number;
   if (!pick || pick <= 0) return null;
-  if (pick <= 32)  return 'R1';
+  if (pick <= 32) return 'R1';
   if (pick <= 105) return 'R23';
   return 'R47';
 }
@@ -575,7 +659,7 @@ function playerInDraftRound(bio: any, draftRound: string, sport: 'nba' | 'nfl'):
 function getActualNflDivision(team: string): string | null {
   const aliases = NFL_FRANCHISE_ALIASES[team] ?? [team];
   for (const [div, teams] of Object.entries(NFL_DIVISIONS)) {
-    if (aliases.some(a => teams.includes(a)) || teams.includes(team)) return div;
+    if (aliases.some((a) => teams.includes(a)) || teams.includes(team)) return div;
   }
   return null;
 }
@@ -584,7 +668,7 @@ function getActualNflDivision(team: string): string | null {
 function getActualNbaDivision(team: string): string | null {
   const candidates = NBA_FRANCHISE_ALIASES[team] ? [team, ...NBA_FRANCHISE_ALIASES[team]] : [team];
   for (const [div, teams] of Object.entries(NBA_DIVISIONS)) {
-    if (candidates.some(c => teams.includes(c))) return div;
+    if (candidates.some((c) => teams.includes(c))) return div;
   }
   return null;
 }
@@ -592,11 +676,13 @@ function getActualNbaDivision(team: string): string | null {
 /** Returns true if dataTeam played in the given NBA division. Handles slash-seasons and franchise aliases. */
 function teamInNbaDivision(dataTeam: string, division: string): boolean {
   if (dataTeam.includes('/')) {
-    return dataTeam.split('/').some(t => teamInNbaDivision(t.trim(), division));
+    return dataTeam.split('/').some((t) => teamInNbaDivision(t.trim(), division));
   }
   const divTeams = NBA_DIVISIONS[division] ?? [];
-  const candidates = NBA_FRANCHISE_ALIASES[dataTeam] ? [dataTeam, ...NBA_FRANCHISE_ALIASES[dataTeam]] : [dataTeam];
-  return candidates.some(t => divTeams.includes(t));
+  const candidates = NBA_FRANCHISE_ALIASES[dataTeam]
+    ? [dataTeam, ...NBA_FRANCHISE_ALIASES[dataTeam]]
+    : [dataTeam];
+  return candidates.some((t) => divTeams.includes(t));
 }
 
 /**
@@ -633,7 +719,9 @@ const TEST_FORCE_NAME_ROUND: 'first' | 'last' | false = false;
 // Set `prefixFilter` when excluding by prefix (e.g. "SEC|AFC" excludes conf "SEC").
 function selectFromPool(all: string[], exclude?: string[] | null, prefixFilter = false): string {
   const available = exclude
-    ? all.filter(i => prefixFilter ? !exclude.some(e => e.startsWith(i)) : !exclude.includes(i))
+    ? all.filter((i) =>
+        prefixFilter ? !exclude.some((e) => e.startsWith(i)) : !exclude.includes(i),
+      )
     : all;
   const pool = available.length > 0 ? available : all;
   return pool[Math.floor(Math.random() * pool.length)];
@@ -673,10 +761,19 @@ export function assignRandomTeam(
   // Variants: 65% played-with (MATE:N), 20% first-name (FNAME:N), 15% last-name (LNAME:N).
   // Name-match rounds optionally carry a conference tag (~50% chance). Skipped for total_gp.
   const bypassCycle = TEST_FORCE_TEAMMATE && prevPicks && prevPicks.length >= 2;
-  if (!disabledRoundTypes?.includes('teammate') && prevPicks && prevPicks.length > 0 && (!usedSpecialTypes?.includes('teammate') || bypassCycle) && statCategory !== 'total_gp') {
-    const validPriorPicks = prevPicks.filter(p => !p.isSkipped && p.playerId != null);
-    const teammateOdds = isLastRound ? 0.33 : 0.10;
-    if (validPriorPicks.length > 0 && (bypassCycle || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)) {
+  if (
+    !disabledRoundTypes?.includes('teammate') &&
+    prevPicks &&
+    prevPicks.length > 0 &&
+    (!usedSpecialTypes?.includes('teammate') || bypassCycle) &&
+    statCategory !== 'total_gp'
+  ) {
+    const validPriorPicks = prevPicks.filter((p) => !p.isSkipped && p.playerId != null);
+    const teammateOdds = isLastRound ? 0.33 : 0.1;
+    if (
+      validPriorPicks.length > 0 &&
+      (bypassCycle || (TEST_FORCE_NAME_ROUND && isLastRound) || Math.random() < teammateOdds)
+    ) {
       const refPick = validPriorPicks[Math.floor(Math.random() * validPriorPicks.length)];
       const refIndex = prevPicks.indexOf(refPick) + 1; // 1-based
 
@@ -701,7 +798,10 @@ export function assignRandomTeam(
   if (sport === 'nba' && (TEST_FORCE_CONFERENCE || statCategory !== 'total_gp')) {
     const conferenceUsed = usedSpecialTypes?.includes('conference');
     const conferenceDisabled = disabledRoundTypes?.includes('conference');
-    if (!conferenceDisabled && (TEST_FORCE_CONFERENCE || (!conferenceUsed && Math.random() < 0.15))) {
+    if (
+      !conferenceDisabled &&
+      (TEST_FORCE_CONFERENCE || (!conferenceUsed && Math.random() < 0.15))
+    ) {
       const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
       const college = selectFromPool(confs, excludeTeams, true);
       const nbaConf = Math.random() < 0.5 ? 'East' : 'West';
@@ -711,23 +811,29 @@ export function assignRandomTeam(
   if (sport === 'nfl' && statCategory !== 'total_gp' && !isCareerStat(statCategory!)) {
     const roll = Math.random();
     // Each band is exclusive — a blocked type falls to plain team, not the next special type.
-    if (roll < 0.10) {
+    if (roll < 0.1) {
       // ~10% → division + draft round; skip if already used this cycle or disabled
-      if (!disabledRoundTypes?.includes('division_draft') && !usedSpecialTypes?.includes('division_draft')) {
+      if (
+        !disabledRoundTypes?.includes('division_draft') &&
+        !usedSpecialTypes?.includes('division_draft')
+      ) {
         const divs = Object.keys(NFL_DIVISIONS);
         const div = selectFromPool(divs, excludeTeams);
         const rounds = ['R1', 'R23', 'R47'] as const;
         return `${div}|${rounds[Math.floor(Math.random() * rounds.length)]}`;
       }
-    } else if (roll < 0.20) {
+    } else if (roll < 0.2) {
       // ~10% → division only; skip if already used this cycle or disabled
       if (!disabledRoundTypes?.includes('division') && !usedSpecialTypes?.includes('division')) {
         const divs = Object.keys(NFL_DIVISIONS);
         return selectFromPool(divs, excludeTeams);
       }
-    } else if (roll < 0.30) {
+    } else if (roll < 0.3) {
       // ~10% → conference round; skip if already used this cycle or disabled
-      if (!disabledRoundTypes?.includes('conference') && !usedSpecialTypes?.includes('conference')) {
+      if (
+        !disabledRoundTypes?.includes('conference') &&
+        !usedSpecialTypes?.includes('conference')
+      ) {
         const confs = [...Object.keys(P4_CONFERENCES), 'Non-P4'];
         const college = selectFromPool(confs, excludeTeams, true);
         const nflConf = Math.random() < 0.5 ? 'AFC' : 'NFC';
@@ -745,21 +851,21 @@ export function assignRandomTeam(
 export async function searchPlayersByNameAndYear(
   sport: Sport,
   playerName: string,
-  year: number
+  year: number,
 ): Promise<PlayerSeason[]> {
   try {
     const searchLower = normalizeStr(playerName);
-    
+
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
       const seasonStr = `${year}-${String(year + 1).slice(-2)}`;
-      
+
       const results = players
-        .filter(p => normalizeStr(p.player_name).includes(searchLower))
-        .flatMap(p =>
+        .filter((p) => normalizeStr(p.player_name).includes(searchLower))
+        .flatMap((p) =>
           p.seasons
-            .filter(s => s.season === seasonStr)
-            .map(s => ({
+            .filter((s) => s.season === seasonStr)
+            .map((s) => ({
               playerId: p.player_id,
               playerName: p.player_name,
               season: s.season,
@@ -771,21 +877,21 @@ export async function searchPlayersByNameAndYear(
                 reb: s.reb ?? 0,
                 min: s.min ?? 0,
               },
-            }))
+            })),
         );
-      
+
       return results;
     } else {
       // NFL
       const players = await loadNFLLineupPool();
       const seasonStr = `${year}`;
-      
+
       const results = players
-        .filter(p => normalizeStr(p.player_name).includes(searchLower))
-        .flatMap(p =>
+        .filter((p) => normalizeStr(p.player_name).includes(searchLower))
+        .flatMap((p) =>
           p.seasons
-            .filter(s => s.season === seasonStr)
-            .map(s => ({
+            .filter((s) => s.season === seasonStr)
+            .map((s) => ({
               playerId: p.player_id,
               playerName: p.player_name,
               season: s.season,
@@ -799,9 +905,9 @@ export async function searchPlayersByNameAndYear(
                 receiving_yards: s.receiving_yards ?? 0,
                 receiving_tds: s.receiving_tds ?? 0,
               },
-            }))
+            })),
         );
-      
+
       return results;
     }
   } catch (error) {
@@ -815,18 +921,18 @@ export async function searchPlayersByNameAndYear(
  */
 export async function searchPlayersByName(
   sport: Sport,
-  playerName: string
+  playerName: string,
 ): Promise<PlayerSeason[]> {
   try {
     const searchLower = normalizeStr(playerName);
-    
+
     if (sport === 'nba') {
       const players = await loadNBALineupPool();
-      
+
       const results = players
-        .filter(p => normalizeStr(p.player_name).includes(searchLower))
-        .flatMap(p =>
-          p.seasons.map(s => ({
+        .filter((p) => normalizeStr(p.player_name).includes(searchLower))
+        .flatMap((p) =>
+          p.seasons.map((s) => ({
             playerId: p.player_id,
             playerName: p.player_name,
             season: s.season,
@@ -838,18 +944,18 @@ export async function searchPlayersByName(
               reb: s.reb ?? 0,
               min: s.min ?? 0,
             },
-          }))
+          })),
         );
-      
+
       return results;
     } else {
       // NFL
       const players = await loadNFLLineupPool();
-      
+
       const results = players
-        .filter(p => normalizeStr(p.player_name).includes(searchLower))
-        .flatMap(p =>
-          p.seasons.map(s => ({
+        .filter((p) => normalizeStr(p.player_name).includes(searchLower))
+        .flatMap((p) =>
+          p.seasons.map((s) => ({
             playerId: p.player_id,
             playerName: p.player_name,
             season: s.season,
@@ -863,9 +969,9 @@ export async function searchPlayersByName(
               receiving_yards: s.receiving_yards ?? 0,
               receiving_tds: s.receiving_tds ?? 0,
             },
-          }))
+          })),
         );
-      
+
       return results;
     }
   } catch (error) {
@@ -885,7 +991,7 @@ const NFL_SKILL_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'FB']);
 export async function searchPlayersByNameOnly(
   sport: Sport,
   playerName: string,
-  statCategory?: StatCategory
+  statCategory?: StatCategory,
 ): Promise<Array<{ playerId: string | number; playerName: string }>> {
   try {
     const searchLower = normalizeStr(playerName);
@@ -896,11 +1002,19 @@ export async function searchPlayersByNameOnly(
     const filterToSkill = sport === 'nfl' && statCategory && statCategory !== 'total_gp';
 
     // Deduplicate by player_id first
-    const seen = new Map<string | number, { playerId: string | number; playerName: string; position?: string }>();
+    const seen = new Map<
+      string | number,
+      { playerId: string | number; playerName: string; position?: string }
+    >();
     for (const p of pool) {
       if (!normalizeStr(p.player_name).includes(searchLower)) continue;
       const pos = (p as any).position ?? '';
-      if (filterToSkill && !NFL_SKILL_POSITIONS.has(pos) && !(statCategory === 'fpts' && pos === 'K')) continue;
+      if (
+        filterToSkill &&
+        !NFL_SKILL_POSITIONS.has(pos) &&
+        !(statCategory === 'fpts' && pos === 'K')
+      )
+        continue;
       if (!seen.has(p.player_id)) {
         seen.set(p.player_id, {
           playerId: p.player_id,
@@ -941,7 +1055,7 @@ export async function searchPlayersByNameOnly(
       }
     }
 
-    return dedupedResults.map(r => {
+    return dedupedResults.map((r) => {
       const nameCount = nameCounts.get(normalizeStr(r.playerName)) ?? 0;
       if (nameCount <= 1) return { playerId: r.playerId, playerName: r.playerName };
 
@@ -975,13 +1089,13 @@ export function stripPositionSuffix(name: string): string {
 function findPlayer<T extends { player_id: string | number; player_name: string }>(
   pool: T[],
   playerName: string,
-  playerId?: string | number
+  playerId?: string | number,
 ): T | undefined {
   if (playerId != null) {
-    return pool.find(p => String(p.player_id) === String(playerId));
+    return pool.find((p) => String(p.player_id) === String(playerId));
   }
   const cleanName = normalizeStr(stripPositionSuffix(playerName));
-  return pool.find(p => normalizeStr(p.player_name) === cleanName);
+  return pool.find((p) => normalizeStr(p.player_name) === cleanName);
 }
 
 /**
@@ -993,7 +1107,7 @@ export async function getPlayerYearsOnTeam(
   sport: Sport,
   playerName: string,
   _team: string,
-  playerId?: string | number
+  playerId?: string | number,
 ): Promise<string[]> {
   try {
     if (sport === 'nba') {
@@ -1002,12 +1116,11 @@ export async function getPlayerYearsOnTeam(
 
       if (!player) return [];
 
-      const years = player.seasons
-        .map(s => {
-          // Convert season format "2023-24" to year "2023"
-          const parts = s.season.split('-');
-          return parts[0];
-        });
+      const years = player.seasons.map((s) => {
+        // Convert season format "2023-24" to year "2023"
+        const parts = s.season.split('-');
+        return parts[0];
+      });
 
       return [...new Set(years)].sort();
     } else {
@@ -1017,7 +1130,7 @@ export async function getPlayerYearsOnTeam(
 
       if (!player) return [];
 
-      const years = player.seasons.map(s => s.season);
+      const years = player.seasons.map((s) => s.season);
       return [...new Set(years)].sort();
     }
   } catch (error) {
@@ -1026,9 +1139,21 @@ export async function getPlayerYearsOnTeam(
   }
 }
 
-type StatResult = { value: number; neverOnTeam: boolean; actualTeam?: string; actualNflConf?: string; actualCollege?: string; actualDraftRound?: string; hwFilterFailed?: HWFilter; actualHeight?: string; actualWeight?: number };
+type StatResult = {
+  value: number;
+  neverOnTeam: boolean;
+  actualTeam?: string;
+  actualNflConf?: string;
+  actualCollege?: string;
+  actualDraftRound?: string;
+  hwFilterFailed?: HWFilter;
+  actualHeight?: string;
+  actualWeight?: number;
+};
 
-type HWCheckResult = { passes: true } | { passes: false; hwFilterFailed: HWFilter; actualHeight?: string; actualWeight?: number };
+type HWCheckResult =
+  | { passes: true }
+  | { passes: false; hwFilterFailed: HWFilter; actualHeight?: string; actualWeight?: number };
 
 /**
  * Check whether a player's bio satisfies a height/weight filter.
@@ -1039,19 +1164,27 @@ type HWCheckResult = { passes: true } | { passes: false; hwFilterFailed: HWFilte
 function checkHWFilter(bio: any, hwFilter: HWFilter, sport: Sport): HWCheckResult {
   const heightInches = parseBioHeight(bio?.height);
   const weight: number | null = bio?.weight ?? null;
-  const threshold = (hwFilter === 'height_above' || hwFilter === 'height_below')
-    ? (sport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL)
-    : WEIGHT_THRESHOLD;
+  const threshold =
+    hwFilter === 'height_above' || hwFilter === 'height_below'
+      ? sport === 'nba'
+        ? HEIGHT_THRESHOLD_NBA
+        : HEIGHT_THRESHOLD_NFL
+      : WEIGHT_THRESHOLD;
   if (hwFilter === 'height_above' || hwFilter === 'height_below') {
     if (heightInches === null) return { passes: false, hwFilterFailed: hwFilter };
     // height_above: strictly above threshold; height_below: at or below (inclusive)
-    const qualifies = hwFilter === 'height_above' ? heightInches > threshold : heightInches <= threshold;
-    return qualifies ? { passes: true } : { passes: false, hwFilterFailed: hwFilter, actualHeight: bio?.height };
+    const qualifies =
+      hwFilter === 'height_above' ? heightInches > threshold : heightInches <= threshold;
+    return qualifies
+      ? { passes: true }
+      : { passes: false, hwFilterFailed: hwFilter, actualHeight: bio?.height };
   } else {
     if (weight === null) return { passes: false, hwFilterFailed: hwFilter };
     // weight_above: strictly above threshold; weight_below: at or below (inclusive)
     const qualifies = hwFilter === 'weight_above' ? weight > threshold : weight <= threshold;
-    return qualifies ? { passes: true } : { passes: false, hwFilterFailed: hwFilter, actualWeight: weight };
+    return qualifies
+      ? { passes: true }
+      : { passes: false, hwFilterFailed: hwFilter, actualWeight: weight };
   }
 }
 
@@ -1067,7 +1200,7 @@ export async function getPlayerStatForYearAndTeam(
   year: string,
   statCategory: string,
   playerId?: string | number,
-  hwFilter?: HWFilter | null
+  hwFilter?: HWFilter | null,
 ): Promise<StatResult> {
   try {
     if (sport === 'nba') {
@@ -1081,13 +1214,19 @@ export async function getPlayerStatForYearAndTeam(
         const { division, draftRound } = parseDivisionDraftRound(team);
         if (!playerInDraftRound((player as any).bio, draftRound, 'nba')) {
           const actual = nbaDraftRoundCode((player as any).bio);
-          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+          return {
+            value: 0,
+            neverOnTeam: true,
+            actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted',
+          };
         }
         const numYear = parseInt(year);
         const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
-        const season = player.seasons.find(s => s.season === seasonStr && teamInNbaDivision(s.team, division));
+        const season = player.seasons.find(
+          (s) => s.season === seasonStr && teamInNbaDivision(s.team, division),
+        );
         if (!season) {
-          const actualSeason = player.seasons.find(s => s.season === seasonStr);
+          const actualSeason = player.seasons.find((s) => s.season === seasonStr);
           const actualDiv = actualSeason ? getActualNbaDivision(actualSeason.team) : null;
           return { value: 0, neverOnTeam: true, actualNflConf: actualDiv ?? undefined };
         }
@@ -1103,7 +1242,7 @@ export async function getPlayerStatForYearAndTeam(
           if (nbaConf) {
             const numYear = parseInt(year);
             const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
-            const actualSeason = player.seasons.find(s => s.season === seasonStr);
+            const actualSeason = player.seasons.find((s) => s.season === seasonStr);
             if (actualSeason) {
               const inEast = nbaConferenceMatches(actualSeason.team, 'East');
               const actualNflConf = inEast ? 'East' : 'West';
@@ -1118,10 +1257,10 @@ export async function getPlayerStatForYearAndTeam(
         const numYear = parseInt(year);
         const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
         const season = player.seasons.find(
-          s => s.season === seasonStr && nbaConferenceMatches(s.team, nbaConf)
+          (s) => s.season === seasonStr && nbaConferenceMatches(s.team, nbaConf),
         );
         if (!season) {
-          const actualSeason = player.seasons.find(s => s.season === seasonStr);
+          const actualSeason = player.seasons.find((s) => s.season === seasonStr);
           if (actualSeason) {
             const inEast = nbaConferenceMatches(actualSeason.team, 'East');
             return { value: 0, neverOnTeam: true, actualNflConf: inEast ? 'East' : 'West' };
@@ -1136,17 +1275,24 @@ export async function getPlayerStatForYearAndTeam(
       const seasonStr = `${numYear}-${String(numYear + 1).slice(-2)}`;
 
       const season = player.seasons.find(
-        s => s.season === seasonStr && nbaTeamMatches(s.team, team)
+        (s) => s.season === seasonStr && nbaTeamMatches(s.team, team),
       );
 
       if (!season) {
-        const actualSeason = player.seasons.find(s => s.season === seasonStr);
+        const actualSeason = player.seasons.find((s) => s.season === seasonStr);
         return { value: 0, neverOnTeam: true, actualTeam: actualSeason?.team };
       }
 
       if (hwFilter) {
         const hw = checkHWFilter((player as any).bio, hwFilter, sport);
-        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+        if (!hw.passes)
+          return {
+            value: 0,
+            neverOnTeam: true,
+            hwFilterFailed: hw.hwFilterFailed,
+            actualHeight: hw.actualHeight,
+            actualWeight: hw.actualWeight,
+          };
       }
       return { value: computeNbaStat(season, statCategory), neverOnTeam: false };
     } else {
@@ -1161,17 +1307,26 @@ export async function getPlayerStatForYearAndTeam(
         const { division, draftRound } = parseDivisionDraftRound(team);
         if (!playerInDraftRound((player as any).bio, draftRound, 'nfl')) {
           const actual = nflDraftRoundCode((player as any).bio);
-          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+          return {
+            value: 0,
+            neverOnTeam: true,
+            actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted',
+          };
         }
         if (isCareerStat(statCategory as StatCategory)) {
-          const wasInDiv = player.seasons.some(s => teamInDivision(s.team, division));
+          const wasInDiv = player.seasons.some((s) => teamInDivision(s.team, division));
           if (!wasInDiv) return { value: 0, neverOnTeam: true };
           const field = careerStatField(statCategory as StatCategory);
-          return { value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0), neverOnTeam: false };
+          return {
+            value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0),
+            neverOnTeam: false,
+          };
         }
-        const season = player.seasons.find(s => s.season === year && teamInDivision(s.team, division));
+        const season = player.seasons.find(
+          (s) => s.season === year && teamInDivision(s.team, division),
+        );
         if (!season) {
-          const actualSeason = player.seasons.find(s => s.season === year);
+          const actualSeason = player.seasons.find((s) => s.season === year);
           const actualDiv = actualSeason ? getActualNflDivision(actualSeason.team) : null;
           return { value: 0, neverOnTeam: true, actualNflConf: actualDiv ?? undefined };
         }
@@ -1185,10 +1340,11 @@ export async function getPlayerStatForYearAndTeam(
           // Wrong college conference — also check if NFL conf is wrong so we can show both errors
           const actualCollege = (player as any).bio?.college ?? '';
           if (nflConf && !isCareerStat(statCategory as StatCategory)) {
-            const actualSeason = player.seasons.find(s => s.season === year);
+            const actualSeason = player.seasons.find((s) => s.season === year);
             if (actualSeason) {
-              const inAFC = AFC_TEAMS.has(actualSeason.team) ||
-                (NFL_FRANCHISE_ALIASES[actualSeason.team] ?? []).some(a => AFC_TEAMS.has(a));
+              const inAFC =
+                AFC_TEAMS.has(actualSeason.team) ||
+                (NFL_FRANCHISE_ALIASES[actualSeason.team] ?? []).some((a) => AFC_TEAMS.has(a));
               const actualNflConf = inAFC ? 'AFC' : 'NFC';
               if (actualNflConf !== nflConf) {
                 return { value: 0, neverOnTeam: true, actualCollege, actualNflConf };
@@ -1200,18 +1356,22 @@ export async function getPlayerStatForYearAndTeam(
         if (isCareerStat(statCategory as StatCategory)) {
           // Career stats: college check only, no NFL conf restriction
           const field = careerStatField(statCategory as StatCategory);
-          return { value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0), neverOnTeam: false };
+          return {
+            value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0),
+            neverOnTeam: false,
+          };
         }
         // Year-by-year: season must be with an NFL conf team
-        const season = player.seasons.find(s =>
-          s.season === year && nflConferenceMatches(s.team, nflConf)
+        const season = player.seasons.find(
+          (s) => s.season === year && nflConferenceMatches(s.team, nflConf),
         );
         if (!season) {
           // College conf was right — show which NFL conf they actually played in that year
-          const actualSeason = player.seasons.find(s => s.season === year);
+          const actualSeason = player.seasons.find((s) => s.season === year);
           if (actualSeason) {
-            const inAFC = AFC_TEAMS.has(actualSeason.team) ||
-              (NFL_FRANCHISE_ALIASES[actualSeason.team] ?? []).some(a => AFC_TEAMS.has(a));
+            const inAFC =
+              AFC_TEAMS.has(actualSeason.team) ||
+              (NFL_FRANCHISE_ALIASES[actualSeason.team] ?? []).some((a) => AFC_TEAMS.has(a));
             return { value: 0, neverOnTeam: true, actualNflConf: inAFC ? 'AFC' : 'NFC' };
           }
           return { value: 0, neverOnTeam: true };
@@ -1221,30 +1381,38 @@ export async function getPlayerStatForYearAndTeam(
 
       // Career stat: full career total, but only counts if player was on the assigned team at any point
       if (isCareerStat(statCategory as StatCategory)) {
-        const wasOnTeam = player.seasons.some(s =>
-          isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
+        const wasOnTeam = player.seasons.some((s) =>
+          isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team),
         );
         if (!wasOnTeam) return { value: 0, neverOnTeam: true };
         const field = careerStatField(statCategory as StatCategory);
-        return { value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0), neverOnTeam: false };
+        return {
+          value: player.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0),
+          neverOnTeam: false,
+        };
       }
 
       const season = player.seasons.find(
-        s => s.season === year && (
-          isDivisionRound(team)
-            ? teamInDivision(s.team, team)
-            : nflTeamMatches(s.team, team)
-        )
+        (s) =>
+          s.season === year &&
+          (isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)),
       );
 
       if (!season) {
-        const actualSeason = player.seasons.find(s => s.season === year);
+        const actualSeason = player.seasons.find((s) => s.season === year);
         return { value: 0, neverOnTeam: true, actualTeam: actualSeason?.team };
       }
 
       if (hwFilter) {
         const hw = checkHWFilter((player as any).bio, hwFilter, sport);
-        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+        if (!hw.passes)
+          return {
+            value: 0,
+            neverOnTeam: true,
+            hwFilterFailed: hw.hwFilterFailed,
+            actualHeight: hw.actualHeight,
+            actualWeight: hw.actualWeight,
+          };
       }
       return { value: computeNflStat(season, statCategory), neverOnTeam: false };
     }
@@ -1261,7 +1429,7 @@ export async function getPlayerStatForYearAndTeam(
 export async function getPlayerMostPlayedTeam(
   sport: Sport,
   playerName: string,
-  playerId?: string | number
+  playerId?: string | number,
 ): Promise<string> {
   try {
     const pool: Array<{ player_id: string | number; player_name: string; seasons: any[] }> =
@@ -1282,7 +1450,10 @@ export async function getPlayerMostPlayedTeam(
     let best = '';
     let bestGP = -1;
     for (const [team, gp] of gpByTeam) {
-      if (gp > bestGP) { bestGP = gp; best = team; }
+      if (gp > bestGP) {
+        bestGP = gp;
+        best = team;
+      }
     }
     return best;
   } catch (error) {
@@ -1298,13 +1469,12 @@ export async function getPlayerMostPlayedTeam(
  * Works for both NBA and NFL — no year selection needed.
  */
 
-
 export async function getPlayerTotalGPForTeam(
   sport: Sport,
   playerName: string,
   team: string,
   playerId?: string | number,
-  hwFilter?: HWFilter | null
+  hwFilter?: HWFilter | null,
 ): Promise<StatResult> {
   try {
     if (sport === 'nba') {
@@ -1316,10 +1486,14 @@ export async function getPlayerTotalGPForTeam(
         const { division, draftRound } = parseDivisionDraftRound(team);
         if (!playerInDraftRound((player as any).bio, draftRound, 'nba')) {
           const actual = nbaDraftRoundCode((player as any).bio);
-          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+          return {
+            value: 0,
+            neverOnTeam: true,
+            actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted',
+          };
         }
         const total = player.seasons
-          .filter(s => teamInNbaDivision(s.team, division))
+          .filter((s) => teamInNbaDivision(s.team, division))
           .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
         if (total === 0) return { value: 0, neverOnTeam: true };
         return { value: total, neverOnTeam: false };
@@ -1328,17 +1502,34 @@ export async function getPlayerTotalGPForTeam(
       if (isConferenceRound(team)) {
         const { college: confName } = parseConferenceRound(team);
         if (!playerCollegeInConference((player as any).bio, confName)) {
-          return { value: 0, neverOnTeam: true, actualCollege: (player as any).bio?.school ?? (player as any).bio?.college ?? '' };
+          return {
+            value: 0,
+            neverOnTeam: true,
+            actualCollege: (player as any).bio?.school ?? (player as any).bio?.college ?? '',
+          };
         }
-        return { value: player.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+        return {
+          value: player.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0),
+          neverOnTeam: false,
+        };
       }
-      const seasonsOnTeam = player.seasons.filter(s => nbaTeamMatches(s.team, team));
+      const seasonsOnTeam = player.seasons.filter((s) => nbaTeamMatches(s.team, team));
       if (seasonsOnTeam.length === 0) return { value: 0, neverOnTeam: true };
       if (hwFilter) {
         const hw = checkHWFilter((player as any).bio, hwFilter, sport);
-        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+        if (!hw.passes)
+          return {
+            value: 0,
+            neverOnTeam: true,
+            hwFilterFailed: hw.hwFilterFailed,
+            actualHeight: hw.actualHeight,
+            actualWeight: hw.actualWeight,
+          };
       }
-      return { value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+      return {
+        value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0),
+        neverOnTeam: false,
+      };
     } else {
       const players = await loadNFLLineupPool();
       const player = findPlayer(players, playerName, playerId);
@@ -1348,11 +1539,18 @@ export async function getPlayerTotalGPForTeam(
         const { division, draftRound } = parseDivisionDraftRound(team);
         if (!playerInDraftRound((player as any).bio, draftRound, 'nfl')) {
           const actual = nflDraftRoundCode((player as any).bio);
-          return { value: 0, neverOnTeam: true, actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted' };
+          return {
+            value: 0,
+            neverOnTeam: true,
+            actualDraftRound: actual ? draftRoundLabel(actual) : 'Undrafted',
+          };
         }
-        const seasonsInDiv = player.seasons.filter(s => teamInDivision(s.team, division));
+        const seasonsInDiv = player.seasons.filter((s) => teamInDivision(s.team, division));
         if (seasonsInDiv.length === 0) return { value: 0, neverOnTeam: true };
-        return { value: seasonsInDiv.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+        return {
+          value: seasonsInDiv.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0),
+          neverOnTeam: false,
+        };
       }
       // Conference round: qualify by college; total_gp is a career stat so no NFL conf restriction
       if (isConferenceRound(team)) {
@@ -1360,17 +1558,30 @@ export async function getPlayerTotalGPForTeam(
         if (!playerCollegeInConference((player as any).bio, confName)) {
           return { value: 0, neverOnTeam: true, actualCollege: (player as any).bio?.college ?? '' };
         }
-        return { value: player.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+        return {
+          value: player.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0),
+          neverOnTeam: false,
+        };
       }
-      const seasonsOnTeam = player.seasons.filter(s =>
-        isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
+      const seasonsOnTeam = player.seasons.filter((s) =>
+        isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team),
       );
       if (seasonsOnTeam.length === 0) return { value: 0, neverOnTeam: true };
       if (hwFilter) {
         const hw = checkHWFilter((player as any).bio, hwFilter, sport);
-        if (!hw.passes) return { value: 0, neverOnTeam: true, hwFilterFailed: hw.hwFilterFailed, actualHeight: hw.actualHeight, actualWeight: hw.actualWeight };
+        if (!hw.passes)
+          return {
+            value: 0,
+            neverOnTeam: true,
+            hwFilterFailed: hw.hwFilterFailed,
+            actualHeight: hw.actualHeight,
+            actualWeight: hw.actualWeight,
+          };
       }
-      return { value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0), neverOnTeam: false };
+      return {
+        value: seasonsOnTeam.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0),
+        neverOnTeam: false,
+      };
     }
   } catch (error) {
     console.error('Error getting player total GP:', error);
@@ -1385,7 +1596,7 @@ export async function getPlayerTotalGPForTeam(
 export async function getEligiblePlayersForTeamAndPosition(
   _sport: 'nba' | 'nfl',
   _teamAbbr: string,
-  _position: any
+  _position: any,
 ): Promise<PlayerSeason[]> {
   // This function is deprecated and no longer used
   return [];
@@ -1396,10 +1607,7 @@ export async function getEligiblePlayersForTeamAndPosition(
 /**
  * Get the stat value from a player season for a given category.
  */
-export function getStatValue(
-  playerSeason: PlayerSeason,
-  statCategory: StatCategory
-): number {
+export function getStatValue(playerSeason: PlayerSeason, statCategory: StatCategory): number {
   return playerSeason.stats[statCategory] ?? 0;
 }
 
@@ -1409,7 +1617,7 @@ export function getStatValue(
 export function calculateLineupStat(
   lineup: PlayerLineup,
   _statCategory: StatCategory,
-  _targetCap: number
+  _targetCap: number,
 ): { total: number } {
   // Bust picks (isBust: true) count as 0 — only valid picks contribute to the total.
   // Bust detection is done inline at pick time (statValue > remainingBudget);
@@ -1429,7 +1637,7 @@ export function calculateLineupStat(
  */
 export function addPlayerToLineup(
   lineup: PlayerLineup,
-  selectedPlayer: SelectedPlayer
+  selectedPlayer: SelectedPlayer,
 ): PlayerLineup {
   return {
     ...lineup,
@@ -1449,13 +1657,18 @@ function wereTeammates(
   for (const sA of poolA.seasons) {
     for (const sB of poolB.seasons) {
       if (sA.season !== sB.season) continue;
-      const aTeams: string[] = sA.team.includes('/') ? sA.team.split('/').map((t: string) => t.trim()) : [sA.team];
-      const bTeams: string[] = sB.team.includes('/') ? sB.team.split('/').map((t: string) => t.trim()) : [sB.team];
-      const match = aTeams.some(ta =>
-        bTeams.some(tb =>
-          sport === 'nba' ? nbaTeamMatches(ta, tb) || nbaTeamMatches(tb, ta)
-                          : nflTeamMatches(ta, tb) || nflTeamMatches(tb, ta)
-        )
+      const aTeams: string[] = sA.team.includes('/')
+        ? sA.team.split('/').map((t: string) => t.trim())
+        : [sA.team];
+      const bTeams: string[] = sB.team.includes('/')
+        ? sB.team.split('/').map((t: string) => t.trim())
+        : [sB.team];
+      const match = aTeams.some((ta) =>
+        bTeams.some((tb) =>
+          sport === 'nba'
+            ? nbaTeamMatches(ta, tb) || nbaTeamMatches(tb, ta)
+            : nflTeamMatches(ta, tb) || nflTeamMatches(tb, ta),
+        ),
       );
       if (match) return { result: true, sharedYear: sA.season, sharedTeam: aTeams[0] };
     }
@@ -1480,7 +1693,19 @@ export async function resolvePickResult(params: {
   isBlindMode?: boolean;
   prevPicks?: SelectedPlayer[];
 }): Promise<{ selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup }> {
-  const { sport, playerName, playerId, team, year, statCategory, hwFilter, lineup, targetCap, isBlindMode = false, prevPicks } = params;
+  const {
+    sport,
+    playerName,
+    playerId,
+    team,
+    year,
+    statCategory,
+    hwFilter,
+    lineup,
+    targetCap,
+    isBlindMode = false,
+    prevPicks,
+  } = params;
 
   const isTotalGP = statCategory === 'total_gp';
   const isCareerStatRound = isCareerStat(statCategory);
@@ -1495,35 +1720,63 @@ export async function resolvePickResult(params: {
     let statValue = 0;
     if (player) {
       if (isTotalGP) {
-        statValue = player.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+        statValue = player.seasons.reduce(
+          (sum: number, s: any) => sum + ((s.gp ?? 0) as number),
+          0,
+        );
       } else if (isCareerStatRound) {
         const field = careerStatField(statCategory);
-        statValue = player.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+        statValue = player.seasons.reduce(
+          (sum: number, s: any) => sum + ((s as any)[field] ?? 0),
+          0,
+        );
       } else {
-        const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
+        const seasonKey =
+          sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
         const season = player.seasons.find((s: any) => s.season === seasonKey);
-        statValue = season ? (sport === 'nba' ? computeNbaStat(season, statCategory) : computeNflStat(season, statCategory)) : 0;
+        statValue = season
+          ? sport === 'nba'
+            ? computeNbaStat(season, statCategory)
+            : computeNflStat(season, statCategory)
+          : 0;
       }
     }
 
     if (!player) {
       const notFoundSp: SelectedPlayer = {
-        playerName: stripPositionSuffix(playerName), team, selectedYear,
-        playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true, playerId,
+        playerName: stripPositionSuffix(playerName),
+        team,
+        selectedYear,
+        playerSeason: null,
+        statValue: 0,
+        isBust: false,
+        neverOnTeam: true,
+        playerId,
       };
-      return { selectedPlayer: notFoundSp, updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, notFoundSp] } };
+      return {
+        selectedPlayer: notFoundSp,
+        updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, notFoundSp] },
+      };
     }
-    const wouldBust = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+    const wouldBust = !isBlindMode && lineup.totalStat + statValue > targetCap;
     const wildcardSp: SelectedPlayer = {
-      playerName: stripPositionSuffix(playerName), team, selectedYear,
-      playerSeason: null, statValue, isBust: wouldBust, neverOnTeam: false, playerId,
+      playerName: stripPositionSuffix(playerName),
+      team,
+      selectedYear,
+      playerSeason: null,
+      statValue,
+      isBust: wouldBust,
+      neverOnTeam: false,
+      playerId,
     };
     return {
       selectedPlayer: wildcardSp,
       updatedLineup: {
         ...lineup,
         selectedPlayers: [...lineup.selectedPlayers, wildcardSp],
-        totalStat: wouldBust ? lineup.totalStat : parseFloat((lineup.totalStat + statValue).toFixed(1)),
+        totalStat: wouldBust
+          ? lineup.totalStat
+          : parseFloat((lineup.totalStat + statValue).toFixed(1)),
         bustCount: wouldBust ? (lineup.bustCount ?? 0) + 1 : (lineup.bustCount ?? 0),
       },
     };
@@ -1535,15 +1788,29 @@ export async function resolvePickResult(params: {
     const refPick = prevPicks?.[pickIndex - 1];
     const selectedYear = isNoYearSelect ? 'career' : year;
 
-    const failNamePick = (actualTeammate: string, nameMatchFailed: 'first' | 'last'): { selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup } => {
+    const failNamePick = (
+      actualTeammate: string,
+      nameMatchFailed: 'first' | 'last',
+    ): { selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup } => {
       const sp: SelectedPlayer = {
-        playerName: stripPositionSuffix(playerName), team, selectedYear,
-        playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true,
-        actualTeammate, nameMatchFailed, playerId,
+        playerName: stripPositionSuffix(playerName),
+        team,
+        selectedYear,
+        playerSeason: null,
+        statValue: 0,
+        isBust: false,
+        neverOnTeam: true,
+        actualTeammate,
+        nameMatchFailed,
+        playerId,
       };
       return {
         selectedPlayer: sp,
-        updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, sp], bustCount: lineup.bustCount ?? 0 },
+        updatedLineup: {
+          ...lineup,
+          selectedPlayers: [...lineup.selectedPlayers, sp],
+          bustCount: lineup.bustCount ?? 0,
+        },
       };
     };
 
@@ -1565,22 +1832,38 @@ export async function resolvePickResult(params: {
     // Conference check (career-wide: player must have played for that conf at any point)
     if (proConf) {
       const everInConf = newPlayer.seasons.some((s: any) =>
-        sport === 'nfl' ? nflConferenceMatches(s.team, proConf)
-                        : nbaConferenceMatches(s.team, proConf)
+        sport === 'nfl'
+          ? nflConferenceMatches(s.team, proConf)
+          : nbaConferenceMatches(s.team, proConf),
       );
       if (!everInConf) {
         // Name initial matched but conference didn't — show WRONG CONF, not WRONG NAME
-        const oppConf = sport === 'nfl'
-          ? (proConf === 'AFC' ? 'NFC' : 'AFC')
-          : (proConf === 'East' ? 'West' : 'East');
+        const oppConf =
+          sport === 'nfl'
+            ? proConf === 'AFC'
+              ? 'NFC'
+              : 'AFC'
+            : proConf === 'East'
+              ? 'West'
+              : 'East';
         const sp: SelectedPlayer = {
-          playerName: stripPositionSuffix(playerName), team, selectedYear,
-          playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true,
-          actualNflConf: oppConf, playerId,
+          playerName: stripPositionSuffix(playerName),
+          team,
+          selectedYear,
+          playerSeason: null,
+          statValue: 0,
+          isBust: false,
+          neverOnTeam: true,
+          actualNflConf: oppConf,
+          playerId,
         };
         return {
           selectedPlayer: sp,
-          updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, sp], bustCount: lineup.bustCount ?? 0 },
+          updatedLineup: {
+            ...lineup,
+            selectedPlayers: [...lineup.selectedPlayers, sp],
+            bustCount: lineup.bustCount ?? 0,
+          },
         };
       }
     }
@@ -1588,27 +1871,45 @@ export async function resolvePickResult(params: {
     // Name + conf check passed — compute stat with NO team constraint
     let statValue = 0;
     if (isTotalGP) {
-      statValue = newPlayer.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+      statValue = newPlayer.seasons.reduce(
+        (sum: number, s: any) => sum + ((s.gp ?? 0) as number),
+        0,
+      );
     } else if (isCareerStatRound) {
       const field = careerStatField(statCategory);
-      statValue = newPlayer.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+      statValue = newPlayer.seasons.reduce(
+        (sum: number, s: any) => sum + ((s as any)[field] ?? 0),
+        0,
+      );
     } else {
       const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
       const season = newPlayer.seasons.find((s: any) => s.season === seasonKey);
-      statValue = season ? (sport === 'nba' ? computeNbaStat(season, statCategory) : computeNflStat(season, statCategory)) : 0;
+      statValue = season
+        ? sport === 'nba'
+          ? computeNbaStat(season, statCategory)
+          : computeNflStat(season, statCategory)
+        : 0;
     }
 
-    const wouldBustName = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+    const wouldBustName = !isBlindMode && lineup.totalStat + statValue > targetCap;
     const namePickSp: SelectedPlayer = {
-      playerName: stripPositionSuffix(playerName), team, selectedYear,
-      playerSeason: null, statValue, isBust: wouldBustName, neverOnTeam: false, playerId,
+      playerName: stripPositionSuffix(playerName),
+      team,
+      selectedYear,
+      playerSeason: null,
+      statValue,
+      isBust: wouldBustName,
+      neverOnTeam: false,
+      playerId,
     };
     return {
       selectedPlayer: namePickSp,
       updatedLineup: {
         ...lineup,
         selectedPlayers: [...lineup.selectedPlayers, namePickSp],
-        totalStat: wouldBustName ? lineup.totalStat : parseFloat((lineup.totalStat + statValue).toFixed(1)),
+        totalStat: wouldBustName
+          ? lineup.totalStat
+          : parseFloat((lineup.totalStat + statValue).toFixed(1)),
         bustCount: wouldBustName ? (lineup.bustCount ?? 0) + 1 : (lineup.bustCount ?? 0),
       },
     };
@@ -1620,15 +1921,27 @@ export async function resolvePickResult(params: {
     const refPick = prevPicks?.[pickIndex - 1];
     const selectedYear = isNoYearSelect ? 'career' : year;
 
-    const failPick = (actualTeammate: string): { selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup } => {
+    const failPick = (
+      actualTeammate: string,
+    ): { selectedPlayer: SelectedPlayer; updatedLineup: PlayerLineup } => {
       const sp: SelectedPlayer = {
-        playerName: stripPositionSuffix(playerName), team, selectedYear,
-        playerSeason: null, statValue: 0, isBust: false, neverOnTeam: true,
-        actualTeammate, playerId,
+        playerName: stripPositionSuffix(playerName),
+        team,
+        selectedYear,
+        playerSeason: null,
+        statValue: 0,
+        isBust: false,
+        neverOnTeam: true,
+        actualTeammate,
+        playerId,
       };
       return {
         selectedPlayer: sp,
-        updatedLineup: { ...lineup, selectedPlayers: [...lineup.selectedPlayers, sp], bustCount: lineup.bustCount ?? 0 },
+        updatedLineup: {
+          ...lineup,
+          selectedPlayers: [...lineup.selectedPlayers, sp],
+          bustCount: lineup.bustCount ?? 0,
+        },
       };
     };
 
@@ -1648,27 +1961,45 @@ export async function resolvePickResult(params: {
     // Teammate check passed — compute stat with NO team constraint
     let statValue = 0;
     if (isTotalGP) {
-      statValue = newPlayer.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
+      statValue = newPlayer.seasons.reduce(
+        (sum: number, s: any) => sum + ((s.gp ?? 0) as number),
+        0,
+      );
     } else if (isCareerStatRound) {
       const field = careerStatField(statCategory);
-      statValue = newPlayer.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+      statValue = newPlayer.seasons.reduce(
+        (sum: number, s: any) => sum + ((s as any)[field] ?? 0),
+        0,
+      );
     } else {
       const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
       const season = newPlayer.seasons.find((s: any) => s.season === seasonKey);
-      statValue = season ? (sport === 'nba' ? computeNbaStat(season, statCategory) : computeNflStat(season, statCategory)) : 0;
+      statValue = season
+        ? sport === 'nba'
+          ? computeNbaStat(season, statCategory)
+          : computeNflStat(season, statCategory)
+        : 0;
     }
 
-    const wouldBustTeammate = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+    const wouldBustTeammate = !isBlindMode && lineup.totalStat + statValue > targetCap;
     const sp: SelectedPlayer = {
-      playerName: stripPositionSuffix(playerName), team, selectedYear,
-      playerSeason: null, statValue, isBust: wouldBustTeammate, neverOnTeam: false, playerId,
+      playerName: stripPositionSuffix(playerName),
+      team,
+      selectedYear,
+      playerSeason: null,
+      statValue,
+      isBust: wouldBustTeammate,
+      neverOnTeam: false,
+      playerId,
     };
     return {
       selectedPlayer: sp,
       updatedLineup: {
         ...lineup,
         selectedPlayers: [...lineup.selectedPlayers, sp],
-        totalStat: wouldBustTeammate ? lineup.totalStat : parseFloat((lineup.totalStat + statValue).toFixed(1)),
+        totalStat: wouldBustTeammate
+          ? lineup.totalStat
+          : parseFloat((lineup.totalStat + statValue).toFixed(1)),
         bustCount: wouldBustTeammate ? (lineup.bustCount ?? 0) + 1 : (lineup.bustCount ?? 0),
       },
     };
@@ -1677,21 +2008,37 @@ export async function resolvePickResult(params: {
   const statResult = isTotalGP
     ? await getPlayerTotalGPForTeam(sport, playerName, team, playerId, hwFilter)
     : isCareerStatRound
-      ? await getPlayerStatForYearAndTeam(sport, playerName, team, 'career', statCategory, playerId, hwFilter)
-      : await getPlayerStatForYearAndTeam(sport, playerName, team, year, statCategory, playerId, hwFilter);
+      ? await getPlayerStatForYearAndTeam(
+          sport,
+          playerName,
+          team,
+          'career',
+          statCategory,
+          playerId,
+          hwFilter,
+        )
+      : await getPlayerStatForYearAndTeam(
+          sport,
+          playerName,
+          team,
+          year,
+          statCategory,
+          playerId,
+          hwFilter,
+        );
 
   const r = statResult as any;
-  const statValue: number        = r.value;
-  const neverOnTeam: boolean     = r.neverOnTeam;
-  const actualTeam               = r.actualTeam       as string | undefined;
-  const actualNflConf            = r.actualNflConf    as string | undefined;
-  const actualCollege            = r.actualCollege    as string | undefined;
-  const actualDraftRound         = r.actualDraftRound as string | undefined;
-  const hwFilterFailed           = r.hwFilterFailed   as HWFilter | undefined;
-  const actualHeight             = r.actualHeight     as string | undefined;
-  const actualWeight             = r.actualWeight     as number | undefined;
+  const statValue: number = r.value;
+  const neverOnTeam: boolean = r.neverOnTeam;
+  const actualTeam = r.actualTeam as string | undefined;
+  const actualNflConf = r.actualNflConf as string | undefined;
+  const actualCollege = r.actualCollege as string | undefined;
+  const actualDraftRound = r.actualDraftRound as string | undefined;
+  const hwFilterFailed = r.hwFilterFailed as HWFilter | undefined;
+  const actualHeight = r.actualHeight as string | undefined;
+  const actualWeight = r.actualWeight as number | undefined;
 
-  const wouldBust = !isBlindMode && (lineup.totalStat + statValue) > targetCap;
+  const wouldBust = !isBlindMode && lineup.totalStat + statValue > targetCap;
 
   const selectedPlayer: SelectedPlayer = {
     playerName: stripPositionSuffix(playerName),
@@ -1725,9 +2072,7 @@ export async function resolvePickResult(params: {
  * Check if the game is finished (all players either busted or lineups full - 5 players each).
  */
 export function isGameFinished(state: LineupIsRightGameState): boolean {
-  return state.lineups.every(
-    lineup => lineup.selectedPlayers.length === 5 && lineup.isFinished
-  );
+  return state.lineups.every((lineup) => lineup.selectedPlayers.length === 5 && lineup.isFinished);
 }
 
 // ─── Shared tiebreak helpers ──────────────────────────────────────────────────
@@ -1748,9 +2093,14 @@ export function lineupHitRound(lineup: PlayerLineup): number {
 
 /** Average selected year across qualifying picks (excludes invalid/skipped; busts count since the year choice was real). */
 export function lineupAvgPickYear(lineup: PlayerLineup): number {
-  const picks = lineup.selectedPlayers.filter(p => !p.neverOnTeam && !p.isSkipped);
+  const picks = lineup.selectedPlayers.filter((p) => !p.neverOnTeam && !p.isSkipped);
   if (picks.length === 0) return 2025;
-  return picks.reduce((sum, p) => sum + (p.selectedYear === 'career' ? 2025 : (parseInt(p.selectedYear) || 2025)), 0) / picks.length;
+  return (
+    picks.reduce(
+      (sum, p) => sum + (p.selectedYear === 'career' ? 2025 : parseInt(p.selectedYear) || 2025),
+      0,
+    ) / picks.length
+  );
 }
 
 /** Number of valid (non-bust, non-invalid) picks in this lineup that no other lineup also picked. */
@@ -1764,9 +2114,12 @@ export function lineupUniquePickCount(lineup: PlayerLineup, allLineups: PlayerLi
         othersNames.add(p.playerName.toLowerCase().trim());
     }
   }
-  return lineup.selectedPlayers.filter(p =>
-    !p.isBust && !p.neverOnTeam && !p.isSkipped &&
-    !othersNames.has(p.playerName.toLowerCase().trim())
+  return lineup.selectedPlayers.filter(
+    (p) =>
+      !p.isBust &&
+      !p.neverOnTeam &&
+      !p.isSkipped &&
+      !othersNames.has(p.playerName.toLowerCase().trim()),
   ).length;
 }
 
@@ -1778,12 +2131,15 @@ export function calculateWinners(lineups: PlayerLineup[], targetCap: number): Pl
   return [...lineups].sort((a, b) => {
     if (b.totalStat !== a.totalStat) return b.totalStat - a.totalStat;
     if (a.totalStat === targetCap && b.totalStat === targetCap) {
-      const aHit = lineupHitRound(a), bHit = lineupHitRound(b);
+      const aHit = lineupHitRound(a),
+        bHit = lineupHitRound(b);
       if (aHit !== bHit) return aHit - bHit;
     }
-    const aBusts = a.bustCount ?? 0, bBusts = b.bustCount ?? 0;
+    const aBusts = a.bustCount ?? 0,
+      bBusts = b.bustCount ?? 0;
     if (aBusts !== bBusts) return aBusts - bBusts;
-    const aUniq = lineupUniquePickCount(a, lineups), bUniq = lineupUniquePickCount(b, lineups);
+    const aUniq = lineupUniquePickCount(a, lineups),
+      bUniq = lineupUniquePickCount(b, lineups);
     if (aUniq !== bUniq) return bUniq - aUniq;
     return lineupAvgPickYear(a) - lineupAvgPickYear(b);
   });
@@ -1792,13 +2148,13 @@ export function calculateWinners(lineups: PlayerLineup[], targetCap: number): Pl
 export interface OptimalPick {
   playerName: string;
   playerId?: string | number;
-  year: string;      // season string or 'career' for total_gp
-  team: string;      // actual team the player was on
+  year: string; // season string or 'career' for total_gp
+  team: string; // actual team the player was on
   statValue: number;
-  college?: string;    // set for conference rounds — the school that qualified them
+  college?: string; // set for conference rounds — the school that qualified them
   draftRound?: string; // set for division+draft rounds — e.g. "1st Round (pick 5)"
-  teammate?: string;       // set for teammate/name-match rounds — the referenced player's name
-  teammateYear?: string;   // set for teammate rounds — the season they shared
+  teammate?: string; // set for teammate/name-match rounds — the referenced player's name
+  teammateYear?: string; // set for teammate rounds — the season they shared
   nameMatchType?: 'first' | 'last'; // set for name-match rounds to distinguish from teammate
 }
 
@@ -1825,9 +2181,8 @@ export async function findOptimalLastPick(
   // No headroom left, or they already hit exactly on the dot
   if (remainingBudget <= 0 || remainingBudget === actualStatValue) return null;
 
-  const excluded = excludePlayerNames && excludePlayerNames.length > 0
-    ? new Set(excludePlayerNames)
-    : null;
+  const excluded =
+    excludePlayerNames && excludePlayerNames.length > 0 ? new Set(excludePlayerNames) : null;
 
   // Wildcard round: scan all players with no constraints
   if (isWildcardRound(team)) {
@@ -1838,7 +2193,9 @@ export async function findOptimalLastPick(
       for (const p of pool) {
         if (excluded?.has(p.player_name)) continue;
 
-        let val = 0, yr = 'career', actualTeam = '';
+        let val = 0,
+          yr = 'career',
+          actualTeam = '';
         if (statCategory === 'total_gp') {
           val = p.seasons.reduce((sum: number, s: any) => sum + ((s.gp ?? 0) as number), 0);
         } else if (isCareerStat(statCategory)) {
@@ -1846,14 +2203,25 @@ export async function findOptimalLastPick(
           val = p.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
         } else {
           for (const s of p.seasons) {
-            const v = sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
-            if (v > val) { val = v; yr = s.season; actualTeam = s.team; }
+            const v =
+              sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
+            if (v > val) {
+              val = v;
+              yr = s.season;
+              actualTeam = s.team;
+            }
           }
         }
 
         if (val > actualStatValue && val <= remainingBudget) {
           if (!best || val > best.statValue) {
-            best = { playerName: p.player_name, playerId: p.player_id, year: yr, team: actualTeam, statValue: val };
+            best = {
+              playerName: p.player_name,
+              playerId: p.player_id,
+              year: yr,
+              team: actualTeam,
+              statValue: val,
+            };
           }
         }
       }
@@ -1894,16 +2262,26 @@ export async function findOptimalLastPick(
           val = p.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
         } else {
           for (const s of p.seasons) {
-            const v = sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
-            if (v > val) { val = v; yr = s.season; actualTeam = s.team; }
+            const v =
+              sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
+            if (v > val) {
+              val = v;
+              yr = s.season;
+              actualTeam = s.team;
+            }
           }
         }
 
         if (val > actualStatValue && val <= remainingBudget) {
           if (!best || val > best.statValue) {
             best = {
-              playerName: p.player_name, playerId: p.player_id, year: yr, team: actualTeam,
-              statValue: val, teammate: refPick.playerName, teammateYear: sharedYear,
+              playerName: p.player_name,
+              playerId: p.player_id,
+              year: yr,
+              team: actualTeam,
+              statValue: val,
+              teammate: refPick.playerName,
+              teammateYear: sharedYear,
             };
           }
         }
@@ -1926,9 +2304,10 @@ export async function findOptimalLastPick(
       const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
       const extractFn = type === 'first' ? extractFirstName : extractLastName;
       const requiredInitial = extractFn(refPick.playerName)[0] ?? '';
-      const confMatchFn = sport === 'nfl'
-        ? (team: string) => nflConferenceMatches(team, proConf!)
-        : (team: string) => nbaConferenceMatches(team, proConf!);
+      const confMatchFn =
+        sport === 'nfl'
+          ? (team: string) => nflConferenceMatches(team, proConf!)
+          : (team: string) => nbaConferenceMatches(team, proConf!);
 
       let best: OptimalPick | null = null;
 
@@ -1948,16 +2327,26 @@ export async function findOptimalLastPick(
           val = p.seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
         } else {
           for (const s of p.seasons) {
-            const v = sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
-            if (v > val) { val = v; yr = s.season; actualTeam = s.team; }
+            const v =
+              sport === 'nba' ? computeNbaStat(s, statCategory) : computeNflStat(s, statCategory);
+            if (v > val) {
+              val = v;
+              yr = s.season;
+              actualTeam = s.team;
+            }
           }
         }
 
         if (val > actualStatValue && val <= remainingBudget) {
           if (!best || val > best.statValue) {
             best = {
-              playerName: p.player_name, playerId: p.player_id, year: yr, team: actualTeam || team,
-              statValue: val, teammate: refPick.playerName, nameMatchType: type,
+              playerName: p.player_name,
+              playerId: p.player_id,
+              year: yr,
+              team: actualTeam || team,
+              statValue: val,
+              teammate: refPick.playerName,
+              nameMatchType: type,
             };
           }
         }
@@ -1979,16 +2368,25 @@ export async function findOptimalLastPick(
       // Division + Draft round: filter by draft round, then by division per-season
       if (isDivisionDraftRound(team)) {
         const { division, draftRound } = parseDivisionDraftRound(team);
-        const draftPlayers = players.filter(p => playerInDraftRound((p as any).bio, draftRound, 'nba'));
+        const draftPlayers = players.filter((p) =>
+          playerInDraftRound((p as any).bio, draftRound, 'nba'),
+        );
         if (statCategory === 'total_gp') {
           for (const p of draftPlayers) {
             if (excluded?.has(p.player_name)) continue;
             const totalGP = p.seasons
-              .filter(s => teamInNbaDivision(s.team, division))
+              .filter((s) => teamInNbaDivision(s.team, division))
               .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
             if (totalGP > actualStatValue && totalGP <= remainingBudget) {
               if (!best || totalGP > best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, draftRound: draftRoundWithPick((p as any).bio, 'nba') };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: 'career',
+                  team,
+                  statValue: totalGP,
+                  draftRound: draftRoundWithPick((p as any).bio, 'nba'),
+                };
               }
             }
           }
@@ -2000,23 +2398,39 @@ export async function findOptimalLastPick(
               const val = computeNbaStat(s, statCategory);
               if (val > actualStatValue && val <= remainingBudget) {
                 if (!best || val >= best.statValue) {
-                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, draftRound: draftRoundWithPick((p as any).bio, 'nba') };
+                  best = {
+                    playerName: p.player_name,
+                    playerId: p.player_id,
+                    year: s.season,
+                    team: s.team,
+                    statValue: val,
+                    draftRound: draftRoundWithPick((p as any).bio, 'nba'),
+                  };
                 }
               }
             }
           }
         }
-      // Conference round: filter by college school, then optionally NBA conf
+        // Conference round: filter by college school, then optionally NBA conf
       } else if (isConferenceRound(team)) {
         const { college: confName, nflConf: nbaConf } = parseConferenceRound(team);
-        const confPlayers = players.filter(p => playerCollegeInConference((p as any).bio, confName));
+        const confPlayers = players.filter((p) =>
+          playerCollegeInConference((p as any).bio, confName),
+        );
         if (statCategory === 'total_gp') {
           for (const p of confPlayers) {
             if (excluded?.has(p.player_name)) continue;
             const totalGP = p.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
             if (totalGP > actualStatValue && totalGP <= remainingBudget) {
               if (!best || totalGP > best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, college: (p as any).bio?.school };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: 'career',
+                  team,
+                  statValue: totalGP,
+                  college: (p as any).bio?.school,
+                };
               }
             }
           }
@@ -2028,7 +2442,14 @@ export async function findOptimalLastPick(
               const val = computeNbaStat(s, statCategory);
               if (val > actualStatValue && val <= remainingBudget) {
                 if (!best || val >= best.statValue) {
-                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.school };
+                  best = {
+                    playerName: p.player_name,
+                    playerId: p.player_id,
+                    year: s.season,
+                    team: s.team,
+                    statValue: val,
+                    college: (p as any).bio?.school,
+                  };
                 }
               }
             }
@@ -2038,11 +2459,17 @@ export async function findOptimalLastPick(
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
           const totalGP = p.seasons
-            .filter(s => nbaTeamMatches(s.team, team))
+            .filter((s) => nbaTeamMatches(s.team, team))
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
           if (totalGP > actualStatValue && totalGP <= remainingBudget) {
             if (!best || totalGP > best.statValue) {
-              best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP };
+              best = {
+                playerName: p.player_name,
+                playerId: p.player_id,
+                year: 'career',
+                team,
+                statValue: totalGP,
+              };
             }
           }
         }
@@ -2058,7 +2485,13 @@ export async function findOptimalLastPick(
             const val = computeNbaStat(s, statCategory);
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: s.season,
+                  team: s.team,
+                  statValue: val,
+                };
               }
             }
           }
@@ -2070,16 +2503,25 @@ export async function findOptimalLastPick(
       // Division + Draft round: filter by draft round, then by division per-season
       if (isDivisionDraftRound(team)) {
         const { division, draftRound } = parseDivisionDraftRound(team);
-        const draftPlayers = players.filter(p => playerInDraftRound((p as any).bio, draftRound, 'nfl'));
+        const draftPlayers = players.filter((p) =>
+          playerInDraftRound((p as any).bio, draftRound, 'nfl'),
+        );
         if (statCategory === 'total_gp') {
           for (const p of draftPlayers) {
             if (excluded?.has(p.player_name)) continue;
             const totalGP = p.seasons
-              .filter(s => teamInDivision(s.team, division))
+              .filter((s) => teamInDivision(s.team, division))
               .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
             if (totalGP > actualStatValue && totalGP <= remainingBudget) {
               if (!best || totalGP > best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, draftRound: draftRoundWithPick((p as any).bio, 'nfl') };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: 'career',
+                  team,
+                  statValue: totalGP,
+                  draftRound: draftRoundWithPick((p as any).bio, 'nfl'),
+                };
               }
             }
           }
@@ -2087,12 +2529,19 @@ export async function findOptimalLastPick(
           const field = careerStatField(statCategory);
           for (const p of draftPlayers) {
             if (excluded?.has(p.player_name)) continue;
-            const wasInDiv = p.seasons.some(s => teamInDivision(s.team, division));
+            const wasInDiv = p.seasons.some((s) => teamInDivision(s.team, division));
             if (!wasInDiv) continue;
             const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: val, draftRound: draftRoundWithPick((p as any).bio, 'nfl') };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: 'career',
+                  team,
+                  statValue: val,
+                  draftRound: draftRoundWithPick((p as any).bio, 'nfl'),
+                };
               }
             }
           }
@@ -2104,16 +2553,25 @@ export async function findOptimalLastPick(
               const val = computeNflStat(s, statCategory);
               if (val > actualStatValue && val <= remainingBudget) {
                 if (!best || val >= best.statValue) {
-                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, draftRound: draftRoundWithPick((p as any).bio, 'nfl') };
+                  best = {
+                    playerName: p.player_name,
+                    playerId: p.player_id,
+                    year: s.season,
+                    team: s.team,
+                    statValue: val,
+                    draftRound: draftRoundWithPick((p as any).bio, 'nfl'),
+                  };
                 }
               }
             }
           }
         }
-      // Conference round: qualify by college bio; year-by-year also requires NFL conf match
+        // Conference round: qualify by college bio; year-by-year also requires NFL conf match
       } else if (isConferenceRound(team)) {
         const { college: confName, nflConf } = parseConferenceRound(team);
-        const confPlayers = players.filter(p => playerCollegeInConference((p as any).bio, confName));
+        const confPlayers = players.filter((p) =>
+          playerCollegeInConference((p as any).bio, confName),
+        );
         if (statCategory === 'total_gp') {
           // Career stat — no NFL conf restriction
           for (const p of confPlayers) {
@@ -2121,7 +2579,14 @@ export async function findOptimalLastPick(
             const totalGP = p.seasons.reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
             if (totalGP > actualStatValue && totalGP <= remainingBudget) {
               if (!best || totalGP > best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP, college: (p as any).bio?.college };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: 'career',
+                  team,
+                  statValue: totalGP,
+                  college: (p as any).bio?.college,
+                };
               }
             }
           }
@@ -2133,7 +2598,14 @@ export async function findOptimalLastPick(
             const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: val, college: (p as any).bio?.college };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: 'career',
+                  team,
+                  statValue: val,
+                  college: (p as any).bio?.college,
+                };
               }
             }
           }
@@ -2146,7 +2618,14 @@ export async function findOptimalLastPick(
               const val = computeNflStat(s, statCategory);
               if (val > actualStatValue && val <= remainingBudget) {
                 if (!best || val >= best.statValue) {
-                  best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val, college: (p as any).bio?.college };
+                  best = {
+                    playerName: p.player_name,
+                    playerId: p.player_id,
+                    year: s.season,
+                    team: s.team,
+                    statValue: val,
+                    college: (p as any).bio?.college,
+                  };
                 }
               }
             }
@@ -2156,11 +2635,19 @@ export async function findOptimalLastPick(
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
           const totalGP = p.seasons
-            .filter(s => isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team))
+            .filter((s) =>
+              isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team),
+            )
             .reduce((sum, s) => sum + ((s as any).gp ?? 0), 0);
           if (totalGP > actualStatValue && totalGP <= remainingBudget) {
             if (!best || totalGP > best.statValue) {
-              best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: totalGP };
+              best = {
+                playerName: p.player_name,
+                playerId: p.player_id,
+                year: 'career',
+                team,
+                statValue: totalGP,
+              };
             }
           }
         }
@@ -2170,12 +2657,16 @@ export async function findOptimalLastPick(
         const careerYardMinimum = 100;
         for (const p of players) {
           if (excluded?.has(p.player_name)) continue;
-          const teamSeasons = p.seasons.filter(s =>
-            isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team)
+          const teamSeasons = p.seasons.filter((s) =>
+            isDivisionRound(team) ? teamInDivision(s.team, team) : nflTeamMatches(s.team, team),
           );
           if (teamSeasons.length === 0) continue;
           // For yardage career stats, require at least 100 yards with the team
-          const yardCategories = ['career_passing_yards', 'career_rushing_yards', 'career_receiving_yards'];
+          const yardCategories = [
+            'career_passing_yards',
+            'career_rushing_yards',
+            'career_receiving_yards',
+          ];
           if (yardCategories.includes(statCategory)) {
             const yardsWithTeam = teamSeasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
             if (yardsWithTeam < careerYardMinimum) continue;
@@ -2183,7 +2674,13 @@ export async function findOptimalLastPick(
           const val = p.seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
           if (val > actualStatValue && val <= remainingBudget) {
             if (!best || val >= best.statValue) {
-              best = { playerName: p.player_name, playerId: p.player_id, year: 'career', team, statValue: val };
+              best = {
+                playerName: p.player_name,
+                playerId: p.player_id,
+                year: 'career',
+                team,
+                statValue: val,
+              };
             }
           }
         }
@@ -2202,7 +2699,13 @@ export async function findOptimalLastPick(
             const val = computeNflStat(s, statCategory);
             if (val > actualStatValue && val <= remainingBudget) {
               if (!best || val >= best.statValue) {
-                best = { playerName: p.player_name, playerId: p.player_id, year: s.season, team: s.team, statValue: val };
+                best = {
+                  playerName: p.player_name,
+                  playerId: p.player_id,
+                  year: s.season,
+                  team: s.team,
+                  statValue: val,
+                };
               }
             }
           }

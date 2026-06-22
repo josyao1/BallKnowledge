@@ -12,36 +12,36 @@
 
 // ── Historical NBA abbr → current franchise abbr ─────────────────────────────
 const NBA_HISTORICAL_TO_CURRENT: Record<string, string> = {
-  NJN: 'BKN',   // Nets moved to Brooklyn 2012
-  SEA: 'OKC',   // SuperSonics became Thunder 2008
-  NOH: 'NOP',   // Hornets → Pelicans 2013
+  NJN: 'BKN', // Nets moved to Brooklyn 2012
+  SEA: 'OKC', // SuperSonics became Thunder 2008
+  NOH: 'NOP', // Hornets → Pelicans 2013
   NOK: 'NOP',
-  VAN: 'MEM',   // Grizzlies moved to Memphis 2001
-  UTH: 'UTA',   // ESPN alias for Utah Jazz
-  GOS: 'GSW',   // ESPN alias for Golden State Warriors
-  CHH: 'CHA',   // Charlotte Hornets (original; Charlotte Bobcats later became Hornets)
-  KCK: 'SAC',   // Kansas City Kings moved to Sacramento 1985
-  PHL: 'PHI',   // ESPN alias for Philadelphia 76ers
-  SAN: 'SAS',   // ESPN alias for San Antonio Spurs
+  VAN: 'MEM', // Grizzlies moved to Memphis 2001
+  UTH: 'UTA', // ESPN alias for Utah Jazz
+  GOS: 'GSW', // ESPN alias for Golden State Warriors
+  CHH: 'CHA', // Charlotte Hornets (original; Charlotte Bobcats later became Hornets)
+  KCK: 'SAC', // Kansas City Kings moved to Sacramento 1985
+  PHL: 'PHI', // ESPN alias for Philadelphia 76ers
+  SAN: 'SAS', // ESPN alias for San Antonio Spurs
 };
 
 // ── Standard abbr → ESPN CDN slug (NBA) ──────────────────────────────────────
 // Most abbreviations pass through as lowercase. These are the exceptions.
 const NBA_TO_ESPN: Record<string, string> = {
-  GSW:  'gs',
-  SAS:  'sa',
-  NYK:  'ny',
-  NOP:  'no',
-  UTA:  'utah',
-  WAS:  'wsh',
-  PHX:  'phx',
-  PHO:  'phx',
+  GSW: 'gs',
+  SAS: 'sa',
+  NYK: 'ny',
+  NOP: 'no',
+  UTA: 'utah',
+  WAS: 'wsh',
+  PHX: 'phx',
+  PHO: 'phx',
 };
 
 // ── Standard abbr → ESPN CDN slug (NFL) ──────────────────────────────────────
 const NFL_TO_ESPN: Record<string, string> = {
-  WAS:  'wsh',   // Washington Commanders
-  JAX:  'jax',
+  WAS: 'wsh', // Washington Commanders
+  JAX: 'jax',
 };
 
 /**

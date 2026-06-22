@@ -4,36 +4,82 @@ import { Row, Chips, ScrollStrip, Chip, Stepper } from './SettingsHelpers';
 
 const LINEUP_STAT_ABBR: Record<string, string> = {
   random: 'RANDOM',
-  pts: 'PTS/G', ast: 'AST/G', reb: 'REB/G', min: 'MIN/G', pra: 'PRA/G',
-  total_pts: 'TOT PTS', total_reb: 'TOT REB', total_ast: 'TOT AST', total_blk: 'TOT BLK',
-  total_3pm: 'TOT 3PM', total_ftm: 'TOT FTM', total_pf: 'TOT PF',
-  passing_yards: 'PASS YD', passing_tds: 'PASS TD', interceptions: 'INT',
-  rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD',
-  receiving_yards: 'REC YD', receiving_tds: 'REC TD', receptions: 'REC',
+  pts: 'PTS/G',
+  ast: 'AST/G',
+  reb: 'REB/G',
+  min: 'MIN/G',
+  pra: 'PRA/G',
+  total_pts: 'TOT PTS',
+  total_reb: 'TOT REB',
+  total_ast: 'TOT AST',
+  total_blk: 'TOT BLK',
+  total_3pm: 'TOT 3PM',
+  total_ftm: 'TOT FTM',
+  total_pf: 'TOT PF',
+  passing_yards: 'PASS YD',
+  passing_tds: 'PASS TD',
+  interceptions: 'INT',
+  rushing_yards: 'RUSH YD',
+  rushing_tds: 'RUSH TD',
+  receiving_yards: 'REC YD',
+  receiving_tds: 'REC TD',
+  receptions: 'REC',
   fpts: 'FPTS',
   total_gp: 'TOT GP',
-  career_passing_yards:   'CAREER PASS YD',
-  career_passing_tds:     'CAREER PASS TD',
-  career_rushing_yards:   'CAREER RUSH YD',
-  career_rushing_tds:     'CAREER RUSH TD',
+  career_passing_yards: 'CAREER PASS YD',
+  career_passing_tds: 'CAREER PASS TD',
+  career_rushing_yards: 'CAREER RUSH YD',
+  career_rushing_tds: 'CAREER RUSH TD',
   career_receiving_yards: 'CAREER REC YD',
-  career_receiving_tds:   'CAREER REC TD',
+  career_receiving_tds: 'CAREER REC TD',
 };
 
-const NBA_SEASON_CATS = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'];
-const NFL_SEASON_CATS = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'];
+const NBA_SEASON_CATS = [
+  'pts',
+  'ast',
+  'reb',
+  'min',
+  'pra',
+  'total_gp',
+  'total_pts',
+  'total_reb',
+  'total_ast',
+  'total_blk',
+  'total_3pm',
+  'total_ftm',
+  'total_pf',
+];
+const NFL_SEASON_CATS = [
+  'passing_yards',
+  'passing_tds',
+  'interceptions',
+  'rushing_yards',
+  'rushing_tds',
+  'receiving_yards',
+  'receiving_tds',
+  'receptions',
+  'fpts',
+  'total_gp',
+];
 const NFL_CAREER_CATS = [
-  'career_passing_yards', 'career_passing_tds',
-  'career_rushing_yards', 'career_rushing_tds',
-  'career_receiving_yards', 'career_receiving_tds',
+  'career_passing_yards',
+  'career_passing_tds',
+  'career_rushing_yards',
+  'career_rushing_tds',
+  'career_receiving_yards',
+  'career_receiving_tds',
 ] as const;
 
 const FILTER_LABELS: { type: SpecialRoundType; label: string; tooltip?: string }[] = [
-  { type: 'hw_filter',      label: 'H/W' },
-  { type: 'division',       label: 'Division' },
+  { type: 'hw_filter', label: 'H/W' },
+  { type: 'division', label: 'Division' },
   { type: 'division_draft', label: 'Draft' },
-  { type: 'conference',     label: 'College' },
-  { type: 'teammate',       label: 'Special ?', tooltip: 'Covers Teammate (played-with) and Name Match (first/last initial) rounds' },
+  { type: 'conference', label: 'College' },
+  {
+    type: 'teammate',
+    label: 'Special ?',
+    tooltip: 'Covers Teammate (played-with) and Name Match (first/last initial) rounds',
+  },
 ];
 
 const PICK_TIMER_OPTIONS: Array<{ label: string; value: number | null }> = [
@@ -44,7 +90,10 @@ const PICK_TIMER_OPTIONS: Array<{ label: string; value: number | null }> = [
   { label: '60s', value: 60 },
 ];
 
-interface Player { player_id: string; player_name: string; }
+interface Player {
+  player_id: string;
+  player_name: string;
+}
 
 interface Props {
   sport: Sport;
@@ -69,15 +118,29 @@ interface Props {
 }
 
 export function CapCrunchSettings({
-  sport, onSportChange, lineupStat, onLineupStatChange,
-  customCap, onCustomCapChange, hardMode, onHardModeChange,
-  blindMode, onBlindModeChange, pickTimer, onPickTimerChange,
-  firstPickerId, onFirstPickerIdChange, totalRounds, onTotalRoundsChange, players,
-  disabledRoundTypes, onDisabledRoundTypesChange,
+  sport,
+  onSportChange,
+  lineupStat,
+  onLineupStatChange,
+  customCap,
+  onCustomCapChange,
+  hardMode,
+  onHardModeChange,
+  blindMode,
+  onBlindModeChange,
+  pickTimer,
+  onPickTimerChange,
+  firstPickerId,
+  onFirstPickerIdChange,
+  totalRounds,
+  onTotalRoundsChange,
+  players,
+  disabledRoundTypes,
+  onDisabledRoundTypesChange,
 }: Props) {
   function toggleFilter(type: SpecialRoundType) {
     if (disabledRoundTypes.includes(type)) {
-      onDisabledRoundTypesChange(disabledRoundTypes.filter(t => t !== type));
+      onDisabledRoundTypesChange(disabledRoundTypes.filter((t) => t !== type));
     } else {
       onDisabledRoundTypesChange([...disabledRoundTypes, type]);
     }
@@ -87,16 +150,31 @@ export function CapCrunchSettings({
 
   return (
     <div className="space-y-2.5">
-
       {/* Sport */}
       <Row label="Sport">
         <Chips>
-          <Chip active={sport === 'nba'} activeBg="#f15a29" activeText="#fff"
-            onClick={() => { onSportChange('nba'); onLineupStatChange('random'); onCustomCapChange(null); }}>
+          <Chip
+            active={sport === 'nba'}
+            activeBg="#f15a29"
+            activeText="#fff"
+            onClick={() => {
+              onSportChange('nba');
+              onLineupStatChange('random');
+              onCustomCapChange(null);
+            }}
+          >
             NBA
           </Chip>
-          <Chip active={sport === 'nfl'} activeBg="#013369" activeText="#fff"
-            onClick={() => { onSportChange('nfl'); onLineupStatChange('random'); onCustomCapChange(null); }}>
+          <Chip
+            active={sport === 'nfl'}
+            activeBg="#013369"
+            activeText="#fff"
+            onClick={() => {
+              onSportChange('nfl');
+              onLineupStatChange('random');
+              onCustomCapChange(null);
+            }}
+          >
             NFL
           </Chip>
         </Chips>
@@ -106,12 +184,15 @@ export function CapCrunchSettings({
       <div className="border-t border-white/8 pt-2.5 space-y-2">
         <Row label="Season">
           <ScrollStrip>
-            {seasonCats.map(cat => (
+            {seasonCats.map((cat) => (
               <Chip
                 key={cat}
                 active={lineupStat === cat}
                 activeBg={cat === 'random' ? '#FDF100' : '#E2008A'}
-                onClick={() => { onLineupStatChange(cat); if (cat === 'random') onCustomCapChange(null); }}
+                onClick={() => {
+                  onLineupStatChange(cat);
+                  if (cat === 'random') onCustomCapChange(null);
+                }}
               >
                 {LINEUP_STAT_ABBR[cat] || cat.toUpperCase()}
               </Chip>
@@ -126,14 +207,22 @@ export function CapCrunchSettings({
                 active={false}
                 onClick={() => {
                   const pick = NFL_CAREER_CATS[Math.floor(Math.random() * NFL_CAREER_CATS.length)];
-                  onLineupStatChange(pick); onCustomCapChange(null);
+                  onLineupStatChange(pick);
+                  onCustomCapChange(null);
                 }}
               >
                 RND
               </Chip>
-              {NFL_CAREER_CATS.map(cat => (
-                <Chip key={cat} active={lineupStat === cat} activeBg="#E2008A"
-                  onClick={() => { onLineupStatChange(cat); onCustomCapChange(null); }}>
+              {NFL_CAREER_CATS.map((cat) => (
+                <Chip
+                  key={cat}
+                  active={lineupStat === cat}
+                  activeBg="#E2008A"
+                  onClick={() => {
+                    onLineupStatChange(cat);
+                    onCustomCapChange(null);
+                  }}
+                >
                   {LINEUP_STAT_ABBR[cat]}
                 </Chip>
               ))}
@@ -150,11 +239,12 @@ export function CapCrunchSettings({
 
         <Row label="Cap">
           <input
-            type="number" min={1}
+            type="number"
+            min={1}
             disabled={lineupStat === 'random'}
             value={lineupStat === 'random' ? '' : (customCap ?? '')}
             placeholder="AUTO"
-            onChange={e => {
+            onChange={(e) => {
               const v = e.target.value === '' ? null : parseInt(e.target.value);
               onCustomCapChange(v && !isNaN(v) && v > 0 ? v : null);
             }}
@@ -168,12 +258,23 @@ export function CapCrunchSettings({
 
         <Row label="Modes">
           <Chips>
-            <Chip active={hardMode} activeBg="#c8102e" activeText="#fff"
-              onClick={() => { onHardModeChange(!hardMode); onFirstPickerIdChange(null); }}>
+            <Chip
+              active={hardMode}
+              activeBg="#c8102e"
+              activeText="#fff"
+              onClick={() => {
+                onHardModeChange(!hardMode);
+                onFirstPickerIdChange(null);
+              }}
+            >
               Hard
             </Chip>
-            <Chip active={blindMode} activeBg="#7c3aed" activeText="#fff"
-              onClick={() => onBlindModeChange(!blindMode)}>
+            <Chip
+              active={blindMode}
+              activeBg="#7c3aed"
+              activeText="#fff"
+              onClick={() => onBlindModeChange(!blindMode)}
+            >
               Blind
             </Chip>
           </Chips>
@@ -181,9 +282,12 @@ export function CapCrunchSettings({
 
         <Row label="Timer">
           <Chips>
-            {PICK_TIMER_OPTIONS.map(opt => (
-              <Chip key={String(opt.value)} active={pickTimer === opt.value}
-                onClick={() => onPickTimerChange(opt.value)}>
+            {PICK_TIMER_OPTIONS.map((opt) => (
+              <Chip
+                key={String(opt.value)}
+                active={pickTimer === opt.value}
+                onClick={() => onPickTimerChange(opt.value)}
+              >
                 {opt.label}
               </Chip>
             ))}
@@ -219,10 +323,14 @@ export function CapCrunchSettings({
               <Chip active={firstPickerId === null} onClick={() => onFirstPickerIdChange(null)}>
                 AUTO
               </Chip>
-              {players.map(p => (
-                <Chip key={p.player_id} active={firstPickerId === p.player_id}
-                  activeBg="#c8102e" activeText="#fff"
-                  onClick={() => onFirstPickerIdChange(p.player_id)}>
+              {players.map((p) => (
+                <Chip
+                  key={p.player_id}
+                  active={firstPickerId === p.player_id}
+                  activeBg="#c8102e"
+                  activeText="#fff"
+                  onClick={() => onFirstPickerIdChange(p.player_id)}
+                >
                   {p.player_name}
                 </Chip>
               ))}
@@ -230,7 +338,6 @@ export function CapCrunchSettings({
           </Row>
         )}
       </div>
-
     </div>
   );
 }

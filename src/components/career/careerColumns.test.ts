@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { getColumns, formatStat, NBA_COLUMNS, NFL_QB_COLUMNS, NFL_RB_COLUMNS, NFL_WR_TE_COLUMNS } from './careerColumns';
+import {
+  getColumns,
+  formatStat,
+  NBA_COLUMNS,
+  NFL_QB_COLUMNS,
+  NFL_RB_COLUMNS,
+  NFL_WR_TE_COLUMNS,
+} from './careerColumns';
 
 describe('getColumns', () => {
   it('returns NBA columns for NBA sport', () => {

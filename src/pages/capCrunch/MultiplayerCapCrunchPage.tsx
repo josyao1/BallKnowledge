@@ -47,13 +47,13 @@ import {
 } from '../../services/capCrunch';
 import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/capCrunch';
 import type { PlayerLineup, SelectedPlayer, StatCategory } from '../../types/capCrunch';
-import { CapCrunchHeader }      from '../../components/capCrunch/CapCrunchHeader';
-import { CapCrunchPickPanel }   from '../../components/capCrunch/CapCrunchPickPanel';
+import { CapCrunchHeader } from '../../components/capCrunch/CapCrunchHeader';
+import { CapCrunchPickPanel } from '../../components/capCrunch/CapCrunchPickPanel';
 import { CapCrunchScoresPanel } from '../../components/capCrunch/CapCrunchScoresPanel';
-import { CapCrunchResultCard }  from '../../components/capCrunch/CapCrunchResultCard';
-import { BlindModeReveal }      from '../../components/capCrunch/BlindModeReveal';
+import { CapCrunchResultCard } from '../../components/capCrunch/CapCrunchResultCard';
+import { BlindModeReveal } from '../../components/capCrunch/BlindModeReveal';
 import { getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
-import { getTotalColor }        from '../../components/capCrunch/SpinningNumber';
+import { getTotalColor } from '../../components/capCrunch/SpinningNumber';
 import { GradWeekOverlay, GradBanner } from '../../components/GradWeekOverlay';
 
 type Phase = 'loading' | 'picking' | 'blind-reveal' | 'results';
@@ -95,7 +95,9 @@ export function MultiplayerCapCrunchPage() {
 
   // Ephemeral UI state — never synced to Supabase
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Array<{ playerId: string | number; playerName: string }>>([]);
+  const [searchResults, setSearchResults] = useState<
+    Array<{ playerId: string | number; playerName: string }>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | number | null>(null);
@@ -113,7 +115,10 @@ export function MultiplayerCapCrunchPage() {
 
   // Mobile toast for opponent picks
   const [opponentPickToast, setOpponentPickToast] = useState<{
-    key: number; name: string; pick: string; isSkipped: boolean;
+    key: number;
+    name: string;
+    pick: string;
+    isSkipped: boolean;
   } | null>(null);
   const opponentToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastKeyRef = useRef(0);
@@ -172,7 +177,7 @@ export function MultiplayerCapCrunchPage() {
         shouldCountdown = currentPickerId === currentPlayerId;
       } else {
         // Normal mode: countdown if I'm the only one left
-        const stillWaiting = playerIds.filter(pid => {
+        const stillWaiting = playerIds.filter((pid) => {
           const l = lineups[pid] as any;
           return !l?.hasPickedThisRound && !l?.isFinished;
         });
@@ -211,7 +216,7 @@ export function MultiplayerCapCrunchPage() {
     setCountdown(pickTimer);
 
     countdownIntervalRef.current = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev === null) return null;
         if (prev <= 1) {
           if (countdownIntervalRef.current !== null) {
@@ -225,8 +230,8 @@ export function MultiplayerCapCrunchPage() {
         return prev - 1;
       });
     }, 1000);
-  // allLineups is the reactive signal here — it changes whenever anyone picks
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // allLineups is the reactive signal here — it changes whenever anyone picks
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allLineups, phase, pickTimer, currentPlayerId, currentPickerId, hardMode]);
 
   // ── Auto-skip when countdown expires ────────────────────────────────────────
@@ -237,7 +242,7 @@ export function MultiplayerCapCrunchPage() {
     // picked manually in the same tick the timer fired)
     if (phase !== 'picking' || !canPickThisRound) return;
     handleAutoSkip();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSkipNeeded]);
 
   // ── Mobile toast: show brief notification when an opponent picks ─────────────
@@ -256,7 +261,7 @@ export function MultiplayerCapCrunchPage() {
       const prevLineup = prev[pid];
       if ((lineup.selectedPlayers.length ?? 0) > (prevLineup?.selectedPlayers.length ?? 0)) {
         const newPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
-        const opponentName = players.find(p => p.player_id === pid)?.player_name ?? 'Opponent';
+        const opponentName = players.find((p) => p.player_id === pid)?.player_name ?? 'Opponent';
         toastKeyRef.current += 1;
         setOpponentPickToast({
           key: toastKeyRef.current,
@@ -270,20 +275,24 @@ export function MultiplayerCapCrunchPage() {
       }
     }
     prevAllLineupsRef.current = { ...allLineups };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allLineups]);
 
-  const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as import('../../types').Sport | null;
+  const selectedSport = ((lobby?.career_state as any)?.sport ?? null) as
+    | import('../../types').Sport
+    | null;
 
   // Derived: my lineup and whether I can pick this round
-  const myLineup = allLineups[currentPlayerId || ''] as (PlayerLineup & { hasPickedThisRound?: boolean }) | undefined;
+  const myLineup = allLineups[currentPlayerId || ''] as
+    | (PlayerLineup & { hasPickedThisRound?: boolean })
+    | undefined;
   const canPickThisRound = hardMode
-    ? (currentPickerId === currentPlayerId && !myLineup?.isFinished)
-    : (!myLineup?.hasPickedThisRound && !myLineup?.isFinished);
+    ? currentPickerId === currentPlayerId && !myLineup?.isFinished
+    : !myLineup?.hasPickedThisRound && !myLineup?.isFinished;
 
-  const usedPlayerNames = new Set(myLineup?.selectedPlayers.map(p => p.playerName) ?? []);
+  const usedPlayerNames = new Set(myLineup?.selectedPlayers.map((p) => p.playerName) ?? []);
   const lockedPlayerNames = hardMode
-    ? new Set(pickedPlayerSeasons.map(k => k.split('|')[0]))
+    ? new Set(pickedPlayerSeasons.map((k) => k.split('|')[0]))
     : new Set<string>();
 
   const isTotalGP = statCategory === 'total_gp';
@@ -294,12 +303,18 @@ export function MultiplayerCapCrunchPage() {
 
   // ── Mount: load lobby and read full game state from career_state ────────────
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
 
     const initGame = async () => {
       try {
         const result = await findLobbyByCode(code);
-        if (!result.lobby) { navigate('/'); return; }
+        if (!result.lobby) {
+          navigate('/');
+          return;
+        }
 
         // Status-aware redirects before touching any game state
         if (result.lobby.status === 'finished') {
@@ -314,7 +329,9 @@ export function MultiplayerCapCrunchPage() {
         setLobby(result.lobby);
 
         const playersResult = await getLobbyPlayers(result.lobby.id);
-        const lobbyPlayers = Array.isArray(playersResult) ? playersResult : (playersResult?.players || []);
+        const lobbyPlayers = Array.isArray(playersResult)
+          ? playersResult
+          : playersResult?.players || [];
         if (lobbyPlayers.length > 0) setPlayers(lobbyPlayers);
 
         const cs = (result.lobby.career_state as any) || {};
@@ -334,8 +351,9 @@ export function MultiplayerCapCrunchPage() {
         setPickTimer((cs.pickTimer as number | null) ?? null);
 
         if (cs.phase === 'results') setPhase('results');
-        else if (cs.phase === 'blind-reveal') { setPhase('blind-reveal'); }
-        else if (cs.statCategory && cs.allLineups) setPhase('picking');
+        else if (cs.phase === 'blind-reveal') {
+          setPhase('blind-reveal');
+        } else if (cs.statCategory && cs.allLineups) setPhase('picking');
       } catch (error) {
         console.error('Error initializing game:', error);
         navigate('/');
@@ -347,7 +365,7 @@ export function MultiplayerCapCrunchPage() {
 
   // ── Realtime sync: when lobby.career_state changes, update local state ──────
   useEffect(() => {
-    const cs = (lobby?.career_state as any);
+    const cs = lobby?.career_state as any;
     if (!cs?.statCategory || !cs?.allLineups) return;
 
     // Always process results/blind-reveal transitions — must not be blocked by addingPlayerRef
@@ -417,7 +435,7 @@ export function MultiplayerCapCrunchPage() {
         allLineups: { ...cs.allLineups, [currentPlayerId]: mySubmittedLineupRef.current },
       }).catch(console.error);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobby?.career_state]);
 
   // ── Host-only: advance round when all players have picked ───────────────────
@@ -430,11 +448,11 @@ export function MultiplayerCapCrunchPage() {
     const lineups = cs.allLineups || {};
     // Use live lobby_players as source of truth so mid-game joiners are included.
     // A player in lobby_players but not yet in allLineups has undefined lineup → not picked → waits.
-    const activePlayerIds = players.filter(p => !p.is_dummy).map(p => p.player_id);
+    const activePlayerIds = players.filter((p) => !p.is_dummy).map((p) => p.player_id);
     if (activePlayerIds.length === 0) return;
 
-    const allPicked = activePlayerIds.every(pid =>
-      (lineups[pid] as any)?.hasPickedThisRound || (lineups[pid] as any)?.isFinished
+    const allPicked = activePlayerIds.every(
+      (pid) => (lineups[pid] as any)?.hasPickedThisRound || (lineups[pid] as any)?.isFinished,
     );
     if (!allPicked) return;
 
@@ -456,17 +474,21 @@ export function MultiplayerCapCrunchPage() {
         } else {
           // Normal mode: determine winner(s): score → hit round → fewest busts → most unique picks → oldest avg year
           const cap = cs.targetCap as number;
-          const allLineupsList = activePlayerIds.map(pid => lineups[pid] as PlayerLineup);
+          const allLineupsList = activePlayerIds.map((pid) => lineups[pid] as PlayerLineup);
           const sorted = [...activePlayerIds].sort((a, b) => {
-            const la = lineups[a] as PlayerLineup, lb = lineups[b] as PlayerLineup;
+            const la = lineups[a] as PlayerLineup,
+              lb = lineups[b] as PlayerLineup;
             if (lb.totalStat !== la.totalStat) return lb.totalStat - la.totalStat;
             if (la.totalStat === cap && lb.totalStat === cap) {
-              const aHit = lineupHitRound(la), bHit = lineupHitRound(lb);
+              const aHit = lineupHitRound(la),
+                bHit = lineupHitRound(lb);
               if (aHit !== bHit) return aHit - bHit;
             }
-            const aBusts = la.bustCount ?? 0, bBusts = lb.bustCount ?? 0;
+            const aBusts = la.bustCount ?? 0,
+              bBusts = lb.bustCount ?? 0;
             if (aBusts !== bBusts) return aBusts - bBusts;
-            const aUniq = lineupUniquePickCount(la, allLineupsList), bUniq = lineupUniquePickCount(lb, allLineupsList);
+            const aUniq = lineupUniquePickCount(la, allLineupsList),
+              bUniq = lineupUniquePickCount(lb, allLineupsList);
             if (aUniq !== bUniq) return bUniq - aUniq;
             return lineupAvgPickYear(la) - lineupAvgPickYear(lb);
           });
@@ -505,12 +527,29 @@ export function MultiplayerCapCrunchPage() {
         const usedSpecial: SpecialRoundType[] = cs.usedSpecialTypes || [];
         const disabledRoundTypes: SpecialRoundType[] = cs.disabledRoundTypes || [];
         const hostLineup = lineups[currentPlayerId] as PlayerLineup | undefined;
-        const newTeam = assignRandomTeam(cs.sport || 'nba', cs.statCategory, cs.usedTeams || [], usedSpecial, hostLineup?.selectedPlayers, nextRound >= totalRds, disabledRoundTypes);
-        const newHwFilter = selectRandomHWFilter(cs.sport || 'nba', newTeam, cs.statCategory, usedSpecial, disabledRoundTypes);
-        const nextUsedSpecial = advanceSpecialRoundCycle(usedSpecial, classifySpecialRoundType(newTeam, newHwFilter));
+        const newTeam = assignRandomTeam(
+          cs.sport || 'nba',
+          cs.statCategory,
+          cs.usedTeams || [],
+          usedSpecial,
+          hostLineup?.selectedPlayers,
+          nextRound >= totalRds,
+          disabledRoundTypes,
+        );
+        const newHwFilter = selectRandomHWFilter(
+          cs.sport || 'nba',
+          newTeam,
+          cs.statCategory,
+          usedSpecial,
+          disabledRoundTypes,
+        );
+        const nextUsedSpecial = advanceSpecialRoundCycle(
+          usedSpecial,
+          classifySpecialRoundType(newTeam, newHwFilter),
+        );
         const resetLineups: Record<string, any> = {};
         // Rebuild from all allLineups keys (not just original playerIds) so mid-game joiners aren't wiped
-        Object.keys(lineups).forEach(pid => {
+        Object.keys(lineups).forEach((pid) => {
           resetLineups[pid] = {
             ...lineups[pid],
             hasPickedThisRound: (lineups[pid] as any).isFinished ? true : false,
@@ -533,7 +572,10 @@ export function MultiplayerCapCrunchPage() {
               break;
             }
           }
-          hardModeUpdates = { currentPickerId: firstPicker, roundStartPickerIndex: newRoundStartIndex };
+          hardModeUpdates = {
+            currentPickerId: firstPicker,
+            roundStartPickerIndex: newRoundStartIndex,
+          };
         }
 
         await updateCareerState(lobbyId, {
@@ -550,7 +592,7 @@ export function MultiplayerCapCrunchPage() {
       }
     };
 
-    advanceRound().catch(err => console.error('[advanceRound] Failed:', err));
+    advanceRound().catch((err) => console.error('[advanceRound] Failed:', err));
   }, [lobby?.career_state, players, isHost, lobby?.id]);
 
   // ── Host-only: initialize lineups for players who joined mid-game ───────────
@@ -563,7 +605,7 @@ export function MultiplayerCapCrunchPage() {
 
     const allLos = cs.allLineups as Record<string, any>;
     const currentRound = cs.currentRound || 1;
-    const newPlayers = players.filter(p => {
+    const newPlayers = players.filter((p) => {
       if (p.is_dummy || p.player_id in allLos) return false;
       const addedAtRound = addedMidGamePlayersRef.current.get(p.player_id);
       // Never added, or added in an earlier round (data may have been lost) → add again
@@ -571,7 +613,7 @@ export function MultiplayerCapCrunchPage() {
     });
     if (newPlayers.length === 0) return;
 
-    newPlayers.forEach(p => addedMidGamePlayersRef.current.set(p.player_id, currentRound));
+    newPlayers.forEach((p) => addedMidGamePlayersRef.current.set(p.player_id, currentRound));
     // During picking: let them pick the current round (skip all previous)
     // During results/blind-reveal: skip the current round too (join at next)
     const skipCount = cs.phase === 'picking' ? Math.max(0, currentRound - 1) : currentRound;
@@ -588,7 +630,7 @@ export function MultiplayerCapCrunchPage() {
     });
 
     const updatedLineups = { ...allLos };
-    newPlayers.forEach(player => {
+    newPlayers.forEach((player) => {
       updatedLineups[player.player_id] = {
         playerId: player.player_id,
         playerName: player.player_name,
@@ -602,18 +644,30 @@ export function MultiplayerCapCrunchPage() {
 
     const updatedPlayerOrder = [
       ...(cs.playerOrder || Object.keys(allLos)),
-      ...newPlayers.map(p => p.player_id),
+      ...newPlayers.map((p) => p.player_id),
     ];
-    updateCareerState(lobby.id, { ...cs, allLineups: updatedLineups, playerOrder: updatedPlayerOrder })
-      .catch(err => console.error('[midGameJoin] Failed to initialize lineup:', err));
+    updateCareerState(lobby.id, {
+      ...cs,
+      allLineups: updatedLineups,
+      playerOrder: updatedPlayerOrder,
+    }).catch((err) => console.error('[midGameJoin] Failed to initialize lineup:', err));
   }, [players, lobby?.career_state, isHost, lobby?.id]);
 
   // ── Navigate back to lobby when host resets or abandons ────────────────────
   useEffect(() => {
     if (!lobby) return;
-    if ((lobby.career_state as any)?.abandoned) { navigate(`/lobby/${code}`); return; }
-    if (lobby.status === 'finished') { navigate(`/lobby/${code}/lineup-is-right/results`); return; }
-    if (lobby.status === 'waiting') { navigate(`/lobby/${code}`); return; }
+    if ((lobby.career_state as any)?.abandoned) {
+      navigate(`/lobby/${code}`);
+      return;
+    }
+    if (lobby.status === 'finished') {
+      navigate(`/lobby/${code}/lineup-is-right/results`);
+      return;
+    }
+    if (lobby.status === 'waiting') {
+      navigate(`/lobby/${code}`);
+      return;
+    }
   }, [lobby?.career_state, lobby?.status, navigate, code]);
 
   // ── Compute optimal last picks once results screen loads ────────────────────
@@ -623,18 +677,30 @@ export function MultiplayerCapCrunchPage() {
       const settled = await Promise.allSettled(
         players.map(async (p) => {
           const lineup = allLineups[p.player_id] as PlayerLineup | undefined;
-          if (!lineup || lineup.selectedPlayers.length === 0) return { playerId: p.player_id, opt: null };
+          if (!lineup || lineup.selectedPlayers.length === 0)
+            return { playerId: p.player_id, opt: null };
           const lastPick = lineup.selectedPlayers[lineup.selectedPlayers.length - 1];
           const totalBeforeLast = lastPick.isBust
             ? lineup.totalStat
             : parseFloat((lineup.totalStat - lastPick.statValue).toFixed(1));
           const remainingBudget = parseFloat((targetCap - totalBeforeLast).toFixed(1));
           const excludeNames = hardMode
-            ? pickedPlayerSeasons.map(k => k.split('|')[0]).filter(n => n !== lastPick.playerName)
+            ? pickedPlayerSeasons
+                .map((k) => k.split('|')[0])
+                .filter((n) => n !== lastPick.playerName)
             : undefined;
-          const opt = await findOptimalLastPick(selectedSport, lastPick.team, statCategory, remainingBudget, lastPick.isBust ? 0 : lastPick.statValue, excludeNames, hwFilter, lineup.selectedPlayers);
+          const opt = await findOptimalLastPick(
+            selectedSport,
+            lastPick.team,
+            statCategory,
+            remainingBudget,
+            lastPick.isBust ? 0 : lastPick.statValue,
+            excludeNames,
+            hwFilter,
+            lineup.selectedPlayers,
+          );
           return { playerId: p.player_id, opt };
-        })
+        }),
       );
       const results = new Map<string, OptimalPick | null>();
       for (const result of settled) {
@@ -647,7 +713,7 @@ export function MultiplayerCapCrunchPage() {
       setOptimalPicks(results);
     };
     computeAll();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -670,7 +736,7 @@ export function MultiplayerCapCrunchPage() {
     const latestCS = (lobby.career_state as any) || {};
     const myCurrentLineup: any = latestCS.allLineups?.[currentPlayerId] || {
       playerId: currentPlayerId,
-      playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
+      playerName: players.find((p) => p.player_id === currentPlayerId)?.player_name || '',
       selectedPlayers: [],
       totalStat: 0,
       bustCount: 0,
@@ -702,12 +768,15 @@ export function MultiplayerCapCrunchPage() {
     let hardModeUpdates: Record<string, any> = {};
     if (latestCS.hardMode) {
       const allLineupsAfterSkip = { ...latestCS.allLineups, [currentPlayerId]: withSkip };
-      const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+      const order: string[] = latestCS.playerOrder || players.map((p) => p.player_id);
       const currentIdx = order.indexOf(currentPlayerId);
       let nextPickerId: string | null = null;
       for (let i = 1; i <= order.length; i++) {
         const pid = order[(currentIdx + i) % order.length];
-        if (!((allLineupsAfterSkip[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterSkip[pid] as any)?.isFinished)) {
+        if (
+          !(allLineupsAfterSkip[pid] as any)?.hasPickedThisRound &&
+          !(allLineupsAfterSkip[pid] as any)?.isFinished
+        ) {
           nextPickerId = pid;
           break;
         }
@@ -722,7 +791,7 @@ export function MultiplayerCapCrunchPage() {
     };
     await updateCareerState(lobby.id, updatedCS);
     mySubmittedLineupRef.current = withSkip;
-    setAllLineups(prev => ({ ...prev, [currentPlayerId]: withSkip }));
+    setAllLineups((prev) => ({ ...prev, [currentPlayerId]: withSkip }));
   };
 
   // Host-only: force-skip any player who is stuck and hasn't picked this round.
@@ -731,7 +800,7 @@ export function MultiplayerCapCrunchPage() {
     const latestCS = (lobby.career_state as any) || {};
     const targetLineup: any = latestCS.allLineups?.[targetPlayerId] || {
       playerId: targetPlayerId,
-      playerName: players.find(p => p.player_id === targetPlayerId)?.player_name || '',
+      playerName: players.find((p) => p.player_id === targetPlayerId)?.player_name || '',
       selectedPlayers: [],
       totalStat: 0,
       bustCount: 0,
@@ -762,12 +831,15 @@ export function MultiplayerCapCrunchPage() {
     let hardModeUpdates: Record<string, any> = {};
     if (latestCS.hardMode) {
       const allLineupsAfterSkip = { ...latestCS.allLineups, [targetPlayerId]: withSkip };
-      const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+      const order: string[] = latestCS.playerOrder || players.map((p) => p.player_id);
       const currentIdx = order.indexOf(targetPlayerId);
       let nextPickerId: string | null = null;
       for (let i = 1; i <= order.length; i++) {
         const pid = order[(currentIdx + i) % order.length];
-        if (!((allLineupsAfterSkip[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterSkip[pid] as any)?.isFinished)) {
+        if (
+          !(allLineupsAfterSkip[pid] as any)?.hasPickedThisRound &&
+          !(allLineupsAfterSkip[pid] as any)?.isFinished
+        ) {
           nextPickerId = pid;
           break;
         }
@@ -846,7 +918,11 @@ export function MultiplayerCapCrunchPage() {
     }
     setLoading(true);
     try {
-      const results = await searchPlayersByNameOnly(selectedSport, query, statCategory ?? undefined);
+      const results = await searchPlayersByNameOnly(
+        selectedSport,
+        query,
+        statCategory ?? undefined,
+      );
       setSearchResults(results);
     } catch (error) {
       console.error('[handleSearch] Failed:', error);
@@ -876,7 +952,12 @@ export function MultiplayerCapCrunchPage() {
 
     setLoadingYears(true);
     try {
-      const years = await getPlayerYearsOnTeam(selectedSport!, player.playerName, currentTeam, player.playerId);
+      const years = await getPlayerYearsOnTeam(
+        selectedSport!,
+        player.playerName,
+        currentTeam,
+        player.playerId,
+      );
       setAvailableYears(years);
     } catch (error) {
       console.error('[handleSelectPlayer] Failed to fetch years:', error);
@@ -894,7 +975,8 @@ export function MultiplayerCapCrunchPage() {
   };
 
   const handleConfirmYear = async () => {
-    if (!selectedPlayerName || !selectedSport || !statCategory || !lobby || !currentPlayerId) return;
+    if (!selectedPlayerName || !selectedSport || !statCategory || !lobby || !currentPlayerId)
+      return;
     if (!isNoYearSelect && !selectedYear) return;
 
     addingPlayerRef.current = true;
@@ -903,7 +985,7 @@ export function MultiplayerCapCrunchPage() {
       const latestCS = (lobby.career_state as any) || {};
       const myCurrentLineup: PlayerLineup = latestCS.allLineups?.[currentPlayerId] || {
         playerId: currentPlayerId,
-        playerName: players.find(p => p.player_id === currentPlayerId)?.player_name || '',
+        playerName: players.find((p) => p.player_id === currentPlayerId)?.player_name || '',
         selectedPlayers: [],
         totalStat: 0,
         bustCount: 0,
@@ -913,23 +995,25 @@ export function MultiplayerCapCrunchPage() {
 
       const isBlindMode = (latestCS.blindMode || false) as boolean;
 
-      const { selectedPlayer: newSelectedPlayer, updatedLineup: withNewPlayer } = await resolvePickResult({
-        sport: selectedSport as any,
-        playerName: selectedPlayerName,
-        playerId: selectedPlayerId ?? undefined,
-        team: currentTeam,
-        year: selectedYear,
-        statCategory,
-        hwFilter,
-        lineup: myCurrentLineup,
-        targetCap,
-        isBlindMode,
-        prevPicks: myCurrentLineup.selectedPlayers,
-      });
+      const { selectedPlayer: newSelectedPlayer, updatedLineup: withNewPlayer } =
+        await resolvePickResult({
+          sport: selectedSport as any,
+          playerName: selectedPlayerName,
+          playerId: selectedPlayerId ?? undefined,
+          team: currentTeam,
+          year: selectedYear,
+          statCategory,
+          hwFilter,
+          lineup: myCurrentLineup,
+          targetCap,
+          isBlindMode,
+          prevPicks: myCurrentLineup.selectedPlayers,
+        });
 
       (withNewPlayer as any).hasPickedThisRound = true;
       // In blind mode, only finish when all rounds are played (no early exit on exact cap hit)
-      const exactHit = !isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap;
+      const exactHit =
+        !isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap;
       if (withNewPlayer.selectedPlayers.length >= totalRoundsRef.current || exactHit) {
         withNewPlayer.isFinished = true;
       }
@@ -938,12 +1022,15 @@ export function MultiplayerCapCrunchPage() {
       let hardModeUpdates: Record<string, any> = {};
       if (latestCS.hardMode && currentPlayerId) {
         const allLineupsAfterPick = { ...latestCS.allLineups, [currentPlayerId]: withNewPlayer };
-        const order: string[] = latestCS.playerOrder || players.map(p => p.player_id);
+        const order: string[] = latestCS.playerOrder || players.map((p) => p.player_id);
         const currentIndexInOrder = order.indexOf(currentPlayerId);
         let nextPickerId: string | null = null;
         if (currentIndexInOrder === -1) {
           for (const pid of order) {
-            if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+            if (
+              !(allLineupsAfterPick[pid] as any)?.hasPickedThisRound &&
+              !(allLineupsAfterPick[pid] as any)?.isFinished
+            ) {
               nextPickerId = pid;
               break;
             }
@@ -951,7 +1038,10 @@ export function MultiplayerCapCrunchPage() {
         } else {
           for (let i = 1; i < order.length; i++) {
             const pid = order[(currentIndexInOrder + i) % order.length];
-            if (!((allLineupsAfterPick[pid] as any)?.hasPickedThisRound) && !((allLineupsAfterPick[pid] as any)?.isFinished)) {
+            if (
+              !(allLineupsAfterPick[pid] as any)?.hasPickedThisRound &&
+              !(allLineupsAfterPick[pid] as any)?.isFinished
+            ) {
               nextPickerId = pid;
               break;
             }
@@ -973,16 +1063,40 @@ export function MultiplayerCapCrunchPage() {
       await updateCareerState(lobby.id, updatedCS);
 
       mySubmittedLineupRef.current = withNewPlayer;
-      setAllLineups(prev => ({ ...prev, [currentPlayerId]: withNewPlayer }));
+      setAllLineups((prev) => ({ ...prev, [currentPlayerId]: withNewPlayer }));
 
-      if (!isBlindMode && (newSelectedPlayer.isBust || newSelectedPlayer.statValue === 0)) setBadFlashKey(k => k + 1);
+      if (!isBlindMode && (newSelectedPlayer.isBust || newSelectedPlayer.statValue === 0))
+        setBadFlashKey((k) => k + 1);
 
       if (!isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
-        confetti({ particleCount: 160, spread: 90, origin: { y: 0.55 }, colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'] });
+        confetti({
+          particleCount: 160,
+          spread: 90,
+          origin: { y: 0.55 },
+          colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'],
+        });
         confettiTimersRef.current = [
-          setTimeout(() => confetti({ particleCount: 60, spread: 60, origin: { y: 0.4, x: 0.3 }, colors: ['#d4af37', '#ffffff'] }), 250),
-          setTimeout(() => confetti({ particleCount: 60, spread: 60, origin: { y: 0.4, x: 0.7 }, colors: ['#d4af37', '#ffffff'] }), 400),
+          setTimeout(
+            () =>
+              confetti({
+                particleCount: 60,
+                spread: 60,
+                origin: { y: 0.4, x: 0.3 },
+                colors: ['#d4af37', '#ffffff'],
+              }),
+            250,
+          ),
+          setTimeout(
+            () =>
+              confetti({
+                particleCount: 60,
+                spread: 60,
+                origin: { y: 0.4, x: 0.7 },
+                colors: ['#d4af37', '#ffffff'],
+              }),
+            400,
+          ),
         ];
         exactHitTimerRef.current = setTimeout(() => setShowExactHit(false), 2500);
       }
@@ -1021,7 +1135,12 @@ export function MultiplayerCapCrunchPage() {
   }
 
   // Mid-game joiner: game loaded but host hasn't initialized our lineup yet
-  if (phase === 'picking' && currentPlayerId && Object.keys(allLineups).length > 0 && !allLineups[currentPlayerId]) {
+  if (
+    phase === 'picking' &&
+    currentPlayerId &&
+    Object.keys(allLineups).length > 0 &&
+    !allLineups[currentPlayerId]
+  ) {
     return (
       <div className="min-h-screen capcrunch-shell text-white flex items-center justify-center relative overflow-hidden">
         <div className="relative z-10 text-center space-y-3">
@@ -1041,11 +1160,11 @@ export function MultiplayerCapCrunchPage() {
 
   // ── Picking screen ───────────────────────────────────────────────────────────
   if (phase === 'picking' && statCategory) {
-    const waitingFor = players.filter(p => {
+    const waitingFor = players.filter((p) => {
       const l = allLineups[p.player_id] as any;
       return !l?.hasPickedThisRound && !l?.isFinished;
     });
-    const currentPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+    const currentPlayerName = players.find((p) => p.player_id === currentPlayerId)?.player_name;
 
     return (
       <motion.div
@@ -1054,20 +1173,33 @@ export function MultiplayerCapCrunchPage() {
         className="h-[100dvh] capcrunch-shell text-white flex flex-col relative overflow-hidden"
       >
         <GradWeekOverlay />
-        <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={currentPlayerName} />
+        <EmoteOverlay
+          lobbyId={lobby?.id}
+          currentPlayerId={currentPlayerId}
+          currentPlayerName={currentPlayerName}
+        />
         {/* Exact hit celebration overlay */}
         {showExactHit && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(0,0,0,0.9) 100%)' }}
+            style={{
+              background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(0,0,0,0.9) 100%)',
+            }}
           >
             {[0, 0.25, 0.5].map((delay, i) => (
               <motion.div
                 key={i}
                 className="absolute rounded-full border-2 border-[#d4af37]/70 pointer-events-none"
-                style={{ width: 160, height: 160, marginLeft: -80, marginTop: -80, left: '50%', top: '50%' }}
+                style={{
+                  width: 160,
+                  height: 160,
+                  marginLeft: -80,
+                  marginTop: -80,
+                  left: '50%',
+                  top: '50%',
+                }}
                 initial={{ scale: 0.4, opacity: 0.9 }}
                 animate={{ scale: 5, opacity: 0 }}
                 transition={{ duration: 1.4, ease: 'easeOut', delay }}
@@ -1082,12 +1214,14 @@ export function MultiplayerCapCrunchPage() {
               <motion.div
                 animate={{ scale: [1, 1.06, 1] }}
                 transition={{ duration: 0.6, delay: 0.5, repeat: 2, ease: 'easeInOut' }}
-              className="capcrunch-title text-6xl md:text-8xl text-[#FDF100] mb-2"
+                className="capcrunch-title text-6xl md:text-8xl text-[#FDF100] mb-2"
                 style={{ textShadow: '0 0 40px #d4af37, 0 0 100px #d4af37bb' }}
               >
                 EXACT!
               </motion.div>
-              <div className="capcrunch-kicker text-xl md:text-2xl text-white tracking-widest uppercase mb-1">Perfect score</div>
+              <div className="capcrunch-kicker text-xl md:text-2xl text-white tracking-widest uppercase mb-1">
+                Perfect score
+              </div>
               <div className="capcrunch-title text-3xl md:text-4xl text-[#FDF100]">{targetCap}</div>
             </motion.div>
           </motion.div>
@@ -1104,11 +1238,15 @@ export function MultiplayerCapCrunchPage() {
               transition={{ duration: 0.18 }}
               className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 capcrunch-panel px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-none max-w-[88vw]"
             >
-              <span className="text-white/50 text-[11px] capcrunch-kicker truncate shrink-0">{opponentPickToast.name}:</span>
+              <span className="text-white/50 text-[11px] capcrunch-kicker truncate shrink-0">
+                {opponentPickToast.name}:
+              </span>
               {opponentPickToast.isSkipped ? (
                 <span className="text-white/30 text-[11px] capcrunch-title italic">skipped</span>
               ) : (
-                <span className="text-white text-[11px] capcrunch-title truncate">{opponentPickToast.pick}</span>
+                <span className="text-white text-[11px] capcrunch-title truncate">
+                  {opponentPickToast.pick}
+                </span>
               )}
             </motion.div>
           )}
@@ -1150,7 +1288,7 @@ export function MultiplayerCapCrunchPage() {
 
         {/* Mobile tab bar */}
         <div className="relative z-10 flex-shrink-0 flex md:hidden border-b border-white/10 bg-black/30">
-          {(['pick', 'scores'] as const).map(tab => (
+          {(['pick', 'scores'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setMobileTab(tab)}
@@ -1170,10 +1308,15 @@ export function MultiplayerCapCrunchPage() {
           <div className="md:hidden h-full p-3 flex flex-col">
             {/* Countdown banner — shown to the player whose turn it is */}
             {countdown !== null && mobileTab === 'pick' && (
-              <div className={`flex-shrink-0 mb-2 py-2 text-center capcrunch-title text-lg transition-colors ${
-                countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#4E53A5]/20 text-[#68BBE5] border border-[#68BBE5]/30'
-              }`}>
-                {hardMode ? 'Your turn — ' : 'Last to pick — '}{countdown}s
+              <div
+                className={`flex-shrink-0 mb-2 py-2 text-center capcrunch-title text-lg transition-colors ${
+                  countdown <= 10
+                    ? 'bg-red-900/60 text-red-300 border border-red-500/40'
+                    : 'bg-[#4E53A5]/20 text-[#68BBE5] border border-[#68BBE5]/30'
+                }`}
+              >
+                {hardMode ? 'Your turn — ' : 'Last to pick — '}
+                {countdown}s
               </div>
             )}
             <div className={mobileTab !== 'pick' ? 'hidden' : 'flex-1 min-h-0 flex flex-col'}>
@@ -1231,43 +1374,67 @@ export function MultiplayerCapCrunchPage() {
           {/* Desktop: 3-column layout */}
           <div className="hidden md:flex h-full px-6 py-4 gap-4">
             <div className="w-52 flex flex-col gap-4">
-              <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#FDF100' }}>
-                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">Target</div>
+              <div
+                className="capcrunch-metric px-6 py-6 text-center shadow-xl"
+                style={{ borderLeftColor: '#FDF100' }}
+              >
+                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">
+                  Target
+                </div>
                 <p className="capcrunch-title text-4xl text-white">{targetCap}</p>
               </div>
-              <div className="capcrunch-metric px-6 py-6 text-center shadow-xl" style={{ borderLeftColor: '#68BBE5' }}>
-                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">{isCareerStatRound ? 'Career' : 'Category'}</div>
+              <div
+                className="capcrunch-metric px-6 py-6 text-center shadow-xl"
+                style={{ borderLeftColor: '#68BBE5' }}
+              >
+                <div className="capcrunch-kicker text-[8px] text-white/30 tracking-widest uppercase mb-2">
+                  {isCareerStatRound ? 'Career' : 'Category'}
+                </div>
                 <p className="capcrunch-title text-2xl text-white">
-                  {statCategory ? (isCareerStatRound ? getCategoryAbbr(statCategory).replace('CAREER ', '') : getCategoryAbbr(statCategory)) : '—'}
+                  {statCategory
+                    ? isCareerStatRound
+                      ? getCategoryAbbr(statCategory).replace('CAREER ', '')
+                      : getCategoryAbbr(statCategory)
+                    : '—'}
                 </p>
               </div>
               {!blindMode && (
-              <div className="capcrunch-metric px-3 py-2 shadow-xl" style={{ borderLeftColor: '#70BE5B' }}>
-                <div className="capcrunch-kicker text-[6px] text-white/30 tracking-widest uppercase mb-1.5">Cap</div>
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full"
-                    animate={{
-                      width: `${Math.min(((myLineup?.totalStat ?? 0) / targetCap) * 100, 100)}%`,
-                      backgroundColor: getTotalColor(myLineup?.totalStat ?? 0, targetCap),
-                    }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                  />
+                <div
+                  className="capcrunch-metric px-3 py-2 shadow-xl"
+                  style={{ borderLeftColor: '#70BE5B' }}
+                >
+                  <div className="capcrunch-kicker text-[6px] text-white/30 tracking-widest uppercase mb-1.5">
+                    Cap
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      animate={{
+                        width: `${Math.min(((myLineup?.totalStat ?? 0) / targetCap) * 100, 100)}%`,
+                        backgroundColor: getTotalColor(myLineup?.totalStat ?? 0, targetCap),
+                      }}
+                      transition={{ duration: 0.4, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="capcrunch-kicker text-[6px] text-white/20">0</span>
+                    <span className="capcrunch-kicker text-[6px] text-white/20">{targetCap}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between mt-1">
-                  <span className="capcrunch-kicker text-[6px] text-white/20">0</span>
-                  <span className="capcrunch-kicker text-[6px] text-white/20">{targetCap}</span>
-                </div>
-              </div>
               )}
             </div>
             <div className="flex-1 flex flex-col">
               {/* Countdown banner — desktop */}
               {countdown !== null && (
-                <div className={`flex-shrink-0 mb-3 py-2.5 text-center capcrunch-title text-xl transition-colors ${
-                  countdown <= 10 ? 'bg-red-900/60 text-red-300 border border-red-500/40' : 'bg-[#4E53A5]/20 text-[#68BBE5] border border-[#68BBE5]/30'
-                }`}>
-                  {hardMode ? 'Your turn — ' : 'Last to pick — '}{countdown}s
+                <div
+                  className={`flex-shrink-0 mb-3 py-2.5 text-center capcrunch-title text-xl transition-colors ${
+                    countdown <= 10
+                      ? 'bg-red-900/60 text-red-300 border border-red-500/40'
+                      : 'bg-[#4E53A5]/20 text-[#68BBE5] border border-[#68BBE5]/30'
+                  }`}
+                >
+                  {hardMode ? 'Your turn — ' : 'Last to pick — '}
+                  {countdown}s
                 </div>
               )}
               <CapCrunchPickPanel
@@ -1348,10 +1515,17 @@ export function MultiplayerCapCrunchPage() {
   if (phase === 'results') {
     const mappedLineups = players.map((p) => ({
       ...p,
-      lineup: (allLineups[p.player_id] || { playerId: p.player_id, playerName: p.player_name, selectedPlayers: [], totalStat: 0, bustCount: 0, isFinished: false }) as PlayerLineup,
+      lineup: (allLineups[p.player_id] || {
+        playerId: p.player_id,
+        playerName: p.player_name,
+        selectedPlayers: [],
+        totalStat: 0,
+        bustCount: 0,
+        isFinished: false,
+      }) as PlayerLineup,
     }));
 
-    const allMappedLineups = mappedLineups.map(m => m.lineup);
+    const allMappedLineups = mappedLineups.map((m) => m.lineup);
 
     const sortedLineups = mappedLineups.sort((a, b) => {
       if (blindMode) {
@@ -1361,36 +1535,44 @@ export function MultiplayerCapCrunchPage() {
       }
       if (b.lineup.totalStat !== a.lineup.totalStat) return b.lineup.totalStat - a.lineup.totalStat;
       if (a.lineup.totalStat === targetCap && b.lineup.totalStat === targetCap) {
-        const aHit = lineupHitRound(a.lineup), bHit = lineupHitRound(b.lineup);
+        const aHit = lineupHitRound(a.lineup),
+          bHit = lineupHitRound(b.lineup);
         if (aHit !== bHit) return aHit - bHit;
       }
-      const aBusts = a.lineup.bustCount ?? 0, bBusts = b.lineup.bustCount ?? 0;
+      const aBusts = a.lineup.bustCount ?? 0,
+        bBusts = b.lineup.bustCount ?? 0;
       if (aBusts !== bBusts) return aBusts - bBusts;
-      const aUniq = lineupUniquePickCount(a.lineup, allMappedLineups), bUniq = lineupUniquePickCount(b.lineup, allMappedLineups);
+      const aUniq = lineupUniquePickCount(a.lineup, allMappedLineups),
+        bUniq = lineupUniquePickCount(b.lineup, allMappedLineups);
       if (aUniq !== bUniq) return bUniq - aUniq;
       return lineupAvgPickYear(a.lineup) - lineupAvgPickYear(b.lineup);
     });
 
-    const allSortedLineups = sortedLineups.map(m => m.lineup);
+    const allSortedLineups = sortedLineups.map((m) => m.lineup);
     const top0 = sortedLineups[0];
     const top1 = sortedLineups[1];
-    const tiedOnScore = sortedLineups.length >= 2 && (
-      blindMode
-        ? Math.abs(targetCap - top0.lineup.totalStat) === Math.abs(targetCap - top1.lineup.totalStat)
-        : top0.lineup.totalStat === top1.lineup.totalStat
-    );
+    const tiedOnScore =
+      sortedLineups.length >= 2 &&
+      (blindMode
+        ? Math.abs(targetCap - top0.lineup.totalStat) ===
+          Math.abs(targetCap - top1.lineup.totalStat)
+        : top0.lineup.totalStat === top1.lineup.totalStat);
     // Hit-round tiebreaker only applies when both players hit the exact cap
     const bothHitExactCap = !blindMode && tiedOnScore && top0.lineup.totalStat === targetCap;
-    const tiedOnHitRound = bothHitExactCap && lineupHitRound(top0.lineup) === lineupHitRound(top1.lineup);
+    const tiedOnHitRound =
+      bothHitExactCap && lineupHitRound(top0.lineup) === lineupHitRound(top1.lineup);
     // Bust tiebreaker applies after score (and after hitRound if both hit cap)
     const tiedForBusts = tiedOnScore && (!bothHitExactCap || tiedOnHitRound);
-    const tiedOnBusts = tiedForBusts && (top0.lineup.bustCount ?? 0) === (top1.lineup.bustCount ?? 0);
-    const tiedOnUnique = tiedOnBusts && lineupUniquePickCount(top0.lineup, allSortedLineups) === lineupUniquePickCount(top1.lineup, allSortedLineups);
+    const tiedOnBusts =
+      tiedForBusts && (top0.lineup.bustCount ?? 0) === (top1.lineup.bustCount ?? 0);
+    const tiedOnUnique =
+      tiedOnBusts &&
+      lineupUniquePickCount(top0.lineup, allSortedLineups) ===
+        lineupUniquePickCount(top1.lineup, allSortedLineups);
     const tiebreakerUsed = tiedOnScore;
 
     return (
       <div className="min-h-screen capcrunch-shell text-white flex flex-col relative overflow-hidden">
-
         <header className="relative z-10 p-6 border-b border-white/10 capcrunch-panel">
           <div className="max-w-7xl mx-auto">
             <h1 className="capcrunch-title text-2xl text-[#FDF100]">Final Results</h1>
@@ -1405,16 +1587,22 @@ export function MultiplayerCapCrunchPage() {
             className="w-full max-w-2xl"
           >
             <div className="mb-4 p-4 capcrunch-panel text-center">
-              <p className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">Target Cap</p>
+              <p className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                Target Cap
+              </p>
               <p className="capcrunch-title text-3xl text-[#FDF100]">{targetCap}</p>
             </div>
             {tiebreakerUsed && (
               <div className="mb-4 p-3 bg-[#FDF100]/10 border border-[#FDF100]/30 text-center">
                 <p className="capcrunch-kicker text-[10px] text-[#FDF100] tracking-widest uppercase">
                   {tiedOnUnique
-                    ? (bothHitExactCap ? 'Tied score, hit round, busts & unique — older avg year wins' : 'Tied score, busts & unique — older avg year wins')
+                    ? bothHitExactCap
+                      ? 'Tied score, hit round, busts & unique — older avg year wins'
+                      : 'Tied score, busts & unique — older avg year wins'
                     : tiedOnBusts
-                      ? (bothHitExactCap ? 'Tied score, hit round & busts — most unique picks wins' : 'Tied score & busts — most unique picks wins')
+                      ? bothHitExactCap
+                        ? 'Tied score, hit round & busts — most unique picks wins'
+                        : 'Tied score & busts — most unique picks wins'
                       : tiedOnHitRound
                         ? 'Tied score & hit round — fewest busts wins'
                         : bothHitExactCap

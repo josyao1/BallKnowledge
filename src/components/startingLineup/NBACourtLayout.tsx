@@ -22,9 +22,12 @@ type Props = {
 
 function getEncodingLabel(encoding: StarterEncoding): string {
   switch (encoding) {
-    case 'college': return 'College Logos';
-    case 'number':  return 'Jersey Numbers';
-    case 'draft':   return 'Draft Picks';
+    case 'college':
+      return 'College Logos';
+    case 'number':
+      return 'Jersey Numbers';
+    case 'draft':
+      return 'Draft Picks';
   }
 }
 
@@ -32,11 +35,11 @@ function getEncodingLabel(encoding: StarterEncoding): string {
 // Basket is near the bottom center (~85% top).
 // Three-point arc apex is ~20% top.
 const SLOT_COORDS: Record<string, [number, number]> = {
-  PG: [50, 22],   // top of key / point guard spot
-  SG: [82, 45],   // right wing
-  SF: [16, 45],   // left wing
-  PF: [72, 68],   // right block
-  C:  [50, 74],   // center post
+  PG: [50, 22], // top of key / point guard spot
+  SG: [82, 45], // right wing
+  SF: [16, 45], // left wing
+  PF: [72, 68], // right block
+  C: [50, 74], // center post
 };
 
 // Fallback for any unrecognised pos_abb — assign by index
@@ -46,7 +49,14 @@ function getCoords(player: StarterPlayer, idx: number): [number, number] {
   return SLOT_COORDS[player.pos_abb] ?? SLOT_COORDS[SLOT_ORDER[idx]] ?? [50, 50];
 }
 
-export function NBACourtLayout({ players, encoding, blobState, bonusCorrect, onBonusGuess, showHint }: Props) {
+export function NBACourtLayout({
+  players,
+  encoding,
+  blobState,
+  bonusCorrect,
+  onBonusGuess,
+  showHint,
+}: Props) {
   const five = players.slice(0, 5);
 
   return (
@@ -64,23 +74,59 @@ export function NBACourtLayout({ players, encoding, blobState, bonusCorrect, onB
       {/* Court container — 16:9 */}
       <div
         className="relative w-full rounded-lg overflow-hidden border border-[#2a1800] shadow-xl"
-        style={{ aspectRatio: '16/9', background: 'linear-gradient(180deg, #1a0e00 0%, #120a00 50%, #1a0e00 100%)' }}
+        style={{
+          aspectRatio: '16/9',
+          background: 'linear-gradient(180deg, #1a0e00 0%, #120a00 50%, #1a0e00 100%)',
+        }}
       >
         {/* Court markings */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1600 900" preserveAspectRatio="none">
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 1600 900"
+          preserveAspectRatio="none"
+        >
           {/* Three-point arc */}
           <path
             d="M 130 850 A 700 700 0 0 1 1470 850"
-            stroke="rgba(255,255,255,0.07)" strokeWidth="3" fill="none"
+            stroke="rgba(255,255,255,0.07)"
+            strokeWidth="3"
+            fill="none"
           />
           {/* Lane / key rectangle */}
-          <rect x="580" y="580" width="440" height="280" stroke="rgba(255,255,255,0.07)" strokeWidth="2" fill="none" />
+          <rect
+            x="580"
+            y="580"
+            width="440"
+            height="280"
+            stroke="rgba(255,255,255,0.07)"
+            strokeWidth="2"
+            fill="none"
+          />
           {/* Free throw circle */}
-          <circle cx="800" cy="580" r="180" stroke="rgba(255,255,255,0.06)" strokeWidth="2" fill="none" />
+          <circle
+            cx="800"
+            cy="580"
+            r="180"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="2"
+            fill="none"
+          />
           {/* Restricted area arc */}
-          <path d="M 680 850 A 120 120 0 0 1 920 850" stroke="rgba(255,255,255,0.06)" strokeWidth="2" fill="none" />
+          <path
+            d="M 680 850 A 120 120 0 0 1 920 850"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="2"
+            fill="none"
+          />
           {/* Basket */}
-          <circle cx="800" cy="830" r="45" stroke="rgba(234,88,12,0.35)" strokeWidth="3" fill="none" />
+          <circle
+            cx="800"
+            cy="830"
+            r="45"
+            stroke="rgba(234,88,12,0.35)"
+            strokeWidth="3"
+            fill="none"
+          />
           {/* Backboard */}
           <line x1="660" y1="870" x2="940" y2="870" stroke="rgba(234,88,12,0.25)" strokeWidth="3" />
           {/* Half-court line at top */}

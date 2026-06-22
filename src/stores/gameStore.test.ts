@@ -15,9 +15,9 @@ const mockRoster = [
 ];
 
 function initGame(hideResults = false) {
-  useGameStore.getState().setGameConfig(
-    'nba', mockTeam, '2024-25', 'random', 90, mockRoster, [], hideResults
-  );
+  useGameStore
+    .getState()
+    .setGameConfig('nba', mockTeam, '2024-25', 'random', 90, mockRoster, [], hideResults);
   useGameStore.getState().startGame();
 }
 
@@ -28,9 +28,7 @@ describe('gameStore', () => {
 
   describe('setGameConfig', () => {
     it('sets configuration and initial state', () => {
-      useGameStore.getState().setGameConfig(
-        'nba', mockTeam, '2024-25', 'random', 120, mockRoster
-      );
+      useGameStore.getState().setGameConfig('nba', mockTeam, '2024-25', 'random', 120, mockRoster);
       const state = useGameStore.getState();
       expect(state.sport).toBe('nba');
       expect(state.selectedTeam).toEqual(mockTeam);

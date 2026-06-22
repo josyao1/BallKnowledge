@@ -15,7 +15,12 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { teams } from '../data/teams';
 import { nflTeams } from '../data/nfl-teams';
 import { HOME_TILES, type GenericTeam, type LoadingStatus } from '../data/homeGames';
-import { fetchTeamRoster, fetchStaticNFLRoster, fetchStaticSeasonPlayers, fetchStaticNFLSeasonPlayers } from '../services/roster';
+import {
+  fetchTeamRoster,
+  fetchStaticNFLRoster,
+  fetchStaticSeasonPlayers,
+  fetchStaticNFLSeasonPlayers,
+} from '../services/roster';
 import { warmCareerCache } from '../services/careerData';
 import { TeamRevealOverlay } from '../components/home/TeamRevealOverlay';
 import type { GameMode } from '../types';
@@ -26,22 +31,73 @@ type CapCrunchModalStep = 'sport' | 'settings' | null;
 type SportPickStep = 'sport' | 'settings' | null;
 type RulesTileId = (typeof HOME_TILES)[number]['id'] | null;
 
-const CAP_CRUNCH_NBA_CATS = ['pts', 'ast', 'reb', 'min', 'pra', 'total_gp', 'total_pts', 'total_reb', 'total_ast', 'total_blk', 'total_3pm', 'total_ftm', 'total_pf'] as const;
-const CAP_CRUNCH_NFL_CATS = ['passing_yards', 'passing_tds', 'interceptions', 'rushing_yards', 'rushing_tds', 'receiving_yards', 'receiving_tds', 'receptions', 'fpts', 'total_gp'] as const;
-const CAP_CRUNCH_NFL_CAREER_CATS = ['career_passing_yards', 'career_passing_tds', 'career_rushing_yards', 'career_rushing_tds', 'career_receiving_yards', 'career_receiving_tds'] as const;
+const CAP_CRUNCH_NBA_CATS = [
+  'pts',
+  'ast',
+  'reb',
+  'min',
+  'pra',
+  'total_gp',
+  'total_pts',
+  'total_reb',
+  'total_ast',
+  'total_blk',
+  'total_3pm',
+  'total_ftm',
+  'total_pf',
+] as const;
+const CAP_CRUNCH_NFL_CATS = [
+  'passing_yards',
+  'passing_tds',
+  'interceptions',
+  'rushing_yards',
+  'rushing_tds',
+  'receiving_yards',
+  'receiving_tds',
+  'receptions',
+  'fpts',
+  'total_gp',
+] as const;
+const CAP_CRUNCH_NFL_CAREER_CATS = [
+  'career_passing_yards',
+  'career_passing_tds',
+  'career_rushing_yards',
+  'career_rushing_tds',
+  'career_receiving_yards',
+  'career_receiving_tds',
+] as const;
 
 const getCapCrunchLabel = (category: string) => {
   const labels: Record<string, string> = {
     random: 'RANDOM',
-    pts: 'PTS/G', ast: 'AST/G', reb: 'REB/G', min: 'MIN/G', pra: 'PRA/G',
-    total_pts: 'TOT PTS', total_reb: 'TOT REB', total_ast: 'TOT AST', total_blk: 'TOT BLK',
-    total_3pm: 'TOT 3PM', total_ftm: 'TOT FTM', total_pf: 'TOT PF',
-    passing_yards: 'PASS YD', passing_tds: 'PASS TD', interceptions: 'INT',
-    rushing_yards: 'RUSH YD', rushing_tds: 'RUSH TD', receiving_yards: 'REC YD',
-    receiving_tds: 'REC TD', receptions: 'REC', fpts: 'FPTS', total_gp: 'TOT GP',
-    career_passing_yards: 'CAREER PASS YD', career_passing_tds: 'CAREER PASS TD',
-    career_rushing_yards: 'CAREER RUSH YD', career_rushing_tds: 'CAREER RUSH TD',
-    career_receiving_yards: 'CAREER REC YD', career_receiving_tds: 'CAREER REC TD',
+    pts: 'PTS/G',
+    ast: 'AST/G',
+    reb: 'REB/G',
+    min: 'MIN/G',
+    pra: 'PRA/G',
+    total_pts: 'TOT PTS',
+    total_reb: 'TOT REB',
+    total_ast: 'TOT AST',
+    total_blk: 'TOT BLK',
+    total_3pm: 'TOT 3PM',
+    total_ftm: 'TOT FTM',
+    total_pf: 'TOT PF',
+    passing_yards: 'PASS YD',
+    passing_tds: 'PASS TD',
+    interceptions: 'INT',
+    rushing_yards: 'RUSH YD',
+    rushing_tds: 'RUSH TD',
+    receiving_yards: 'REC YD',
+    receiving_tds: 'REC TD',
+    receptions: 'REC',
+    fpts: 'FPTS',
+    total_gp: 'TOT GP',
+    career_passing_yards: 'CAREER PASS YD',
+    career_passing_tds: 'CAREER PASS TD',
+    career_rushing_yards: 'CAREER RUSH YD',
+    career_rushing_tds: 'CAREER RUSH TD',
+    career_receiving_yards: 'CAREER REC YD',
+    career_receiving_tds: 'CAREER REC TD',
   };
 
   return labels[category] ?? category.toUpperCase();
@@ -55,8 +111,8 @@ export function HomePage() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  const [guessPlayerStep,  setGuessPlayerStep]  = useState<GuessPlayerStep>(null);
-  const [guessPlayerMode,  setGuessPlayerMode]  = useState<'solo' | 'lobby'>('solo');
+  const [guessPlayerStep, setGuessPlayerStep] = useState<GuessPlayerStep>(null);
+  const [guessPlayerMode, setGuessPlayerMode] = useState<'solo' | 'lobby'>('solo');
   const [guessPlayerSport, setGuessPlayerSport] = useState<Sport | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
   const [preparedGameData, setPreparedGameData] = useState<any>(null);
@@ -93,11 +149,27 @@ export function HomePage() {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape') return;
-      if (guessPlayerStep) { setGuessPlayerStep(null); return; }
-      if (rosterStep) { setRosterStep(null); setLoadingStatus('idle'); return; }
-      if (topTenStep) { setTopTenStep(null); return; }
-      if (capCrunchStep) { setCapCrunchStep(null); return; }
-      if (rulesTileId) { setRulesTileId(null); return; }
+      if (guessPlayerStep) {
+        setGuessPlayerStep(null);
+        return;
+      }
+      if (rosterStep) {
+        setRosterStep(null);
+        setLoadingStatus('idle');
+        return;
+      }
+      if (topTenStep) {
+        setTopTenStep(null);
+        return;
+      }
+      if (capCrunchStep) {
+        setCapCrunchStep(null);
+        return;
+      }
+      if (rulesTileId) {
+        setRulesTileId(null);
+        return;
+      }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -106,8 +178,11 @@ export function HomePage() {
   // Re-open modals when navigating back from a solo game
   useEffect(() => {
     const s = location.state as {
-      openTopTen?: boolean; topTenSport?: Sport;
-      openCareer?: boolean; openScramble?: boolean; openFaceReveal?: boolean;
+      openTopTen?: boolean;
+      topTenSport?: Sport;
+      openCareer?: boolean;
+      openScramble?: boolean;
+      openFaceReveal?: boolean;
     } | null;
     if (s?.openTopTen && s.topTenSport) {
       setTopTenSport(s.topTenSport);
@@ -146,7 +221,8 @@ export function HomePage() {
 
     const pickRandomTeamSeason = () => {
       const team = currentTeams[Math.floor(Math.random() * currentTeams.length)];
-      const year = Math.floor(Math.random() * (currentMaxYear - currentMinYear + 1)) + currentMinYear;
+      const year =
+        Math.floor(Math.random() * (currentMaxYear - currentMinYear + 1)) + currentMinYear;
       return { team, year };
     };
 
@@ -160,16 +236,25 @@ export function HomePage() {
           const roster = await fetchTeamRoster(team.abbreviation, season);
           if (!roster?.players?.length) return false;
           players = roster.players;
-          league = await fetchStaticSeasonPlayers(season) ?? [];
+          league = (await fetchStaticSeasonPlayers(season)) ?? [];
         } else {
           const nflPlayers = await fetchStaticNFLRoster(team.abbreviation, year);
           if (!nflPlayers?.length) return false;
           players = nflPlayers;
-          league = await fetchStaticNFLSeasonPlayers(year) ?? [];
+          league = (await fetchStaticNFLSeasonPlayers(year)) ?? [];
         }
         setLoadingStatus('success');
         await new Promise((resolve) => setTimeout(resolve, 500));
-        setPreparedGameData({ sport, team, season, gameMode, timerDuration, players, leaguePlayers: league, hideResultsDuringGame });
+        setPreparedGameData({
+          sport,
+          team,
+          season,
+          gameMode,
+          timerDuration,
+          players,
+          leaguePlayers: league,
+          hideResultsDuringGame,
+        });
         setShowRoulette(true);
         return true;
       } catch {
@@ -178,7 +263,7 @@ export function HomePage() {
     };
 
     if (gameMode === 'manual' && selectedTeam && selectedYear) {
-      if (!await attemptLoadRoster(selectedTeam, selectedYear)) {
+      if (!(await attemptLoadRoster(selectedTeam, selectedYear))) {
         setLoadingStatus('error');
         setStatusMessage('Roster data not found.');
       }
@@ -187,7 +272,7 @@ export function HomePage() {
 
     for (let index = 0; index < 5; index += 1) {
       const pick = pickRandomTeamSeason();
-      if (pick && await attemptLoadRoster(pick.team, pick.year)) return;
+      if (pick && (await attemptLoadRoster(pick.team, pick.year))) return;
     }
 
     setLoadingStatus('error');
@@ -229,7 +314,7 @@ export function HomePage() {
     const lobbyModeMap: Record<string, string> = {
       'cap-crunch': 'lineup-is-right',
       'starting-lineup': 'starting-lineup',
-      'rollcall': 'roll-call',
+      rollcall: 'roll-call',
       'top-ten': 'top-ten',
     };
 
@@ -263,7 +348,10 @@ export function HomePage() {
     });
   };
 
-  const RULES_CONTENT: Record<Exclude<RulesTileId, null>, { title: string; accent: string; bullets: string[] }> = {
+  const RULES_CONTENT: Record<
+    Exclude<RulesTileId, null>,
+    { title: string; accent: string; bullets: string[] }
+  > = {
     'cap-crunch': {
       title: 'Cap Crunch',
       accent: '#FDF100',
@@ -320,9 +408,7 @@ export function HomePage() {
     'coming-soon': {
       title: 'Coming Soon',
       accent: '#E2008A',
-      bullets: [
-        'Another game mode is in development.',
-      ],
+      bullets: ['Another game mode is in development.'],
     },
   };
 
@@ -374,13 +460,20 @@ export function HomePage() {
               >
                 <div
                   className="absolute inset-0"
-                  style={{ background: `radial-gradient(circle at top right, ${tile.accent}33, transparent 35%)` }}
+                  style={{
+                    background: `radial-gradient(circle at top right, ${tile.accent}33, transparent 35%)`,
+                  }}
                 />
                 <div
                   className="absolute inset-x-0 top-0 h-1"
-                  style={{ background: `linear-gradient(90deg, transparent 0%, ${tile.accent} 45%, transparent 100%)` }}
+                  style={{
+                    background: `linear-gradient(90deg, transparent 0%, ${tile.accent} 45%, transparent 100%)`,
+                  }}
                 />
-                <div className="absolute inset-0" style={{ backgroundColor: tile.accent, opacity: tile.disabled ? 0.08 : 0.2 }} />
+                <div
+                  className="absolute inset-0"
+                  style={{ backgroundColor: tile.accent, opacity: tile.disabled ? 0.08 : 0.2 }}
+                />
                 <img
                   src={tile.image}
                   alt={tile.name}
@@ -393,7 +486,10 @@ export function HomePage() {
                     <button
                       type="button"
                       aria-label={`Open ${tile.name} rules`}
-                      onClick={(event) => { event.stopPropagation(); setRulesTileId(tile.id); }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setRulesTileId(tile.id);
+                      }}
                       className="absolute right-5 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-black/20 text-sm text-white/55 transition hover:bg-black/30 hover:text-white"
                       style={{ borderColor: `${tile.accent}80` }}
                     >
@@ -405,13 +501,23 @@ export function HomePage() {
                       {tile.popularLabel && (
                         <span
                           className="mb-4 inline-flex border px-3 py-1 text-[10px] uppercase tracking-[0.3em]"
-                          style={{ borderColor: `${tile.accent}88`, color: tile.accent, backgroundColor: `${tile.accent}1a` }}
+                          style={{
+                            borderColor: `${tile.accent}88`,
+                            color: tile.accent,
+                            backgroundColor: `${tile.accent}1a`,
+                          }}
                         >
                           {tile.popularLabel}
                         </span>
                       )}
-                      <h2 className={`home-tile-title text-3xl sm:text-4xl ${tile.disabled ? 'text-white/72' : 'text-white'}`}>{tile.name}</h2>
-                      <p className={`home-body mt-3 max-w-2xl text-sm leading-6 sm:text-base ${tile.disabled ? 'text-[#d7d7d3]/70' : 'text-[#d7d7d3]'}`}>
+                      <h2
+                        className={`home-tile-title text-3xl sm:text-4xl ${tile.disabled ? 'text-white/72' : 'text-white'}`}
+                      >
+                        {tile.name}
+                      </h2>
+                      <p
+                        className={`home-body mt-3 max-w-2xl text-sm leading-6 sm:text-base ${tile.disabled ? 'text-[#d7d7d3]/70' : 'text-[#d7d7d3]'}`}
+                      >
                         {tile.taglineBySport?.[sport] ?? tile.tagline}
                       </p>
                     </div>
@@ -428,9 +534,9 @@ export function HomePage() {
                       </button>
                     )}
                     {tile.disabled ? (
-                        <span className="border border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc]/75">
-                          Coming Soon
-                        </span>
+                      <span className="border border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc]/75">
+                        Coming Soon
+                      </span>
                     ) : (
                       <button
                         onClick={() => openTile(tile.id, 'lobby')}
@@ -456,13 +562,20 @@ export function HomePage() {
                 >
                   <div
                     className="absolute inset-0"
-                    style={{ background: `radial-gradient(circle at top right, ${tile.accent}33, transparent 35%)` }}
+                    style={{
+                      background: `radial-gradient(circle at top right, ${tile.accent}33, transparent 35%)`,
+                    }}
                   />
                   <div
                     className="absolute inset-x-0 top-0 h-1"
-                    style={{ background: `linear-gradient(90deg, transparent 0%, ${tile.accent} 45%, transparent 100%)` }}
+                    style={{
+                      background: `linear-gradient(90deg, transparent 0%, ${tile.accent} 45%, transparent 100%)`,
+                    }}
                   />
-                  <div className="absolute inset-0" style={{ backgroundColor: tile.accent, opacity: tile.disabled ? 0.08 : 0.2 }} />
+                  <div
+                    className="absolute inset-0"
+                    style={{ backgroundColor: tile.accent, opacity: tile.disabled ? 0.08 : 0.2 }}
+                  />
                   <img
                     src={tile.image}
                     alt={tile.name}
@@ -475,7 +588,10 @@ export function HomePage() {
                       <button
                         type="button"
                         aria-label={`Open ${tile.name} rules`}
-                        onClick={(event) => { event.stopPropagation(); setRulesTileId(tile.id); }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRulesTileId(tile.id);
+                        }}
                         className="absolute right-4 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-full border bg-black/20 text-sm text-white/55 transition hover:bg-black/30 hover:text-white"
                         style={{ borderColor: `${tile.accent}80` }}
                       >
@@ -487,13 +603,23 @@ export function HomePage() {
                         {tile.popularLabel && (
                           <span
                             className="mb-3 inline-flex border px-3 py-1 text-[10px] uppercase tracking-[0.3em]"
-                            style={{ borderColor: `${tile.accent}88`, color: tile.accent, backgroundColor: `${tile.accent}1a` }}
+                            style={{
+                              borderColor: `${tile.accent}88`,
+                              color: tile.accent,
+                              backgroundColor: `${tile.accent}1a`,
+                            }}
                           >
                             {tile.popularLabel}
                           </span>
                         )}
-                        <h2 className={`home-tile-title text-xl sm:text-2xl ${tile.disabled ? 'text-white/72' : 'text-white'}`}>{tile.name}</h2>
-                        <p className={`home-body mt-2 text-xs leading-5 sm:text-sm ${tile.disabled ? 'text-[#d7d7d3]/70' : 'text-[#d7d7d3]'}`}>
+                        <h2
+                          className={`home-tile-title text-xl sm:text-2xl ${tile.disabled ? 'text-white/72' : 'text-white'}`}
+                        >
+                          {tile.name}
+                        </h2>
+                        <p
+                          className={`home-body mt-2 text-xs leading-5 sm:text-sm ${tile.disabled ? 'text-[#d7d7d3]/70' : 'text-[#d7d7d3]'}`}
+                        >
                           {tile.taglineBySport?.[sport] ?? tile.tagline}
                         </p>
                       </div>
@@ -527,7 +653,6 @@ export function HomePage() {
               ))}
             </div>
           </div>
-
         </main>
       </div>
 
@@ -559,17 +684,30 @@ export function HomePage() {
 
       {/* Guess the Player modal */}
       {guessPlayerStep && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setGuessPlayerStep(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setGuessPlayerStep(null)}
+        >
           {guessPlayerStep === 'sport' && (
-            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+            <div
+              className="capcrunch-panel w-full max-w-2xl p-6 md:p-10"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="mb-8">
                 <p className="home-kicker text-[#bfbfbf] mb-3">Guess the Player</p>
-                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
-                <p className="capcrunch-body text-white/60 text-sm">Career Arc, Name Scramble, and Face Reveal — choose your league first.</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">
+                  Pick a Sport
+                </h2>
+                <p className="capcrunch-body text-white/60 text-sm">
+                  Career Arc, Name Scramble, and Face Reveal — choose your league first.
+                </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
                 <button
-                  onClick={() => { setGuessPlayerSport('nba'); setGuessPlayerStep('select'); }}
+                  onClick={() => {
+                    setGuessPlayerSport('nba');
+                    setGuessPlayerStep('select');
+                  }}
                   className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
@@ -577,13 +715,20 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#E2008A]">Basketball</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                      <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1980 onward, modern era filter available.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">
+                        Career stats from 1980 onward, modern era filter available.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">
+                      Continue →
+                    </span>
                   </div>
                 </button>
                 <button
-                  onClick={() => { setGuessPlayerSport('nfl'); setGuessPlayerStep('select'); }}
+                  onClick={() => {
+                    setGuessPlayerSport('nfl');
+                    setGuessPlayerStep('select');
+                  }}
                   className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#E2008A]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#E2008A]" />
@@ -591,19 +736,28 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#E2008A]">Football</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                      <p className="capcrunch-body mt-3 text-sm text-white/60">Career stats from 1999 onward. Face Reveal includes defensive pool.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">
+                        Career stats from 1999 onward. Face Reveal includes defensive pool.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">
+                      Continue →
+                    </span>
                   </div>
                 </button>
               </div>
               <div className="mt-5 flex justify-end">
-                <button onClick={() => setGuessPlayerStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+                <button
+                  onClick={() => setGuessPlayerStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
               </div>
             </div>
           )}
           {guessPlayerStep === 'select' && guessPlayerSport && (
-            <div className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
               <GuessPlayerSelect
                 sport={guessPlayerSport}
                 mode={guessPlayerMode}
@@ -613,7 +767,10 @@ export function HomePage() {
             </div>
           )}
           {guessPlayerStep === 'career' && guessPlayerSport && (
-            <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
+            <div
+              className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]"
+              onClick={(e) => e.stopPropagation()}
+            >
               <CareerArcSetup
                 sport={guessPlayerSport}
                 onBack={() => setGuessPlayerStep('select')}
@@ -621,15 +778,18 @@ export function HomePage() {
             </div>
           )}
           {guessPlayerStep === 'scramble' && guessPlayerSport && (
-            <div className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
-              <ScrambleSetup
-                sport={guessPlayerSport}
-                onBack={() => setGuessPlayerStep('select')}
-              />
+            <div
+              className="w-full max-w-3xl overflow-y-auto max-h-[calc(100vh-2rem)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ScrambleSetup sport={guessPlayerSport} onBack={() => setGuessPlayerStep('select')} />
             </div>
           )}
           {guessPlayerStep === 'face-reveal' && guessPlayerSport && (
-            <div className="w-full max-w-4xl overflow-y-auto max-h-[calc(100vh-2rem)]" onClick={e => e.stopPropagation()}>
+            <div
+              className="w-full max-w-4xl overflow-y-auto max-h-[calc(100vh-2rem)]"
+              onClick={(e) => e.stopPropagation()}
+            >
               <FaceRevealSetup
                 sport={guessPlayerSport}
                 onBack={() => setGuessPlayerStep('select')}
@@ -641,17 +801,35 @@ export function HomePage() {
 
       {/* Roster Royale modal — sport picker → settings */}
       {rosterStep && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setRosterStep(null); setLoadingStatus('idle'); }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => {
+            setRosterStep(null);
+            setLoadingStatus('idle');
+          }}
+        >
           {rosterStep === 'sport' && (
-            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+            <div
+              className="capcrunch-panel w-full max-w-2xl p-6 md:p-10"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="mb-8">
                 <p className="home-kicker text-[#bfbfbf] mb-3">Roster Royale</p>
-                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
-                <p className="capcrunch-body text-white/60 text-sm">Name every player on a team's roster for a given season.</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">
+                  Pick a Sport
+                </h2>
+                <p className="capcrunch-body text-white/60 text-sm">
+                  Name every player on a team's roster for a given season.
+                </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
                 <button
-                  onClick={() => { setRosterSport('nba'); setRosterStep('settings'); setGameMode('random'); setLoadingStatus('idle'); }}
+                  onClick={() => {
+                    setRosterSport('nba');
+                    setRosterStep('settings');
+                    setGameMode('random');
+                    setLoadingStatus('idle');
+                  }}
                   className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
@@ -659,13 +837,22 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#FDF100]">Basketball</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                      <p className="capcrunch-body mt-3 text-sm text-white/60">Seasons from 2000 to present.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">
+                        Seasons from 2000 to present.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">
+                      Continue →
+                    </span>
                   </div>
                 </button>
                 <button
-                  onClick={() => { setRosterSport('nfl'); setRosterStep('settings'); setGameMode('random'); setLoadingStatus('idle'); }}
+                  onClick={() => {
+                    setRosterSport('nfl');
+                    setRosterStep('settings');
+                    setGameMode('random');
+                    setLoadingStatus('idle');
+                  }}
                   className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
@@ -673,49 +860,58 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#68BBE5]">Football</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                      <p className="capcrunch-body mt-3 text-sm text-white/60">Seasons from 2000 to present. Includes Box Score mode.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">
+                        Seasons from 2000 to present. Includes Box Score mode.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">
+                      Continue →
+                    </span>
                   </div>
                 </button>
               </div>
               <div className="mt-5 flex justify-end">
-                <button onClick={() => setRosterStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+                <button
+                  onClick={() => setRosterStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
               </div>
             </div>
           )}
           {rosterStep === 'settings' && rosterSport && (
-            <div onClick={e => e.stopPropagation()}>
-            <RosterRoyaleSetup
-              sport={rosterSport}
-              deckArt="/images/home/roster-royale.svg"
-              rosterSubMode={rosterSubMode}
-              setRosterSubMode={setRosterSubMode}
-              boxScoreMinYear={boxScoreMinYear}
-              setBoxScoreMinYear={setBoxScoreMinYear}
-              boxScoreMaxYear={boxScoreMaxYear}
-              setBoxScoreMaxYear={setBoxScoreMaxYear}
-              boxScoreTeam={boxScoreTeam}
-              setBoxScoreTeam={setBoxScoreTeam}
-              gameMode={gameMode}
-              setGameMode={setGameMode}
-              selectedTeam={selectedTeam}
-              setSelectedTeam={setSelectedTeam}
-              selectedYear={selectedYear}
-              setSelectedYear={setSelectedYear}
-              randomMinYear={randomMinYear}
-              setRandomMinYear={setRandomMinYear}
-              randomMaxYear={randomMaxYear}
-              setRandomMaxYear={setRandomMaxYear}
-              timerDuration={timerDuration}
-              loadingStatus={loadingStatus}
-              setLoadingStatus={setLoadingStatus}
-              statusMessage={statusMessage}
-              onBack={() => setRosterStep('sport')}
-              onStartGame={handleStartGame}
-              setTimerDuration={setTimerDuration}
-              soloOnly
-            />
+            <div onClick={(e) => e.stopPropagation()}>
+              <RosterRoyaleSetup
+                sport={rosterSport}
+                deckArt="/images/home/roster-royale.svg"
+                rosterSubMode={rosterSubMode}
+                setRosterSubMode={setRosterSubMode}
+                boxScoreMinYear={boxScoreMinYear}
+                setBoxScoreMinYear={setBoxScoreMinYear}
+                boxScoreMaxYear={boxScoreMaxYear}
+                setBoxScoreMaxYear={setBoxScoreMaxYear}
+                boxScoreTeam={boxScoreTeam}
+                setBoxScoreTeam={setBoxScoreTeam}
+                gameMode={gameMode}
+                setGameMode={setGameMode}
+                selectedTeam={selectedTeam}
+                setSelectedTeam={setSelectedTeam}
+                selectedYear={selectedYear}
+                setSelectedYear={setSelectedYear}
+                randomMinYear={randomMinYear}
+                setRandomMinYear={setRandomMinYear}
+                randomMaxYear={randomMaxYear}
+                setRandomMaxYear={setRandomMaxYear}
+                timerDuration={timerDuration}
+                loadingStatus={loadingStatus}
+                setLoadingStatus={setLoadingStatus}
+                statusMessage={statusMessage}
+                onBack={() => setRosterStep('sport')}
+                onStartGame={handleStartGame}
+                setTimerDuration={setTimerDuration}
+                soloOnly
+              />
             </div>
           )}
         </div>
@@ -723,17 +919,30 @@ export function HomePage() {
 
       {/* Top Ten modal — sport picker → settings */}
       {topTenStep && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setTopTenStep(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setTopTenStep(null)}
+        >
           {topTenStep === 'sport' && (
-            <div className="capcrunch-panel w-full max-w-2xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+            <div
+              className="capcrunch-panel w-full max-w-2xl p-6 md:p-10"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="mb-8">
                 <p className="home-kicker text-[#bfbfbf] mb-3">Top Ten</p>
-                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">Pick a Sport</h2>
-                <p className="capcrunch-body text-white/60 text-sm">Name the top 10 players in a stat category for a given season.</p>
+                <h2 className="capcrunch-title text-4xl md:text-5xl text-white mb-3">
+                  Pick a Sport
+                </h2>
+                <p className="capcrunch-body text-white/60 text-sm">
+                  Name the top 10 players in a stat category for a given season.
+                </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
                 <button
-                  onClick={() => { setTopTenSport('nba'); setTopTenStep('settings'); }}
+                  onClick={() => {
+                    setTopTenSport('nba');
+                    setTopTenStep('settings');
+                  }}
                   className="group relative min-h-[180px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#70BE5B]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#70BE5B]" />
@@ -741,13 +950,20 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#70BE5B]">Basketball</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                      <p className="capcrunch-body mt-3 text-sm text-white/60">Points, rebounds, assists, and more from 1996 onward.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">
+                        Points, rebounds, assists, and more from 1996 onward.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">
+                      Continue →
+                    </span>
                   </div>
                 </button>
                 <button
-                  onClick={() => { setTopTenSport('nfl'); setTopTenStep('settings'); }}
+                  onClick={() => {
+                    setTopTenSport('nfl');
+                    setTopTenStep('settings');
+                  }}
                   className="group relative min-h-[180px] bg-white/[0.03] p-6 text-left transition hover:bg-[#70BE5B]/8"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#70BE5B]" />
@@ -755,19 +971,28 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#70BE5B]">Football</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                      <p className="capcrunch-body mt-3 text-sm text-white/60">Passing, rushing, receiving, and fantasy from 1999 onward.</p>
+                      <p className="capcrunch-body mt-3 text-sm text-white/60">
+                        Passing, rushing, receiving, and fantasy from 1999 onward.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">Continue →</span>
+                    <span className="capcrunch-kicker text-white/50 group-hover:text-white transition-colors">
+                      Continue →
+                    </span>
                   </div>
                 </button>
               </div>
               <div className="mt-5 flex justify-end">
-                <button onClick={() => setTopTenStep(null)} className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm">Close</button>
+                <button
+                  onClick={() => setTopTenStep(null)}
+                  className="px-4 py-2 capcrunch-btn-secondary capcrunch-title text-sm"
+                >
+                  Close
+                </button>
               </div>
             </div>
           )}
           {topTenStep === 'settings' && topTenSport && (
-            <div onClick={e => e.stopPropagation()}>
+            <div onClick={(e) => e.stopPropagation()}>
               <TopTenSetup
                 initialSport={topTenSport}
                 onBack={() => setTopTenStep('sport')}
@@ -779,17 +1004,31 @@ export function HomePage() {
       )}
 
       {capCrunchStep && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setCapCrunchStep(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setCapCrunchStep(null)}
+        >
           {capCrunchStep === 'sport' && (
-            <div className="capcrunch-panel w-full max-w-4xl p-6 md:p-10" onClick={e => e.stopPropagation()}>
+            <div
+              className="capcrunch-panel w-full max-w-4xl p-6 md:p-10"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="mb-8">
                 <p className="home-kicker text-[#bfbfbf] mb-3">Cap Crunch</p>
-                <h2 className="capcrunch-title text-4xl md:text-6xl text-white mb-3">Pick a Sport</h2>
-                <p className="capcrunch-body text-white/60 text-sm md:text-base">Choose a league, then configure the solo game without leaving the homepage.</p>
+                <h2 className="capcrunch-title text-4xl md:text-6xl text-white mb-3">
+                  Pick a Sport
+                </h2>
+                <p className="capcrunch-body text-white/60 text-sm md:text-base">
+                  Choose a league, then configure the solo game without leaving the homepage.
+                </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10">
                 <button
-                  onClick={() => { setCapCrunchSport('nba'); setCapCrunchCategory(null); setCapCrunchStep('settings'); }}
+                  onClick={() => {
+                    setCapCrunchSport('nba');
+                    setCapCrunchCategory(null);
+                    setCapCrunchStep('settings');
+                  }}
                   className="group relative min-h-[220px] border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.03] p-6 text-left transition hover:bg-[#FDF100]/10"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#FDF100]" />
@@ -797,13 +1036,21 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#FDF100]">Basketball</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NBA</h3>
-                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Per-game categories and team-based career games played.</p>
+                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">
+                        Per-game categories and team-based career games played.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
+                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">
+                      Continue
+                    </span>
                   </div>
                 </button>
                 <button
-                  onClick={() => { setCapCrunchSport('nfl'); setCapCrunchCategory(null); setCapCrunchStep('settings'); }}
+                  onClick={() => {
+                    setCapCrunchSport('nfl');
+                    setCapCrunchCategory(null);
+                    setCapCrunchStep('settings');
+                  }}
                   className="group relative min-h-[220px] bg-white/[0.03] p-6 text-left transition hover:bg-[#68BBE5]/10"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-[#68BBE5]" />
@@ -811,9 +1058,13 @@ export function HomePage() {
                     <div>
                       <span className="capcrunch-kicker text-[#68BBE5]">Football</span>
                       <h3 className="capcrunch-title mt-4 text-3xl text-white">NFL</h3>
-                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">Season and career stat variants with broader qualifier rounds.</p>
+                      <p className="capcrunch-body mt-3 max-w-sm text-sm text-white/65">
+                        Season and career stat variants with broader qualifier rounds.
+                      </p>
                     </div>
-                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">Continue</span>
+                    <span className="capcrunch-kicker text-white/70 group-hover:text-white">
+                      Continue
+                    </span>
                   </div>
                 </button>
               </div>
@@ -829,7 +1080,7 @@ export function HomePage() {
           )}
 
           {capCrunchStep === 'settings' && capCrunchSport && (
-            <div className="w-full max-w-6xl" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-6xl" onClick={(e) => e.stopPropagation()}>
               <div className="mb-4 flex items-center justify-between lg:hidden">
                 <div className="inline-flex border border-white/10 bg-black/20">
                   <button
@@ -854,11 +1105,15 @@ export function HomePage() {
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                <section className={`${capCrunchTab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
+                <section
+                  className={`${capCrunchTab !== 'settings' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}
+                >
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
                       <p className="home-kicker text-[#bfbfbf] mb-2">Cap Crunch</p>
-                      <h2 className="capcrunch-title text-4xl md:text-5xl text-white">{capCrunchSport.toUpperCase()} Settings</h2>
+                      <h2 className="capcrunch-title text-4xl md:text-5xl text-white">
+                        {capCrunchSport.toUpperCase()} Settings
+                      </h2>
                     </div>
                     <button
                       onClick={() => setCapCrunchStep('sport')}
@@ -876,22 +1131,26 @@ export function HomePage() {
                       >
                         RANDOM
                       </button>
-                      {(capCrunchSport === 'nba' ? CAP_CRUNCH_NBA_CATS : CAP_CRUNCH_NFL_CATS).map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => setCapCrunchCategory(category)}
-                          className={`px-4 py-2 rounded-sm capcrunch-kicker text-xs transition ${capCrunchCategory === category ? 'bg-[#d4af37] text-black border border-[#d4af37]' : 'bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white'}`}
-                        >
-                          {getCapCrunchLabel(category)}
-                        </button>
-                      ))}
+                      {(capCrunchSport === 'nba' ? CAP_CRUNCH_NBA_CATS : CAP_CRUNCH_NFL_CATS).map(
+                        (category) => (
+                          <button
+                            key={category}
+                            onClick={() => setCapCrunchCategory(category)}
+                            className={`px-4 py-2 rounded-sm capcrunch-kicker text-xs transition ${capCrunchCategory === category ? 'bg-[#d4af37] text-black border border-[#d4af37]' : 'bg-black/50 border border-white/20 text-white/70 hover:border-white/60 hover:text-white'}`}
+                          >
+                            {getCapCrunchLabel(category)}
+                          </button>
+                        ),
+                      )}
                     </div>
 
                     {capCrunchSport === 'nfl' && (
                       <div className="w-full">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex-1 h-px bg-white/10" />
-                          <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase">Career Totals</span>
+                          <span className="capcrunch-kicker text-[9px] text-white/40 tracking-[0.3em] uppercase">
+                            Career Totals
+                          </span>
                           <div className="flex-1 h-px bg-white/10" />
                         </div>
                         <div className="flex flex-wrap gap-2 justify-center">
@@ -910,7 +1169,9 @@ export function HomePage() {
                   </div>
 
                   <div className="flex items-center gap-3 justify-center mt-6">
-                    <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">ROUNDS</span>
+                    <span className="capcrunch-kicker text-[10px] text-white/50 tracking-widest">
+                      ROUNDS
+                    </span>
                     <div className="flex gap-1">
                       {[3, 4, 5, 6, 7, 8, 9, 10].map((rounds) => (
                         <button
@@ -930,7 +1191,9 @@ export function HomePage() {
 
                   <div className="mt-6 flex justify-center">
                     <button
-                      onClick={() => capCrunchSport && launchCapCrunch(capCrunchSport, capCrunchCategory)}
+                      onClick={() =>
+                        capCrunchSport && launchCapCrunch(capCrunchSport, capCrunchCategory)
+                      }
                       className="capcrunch-btn-primary px-10 py-3 capcrunch-kicker text-sm"
                     >
                       START
@@ -938,7 +1201,9 @@ export function HomePage() {
                   </div>
                 </section>
 
-                <aside className={`${capCrunchTab !== 'rules' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}>
+                <aside
+                  className={`${capCrunchTab !== 'rules' ? 'hidden lg:block' : ''} capcrunch-panel p-5 md:p-6`}
+                >
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <h3 className="capcrunch-title text-lg text-[#FDF100]">How to Play</h3>
                     <button
@@ -949,13 +1214,34 @@ export function HomePage() {
                     </button>
                   </div>
                   <ul className="text-sm text-white/80 space-y-2.5 text-left">
-                    <li><span className="text-[#d4af37] font-bold">Goal:</span> Build a lineup whose combined stat reaches — but does not exceed — the target cap.</li>
-                    <li><span className="text-[#d4af37] font-bold">Each pick:</span> A filter is shown. Search any qualifying player and their value gets added to your total.</li>
-                    <li><span className="text-emerald-400 font-bold">Season stats:</span> Pick a year and that team-season value counts.</li>
-                    <li><span className="text-emerald-400 font-bold">Career variants:</span> Some modes count career totals without needing a year.</li>
-                    <li><span className="text-red-400 font-bold">Busts:</span> A pick that pushes you over the cap scores 0 and your total reverts.</li>
-                    <li><span className="text-white/60 font-bold">Special rounds:</span> Filters can be team, division, conference, draft, teammate, or more.</li>
-                    <li><span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts wins; then oldest average pick year.</li>
+                    <li>
+                      <span className="text-[#d4af37] font-bold">Goal:</span> Build a lineup whose
+                      combined stat reaches — but does not exceed — the target cap.
+                    </li>
+                    <li>
+                      <span className="text-[#d4af37] font-bold">Each pick:</span> A filter is
+                      shown. Search any qualifying player and their value gets added to your total.
+                    </li>
+                    <li>
+                      <span className="text-emerald-400 font-bold">Season stats:</span> Pick a year
+                      and that team-season value counts.
+                    </li>
+                    <li>
+                      <span className="text-emerald-400 font-bold">Career variants:</span> Some
+                      modes count career totals without needing a year.
+                    </li>
+                    <li>
+                      <span className="text-red-400 font-bold">Busts:</span> A pick that pushes you
+                      over the cap scores 0 and your total reverts.
+                    </li>
+                    <li>
+                      <span className="text-white/60 font-bold">Special rounds:</span> Filters can
+                      be team, division, conference, draft, teammate, or more.
+                    </li>
+                    <li>
+                      <span className="text-[#d4af37] font-bold">Tiebreaker:</span> Fewest busts
+                      wins; then oldest average pick year.
+                    </li>
                   </ul>
                 </aside>
               </div>
@@ -965,8 +1251,14 @@ export function HomePage() {
       )}
 
       {rulesTileId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setRulesTileId(null)}>
-          <div className="capcrunch-panel w-full max-w-2xl p-5 md:p-6" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setRulesTileId(null)}
+        >
+          <div
+            className="capcrunch-panel w-full max-w-2xl p-5 md:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <p className="home-kicker text-[#bfbfbf] mb-2">Rules</p>
@@ -981,11 +1273,17 @@ export function HomePage() {
                 Close
               </button>
             </div>
-            <div className="mb-5 h-1 w-28" style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }} />
+            <div
+              className="mb-5 h-1 w-28"
+              style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }}
+            />
             <ul className="space-y-3 text-sm text-white/80">
               {RULES_CONTENT[rulesTileId].bullets.map((bullet) => (
                 <li key={bullet} className="flex gap-3">
-                  <span className="mt-1 h-2 w-2 shrink-0" style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }} />
+                  <span
+                    className="mt-1 h-2 w-2 shrink-0"
+                    style={{ backgroundColor: RULES_CONTENT[rulesTileId].accent }}
+                  />
                   <span>{bullet}</span>
                 </li>
               ))}

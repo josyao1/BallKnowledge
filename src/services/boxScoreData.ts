@@ -48,8 +48,8 @@ export interface BoxScoreGame {
   game_id: string;
   season: number;
   week: number;
-  game_type: string;   // "REG" | "WC" | "DIV" | "CON" | "SB"
-  gameday: string;     // "2024-09-05"
+  game_type: string; // "REG" | "WC" | "DIV" | "CON" | "SB"
+  gameday: string; // "2024-09-05"
   home_team: string;
   away_team: string;
   home_score: number;
@@ -72,7 +72,9 @@ export interface BoxScoreGame {
 
 // ─── Cache ────────────────────────────────────────────────────────────────────
 
-export const ALL_BOX_SCORE_YEARS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+export const ALL_BOX_SCORE_YEARS = [
+  2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025,
+];
 
 // Per-season lazy cache — each year fetched at most once per session
 const _cache: Record<number, Promise<BoxScoreGame[]>> = {};
@@ -82,11 +84,11 @@ const _cache: Record<number, Promise<BoxScoreGame[]>> = {};
 export function loadBoxScoreYear(year: number): Promise<BoxScoreGame[]> {
   if (!_cache[year]) {
     _cache[year] = fetch(`/data/nfl/box_scores/${year}.json`, { cache: 'no-store' })
-      .then(r => {
+      .then((r) => {
         if (!r.ok) throw new Error(`Box score fetch failed: ${r.status} for ${year}`);
         return r.json() as Promise<BoxScoreGame[]>;
       })
-      .catch(err => {
+      .catch((err) => {
         // Remove from cache so a retry is possible
         delete _cache[year];
         throw err;
@@ -96,7 +98,7 @@ export function loadBoxScoreYear(year: number): Promise<BoxScoreGame[]> {
 }
 
 export interface BoxScoreFilters {
-  years?: number[];    // subset of ALL_BOX_SCORE_YEARS; defaults to all
+  years?: number[]; // subset of ALL_BOX_SCORE_YEARS; defaults to all
   team?: string | null; // e.g. "KC" — either team in the game; null = any
 }
 
@@ -105,16 +107,14 @@ export interface BoxScoreFilters {
  * requested years. Fetches only the year files that are needed.
  */
 export async function getRandomBoxScoreGame(filters: BoxScoreFilters = {}): Promise<BoxScoreGame> {
-  const years = (filters.years && filters.years.length > 0)
-    ? filters.years
-    : ALL_BOX_SCORE_YEARS;
+  const years = filters.years && filters.years.length > 0 ? filters.years : ALL_BOX_SCORE_YEARS;
 
   const pools = await Promise.all(years.map(loadBoxScoreYear));
   let games = pools.flat();
 
   if (filters.team) {
     const t = filters.team.toUpperCase();
-    games = games.filter(g => g.home_team === t || g.away_team === t);
+    games = games.filter((g) => g.home_team === t || g.away_team === t);
   }
 
   if (games.length === 0) {
@@ -126,23 +126,23 @@ export async function getRandomBoxScoreGame(filters: BoxScoreFilters = {}): Prom
 
 /** Count total qualifying games for given filters (without loading full data). */
 export async function countBoxScoreGames(filters: BoxScoreFilters = {}): Promise<number> {
-  const years = (filters.years && filters.years.length > 0)
-    ? filters.years
-    : ALL_BOX_SCORE_YEARS;
+  const years = filters.years && filters.years.length > 0 ? filters.years : ALL_BOX_SCORE_YEARS;
 
   const pools = await Promise.all(years.map(loadBoxScoreYear));
   let games = pools.flat();
 
   if (filters.team) {
     const t = filters.team.toUpperCase();
-    games = games.filter(g => g.home_team === t || g.away_team === t);
+    games = games.filter((g) => g.home_team === t || g.away_team === t);
   }
 
   return games.length;
 }
 
 /** All unique player entries across all three categories for a given side. */
-export function allPlayersInGame(game: BoxScoreGame): Array<{ id: string; name: string; side: 'home' | 'away' }> {
+export function allPlayersInGame(
+  game: BoxScoreGame,
+): Array<{ id: string; name: string; side: 'home' | 'away' }> {
   const seen = new Set<string>();
   const result: Array<{ id: string; name: string; side: 'home' | 'away' }> = [];
 

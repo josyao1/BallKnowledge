@@ -24,8 +24,11 @@ export function CareerStatsTable({ columns, seasons, careerHighs, yearsRevealed,
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b-2 border-white/10">
-            {columns.map(col => (
-              <th key={col.key} className="px-3 py-2 text-left capcrunch-kicker text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap">
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className="px-3 py-2 text-left capcrunch-kicker text-[10px] text-[#888] tracking-wider uppercase whitespace-nowrap"
+              >
                 {col.label}
               </th>
             ))}
@@ -44,25 +47,26 @@ export function CareerStatsTable({ columns, seasons, careerHighs, yearsRevealed,
                 }}
                 className="border-b border-white/5 hover:bg-white/5 row-gold-flash"
               >
-                {columns.map(col => {
-                  const isHigh = col.key !== 'season' && col.key !== 'team'
-                    && careerHighs[col.key] !== undefined
-                    && (Number(season[col.key]) || 0) === careerHighs[col.key];
+                {columns.map((col) => {
+                  const isHigh =
+                    col.key !== 'season' &&
+                    col.key !== 'team' &&
+                    careerHighs[col.key] !== undefined &&
+                    (Number(season[col.key]) || 0) === careerHighs[col.key];
                   return (
                     <td
                       key={col.key}
                       className={`px-3 py-2 capcrunch-kicker text-xs whitespace-nowrap ${
-                        isHigh
-                          ? 'text-[#d4af37] bg-[#d4af37]/10 font-bold'
-                          : 'text-white/80'
+                        isHigh ? 'text-[#d4af37] bg-[#d4af37]/10 font-bold' : 'text-white/80'
                       }`}
                     >
                       {col.key === 'season'
-                        ? (yearsRevealed ? season.season : '???')
+                        ? yearsRevealed
+                          ? season.season
+                          : '???'
                         : col.key === 'team'
                           ? normalizeTeamAbbr(formatStat(col.key, season[col.key]), sport)
-                          : formatStat(col.key, season[col.key])
-                      }
+                          : formatStat(col.key, season[col.key])}
                     </td>
                   );
                 })}

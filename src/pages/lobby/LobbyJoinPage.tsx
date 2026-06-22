@@ -20,7 +20,10 @@ export function LobbyJoinPage() {
   const [joinCode, setJoinCode] = useState(code?.toUpperCase() || '');
 
   const handleCodeChange = (value: string) => {
-    const formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    const formatted = value
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6);
     setJoinCode(formatted);
   };
 
@@ -73,9 +76,7 @@ export function LobbyJoinPage() {
           animate={{ opacity: 1, y: 0 }}
           className="capcrunch-panel p-4"
         >
-          <label className="block capcrunch-kicker text-[10px] text-white/40 mb-2">
-            Your Name
-          </label>
+          <label className="block capcrunch-kicker text-[10px] text-white/40 mb-2">Your Name</label>
           <input
             type="text"
             value={playerName}
@@ -116,7 +117,8 @@ export function LobbyJoinPage() {
           transition={{ delay: 0.15 }}
           className="text-center text-white/30 text-[11px] capcrunch-kicker tracking-wide"
         >
-          Glitched out of a game? Re-enter the same code with your name as it shows in the lobby to pick up where you left off.
+          Glitched out of a game? Re-enter the same code with your name as it shows in the lobby to
+          pick up where you left off.
         </motion.p>
 
         {/* Error message */}

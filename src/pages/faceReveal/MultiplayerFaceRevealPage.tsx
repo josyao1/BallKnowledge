@@ -66,10 +66,10 @@ interface FaceRevealState {
   player_id: string | number;
   longest_team?: string; // team abbreviation the player spent the most seasons with
   zoom_level: 1 | 2 | 3 | 4; // 4 = initials+team hint level (final before reveal)
-  zoom_deadline: string;  // ISO timestamp when current level expires
-  skip_votes?: string[];  // player_ids who voted to skip to the next zoom level
-  focal_x?: number;       // zoom focal point X% (randomised per player so it's not always both eyes)
-  focal_y?: number;       // zoom focal point Y%
+  zoom_deadline: string; // ISO timestamp when current level expires
+  skip_votes?: string[]; // player_ids who voted to skip to the next zoom level
+  focal_x?: number; // zoom focal point X% (randomised per player so it's not always both eyes)
+  focal_y?: number; // zoom focal point Y%
 }
 
 // Points earned based on the zoom level at which a player answered correctly.
@@ -99,54 +99,71 @@ export function MultiplayerFaceRevealPage() {
   const careerState = lobby?.career_state as FaceRevealState | null;
 
   // ── Local state ──
-  const { guessInput, setGuessInput, feedbackMsg, setFeedbackMsg, feedbackType, setFeedbackType, inputRef: guessInputRef } = useGuessInput();
-  const [suggestions, setSuggestions]   = useState<PlayerEntry[]>([]);
-  const [localDone, setLocalDone]       = useState(false);
+  const {
+    guessInput,
+    setGuessInput,
+    feedbackMsg,
+    setFeedbackMsg,
+    feedbackType,
+    setFeedbackType,
+    inputRef: guessInputRef,
+  } = useGuessInput();
+  const [suggestions, setSuggestions] = useState<PlayerEntry[]>([]);
+  const [localDone, setLocalDone] = useState(false);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [roundSummary, setRoundSummary] = useState<RoundSummary | null>(null);
   // Live countdown for current zoom level (computed from zoom_deadline).
-  const [countdown, setCountdown]       = useState(0);
+  const [countdown, setCountdown] = useState(0);
   // Local zoom level display (mirrors careerState but updates instantly from deadline watcher).
-  const [displayZoom, setDisplayZoom]   = useState<1 | 2 | 3 | 4>(1);
+  const [displayZoom, setDisplayZoom] = useState<1 | 2 | 3 | 4>(1);
 
   // ── Refs ──
-  const hasSubmittedRef    = useRef(false);
-  const hasAdvancedRef     = useRef(false);  // guards endRound from double-firing
-  const isZoomAdvancingRef = useRef(false);  // guards zoom-level advance from double-firing
-  const prevRoundRef       = useRef(-1);
-  const prevStatusRef      = useRef<string | null>(null);
-  const roundHistoryRef    = useRef<RoundSummary[]>([]);
-  const zoomTimerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasSubmittedRef = useRef(false);
+  const hasAdvancedRef = useRef(false); // guards endRound from double-firing
+  const isZoomAdvancingRef = useRef(false); // guards zoom-level advance from double-firing
+  const prevRoundRef = useRef(-1);
+  const prevStatusRef = useRef<string | null>(null);
+  const roundHistoryRef = useRef<RoundSummary[]>([]);
+  const zoomTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Gate for the "all players done" effect. Set to false when a new round is
   // detected (career_state has incremented round), then flipped to true only
   // once the lobby_players update arrives with all finished_at === null.
   // Prevents endRound from firing with stale previous-round player data
   // because Supabase realtime delivers the lobbies and lobby_players updates
   // as separate events (lobbies arrives first).
-  const roundReadyRef      = useRef(false);
+  const roundReadyRef = useRef(false);
   // Stable reference to lobby so endRound doesn't need to be recreated on
   // every career_state change (zoom level, skip votes). Without this, the
   // "all done" effect would re-run on every lobby update.
-  const lobbyRef           = useRef(lobby);
+  const lobbyRef = useRef(lobby);
 
   // Player pool for host (to pick next player).
   const playerPoolRef = useRef<PlayerEntry[]>([]);
-  const usedIdsRef    = useRef<Set<string | number>>(new Set());
+  const usedIdsRef = useRef<Set<string | number>>(new Set());
 
   // ── Load lobby on mount (and whenever player_name is missing) ──
   // Guards on player_name so the initial career_state (round:0, no player) doesn't
   // satisfy the check. Re-runs if a realtime event clears career_state.
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
     if (careerState?.player_name) return;
 
-    findLobbyByCode(code).then(result => {
-      if (!result.lobby) { navigate('/'); return; }
+    findLobbyByCode(code).then((result) => {
+      if (!result.lobby) {
+        navigate('/');
+        return;
+      }
       // Only redirect for non-playing states when the game hasn't started yet.
       // 'waiting' between rounds is valid for FaceReveal (interstitial screen).
-      if (result.lobby.status === 'finished') { navigate(`/lobby/${code}/face-reveal/results`); return; }
+      if (result.lobby.status === 'finished') {
+        navigate(`/lobby/${code}/face-reveal/results`);
+        return;
+      }
       setLobby(result.lobby);
-      getLobbyPlayers(result.lobby.id).then(pr => {
+      getLobbyPlayers(result.lobby.id).then((pr) => {
         if (pr.players) setPlayers(pr.players);
       });
     });
@@ -156,30 +173,48 @@ export function MultiplayerFaceRevealPage() {
   useEffect(() => {
     if (!careerState || playerPoolRef.current.length) return;
     const { sport, career_to } = careerState;
-    const min_yards: number     = (careerState as any).min_yards    || 0;
-    const min_mpg: number       = (careerState as any).min_mpg      || 0;
-    const defense_mode: string  = (careerState as any).defense_mode || 'known';
+    const min_yards: number = (careerState as any).min_yards || 0;
+    const min_mpg: number = (careerState as any).min_mpg || 0;
+    const defense_mode: string = (careerState as any).defense_mode || 'known';
 
     async function loadPool() {
       if (sport === 'nba') {
         const all = await loadNBALineupPool();
-        let filtered = all.filter(p => p.player_id != null);
-        if (career_to) filtered = filtered.filter(p => nbaEndYear(p) >= career_to);
-        if (min_mpg) filtered = filtered.filter(p => p.seasons.some((s: any) => (s.min ?? 0) >= min_mpg));
-        playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, longestTeam: longestTenuredTeam(p.seasons) }));
+        let filtered = all.filter((p) => p.player_id != null);
+        if (career_to) filtered = filtered.filter((p) => nbaEndYear(p) >= career_to);
+        if (min_mpg)
+          filtered = filtered.filter((p) => p.seasons.some((s: any) => (s.min ?? 0) >= min_mpg));
+        playerPoolRef.current = filtered.map((p) => ({
+          player_id: p.player_id,
+          player_name: p.player_name,
+          longestTeam: longestTenuredTeam(p.seasons),
+        }));
       } else {
         const all = await loadNFLLineupPool();
-        let filtered = all.filter(p => p.player_id != null);
-        if (career_to) filtered = filtered.filter(p => nflEndYear(p) >= career_to);
-        filtered = filtered.filter(p => nflInPool(p, min_yards, defense_mode as 'known' | 'all'));
-        playerPoolRef.current = filtered.map(p => ({ player_id: p.player_id, player_name: p.player_name, position: p.position, longestTeam: longestTenuredTeam(p.seasons) }));
+        let filtered = all.filter((p) => p.player_id != null);
+        if (career_to) filtered = filtered.filter((p) => nflEndYear(p) >= career_to);
+        filtered = filtered.filter((p) => nflInPool(p, min_yards, defense_mode as 'known' | 'all'));
+        playerPoolRef.current = filtered.map((p) => ({
+          player_id: p.player_id,
+          player_name: p.player_name,
+          position: p.position,
+          longestTeam: longestTenuredTeam(p.seasons),
+        }));
       }
     }
     loadPool();
-  }, [careerState?.sport, careerState?.career_to, (careerState as any)?.min_yards, (careerState as any)?.min_mpg, (careerState as any)?.defense_mode]);
+  }, [
+    careerState?.sport,
+    careerState?.career_to,
+    (careerState as any)?.min_yards,
+    (careerState as any)?.min_mpg,
+    (careerState as any)?.defense_mode,
+  ]);
 
   // Keep lobbyRef in sync so endRound always sees the latest lobby object.
-  useEffect(() => { lobbyRef.current = lobby; }, [lobby]);
+  useEffect(() => {
+    lobbyRef.current = lobby;
+  }, [lobby]);
 
   // ── Countdown timer: tracks seconds until zoom_deadline ──
   useEffect(() => {
@@ -193,13 +228,18 @@ export function MultiplayerFaceRevealPage() {
     isZoomAdvancingRef.current = false;
 
     function tick() {
-      const remaining = Math.max(0, Math.ceil((new Date(careerState!.zoom_deadline).getTime() - Date.now()) / 1000));
+      const remaining = Math.max(
+        0,
+        Math.ceil((new Date(careerState!.zoom_deadline).getTime() - Date.now()) / 1000),
+      );
       setCountdown(remaining);
     }
 
     tick();
     zoomTimerRef.current = setInterval(tick, 500);
-    return () => { if (zoomTimerRef.current) clearInterval(zoomTimerRef.current); };
+    return () => {
+      if (zoomTimerRef.current) clearInterval(zoomTimerRef.current);
+    };
   }, [careerState?.zoom_deadline, careerState?.zoom_level, lobby?.status]);
 
   // ── HOST: watch zoom_deadline and advance zoom level when expired ──
@@ -207,7 +247,8 @@ export function MultiplayerFaceRevealPage() {
     if (!isHost || !careerState || lobby?.status !== 'playing') return;
     if (countdown > 0) return;
     // Extra guard: verify the deadline has actually passed (not just initial countdown===0).
-    if (careerState.zoom_deadline && new Date(careerState.zoom_deadline).getTime() > Date.now()) return;
+    if (careerState.zoom_deadline && new Date(careerState.zoom_deadline).getTime() > Date.now())
+      return;
     // Guard against firing multiple times while countdown stays at 0
     // between 500ms ticks and before the Supabase write propagates back.
     if (hasAdvancedRef.current) return;
@@ -222,7 +263,9 @@ export function MultiplayerFaceRevealPage() {
         zoom_level: (currentZoom + 1) as 1 | 2 | 3 | 4,
         zoom_deadline: nextDeadline,
         skip_votes: [],
-      }).catch(() => { isZoomAdvancingRef.current = false; });
+      }).catch(() => {
+        isZoomAdvancingRef.current = false;
+      });
     } else {
       // Level 4 expired — end the round.
       endRound();
@@ -235,11 +278,11 @@ export function MultiplayerFaceRevealPage() {
     if (displayZoom >= 4) return;
     if (isZoomAdvancingRef.current) return;
 
-    const skipVotes  = careerState.skip_votes ?? [];
+    const skipVotes = careerState.skip_votes ?? [];
     // Eligible = players still guessing (finished_at null).
-    const eligible   = players.filter(p => p.finished_at === null);
+    const eligible = players.filter((p) => p.finished_at === null);
     if (eligible.length === 0) return;
-    if (!eligible.every(p => skipVotes.includes(p.player_id))) return;
+    if (!eligible.every((p) => skipVotes.includes(p.player_id))) return;
 
     isZoomAdvancingRef.current = true;
     const nextDeadline = new Date(Date.now() + careerState.timer * 1000).toISOString();
@@ -248,7 +291,9 @@ export function MultiplayerFaceRevealPage() {
       zoom_level: (displayZoom + 1) as 1 | 2 | 3 | 4,
       zoom_deadline: nextDeadline,
       skip_votes: [],
-    }).catch(() => { isZoomAdvancingRef.current = false; });
+    }).catch(() => {
+      isZoomAdvancingRef.current = false;
+    });
   }, [careerState?.skip_votes?.length, players, isHost, displayZoom, lobby?.status]);
 
   // ── Detect new round — reset all local state ──
@@ -283,7 +328,7 @@ export function MultiplayerFaceRevealPage() {
   useEffect(() => {
     if (lobby?.status !== 'playing') return;
     if (players.length === 0) return;
-    if (players.every(p => p.finished_at === null)) {
+    if (players.every((p) => p.finished_at === null)) {
       roundReadyRef.current = true;
     }
   }, [players, lobby?.status]);
@@ -294,17 +339,21 @@ export function MultiplayerFaceRevealPage() {
     const prev = prevStatusRef.current;
     prevStatusRef.current = lobby.status;
 
-    if (prev === 'playing' && (lobby.status === 'waiting' || lobby.status === 'finished') && careerState
-        && !(careerState as any).abandoned) {
+    if (
+      prev === 'playing' &&
+      (lobby.status === 'waiting' || lobby.status === 'finished') &&
+      careerState &&
+      !(careerState as any).abandoned
+    ) {
       // Skipped when host sends everyone to lobby (abandoned=true) — no round summary needed.
       // Derive pts from lobby_players: score = zoom level (1–4) when correct, 0 = gave up.
       // Points = zoomToPoints(zoom) + 1 bonus for the earliest finished_at (first guesser).
       const ptsMap: Record<string, number> = {};
       const correctPlayers = [...players]
-        .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
+        .filter((p) => (p.score || 0) > 0 && p.finished_at !== null)
         .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
       const firstId = correctPlayers[0]?.player_id ?? null;
-      players.forEach(p => {
+      players.forEach((p) => {
         const zoom = p.score || 0;
         if (zoom === 0) {
           ptsMap[p.player_id] = 0;
@@ -314,7 +363,9 @@ export function MultiplayerFaceRevealPage() {
       });
 
       const finishedAtMap: Record<string, string | null> = {};
-      players.forEach(p => { finishedAtMap[p.player_id] = p.finished_at ?? null; });
+      players.forEach((p) => {
+        finishedAtMap[p.player_id] = p.finished_at ?? null;
+      });
 
       const newSummary: RoundSummary = {
         playerName: careerState.player_name,
@@ -329,7 +380,9 @@ export function MultiplayerFaceRevealPage() {
     }
 
     if (lobby.status === 'finished') {
-      navigate(`/lobby/${code}/face-reveal/results`, { state: { roundHistory: roundHistoryRef.current } });
+      navigate(`/lobby/${code}/face-reveal/results`, {
+        state: { roundHistory: roundHistoryRef.current },
+      });
     }
   }, [lobby?.status]);
 
@@ -361,17 +414,19 @@ export function MultiplayerFaceRevealPage() {
       // score field = zoom level (1–4) when correct, 0 = gave up/wrong.
       // Sort by finished_at so [0] is the first correct guesser (+1 speed bonus).
       const correctPlayers = freshPlayers
-        .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
+        .filter((p) => (p.score || 0) > 0 && p.finished_at !== null)
         .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
 
-      await Promise.all(correctPlayers.map((p, i) =>
-        addCareerPoints(currentLobby.id, p.player_id, zoomToPoints(p.score!) + (i === 0 ? 1 : 0))
-      ));
+      await Promise.all(
+        correctPlayers.map((p, i) =>
+          addCareerPoints(currentLobby.id, p.player_id, zoomToPoints(p.score!) + (i === 0 ? 1 : 0)),
+        ),
+      );
 
       // Check win condition with updated points.
       const afterPtsResult = await getLobbyPlayers(currentLobby.id);
       const afterPts = afterPtsResult.players || [];
-      const gameWinner = afterPts.find(p => (p.points ?? 0) >= winTarget);
+      const gameWinner = afterPts.find((p) => (p.points ?? 0) >= winTarget);
 
       if (gameWinner) {
         await incrementPlayerWins(currentLobby.id, gameWinner.player_id);
@@ -393,7 +448,7 @@ export function MultiplayerFaceRevealPage() {
     if (!isHost || lobby?.status !== 'playing') return;
     if (players.length === 0) return;
     if (!roundReadyRef.current) return;
-    if (!players.every(p => p.finished_at !== null)) return;
+    if (!players.every((p) => p.finished_at !== null)) return;
     endRound();
   }, [players, isHost, lobby?.status, endRound]);
 
@@ -406,7 +461,7 @@ export function MultiplayerFaceRevealPage() {
     const interval = setInterval(async () => {
       if (hasAdvancedRef.current || !roundReadyRef.current) return;
       const { players: fresh } = await getLobbyPlayers(lobbyId);
-      if (fresh && fresh.length > 0 && fresh.every(p => p.finished_at !== null)) {
+      if (fresh && fresh.length > 0 && fresh.every((p) => p.finished_at !== null)) {
         endRound();
       }
     }, 5000);
@@ -458,13 +513,16 @@ export function MultiplayerFaceRevealPage() {
           await updatePlayerScore(lobbyId, displayZoom, 0, [], [], true);
           break;
         } catch {
-          if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
         }
       }
     } else {
       setFeedbackMsg(`"${name}" — try again`);
       setFeedbackType('wrong');
-      setTimeout(() => { setFeedbackMsg(''); setFeedbackType(''); }, 1800);
+      setTimeout(() => {
+        setFeedbackMsg('');
+        setFeedbackType('');
+      }, 1800);
     }
   }
 
@@ -478,7 +536,7 @@ export function MultiplayerFaceRevealPage() {
         await updatePlayerScore(lobbyId, 0, 0, [], [], true);
         break;
       } catch {
-        if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
       }
     }
   }
@@ -501,7 +559,7 @@ export function MultiplayerFaceRevealPage() {
     const pool = playerPoolRef.current;
     if (!pool.length) return null;
 
-    let candidates = pool.filter(p => !usedIdsRef.current.has(p.player_id));
+    let candidates = pool.filter((p) => !usedIdsRef.current.has(p.player_id));
     if (!candidates.length) {
       usedIdsRef.current.clear();
       candidates = pool;
@@ -525,7 +583,11 @@ export function MultiplayerFaceRevealPage() {
     setIsLoadingNext(true);
 
     const player = pickNextPlayer();
-    if (!player) { isStartingNextRef.current = false; setIsLoadingNext(false); return; }
+    if (!player) {
+      isStartingNextRef.current = false;
+      setIsLoadingNext(false);
+      return;
+    }
 
     const timerSecs = careerState.timer || 60;
     // Randomise focal point so the zoom-in spot varies per player
@@ -567,23 +629,23 @@ export function MultiplayerFaceRevealPage() {
 
   const COLOR = '#06b6d4';
   const winTarget = careerState.win_target || 30;
-  const doneCount = players.filter(p => p.finished_at !== null).length;
+  const doneCount = players.filter((p) => p.finished_at !== null).length;
   const totalCount = players.length;
-  const myPlayerName = players.find(p => p.player_id === currentPlayerId)?.player_name;
+  const myPlayerName = players.find((p) => p.player_id === currentPlayerId)?.player_name;
 
   // Derive correctness from lobby_players (authoritative, no race conditions).
-  const myRow = players.find(p => p.player_id === currentPlayerId);
+  const myRow = players.find((p) => p.player_id === currentPlayerId);
   const iGotIt = (myRow?.score || 0) > 0;
   const correctPlayersSorted = players
-    .filter(p => (p.score || 0) > 0 && p.finished_at !== null)
+    .filter((p) => (p.score || 0) > 0 && p.finished_at !== null)
     .sort((a, b) => new Date(a.finished_at!).getTime() - new Date(b.finished_at!).getTime());
   const isFirstCorrect = correctPlayersSorted[0]?.player_id === currentPlayerId;
 
   // Skip-zoom vote state.
-  const skipVotes    = careerState.skip_votes ?? [];
-  const iHaveVoted   = currentPlayerId ? skipVotes.includes(currentPlayerId) : false;
-  const votedPlayers = players.filter(p => skipVotes.includes(p.player_id));
-  const eligibleForSkip = players.filter(p => p.finished_at === null);
+  const skipVotes = careerState.skip_votes ?? [];
+  const iHaveVoted = currentPlayerId ? skipVotes.includes(currentPlayerId) : false;
+  const votedPlayers = players.filter((p) => skipVotes.includes(p.player_id));
+  const eligibleForSkip = players.filter((p) => p.finished_at === null);
 
   const timerFraction = careerState.timer ? countdown / careerState.timer : 0;
   const color = timerColor(timerFraction);
@@ -592,22 +654,26 @@ export function MultiplayerFaceRevealPage() {
   if (lobby.status === 'waiting') {
     const summary = roundSummary;
     const interFinisherMs = players
-      .map(p => summary?.finishedAt?.[p.player_id])
+      .map((p) => summary?.finishedAt?.[p.player_id])
       .filter((t): t is string => !!t)
-      .map(t => new Date(t).getTime());
+      .map((t) => new Date(t).getTime());
     const interFirstMs = interFinisherMs.length > 0 ? Math.min(...interFinisherMs) : null;
     return (
       <div className="min-h-screen home-chalkboard text-white flex flex-col p-4 md:p-6">
         <header className="flex justify-between items-center mb-6">
           <div>
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">Round Complete</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">
+              Round Complete
+            </div>
             <h1 className="capcrunch-title text-2xl text-white">
               Round {summary?.round ?? careerState.round}
             </h1>
           </div>
           <div className="text-right">
             <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">FIRST TO</div>
-            <div className="capcrunch-title text-2xl" style={{ color: COLOR }}>{winTarget} pts</div>
+            <div className="capcrunch-title text-2xl" style={{ color: COLOR }}>
+              {winTarget} pts
+            </div>
           </div>
         </header>
 
@@ -619,10 +685,18 @@ export function MultiplayerFaceRevealPage() {
             className="mb-6 p-6 bg-black/40 border-2 text-center space-y-3"
             style={{ borderColor: `${COLOR}50` }}
           >
-            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">The Answer Was</div>
+            <div className="capcrunch-kicker text-[10px] text-[#888] tracking-widest uppercase">
+              The Answer Was
+            </div>
             <div className="capcrunch-title text-3xl text-[#d4af37]">{summary.playerName}</div>
             <div className="flex justify-center">
-              <ZoomedHeadshot playerId={summary.playerId} sport={careerState.sport} zoomLevel={0} size={200} className="rounded-xl" />
+              <ZoomedHeadshot
+                playerId={summary.playerId}
+                sport={careerState.sport}
+                zoomLevel={0}
+                size={200}
+                className="rounded-xl"
+              />
             </div>
           </motion.div>
         )}
@@ -638,49 +712,67 @@ export function MultiplayerFaceRevealPage() {
             This Round
           </div>
           <div className="space-y-2">
-            {[...players].sort((a, b) => ((summary?.pts[b.player_id] ?? 0) - (summary?.pts[a.player_id] ?? 0))).map((player) => {
-              const pts = summary?.pts[player.player_id] ?? 0;
-              const isMe = player.player_id === currentPlayerId;
-              const badge = pts === 3 ? '🥇' : pts === 1 ? '✓' : '—';
-              const finMs = summary?.finishedAt?.[player.player_id]
-                ? new Date(summary.finishedAt[player.player_id]!).getTime()
-                : null;
-              const offsetMs = finMs !== null && interFirstMs !== null ? finMs - interFirstMs : null;
+            {[...players]
+              .sort((a, b) => (summary?.pts[b.player_id] ?? 0) - (summary?.pts[a.player_id] ?? 0))
+              .map((player) => {
+                const pts = summary?.pts[player.player_id] ?? 0;
+                const isMe = player.player_id === currentPlayerId;
+                const badge = pts === 3 ? '🥇' : pts === 1 ? '✓' : '—';
+                const finMs = summary?.finishedAt?.[player.player_id]
+                  ? new Date(summary.finishedAt[player.player_id]!).getTime()
+                  : null;
+                const offsetMs =
+                  finMs !== null && interFirstMs !== null ? finMs - interFirstMs : null;
 
-              return (
-                <div
-                  key={player.player_id}
-                  className={`flex items-center justify-between p-3 rounded-lg ${
-                    isMe ? 'bg-[#06b6d4]/10 border border-[#06b6d4]/30' : 'bg-black/30'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl w-8 text-center">{badge}</span>
-                    <div>
-                      <span className="capcrunch-kicker text-sm text-white/80">{player.player_name}</span>
-                      {isMe && <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">(you)</span>}
-                      {offsetMs !== null && offsetMs > 0 && (
-                        <span className="capcrunch-kicker text-[9px] text-[#d4af37] ml-1.5">
-                          +{offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                return (
+                  <div
+                    key={player.player_id}
+                    className={`flex items-center justify-between p-3 rounded-lg ${
+                      isMe ? 'bg-[#06b6d4]/10 border border-[#06b6d4]/30' : 'bg-black/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl w-8 text-center">{badge}</span>
+                      <div>
+                        <span className="capcrunch-kicker text-sm text-white/80">
+                          {player.player_name}
                         </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">RND</div>
-                      <div className={`capcrunch-title text-lg ${pts > 0 ? 'text-[#d4af37]' : 'text-[#555]'}`}>
-                        {pts > 0 ? `+${pts}` : '—'}
+                        {isMe && (
+                          <span className="text-[10px] text-white/40 capcrunch-kicker ml-1">
+                            (you)
+                          </span>
+                        )}
+                        {offsetMs !== null && offsetMs > 0 && (
+                          <span className="capcrunch-kicker text-[9px] text-[#d4af37] ml-1.5">
+                            +
+                            {offsetMs < 1000 ? `${offsetMs}ms` : `${(offsetMs / 1000).toFixed(1)}s`}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">TOTAL</div>
-                      <div className="capcrunch-title text-lg" style={{ color: COLOR }}>{player.points ?? 0}</div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">
+                          RND
+                        </div>
+                        <div
+                          className={`capcrunch-title text-lg ${pts > 0 ? 'text-[#d4af37]' : 'text-[#555]'}`}
+                        >
+                          {pts > 0 ? `+${pts}` : '—'}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="capcrunch-kicker text-[8px] text-[#888] tracking-wider">
+                          TOTAL
+                        </div>
+                        <div className="capcrunch-title text-lg" style={{ color: COLOR }}>
+                          {player.points ?? 0}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </motion.div>
 
@@ -695,30 +787,37 @@ export function MultiplayerFaceRevealPage() {
             Race to {winTarget} pts
           </div>
           <div className="space-y-3">
-            {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => {
-              const pts = player.points ?? 0;
-              const pct = Math.min(100, (pts / winTarget) * 100);
-              const isMe = player.player_id === currentPlayerId;
-              return (
-                <div key={player.player_id}>
-                  <div className="flex justify-between mb-1">
-                    <span className={`capcrunch-kicker text-xs ${isMe ? 'text-white' : 'text-white/60'}`}>
-                      {player.player_name}{isMe ? ' (you)' : ''}
-                    </span>
-                    <span className="capcrunch-title text-sm" style={{ color: COLOR }}>{pts}</span>
+            {[...players]
+              .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+              .map((player) => {
+                const pts = player.points ?? 0;
+                const pct = Math.min(100, (pts / winTarget) * 100);
+                const isMe = player.player_id === currentPlayerId;
+                return (
+                  <div key={player.player_id}>
+                    <div className="flex justify-between mb-1">
+                      <span
+                        className={`capcrunch-kicker text-xs ${isMe ? 'text-white' : 'text-white/60'}`}
+                      >
+                        {player.player_name}
+                        {isMe ? ' (you)' : ''}
+                      </span>
+                      <span className="capcrunch-title text-sm" style={{ color: COLOR }}>
+                        {pts}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-[#222] rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        className="h-full rounded-full"
+                        style={{ background: `linear-gradient(to right, ${COLOR}, #67e8f9)` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-[#222] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.6, ease: 'easeOut' }}
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(to right, ${COLOR}, #67e8f9)` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </motion.div>
 
@@ -742,14 +841,21 @@ export function MultiplayerFaceRevealPage() {
   // ── GAMEPLAY ──
   return (
     <div className="fixed inset-0 home-chalkboard text-white flex flex-col overflow-hidden">
-      <EmoteOverlay lobbyId={lobby?.id} currentPlayerId={currentPlayerId} currentPlayerName={myPlayerName} />
+      <EmoteOverlay
+        lobbyId={lobby?.id}
+        currentPlayerId={currentPlayerId}
+        currentPlayerName={myPlayerName}
+      />
 
       {/* Pinned top */}
       <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-white/10 home-chalkboard">
         {/* Round / done badge row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider text-[#111]" style={{ backgroundColor: COLOR }}>
+            <span
+              className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider text-[#111]"
+              style={{ backgroundColor: COLOR }}
+            >
               FACE REVEAL
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] capcrunch-kicker tracking-wider bg-black/40 text-[#888]">
@@ -760,7 +866,9 @@ export function MultiplayerFaceRevealPage() {
             <HomeButton isHost={isHost} onEndGame={handleEndGame} />
             <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-1 text-center">
               <div className="capcrunch-kicker text-[8px] text-[#888] tracking-widest">DONE</div>
-              <div className="capcrunch-title text-lg text-white leading-none">{doneCount}/{totalCount}</div>
+              <div className="capcrunch-title text-lg text-white leading-none">
+                {doneCount}/{totalCount}
+              </div>
             </div>
           </div>
         </div>
@@ -791,16 +899,14 @@ export function MultiplayerFaceRevealPage() {
           <motion.div
             className="rounded-xl overflow-hidden"
             animate={{
-              boxShadow: iGotIt
-                ? '0 0 0 3px #22c55e'
-                : `0 0 0 2px ${COLOR}50`,
+              boxShadow: iGotIt ? '0 0 0 3px #22c55e' : `0 0 0 2px ${COLOR}50`,
             }}
           >
             {/* Always show the face — at zoom 4 use level 3 (mostly zoomed out) */}
             <ZoomedHeadshot
               playerId={careerState.player_id}
               sport={careerState.sport}
-              zoomLevel={displayZoom >= 4 ? 3 : displayZoom as 1 | 2 | 3}
+              zoomLevel={displayZoom >= 4 ? 3 : (displayZoom as 1 | 2 | 3)}
               originX={careerState.focal_x ?? 50}
               originY={careerState.focal_y ?? 28}
             />
@@ -836,32 +942,41 @@ export function MultiplayerFaceRevealPage() {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {/* Points progress bars */}
         <div className="space-y-2">
-          {[...players].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)).map(player => {
-            const pts = player.points ?? 0;
-            const pct = Math.min(100, (pts / winTarget) * 100);
-            const isMe = player.player_id === currentPlayerId;
-            return (
-              <div key={player.player_id} className="flex items-center gap-2">
-                <span className={`capcrunch-kicker text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}>
-                  {player.player_name}
-                </span>
-                <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.4 }}
-                    className="h-full rounded-full"
-                    style={{ background: `linear-gradient(to right, ${COLOR}, #67e8f9)` }}
-                  />
+          {[...players]
+            .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+            .map((player) => {
+              const pts = player.points ?? 0;
+              const pct = Math.min(100, (pts / winTarget) * 100);
+              const isMe = player.player_id === currentPlayerId;
+              return (
+                <div key={player.player_id} className="flex items-center gap-2">
+                  <span
+                    className={`capcrunch-kicker text-[10px] w-20 truncate flex-shrink-0 ${isMe ? 'text-white' : 'text-white/50'}`}
+                  >
+                    {player.player_name}
+                  </span>
+                  <div className="flex-1 h-2 bg-[#222] rounded-full overflow-hidden">
+                    <motion.div
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.4 }}
+                      className="h-full rounded-full"
+                      style={{ background: `linear-gradient(to right, ${COLOR}, #67e8f9)` }}
+                    />
+                  </div>
+                  <span
+                    className="capcrunch-title text-sm w-8 text-right flex-shrink-0"
+                    style={{ color: COLOR }}
+                  >
+                    {pts}
+                  </span>
                 </div>
-                <span className="capcrunch-title text-sm w-8 text-right flex-shrink-0" style={{ color: COLOR }}>{pts}</span>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* Live player status */}
         <div className="flex gap-2 flex-wrap">
-          {players.map(player => {
+          {players.map((player) => {
             const isMe = player.player_id === currentPlayerId;
             const finished = player.finished_at !== null;
             const gotIt = finished && (player.score || 0) > 0;
@@ -872,11 +987,14 @@ export function MultiplayerFaceRevealPage() {
                   gotIt
                     ? 'bg-green-900/20 border-green-700/40 text-green-300'
                     : finished
-                    ? 'bg-red-900/20 border-red-900/40 text-red-400'
-                    : 'bg-black/40 border-white/10 text-white/60'
+                      ? 'bg-red-900/20 border-red-900/40 text-red-400'
+                      : 'bg-black/40 border-white/10 text-white/60'
                 }`}
               >
-                <span>{player.player_name}{isMe ? ' (you)' : ''}</span>
+                <span>
+                  {player.player_name}
+                  {isMe ? ' (you)' : ''}
+                </span>
                 {gotIt && <span className="text-green-400">✓</span>}
                 {finished && !gotIt && <span>✗</span>}
                 {!finished && (
@@ -900,7 +1018,7 @@ export function MultiplayerFaceRevealPage() {
                 SKIP ZOOM
               </span>
               <div className="flex flex-wrap gap-1 flex-1">
-                {votedPlayers.map(p => (
+                {votedPlayers.map((p) => (
                   <span
                     key={p.player_id}
                     className="px-1.5 py-0.5 rounded bg-[#06b6d4]/20 capcrunch-kicker text-[10px] text-[#06b6d4]"
@@ -939,11 +1057,13 @@ export function MultiplayerFaceRevealPage() {
               className="p-4 text-center bg-black/40 border border-white/10"
             >
               <div className="capcrunch-kicker text-sm text-[#888]">
-                {iGotIt ? (() => {
-                  const base = zoomToPoints(myRow?.score || 0);
-                  const total = base + (isFirstCorrect ? 1 : 0);
-                  return `${isFirstCorrect ? '🥇 First!' : '✓ Got it!'} +${total} pts — waiting for others...`;
-                })() : 'Waiting for others...'}
+                {iGotIt
+                  ? (() => {
+                      const base = zoomToPoints(myRow?.score || 0);
+                      const total = base + (isFirstCorrect ? 1 : 0);
+                      return `${isFirstCorrect ? '🥇 First!' : '✓ Got it!'} +${total} pts — waiting for others...`;
+                    })()
+                  : 'Waiting for others...'}
               </div>
             </motion.div>
           )}
@@ -955,44 +1075,44 @@ export function MultiplayerFaceRevealPage() {
         <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/10 home-chalkboard space-y-2">
           <div className="flex gap-2">
             <div className="relative flex-1">
-            <input
-              ref={guessInputRef}
-              type="text"
-              value={guessInput}
-              onChange={e => {
-                const val = e.target.value;
-                setGuessInput(val);
-                setSuggestions(getSuggestions(val, playerPoolRef.current));
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleGuess();
-                if (e.key === 'Escape') setSuggestions([]);
-              }}
-              placeholder="Type the player's name..."
-              className="w-full bg-black/40 border border-white/10 px-4 py-3 capcrunch-kicker text-sm text-white placeholder-white/30 focus:outline-none"
-              style={{ borderColor: `${COLOR}60` }}
-              onFocus={e => (e.currentTarget.style.borderColor = COLOR)}
-              onBlur={e => {
-                e.currentTarget.style.borderColor = `${COLOR}60`;
-                setTimeout(() => setSuggestions([]), 150);
-              }}
-            />
-            {suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 bottom-full mb-1 z-20 bg-black/40 border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
-                {suggestions.map(s => (
-                  <button
-                    key={s.player_id}
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      handleGuess(s.player_name);
-                    }}
-                    className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
-                  >
-                    {s.player_name}
-                  </button>
-                ))}
-              </div>
-            )}
+              <input
+                ref={guessInputRef}
+                type="text"
+                value={guessInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setGuessInput(val);
+                  setSuggestions(getSuggestions(val, playerPoolRef.current));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleGuess();
+                  if (e.key === 'Escape') setSuggestions([]);
+                }}
+                placeholder="Type the player's name..."
+                className="w-full bg-black/40 border border-white/10 px-4 py-3 capcrunch-kicker text-sm text-white placeholder-white/30 focus:outline-none"
+                style={{ borderColor: `${COLOR}60` }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = COLOR)}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = `${COLOR}60`;
+                  setTimeout(() => setSuggestions([]), 150);
+                }}
+              />
+              {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 bottom-full mb-1 z-20 bg-black/40 border border-[#06b6d4]/40 rounded-lg overflow-hidden shadow-xl">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.player_id}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleGuess(s.player_name);
+                      }}
+                      className="w-full text-left px-4 py-2.5 capcrunch-kicker text-sm text-white hover:bg-[#06b6d4]/10 border-b border-[#2a2a2a] last:border-0 transition-colors"
+                    >
+                      {s.player_name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               onClick={() => handleGuess()}

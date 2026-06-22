@@ -22,8 +22,11 @@ export function RollCallResultsPage() {
   const { code } = useParams<{ code: string }>();
   const { lobby, isHost, setLobby, setPlayers } = useLobbyStore();
   const {
-    mergeDecisions, fetchMergeDecisions,
-    confirmMerge, dismissSuggestion, clearAll,
+    mergeDecisions,
+    fetchMergeDecisions,
+    confirmMerge,
+    dismissSuggestion,
+    clearAll,
     reset: resetRollCall,
   } = useRollCallStore();
 
@@ -38,7 +41,10 @@ export function RollCallResultsPage() {
 
   // Load lobby + entries + merges
   useEffect(() => {
-    if (!code) { navigate('/'); return; }
+    if (!code) {
+      navigate('/');
+      return;
+    }
 
     const load = async () => {
       setIsLoading(true);
@@ -46,7 +52,10 @@ export function RollCallResultsPage() {
       let currentLobby = lobby;
       if (!currentLobby) {
         const result = await findLobbyByCode(code);
-        if (!result.lobby) { navigate('/'); return; }
+        if (!result.lobby) {
+          navigate('/');
+          return;
+        }
         currentLobby = result.lobby;
         setLobby(currentLobby);
         const playersResult = await getLobbyPlayers(currentLobby.id);
@@ -72,17 +81,17 @@ export function RollCallResultsPage() {
   // Derive merge state from DB decisions
   const { confirmedKeys, dismissedKeys, confirmedMerges } = useMemo(
     () => deriveMergeState(mergeDecisions),
-    [mergeDecisions]
+    [mergeDecisions],
   );
 
   const groups = useMemo(
     () => applyMerges(allEntries, confirmedMerges),
-    [allEntries, confirmedMerges]
+    [allEntries, confirmedMerges],
   );
 
   const suggestions = useMemo(
     () => findSuggestions(allEntries, confirmedKeys, dismissedKeys),
-    [allEntries, confirmedKeys, dismissedKeys]
+    [allEntries, confirmedKeys, dismissedKeys],
   );
 
   const handleNewRound = async () => {
@@ -96,15 +105,15 @@ export function RollCallResultsPage() {
 
   const handleDeleteGroup = async (group: PlayerGroup) => {
     const idsToDelete = allEntries
-      .filter(e => group.variants.some(v => v.text === e.entry_text))
-      .map(e => e.id);
+      .filter((e) => group.variants.some((v) => v.text === e.entry_text))
+      .map((e) => e.id);
     if (idsToDelete.length === 0) return;
     await deleteEntriesByIds(idsToDelete);
-    setAllEntries(prev => prev.filter(e => !idsToDelete.includes(e.id)));
+    setAllEntries((prev) => prev.filter((e) => !idsToDelete.includes(e.id)));
   };
 
   const handleCopyList = () => {
-    const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
+    const capitalize = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
     const list = groups.map((g, i) => `${i + 1}. ${capitalize(g.canonical)}`).join('\n');
     navigator.clipboard.writeText(list);
     setCopiedList(true);
@@ -135,13 +144,25 @@ export function RollCallResultsPage() {
       <header className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <button onClick={handleLeave} className="p-2 hover:bg-white/10 transition-colors">
-            <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-5 h-5 text-white/60"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
           </button>
           <div>
             <h1 className="capcrunch-title text-xl text-[#d4af37]">Roll Call Results</h1>
-            <p className="capcrunch-kicker text-[8px] text-white/30 tracking-[0.3em] uppercase">Final Tally</p>
+            <p className="capcrunch-kicker text-[8px] text-white/30 tracking-[0.3em] uppercase">
+              Final Tally
+            </p>
           </div>
         </div>
       </header>
@@ -155,7 +176,9 @@ export function RollCallResultsPage() {
         >
           <div className="text-center">
             <div className="capcrunch-title text-3xl text-[#d4af37]">{groups.length}</div>
-            <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">Unique Players</div>
+            <div className="capcrunch-kicker text-[10px] text-white/40 tracking-[0.3em] uppercase">
+              Unique Players
+            </div>
           </div>
         </motion.div>
 
@@ -171,9 +194,16 @@ export function RollCallResultsPage() {
               <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-400 text-xs font-bold capcrunch-kicker">
                 {suggestions.length}
               </span>
-              <span className="capcrunch-kicker text-sm text-orange-400">possible duplicates to review</span>
+              <span className="capcrunch-kicker text-sm text-orange-400">
+                possible duplicates to review
+              </span>
             </div>
-            <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-4 h-4 text-orange-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </motion.button>
@@ -187,7 +217,9 @@ export function RollCallResultsPage() {
               group={group}
               index={i}
               isExpanded={expandedGroup === group.canonical}
-              onToggle={() => setExpandedGroup(expandedGroup === group.canonical ? null : group.canonical)}
+              onToggle={() =>
+                setExpandedGroup(expandedGroup === group.canonical ? null : group.canonical)
+              }
               onDelete={() => handleDeleteGroup(group)}
             />
           ))}
@@ -263,7 +295,11 @@ function deriveMergeState(decisions: RollCallMerge[]) {
 // --- Result group row ---
 
 function ResultGroupRow({
-  group, index, isExpanded, onToggle, onDelete,
+  group,
+  index,
+  isExpanded,
+  onToggle,
+  onDelete,
 }: {
   group: PlayerGroup;
   index: number;
@@ -294,7 +330,9 @@ function ResultGroupRow({
           </span>
           <svg
             className={`w-4 h-4 text-white/30 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -314,7 +352,10 @@ function ResultGroupRow({
             </div>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="w-full py-1.5 capcrunch-kicker text-xs tracking-wider text-red-400 border border-red-700/40 hover:bg-red-900/20 transition-colors"
           >
             Remove
@@ -328,9 +369,16 @@ function ResultGroupRow({
 // --- Merge suggestion overlay ---
 
 function MergeSuggestionOverlay({
-  suggestions, onConfirm, onDismiss, onClose,
+  suggestions,
+  onConfirm,
+  onDismiss,
+  onClose,
 }: {
-  suggestions: { key: string; canonical: string; entries: { id: string; text: string; submitter: string }[] }[];
+  suggestions: {
+    key: string;
+    canonical: string;
+    entries: { id: string; text: string; submitter: string }[];
+  }[];
   onConfirm: (key: string, entryIds: string[], canonical: string) => void;
   onDismiss: (key: string, entryIds: string[], canonical: string) => void;
   onClose: () => void;
@@ -353,8 +401,18 @@ function MergeSuggestionOverlay({
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 transition-colors">
-            <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5 text-white/50"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -374,7 +432,9 @@ function MergeSuggestionOverlay({
                   {s.entries.map((e) => (
                     <div key={e.id} className="flex justify-between py-1 px-2 bg-black/30">
                       <span className="text-white/80 capcrunch-kicker text-sm">{e.text}</span>
-                      <span className="text-white/30 capcrunch-kicker text-[10px]">{e.submitter}</span>
+                      <span className="text-white/30 capcrunch-kicker text-[10px]">
+                        {e.submitter}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -383,13 +443,25 @@ function MergeSuggestionOverlay({
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onConfirm(s.key, s.entries.map(e => e.id), s.canonical)}
+                    onClick={() =>
+                      onConfirm(
+                        s.key,
+                        s.entries.map((e) => e.id),
+                        s.canonical,
+                      )
+                    }
                     className="flex-1 py-2 capcrunch-kicker text-xs tracking-wider bg-emerald-900/40 text-emerald-400 border border-emerald-700/50 hover:bg-emerald-800/40 transition-colors"
                   >
                     Merge
                   </button>
                   <button
-                    onClick={() => onDismiss(s.key, s.entries.map(e => e.id), s.canonical)}
+                    onClick={() =>
+                      onDismiss(
+                        s.key,
+                        s.entries.map((e) => e.id),
+                        s.canonical,
+                      )
+                    }
                     className="flex-1 py-2 capcrunch-kicker text-xs tracking-wider bg-black/40 text-white/40 border border-white/10 hover:border-white/30 transition-colors"
                   >
                     Not the same

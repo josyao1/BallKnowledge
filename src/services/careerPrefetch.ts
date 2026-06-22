@@ -23,7 +23,10 @@ let _prefetching = false;
 const PREFETCH_COUNT = 2;
 
 /** Build a CareerGameData from raw NBA API responses. */
-function buildNBAGame(player: { player_id: number; player_name: string }, career: any): PrefetchedGame | null {
+function buildNBAGame(
+  player: { player_id: number; player_name: string },
+  career: any,
+): PrefetchedGame | null {
   if (!career || career.seasons.length < 2) return null;
   return {
     sport: 'nba',
@@ -117,7 +120,10 @@ export function popPrefetched(sport: Sport): PrefetchedGame | null {
  * Fetch a game — tries cache first (unless filters are active), falls back to live fetch.
  * After returning, kicks off another prefetch to refill the cache.
  */
-export async function getNextGame(sport: Sport, filters?: CareerFilters): Promise<PrefetchedGame | null> {
+export async function getNextGame(
+  sport: Sport,
+  filters?: CareerFilters,
+): Promise<PrefetchedGame | null> {
   const hasFilters = filters && (filters.careerFrom || filters.careerTo);
   // Skip prefetch cache when era filters are active — cache has no filter awareness
   const cached = hasFilters ? null : popPrefetched(sport);
