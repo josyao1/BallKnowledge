@@ -40,6 +40,7 @@ export interface SelectedPlayer {
   actualTeammate?: string; // referenced player name when neverOnTeam due to teammate or name-match round
   nameMatchFailed?: 'first' | 'last'; // set on name-match round failures (alongside actualTeammate)
   playerId?: string | number; // ESPN player ID — used for headshot URL
+  position?: string; // player position (PG, SF, QB, RB, etc.)
   /** True when this pick slot was auto-skipped (timer expired with no selection) */
   isSkipped?: boolean;
 }

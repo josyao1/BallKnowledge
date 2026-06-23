@@ -43,6 +43,8 @@ import { MultiplayerFaceRevealResultsPage } from './pages/faceReveal/Multiplayer
 import { SoloTopTenPage } from './pages/topTen/SoloTopTenPage';
 import { MultiplayerTopTenPage } from './pages/topTen/MultiplayerTopTenPage';
 import { MultiplayerTopTenResultsPage } from './pages/topTen/MultiplayerTopTenResultsPage';
+import DailyCapCrunchPage from './pages/dailyCapCrunch/DailyCapCrunchPage';
+import DailyCapCrunchResultsPage from './pages/dailyCapCrunch/DailyCapCrunchResultsPage';
 
 function App() {
   return (
@@ -115,6 +117,9 @@ function App() {
         <Route path="/top-ten" element={<SoloTopTenPage />} />
         <Route path="/lobby/:code/top-ten" element={<MultiplayerTopTenPage />} />
         <Route path="/lobby/:code/top-ten/results" element={<MultiplayerTopTenResultsPage />} />
+        {/* Daily Cap Crunch */}
+        <Route path="/daily/cap-crunch" element={<DailyCapCrunchPage />} />
+        <Route path="/daily/cap-crunch/results" element={<DailyCapCrunchResultsPage />} />
       </Routes>
     </BrowserRouter>
   );
