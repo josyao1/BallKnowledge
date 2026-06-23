@@ -134,6 +134,7 @@ export function HomePage() {
   const [capCrunchRounds, setCapCrunchRounds] = useState(5);
   const [capCrunchTab, setCapCrunchTab] = useState<'settings' | 'rules'>('settings');
   const [capCrunchCategory, setCapCrunchCategory] = useState<string | null>(null);
+  const [capCrunchDailyStep, setCapCrunchDailyStep] = useState<'closed' | 'sport'>('closed');
   const [rulesTileId, setRulesTileId] = useState<RulesTileId>(null);
 
   const [rosterStep, setRosterStep] = useState<SportPickStep>(null);
@@ -531,6 +532,14 @@ export function HomePage() {
                         style={{ borderColor: `${tile.accent}80` }}
                       >
                         {tile.id === 'roster' || tile.id === 'guess-player' ? 'Solo' : 'Solo'}
+                      </button>
+                    )}
+                    {tile.id === 'cap-crunch' && !tile.disabled && (
+                      <button
+                        onClick={() => setCapCrunchDailyStep('sport')}
+                        className="border border-[#FDF100]/60 px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#FDF100] transition hover:bg-[#FDF100]/10"
+                      >
+                        Daily
                       </button>
                     )}
                     {tile.disabled ? (
@@ -1247,6 +1256,51 @@ export function HomePage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {capCrunchDailyStep === 'sport' && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setCapCrunchDailyStep('closed')}
+        >
+          <div
+            className="capcrunch-panel w-full max-w-xl p-6 md:p-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6">
+              <p className="home-kicker text-[#FDF100] mb-2">Daily Cap Crunch</p>
+              <h2 className="capcrunch-title text-3xl md:text-4xl text-white">Pick a Sport</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setCapCrunchDailyStep('closed');
+                  navigate('/daily/cap-crunch', { state: { sport: 'nba' } });
+                }}
+                className="group capcrunch-panel border-[#FDF100]/30 p-6 text-left hover:bg-[#FDF100]/10 transition"
+              >
+                <div className="capcrunch-kicker text-[#FDF100] text-[11px] mb-2">Basketball</div>
+                <div className="capcrunch-title text-2xl text-white">NBA</div>
+                <div className="capcrunch-kicker text-white/40 text-[10px] mt-1 group-hover:text-white/70">
+                  Play today →
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setCapCrunchDailyStep('closed');
+                  navigate('/daily/cap-crunch', { state: { sport: 'nfl' } });
+                }}
+                className="group capcrunch-panel border-[#FDF100]/30 p-6 text-left hover:bg-[#FDF100]/10 transition"
+              >
+                <div className="capcrunch-kicker text-[#FDF100] text-[11px] mb-2">Football</div>
+                <div className="capcrunch-title text-2xl text-white">NFL</div>
+                <div className="capcrunch-kicker text-white/40 text-[10px] mt-1 group-hover:text-white/70">
+                  Play today →
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

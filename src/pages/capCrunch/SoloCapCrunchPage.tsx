@@ -67,8 +67,15 @@ import type { OptimalPick, HWFilter, SpecialRoundType } from '../../services/cap
 import type { Sport } from '../../types';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 import { GradWeekOverlay, GradBanner, isGradWeek } from '../../components/GradWeekOverlay';
+import type { DailyRoundFilter } from '../../services/dailyCapCrunch';
 
 type Phase = 'sport-select' | 'playing' | 'results';
+
+interface DailyModeConfig {
+  targetCap: number;
+  filters: DailyRoundFilter[];
+  dayNumber: number;
+}
 
 function draftLabel(code: string): string {
   if (code === 'R1') return '1st Round';
@@ -127,6 +134,7 @@ export function SoloCapCrunchPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | number | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<string | undefined>(undefined);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [loadingYears, setLoadingYears] = useState(false);
@@ -141,6 +149,11 @@ export function SoloCapCrunchPage() {
   // doesn't wipe sessionStorage before we've had a chance to read it back.
   const restoredRef = useRef(false);
 
+  // Daily mode: precomputed puzzle config (set via autoStart state; null = regular solo)
+  const dailyConfigRef = useRef<DailyModeConfig | null>(null);
+  // Daily mode: timestamp when the first pick was confirmed, used for leaderboard tiebreaking
+  const dailyGameStartedAtRef = useRef<number | null>(null);
+
   useEffect(() => {
     return () => {
       if (exactHitTimerRef.current !== null) clearTimeout(exactHitTimerRef.current);
@@ -154,6 +167,10 @@ export function SoloCapCrunchPage() {
       selectedSport?: Sport;
       statCategory?: StatCategory | null;
       totalRounds?: number;
+      dailyMode?: boolean;
+      dayNumber?: number;
+      dailyTargetCap?: number;
+      dailyFilters?: DailyRoundFilter[];
     } | null;
     if (!autoStartState?.autoStart || phase !== 'sport-select' || consumedAutoStartRef.current)
       return;
@@ -163,7 +180,18 @@ export function SoloCapCrunchPage() {
     const nextRounds = autoStartState.totalRounds ?? 5;
     setSelectedSport(nextSport);
     setTotalRounds(nextRounds);
-    void handleStartGame(nextSport, autoStartState.statCategory ?? null, nextRounds);
+    const dailyConfig =
+      autoStartState.dailyMode &&
+      autoStartState.dailyTargetCap !== undefined &&
+      autoStartState.dailyFilters &&
+      autoStartState.dayNumber !== undefined
+        ? {
+            targetCap: autoStartState.dailyTargetCap,
+            filters: autoStartState.dailyFilters,
+            dayNumber: autoStartState.dayNumber,
+          }
+        : undefined;
+    void handleStartGame(nextSport, autoStartState.statCategory ?? null, nextRounds, dailyConfig);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, phase]);
 
@@ -199,8 +227,10 @@ export function SoloCapCrunchPage() {
 
   // Persist game state to sessionStorage whenever it changes.
   // Skip until the restore effect above has run to avoid wiping a valid save on mount.
+  // Also skip in daily mode — the daily page handles restart gracefully without session restore.
   useEffect(() => {
     if (!restoredRef.current) return;
+    if (dailyConfigRef.current) return;
     if (phase === 'sport-select') {
       sessionStorage.removeItem('soloCapCrunch');
       return;
@@ -237,22 +267,37 @@ export function SoloCapCrunchPage() {
     sport: Sport,
     forcedCategory?: StatCategory | null,
     rounds: number = totalRounds,
+    dailyConfig?: DailyModeConfig,
   ) => {
     setSelectedSport(sport);
     setTotalRounds(rounds);
     const category = forcedCategory ?? selectRandomStatCategory(sport);
-    const cap = generateTargetCap(sport, category, rounds);
-    const freshUsed: SpecialRoundType[] = []; // reset cycle on new game
-    const team = assignRandomTeam(sport, category, undefined, freshUsed);
-    const filter = selectRandomHWFilter(sport, team, category, freshUsed);
-    const initialUsed = advanceSpecialRoundCycle(freshUsed, classifySpecialRoundType(team, filter));
-    usedTeamsRef.current = [team];
 
-    setStatCategory(category);
-    setHwFilter(filter);
-    setUsedSpecialTypes(initialUsed);
-    setTargetCap(cap);
-    setCurrentTeam(team);
+    if (dailyConfig) {
+      dailyConfigRef.current = dailyConfig;
+      dailyGameStartedAtRef.current = Date.now();
+      sessionStorage.removeItem('soloCapCrunch');
+      const filter0 = dailyConfig.filters[0];
+      usedTeamsRef.current = [filter0.team];
+      setStatCategory(category);
+      setHwFilter(filter0.hwFilter);
+      setUsedSpecialTypes([]);
+      setTargetCap(dailyConfig.targetCap);
+      setCurrentTeam(filter0.team);
+    } else {
+      const cap = generateTargetCap(sport, category, rounds);
+      const freshUsed: SpecialRoundType[] = [];
+      const team = assignRandomTeam(sport, category, undefined, freshUsed);
+      const filter = selectRandomHWFilter(sport, team, category, freshUsed);
+      const initialUsed = advanceSpecialRoundCycle(freshUsed, classifySpecialRoundType(team, filter));
+      usedTeamsRef.current = [team];
+      setStatCategory(category);
+      setHwFilter(filter);
+      setUsedSpecialTypes(initialUsed);
+      setTargetCap(cap);
+      setCurrentTeam(team);
+    }
+
     setLineup({
       playerId: 'solo',
       playerName: 'You',
@@ -295,9 +340,10 @@ export function SoloCapCrunchPage() {
   const isNoYearSelect = isTotalGP || isCareerStatRound;
 
   // Select a player from search results
-  const handleSelectPlayer = async (player: { playerId: string | number; playerName: string }) => {
+  const handleSelectPlayer = async (player: { playerId: string | number; playerName: string; position?: string }) => {
     setSelectedPlayerName(player.playerName);
     setSelectedPlayerId(player.playerId);
+    setSelectedPosition((player as any).position || undefined);
     setSelectedYear('');
     setAvailableYears([]);
 
@@ -334,6 +380,7 @@ export function SoloCapCrunchPage() {
           sport: selectedSport,
           playerName: selectedPlayerName,
           playerId: selectedPlayerId ?? undefined,
+          position: selectedPosition,
           team: currentTeam,
           year: selectedYear,
           statCategory,
@@ -395,35 +442,46 @@ export function SoloCapCrunchPage() {
         updated.isFinished = true;
         setPhase('results');
       } else {
-        // Switch team for next turn — no repeats; advance special round cycle
-        const nextTeam = assignRandomTeam(
-          selectedSport,
-          statCategory,
-          usedTeamsRef.current,
-          usedSpecialTypes,
-          updated.selectedPlayers,
-          updated.selectedPlayers.length === totalRounds - 1,
-        );
-        const nextFilter = selectRandomHWFilter(
-          selectedSport,
-          nextTeam,
-          statCategory,
-          usedSpecialTypes,
-        );
-        const nextUsed = advanceSpecialRoundCycle(
-          usedSpecialTypes,
-          classifySpecialRoundType(nextTeam, nextFilter),
-        );
-        usedTeamsRef.current = [...usedTeamsRef.current, nextTeam];
-        setCurrentTeam(nextTeam);
-        setHwFilter(nextFilter);
-        setUsedSpecialTypes(nextUsed);
+        // Switch team for next turn
+        const roundIdx = updated.selectedPlayers.length;
+        const dc = dailyConfigRef.current;
+        if (dc) {
+          // Daily mode: use precomputed filter for this round
+          const f = dc.filters[roundIdx];
+          setCurrentTeam(f.team);
+          setHwFilter(f.hwFilter);
+        } else {
+          // Regular solo: random next round
+          const nextTeam = assignRandomTeam(
+            selectedSport,
+            statCategory,
+            usedTeamsRef.current,
+            usedSpecialTypes,
+            updated.selectedPlayers,
+            updated.selectedPlayers.length === totalRounds - 1,
+          );
+          const nextFilter = selectRandomHWFilter(
+            selectedSport,
+            nextTeam,
+            statCategory,
+            usedSpecialTypes,
+          );
+          const nextUsed = advanceSpecialRoundCycle(
+            usedSpecialTypes,
+            classifySpecialRoundType(nextTeam, nextFilter),
+          );
+          usedTeamsRef.current = [...usedTeamsRef.current, nextTeam];
+          setCurrentTeam(nextTeam);
+          setHwFilter(nextFilter);
+          setUsedSpecialTypes(nextUsed);
+        }
 
         // Clear search
         setSearchQuery('');
         setSearchResults([]);
         setSelectedPlayerName(null);
         setSelectedPlayerId(null);
+        setSelectedPosition(undefined);
         setSelectedYear('');
         setAvailableYears([]);
       }
@@ -457,9 +515,29 @@ export function SoloCapCrunchPage() {
     usedTeamsRef.current = [];
   };
 
+  // In daily mode, navigate to the dedicated results page instead of showing inline results
+  useEffect(() => {
+    if (phase !== 'results' || !lineup || !statCategory || !selectedSport) return;
+    const dc = dailyConfigRef.current;
+    if (!dc) return;
+    navigate('/daily/cap-crunch/results', {
+      state: {
+        dayNumber: dc.dayNumber,
+        sport: selectedSport,
+        statCategory,
+        targetCap,
+        lineup,
+        startedAtMs: dailyGameStartedAtRef.current ?? Date.now(),
+        finishedAtMs: Date.now(),
+      },
+      replace: true,
+    });
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Compute optimal last pick hint when results phase is reached
   useEffect(() => {
     if (phase !== 'results' || !lineup || !statCategory || !selectedSport) return;
+    if (dailyConfigRef.current) return; // daily navigates away; no hint needed
     const picks = lineup.selectedPlayers;
     if (picks.length === 0) return;
     const lastPick = picks[picks.length - 1];
@@ -858,7 +936,9 @@ export function SoloCapCrunchPage() {
               ← Back
             </button>
             <h1 className="capcrunch-title text-lg sm:text-2xl text-[#FDF100]">
-              Cap Crunch{isGradWeek() ? ' 🎓' : ''}
+              {dailyConfigRef.current
+                ? `Daily Cap Crunch #${dailyConfigRef.current.dayNumber}`
+                : `Cap Crunch${isGradWeek() ? ' 🎓' : ''}`}
             </h1>
             <div className="w-10 sm:w-16" />
           </div>

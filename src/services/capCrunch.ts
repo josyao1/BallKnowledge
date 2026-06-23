@@ -1684,6 +1684,7 @@ export async function resolvePickResult(params: {
   sport: Sport;
   playerName: string;
   playerId?: string | number;
+  position?: string;
   team: string;
   year: string;
   statCategory: StatCategory;
@@ -1697,6 +1698,7 @@ export async function resolvePickResult(params: {
     sport,
     playerName,
     playerId,
+    position,
     team,
     year,
     statCategory,
@@ -1768,6 +1770,7 @@ export async function resolvePickResult(params: {
       isBust: wouldBust,
       neverOnTeam: false,
       playerId,
+      position: player?.position || position,
     };
     return {
       selectedPlayer: wildcardSp,
@@ -2056,6 +2059,7 @@ export async function resolvePickResult(params: {
     actualHeight,
     actualWeight,
     playerId,
+    position,
   };
 
   const updatedLineup: PlayerLineup = {
@@ -2716,6 +2720,232 @@ export async function findOptimalLastPick(
     return best;
   } catch (err) {
     console.error('Error finding optimal last pick:', err);
+    return null;
+  }
+}
+
+// ─── Perfect Daily Lineup ─────────────────────────────────────────────────────
+
+export interface PerfectPick {
+  playerName: string;
+  playerId: string | number | undefined;
+  position: string | undefined;
+  team: string;
+  year: string;
+  stat: number;
+}
+
+/** For a single filter, returns qualifying candidates sorted by stat DESC, year DESC. */
+function getCandidatesForFilter(
+  pool: any[],
+  filterTeam: string,
+  hwFilter: HWFilter | null,
+  statCategory: StatCategory,
+  sport: Sport,
+): Array<PerfectPick & { sortYear: number }> {
+  const candidates: Array<PerfectPick & { sortYear: number }> = [];
+  const isCareer = isCareerStat(statCategory);
+  const isTotalGP = statCategory === 'total_gp';
+
+  for (const player of pool) {
+    const bio = (player as any).bio;
+    const seasons: any[] = player.seasons ?? [];
+    if (!seasons.length) continue;
+
+    // ── Conference round ─────────────────────────────────────────────────────
+    if (isConferenceRound(filterTeam)) {
+      const { college, nflConf } = parseConferenceRound(filterTeam);
+      if (!playerCollegeInConference(bio, college)) continue;
+      const computeStat = sport === 'nba' ? computeNbaStat : computeNflStat;
+      const confMatch = (t: string) =>
+        sport === 'nba'
+          ? !nflConf || nbaConferenceMatches(t, nflConf)
+          : !nflConf || nflConferenceMatches(t, nflConf);
+      const qualifying = [...seasons]
+        .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
+        .filter((s) => confMatch(s.team));
+      if (!qualifying.length) continue;
+      const s = qualifying[0];
+      const stat = computeStat(s, statCategory);
+      if (stat <= 0) continue;
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+      continue;
+    }
+
+    // ── Division+Draft round ──────────────────────────────────────────────────
+    if (isDivisionDraftRound(filterTeam)) {
+      const { division, draftRound } = parseDivisionDraftRound(filterTeam);
+      if (!playerInDraftRound(bio, draftRound, sport)) continue;
+      const computeStat = sport === 'nba' ? computeNbaStat : computeNflStat;
+      const divMatch = (t: string) =>
+        sport === 'nba' ? teamInNbaDivision(t, division) : teamInDivision(t, division);
+      const qualifying = [...seasons]
+        .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
+        .filter((s) => divMatch(s.team));
+      if (!qualifying.length) continue;
+      const s = qualifying[0];
+      const stat = computeStat(s, statCategory);
+      if (stat <= 0) continue;
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+      continue;
+    }
+
+    // ── Division round (NFL) ──────────────────────────────────────────────────
+    if (isDivisionRound(filterTeam)) {
+      const qualifying = [...seasons]
+        .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
+        .filter((s) => teamInDivision(s.team, filterTeam));
+      if (!qualifying.length) continue;
+      if (isCareer) {
+        const field = careerStatField(statCategory);
+        const total = seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+        if (total <= 0) continue;
+        const s = qualifying[0];
+        candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat: total, sortYear: parseInt(s.season) });
+      } else {
+        const s = qualifying[0];
+        const stat = computeNflStat(s, statCategory);
+        if (stat <= 0) continue;
+        candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+      }
+      continue;
+    }
+
+    // ── Plain team round ──────────────────────────────────────────────────────
+    const teamMatch = sport === 'nba'
+      ? (t: string) => nbaTeamMatches(t, filterTeam)
+      : (t: string) => nflTeamMatches(t, filterTeam);
+    const computeStat = sport === 'nba' ? computeNbaStat : computeNflStat;
+
+    const qualifying = [...seasons]
+      .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
+      .filter((s) => teamMatch(s.team));
+    if (!qualifying.length) continue;
+
+    if (isCareer) {
+      const field = careerStatField(statCategory);
+      const total = seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
+      if (total <= 0) continue;
+      const s = qualifying[0];
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat: total, sortYear: parseInt(s.season) });
+    } else if (isTotalGP) {
+      const total = qualifying.reduce((sum, s) => sum + (s.gp ?? 0), 0);
+      if (total <= 0) continue;
+      const s = qualifying[0];
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: filterTeam, year: s.season, stat: total, sortYear: parseInt(s.season) });
+    } else {
+      const s = qualifying[0];
+      if (hwFilter) {
+        const hw = checkHWFilter(bio, hwFilter, sport);
+        if (!hw.passes) continue;
+      }
+      const stat = computeStat(s, statCategory);
+      if (stat <= 0) continue;
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+    }
+  }
+
+  // Sort: recency first, then stat DESC as tiebreak
+  candidates.sort((a, b) => b.sortYear - a.sortYear || b.stat - a.stat);
+  // Limit per filter so search stays fast
+  return candidates.slice(0, 40);
+}
+
+/**
+ * Find the best 5-pick lineup for the daily puzzle.
+ *
+ * Three passes in priority order:
+ *  1. Balanced  — tries picks closest to (remainingBudget / remainingSlots) at each step,
+ *                 so the resulting lineup has evenly distributed stats and realistic players.
+ *  2. Greedy    — falls back to pure stat-DESC ordering if balanced can't find an exact hit.
+ *  3. Closest   — if neither finds an exact hit, returns whichever got nearest to the cap.
+ */
+export async function computePerfectDailyLineup(
+  sport: Sport,
+  statCategory: StatCategory,
+  targetCap: number,
+  filters: Array<{ team: string; hwFilter: HWFilter | null }>,
+): Promise<PerfectPick[] | null> {
+  try {
+    const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+    const slotCandidates = filters.map((f) =>
+      getCandidatesForFilter(pool, f.team, f.hwFilter, statCategory, sport),
+    );
+
+    type RawCandidate = (typeof slotCandidates)[0][0];
+    const nSlots = filters.length;
+    const ITER_PER_PASS = 150_000;
+
+    /** Run DFS, returning best (picks, total) found within the iteration budget. */
+    function runPass(
+      balanced: boolean,
+    ): { picks: RawCandidate[]; total: number } {
+      let bestTotal = -1;
+      let bestPicks: RawCandidate[] = [];
+      let iterations = 0;
+
+      function dfs(slot: number, currentTotal: number, currentPicks: RawCandidate[]) {
+        if (iterations++ > ITER_PER_PASS) return;
+
+        if (slot === nSlots) {
+          const rounded = parseFloat(currentTotal.toFixed(1));
+          if (rounded > bestTotal) {
+            bestTotal = rounded;
+            bestPicks = [...currentPicks];
+          }
+          return;
+        }
+
+        const remaining = targetCap - currentTotal;
+        const slotsLeft = nSlots - slot;
+
+        // Balanced: sort so the pick closest to fair share is tried first.
+        // Greedy: candidates are already sorted stat DESC from getCandidatesForFilter.
+        let ordered = slotCandidates[slot];
+        if (balanced) {
+          const fairShare = remaining / slotsLeft;
+          ordered = [...ordered].sort((a, b) => {
+            const da = Math.abs(a.stat - fairShare);
+            const db = Math.abs(b.stat - fairShare);
+            return da !== db ? da - db : b.sortYear - a.sortYear;
+          });
+        }
+
+        for (const candidate of ordered) {
+          if (candidate.stat > remaining) continue;
+          currentPicks.push(candidate);
+          dfs(slot + 1, parseFloat((currentTotal + candidate.stat).toFixed(1)), currentPicks);
+          currentPicks.pop();
+          if (bestTotal === targetCap) return; // exact hit — stop early
+        }
+      }
+
+      dfs(0, 0, []);
+      return { picks: bestPicks, total: bestTotal };
+    }
+
+    const toPerfectPick = ({ playerName, playerId, position, team, year, stat }: RawCandidate): PerfectPick =>
+      ({ playerName, playerId, position, team, year, stat });
+
+    // Pass 1: balanced
+    const balancedResult = runPass(true);
+    if (balancedResult.total === targetCap) {
+      return balancedResult.picks.map(toPerfectPick);
+    }
+
+    // Pass 2: greedy
+    const greedyResult = runPass(false);
+    if (greedyResult.total === targetCap) {
+      return greedyResult.picks.map(toPerfectPick);
+    }
+
+    // Pass 3: closest — return whichever pass got nearest
+    const best = balancedResult.total >= greedyResult.total ? balancedResult : greedyResult;
+    if (best.picks.length === 0) return null;
+    return best.picks.map(toPerfectPick);
+
+  } catch (err) {
+    console.error('computePerfectDailyLineup error:', err);
     return null;
   }
 }
