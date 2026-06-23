@@ -2768,7 +2768,15 @@ function getCandidatesForFilter(
       const s = qualifying[0];
       const stat = computeStat(s, statCategory);
       if (stat <= 0) continue;
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team: s.team,
+        year: s.season,
+        stat,
+        sortYear: parseInt(s.season),
+      });
       continue;
     }
 
@@ -2786,7 +2794,15 @@ function getCandidatesForFilter(
       const s = qualifying[0];
       const stat = computeStat(s, statCategory);
       if (stat <= 0) continue;
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team: s.team,
+        year: s.season,
+        stat,
+        sortYear: parseInt(s.season),
+      });
       continue;
     }
 
@@ -2801,20 +2817,37 @@ function getCandidatesForFilter(
         const total = seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
         if (total <= 0) continue;
         const s = qualifying[0];
-        candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat: total, sortYear: parseInt(s.season) });
+        candidates.push({
+          playerName: player.player_name,
+          playerId: player.player_id,
+          position: player.position,
+          team: s.team,
+          year: s.season,
+          stat: total,
+          sortYear: parseInt(s.season),
+        });
       } else {
         const s = qualifying[0];
         const stat = computeNflStat(s, statCategory);
         if (stat <= 0) continue;
-        candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+        candidates.push({
+          playerName: player.player_name,
+          playerId: player.player_id,
+          position: player.position,
+          team: s.team,
+          year: s.season,
+          stat,
+          sortYear: parseInt(s.season),
+        });
       }
       continue;
     }
 
     // ── Plain team round ──────────────────────────────────────────────────────
-    const teamMatch = sport === 'nba'
-      ? (t: string) => nbaTeamMatches(t, filterTeam)
-      : (t: string) => nflTeamMatches(t, filterTeam);
+    const teamMatch =
+      sport === 'nba'
+        ? (t: string) => nbaTeamMatches(t, filterTeam)
+        : (t: string) => nflTeamMatches(t, filterTeam);
     const computeStat = sport === 'nba' ? computeNbaStat : computeNflStat;
 
     const qualifying = [...seasons]
@@ -2827,12 +2860,28 @@ function getCandidatesForFilter(
       const total = seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
       if (total <= 0) continue;
       const s = qualifying[0];
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat: total, sortYear: parseInt(s.season) });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team: s.team,
+        year: s.season,
+        stat: total,
+        sortYear: parseInt(s.season),
+      });
     } else if (isTotalGP) {
       const total = qualifying.reduce((sum, s) => sum + (s.gp ?? 0), 0);
       if (total <= 0) continue;
       const s = qualifying[0];
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: filterTeam, year: s.season, stat: total, sortYear: parseInt(s.season) });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team: filterTeam,
+        year: s.season,
+        stat: total,
+        sortYear: parseInt(s.season),
+      });
     } else {
       const s = qualifying[0];
       if (hwFilter) {
@@ -2841,7 +2890,15 @@ function getCandidatesForFilter(
       }
       const stat = computeStat(s, statCategory);
       if (stat <= 0) continue;
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team: s.team, year: s.season, stat, sortYear: parseInt(s.season) });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team: s.team,
+        year: s.season,
+        stat,
+        sortYear: parseInt(s.season),
+      });
     }
   }
 
@@ -2877,9 +2934,7 @@ export async function computePerfectDailyLineup(
     const ITER_PER_PASS = 150_000;
 
     /** Run DFS, returning best (picks, total) found within the iteration budget. */
-    function runPass(
-      balanced: boolean,
-    ): { picks: RawCandidate[]; total: number } {
+    function runPass(balanced: boolean): { picks: RawCandidate[]; total: number } {
       let bestTotal = -1;
       let bestPicks: RawCandidate[] = [];
       let iterations = 0;
@@ -2924,8 +2979,14 @@ export async function computePerfectDailyLineup(
       return { picks: bestPicks, total: bestTotal };
     }
 
-    const toPerfectPick = ({ playerName, playerId, position, team, year, stat }: RawCandidate): PerfectPick =>
-      ({ playerName, playerId, position, team, year, stat });
+    const toPerfectPick = ({
+      playerName,
+      playerId,
+      position,
+      team,
+      year,
+      stat,
+    }: RawCandidate): PerfectPick => ({ playerName, playerId, position, team, year, stat });
 
     // Pass 1: balanced
     const balancedResult = runPass(true);
@@ -2943,7 +3004,6 @@ export async function computePerfectDailyLineup(
     const best = balancedResult.total >= greedyResult.total ? balancedResult : greedyResult;
     if (best.picks.length === 0) return null;
     return best.picks.map(toPerfectPick);
-
   } catch (err) {
     console.error('computePerfectDailyLineup error:', err);
     return null;

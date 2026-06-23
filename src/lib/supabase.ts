@@ -38,7 +38,9 @@ export async function ensureAnonymousSession(): Promise<User | null> {
   if (!supabase) return null;
 
   // Try Supabase anonymous auth
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (session?.user) return session.user;
 
   const { data, error } = await supabase.auth.signInAnonymously();
