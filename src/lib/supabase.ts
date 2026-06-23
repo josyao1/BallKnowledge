@@ -15,35 +15,42 @@ export const supabase: SupabaseClient | null =
 
 export const isSupabaseEnabled = !!supabase;
 
+const LOCAL_PLAYER_ID_KEY = 'ballknowledge_player_id';
+
+function getOrCreateLocalPlayerId(): string {
+  try {
+    const existing = localStorage.getItem(LOCAL_PLAYER_ID_KEY);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    localStorage.setItem(LOCAL_PLAYER_ID_KEY, id);
+    return id;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
+
 /**
- * Ensure the client has an anonymous Supabase auth session.
- * Returns the authenticated user, or null if Supabase is not configured or auth fails.
- *
- * This replaces the old localStorage UUID approach with real JWT-based identity.
- * RLS policies use auth.uid() to scope writes to the authenticated user.
+ * Ensure the client has an identity for leaderboard submission.
+ * Tries Supabase anonymous auth first; falls back to a stable localStorage UUID
+ * if anonymous auth is unavailable (e.g. not enabled on the Supabase project).
  */
 export async function ensureAnonymousSession(): Promise<User | null> {
   if (!supabase) return null;
 
-  // Check for existing session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Try Supabase anonymous auth
+  const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) return session.user;
 
-  // Create a new anonymous session
   const { data, error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    console.error('Anonymous auth failed:', error.message);
-    return null;
-  }
-  return data?.user ?? null;
+  if (!error && data?.user) return data.user;
+
+  // Fall back to localStorage UUID — works as long as RLS policies allow it
+  const localId = getOrCreateLocalPlayerId();
+  return { id: localId } as User;
 }
 
 /**
- * Get the current authenticated user's ID.
- * Ensures an anonymous session exists first.
- * Returns null if Supabase is not configured (solo mode).
+ * Get the current player's ID for leaderboard submission.
  */
 export async function getAuthPlayerId(): Promise<string | null> {
   const user = await ensureAnonymousSession();
