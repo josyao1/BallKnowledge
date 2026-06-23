@@ -164,18 +164,22 @@ function LeaderboardRow({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+// Outer shell: handles redirect and null guard before any hooks that need pageState
 export default function DailyCapCrunchResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const pageState = location.state as PageState | null;
 
-  // Redirect if navigated here with no state
   useEffect(() => {
     if (!pageState) navigate('/', { replace: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!pageState) return null;
+  return <DailyResultsContent pageState={pageState} />;
+}
 
+function DailyResultsContent({ pageState }: { pageState: PageState }) {
+  const navigate = useNavigate();
   const { dayNumber, sport, statCategory, targetCap } = pageState;
 
   // Derive picks and result data
@@ -219,17 +223,18 @@ export default function DailyCapCrunchResultsPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Load auth + default name on mount
+  // Load auth + default name on mount (always load playerId for "(you)" badge on leaderboard)
   useEffect(() => {
-    if (pageState.alreadyPlayed) return;
     ensureAnonymousSession().then((user) => {
       if (user) {
         setPlayerId(user.id);
-        const stored = getStoredPlayerName();
-        const fallback = `Player #${user.id.slice(-6).toUpperCase()}`;
-        setPlayerName(stored ?? fallback);
+        if (!pageState.alreadyPlayed) {
+          const stored = getStoredPlayerName();
+          const fallback = `Player #${user.id.slice(-6).toUpperCase()}`;
+          setPlayerName(stored ?? fallback);
+        }
       }
-      setAuthLoading(false);
+      if (!pageState.alreadyPlayed) setAuthLoading(false);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -17,7 +17,8 @@ export default function DailyCapCrunchPage() {
   // ?day=N overrides the day number so you can preview a specific puzzle.
   const params = new URLSearchParams(location.search);
   const resetMode = params.has('reset');
-  const dayOverride = params.has('day') ? parseInt(params.get('day')!, 10) : null;
+  const rawDay = params.has('day') ? parseInt(params.get('day')!, 10) : null;
+  const dayOverride = rawDay !== null && !isNaN(rawDay) ? rawDay : null;
 
   useEffect(() => {
     if (startedRef.current) return;

@@ -153,6 +153,8 @@ export function SoloCapCrunchPage() {
   const dailyConfigRef = useRef<DailyModeConfig | null>(null);
   // Daily mode: timestamp when the first pick was confirmed, used for leaderboard tiebreaking
   const dailyGameStartedAtRef = useRef<number | null>(null);
+  // Captured at the exact moment the last pick resolves (before any celebration delay)
+  const finishedAtMsRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -398,6 +400,7 @@ export function SoloCapCrunchPage() {
 
       // Exact hit — celebrate and end game early
       if (!newSelectedPlayer.isBust && updated.totalStat === targetCap) {
+        finishedAtMsRef.current = Date.now();
         updated.isFinished = true;
         setLineup(updated);
         setShowExactHit(true);
@@ -439,6 +442,7 @@ export function SoloCapCrunchPage() {
 
       // Always play all picks — no early game-over on bust
       if (updated.selectedPlayers.length === totalRounds) {
+        finishedAtMsRef.current = Date.now();
         updated.isFinished = true;
         setPhase('results');
       } else {
@@ -528,7 +532,7 @@ export function SoloCapCrunchPage() {
         targetCap,
         lineup,
         startedAtMs: dailyGameStartedAtRef.current ?? Date.now(),
-        finishedAtMs: Date.now(),
+        finishedAtMs: finishedAtMsRef.current ?? Date.now(),
       },
       replace: true,
     });

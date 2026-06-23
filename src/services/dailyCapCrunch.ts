@@ -34,8 +34,9 @@ export function getDayNumber(): number {
 
 /** UTC midnight for the next day, used to compute countdown. */
 export function getNextResetMs(): number {
-  const dayNumber = getDayNumber();
-  return LAUNCH_DATE_UTC_MS + dayNumber * 86400000;
+  const now = Date.now();
+  const daysSinceLaunch = Math.floor((now - LAUNCH_DATE_UTC_MS) / 86400000);
+  return LAUNCH_DATE_UTC_MS + (daysSinceLaunch + 1) * 86400000;
 }
 
 export interface DailyRoundFilter {
@@ -276,7 +277,7 @@ export async function getPerfectLineup(
   targetCap: number,
   filters: DailyRoundFilter[],
 ): Promise<PerfectPick[] | null> {
-  const key = `${dayNumber}_${sport}`;
+  const key = `${dayNumber}_${sport}_${statCategory}`;
   if (_perfectCache.has(key)) return _perfectCache.get(key)!;
   const result = await computePerfectDailyLineup(sport, statCategory, targetCap, filters);
   _perfectCache.set(key, result);
