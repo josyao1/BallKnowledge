@@ -291,7 +291,10 @@ export function SoloCapCrunchPage() {
       const freshUsed: SpecialRoundType[] = [];
       const team = assignRandomTeam(sport, category, undefined, freshUsed);
       const filter = selectRandomHWFilter(sport, team, category, freshUsed);
-      const initialUsed = advanceSpecialRoundCycle(freshUsed, classifySpecialRoundType(team, filter));
+      const initialUsed = advanceSpecialRoundCycle(
+        freshUsed,
+        classifySpecialRoundType(team, filter),
+      );
       usedTeamsRef.current = [team];
       setStatCategory(category);
       setHwFilter(filter);
@@ -342,7 +345,11 @@ export function SoloCapCrunchPage() {
   const isNoYearSelect = isTotalGP || isCareerStatRound;
 
   // Select a player from search results
-  const handleSelectPlayer = async (player: { playerId: string | number; playerName: string; position?: string }) => {
+  const handleSelectPlayer = async (player: {
+    playerId: string | number;
+    playerName: string;
+    position?: string;
+  }) => {
     setSelectedPlayerName(player.playerName);
     setSelectedPlayerId(player.playerId);
     setSelectedPosition((player as any).position || undefined);

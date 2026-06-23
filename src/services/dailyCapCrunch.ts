@@ -152,45 +152,80 @@ function generateDailyStatCategory(sport: Sport, rng: () => number): StatCategor
   return 'rushing_yards';
 }
 
-function generateDailyTargetCap(sport: Sport, statCategory: StatCategory, rng: () => number): number {
+function generateDailyTargetCap(
+  sport: Sport,
+  statCategory: StatCategory,
+  rng: () => number,
+): number {
   const r = (min: number, max: number) => min + Math.floor(rng() * (max - min + 1));
 
   if (sport === 'nba') {
     switch (statCategory) {
-      case 'pts': return r(75, 120);
-      case 'ast': return r(22, 40);
-      case 'reb': return r(30, 50);
-      case 'min': return r(130, 175);
-      case 'pra': return r(120, 225);
-      case 'total_pts': return r(3500, 10000);
-      case 'total_reb': return r(2000, 4000);
-      case 'total_ast': return r(900, 3000);
-      case 'total_blk': return r(200, 1050);
-      case 'total_3pm': return r(100, 2000);
-      case 'total_ftm': return r(200, 2100);
-      case 'total_pf': return r(600, 1500);
-      case 'total_gp': return r(700, 2000);
-      default: return 100;
+      case 'pts':
+        return r(75, 120);
+      case 'ast':
+        return r(22, 40);
+      case 'reb':
+        return r(30, 50);
+      case 'min':
+        return r(130, 175);
+      case 'pra':
+        return r(120, 225);
+      case 'total_pts':
+        return r(3500, 10000);
+      case 'total_reb':
+        return r(2000, 4000);
+      case 'total_ast':
+        return r(900, 3000);
+      case 'total_blk':
+        return r(200, 1050);
+      case 'total_3pm':
+        return r(100, 2000);
+      case 'total_ftm':
+        return r(200, 2100);
+      case 'total_pf':
+        return r(600, 1500);
+      case 'total_gp':
+        return r(700, 2000);
+      default:
+        return 100;
     }
   } else {
     switch (statCategory) {
-      case 'passing_yards': return r(12000, 20000);
-      case 'passing_tds': return r(80, 140);
-      case 'interceptions': return r(25, 55);
-      case 'rushing_yards': return r(4000, 7500);
-      case 'rushing_tds': return r(35, 65);
-      case 'receiving_yards': return r(3500, 6000);
-      case 'receiving_tds': return r(28, 50);
-      case 'receptions': return r(220, 500);
-      case 'fpts': return r(650, 1750);
-      case 'total_gp': return r(225, 450);
-      case 'career_passing_yards': return r(55000, 184000);
-      case 'career_passing_tds': return r(300, 800);
-      case 'career_rushing_yards': return r(18000, 51000);
-      case 'career_rushing_tds': return r(130, 450);
-      case 'career_receiving_yards': return r(18000, 51000);
-      case 'career_receiving_tds': return r(130, 450);
-      default: return 500;
+      case 'passing_yards':
+        return r(12000, 20000);
+      case 'passing_tds':
+        return r(80, 140);
+      case 'interceptions':
+        return r(25, 55);
+      case 'rushing_yards':
+        return r(4000, 7500);
+      case 'rushing_tds':
+        return r(35, 65);
+      case 'receiving_yards':
+        return r(3500, 6000);
+      case 'receiving_tds':
+        return r(28, 50);
+      case 'receptions':
+        return r(220, 500);
+      case 'fpts':
+        return r(650, 1750);
+      case 'total_gp':
+        return r(225, 450);
+      case 'career_passing_yards':
+        return r(55000, 184000);
+      case 'career_passing_tds':
+        return r(300, 800);
+      case 'career_rushing_yards':
+        return r(18000, 51000);
+      case 'career_rushing_tds':
+        return r(130, 450);
+      case 'career_receiving_yards':
+        return r(18000, 51000);
+      case 'career_receiving_tds':
+        return r(130, 450);
+      default:
+        return 500;
     }
   }
 }
@@ -198,7 +233,7 @@ function generateDailyTargetCap(sport: Sport, statCategory: StatCategory, rng: (
 export function generateDailyPuzzle(sport: Sport, dayNumber: number): DailyPuzzle {
   // Separate seeds per sport so NBA and NFL produce different puzzles each day
   const sportOffset = sport === 'nba' ? 0 : 999983;
-  const seed = ((dayNumber * 1000003 + sportOffset) >>> 0);
+  const seed = (dayNumber * 1000003 + sportOffset) >>> 0;
   const rng = mulberry32(seed);
 
   const statCategory = generateDailyStatCategory(sport, rng);
@@ -256,7 +291,9 @@ export async function fetchDailyLeaderboard(
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('daily_cap_crunch_entries')
-    .select('id, day_number, player_id, player_name, sport, total_stat, target_cap, distance, time_taken_ms, picks, submitted_at')
+    .select(
+      'id, day_number, player_id, player_name, sport, total_stat, target_cap, distance, time_taken_ms, picks, submitted_at',
+    )
     .eq('day_number', dayNumber)
     .eq('sport', sport)
     .order('distance', { ascending: true })
@@ -295,5 +332,7 @@ export function getStoredPlayerName(): string | null {
 export function setStoredPlayerName(name: string): void {
   try {
     localStorage.setItem('ballknowledge_player_name', name);
-  } catch {}
+  } catch {
+    // localStorage may be unavailable (private browsing)
+  }
 }

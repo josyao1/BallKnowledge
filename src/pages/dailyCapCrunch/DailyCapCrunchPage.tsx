@@ -1,10 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  getDayNumber,
-  generateDailyPuzzle,
-  getExistingEntry,
-} from '../../services/dailyCapCrunch';
+import { getDayNumber, generateDailyPuzzle, getExistingEntry } from '../../services/dailyCapCrunch';
 import type { Sport } from '../../types';
 
 export default function DailyCapCrunchPage() {

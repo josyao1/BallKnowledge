@@ -92,7 +92,9 @@ function PickRow({
         sport={sport}
         className="w-8 h-8 rounded-full object-cover shrink-0"
       />
-      <span className={`capcrunch-title text-sm flex-1 min-w-0 truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}>
+      <span
+        className={`capcrunch-title text-sm flex-1 min-w-0 truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}
+      >
         {pick.playerName}
       </span>
       {pick.position && (
@@ -106,7 +108,9 @@ function PickRow({
       {bust && pick.isBust ? (
         <span className="shrink-0 text-right">
           <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">BUST</span>
-          <span className="capcrunch-kicker text-white/30 text-[9px] block">+{fmtStat(pick.statValue, cat)}</span>
+          <span className="capcrunch-kicker text-white/30 text-[9px] block">
+            +{fmtStat(pick.statValue, cat)}
+          </span>
         </span>
       ) : bust ? (
         <span className="capcrunch-kicker text-red-400 text-[10px] font-bold shrink-0">BUST</span>
@@ -183,10 +187,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
   const { dayNumber, sport, statCategory, targetCap } = pageState;
 
   // Derive picks and result data
-  const picks: SelectedPlayer[] =
-    pageState.alreadyPlayed
-      ? (pageState.existingEntry.picks as SelectedPlayer[])
-      : pageState.lineup.selectedPlayers;
+  const picks: SelectedPlayer[] = pageState.alreadyPlayed
+    ? (pageState.existingEntry.picks as SelectedPlayer[])
+    : pageState.lineup.selectedPlayers;
 
   const total = picks.reduce((s, p) => s + (p.isBust || p.neverOnTeam ? 0 : p.statValue), 0);
   const distance = Math.max(0, targetCap - Math.floor(total));
@@ -388,7 +391,8 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
               Daily Cap Crunch #{dayNumber}
             </h1>
             <p className="capcrunch-kicker text-white/40 text-[10px] mt-0.5">
-              {sport.toUpperCase()} · {getCategoryAbbr(statCategory)} · Target: {targetCap} · Next puzzle in {countdown}
+              {sport.toUpperCase()} · {getCategoryAbbr(statCategory)} · Target: {targetCap} · Next
+              puzzle in {countdown}
             </p>
           </div>
           <button
@@ -504,13 +508,21 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="py-2 pl-3 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">#</th>
-                      <th className="py-2 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">Name</th>
+                      <th className="py-2 pl-3 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">
+                        #
+                      </th>
+                      <th className="py-2 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">
+                        Name
+                      </th>
                       <th className="py-2 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">
                         {getCategoryAbbr(statCategory)}
                       </th>
-                      <th className="py-2 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">Away</th>
-                      <th className="py-2 pr-3 capcrunch-kicker text-[10px] text-white/30 text-left">Time</th>
+                      <th className="py-2 pr-2 capcrunch-kicker text-[10px] text-white/30 text-left">
+                        Away
+                      </th>
+                      <th className="py-2 pr-3 capcrunch-kicker text-[10px] text-white/30 text-left">
+                        Time
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -549,7 +561,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
             </h2>
             {perfectLineup === 'loading' ? (
               <div className="capcrunch-panel px-4 py-6 text-center">
-                <p className="capcrunch-kicker text-white/30 text-[11px] animate-pulse">Calculating…</p>
+                <p className="capcrunch-kicker text-white/30 text-[11px] animate-pulse">
+                  Calculating…
+                </p>
               </div>
             ) : perfectLineup === null ? (
               <div className="capcrunch-panel px-4 py-6 text-center">
@@ -564,7 +578,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                       key={i}
                       className="flex items-center gap-3 px-3 py-2.5 border-b border-white/5"
                     >
-                      <span className="capcrunch-kicker text-white/30 w-4 text-right shrink-0">{i + 1}</span>
+                      <span className="capcrunch-kicker text-white/30 w-4 text-right shrink-0">
+                        {i + 1}
+                      </span>
                       <PlayerHeadshot
                         playerId={pick.playerId}
                         sport={sport}
@@ -579,7 +595,8 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                         </span>
                       )}
                       <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
-                        {pick.team}{yearShort ? ` ${yearShort}` : ''}
+                        {pick.team}
+                        {yearShort ? ` ${yearShort}` : ''}
                       </span>
                       <span className="capcrunch-title text-sm text-[#d4af37] shrink-0">
                         {fmtStat(pick.stat, statCategory)}
@@ -619,7 +636,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
               <div>
                 <p className="capcrunch-title text-sm text-white">{peekedEntry.player_name}</p>
                 <p className="capcrunch-kicker text-white/40 text-[10px]">
-                  {fmtStat(peekedEntry.total_stat, statCategory)} · {peekedEntry.distance === 0 ? 'EXACT' : `${peekedEntry.distance} away`} · {formatMs(peekedEntry.time_taken_ms)}
+                  {fmtStat(peekedEntry.total_stat, statCategory)} ·{' '}
+                  {peekedEntry.distance === 0 ? 'EXACT' : `${peekedEntry.distance} away`} ·{' '}
+                  {formatMs(peekedEntry.time_taken_ms)}
                 </p>
               </div>
               <button
@@ -633,14 +652,21 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
               const bust = pick.isBust || pick.neverOnTeam;
               const year = pick.selectedYear ? `'${String(pick.selectedYear).slice(-2)}` : '';
               return (
-                <div key={i} className={`flex items-center gap-3 px-3 py-2.5 border-b border-white/5 ${bust ? 'opacity-50' : ''}`}>
-                  <span className="capcrunch-kicker text-white/30 w-4 text-right shrink-0">{i + 1}</span>
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 px-3 py-2.5 border-b border-white/5 ${bust ? 'opacity-50' : ''}`}
+                >
+                  <span className="capcrunch-kicker text-white/30 w-4 text-right shrink-0">
+                    {i + 1}
+                  </span>
                   <PlayerHeadshot
                     playerId={pick.playerId}
                     sport={sport}
                     className="w-7 h-7 rounded-full object-cover shrink-0"
                   />
-                  <span className={`capcrunch-title text-sm flex-1 min-w-0 truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}>
+                  <span
+                    className={`capcrunch-title text-sm flex-1 min-w-0 truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}
+                  >
                     {pick.playerName}
                   </span>
                   {pick.position && (
@@ -649,12 +675,17 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                     </span>
                   )}
                   <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
-                    {pick.team}{year ? ` ${year}` : ''}
+                    {pick.team}
+                    {year ? ` ${year}` : ''}
                   </span>
                   {bust && pick.isBust ? (
                     <span className="shrink-0 text-right">
-                      <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">BUST</span>
-                      <span className="capcrunch-kicker text-white/30 text-[9px] block">+{fmtStat(pick.statValue, statCategory)}</span>
+                      <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">
+                        BUST
+                      </span>
+                      <span className="capcrunch-kicker text-white/30 text-[9px] block">
+                        +{fmtStat(pick.statValue, statCategory)}
+                      </span>
                     </span>
                   ) : bust ? (
                     <span className="capcrunch-kicker text-red-400 text-[10px] shrink-0">BUST</span>
