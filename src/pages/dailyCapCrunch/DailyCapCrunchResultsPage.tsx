@@ -103,7 +103,12 @@ function PickRow({
       <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
         {pick.team} {pick.selectedYear ? `'${String(pick.selectedYear).slice(-2)}` : ''}
       </span>
-      {bust ? (
+      {bust && pick.isBust ? (
+        <span className="shrink-0 text-right">
+          <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">BUST</span>
+          <span className="capcrunch-kicker text-white/30 text-[9px] block">+{fmtStat(pick.statValue, cat)}</span>
+        </span>
+      ) : bust ? (
         <span className="capcrunch-kicker text-red-400 text-[10px] font-bold shrink-0">BUST</span>
       ) : (
         <span className="capcrunch-title text-sm text-[#FDF100] shrink-0">
@@ -641,7 +646,12 @@ export default function DailyCapCrunchResultsPage() {
                   <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
                     {pick.team}{year ? ` ${year}` : ''}
                   </span>
-                  {bust ? (
+                  {bust && pick.isBust ? (
+                    <span className="shrink-0 text-right">
+                      <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">BUST</span>
+                      <span className="capcrunch-kicker text-white/30 text-[9px] block">+{fmtStat(pick.statValue, statCategory)}</span>
+                    </span>
+                  ) : bust ? (
                     <span className="capcrunch-kicker text-red-400 text-[10px] shrink-0">BUST</span>
                   ) : (
                     <span className="capcrunch-title text-sm text-[#FDF100] shrink-0">
