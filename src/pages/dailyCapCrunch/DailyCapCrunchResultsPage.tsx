@@ -253,7 +253,7 @@ export default function DailyCapCrunchResultsPage() {
     setSubmitting(true);
     const trimmed = playerName.trim() || `Player #${playerId.slice(-6).toUpperCase()}`;
     setStoredPlayerName(trimmed);
-    await submitDailyEntry({
+    const { error } = await submitDailyEntry({
       day_number: dayNumber,
       player_id: playerId,
       player_name: trimmed,
@@ -264,6 +264,7 @@ export default function DailyCapCrunchResultsPage() {
       time_taken_ms: timeTakenMs,
       picks,
     });
+    if (error) console.error('submitDailyEntry failed:', error);
     setSubmitting(false);
     setShowNamePrompt(false);
     setSubmitted(true);
