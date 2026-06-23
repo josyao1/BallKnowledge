@@ -113,7 +113,9 @@ function PickRow({
           </span>
         </span>
       ) : bust ? (
-        <span className="capcrunch-kicker text-orange-400 text-[10px] font-bold shrink-0">INVALID</span>
+        <span className="capcrunch-kicker text-orange-400 text-[10px] font-bold shrink-0">
+          INVALID
+        </span>
       ) : (
         <span className="capcrunch-title text-sm text-[#FDF100] shrink-0">
           {fmtStat(pick.statValue, cat)}
@@ -678,7 +680,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                       </span>
                     </span>
                   ) : bust ? (
-                    <span className="capcrunch-kicker text-orange-400 text-[10px] font-bold shrink-0">INVALID</span>
+                    <span className="capcrunch-kicker text-orange-400 text-[10px] font-bold shrink-0">
+                      INVALID
+                    </span>
                   ) : (
                     <span className="capcrunch-title text-sm text-[#FDF100] shrink-0">
                       {fmtStat(pick.statValue, statCategory)}
