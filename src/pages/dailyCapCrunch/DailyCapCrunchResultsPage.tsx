@@ -113,7 +113,9 @@ function PickRow({
           </span>
         </span>
       ) : bust ? (
-        <span className="capcrunch-kicker text-red-400 text-[10px] font-bold shrink-0">BUST</span>
+        <span className="capcrunch-kicker text-orange-400 text-[10px] font-bold shrink-0">
+          INVALID
+        </span>
       ) : (
         <span className="capcrunch-title text-sm text-[#FDF100] shrink-0">
           {fmtStat(pick.statValue, cat)}
@@ -468,16 +470,6 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
             >
               Play today's {altSport.toUpperCase()} puzzle →
             </button>
-            <a
-              href={`/daily/cap-crunch?reset&sport=${sport}`}
-              className="capcrunch-kicker text-white/20 text-[11px] hover:text-white/50 transition"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate(`/daily/cap-crunch?reset`, { state: { sport } });
-              }}
-            >
-              Play again (testing)
-            </a>
           </div>
         </div>
 
@@ -688,7 +680,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                       </span>
                     </span>
                   ) : bust ? (
-                    <span className="capcrunch-kicker text-red-400 text-[10px] shrink-0">BUST</span>
+                    <span className="capcrunch-kicker text-orange-400 text-[10px] font-bold shrink-0">
+                      INVALID
+                    </span>
                   ) : (
                     <span className="capcrunch-title text-sm text-[#FDF100] shrink-0">
                       {fmtStat(pick.statValue, statCategory)}
