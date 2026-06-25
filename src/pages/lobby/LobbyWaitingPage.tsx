@@ -494,9 +494,7 @@ export function LobbyWaitingPage() {
           : selectRandomStatCategory(sport);
       const forcedCap = cs.forcedTargetCap as number | null;
       const targetCap =
-        forcedCap && forcedCap > 0
-          ? forcedCap
-          : generateTargetCap(sport, statCategory, cs.totalRounds || 5);
+        forcedCap && forcedCap > 0 ? forcedCap : generateTargetCap(sport, statCategory);
       const disabledRoundTypes =
         (cs.disabledRoundTypes as import('../../services/capCrunch').SpecialRoundType[]) || [];
 
@@ -533,7 +531,7 @@ export function LobbyWaitingPage() {
         undefined,
         disabledRoundTypes,
       );
-      const hwFilter = selectRandomHWFilter(sport, firstTeam, statCategory, [], disabledRoundTypes);
+      const hwFilter = selectRandomHWFilter(firstTeam, statCategory, [], disabledRoundTypes);
       const initialUsedSpecial = advanceSpecialRoundCycle(
         [],
         classifySpecialRoundType(firstTeam, hwFilter),

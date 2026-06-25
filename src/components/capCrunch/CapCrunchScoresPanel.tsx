@@ -7,45 +7,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { fmt, getPickErrorMessage, getPickBadgeLabel } from './capCrunchUtils';
+import { fmt, getPickErrorMessage, getPickBadgeLabel, formatPickTeam } from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
-import {
-  isDivisionDraftRound,
-  parseDivisionDraftRound,
-  isTeammateRound,
-  parseTeammateRound,
-  isNameMatchRound,
-  parseNameRound,
-  isWildcardRound,
-} from '../../services/capCrunch';
 import type { PlayerLineup } from '../../types/capCrunch';
-
-function draftLabel(code: string): string {
-  if (code === 'R1') return '1st Round';
-  if (code === 'R2') return '2nd Round';
-  if (code === 'R23') return '2nd–3rd Round';
-  if (code === 'R47') return '4th Round+';
-  return code;
-}
-
-function formatPickTeam(team: string): string {
-  if (isDivisionDraftRound(team)) {
-    const { division, draftRound } = parseDivisionDraftRound(team);
-    return `${division} · ${draftLabel(draftRound)}`;
-  }
-  if (isTeammateRound(team)) {
-    const { pickIndex } = parseTeammateRound(team);
-    return `Played with Pick ${pickIndex}`;
-  }
-  if (isNameMatchRound(team)) {
-    const { type, pickIndex, proConf } = parseNameRound(team);
-    const label = type === 'first' ? 'First Initial' : 'Last Initial';
-    return proConf ? `${label}: Pick ${pickIndex} + ${proConf}` : `${label}: Pick ${pickIndex}`;
-  }
-  if (isWildcardRound(team)) return 'Wildcard';
-  return team;
-}
 
 interface Player {
   id: string;

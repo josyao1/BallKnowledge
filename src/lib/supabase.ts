@@ -58,3 +58,21 @@ export async function getAuthPlayerId(): Promise<string | null> {
   const user = await ensureAnonymousSession();
   return user?.id ?? null;
 }
+
+const PLAYER_NAME_KEY = 'ballknowledge_player_name';
+
+export function getStoredPlayerName(): string | null {
+  try {
+    return localStorage.getItem(PLAYER_NAME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredPlayerName(name: string): void {
+  try {
+    localStorage.setItem(PLAYER_NAME_KEY, name);
+  } catch {
+    // localStorage may be unavailable (private browsing)
+  }
+}

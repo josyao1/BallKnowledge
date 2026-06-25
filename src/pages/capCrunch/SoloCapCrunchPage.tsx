@@ -12,7 +12,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import {
   SpinningNumber,
   getTotalColor,
@@ -31,6 +30,8 @@ import {
   getCategoryAbbr,
   getPickErrorMessage,
   getPickBadgeLabel,
+  formatPickTeam,
+  fireCapCrunchConfetti,
 } from '../../components/capCrunch/capCrunchUtils';
 import {
   selectRandomStatCategory,
@@ -75,31 +76,6 @@ interface DailyModeConfig {
   targetCap: number;
   filters: DailyRoundFilter[];
   dayNumber: number;
-}
-
-function draftLabel(code: string): string {
-  if (code === 'R1') return '1st Round';
-  if (code === 'R2') return '2nd Round';
-  if (code === 'R23') return '2nd–3rd Round';
-  if (code === 'R47') return '4th Round+';
-  return code;
-}
-
-function formatPickTeam(team: string): string {
-  if (isDivisionDraftRound(team)) {
-    const { division, draftRound } = parseDivisionDraftRound(team);
-    return `${division} · ${draftLabel(draftRound)}`;
-  }
-  if (isTeammateRound(team)) {
-    const { pickIndex } = parseTeammateRound(team);
-    return `Played with Pick ${pickIndex}`;
-  }
-  if (isNameMatchRound(team)) {
-    const { type, pickIndex, proConf } = parseNameRound(team);
-    const label = type === 'first' ? 'First Initial' : 'Last Initial';
-    return proConf ? `${label}: Pick ${pickIndex} + ${proConf}` : `${label}: Pick ${pickIndex}`;
-  }
-  return team;
 }
 
 export function SoloCapCrunchPage() {
@@ -287,10 +263,10 @@ export function SoloCapCrunchPage() {
       setTargetCap(dailyConfig.targetCap);
       setCurrentTeam(filter0.team);
     } else {
-      const cap = generateTargetCap(sport, category, rounds);
+      const cap = generateTargetCap(sport, category);
       const freshUsed: SpecialRoundType[] = [];
       const team = assignRandomTeam(sport, category, undefined, freshUsed);
-      const filter = selectRandomHWFilter(sport, team, category, freshUsed);
+      const filter = selectRandomHWFilter(team, category, freshUsed);
       const initialUsed = advanceSpecialRoundCycle(
         freshUsed,
         classifySpecialRoundType(team, filter),
@@ -412,34 +388,7 @@ export function SoloCapCrunchPage() {
         setLineup(updated);
         setShowExactHit(true);
         // Confetti burst
-        confetti({
-          particleCount: 160,
-          spread: 90,
-          origin: { y: 0.55 },
-          colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'],
-        });
-        confettiTimersRef.current = [
-          setTimeout(
-            () =>
-              confetti({
-                particleCount: 60,
-                spread: 60,
-                origin: { y: 0.4, x: 0.3 },
-                colors: ['#d4af37', '#ffffff'],
-              }),
-            250,
-          ),
-          setTimeout(
-            () =>
-              confetti({
-                particleCount: 60,
-                spread: 60,
-                origin: { y: 0.4, x: 0.7 },
-                colors: ['#d4af37', '#ffffff'],
-              }),
-            400,
-          ),
-        ];
+        confettiTimersRef.current = fireCapCrunchConfetti();
         exactHitTimerRef.current = setTimeout(() => {
           setShowExactHit(false);
           setPhase('results');
@@ -471,12 +420,7 @@ export function SoloCapCrunchPage() {
             updated.selectedPlayers,
             updated.selectedPlayers.length === totalRounds - 1,
           );
-          const nextFilter = selectRandomHWFilter(
-            selectedSport,
-            nextTeam,
-            statCategory,
-            usedSpecialTypes,
-          );
+          const nextFilter = selectRandomHWFilter(nextTeam, statCategory, usedSpecialTypes);
           const nextUsed = advanceSpecialRoundCycle(
             usedSpecialTypes,
             classifySpecialRoundType(nextTeam, nextFilter),

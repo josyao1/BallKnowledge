@@ -6,6 +6,7 @@
  */
 
 import { loadNBALineupPool, loadNFLLineupPool } from './careerData';
+import { NAME_SUFFIXES } from '../components/capCrunch/capCrunchUtils';
 import type {
   StatCategory,
   HWFilter,
@@ -136,6 +137,7 @@ function computeNflStat(season: any, statCategory: string): number {
       (
         (season.passing_yards ?? 0) * 0.04 +
         (season.passing_tds ?? 0) * 4 +
+        (season.interceptions ?? 0) * -2 +
         (season.rushing_yards ?? 0) * 0.1 +
         (season.rushing_tds ?? 0) * 6 +
         (season.receiving_yards ?? 0) * 0.1 +
@@ -198,8 +200,6 @@ export function advanceSpecialRoundCycle(
   return updated.length >= 5 ? [] : updated; // reset cycle once all 5 seen
 }
 
-const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
-
 /** Extract the first name token from a player's full name. */
 function extractFirstName(name: string): string {
   return normalizeStr(name.trim().split(' ')[0] ?? '');
@@ -225,7 +225,6 @@ function pickRandomConf(sport: Sport): string {
  * Pass usedSpecialTypes to block hw_filter from repeating before the cycle completes.
  */
 export function selectRandomHWFilter(
-  _sport: Sport,
   team: string,
   statCategory: StatCategory,
   usedSpecialTypes?: SpecialRoundType[],
@@ -302,11 +301,7 @@ function careerStatField(cat: StatCategory): string {
 /**
  * Generate a reasonable target cap based on the stat category and sport.
  */
-export function generateTargetCap(
-  sport: Sport,
-  statCategory: StatCategory,
-  _totalRounds: number = 5,
-): number {
+export function generateTargetCap(sport: Sport, statCategory: StatCategory): number {
   const r = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 
   if (sport === 'nba') {
@@ -1142,6 +1137,7 @@ export async function getPlayerYearsOnTeam(
 type StatResult = {
   value: number;
   neverOnTeam: boolean;
+  matchedTeam?: string; // actual team abbreviation for the matched season (for special rounds)
   actualTeam?: string;
   actualNflConf?: string;
   actualCollege?: string;
@@ -1230,7 +1226,11 @@ export async function getPlayerStatForYearAndTeam(
           const actualDiv = actualSeason ? getActualNbaDivision(actualSeason.team) : null;
           return { value: 0, neverOnTeam: true, actualNflConf: actualDiv ?? undefined };
         }
-        return { value: computeNbaStat(season, statCategory), neverOnTeam: false };
+        return {
+          value: computeNbaStat(season, statCategory),
+          neverOnTeam: false,
+          matchedTeam: season.team,
+        };
       }
 
       // Conference round: qualify by college school; year-by-year also requires NBA conf match
@@ -1267,7 +1267,11 @@ export async function getPlayerStatForYearAndTeam(
           }
           return { value: 0, neverOnTeam: true };
         }
-        return { value: computeNbaStat(season, statCategory), neverOnTeam: false };
+        return {
+          value: computeNbaStat(season, statCategory),
+          neverOnTeam: false,
+          matchedTeam: season.team,
+        };
       }
 
       // Convert year to season format (e.g., "2023" -> "2023-24")
@@ -1294,7 +1298,11 @@ export async function getPlayerStatForYearAndTeam(
             actualWeight: hw.actualWeight,
           };
       }
-      return { value: computeNbaStat(season, statCategory), neverOnTeam: false };
+      return {
+        value: computeNbaStat(season, statCategory),
+        neverOnTeam: false,
+        matchedTeam: season.team,
+      };
     } else {
       // NFL
       const players = await loadNFLLineupPool();
@@ -1330,7 +1338,11 @@ export async function getPlayerStatForYearAndTeam(
           const actualDiv = actualSeason ? getActualNflDivision(actualSeason.team) : null;
           return { value: 0, neverOnTeam: true, actualNflConf: actualDiv ?? undefined };
         }
-        return { value: computeNflStat(season, statCategory), neverOnTeam: false };
+        return {
+          value: computeNflStat(season, statCategory),
+          neverOnTeam: false,
+          matchedTeam: season.team,
+        };
       }
 
       // Conference round: qualify by college bio; year-by-year also requires NFL conf match
@@ -1376,7 +1388,11 @@ export async function getPlayerStatForYearAndTeam(
           }
           return { value: 0, neverOnTeam: true };
         }
-        return { value: computeNflStat(season, statCategory), neverOnTeam: false };
+        return {
+          value: computeNflStat(season, statCategory),
+          neverOnTeam: false,
+          matchedTeam: season.team,
+        };
       }
 
       // Career stat: full career total, but only counts if player was on the assigned team at any point
@@ -1414,7 +1430,11 @@ export async function getPlayerStatForYearAndTeam(
             actualWeight: hw.actualWeight,
           };
       }
-      return { value: computeNflStat(season, statCategory), neverOnTeam: false };
+      return {
+        value: computeNflStat(season, statCategory),
+        neverOnTeam: false,
+        matchedTeam: season.team,
+      };
     }
   } catch (error) {
     console.error('Error getting player stat:', error);
@@ -1589,19 +1609,6 @@ export async function getPlayerTotalGPForTeam(
   }
 }
 
-/**
- * Get all eligible players from a team for filling a specific position.
- * DEPRECATED - Use searchPlayersByNameAndYear instead.
- */
-export async function getEligiblePlayersForTeamAndPosition(
-  _sport: 'nba' | 'nfl',
-  _teamAbbr: string,
-  _position: any,
-): Promise<PlayerSeason[]> {
-  // This function is deprecated and no longer used
-  return [];
-}
-
 // ─── Stat Calculation ────────────────────────────────────────────────────────
 
 /**
@@ -1761,6 +1768,11 @@ export async function resolvePickResult(params: {
       };
     }
     const wouldBust = !isBlindMode && lineup.totalStat + statValue > targetCap;
+    const wildcardSeasonKey =
+      sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
+    const wildcardSeason = !isNoYearSelect
+      ? player?.seasons.find((s: any) => s.season === wildcardSeasonKey)
+      : undefined;
     const wildcardSp: SelectedPlayer = {
       playerName: stripPositionSuffix(playerName),
       team,
@@ -1769,6 +1781,7 @@ export async function resolvePickResult(params: {
       statValue,
       isBust: wouldBust,
       neverOnTeam: false,
+      playerActualTeam: wildcardSeason?.team,
       playerId,
       position: player?.position || position,
     };
@@ -1873,6 +1886,7 @@ export async function resolvePickResult(params: {
 
     // Name + conf check passed — compute stat with NO team constraint
     let statValue = 0;
+    let nameMatchActualTeam: string | undefined;
     if (isTotalGP) {
       statValue = newPlayer.seasons.reduce(
         (sum: number, s: any) => sum + ((s.gp ?? 0) as number),
@@ -1887,6 +1901,7 @@ export async function resolvePickResult(params: {
     } else {
       const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
       const season = newPlayer.seasons.find((s: any) => s.season === seasonKey);
+      nameMatchActualTeam = season?.team;
       statValue = season
         ? sport === 'nba'
           ? computeNbaStat(season, statCategory)
@@ -1903,6 +1918,7 @@ export async function resolvePickResult(params: {
       statValue,
       isBust: wouldBustName,
       neverOnTeam: false,
+      playerActualTeam: nameMatchActualTeam,
       playerId,
     };
     return {
@@ -1963,6 +1979,7 @@ export async function resolvePickResult(params: {
 
     // Teammate check passed — compute stat with NO team constraint
     let statValue = 0;
+    let teammateActualTeam: string | undefined;
     if (isTotalGP) {
       statValue = newPlayer.seasons.reduce(
         (sum: number, s: any) => sum + ((s.gp ?? 0) as number),
@@ -1977,6 +1994,7 @@ export async function resolvePickResult(params: {
     } else {
       const seasonKey = sport === 'nba' ? `${year}-${String(parseInt(year) + 1).slice(-2)}` : year;
       const season = newPlayer.seasons.find((s: any) => s.season === seasonKey);
+      teammateActualTeam = season?.team;
       statValue = season
         ? sport === 'nba'
           ? computeNbaStat(season, statCategory)
@@ -1993,6 +2011,7 @@ export async function resolvePickResult(params: {
       statValue,
       isBust: wouldBustTeammate,
       neverOnTeam: false,
+      playerActualTeam: teammateActualTeam,
       playerId,
     };
     return {
@@ -2030,16 +2049,18 @@ export async function resolvePickResult(params: {
           hwFilter,
         );
 
-  const r = statResult as any;
-  const statValue: number = r.value;
-  const neverOnTeam: boolean = r.neverOnTeam;
-  const actualTeam = r.actualTeam as string | undefined;
-  const actualNflConf = r.actualNflConf as string | undefined;
-  const actualCollege = r.actualCollege as string | undefined;
-  const actualDraftRound = r.actualDraftRound as string | undefined;
-  const hwFilterFailed = r.hwFilterFailed as HWFilter | undefined;
-  const actualHeight = r.actualHeight as string | undefined;
-  const actualWeight = r.actualWeight as number | undefined;
+  const {
+    value: statValue,
+    neverOnTeam,
+    matchedTeam,
+    actualTeam,
+    actualNflConf,
+    actualCollege,
+    actualDraftRound,
+    hwFilterFailed,
+    actualHeight,
+    actualWeight,
+  } = statResult;
 
   const wouldBust = !isBlindMode && lineup.totalStat + statValue > targetCap;
 
@@ -2051,6 +2072,7 @@ export async function resolvePickResult(params: {
     statValue,
     isBust: wouldBust,
     neverOnTeam,
+    playerActualTeam: matchedTeam,
     actualTeam,
     actualNflConf,
     actualCollege,
@@ -2125,28 +2147,6 @@ export function lineupUniquePickCount(lineup: PlayerLineup, allLineups: PlayerLi
       !p.isSkipped &&
       !othersNames.has(p.playerName.toLowerCase().trim()),
   ).length;
-}
-
-/**
- * Sort lineups by the full tiebreak cascade:
- * score → (hit round, only when both hit exact cap) → fewest busts → most unique picks → oldest avg year
- */
-export function calculateWinners(lineups: PlayerLineup[], targetCap: number): PlayerLineup[] {
-  return [...lineups].sort((a, b) => {
-    if (b.totalStat !== a.totalStat) return b.totalStat - a.totalStat;
-    if (a.totalStat === targetCap && b.totalStat === targetCap) {
-      const aHit = lineupHitRound(a),
-        bHit = lineupHitRound(b);
-      if (aHit !== bHit) return aHit - bHit;
-    }
-    const aBusts = a.bustCount ?? 0,
-      bBusts = b.bustCount ?? 0;
-    if (aBusts !== bBusts) return aBusts - bBusts;
-    const aUniq = lineupUniquePickCount(a, lineups),
-      bUniq = lineupUniquePickCount(b, lineups);
-    if (aUniq !== bUniq) return bUniq - aUniq;
-    return lineupAvgPickYear(a) - lineupAvgPickYear(b);
-  });
 }
 
 export interface OptimalPick {
@@ -2732,6 +2732,8 @@ export interface PerfectPick {
   position: string | undefined;
   team: string;
   year: string;
+  yearFrom?: string;
+  yearTo?: string;
   stat: number;
 }
 
@@ -2825,12 +2827,17 @@ function getCandidatesForFilter(
         const total = seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
         if (total <= 0) continue;
         const s = qualifying[0];
+        const qualYears = qualifying.map((q) => parseInt(q.season)).filter((y) => !isNaN(y));
+        const yearFrom = qualYears.length ? String(Math.min(...qualYears)) : s.season;
+        const yearTo = qualYears.length ? String(Math.max(...qualYears)) : s.season;
         candidates.push({
           playerName: player.player_name,
           playerId: player.player_id,
           position: player.position,
           team: s.team,
           year: s.season,
+          yearFrom,
+          yearTo,
           stat: total,
           sortYear: parseInt(s.season),
         });
@@ -2873,12 +2880,17 @@ function getCandidatesForFilter(
       const total = seasons.reduce((sum, s) => sum + ((s as any)[field] ?? 0), 0);
       if (total <= 0) continue;
       const s = qualifying[0];
+      const qualYears = qualifying.map((q) => parseInt(q.season)).filter((y) => !isNaN(y));
+      const yearFrom = qualYears.length ? String(Math.min(...qualYears)) : s.season;
+      const yearTo = qualYears.length ? String(Math.max(...qualYears)) : s.season;
       candidates.push({
         playerName: player.player_name,
         playerId: player.player_id,
         position: player.position,
         team: s.team,
         year: s.season,
+        yearFrom,
+        yearTo,
         stat: total,
         sortYear: parseInt(s.season),
       });

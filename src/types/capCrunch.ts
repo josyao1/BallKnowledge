@@ -30,6 +30,7 @@ export interface SelectedPlayer {
   statValue: number; // The actual stat value achieved
   isBust?: boolean; // true if this pick pushed over the cap — counts as 0, game continues
   neverOnTeam?: boolean; // true if the player was never on the assigned team (total_gp / career stats only)
+  playerActualTeam?: string; // actual team abbreviation for the matched season on special/filter rounds
   actualTeam?: string; // the team the player actually played for that year (shown when neverOnTeam due to wrong NFL team)
   actualNflConf?: string; // the NFL conf / division the player was actually in
   actualCollege?: string; // the player's college(s) from bio (shown when neverOnTeam due to wrong college conf)

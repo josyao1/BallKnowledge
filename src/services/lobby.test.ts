@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Lobby, LobbyPlayer } from '../types/database';
+import { setStoredPlayerName } from '../lib/supabase';
 
 // Fixed mock auth IDs so tests can assert exact identity behavior.
 const MOCK_AUTH_ID = '00000000-0000-0000-0000-000000000001';
@@ -150,6 +151,8 @@ vi.mock('../lib/supabase', () => {
       }),
     },
     getAuthPlayerId: vi.fn(async () => MOCK_AUTH_ID),
+    getStoredPlayerName: vi.fn(() => null),
+    setStoredPlayerName: vi.fn(),
     isSupabaseEnabled: true,
   };
 });
@@ -249,7 +252,7 @@ describe('createLobby', () => {
     expect(result.error).toBeNull();
     expect(result.lobby).not.toBeNull();
     expect(result.lobby!.host_name).toBe('Alice');
-    expect(localStorage.getItem('ballknowledge_player_name')).toBe('Alice');
+    expect(setStoredPlayerName).toHaveBeenCalledWith('Alice');
   });
 
   it('creates a lobby with the authenticated user as host', async () => {
@@ -378,7 +381,7 @@ describe('joinLobby', () => {
     expect(result.error).toBeNull();
     expect(result.player).not.toBeNull();
     expect(result.player!.player_name).toBe('Alice');
-    expect(localStorage.getItem('ballknowledge_player_name')).toBe('Alice');
+    expect(setStoredPlayerName).toHaveBeenCalledWith('Alice');
   });
 
   it('reconnects same-device player by player_id', async () => {
