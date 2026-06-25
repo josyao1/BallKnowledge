@@ -254,9 +254,14 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
       (result) => setPerfectLineup(result),
     );
     if (picks.length >= 2) {
-      void getOptimalLastPick(dayNumber, sport, statCategory, targetCap, puzzle.roundFilters, picks).then(
-        (result) => setOptimalLastPick(result),
-      );
+      void getOptimalLastPick(
+        dayNumber,
+        sport,
+        statCategory,
+        targetCap,
+        puzzle.roundFilters,
+        picks,
+      ).then((result) => setOptimalLastPick(result));
     } else {
       setOptimalLastPick(null);
     }

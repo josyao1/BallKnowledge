@@ -2935,7 +2935,10 @@ function getCandidatesForDependentFilter(
       const { result } = wereTeammates(refPlayer, player, sport);
       if (!result) continue;
       const seasons: any[] = player.seasons ?? [];
-      let stat = 0, year = '', team = '', sortYear = 0;
+      let stat = 0,
+        year = '',
+        team = '',
+        sortYear = 0;
       if (statCategory === 'total_gp') {
         stat = seasons.reduce((s: number, s2: any) => s + (s2.gp ?? 0), 0);
         year = 'career';
@@ -2946,11 +2949,24 @@ function getCandidatesForDependentFilter(
       } else {
         for (const s of seasons) {
           const v = computeStatFn(s, statCategory);
-          if (v > stat) { stat = v; year = s.season; team = s.team; sortYear = parseInt(s.season); }
+          if (v > stat) {
+            stat = v;
+            year = s.season;
+            team = s.team;
+            sortYear = parseInt(s.season);
+          }
         }
       }
       if (stat <= 0) continue;
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team, year, stat, sortYear });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team,
+        year,
+        stat,
+        sortYear,
+      });
     }
   } else if (isNameMatchRound(filterTeam)) {
     const { type, pickIndex, proConf } = parseNameRound(filterTeam);
@@ -2958,15 +2974,19 @@ function getCandidatesForDependentFilter(
     if (!refPick) return [];
     const extractFn = type === 'first' ? extractFirstName : extractLastName;
     const requiredInitial = extractFn(refPick.playerName)[0] ?? '';
-    const confMatchFn = sport === 'nfl'
-      ? (t: string) => nflConferenceMatches(t, proConf!)
-      : (t: string) => nbaConferenceMatches(t, proConf!);
+    const confMatchFn =
+      sport === 'nfl'
+        ? (t: string) => nflConferenceMatches(t, proConf!)
+        : (t: string) => nbaConferenceMatches(t, proConf!);
 
     for (const player of pool) {
       if (extractFn(player.player_name)[0] !== requiredInitial) continue;
       if (proConf && !player.seasons.some((s: any) => confMatchFn(s.team))) continue;
       const seasons: any[] = player.seasons ?? [];
-      let stat = 0, year = '', team = '', sortYear = 0;
+      let stat = 0,
+        year = '',
+        team = '',
+        sortYear = 0;
       if (statCategory === 'total_gp') {
         stat = seasons.reduce((s: number, s2: any) => s + (s2.gp ?? 0), 0);
         year = 'career';
@@ -2977,11 +2997,24 @@ function getCandidatesForDependentFilter(
       } else {
         for (const s of seasons) {
           const v = computeStatFn(s, statCategory);
-          if (v > stat) { stat = v; year = s.season; team = s.team; sortYear = parseInt(s.season); }
+          if (v > stat) {
+            stat = v;
+            year = s.season;
+            team = s.team;
+            sortYear = parseInt(s.season);
+          }
         }
       }
       if (stat <= 0) continue;
-      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team, year, stat, sortYear });
+      candidates.push({
+        playerName: player.player_name,
+        playerId: player.player_id,
+        position: player.position,
+        team,
+        year,
+        stat,
+        sortYear,
+      });
     }
   }
 
@@ -3043,7 +3076,13 @@ export async function computePerfectDailyLineup(
         // Resolve candidates — dependent slots are generated from picks so far.
         const baseCandidates: RawCandidate[] =
           slotCandidates[slot] ??
-          getCandidatesForDependentFilter(pool, filters[slot].team, statCategory, sport, currentPicks);
+          getCandidatesForDependentFilter(
+            pool,
+            filters[slot].team,
+            statCategory,
+            sport,
+            currentPicks,
+          );
 
         // Balanced: sort so the pick closest to fair share is tried first.
         // Greedy: candidates are already sorted stat DESC.
@@ -3100,6 +3139,3 @@ export async function computePerfectDailyLineup(
     return null;
   }
 }
-
-
-

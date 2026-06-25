@@ -160,7 +160,8 @@ function generateDailyHWFilter(
     isDivisionDraftRound(team) ||
     isTeammateRound(team) ||
     isNameMatchRound(team)
-  ) return null;
+  )
+    return null;
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
   if (usedSpecialTypes.includes('hw_filter')) return null;
   if (rng() > 0.15) return null;
@@ -378,9 +379,25 @@ export async function getOptimalLastPick(
   }
   if (_optimalLastPickCache.has(cacheKey)) return _optimalLastPickCache.get(cacheKey)!;
   const prevPicksForSlot = picks.slice(0, slotIndex);
-  const raw = await findOptimalLastPick(sport, team, statCategory, remaining, 0, [], hwFilter, prevPicksForSlot);
+  const raw = await findOptimalLastPick(
+    sport,
+    team,
+    statCategory,
+    remaining,
+    0,
+    [],
+    hwFilter,
+    prevPicksForSlot,
+  );
   const result: PerfectPick | null = raw
-    ? { playerName: raw.playerName, playerId: raw.playerId, position: undefined, team: raw.team, year: raw.year, stat: raw.statValue }
+    ? {
+        playerName: raw.playerName,
+        playerId: raw.playerId,
+        position: undefined,
+        team: raw.team,
+        year: raw.year,
+        stat: raw.statValue,
+      }
     : null;
   _optimalLastPickCache.set(cacheKey, result);
   return result;
