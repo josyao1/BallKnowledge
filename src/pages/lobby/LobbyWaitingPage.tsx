@@ -415,7 +415,8 @@ export function LobbyWaitingPage() {
         min_mpg: cs.min_mpg || 0,
         min_yards: cs.min_yards || 0,
       };
-      await startCareerRound(lobby.id, newState);
+      const { error: startError0 } = await startCareerRound(lobby.id, newState);
+      if (startError0) throw new Error(startError0);
       startPrefetch(sport);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
@@ -461,7 +462,8 @@ export function LobbyWaitingPage() {
         min_yards: cs.min_yards || 0,
         include_defense: includeDefense,
       };
-      await startCareerRound(lobby.id, newState);
+      const { error: startError } = await startCareerRound(lobby.id, newState);
+      if (startError) throw new Error(startError);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
       navigate(`/lobby/${code}/scramble`);
@@ -558,7 +560,8 @@ export function LobbyWaitingPage() {
         pickedPlayerSeasons: [],
         disabledRoundTypes,
       };
-      await startCareerRound(currentLobby.id, newState);
+      const { error: startError } = await startCareerRound(currentLobby.id, newState);
+      if (startError) throw new Error(startError);
       hasStartedGame.current = true;
       setLobby({
         ...(useLobbyStore.getState().lobby ?? currentLobby),
@@ -592,7 +595,8 @@ export function LobbyWaitingPage() {
         max_year: maxYear,
         team: cs.team || null,
       };
-      await startCareerRound(lobby.id, newState);
+      const { error: startErrorBs } = await startCareerRound(lobby.id, newState);
+      if (startErrorBs) throw new Error(startErrorBs);
       hasStartedGame.current = true;
       setPlayers(
         players.map((p) => ({
@@ -637,7 +641,8 @@ export function LobbyWaitingPage() {
         max_year: maxYear,
         team: cs.team || null,
       };
-      await startCareerRound(lobby.id, newState);
+      const { error: startErrorNbs } = await startCareerRound(lobby.id, newState);
+      if (startErrorNbs) throw new Error(startErrorNbs);
       hasStartedGame.current = true;
       setPlayers(
         players.map((p) => ({
@@ -698,7 +703,8 @@ export function LobbyWaitingPage() {
       };
       if (side !== undefined) newState.side = side;
 
-      await startCareerRound(lobby.id, newState);
+      const { error: startErrorSl } = await startCareerRound(lobby.id, newState);
+      if (startErrorSl) throw new Error(startErrorSl);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
       navigate(`/lobby/${code}/starting-lineup`);
@@ -818,7 +824,8 @@ export function LobbyWaitingPage() {
         focal_y: focalY,
       };
 
-      await startCareerRound(lobby.id, newState);
+      const { error: startErrorFr } = await startCareerRound(lobby.id, newState);
+      if (startErrorFr) throw new Error(startErrorFr);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
       navigate(`/lobby/${code}/face-reveal`);
@@ -917,7 +924,8 @@ export function LobbyWaitingPage() {
         top_ten_window_years: cs.top_ten_window_years || 10,
       };
 
-      await startCareerRound(lobby.id, newState);
+      const { error: startErrorTt } = await startCareerRound(lobby.id, newState);
+      if (startErrorTt) throw new Error(startErrorTt);
       hasStartedGame.current = true;
       setLobby({ ...lobby, career_state: newState, status: 'playing' });
       navigate(`/lobby/${code}/top-ten`);
