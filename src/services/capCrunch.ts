@@ -2909,6 +2909,87 @@ function getCandidatesForFilter(
 }
 
 /**
+ * Like getCandidatesForFilter but for slots whose candidates depend on what
+ * was already picked (MATE:N, FNAME:N, LNAME:N). Called lazily inside the DFS.
+ */
+function getCandidatesForDependentFilter(
+  pool: any[],
+  filterTeam: string,
+  statCategory: StatCategory,
+  sport: Sport,
+  pickedSoFar: Array<PerfectPick & { sortYear: number }>,
+): Array<PerfectPick & { sortYear: number }> {
+  const candidates: Array<PerfectPick & { sortYear: number }> = [];
+  const isCareer = isCareerStat(statCategory);
+  const computeStatFn = sport === 'nba' ? computeNbaStat : computeNflStat;
+
+  if (isTeammateRound(filterTeam)) {
+    const { pickIndex } = parseTeammateRound(filterTeam);
+    const refPick = pickedSoFar[pickIndex - 1];
+    if (!refPick) return [];
+    const refPlayer = findPlayer(pool, refPick.playerName, refPick.playerId);
+    if (!refPlayer) return [];
+
+    for (const player of pool) {
+      if (player.player_name === refPlayer.player_name) continue;
+      const { result } = wereTeammates(refPlayer, player, sport);
+      if (!result) continue;
+      const seasons: any[] = player.seasons ?? [];
+      let stat = 0, year = '', team = '', sortYear = 0;
+      if (statCategory === 'total_gp') {
+        stat = seasons.reduce((s: number, s2: any) => s + (s2.gp ?? 0), 0);
+        year = 'career';
+      } else if (isCareer) {
+        const field = careerStatField(statCategory);
+        stat = seasons.reduce((s: number, s2: any) => s + ((s2 as any)[field] ?? 0), 0);
+        year = 'career';
+      } else {
+        for (const s of seasons) {
+          const v = computeStatFn(s, statCategory);
+          if (v > stat) { stat = v; year = s.season; team = s.team; sortYear = parseInt(s.season); }
+        }
+      }
+      if (stat <= 0) continue;
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team, year, stat, sortYear });
+    }
+  } else if (isNameMatchRound(filterTeam)) {
+    const { type, pickIndex, proConf } = parseNameRound(filterTeam);
+    const refPick = pickedSoFar[pickIndex - 1];
+    if (!refPick) return [];
+    const extractFn = type === 'first' ? extractFirstName : extractLastName;
+    const requiredInitial = extractFn(refPick.playerName)[0] ?? '';
+    const confMatchFn = sport === 'nfl'
+      ? (t: string) => nflConferenceMatches(t, proConf!)
+      : (t: string) => nbaConferenceMatches(t, proConf!);
+
+    for (const player of pool) {
+      if (extractFn(player.player_name)[0] !== requiredInitial) continue;
+      if (proConf && !player.seasons.some((s: any) => confMatchFn(s.team))) continue;
+      const seasons: any[] = player.seasons ?? [];
+      let stat = 0, year = '', team = '', sortYear = 0;
+      if (statCategory === 'total_gp') {
+        stat = seasons.reduce((s: number, s2: any) => s + (s2.gp ?? 0), 0);
+        year = 'career';
+      } else if (isCareer) {
+        const field = careerStatField(statCategory);
+        stat = seasons.reduce((s: number, s2: any) => s + ((s2 as any)[field] ?? 0), 0);
+        year = 'career';
+      } else {
+        for (const s of seasons) {
+          const v = computeStatFn(s, statCategory);
+          if (v > stat) { stat = v; year = s.season; team = s.team; sortYear = parseInt(s.season); }
+        }
+      }
+      if (stat <= 0) continue;
+      candidates.push({ playerName: player.player_name, playerId: player.player_id, position: player.position, team, year, stat, sortYear });
+    }
+  }
+
+  candidates.sort((a, b) => b.stat - a.stat || b.sortYear - a.sortYear);
+  return candidates.slice(0, 40);
+}
+
+/**
  * Find the best 5-pick lineup for the daily puzzle.
  *
  * Three passes in priority order:
@@ -2925,11 +3006,16 @@ export async function computePerfectDailyLineup(
 ): Promise<PerfectPick[] | null> {
   try {
     const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
-    const slotCandidates = filters.map((f) =>
-      getCandidatesForFilter(pool, f.team, f.hwFilter, statCategory, sport),
+
+    type RawCandidate = PerfectPick & { sortYear: number };
+
+    // Pre-compute candidates for independent slots; null for dependent (teammate/name-match).
+    const slotCandidates: Array<RawCandidate[] | null> = filters.map((f) =>
+      isTeammateRound(f.team) || isNameMatchRound(f.team)
+        ? null
+        : getCandidatesForFilter(pool, f.team, f.hwFilter, statCategory, sport),
     );
 
-    type RawCandidate = (typeof slotCandidates)[0][0];
     const nSlots = filters.length;
     const ITER_PER_PASS = 150_000;
 
@@ -2954,12 +3040,17 @@ export async function computePerfectDailyLineup(
         const remaining = targetCap - currentTotal;
         const slotsLeft = nSlots - slot;
 
+        // Resolve candidates — dependent slots are generated from picks so far.
+        const baseCandidates: RawCandidate[] =
+          slotCandidates[slot] ??
+          getCandidatesForDependentFilter(pool, filters[slot].team, statCategory, sport, currentPicks);
+
         // Balanced: sort so the pick closest to fair share is tried first.
-        // Greedy: candidates are already sorted stat DESC from getCandidatesForFilter.
-        let ordered = slotCandidates[slot];
+        // Greedy: candidates are already sorted stat DESC.
+        let ordered = baseCandidates;
         if (balanced) {
           const fairShare = remaining / slotsLeft;
-          ordered = [...ordered].sort((a, b) => {
+          ordered = [...baseCandidates].sort((a, b) => {
             const da = Math.abs(a.stat - fairShare);
             const db = Math.abs(b.stat - fairShare);
             return da !== db ? da - db : b.sortYear - a.sortYear;

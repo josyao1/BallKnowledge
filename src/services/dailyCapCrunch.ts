@@ -14,6 +14,10 @@ import {
   isDivisionRound,
   isConferenceRound,
   isDivisionDraftRound,
+  isTeammateRound,
+  isNameMatchRound,
+  parseTeammateRound,
+  parseNameRound,
   classifySpecialRoundType,
   advanceSpecialRoundCycle,
   computePerfectDailyLineup,
@@ -86,12 +90,30 @@ function seededPickNBAConf(rng: () => number): string {
 function generateDailyTeam(
   sport: Sport,
   statCategory: StatCategory,
+  slotIndex: number,
   usedTeams: string[],
   usedSpecialTypes: SpecialRoundType[],
   rng: () => number,
 ): string {
   const isCareer = isCareerStat(statCategory);
   const isTotalGP = statCategory === 'total_gp';
+
+  // Teammate / name-match rounds (slots 1-4 only, 10% flat like all other specials)
+  if (slotIndex >= 1 && !isCareer && !isTotalGP && !usedSpecialTypes.includes('teammate')) {
+    if (rng() < 0.1) {
+      const refIndex = 1 + Math.floor(rng() * slotIndex);
+      const typeRoll = rng();
+      if (typeRoll < 0.65) {
+        return `MATE:${refIndex}`;
+      } else {
+        const prefix = typeRoll < 0.85 ? 'FNAME' : 'LNAME';
+        const confRoll = rng();
+        const confVal = sport === 'nfl' ? seededPickNFLConf(rng) : seededPickNBAConf(rng);
+        const confTag = confRoll < 0.5 ? `|${confVal}` : '';
+        return `${prefix}:${refIndex}${confTag}`;
+      }
+    }
+  }
 
   if (sport === 'nfl' && !isCareer && !isTotalGP) {
     const roll = rng();
@@ -132,7 +154,13 @@ function generateDailyHWFilter(
   usedSpecialTypes: SpecialRoundType[],
   rng: () => number,
 ): HWFilter | null {
-  if (isDivisionRound(team) || isConferenceRound(team) || isDivisionDraftRound(team)) return null;
+  if (
+    isDivisionRound(team) ||
+    isConferenceRound(team) ||
+    isDivisionDraftRound(team) ||
+    isTeammateRound(team) ||
+    isNameMatchRound(team)
+  ) return null;
   if (statCategory === 'total_gp' || isCareerStat(statCategory)) return null;
   if (usedSpecialTypes.includes('hw_filter')) return null;
   if (rng() > 0.15) return null;
@@ -245,7 +273,7 @@ export function generateDailyPuzzle(sport: Sport, dayNumber: number): DailyPuzzl
   const usedTeams: string[] = [];
 
   for (let i = 0; i < 5; i++) {
-    const team = generateDailyTeam(sport, statCategory, usedTeams, usedSpecialTypes, rng);
+    const team = generateDailyTeam(sport, statCategory, i, usedTeams, usedSpecialTypes, rng);
     const hwFilter = generateDailyHWFilter(team, statCategory, usedSpecialTypes, rng);
     const roundType = classifySpecialRoundType(team, hwFilter);
     usedSpecialTypes = advanceSpecialRoundCycle(usedSpecialTypes, roundType);
@@ -342,10 +370,15 @@ export async function getOptimalLastPick(
     .slice(0, slotIndex)
     .reduce((s, p) => s + (p.isBust || p.neverOnTeam ? 0 : p.statValue), 0);
   const remaining = targetCap - runningTotal;
-  const cacheKey = `${dayNumber}_${sport}_${statCategory}_opt_${runningTotal.toFixed(1)}`;
-  if (_optimalLastPickCache.has(cacheKey)) return _optimalLastPickCache.get(cacheKey)!;
   const { team, hwFilter } = filters[slotIndex];
-  const raw = await findOptimalLastPick(sport, team, statCategory, remaining, 0, [], hwFilter);
+  let cacheKey = `${dayNumber}_${sport}_${statCategory}_opt_${runningTotal.toFixed(1)}`;
+  if (isTeammateRound(team) || isNameMatchRound(team)) {
+    const { pickIndex } = isTeammateRound(team) ? parseTeammateRound(team) : parseNameRound(team);
+    cacheKey += `_ref_${picks[pickIndex - 1]?.playerName ?? 'none'}`;
+  }
+  if (_optimalLastPickCache.has(cacheKey)) return _optimalLastPickCache.get(cacheKey)!;
+  const prevPicksForSlot = picks.slice(0, slotIndex);
+  const raw = await findOptimalLastPick(sport, team, statCategory, remaining, 0, [], hwFilter, prevPicksForSlot);
   const result: PerfectPick | null = raw
     ? { playerName: raw.playerName, playerId: raw.playerId, position: undefined, team: raw.team, year: raw.year, stat: raw.statValue }
     : null;
