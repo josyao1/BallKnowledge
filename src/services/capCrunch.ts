@@ -2761,12 +2761,17 @@ function getCandidatesForFilter(
         sport === 'nba'
           ? !nflConf || nbaConferenceMatches(t, nflConf)
           : !nflConf || nflConferenceMatches(t, nflConf);
-      const qualifying = [...seasons]
-        .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
-        .filter((s) => confMatch(s.team));
+      const qualifying = seasons.filter((s) => confMatch(s.team));
       if (!qualifying.length) continue;
-      const s = qualifying[0];
-      const stat = computeStat(s, statCategory);
+      let s = qualifying[0];
+      let stat = computeStat(s, statCategory);
+      for (const candidate of qualifying.slice(1)) {
+        const v = computeStat(candidate, statCategory);
+        if (v > stat) {
+          stat = v;
+          s = candidate;
+        }
+      }
       if (stat <= 0) continue;
       candidates.push({
         playerName: player.player_name,
@@ -2787,12 +2792,17 @@ function getCandidatesForFilter(
       const computeStat = sport === 'nba' ? computeNbaStat : computeNflStat;
       const divMatch = (t: string) =>
         sport === 'nba' ? teamInNbaDivision(t, division) : teamInDivision(t, division);
-      const qualifying = [...seasons]
-        .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
-        .filter((s) => divMatch(s.team));
+      const qualifying = seasons.filter((s) => divMatch(s.team));
       if (!qualifying.length) continue;
-      const s = qualifying[0];
-      const stat = computeStat(s, statCategory);
+      let s = qualifying[0];
+      let stat = computeStat(s, statCategory);
+      for (const candidate of qualifying.slice(1)) {
+        const v = computeStat(candidate, statCategory);
+        if (v > stat) {
+          stat = v;
+          s = candidate;
+        }
+      }
       if (stat <= 0) continue;
       candidates.push({
         playerName: player.player_name,
@@ -2808,9 +2818,7 @@ function getCandidatesForFilter(
 
     // ── Division round (NFL) ──────────────────────────────────────────────────
     if (isDivisionRound(filterTeam)) {
-      const qualifying = [...seasons]
-        .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
-        .filter((s) => teamInDivision(s.team, filterTeam));
+      const qualifying = seasons.filter((s) => teamInDivision(s.team, filterTeam));
       if (!qualifying.length) continue;
       if (isCareer) {
         const field = careerStatField(statCategory);
@@ -2827,8 +2835,15 @@ function getCandidatesForFilter(
           sortYear: parseInt(s.season),
         });
       } else {
-        const s = qualifying[0];
-        const stat = computeNflStat(s, statCategory);
+        let s = qualifying[0];
+        let stat = computeNflStat(s, statCategory);
+        for (const candidate of qualifying.slice(1)) {
+          const v = computeNflStat(candidate, statCategory);
+          if (v > stat) {
+            stat = v;
+            s = candidate;
+          }
+        }
         if (stat <= 0) continue;
         candidates.push({
           playerName: player.player_name,
@@ -2850,9 +2865,7 @@ function getCandidatesForFilter(
         : (t: string) => nflTeamMatches(t, filterTeam);
     const computeStat = sport === 'nba' ? computeNbaStat : computeNflStat;
 
-    const qualifying = [...seasons]
-      .sort((a, b) => b.season?.localeCompare?.(a.season) ?? 0)
-      .filter((s) => teamMatch(s.team));
+    const qualifying = seasons.filter((s) => teamMatch(s.team));
     if (!qualifying.length) continue;
 
     if (isCareer) {
@@ -2883,12 +2896,19 @@ function getCandidatesForFilter(
         sortYear: parseInt(s.season),
       });
     } else {
-      const s = qualifying[0];
       if (hwFilter) {
         const hw = checkHWFilter(bio, hwFilter, sport);
         if (!hw.passes) continue;
       }
-      const stat = computeStat(s, statCategory);
+      let s = qualifying[0];
+      let stat = computeStat(s, statCategory);
+      for (const candidate of qualifying.slice(1)) {
+        const v = computeStat(candidate, statCategory);
+        if (v > stat) {
+          stat = v;
+          s = candidate;
+        }
+      }
       if (stat <= 0) continue;
       candidates.push({
         playerName: player.player_name,
@@ -2902,8 +2922,8 @@ function getCandidatesForFilter(
     }
   }
 
-  // Sort: recency first, then stat DESC as tiebreak
-  candidates.sort((a, b) => b.sortYear - a.sortYear || b.stat - a.stat);
+  // Sort: stat DESC so DFS tries best players first
+  candidates.sort((a, b) => b.stat - a.stat);
   // Limit per filter so search stays fast
   return candidates.slice(0, 40);
 }

@@ -55,6 +55,7 @@ export interface DailyPuzzle {
   statCategory: StatCategory;
   targetCap: number;
   roundFilters: DailyRoundFilter[];
+  totalRounds: number;
 }
 
 export interface DailyEntry {
@@ -185,9 +186,15 @@ function generateDailyStatCategory(sport: Sport, rng: () => number): StatCategor
 function generateDailyTargetCap(
   sport: Sport,
   statCategory: StatCategory,
+  totalRounds: number,
   rng: () => number,
 ): number {
-  const r = (min: number, max: number) => min + Math.floor(rng() * (max - min + 1));
+  const scale = totalRounds / 5;
+  const r = (min: number, max: number) => {
+    const sMin = Math.round(min * scale);
+    const sMax = Math.round(max * scale);
+    return sMin + Math.floor(rng() * (sMax - sMin + 1));
+  };
 
   if (sport === 'nba') {
     switch (statCategory) {
@@ -267,13 +274,14 @@ export function generateDailyPuzzle(sport: Sport, dayNumber: number): DailyPuzzl
   const rng = mulberry32(seed);
 
   const statCategory = generateDailyStatCategory(sport, rng);
-  const targetCap = generateDailyTargetCap(sport, statCategory, rng);
+  const totalRounds = 5 + Math.floor(rng() * 4); // 5, 6, 7, or 8
+  const targetCap = generateDailyTargetCap(sport, statCategory, totalRounds, rng);
 
   const roundFilters: DailyRoundFilter[] = [];
   let usedSpecialTypes: SpecialRoundType[] = [];
   const usedTeams: string[] = [];
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < totalRounds; i++) {
     const team = generateDailyTeam(sport, statCategory, i, usedTeams, usedSpecialTypes, rng);
     const hwFilter = generateDailyHWFilter(team, statCategory, usedSpecialTypes, rng);
     const roundType = classifySpecialRoundType(team, hwFilter);
@@ -282,7 +290,7 @@ export function generateDailyPuzzle(sport: Sport, dayNumber: number): DailyPuzzl
     roundFilters.push({ team, hwFilter });
   }
 
-  return { dayNumber, sport, statCategory, targetCap, roundFilters };
+  return { dayNumber, sport, statCategory, targetCap, roundFilters, totalRounds };
 }
 
 // ─── Supabase operations ──────────────────────────────────────────────────────

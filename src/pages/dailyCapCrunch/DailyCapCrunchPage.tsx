@@ -50,7 +50,7 @@ export default function DailyCapCrunchPage() {
           autoStart: true,
           selectedSport: sport,
           statCategory: puzzle.statCategory,
-          totalRounds: 5,
+          totalRounds: puzzle.roundFilters.length,
           dailyMode: true,
           dayNumber: puzzle.dayNumber,
           dailyTargetCap: puzzle.targetCap,
