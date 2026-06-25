@@ -357,10 +357,7 @@ export async function updateLobbyStatus(
     updates.finished_at = new Date().toISOString();
   }
 
-  const { error } = await supabase
-    .from('lobbies')
-    .update(updates)
-    .eq('id', lobbyId);
+  const { error } = await supabase.from('lobbies').update(updates).eq('id', lobbyId);
 
   return { error: error?.message || null };
 }
