@@ -15,7 +15,33 @@ import {
 } from '../../services/dailyCapCrunch';
 import { ensureAnonymousSession } from '../../lib/supabase';
 import { getCategoryAbbr, fmt } from '../../components/capCrunch/capCrunchUtils';
-import { isCareerStat } from '../../services/capCrunch';
+import {
+  isCareerStat,
+  isDivisionRound,
+  isDivisionDraftRound,
+  parseDivisionDraftRound,
+  isConferenceRound,
+  parseConferenceRound,
+  isTeammateRound,
+  parseTeammateRound,
+  isNameMatchRound,
+  parseNameRound,
+} from '../../services/capCrunch';
+
+function isSpecialRound(team: string): boolean {
+  return (
+    isConferenceRound(team) ||
+    isDivisionRound(team) ||
+    isDivisionDraftRound(team) ||
+    isTeammateRound(team) ||
+    isNameMatchRound(team)
+  );
+}
+import {
+  HEIGHT_THRESHOLD_NBA,
+  HEIGHT_THRESHOLD_NFL,
+  WEIGHT_THRESHOLD,
+} from '../../services/capCrunchData';
 import { PlayerHeadshot } from '../../components/capCrunch/PlayerHeadshot';
 import type { PlayerLineup, StatCategory, SelectedPlayer } from '../../types/capCrunch';
 import type { Sport } from '../../types';
@@ -38,6 +64,65 @@ function formatCountdown(targetMs: number): string {
 function fmtStat(val: number, cat: StatCategory): string {
   if (isCareerStat(cat) || cat.startsWith('total_')) return Math.round(val).toLocaleString();
   return fmt(val);
+}
+
+function fmtPerfectPickYear(
+  pick: { year: string; yearFrom?: string; yearTo?: string },
+  cat: StatCategory,
+): string {
+  if (isCareerStat(cat)) {
+    const from = pick.yearFrom ?? pick.year;
+    const to = pick.yearTo ?? pick.year;
+    const f = `'${String(from).slice(-2)}`;
+    const t = `'${String(to).slice(-2)}`;
+    return from === to ? f : `${f}-${t}`;
+  }
+  return pick.year ? `'${String(pick.year).slice(-2)}` : '';
+}
+
+function formatRoundSubtext(filter: DailyRoundFilter, sport: Sport): string | null {
+  const { team, hwFilter } = filter;
+  let roundPart: string | null = null;
+
+  if (isDivisionDraftRound(team)) {
+    const { division, draftRound } = parseDivisionDraftRound(team);
+    const dl =
+      draftRound === 'R1'
+        ? '1st Rd'
+        : draftRound === 'R23'
+          ? '2nd–3rd Rd'
+          : draftRound === 'R47'
+            ? '4th Rd+'
+            : draftRound;
+    roundPart = `${division} · ${dl}`;
+  } else if (isTeammateRound(team)) {
+    const { pickIndex } = parseTeammateRound(team);
+    roundPart = `w/ pick ${pickIndex}`;
+  } else if (isNameMatchRound(team)) {
+    const { type, pickIndex, proConf } = parseNameRound(team);
+    const label = type === 'first' ? 'first init' : 'last init';
+    roundPart = proConf
+      ? `${label} · pick ${pickIndex} · ${proConf}`
+      : `${label} · pick ${pickIndex}`;
+  } else if (isConferenceRound(team)) {
+    const { college, nflConf } = parseConferenceRound(team);
+    roundPart = nflConf ? `${college} · ${nflConf}` : college;
+  } else if (isDivisionRound(team)) {
+    roundPart = team;
+  }
+
+  let hwPart: string | null = null;
+  if (hwFilter) {
+    const ht = sport === 'nba' ? HEIGHT_THRESHOLD_NBA : HEIGHT_THRESHOLD_NFL;
+    const htStr = `${Math.floor(ht / 12)}'${ht % 12}"`;
+    if (hwFilter === 'height_above') hwPart = `ht > ${htStr}`;
+    else if (hwFilter === 'height_below') hwPart = `ht ≤ ${htStr}`;
+    else if (hwFilter === 'weight_above') hwPart = `wt > ${WEIGHT_THRESHOLD} lbs`;
+    else hwPart = `wt ≤ ${WEIGHT_THRESHOLD} lbs`;
+  }
+
+  if (roundPart && hwPart) return `${roundPart} · ${hwPart}`;
+  return roundPart ?? hwPart;
 }
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -74,14 +159,17 @@ function PickRow({
   cat,
   sport,
   delay,
+  roundFilter,
 }: {
   pick: SelectedPlayer;
   rank: number;
   cat: StatCategory;
   sport: Sport;
   delay: number;
+  roundFilter?: DailyRoundFilter;
 }) {
   const bust = pick.isBust || pick.neverOnTeam;
+  const subtext = roundFilter ? formatRoundSubtext(roundFilter, sport) : null;
   return (
     <motion.div
       initial={{ opacity: 0, x: -12 }}
@@ -95,19 +183,37 @@ function PickRow({
         sport={sport}
         className="w-8 h-8 rounded-full object-cover shrink-0"
       />
-      <span
-        className={`capcrunch-title text-sm flex-1 min-w-0 truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}
-      >
-        {pick.playerName}
-      </span>
+      <div className="flex flex-col flex-1 min-w-0">
+        <span
+          className={`capcrunch-title text-sm truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}
+        >
+          {pick.playerName}
+        </span>
+        {subtext && (
+          <span className="capcrunch-kicker text-white/25 text-[8px] truncate leading-tight uppercase tracking-wide">
+            {subtext}
+          </span>
+        )}
+      </div>
       {pick.position && (
         <span className="capcrunch-kicker text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 shrink-0">
           {pick.position}
         </span>
       )}
-      <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
-        {pick.team} {pick.selectedYear ? `'${String(pick.selectedYear).slice(-2)}` : ''}
-      </span>
+      {(() => {
+        const special = isSpecialRound(pick.team);
+        const displayTeam = special ? pick.playerActualTeam : pick.team;
+        const yearSuffix =
+          pick.selectedYear && pick.selectedYear !== 'career'
+            ? ` '${String(pick.selectedYear).slice(-2)}`
+            : '';
+        return displayTeam ? (
+          <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
+            {displayTeam}
+            {yearSuffix}
+          </span>
+        ) : null;
+      })()}
       {bust && pick.isBust ? (
         <span className="shrink-0 text-right">
           <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">BUST</span>
@@ -312,7 +418,10 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
       '',
       ...picks.map((p, i) => {
         const bust = p.isBust || p.neverOnTeam;
-        const year = p.selectedYear ? `'${String(p.selectedYear).slice(-2)}` : '';
+        const year =
+          p.selectedYear && p.selectedYear !== 'career'
+            ? `'${String(p.selectedYear).slice(-2)}`
+            : '';
         const val = bust ? 'BUST' : fmtStat(p.statValue, statCategory);
         return `${i + 1}. ${p.playerName} (${p.team}${year ? ' ' + year : ''}) — ${val}`;
       }),
@@ -443,6 +552,7 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                 cat={statCategory}
                 sport={sport}
                 delay={i * 0.08}
+                roundFilter={pageState.roundFilters[i]}
               />
             ))}
           </div>
@@ -471,82 +581,89 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
             </div>
           </div>
 
-          {/* Optimal last pick */}
-          <div className="mt-4">
-            <h2 className="capcrunch-title text-sm text-white/60 uppercase tracking-wider mb-2">
-              Optimal Last Pick
-            </h2>
-            {optimalLastPick === 'loading' ? (
-              <div className="capcrunch-panel px-4 py-3 text-center">
-                <p className="capcrunch-kicker text-white/30 text-[11px] animate-pulse">
-                  Calculating…
-                </p>
-              </div>
-            ) : optimalLastPick === null ? (
-              <div className="capcrunch-panel px-4 py-3 text-center">
-                <p className="capcrunch-kicker text-white/30 text-[11px]">Could not compute</p>
-              </div>
-            ) : (
-              <>
-                <div className="capcrunch-panel px-3 py-2.5 flex items-center gap-3">
-                  <PlayerHeadshot
-                    playerId={optimalLastPick.playerId}
-                    sport={sport}
-                    className="w-8 h-8 rounded-full object-cover shrink-0"
-                  />
-                  <span className="capcrunch-title text-sm text-white flex-1 min-w-0 truncate">
-                    {optimalLastPick.playerName}
-                  </span>
-                  {optimalLastPick.position && (
-                    <span className="capcrunch-kicker text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 shrink-0">
-                      {optimalLastPick.position}
-                    </span>
-                  )}
-                  <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
-                    {optimalLastPick.team}
-                    {optimalLastPick.year ? ` '${String(optimalLastPick.year).slice(-2)}` : ''}
-                  </span>
-                  <span className="capcrunch-title text-sm text-[#d4af37] shrink-0">
-                    {fmtStat(optimalLastPick.stat, statCategory)}
-                  </span>
+          {/* Optimal last pick — only shown when not exact */}
+          {!isExact && (
+            <div className="mt-4">
+              <h2 className="capcrunch-title text-sm text-white/60 uppercase tracking-wider mb-2">
+                Optimal Last Pick
+              </h2>
+              {optimalLastPick === 'loading' ? (
+                <div className="capcrunch-panel px-4 py-3 text-center">
+                  <p className="capcrunch-kicker text-white/30 text-[11px] animate-pulse">
+                    Calculating…
+                  </p>
                 </div>
-                {(() => {
-                  const lastPick = picks[picks.length - 1];
-                  const wasOptimal =
-                    lastPick &&
-                    !lastPick.isBust &&
-                    !lastPick.neverOnTeam &&
-                    lastPick.playerName === optimalLastPick.playerName;
-                  if (wasOptimal) {
+              ) : optimalLastPick === null ? (
+                <div className="capcrunch-panel px-4 py-3 text-center">
+                  <p className="capcrunch-kicker text-white/30 text-[11px]">Could not compute</p>
+                </div>
+              ) : (
+                <>
+                  <div className="capcrunch-panel px-3 py-2.5 flex items-center gap-3">
+                    <PlayerHeadshot
+                      playerId={optimalLastPick.playerId}
+                      sport={sport}
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
+                    <span className="capcrunch-title text-sm text-white flex-1 min-w-0 truncate">
+                      {optimalLastPick.playerName}
+                    </span>
+                    {optimalLastPick.position && (
+                      <span className="capcrunch-kicker text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 shrink-0">
+                        {optimalLastPick.position}
+                      </span>
+                    )}
+                    <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
+                      {optimalLastPick.team}
+                      {(() => {
+                        const y = fmtPerfectPickYear(optimalLastPick, statCategory);
+                        return y ? ` ${y}` : '';
+                      })()}
+                    </span>
+                    <span className="capcrunch-title text-sm text-[#d4af37] shrink-0">
+                      {fmtStat(optimalLastPick.stat, statCategory)}
+                    </span>
+                  </div>
+                  {(() => {
+                    const lastPick = picks[picks.length - 1];
+                    const wasOptimal =
+                      lastPick &&
+                      !lastPick.isBust &&
+                      !lastPick.neverOnTeam &&
+                      lastPick.playerName === optimalLastPick.playerName;
+                    if (wasOptimal) {
+                      return (
+                        <p className="capcrunch-kicker text-green-400 text-[10px] text-center mt-1.5">
+                          Your pick was optimal!
+                        </p>
+                      );
+                    }
+                    const lastPickVal =
+                      lastPick && !lastPick.isBust && !lastPick.neverOnTeam
+                        ? lastPick.statValue
+                        : 0;
+                    const projectedTotal = total - lastPickVal + optimalLastPick.stat;
+                    const projectedDistance = Math.max(0, targetCap - Math.floor(projectedTotal));
                     return (
-                      <p className="capcrunch-kicker text-green-400 text-[10px] text-center mt-1.5">
-                        Your pick was optimal!
+                      <p className="capcrunch-kicker text-white/40 text-[10px] text-center mt-1.5">
+                        With this pick:{' '}
+                        <span className="text-[#d4af37]">
+                          {fmtStat(projectedTotal, statCategory)}
+                        </span>
+                        {' / '}
+                        {targetCap}
+                        {projectedDistance === 0 ? (
+                          <span className="text-green-400 ml-1">(EXACT!)</span>
+                        ) : (
+                          <span className="text-white/40 ml-1">({projectedDistance} away)</span>
+                        )}
                       </p>
                     );
-                  }
-                  const lastPickVal =
-                    lastPick && !lastPick.isBust && !lastPick.neverOnTeam ? lastPick.statValue : 0;
-                  const projectedTotal = total - lastPickVal + optimalLastPick.stat;
-                  const projectedDistance = Math.max(0, targetCap - Math.floor(projectedTotal));
-                  return (
-                    <p className="capcrunch-kicker text-white/40 text-[10px] text-center mt-1.5">
-                      With this pick:{' '}
-                      <span className="text-[#d4af37]">
-                        {fmtStat(projectedTotal, statCategory)}
-                      </span>
-                      {' / '}
-                      {targetCap}
-                      {projectedDistance === 0 ? (
-                        <span className="text-green-400 ml-1">(EXACT!)</span>
-                      ) : (
-                        <span className="text-white/40 ml-1">({projectedDistance} away)</span>
-                      )}
-                    </p>
-                  );
-                })()}
-              </>
-            )}
-          </div>
+                  })()}
+                </>
+              )}
+            </div>
+          )}
 
           {/* Play other sport / replay links */}
           <div className="mt-4 flex justify-center gap-6">
@@ -654,7 +771,7 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
             ) : (
               <div className="capcrunch-panel">
                 {perfectLineup.map((pick, i) => {
-                  const yearShort = pick.year ? `'${String(pick.year).slice(-2)}` : '';
+                  const yearDisplay = fmtPerfectPickYear(pick, statCategory);
                   return (
                     <div
                       key={i}
@@ -678,7 +795,7 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                       )}
                       <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
                         {pick.team}
-                        {yearShort ? ` ${yearShort}` : ''}
+                        {yearDisplay ? ` ${yearDisplay}` : ''}
                       </span>
                       <span className="capcrunch-title text-sm text-[#d4af37] shrink-0">
                         {fmtStat(pick.stat, statCategory)}
@@ -732,7 +849,13 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
             </div>
             {(peekedEntry.picks as SelectedPlayer[]).map((pick, i) => {
               const bust = pick.isBust || pick.neverOnTeam;
-              const year = pick.selectedYear ? `'${String(pick.selectedYear).slice(-2)}` : '';
+              const year =
+                pick.selectedYear && pick.selectedYear !== 'career'
+                  ? `'${String(pick.selectedYear).slice(-2)}`
+                  : '';
+              const peekSubtext = pageState.roundFilters[i]
+                ? formatRoundSubtext(pageState.roundFilters[i], sport)
+                : null;
               return (
                 <div
                   key={i}
@@ -746,20 +869,33 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                     sport={sport}
                     className="w-7 h-7 rounded-full object-cover shrink-0"
                   />
-                  <span
-                    className={`capcrunch-title text-sm flex-1 min-w-0 truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}
-                  >
-                    {pick.playerName}
-                  </span>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span
+                      className={`capcrunch-title text-sm truncate ${bust ? 'line-through text-white/40' : 'text-white'}`}
+                    >
+                      {pick.playerName}
+                    </span>
+                    {peekSubtext && (
+                      <span className="capcrunch-kicker text-white/25 text-[8px] truncate leading-tight uppercase tracking-wide">
+                        {peekSubtext}
+                      </span>
+                    )}
+                  </div>
                   {pick.position && (
                     <span className="capcrunch-kicker text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 shrink-0">
                       {pick.position}
                     </span>
                   )}
-                  <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
-                    {pick.team}
-                    {year ? ` ${year}` : ''}
-                  </span>
+                  {(() => {
+                    const special = isSpecialRound(pick.team);
+                    const displayTeam = special ? pick.playerActualTeam : pick.team;
+                    return displayTeam ? (
+                      <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
+                        {displayTeam}
+                        {year ? ` ${year}` : ''}
+                      </span>
+                    ) : null;
+                  })()}
                   {bust && pick.isBust ? (
                     <span className="shrink-0 text-right">
                       <span className="capcrunch-kicker text-red-400 text-[10px] font-bold block">

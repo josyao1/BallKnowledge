@@ -2,7 +2,17 @@
  * capCrunchUtils.ts — Pure helpers shared across Cap Crunch components.
  */
 
+import confetti from 'canvas-confetti';
 import type { StatCategory, SelectedPlayer } from '../../types/capCrunch';
+import {
+  isDivisionDraftRound,
+  parseDivisionDraftRound,
+  isTeammateRound,
+  parseTeammateRound,
+  isNameMatchRound,
+  parseNameRound,
+  isWildcardRound,
+} from '../../services/capCrunch';
 
 /**
  * Short badge label shown on an invalid pick — more specific than "NOT ON TEAM".
@@ -24,7 +34,7 @@ export function getPickBadgeLabel(pick: SelectedPlayer): string {
  * Used in the in-game pick list, scores panel, and results card.
  * Returns null when the pick is not a neverOnTeam failure.
  */
-const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+export const NAME_SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
 
 export function getPickErrorMessage(pick: SelectedPlayer): string | null {
   if (!pick.neverOnTeam) return null;
@@ -143,4 +153,65 @@ export function getCategoryAbbr(category: StatCategory): string {
     default:
       return 'STAT';
   }
+}
+
+export function draftLabel(code: string): string {
+  if (code === 'R1') return '1st Round';
+  if (code === 'R2') return '2nd Round';
+  if (code === 'R23') return '2nd–3rd Round';
+  if (code === 'R47') return '4th Round+';
+  return code;
+}
+
+/**
+ * Fire the 3-burst confetti sequence used on an exact cap hit.
+ * Returns the two setTimeout IDs so callers can store them in confettiTimersRef for cleanup.
+ */
+export function fireCapCrunchConfetti(): ReturnType<typeof setTimeout>[] {
+  confetti({
+    particleCount: 160,
+    spread: 90,
+    origin: { y: 0.55 },
+    colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'],
+  });
+  return [
+    setTimeout(
+      () =>
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.4, x: 0.3 },
+          colors: ['#d4af37', '#ffffff'],
+        }),
+      250,
+    ),
+    setTimeout(
+      () =>
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.4, x: 0.7 },
+          colors: ['#d4af37', '#ffffff'],
+        }),
+      400,
+    ),
+  ];
+}
+
+export function formatPickTeam(team: string): string {
+  if (isDivisionDraftRound(team)) {
+    const { division, draftRound } = parseDivisionDraftRound(team);
+    return `${division} · ${draftLabel(draftRound)}`;
+  }
+  if (isTeammateRound(team)) {
+    const { pickIndex } = parseTeammateRound(team);
+    return `Played with Pick ${pickIndex}`;
+  }
+  if (isNameMatchRound(team)) {
+    const { type, pickIndex, proConf } = parseNameRound(team);
+    const label = type === 'first' ? 'First Initial' : 'Last Initial';
+    return proConf ? `${label}: Pick ${pickIndex} + ${proConf}` : `${label}: Pick ${pickIndex}`;
+  }
+  if (isWildcardRound(team)) return 'Wildcard';
+  return team;
 }

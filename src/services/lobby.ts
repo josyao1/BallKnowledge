@@ -7,7 +7,13 @@
  * via `getPlayerId()` (Supabase anonymous auth) with a localStorage fallback.
  */
 
-import { supabase, getAuthPlayerId } from '../lib/supabase';
+import {
+  supabase,
+  getAuthPlayerId,
+  getStoredPlayerName,
+  setStoredPlayerName,
+} from '../lib/supabase';
+export { getStoredPlayerName, setStoredPlayerName };
 import type {
   Lobby,
   LobbyInsert,
@@ -59,16 +65,6 @@ export function getOrCreatePlayerId(): string {
   const newId = crypto.randomUUID();
   localStorage.setItem('ballknowledge_player_id', newId);
   return newId;
-}
-
-// Get stored player name
-export function getStoredPlayerName(): string | null {
-  return localStorage.getItem('ballknowledge_player_name');
-}
-
-// Store player name
-export function setStoredPlayerName(name: string): void {
-  localStorage.setItem('ballknowledge_player_name', name);
 }
 
 // Create a new lobby

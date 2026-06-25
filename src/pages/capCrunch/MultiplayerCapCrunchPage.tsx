@@ -18,7 +18,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import { useLobbyStore } from '../../stores/lobbyStore';
 import { useLobbySubscription } from '../../hooks/useLobbySubscription';
 import { EmoteOverlay } from '../../components/multiplayer/EmoteOverlay';
@@ -52,7 +51,7 @@ import { CapCrunchPickPanel } from '../../components/capCrunch/CapCrunchPickPane
 import { CapCrunchScoresPanel } from '../../components/capCrunch/CapCrunchScoresPanel';
 import { CapCrunchResultCard } from '../../components/capCrunch/CapCrunchResultCard';
 import { BlindModeReveal } from '../../components/capCrunch/BlindModeReveal';
-import { getCategoryAbbr } from '../../components/capCrunch/capCrunchUtils';
+import { getCategoryAbbr, fireCapCrunchConfetti } from '../../components/capCrunch/capCrunchUtils';
 import { getTotalColor } from '../../components/capCrunch/SpinningNumber';
 import { GradWeekOverlay, GradBanner } from '../../components/GradWeekOverlay';
 
@@ -537,7 +536,6 @@ export function MultiplayerCapCrunchPage() {
           disabledRoundTypes,
         );
         const newHwFilter = selectRandomHWFilter(
-          cs.sport || 'nba',
           newTeam,
           cs.statCategory,
           usedSpecial,
@@ -1070,34 +1068,7 @@ export function MultiplayerCapCrunchPage() {
 
       if (!isBlindMode && !newSelectedPlayer.isBust && withNewPlayer.totalStat === targetCap) {
         setShowExactHit(true);
-        confetti({
-          particleCount: 160,
-          spread: 90,
-          origin: { y: 0.55 },
-          colors: ['#d4af37', '#f5e6c8', '#ffffff', '#facc15', '#fbbf24'],
-        });
-        confettiTimersRef.current = [
-          setTimeout(
-            () =>
-              confetti({
-                particleCount: 60,
-                spread: 60,
-                origin: { y: 0.4, x: 0.3 },
-                colors: ['#d4af37', '#ffffff'],
-              }),
-            250,
-          ),
-          setTimeout(
-            () =>
-              confetti({
-                particleCount: 60,
-                spread: 60,
-                origin: { y: 0.4, x: 0.7 },
-                colors: ['#d4af37', '#ffffff'],
-              }),
-            400,
-          ),
-        ];
+        confettiTimersRef.current = fireCapCrunchConfetti();
         exactHitTimerRef.current = setTimeout(() => setShowExactHit(false), 2500);
       }
 

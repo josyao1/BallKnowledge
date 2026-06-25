@@ -26,10 +26,16 @@ import {
 import type { SpecialRoundType, PerfectPick } from './capCrunch';
 
 export type { PerfectPick };
-import { supabase } from '../lib/supabase';
-import { getAuthPlayerId } from '../lib/supabase';
+import {
+  supabase,
+  getAuthPlayerId,
+  getStoredPlayerName,
+  setStoredPlayerName,
+} from '../lib/supabase';
+export { getStoredPlayerName, setStoredPlayerName };
 
-// Day 1 = June 22 2026 UTC midnight
+// Constant is June 21 (not 22) so that the +1 in getDayNumber makes Day 1 = June 22.
+// Shifted back by one day intentionally to skip the broken day 4 puzzle (see git: badf3c5).
 const LAUNCH_DATE_UTC_MS = Date.UTC(2026, 5, 21); // months are 0-indexed
 
 export function getDayNumber(): number {
@@ -409,20 +415,4 @@ export async function getOptimalLastPick(
     : null;
   _optimalLastPickCache.set(cacheKey, result);
   return result;
-}
-
-export function getStoredPlayerName(): string | null {
-  try {
-    return localStorage.getItem('ballknowledge_player_name');
-  } catch {
-    return null;
-  }
-}
-
-export function setStoredPlayerName(name: string): void {
-  try {
-    localStorage.setItem('ballknowledge_player_name', name);
-  } catch {
-    // localStorage may be unavailable (private browsing)
-  }
 }

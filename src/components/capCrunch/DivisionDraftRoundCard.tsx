@@ -13,14 +13,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NFL_DIVISIONS, NBA_DIVISIONS } from '../../services/capCrunch';
 import { TeamLogo } from '../TeamLogo';
-
-function draftLabel(code: string): string {
-  if (code === 'R1') return '1st Round';
-  if (code === 'R2') return '2nd Round';
-  if (code === 'R23') return '2nd–3rd Round';
-  if (code === 'R47') return '4th Round+';
-  return code;
-}
+import { draftLabel } from './capCrunchUtils';
 
 interface Props {
   division: string;
