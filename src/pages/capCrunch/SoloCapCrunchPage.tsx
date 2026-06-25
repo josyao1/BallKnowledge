@@ -537,6 +537,7 @@ export function SoloCapCrunchPage() {
         sport: selectedSport,
         statCategory,
         targetCap,
+        roundFilters: dc.filters,
         lineup,
         startedAtMs: dailyGameStartedAtRef.current ?? Date.now(),
         finishedAtMs: finishedAtMsRef.current ?? Date.now(),

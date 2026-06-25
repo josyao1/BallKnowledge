@@ -37,6 +37,7 @@ export default function DailyCapCrunchPage() {
               sport,
               statCategory: puzzle.statCategory,
               targetCap: puzzle.targetCap,
+              roundFilters: puzzle.roundFilters,
             },
           });
           return;

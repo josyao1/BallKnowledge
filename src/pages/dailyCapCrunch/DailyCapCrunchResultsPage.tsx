@@ -9,9 +9,9 @@ import {
   getNextResetMs,
   getPerfectLineup,
   getOptimalLastPick,
-  generateDailyPuzzle,
   type DailyEntry,
   type PerfectPick,
+  type DailyRoundFilter,
 } from '../../services/dailyCapCrunch';
 import { ensureAnonymousSession } from '../../lib/supabase';
 import { getCategoryAbbr, fmt } from '../../components/capCrunch/capCrunchUtils';
@@ -48,6 +48,7 @@ interface FreshState {
   sport: Sport;
   statCategory: StatCategory;
   targetCap: number;
+  roundFilters: DailyRoundFilter[];
   lineup: PlayerLineup;
   startedAtMs: number;
   finishedAtMs: number;
@@ -60,6 +61,7 @@ interface AlreadyPlayedState {
   sport: Sport;
   statCategory: StatCategory;
   targetCap: number;
+  roundFilters: DailyRoundFilter[];
 }
 
 type PageState = FreshState | AlreadyPlayedState;
@@ -249,19 +251,14 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
 
   // Compute perfect lineup and optimal last pick once on mount
   useEffect(() => {
-    const puzzle = generateDailyPuzzle(sport, dayNumber);
-    void getPerfectLineup(dayNumber, sport, statCategory, targetCap, puzzle.roundFilters).then(
-      (result) => setPerfectLineup(result),
+    const { roundFilters } = pageState;
+    void getPerfectLineup(dayNumber, sport, statCategory, targetCap, roundFilters).then((result) =>
+      setPerfectLineup(result),
     );
     if (picks.length >= 2) {
-      void getOptimalLastPick(
-        dayNumber,
-        sport,
-        statCategory,
-        targetCap,
-        puzzle.roundFilters,
-        picks,
-      ).then((result) => setOptimalLastPick(result));
+      void getOptimalLastPick(dayNumber, sport, statCategory, targetCap, roundFilters, picks).then(
+        (result) => setOptimalLastPick(result),
+      );
     } else {
       setOptimalLastPick(null);
     }
