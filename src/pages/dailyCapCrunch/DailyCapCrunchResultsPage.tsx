@@ -8,6 +8,7 @@ import {
   setStoredPlayerName,
   getNextResetMs,
   getPerfectLineup,
+  getOptimalLastPick,
   generateDailyPuzzle,
   type DailyEntry,
   type PerfectPick,
@@ -216,6 +217,9 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
   // Perfect lineup state
   const [perfectLineup, setPerfectLineup] = useState<PerfectPick[] | null | 'loading'>('loading');
 
+  // Optimal last pick state
+  const [optimalLastPick, setOptimalLastPick] = useState<PerfectPick | null | 'loading'>('loading');
+
   // Countdown
   const [countdown, setCountdown] = useState(formatCountdown(getNextResetMs()));
   const [copied, setCopied] = useState(false);
@@ -243,12 +247,19 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Compute perfect lineup once on mount
+  // Compute perfect lineup and optimal last pick once on mount
   useEffect(() => {
     const puzzle = generateDailyPuzzle(sport, dayNumber);
     void getPerfectLineup(dayNumber, sport, statCategory, targetCap, puzzle.roundFilters).then(
       (result) => setPerfectLineup(result),
     );
+    if (picks.length >= 2) {
+      void getOptimalLastPick(dayNumber, sport, statCategory, targetCap, puzzle.roundFilters, picks).then(
+        (result) => setOptimalLastPick(result),
+      );
+    } else {
+      setOptimalLastPick(null);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadLeaderboard = async () => {
@@ -456,6 +467,62 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                 </>
               )}
             </div>
+          </div>
+
+          {/* Optimal last pick */}
+          <div className="mt-4">
+            <h2 className="capcrunch-title text-sm text-white/60 uppercase tracking-wider mb-2">
+              Optimal Last Pick
+            </h2>
+            {optimalLastPick === 'loading' ? (
+              <div className="capcrunch-panel px-4 py-3 text-center">
+                <p className="capcrunch-kicker text-white/30 text-[11px] animate-pulse">
+                  Calculating…
+                </p>
+              </div>
+            ) : optimalLastPick === null ? (
+              <div className="capcrunch-panel px-4 py-3 text-center">
+                <p className="capcrunch-kicker text-white/30 text-[11px]">Could not compute</p>
+              </div>
+            ) : (
+              <>
+                <div className="capcrunch-panel px-3 py-2.5 flex items-center gap-3">
+                  <PlayerHeadshot
+                    playerId={optimalLastPick.playerId}
+                    sport={sport}
+                    className="w-8 h-8 rounded-full object-cover shrink-0"
+                  />
+                  <span className="capcrunch-title text-sm text-white flex-1 min-w-0 truncate">
+                    {optimalLastPick.playerName}
+                  </span>
+                  {optimalLastPick.position && (
+                    <span className="capcrunch-kicker text-[9px] text-white/30 bg-white/5 px-1.5 py-0.5 shrink-0">
+                      {optimalLastPick.position}
+                    </span>
+                  )}
+                  <span className="capcrunch-kicker text-white/40 text-[10px] shrink-0">
+                    {optimalLastPick.team}
+                    {optimalLastPick.year ? ` '${String(optimalLastPick.year).slice(-2)}` : ''}
+                  </span>
+                  <span className="capcrunch-title text-sm text-[#d4af37] shrink-0">
+                    {fmtStat(optimalLastPick.stat, statCategory)}
+                  </span>
+                </div>
+                {(() => {
+                  const lastPick = picks[picks.length - 1];
+                  const wasOptimal =
+                    lastPick &&
+                    !lastPick.isBust &&
+                    !lastPick.neverOnTeam &&
+                    lastPick.playerName === optimalLastPick.playerName;
+                  return wasOptimal ? (
+                    <p className="capcrunch-kicker text-green-400 text-[10px] text-center mt-1.5">
+                      Your pick was optimal!
+                    </p>
+                  ) : null;
+                })()}
+              </>
+            )}
           </div>
 
           {/* Play other sport / replay links */}

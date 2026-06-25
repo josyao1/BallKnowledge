@@ -3009,3 +3009,34 @@ export async function computePerfectDailyLineup(
     return null;
   }
 }
+
+/**
+ * Given the running total from the user's previous picks, find the best
+ * single pick they could have made for the given slot without busting.
+ */
+export async function computeOptimalPickForSlot(
+  sport: Sport,
+  statCategory: StatCategory,
+  targetCap: number,
+  filter: { team: string; hwFilter: HWFilter | null },
+  runningTotal: number,
+): Promise<PerfectPick | null> {
+  try {
+    const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
+    const candidates = getCandidatesForFilter(pool, filter.team, filter.hwFilter, statCategory, sport);
+    const remaining = targetCap - runningTotal;
+
+    let best: (PerfectPick & { sortYear: number }) | null = null;
+    for (const c of candidates) {
+      if (c.stat > remaining) continue;
+      if (!best || c.stat > best.stat) best = c;
+    }
+
+    if (!best) return null;
+    const { playerName, playerId, position, team, year, stat } = best;
+    return { playerName, playerId, position, team, year, stat };
+  } catch (err) {
+    console.error('computeOptimalPickForSlot error:', err);
+    return null;
+  }
+}

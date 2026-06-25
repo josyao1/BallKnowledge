@@ -17,6 +17,7 @@ import {
   classifySpecialRoundType,
   advanceSpecialRoundCycle,
   computePerfectDailyLineup,
+  computeOptimalPickForSlot,
 } from './capCrunch';
 import type { SpecialRoundType, PerfectPick } from './capCrunch';
 
@@ -318,6 +319,32 @@ export async function getPerfectLineup(
   if (_perfectCache.has(key)) return _perfectCache.get(key)!;
   const result = await computePerfectDailyLineup(sport, statCategory, targetCap, filters);
   _perfectCache.set(key, result);
+  return result;
+}
+
+const _optimalLastPickCache = new Map<string, PerfectPick | null>();
+
+/**
+ * Find the best pick the user could have made for their last slot, given their
+ * running total from the first N-1 picks.
+ */
+export async function getOptimalLastPick(
+  dayNumber: number,
+  sport: Sport,
+  statCategory: StatCategory,
+  targetCap: number,
+  filters: DailyRoundFilter[],
+  picks: SelectedPlayer[],
+): Promise<PerfectPick | null> {
+  const slotIndex = picks.length - 1;
+  if (slotIndex < 0 || slotIndex >= filters.length) return null;
+  const runningTotal = picks
+    .slice(0, slotIndex)
+    .reduce((s, p) => s + (p.isBust || p.neverOnTeam ? 0 : p.statValue), 0);
+  const cacheKey = `${dayNumber}_${sport}_${statCategory}_opt_${runningTotal.toFixed(1)}`;
+  if (_optimalLastPickCache.has(cacheKey)) return _optimalLastPickCache.get(cacheKey)!;
+  const result = await computeOptimalPickForSlot(sport, statCategory, targetCap, filters[slotIndex], runningTotal);
+  _optimalLastPickCache.set(cacheKey, result);
   return result;
 }
 
