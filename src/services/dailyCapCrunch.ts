@@ -30,7 +30,7 @@ import { supabase } from '../lib/supabase';
 import { getAuthPlayerId } from '../lib/supabase';
 
 // Day 1 = June 22 2026 UTC midnight
-const LAUNCH_DATE_UTC_MS = Date.UTC(2026, 5, 22); // months are 0-indexed
+const LAUNCH_DATE_UTC_MS = Date.UTC(2026, 5, 21); // months are 0-indexed
 
 export function getDayNumber(): number {
   const now = Date.now();
