@@ -3013,6 +3013,10 @@ export async function computePerfectDailyLineup(
 /**
  * Given the running total from the user's previous picks, find the best
  * single pick they could have made for the given slot without busting.
+ *
+ * Unlike getCandidatesForFilter (which only considers each player's most
+ * recent qualifying season), this scans ALL qualifying seasons so peak
+ * historical performances (e.g. Terrell Davis '98) are never missed.
  */
 export async function computeOptimalPickForSlot(
   sport: Sport,
@@ -3023,18 +3027,92 @@ export async function computeOptimalPickForSlot(
 ): Promise<PerfectPick | null> {
   try {
     const pool: any[] = sport === 'nba' ? await loadNBALineupPool() : await loadNFLLineupPool();
-    const candidates = getCandidatesForFilter(pool, filter.team, filter.hwFilter, statCategory, sport);
     const remaining = targetCap - runningTotal;
+    const isCareer = isCareerStat(statCategory);
+    const isTotalGP = statCategory === 'total_gp';
+    const { team: filterTeam, hwFilter } = filter;
+    const computeStatFn = sport === 'nba' ? computeNbaStat : computeNflStat;
 
-    let best: (PerfectPick & { sortYear: number }) | null = null;
-    for (const c of candidates) {
-      if (c.stat > remaining) continue;
-      if (!best || c.stat > best.stat) best = c;
+    let bestStat = -1;
+    let best: PerfectPick | null = null;
+
+    const updateBest = (stat: number, p: any, s: any, overrideTeam?: string) => {
+      if (stat <= 0 || stat > remaining || stat <= bestStat) return;
+      bestStat = stat;
+      best = {
+        playerName: p.player_name,
+        playerId: p.player_id,
+        position: p.position,
+        team: overrideTeam ?? s.team,
+        year: s.season,
+        stat,
+      };
+    };
+
+    for (const player of pool) {
+      const bio = (player as any).bio;
+      const seasons: any[] = player.seasons ?? [];
+      if (!seasons.length) continue;
+
+      if (isConferenceRound(filterTeam)) {
+        const { college, nflConf } = parseConferenceRound(filterTeam);
+        if (!playerCollegeInConference(bio, college)) continue;
+        const confMatch = (t: string) =>
+          sport === 'nba'
+            ? !nflConf || nbaConferenceMatches(t, nflConf)
+            : !nflConf || nflConferenceMatches(t, nflConf);
+        for (const s of seasons) {
+          if (!confMatch(s.team)) continue;
+          updateBest(computeStatFn(s, statCategory), player, s);
+        }
+      } else if (isDivisionDraftRound(filterTeam)) {
+        const { division, draftRound } = parseDivisionDraftRound(filterTeam);
+        if (!playerInDraftRound(bio, draftRound, sport)) continue;
+        const divMatch = (t: string) =>
+          sport === 'nba' ? teamInNbaDivision(t, division) : teamInDivision(t, division);
+        for (const s of seasons) {
+          if (!divMatch(s.team)) continue;
+          updateBest(computeStatFn(s, statCategory), player, s);
+        }
+      } else if (isDivisionRound(filterTeam)) {
+        if (isCareer) {
+          const field = careerStatField(statCategory);
+          const divSeasons = seasons.filter((s: any) => teamInDivision(s.team, filterTeam));
+          if (!divSeasons.length) continue;
+          const total = seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+          updateBest(total, player, divSeasons[0]);
+        } else {
+          for (const s of seasons) {
+            if (!teamInDivision(s.team, filterTeam)) continue;
+            updateBest(computeStatFn(s, statCategory), player, s);
+          }
+        }
+      } else {
+        // Plain team round
+        const teamMatchFn =
+          sport === 'nba'
+            ? (t: string) => nbaTeamMatches(t, filterTeam)
+            : (t: string) => nflTeamMatches(t, filterTeam);
+        const qualifying = seasons.filter((s: any) => teamMatchFn(s.team));
+        if (!qualifying.length) continue;
+
+        if (isCareer) {
+          const field = careerStatField(statCategory);
+          const total = seasons.reduce((sum: number, s: any) => sum + ((s as any)[field] ?? 0), 0);
+          updateBest(total, player, qualifying[0]);
+        } else if (isTotalGP) {
+          const total = qualifying.reduce((sum: number, s: any) => sum + (s.gp ?? 0), 0);
+          updateBest(total, player, qualifying[0], filterTeam);
+        } else {
+          if (hwFilter && !checkHWFilter(bio, hwFilter, sport).passes) continue;
+          for (const s of qualifying) {
+            updateBest(computeStatFn(s, statCategory), player, s);
+          }
+        }
+      }
     }
 
-    if (!best) return null;
-    const { playerName, playerId, position, team, year, stat } = best;
-    return { playerName, playerId, position, team, year, stat };
+    return best;
   } catch (err) {
     console.error('computeOptimalPickForSlot error:', err);
     return null;
