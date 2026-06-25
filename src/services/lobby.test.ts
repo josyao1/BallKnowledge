@@ -503,107 +503,133 @@ describe('host-scoped direct updates', () => {
     localStorage.clear();
   });
 
-  it('updateLobbyStatus filters by host_id', async () => {
+  it('updateLobbyStatus updates the lobbies table by id', async () => {
     setResults({ update: { data: null, error: null } });
     await updateLobbyStatus('lobby-1', 'playing');
 
     const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobbies');
-    expect(eqCalls.map((c) => c.args)).toContainEqual(['host_id', MOCK_AUTH_ID]);
+    expect(eqCalls.map((c) => c.args)).toContainEqual(['id', 'lobby-1']);
   });
 
-  it('deleteLobby filters by host_id', async () => {
+  it('deleteLobby deletes from lobbies by id', async () => {
     setResults({ delete: { error: null } });
     await deleteLobby('lobby-1');
 
     const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobbies');
-    expect(eqCalls.map((c) => c.args)).toContainEqual(['host_id', MOCK_AUTH_ID]);
+    expect(eqCalls.map((c) => c.args)).toContainEqual(['id', 'lobby-1']);
   });
 
-  it('updateLobbySettings filters by host_id', async () => {
+  it('updateLobbySettings updates the lobbies table by id', async () => {
     setResults({ update: { data: null, error: null } });
     await updateLobbySettings('lobby-1', { sport: 'nfl' });
 
     const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobbies');
-    expect(eqCalls.map((c) => c.args)).toContainEqual(['host_id', MOCK_AUTH_ID]);
+    expect(eqCalls.map((c) => c.args)).toContainEqual(['id', 'lobby-1']);
   });
 
-  it('updateCareerState filters by host_id', async () => {
+  it('updateCareerState updates the lobbies table by id', async () => {
     setResults({ update: { data: null, error: null } });
     await updateCareerState('lobby-1', { round: 1 });
 
     const eqCalls = capture.fromCalls.filter((c) => c.method === 'eq' && c.table === 'lobbies');
-    expect(eqCalls.map((c) => c.args)).toContainEqual(['host_id', MOCK_AUTH_ID]);
+    expect(eqCalls.map((c) => c.args)).toContainEqual(['id', 'lobby-1']);
   });
 });
 
-describe('host-only RPC wrappers', () => {
+describe('host-only direct DB operations', () => {
   beforeEach(() => {
     resetCapture();
     localStorage.clear();
   });
 
-  it('kickPlayer calls the kick_player RPC', async () => {
+  it('kickPlayer deletes from lobby_players by lobby_id and player_id', async () => {
     await kickPlayer('lobby-1', OTHER_AUTH_ID);
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'kick_player',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const deleteCalls = capture.fromCalls.filter(
+      (c) => c.method === 'delete' && c.table === 'lobby_players',
+    );
+    expect(deleteCalls.length).toBeGreaterThan(0);
+    const eqCalls = capture.fromCalls.filter(
+      (c) => c.method === 'eq' && c.table === 'lobby_players',
+    );
+    expect(eqCalls.map((c) => c.args)).toContainEqual(['player_id', OTHER_AUTH_ID]);
   });
 
-  it('renamePlayer calls the rename_player RPC', async () => {
+  it('renamePlayer updates lobby_players with the new name', async () => {
     await renamePlayer('lobby-1', OTHER_AUTH_ID, 'NewName');
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'rename_player',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID, p_new_name: 'NewName' },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    expect((updateCalls[0].args[0] as Record<string, unknown>).player_name).toBe('NewName');
   });
 
-  it('updatePlayerTeam calls the update_player_team RPC', async () => {
+  it('updatePlayerTeam updates lobby_players with the team_number', async () => {
     await updatePlayerTeam('lobby-1', OTHER_AUTH_ID, 2);
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'update_player_team',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID, p_team_number: 2 },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    expect((updateCalls[0].args[0] as Record<string, unknown>).team_number).toBe(2);
   });
 
-  it('addCareerPoints calls the add_career_points RPC', async () => {
+  it('addCareerPoints fetches current points then updates lobby_players', async () => {
+    setResults({
+      single: { data: { points: 5 }, error: null },
+      update: { data: null, error: null },
+    });
     await addCareerPoints('lobby-1', OTHER_AUTH_ID, 10);
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'add_career_points',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID, p_pts: 10 },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    expect((updateCalls[0].args[0] as Record<string, unknown>).points).toBe(15);
   });
 
-  it('setPlayerScoreMultiplier calls the set_player_score_multiplier RPC', async () => {
+  it('setPlayerScoreMultiplier updates lobby_players with the multiplier', async () => {
     await setPlayerScoreMultiplier('lobby-1', OTHER_AUTH_ID, 2.5);
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'set_player_score_multiplier',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID, p_multiplier: 2.5 },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    expect((updateCalls[0].args[0] as Record<string, unknown>).score_multiplier).toBe(2.5);
   });
 
-  it('setPlayerDummyMode calls the set_player_dummy_mode RPC', async () => {
+  it('setPlayerDummyMode updates lobby_players with is_dummy', async () => {
     await setPlayerDummyMode('lobby-1', OTHER_AUTH_ID, true);
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'set_player_dummy_mode',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID, p_is_dummy: true },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    expect((updateCalls[0].args[0] as Record<string, unknown>).is_dummy).toBe(true);
   });
 
-  it('resetPlayerPoints calls the reset_player_points RPC', async () => {
+  it('resetPlayerPoints updates all lobby_players points to 0', async () => {
     await resetPlayerPoints('lobby-1');
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'reset_player_points',
-      args: { p_lobby_id: 'lobby-1' },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    expect((updateCalls[0].args[0] as Record<string, unknown>).points).toBe(0);
   });
 
-  it('markPlayerFinished calls the mark_player_finished RPC', async () => {
+  it('markPlayerFinished updates lobby_players finished_at for the target player', async () => {
     await markPlayerFinished('lobby-1', OTHER_AUTH_ID);
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'mark_player_finished',
-      args: { p_lobby_id: 'lobby-1', p_player_id: OTHER_AUTH_ID },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+    const updateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(updateCalls.length).toBeGreaterThan(0);
+    const eqCalls = capture.fromCalls.filter(
+      (c) => c.method === 'eq' && c.table === 'lobby_players',
+    );
+    expect(eqCalls.map((c) => c.args)).toContainEqual(['player_id', OTHER_AUTH_ID]);
   });
 
   it('incrementPlayerWins calls the increment_player_wins RPC', async () => {
@@ -614,29 +640,43 @@ describe('host-only RPC wrappers', () => {
     });
   });
 
-  it('startCareerRound calls the start_career_round RPC', async () => {
+  it('startCareerRound resets lobby_players and sets lobby status to playing', async () => {
     await startCareerRound('lobby-1', { round: 1 });
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'start_career_round',
-      args: { p_lobby_id: 'lobby-1', p_career_state: { round: 1 } },
+    expect(capture.rpcCalls).toHaveLength(0);
+
+    const playerUpdateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(playerUpdateCalls.length).toBeGreaterThan(0);
+    expect((playerUpdateCalls[0].args[0] as Record<string, unknown>).score).toBe(0);
+
+    const lobbyUpdateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobbies',
+    );
+    expect(lobbyUpdateCalls.length).toBeGreaterThan(0);
+    expect((lobbyUpdateCalls[0].args[0] as Record<string, unknown>).status).toBe('playing');
+    expect((lobbyUpdateCalls[0].args[0] as Record<string, unknown>).career_state).toEqual({
+      round: 1,
     });
   });
 
-  it('resetMatchForPlayAgain calls the reset_match_for_play_again RPC', async () => {
+  it('resetMatchForPlayAgain resets lobby_players and sets lobby status to waiting', async () => {
     await resetMatchForPlayAgain('lobby-1', 3, 2000, 2025, { extra: true });
-    expect(capture.rpcCalls).toContainEqual({
-      fn: 'reset_match_for_play_again',
-      args: {
-        p_lobby_id: 'lobby-1',
-        p_career_state: {
-          win_target: 3,
-          round: 0,
-          career_from: 2000,
-          career_to: 2025,
-          extra: true,
-        },
-      },
-    });
+    expect(capture.rpcCalls).toHaveLength(0);
+
+    const playerUpdateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(playerUpdateCalls.length).toBeGreaterThan(0);
+    expect((playerUpdateCalls[0].args[0] as Record<string, unknown>).points).toBe(0);
+
+    const lobbyUpdateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobbies',
+    );
+    expect(lobbyUpdateCalls.length).toBeGreaterThan(0);
+    const lobbyUpdate = lobbyUpdateCalls[0].args[0] as Record<string, unknown>;
+    expect(lobbyUpdate.status).toBe('waiting');
+    expect((lobbyUpdate.career_state as Record<string, unknown>).win_target).toBe(3);
   });
 });
 
@@ -677,14 +717,23 @@ describe('resetLobbyForNewRound', () => {
     } as Lobby;
   }
 
-  it('calls the reset_lobby_for_new_round RPC with status waiting', async () => {
+  it('directly updates lobbies with status waiting and resets all player scores', async () => {
     setResults({ single: { data: makeLobbyForReset(), error: null } });
     await resetLobbyForNewRound('lobby-1');
 
-    const rpcCall = capture.rpcCalls.find((c) => c.fn === 'reset_lobby_for_new_round');
-    expect(rpcCall).toBeDefined();
-    expect(rpcCall!.args.p_lobby_id).toBe('lobby-1');
-    expect((rpcCall!.args.p_lobby_update as Record<string, unknown>).status).toBe('waiting');
+    expect(capture.rpcCalls).toHaveLength(0);
+
+    const lobbyUpdateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobbies',
+    );
+    expect(lobbyUpdateCalls.length).toBeGreaterThan(0);
+    expect((lobbyUpdateCalls[0].args[0] as Record<string, unknown>).status).toBe('waiting');
+
+    const playerUpdateCalls = capture.fromCalls.filter(
+      (c) => c.method === 'update' && c.table === 'lobby_players',
+    );
+    expect(playerUpdateCalls.length).toBeGreaterThan(0);
+    expect((playerUpdateCalls[0].args[0] as Record<string, unknown>).score).toBe(0);
   });
 });
 
