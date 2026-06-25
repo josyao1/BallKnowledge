@@ -17,7 +17,7 @@ import {
   classifySpecialRoundType,
   advanceSpecialRoundCycle,
   computePerfectDailyLineup,
-  computeOptimalPickForSlot,
+  findOptimalLastPick,
 } from './capCrunch';
 import type { SpecialRoundType, PerfectPick } from './capCrunch';
 
@@ -341,9 +341,14 @@ export async function getOptimalLastPick(
   const runningTotal = picks
     .slice(0, slotIndex)
     .reduce((s, p) => s + (p.isBust || p.neverOnTeam ? 0 : p.statValue), 0);
+  const remaining = targetCap - runningTotal;
   const cacheKey = `${dayNumber}_${sport}_${statCategory}_opt_${runningTotal.toFixed(1)}`;
   if (_optimalLastPickCache.has(cacheKey)) return _optimalLastPickCache.get(cacheKey)!;
-  const result = await computeOptimalPickForSlot(sport, statCategory, targetCap, filters[slotIndex], runningTotal);
+  const { team, hwFilter } = filters[slotIndex];
+  const raw = await findOptimalLastPick(sport, team, statCategory, remaining, 0, [], hwFilter);
+  const result: PerfectPick | null = raw
+    ? { playerName: raw.playerName, playerId: raw.playerId, position: undefined, team: raw.team, year: raw.year, stat: raw.statValue }
+    : null;
   _optimalLastPickCache.set(cacheKey, result);
   return result;
 }
