@@ -520,11 +520,32 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                     !lastPick.isBust &&
                     !lastPick.neverOnTeam &&
                     lastPick.playerName === optimalLastPick.playerName;
-                  return wasOptimal ? (
-                    <p className="capcrunch-kicker text-green-400 text-[10px] text-center mt-1.5">
-                      Your pick was optimal!
+                  if (wasOptimal) {
+                    return (
+                      <p className="capcrunch-kicker text-green-400 text-[10px] text-center mt-1.5">
+                        Your pick was optimal!
+                      </p>
+                    );
+                  }
+                  const lastPickVal =
+                    lastPick && !lastPick.isBust && !lastPick.neverOnTeam ? lastPick.statValue : 0;
+                  const projectedTotal = total - lastPickVal + optimalLastPick.stat;
+                  const projectedDistance = Math.max(0, targetCap - Math.floor(projectedTotal));
+                  return (
+                    <p className="capcrunch-kicker text-white/40 text-[10px] text-center mt-1.5">
+                      With this pick:{' '}
+                      <span className="text-[#d4af37]">
+                        {fmtStat(projectedTotal, statCategory)}
+                      </span>
+                      {' / '}
+                      {targetCap}
+                      {projectedDistance === 0 ? (
+                        <span className="text-green-400 ml-1">(EXACT!)</span>
+                      ) : (
+                        <span className="text-white/40 ml-1">({projectedDistance} away)</span>
+                      )}
                     </p>
-                  ) : null;
+                  );
                 })()}
               </>
             )}
