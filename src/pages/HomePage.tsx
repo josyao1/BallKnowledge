@@ -536,12 +536,17 @@ export function HomePage() {
                       </button>
                     )}
                     {tile.id === 'cap-crunch' && !tile.disabled && (
-                      <button
-                        onClick={() => setCapCrunchDailyStep('sport')}
-                        className="border border-[#FDF100]/60 px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#FDF100] transition hover:bg-[#FDF100]/10"
-                      >
-                        Daily
-                      </button>
+                      <div className="relative">
+                        <span className="absolute -top-2 -right-2 z-10 capcrunch-kicker text-[8px] tracking-[0.15em] bg-[#FDF100] text-black px-1.5 py-0.5 leading-none pointer-events-none">
+                          NEW
+                        </span>
+                        <button
+                          onClick={() => setCapCrunchDailyStep('sport')}
+                          className="border border-[#FDF100]/60 px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#FDF100] transition hover:bg-[#FDF100]/10 daily-pulse"
+                        >
+                          Daily
+                        </button>
+                      </div>
                     )}
                     {tile.disabled ? (
                       <span className="border border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-[0.24em] text-[#d0d0cc]/75">

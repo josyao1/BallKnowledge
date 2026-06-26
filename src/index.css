@@ -1,22 +1,19 @@
-
 /* Import app fonts */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&family=Roboto+Condensed:wght@400;700&family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
 @media screen and (max-width: 767px) {
-  input[type="text"],
-  input[type="search"],
-  input[type="email"],
-  input[type="number"],
+  input[type='text'],
+  input[type='search'],
+  input[type='email'],
+  input[type='number'],
   textarea,
   select {
     font-size: 16px !important;
   }
 }
 
-@import "tailwindcss";
-
-
+@import 'tailwindcss';
 
 :root {
   /* Retro NBA Color Palette */
@@ -62,12 +59,7 @@ body {
       rgba(0, 0, 0, 0.03) 2px,
       rgba(0, 0, 0, 0.03) 4px
     ),
-    /* Radial gradient for depth */
-    radial-gradient(
-      ellipse at center,
-      #0d7041 0%,
-      #0a5f38 100%
-    );
+    /* Radial gradient for depth */ radial-gradient(ellipse at center, #0d7041 0%, #0a5f38 100%);
   min-height: 100vh;
   margin: 0;
   font-family: 'Inter', sans-serif;
@@ -79,14 +71,23 @@ body {
 
 .home-chalkboard {
   background:
-    radial-gradient(circle at 22% 28%, rgba(104, 187, 229, 0.28) 0, rgba(104, 187, 229, 0.14) 12%, transparent 30%),
+    radial-gradient(
+      circle at 22% 28%,
+      rgba(104, 187, 229, 0.28) 0,
+      rgba(104, 187, 229, 0.14) 12%,
+      transparent 30%
+    ),
     radial-gradient(circle at 72% 22%, rgba(226, 0, 138, 0.18) 0, transparent 24%),
     radial-gradient(circle at 68% 70%, rgba(78, 83, 165, 0.22) 0, transparent 22%),
     linear-gradient(155deg, rgba(253, 241, 0, 0.08), transparent 24%),
     linear-gradient(24deg, rgba(112, 190, 91, 0.08), transparent 28%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.38)),
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 2px, rgba(0,0,0,0.012) 2px 4px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.008) 0 3px, rgba(0,0,0,0.012) 3px 6px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0 2px, rgba(0, 0, 0, 0.012) 2px 4px),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.008) 0 3px,
+      rgba(0, 0, 0, 0.012) 3px 6px
+    ),
     linear-gradient(180deg, #111111 0%, #060606 52%, #000000 100%);
 }
 
@@ -164,7 +165,7 @@ body {
 
 .capcrunch-metric {
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
     rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-left-width: 4px;
@@ -213,10 +214,25 @@ body {
 /* Court wood texture background */
 .court-bg {
   background:
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.1) 49.5%, rgba(0,0,0,0.1) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.05) 49.5%, rgba(0,0,0,0.05) 50.5%, transparent 50.5%),
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.1) 49.5%,
+      rgba(0, 0, 0, 0.1) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.05) 49.5%,
+      rgba(0, 0, 0, 0.05) 50.5%,
+      transparent 50.5%
+    ),
     linear-gradient(135deg, var(--court-wood) 0%, var(--court-wood-dark) 100%);
-  background-size: 20px 20px, 20px 20px, 100% 100%;
+  background-size:
+    20px 20px,
+    20px 20px,
+    100% 100%;
 }
 
 /* Retro headline font */
@@ -237,7 +253,9 @@ body {
   font-family: 'Bebas Neue', monospace;
   background: var(--scoreboard-display);
   color: var(--led-active);
-  text-shadow: 0 0 10px var(--led-active), 0 0 20px rgba(255, 107, 53, 0.5);
+  text-shadow:
+    0 0 10px var(--led-active),
+    0 0 20px rgba(255, 107, 53, 0.5);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   border: 2px solid #333;
@@ -249,8 +267,8 @@ body {
   border: 3px solid #3d3d3d;
   border-radius: 8px;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.1),
-    0 4px 12px rgba(0,0,0,0.5);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 /* Retro button style - WOODEN VARIANT */
@@ -258,95 +276,190 @@ body {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  background: 
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.15) 49.5%, rgba(0,0,0,0.15) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.08) 49.5%, rgba(0,0,0,0.08) 50.5%, transparent 50.5%),
-    linear-gradient(180deg, var(--court-wood-light) 0%, var(--court-wood) 50%, var(--court-wood-dark) 100%);
-  background-size: 3px 3px, 3px 3px, 100% 100%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.15) 49.5%,
+      rgba(0, 0, 0, 0.15) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.08) 49.5%,
+      rgba(0, 0, 0, 0.08) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      180deg,
+      var(--court-wood-light) 0%,
+      var(--court-wood) 50%,
+      var(--court-wood-dark) 100%
+    );
+  background-size:
+    3px 3px,
+    3px 3px,
+    100% 100%;
   color: var(--vintage-cream);
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   border: 3px solid var(--court-wood-dark);
   border-radius: 8px;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 4px 0 #5a4a35,
-    0 6px 12px rgba(0,0,0,0.4);
+    0 6px 12px rgba(0, 0, 0, 0.4);
   transition: all 0.15s ease;
 }
 
 .retro-btn:hover {
-  background: 
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.15) 49.5%, rgba(0,0,0,0.15) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.08) 49.5%, rgba(0,0,0,0.08) 50.5%, transparent 50.5%),
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.15) 49.5%,
+      rgba(0, 0, 0, 0.15) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.08) 49.5%,
+      rgba(0, 0, 0, 0.08) 50.5%,
+      transparent 50.5%
+    ),
     linear-gradient(180deg, #dbc9a0 0%, #c4a775 50%, #8b7355 100%);
-  background-size: 3px 3px, 3px 3px, 100% 100%;
+  background-size:
+    3px 3px,
+    3px 3px,
+    100% 100%;
   transform: translateY(-2px);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
     0 6px 0 #5a4a35,
-    0 8px 16px rgba(0,0,0,0.5);
+    0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
 .retro-btn:active {
   transform: translateY(2px);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 2px 0 #5a4a35,
-    0 4px 8px rgba(0,0,0,0.3);
+    0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Blue variant button - DARKER WOOD */
 .retro-btn-blue {
-  background: 
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.2) 49.5%, rgba(0,0,0,0.2) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.1) 49.5%, rgba(0,0,0,0.1) 50.5%, transparent 50.5%),
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.2) 49.5%,
+      rgba(0, 0, 0, 0.2) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.1) 49.5%,
+      rgba(0, 0, 0, 0.1) 50.5%,
+      transparent 50.5%
+    ),
     linear-gradient(180deg, #695741 0%, #6d5a42 50%, var(--court-paint) 100%);
-  background-size: 3px 3px, 3px 3px, 100% 100%;
+  background-size:
+    3px 3px,
+    3px 3px,
+    100% 100%;
   border-color: var(--court-paint);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 4px 0 #1a120c,
-    0 6px 12px rgba(0,0,0,0.4);
+    0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 .retro-btn-blue:hover {
-  background: 
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.2) 49.5%, rgba(0,0,0,0.2) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.1) 49.5%, rgba(0,0,0,0.1) 50.5%, transparent 50.5%),
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.2) 49.5%,
+      rgba(0, 0, 0, 0.2) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.1) 49.5%,
+      rgba(0, 0, 0, 0.1) 50.5%,
+      transparent 50.5%
+    ),
     linear-gradient(180deg, #9a826b 0%, #7a6550 50%, #2d1f14 100%);
-  background-size: 3px 3px, 3px 3px, 100% 100%;
+  background-size:
+    3px 3px,
+    3px 3px,
+    100% 100%;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 6px 0 #1a120c,
-    0 8px 16px rgba(0,0,0,0.5);
+    0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
 /* Gold variant button - LIGHT WOOD */
 .retro-btn-gold {
-  background: 
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.1) 49.5%, rgba(0,0,0,0.1) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.05) 49.5%, rgba(0,0,0,0.05) 50.5%, transparent 50.5%),
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.1) 49.5%,
+      rgba(0, 0, 0, 0.1) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.05) 49.5%,
+      rgba(0, 0, 0, 0.05) 50.5%,
+      transparent 50.5%
+    ),
     linear-gradient(180deg, #f4e4c0 0%, var(--court-wood-light) 50%, var(--court-wood) 100%);
-  background-size: 3px 3px, 3px 3px, 100% 100%;
+  background-size:
+    3px 3px,
+    3px 3px,
+    100% 100%;
   color: #2d1f14;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
   border-color: #a89165;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
     0 4px 0 #a89165,
-    0 6px 12px rgba(0,0,0,0.4);
+    0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 .retro-btn-gold:hover {
-  background: 
-    linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.1) 49.5%, rgba(0,0,0,0.1) 50.5%, transparent 50.5%),
-    linear-gradient(0deg, transparent 49.5%, rgba(0,0,0,0.05) 49.5%, rgba(0,0,0,0.05) 50.5%, transparent 50.5%),
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.1) 49.5%,
+      rgba(0, 0, 0, 0.1) 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.5%,
+      rgba(0, 0, 0, 0.05) 49.5%,
+      rgba(0, 0, 0, 0.05) 50.5%,
+      transparent 50.5%
+    ),
     linear-gradient(180deg, #fff8e7 0%, #dbc9a0 50%, #c4a775 100%);
-  background-size: 3px 3px, 3px 3px, 100% 100%;
+  background-size:
+    3px 3px,
+    3px 3px,
+    100% 100%;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 6px 0 #a89165,
-    0 8px 16px rgba(0,0,0,0.5);
+    0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
 /* Retro input style */
@@ -381,7 +494,7 @@ body {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Court lines decoration */
@@ -408,8 +521,8 @@ body {
   border: 4px solid #404040;
   border-radius: 12px;
   box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.5),
-    0 8px 24px rgba(0,0,0,0.5);
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 /* Stat display */
@@ -472,12 +585,33 @@ body {
 }
 
 /* Animations */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 5px var(--nba-orange), 0 0 10px rgba(241, 90, 41, 0.5);
+@keyframes daily-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(253, 241, 0, 0);
   }
   50% {
-    box-shadow: 0 0 15px var(--nba-orange), 0 0 30px rgba(241, 90, 41, 0.5);
+    box-shadow:
+      0 0 0 3px rgba(253, 241, 0, 0.25),
+      0 0 12px rgba(253, 241, 0, 0.12);
+  }
+}
+
+.daily-pulse {
+  animation: daily-ring 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 5px var(--nba-orange),
+      0 0 10px rgba(241, 90, 41, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 15px var(--nba-orange),
+      0 0 30px rgba(241, 90, 41, 0.5);
   }
 }
 
@@ -486,8 +620,12 @@ body {
 }
 
 @keyframes ticker {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 .ticker {
@@ -497,7 +635,9 @@ body {
 /* Dropdown retro style */
 .retro-select {
   appearance: none;
-  background: #1a1a1a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 12px center;
+  background: #1a1a1a
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
   border: 3px solid #3d3d3d;
   border-radius: 8px;
   color: var(--vintage-cream);
@@ -517,7 +657,7 @@ body {
   background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
   border: 2px solid var(--nba-orange);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* Timer ring */
@@ -544,8 +684,12 @@ body {
 }
 
 @keyframes goldFlash {
-  from { background-color: rgba(212, 175, 55, 0.22); }
-  to   { background-color: transparent; }
+  from {
+    background-color: rgba(212, 175, 55, 0.22);
+  }
+  to {
+    background-color: transparent;
+  }
 }
 
 .row-gold-flash {
