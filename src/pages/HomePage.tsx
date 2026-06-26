@@ -216,7 +216,8 @@ export function HomePage() {
     const shouldSkipAnimation = gameMode === 'manual';
     setSkipAnimation(shouldSkipAnimation);
 
-    const currentTeams = sport === 'nba' ? teams : nflTeams;
+    const activeSport = rosterSport ?? sport;
+    const currentTeams = activeSport === 'nba' ? teams : nflTeams;
     const currentMinYear = Math.max(randomMinYear, 2000);
     const currentMaxYear = Math.min(randomMaxYear, 2025);
 
@@ -228,12 +229,12 @@ export function HomePage() {
     };
 
     const attemptLoadRoster = async (team: GenericTeam, year: number) => {
-      const season = sport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
+      const season = activeSport === 'nba' ? `${year}-${String(year + 1).slice(-2)}` : `${year}`;
       setLoadingStatus('fetching');
       try {
         let players;
         let league;
-        if (sport === 'nba') {
+        if (activeSport === 'nba') {
           const roster = await fetchTeamRoster(team.abbreviation, season);
           if (!roster?.players?.length) return false;
           players = roster.players;
@@ -247,7 +248,7 @@ export function HomePage() {
         setLoadingStatus('success');
         await new Promise((resolve) => setTimeout(resolve, 500));
         setPreparedGameData({
-          sport,
+          sport: activeSport,
           team,
           season,
           gameMode,
