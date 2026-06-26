@@ -20,10 +20,11 @@ type LoadingState = 'loading' | 'ready' | 'error';
 export function CareerGamePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { sport } = useSettingsStore();
+  const { sport, setSport } = useSettingsStore();
   const store = useCareerStore();
 
   const locState = location.state as {
+    sport?: Sport;
     careerTo?: number;
     minMpg?: number;
     minYards?: number;
@@ -58,7 +59,9 @@ export function CareerGamePage() {
   useEffect(() => {
     if (loadedRef.current) return;
     loadedRef.current = true;
-    loadNewGame(sport);
+    const activeSport = locState?.sport ?? sport;
+    if (locState?.sport && locState.sport !== sport) setSport(locState.sport);
+    loadNewGame(activeSport);
   }, []);
 
   async function loadNewGame(selectedSport: Sport) {

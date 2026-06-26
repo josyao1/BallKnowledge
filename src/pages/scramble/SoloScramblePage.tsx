@@ -18,6 +18,7 @@ export function SoloScramblePage() {
   const { sport, setSport } = useSettingsStore();
 
   const locState = location.state as {
+    sport?: Sport;
     careerTo?: number;
     minMpg?: number;
     minYards?: number;
@@ -66,7 +67,9 @@ export function SoloScramblePage() {
   }
 
   useEffect(() => {
-    loadPlayer(sport);
+    const activeSport = locState?.sport ?? sport;
+    if (locState?.sport && locState.sport !== sport) setSport(locState.sport);
+    loadPlayer(activeSport);
   }, []);
 
   function handleGuess() {

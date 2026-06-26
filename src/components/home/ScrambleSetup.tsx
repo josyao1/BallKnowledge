@@ -195,6 +195,7 @@ export function ScrambleSetup({ sport, onBack }: Props) {
                 onClick={() =>
                   navigate('/scramble', {
                     state: {
+                      sport,
                       careerTo: activeYear || undefined,
                       minMpg: minMpg || undefined,
                       minYards: minYards || undefined,

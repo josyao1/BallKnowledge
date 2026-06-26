@@ -670,7 +670,7 @@ export function HomePage() {
         <TeamRevealOverlay
           winningTeam={preparedGameData.team.name}
           winningYear={preparedGameData.season}
-          sport={sport}
+          sport={preparedGameData.sport}
           winningTeamData={preparedGameData.team}
           skipAnimation={skipAnimation}
           onComplete={() => {

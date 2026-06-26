@@ -171,6 +171,7 @@ export function CareerArcSetup({ sport, onBack }: Props) {
                 onClick={() =>
                   navigate('/career', {
                     state: {
+                      sport,
                       careerTo: activeYear || undefined,
                       minMpg: minMpg || undefined,
                       minYards: minYards || undefined,
