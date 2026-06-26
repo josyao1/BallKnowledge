@@ -630,7 +630,8 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                       lastPick &&
                       !lastPick.isBust &&
                       !lastPick.neverOnTeam &&
-                      lastPick.playerName === optimalLastPick.playerName;
+                      lastPick.playerName === optimalLastPick.playerName &&
+                      String(lastPick.selectedYear) === String(optimalLastPick.year);
                     if (wasOptimal) {
                       return (
                         <p className="capcrunch-kicker text-green-400 text-[10px] text-center mt-1.5">
