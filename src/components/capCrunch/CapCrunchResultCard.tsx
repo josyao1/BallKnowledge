@@ -13,6 +13,7 @@ import {
   getPickErrorMessage,
   getPickBadgeLabel,
   formatPickTeam,
+  formatSeasonYear,
 } from './capCrunchUtils';
 import { PlayerHeadshot } from './PlayerHeadshot';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
@@ -159,7 +160,7 @@ export function CapCrunchResultCard({
                     <span
                       className={`block text-[11px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}
                     >
-                      ({selected.selectedYear}, {formatPickTeam(selected.team)})
+                      ({formatSeasonYear(selected.selectedYear)}, {formatPickTeam(selected.team)})
                     </span>
                     {isBust && (
                       <span className="block text-[10px] text-red-400/60">
@@ -260,12 +261,12 @@ export function CapCrunchResultCard({
                           ? isCareerStatRound
                             ? getCategoryAbbr(statCategory)
                             : 'Career GP'
-                          : opt!.year}{' '}
+                          : formatSeasonYear(opt!.year)}{' '}
                         · {formatPickTeam(opt!.team)}
                         {opt!.college ? ` · ${opt!.college}` : ''}
                         {opt!.draftRound ? ` · ${opt!.draftRound}` : ''}
                         {opt!.teammate
-                          ? ` · played with ${opt!.teammate}${opt!.teammateYear ? ` in ${opt!.teammateYear}` : ''}`
+                          ? ` · played with ${opt!.teammate}${opt!.teammateYear ? ` in ${formatSeasonYear(opt!.teammateYear)}` : ''}`
                           : ''}
                       </span>
                     )}

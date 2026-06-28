@@ -86,6 +86,14 @@ export function getPickErrorMessage(pick: SelectedPlayer): string | null {
   return hwMsg && teamMsg ? `${teamMsg} / ${hwMsg}` : (hwMsg ?? teamMsg ?? "didn't qualify");
 }
 
+/** Format a season year as "YYYY-YY" (e.g. 2019 → "2019-20", 1999 → "1999-00"). */
+export function formatSeasonYear(year: string | number): string {
+  const y = parseInt(String(year));
+  if (isNaN(y)) return String(year);
+  const next = (y + 1) % 100;
+  return `${y}-${String(next).padStart(2, '0')}`;
+}
+
 /** Format a stat value: whole numbers show no decimal, others show 1 decimal place. */
 export function fmt(val: number): string {
   const r = parseFloat(val.toFixed(1));
