@@ -29,6 +29,7 @@ import {
   HEIGHT_THRESHOLD_NFL,
   WEIGHT_THRESHOLD,
 } from '../../services/capCrunchData';
+import { formatSeasonYear } from './capCrunchUtils';
 import type { HWFilter } from '../../services/capCrunch';
 import type { PlayerLineup, StatCategory } from '../../types/capCrunch';
 
@@ -412,7 +413,7 @@ export function CapCrunchPickPanel({
                             : 'bg-white/[0.03] border-white/10 hover:border-[#68BBE5]/40'
                         }`}
                       >
-                        {year}
+                        {formatSeasonYear(year)}
                       </button>
                     ))}
                   </div>

@@ -31,6 +31,7 @@ import {
   getPickErrorMessage,
   getPickBadgeLabel,
   formatPickTeam,
+  formatSeasonYear,
   fireCapCrunchConfetti,
 } from '../../components/capCrunch/capCrunchUtils';
 import {
@@ -1296,7 +1297,7 @@ export function SoloCapCrunchPage() {
                                 : 'bg-white/[0.03] border-white/10 hover:border-[#68BBE5]/40'
                             }`}
                           >
-                            {year}
+                            {formatSeasonYear(year)}
                           </button>
                         ))}
                       </div>
@@ -1395,7 +1396,7 @@ export function SoloCapCrunchPage() {
                               className={isBad ? 'text-red-400/70' : 'text-white/60'}
                               style={{ fontSize: '0.5rem' }}
                             >
-                              {formatPickTeam(pick.team)} • {pick.selectedYear}
+                              {formatPickTeam(pick.team)} • {formatSeasonYear(pick.selectedYear)}
                               {pick.neverOnTeam && (
                                 <span className="text-orange-400/80 ml-1">
                                   ({getPickErrorMessage(pick)})
@@ -1535,7 +1536,7 @@ export function SoloCapCrunchPage() {
                                 ? isCareerStatRound
                                   ? getCategoryAbbr(statCategory!)
                                   : 'Career GP'
-                                : optimalPick.year}{' '}
+                                : formatSeasonYear(optimalPick.year)}{' '}
                               · {optimalPick.team}
                               {optimalPick.college && (
                                 <span className="text-[#3b82f6]/60 ml-1">
@@ -1551,7 +1552,7 @@ export function SoloCapCrunchPage() {
                                 <span className="text-[#22c55e]/60 ml-1">
                                   · played with {optimalPick.teammate}
                                   {optimalPick.teammateYear
-                                    ? ` in ${optimalPick.teammateYear}`
+                                    ? ` in ${formatSeasonYear(optimalPick.teammateYear)}`
                                     : ''}
                                 </span>
                               )}
@@ -1672,7 +1673,8 @@ export function SoloCapCrunchPage() {
                                 <div
                                   className={`text-xs ${isInvalid ? 'text-red-400/60' : 'text-white/60'}`}
                                 >
-                                  {formatPickTeam(player.team)} • {player.selectedYear}
+                                  {formatPickTeam(player.team)} •{' '}
+                                  {formatSeasonYear(player.selectedYear)}
                                 </div>
                                 {isBust && (
                                   <div className="text-[9px] text-red-400/70 mt-0.5">

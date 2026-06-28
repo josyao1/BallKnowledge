@@ -7,7 +7,13 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { fmt, getPickErrorMessage, getPickBadgeLabel, formatPickTeam } from './capCrunchUtils';
+import {
+  fmt,
+  getPickErrorMessage,
+  getPickBadgeLabel,
+  formatPickTeam,
+  formatSeasonYear,
+} from './capCrunchUtils';
 import { FlipReveal } from './FlipReveal';
 import { PlayerHeadshot } from './PlayerHeadshot';
 import type { PlayerLineup } from '../../types/capCrunch';
@@ -171,7 +177,8 @@ export function CapCrunchScoresPanel({
                                   <span
                                     className={`ml-1 text-[10px] ${isBad ? 'text-red-400/70' : 'text-white/40'}`}
                                   >
-                                    ({selected.selectedYear}, {formatPickTeam(selected.team)})
+                                    ({formatSeasonYear(selected.selectedYear)},{' '}
+                                    {formatPickTeam(selected.team)})
                                   </span>
                                 </div>
                                 {isMe && !blindMode && selected.isBust && targetCap > 0 && (
