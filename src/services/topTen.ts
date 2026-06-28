@@ -784,14 +784,11 @@ export async function findPlayerInPool(
 
 /** Board size for team mode — varies by stat group and window length. */
 export function calcTeamBoardLimit(categoryKey: string, windowYears: number): number {
-  if (categoryKey === 'fantasy_pts') return 10;
-  const step = (windowYears - 5) / 5;
-  if (['passing_yards', 'passing_tds', 'interceptions'].includes(categoryKey))
+  if (['passing_yards', 'passing_tds', 'interceptions'].includes(categoryKey)) {
+    const step = (windowYears - 5) / 5;
     return Math.min(10, 4 + step);
-  if (['rushing_yards', 'rushing_tds'].includes(categoryKey)) return Math.min(10, 6 + step);
-  if (['receiving_yards', 'receiving_tds', 'receptions'].includes(categoryKey))
-    return Math.min(10, 8 + step);
-  return Math.min(10, 6 + step); // NBA stats
+  }
+  return 10;
 }
 
 export function getStatShortLabel(catDef: StatCategoryDef | undefined): string | undefined {
