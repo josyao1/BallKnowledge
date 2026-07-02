@@ -581,8 +581,8 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
             </div>
           </div>
 
-          {/* Optimal last pick — only shown when not exact */}
-          {!isExact && (
+          {/* Optimal last pick — only shown when not exact and a pick was found */}
+          {!isExact && optimalLastPick !== null && (
             <div className="mt-4">
               <h2 className="capcrunch-title text-sm text-white/60 uppercase tracking-wider mb-2">
                 Optimal Last Pick
@@ -592,10 +592,6 @@ function DailyResultsContent({ pageState }: { pageState: PageState }) {
                   <p className="capcrunch-kicker text-white/30 text-[11px] animate-pulse">
                     Calculating…
                   </p>
-                </div>
-              ) : optimalLastPick === null ? (
-                <div className="capcrunch-panel px-4 py-3 text-center">
-                  <p className="capcrunch-kicker text-white/30 text-[11px]">Could not compute</p>
                 </div>
               ) : (
                 <>

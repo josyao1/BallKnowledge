@@ -3089,6 +3089,7 @@ export async function computePerfectDailyLineup(
       let bestTotal = -1;
       let bestPicks: RawCandidate[] = [];
       let iterations = 0;
+      const pickedNames = new Set<string>();
 
       function dfs(slot: number, currentTotal: number, currentPicks: RawCandidate[]) {
         if (iterations++ > ITER_PER_PASS) return;
@@ -3130,9 +3131,12 @@ export async function computePerfectDailyLineup(
 
         for (const candidate of ordered) {
           if (candidate.stat > remaining) continue;
+          if (pickedNames.has(candidate.playerName)) continue;
+          pickedNames.add(candidate.playerName);
           currentPicks.push(candidate);
           dfs(slot + 1, parseFloat((currentTotal + candidate.stat).toFixed(1)), currentPicks);
           currentPicks.pop();
+          pickedNames.delete(candidate.playerName);
           if (bestTotal === targetCap) return; // exact hit — stop early
         }
       }

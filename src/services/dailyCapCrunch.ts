@@ -393,13 +393,16 @@ export async function getOptimalLastPick(
   }
   if (_optimalLastPickCache.has(cacheKey)) return _optimalLastPickCache.get(cacheKey)!;
   const prevPicksForSlot = picks.slice(0, slotIndex);
+  const excludeNames = prevPicksForSlot
+    .filter((p) => !p.isBust && !p.neverOnTeam)
+    .map((p) => p.playerName);
   const raw = await findOptimalLastPick(
     sport,
     team,
     statCategory,
     remaining,
     0,
-    [],
+    excludeNames,
     hwFilter,
     prevPicksForSlot,
   );
